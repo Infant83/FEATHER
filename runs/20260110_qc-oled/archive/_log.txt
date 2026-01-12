@@ -1,0 +1,52 @@
+[2026-01-11 07:12:33] JOB START: 20260110.txt date=2026-01-10 days=365 max_results=5
+[2026-01-11 07:12:33] TAVILY SEARCH: quantum computing materials discovery OLED emitters industrial applications (English)
+[2026-01-11 07:12:38] TAVILY SEARCH: Samsung Display quantum computing materials research OLED (English)
+[2026-01-11 07:12:42] TAVILY SEARCH: LG Display quantum computing OLED materials discovery (English)
+[2026-01-11 07:12:46] TAVILY SEARCH: Universal Display Corporation quantum computing materials OLED (English)
+[2026-01-11 07:12:49] TAVILY SEARCH: site:samsung.com OLED quantum computing materials (English)
+[2026-01-11 07:12:54] TAVILY SEARCH: site:lgdisplay.com OLED quantum computing materials (English)
+[2026-01-11 07:13:04] TAVILY SEARCH: site:udc.com OLED quantum computing materials (English)
+[2026-01-11 07:13:13] TAVILY SEARCH: quantum algorithms for materials science discovery OLED phosphorescent TADF emitters (English)
+[2026-01-11 07:13:18] TAVILY SEARCH: quantum computing chemistry materials simulation industry deployment (English)
+[2026-01-11 07:13:22] OPENALEX SEARCH: quantum computing materials discovery OLED emitters industrial applications
+[2026-01-11 07:13:24] OPENALEX PDF DOWNLOAD: https://jmsg.springeropen.com/counter/pdf/10.1186/s40712-024-00202-7 -> W4406477905.pdf
+[2026-01-11 07:13:26] PDF->TEXT: W4406477905.pdf
+[2026-01-11 07:13:27] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adhm.202500195 -> W4411706831.pdf
+[2026-01-11 07:13:27] ERROR openalex pdf download failed query=quantum computing materials discovery OLED emitters industrial applications err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adhm.202500195') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adhm.202500195']
+[2026-01-11 07:13:27] OPENALEX PDF DOWNLOAD: https://link.springer.com/content/pdf/10.1007/s10904-024-03567-6.pdf -> W4406330631.pdf
+[2026-01-11 07:13:28] PDF->TEXT: W4406330631.pdf
+[2026-01-11 07:13:28] OPENALEX PDF DOWNLOAD: https://www.deepscienceresearch.com/dsr/catalog/download/133/757/1614 -> W4410446803.pdf
+[2026-01-11 07:13:31] PDF->TEXT: W4410446803.pdf
+[2026-01-11 07:13:31] OPENALEX PDF DOWNLOAD: https://asmedigitalcollection.asme.org/electronicpackaging/article-pdf/doi/10.1115/1.4069750/7536161/ep-25-1066.pdf -> W4414157839.pdf
+[2026-01-11 07:13:31] ERROR openalex pdf download failed query=quantum computing materials discovery OLED emitters industrial applications err=HTTPError('403 Client Error: Forbidden for url: https://asmedigitalcollection.asme.org/electronicpackaging/article-pdf/doi/10.1115/1.4069750/7536161/ep-25-1066.pdf') urls=['https://asmedigitalcollection.asme.org/electronicpackaging/article-pdf/doi/10.1115/1.4069750/7536161/ep-25-1066.pdf']
+[2026-01-11 07:13:32] OPENALEX SEARCH: Samsung Display quantum computing materials research OLED
+[2026-01-11 07:13:33] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202504625 -> W4411185700.pdf
+[2026-01-11 07:13:33] ERROR openalex pdf download failed query=Samsung Display quantum computing materials research OLED err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202504625') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202504625']
+[2026-01-11 07:13:33] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/msid.1596 -> W4412423800.pdf
+[2026-01-11 07:13:33] ERROR openalex pdf download failed query=Samsung Display quantum computing materials research OLED err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/msid.1596') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/msid.1596']
+[2026-01-11 07:13:33] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04 -> W4409557436.pdf
+[2026-01-11 07:13:33] ERROR openalex pdf download failed query=Samsung Display quantum computing materials research OLED err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04']
+[2026-01-11 07:13:33] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202509642 -> W4413790004.pdf
+[2026-01-11 07:13:33] ERROR openalex pdf download failed query=Samsung Display quantum computing materials research OLED err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202509642') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202509642']
+[2026-01-11 07:13:34] OPENALEX SEARCH: LG Display quantum computing OLED materials discovery
+[2026-01-11 07:13:35] OPENALEX PDF DOWNLOAD: https://www.nature.com/articles/s41467-025-59439-1.pdf -> W4410193211.pdf
+[2026-01-11 07:13:39] PDF->TEXT: W4410193211.pdf
+[2026-01-11 07:13:39] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04 -> W4409557436.pdf
+[2026-01-11 07:13:39] ERROR openalex pdf download failed query=LG Display quantum computing OLED materials discovery err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/9781394181889.ch04']
+[2026-01-11 07:13:39] OPENALEX SEARCH: Universal Display Corporation quantum computing materials OLED
+[2026-01-11 07:13:41] OPENALEX SEARCH: site:samsung.com OLED quantum computing materials
+[2026-01-11 07:13:42] OPENALEX SEARCH: site:lgdisplay.com OLED quantum computing materials
+[2026-01-11 07:13:44] OPENALEX SEARCH: site:udc.com OLED quantum computing materials
+[2026-01-11 07:13:45] OPENALEX SEARCH: quantum algorithms for materials science discovery OLED phosphorescent TADF emitters
+[2026-01-11 07:13:47] OPENALEX SEARCH: quantum computing chemistry materials simulation industry deployment
+[2026-01-11 07:13:48] OPENALEX PDF DOWNLOAD: https://link.springer.com/content/pdf/10.1007/s12672-025-01821-y.pdf -> W4406707630.pdf
+[2026-01-11 07:13:50] PDF->TEXT: W4406707630.pdf
+[2026-01-11 07:13:50] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1422-0067/26/13/6325/pdf?version=1751292853 -> W4411890965.pdf
+[2026-01-11 07:13:50] ERROR openalex pdf download failed query=quantum computing chemistry materials simulation industry deployment err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1422-0067/26/13/6325/pdf?version=1751292853') urls=['https://www.mdpi.com/1422-0067/26/13/6325/pdf?version=1751292853']
+[2026-01-11 07:13:50] OPENALEX PDF DOWNLOAD: https://doi.org/10.63721/25jpair0118 -> W4417018335.pdf
+[2026-01-11 07:13:52] PDF->TEXT: W4417018335.pdf
+[2026-01-11 07:13:52] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/3/673/pdf?version=1737635168 -> W4406761500.pdf
+[2026-01-11 07:13:52] ERROR openalex pdf download failed query=quantum computing chemistry materials simulation industry deployment err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/3/673/pdf?version=1737635168') urls=['https://www.mdpi.com/1424-8220/25/3/673/pdf?version=1737635168']
+[2026-01-11 07:13:52] OPENALEX PDF DOWNLOAD: https://learning-gate.com/index.php/2576-8484/article/download/4251/1648 -> W4406399672.pdf
+[2026-01-11 07:13:56] PDF->TEXT: W4406399672.pdf
+[2026-01-11 07:13:56] JOB END

@@ -1,0 +1,151 @@
+OTI Lumionics Releases Breakthrough Algorithms for Quantum Chemistry Simulations - Anzu Partners | Breakthrough Industrial and Life Sciences Technologies
+===============
+
+[×](javascript:void(0);)
+
+This website stores cookies on your computer. These cookies are used to improve your website experience and provide more personalized services to you, both on this website and through other media. To find out more about the cookies we use, see our Privacy Policy.
+
+We won't track your information when you visit our site. But in order to comply with your preferences, we'll have to use just one tiny cookie so that you're not asked to make this choice again.
+
+[Accept](javascript:void(0);)[Decline](javascript:void(0);)
+
+[Skip to content](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations#content)
+
+[![Image 1](https://www.anzupartners.com/wp-content/uploads/2025/08/Group.svg)](https://www.anzupartners.com/)
+
+*   [Portfolio](https://www.anzupartners.com/portfolio/)
+*   [Team](https://www.anzupartners.com/team/)
+*   [Newsroom](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations#)
+    *   [Press Releases](https://www.anzupartners.com/news/)
+    *   [Media Coverage](https://www.anzupartners.com/anzu_newsroom/)
+
+*   [Capabilities](https://www.anzupartners.com/capabilities/)
+*   [Newsletter](https://www.anzupartners.com/newsletter-signup/)
+*   [About](https://www.anzupartners.com/about/)
+
+*   [Portfolio](https://www.anzupartners.com/portfolio/)
+*   [Team](https://www.anzupartners.com/team/)
+*   [Newsroom](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations#)
+    *   [Press Releases](https://www.anzupartners.com/news/)
+    *   [Media Coverage](https://www.anzupartners.com/anzu_newsroom/)
+
+*   [Capabilities](https://www.anzupartners.com/capabilities/)
+*   [Newsletter](https://www.anzupartners.com/newsletter-signup/)
+*   [About](https://www.anzupartners.com/about/)
+
+*   [Contact](https://www.anzupartners.com/contact/)
+
+*   [Contact](https://www.anzupartners.com/contact/)
+
+[![Image 2](https://www.anzupartners.com/wp-content/uploads/2025/08/Group.svg)](https://www.anzupartners.com/)
+
+*   [Portfolio](https://www.anzupartners.com/portfolio/)
+*   [Team](https://www.anzupartners.com/team/)
+*   [Newsroom](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations#)
+    *   [Press Releases](https://www.anzupartners.com/news/)
+    *   [Media Coverage](https://www.anzupartners.com/anzu_newsroom/)
+
+*   [Capabilities](https://www.anzupartners.com/capabilities/)
+*   [Newsletter](https://www.anzupartners.com/newsletter-signup/)
+*   [About](https://www.anzupartners.com/about/)
+
+*   [Portfolio](https://www.anzupartners.com/portfolio/)
+*   [Team](https://www.anzupartners.com/team/)
+*   [Newsroom](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations#)
+    *   [Press Releases](https://www.anzupartners.com/news/)
+    *   [Media Coverage](https://www.anzupartners.com/anzu_newsroom/)
+
+*   [Capabilities](https://www.anzupartners.com/capabilities/)
+*   [Newsletter](https://www.anzupartners.com/newsletter-signup/)
+*   [About](https://www.anzupartners.com/about/)
+
+*   [Contact](https://www.anzupartners.com/contact/)
+
+*   [Contact](https://www.anzupartners.com/contact/)
+
+*   [June 18, 2025](https://www.anzupartners.com/2025/06/18/)
+
+ OTI Lumionics Releases Breakthrough Algorithms for Quantum Chemistry Simulations 
+
+TORONTO, June 18, 2025 (GLOBE NEWSWIRE) —[OTI Lumionics](https://www.globenewswire.com/Tracker?data=63y8syaaTIFX0dcA8d_5WYmbHgKJrqP0PsxQtUAZQyn-cHoUhGbSzmvFyFNPy_-mL7N1m8gJnC4Ob3q1rA08I0SdBB0FiqCm3rg_uxFYBYQ=), a leader in advanced quantum simulations and solutions for next-generation materials discovery, announces the publication of its scientific paper, “[Optimization of the Qubit Coupled Cluster Ansatz on classical computers](https://www.globenewswire.com/Tracker?data=8U246zYDGY4yEp786agw9XaFdCoD6TgNcKQ_XiticAbrLiwnhbsOM_1hTAOkVLjZw744E6j3LKAXFtaI5TTFKMr9BjV2mFs_8MO26TLBiZg0rFTuGExLk_jjgjfvEerh5x9S4e1s9RPmpIJfXgg1SPgN3UX2yL5XaI3Nk-g8FVcPWIdt7PwbyQJdGG9JQerMlJ4w4kTyUW4DxFlZm_jyng==),” in the Journal of Chemical Theory and Computation (JCTC). The results mark a major advancement in the quantum computing and OLED industry, demonstrating that large-scale quantum simulations of materials can be simulated today on classical hardware with high-accuracy results. Historically, current quantum computers have struggled to achieve this capability.
+
+Though the adoption of quantum computing has grown rapidly, quantum hardware has progressed at a slower pace. Addressing this limitation, OTI Lumionics has identified quantum-inspired methods that enable scalable simulations of complex molecules on classical computers. These innovations reveal the potential to dramatically improve performance, accuracy and efficiency for quantum-inspired electronic structure calculations.
+
+OTI Lumionics’ paper presents a method that allows for the rapid optimization of complex and deep quantum circuits for materials simulations. This enables hybrid quantum algorithms to efficiently compute the various energy states of materials using a quantum computer. Due to improvements that OTI has made, it also happens in a computationally efficient approach that can be run on standard, easily available computer servers, instead of dedicated supercomputers.
+
+“Our work demonstrates a way to bypass the limitations of today’s quantum hardware while still leveraging the powerful mathematical frameworks drawn from quantum computing,” said Dr. Scott Genin, VP of Materials Discovery at OTI Lumionics. “This is a critical step in accelerating materials design pipelines, especially for OLED applications, where understanding the electronic properties of emitters at the quantum level is essential.”
+
+The research team conducted simulations of real-world OLED molecules such as dinitrogen (N2, 16 qubits), water (H2O, 36 qubits), and tris(2-(2,4-difluorophenyl)pyridine) iridium(III), Ir(F2ppy)3, involving up to 80 qubits and hundreds of thousands optimized parameters. The equivalent circuit on a universal quantum computer would have 80 perfect algorithmic qubits and over 1 million 2-qubit gates simulated on 24 CPUs in less than 24 hours. This sets a record for the simulation of a quantum algorithm on classical hardware. Together, these schemes have a highly valuable scalability, making them practical solutions for real-world applications today.
+
+The paper and research was conducted by VP of Materials Discovery at OTI Lumionics, Scott Genin, and researchers at OTI Lumionics, Ilya G. Ryabinkin and Seyyed Mehdi Hosseini Jenab. The full paper is available at JCTC[here](https://www.globenewswire.com/Tracker?data=6Xo_kQmDu4sPMG099Y-CoTzUUmNkwuasZtRO6Cu0f0JqIq9-4_-bjhB338kE2_tvFIJlzw43IsUqqmYs-qX9nC2xfrAz9OFeCk_xaG_OKIg=)and at arXiv.org[here](https://www.globenewswire.com/Tracker?data=6Xo_kQmDu4sPMG099Y-CoVTDrzFl1HjNeUZ2aDZ3NjwhS8eoHKqj_i0e4itxbKXaUAOVEZhwaSBZe8xEl0eJBA==).
+
+**About OTI Lumionics**
+
+OTI Lumionics develops production-ready advanced materials for best-in-class consumer electronics. OTI is the first to develop quantum computing methods for industrially relevant materials design and apply them to commercial problems. OTI is currently delivering key enabling materials for OLED displays developed using its platform to leading display manufacturers for use in next-generation consumer electronics and automotive. For more information on OTI Lumionics, visit[www.otilumionics.com](https://www.globenewswire.com/Tracker?data=Bp4V0EseJTc96h9ypqGX0WW1rLwNEt8FlUlSiZ0-KCA23Cqc6gzutnA_P1xFLOLpqsf-s9M6Fh1NtYX8LQM8IJ1uqnvZE49aQVoRLzxDTnM=).
+
+**Media Contact**
+
+Erica Torres
+
+Uproar by Moburst for OTI Lumionics
+
+[erica.torres@moburst.com](https://www.globenewswire.com/Tracker?data=NjcnA19KoHBpSLZdNaw3bbXlOFeoUDeEzdygjixJcsiwV1iG1k78UaZT737o3O3vCctkG29UlLbVAP_cQiUeU2MmoLppJ5RZwkAsrGivrSWWoH9KKvkjghV_dAF83yQ2)
+
+Get the latest news from Anzu
+-----------------------------
+
+First name* 
+
+Last name* 
+
+Email* 
+
+![Image 3](https://www.anzupartners.com/wp-content/uploads/2025/08/anzu-logo.svg)
+
+[](https://www.linkedin.com/company/anzupartners/)
+
+[About](https://www.anzupartners.com/about/)
+
+[Portfolio](https://www.anzupartners.com/portfolio/)
+
+[Team](https://www.anzupartners.com/team/)
+
+[Press](https://www.anzupartners.com/news/)
+
+[Capabilities](https://www.anzupartners.com/capabilities/)
+
+[Contact Us](https://www.anzupartners.com/contact/)
+
+[Investor Portal](https://dynamo.dynamosoftware.com/tenant/d6.dynamosoftware.com/Anzu/VC-InvestorsMP)
+
+© Copyright 2025 Anzu Partners
+
+We use cookies on our website to give you the most relevant experience by remembering your preferences and repeat visits. By clicking “Accept”, you consent to the use of ALL the cookies.
+
+[Cookie settings](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)[ACCEPT](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)
+
+Privacy & Cookies Policy
+
+Close
+
+#### Privacy Overview
+
+This website uses cookies to improve your experience while you navigate through the website. Out of these cookies, the cookies that are categorized as necessary are stored on your browser as they are essential for the working of basic functionalities...
+
+[](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)
+
+[Necessary](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)
+
+- [x] Necessary 
+
+Always Enabled
+
+ Necessary cookies are absolutely essential for the website to function properly. This category only includes cookies that ensures basic functionalities and security features of the website. These cookies do not store any personal information. 
+
+[Non-necessary](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)
+
+- [x] Non-necessary 
+
+ Any cookies that may not be particularly necessary for the website to function and is used specifically to collect user personal data via analytics, ads, other embedded contents are termed as non-necessary cookies. It is mandatory to procure user consent prior to running these cookies on your website. 
+
+[SAVE & ACCEPT](https://www.anzupartners.com/2025/06/18/oti-lumionics-releases-breakthrough-algorithms-for-quantum-chemistry-simulations)

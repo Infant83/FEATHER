@@ -1,0 +1,209 @@
+Recent Progress in Stretchable OLED Design and Applications | Academic Journal of Science and Technology
+===============
+
+[Skip to main content](https://drpress.org/ojs/index.php/ajst/article/view/33002#pkp_content_main)[Skip to main navigation menu](https://drpress.org/ojs/index.php/ajst/article/view/33002#siteNav)[Skip to site footer](https://drpress.org/ojs/index.php/ajst/article/view/33002#pkp_content_footer)
+
+Open Menu
+
+[![Image 1: Academic Journal of Science and Technology](https://drpress.org/ojs/public/journals/7/pageHeaderLogoImage_en_US.png)](https://drpress.org/ojs/index.php/ajst/index)
+
+[](https://drpress.org/ojs/index.php/ajst/article/view/33002)
+
+*   [HOME](https://drpress.org/ojs/index.php/ajst/HOME)
+*   [Current](https://drpress.org/ojs/index.php/ajst/issue/current)
+*   [Archives](https://drpress.org/ojs/index.php/ajst/issue/archive)
+*   [Indexing & Abstracting](https://drpress.org/ojs/index.php/ajst/IndexingandAbstracting)
+*   [Submissions](https://drpress.org/ojs/index.php/ajst/about/submissions)
+*   [About](https://drpress.org/ojs/index.php/ajst/article/view/33002#)
+    *   [About the Journal](https://drpress.org/ojs/index.php/ajst/about)
+    *   [Publication Ethics](https://drpress.org/ojs/index.php/ajst/PublicationEthics)
+    *   [Editorial Team](https://drpress.org/ojs/index.php/ajst/about/editorialTeam)
+    *   [Announcements](https://drpress.org/ojs/index.php/ajst/announcement)
+    *   [Privacy Statement](https://drpress.org/ojs/index.php/ajst/about/privacy)
+
+*   [Contact](https://drpress.org/ojs/index.php/ajst/about/contact)
+
+[Search](https://drpress.org/ojs/index.php/index/search)
+
+*   [Register](https://drpress.org/ojs/index.php/ajst/user/register)
+*   [Login](https://drpress.org/ojs/index.php/ajst/login)
+
+[](https://drpress.org/ojs/index.php/ajst/article/view/33002)
+
+1.   [Home](https://drpress.org/ojs/index.php/ajst/index)/
+2.   [Archives](https://drpress.org/ojs/index.php/ajst/issue/archive)/
+3.   [Vol. 18 No. 1 (2025)](https://drpress.org/ojs/index.php/ajst/issue/view/v18n1)/
+4.    Articles 
+
+Recent Progress in Stretchable OLED Design and Applications
+===========================================================
+
+Authors
+-------
+
+*    Xuesong Hu 
+*    Zixin Yang 
+
+DOI:
+----
+
+[https://doi.org/10.54097/wwn7g748](https://doi.org/10.54097/wwn7g748)
+Keywords:
+---------
+
+ Stretchable OLED; recent advance; wearable devices; phototherapy. 
+Abstract
+--------
+
+With the recently rapid development of flexible electronics, stretchable OLEDs has become a significant direction to study because of its strong potential, like its ultra-thin structure, self-emissive nature, bendability, and stretchability. This new technology not only overcomes the limitations of traditional rigid screens, but also provides new opportunities in developing other fields, for example healthcare and human-computer interaction. From this perspective, the existing technology of OLED and its applications in different fields deserve attention. Firstly, it introduces the laser programming Buckling Process, three different island-bridge structures, Fold Bridge and Curved Bridge, Serpentine Bridge and Fractal Bridge, and talks about the Intrinsically stretchable materials. It then gives a few examples of applications in different fields, including Heart rate and blood oxygen monitoring, Variable-size screens and wearable devices and Phototherapy. This article not only makes a conclusion of current technological achievements and challenges of stretchable OLEDs but also makes a foundation for the future development of this field.
+
+Downloads
+---------
+
+References
+----------
+
+[1] Zhao, J., Chi, Z., Yang, Z., et al. Recent developments of truly stretchable thin film electronic and optoelectronic devices. Nanoscale, 2018, 10(13): 5764-5792.
+
+[2] Zhang, H. Y., Jia, S. X., Yin, D. & Feng, J. Challenges and opportunities of stretchable electroluminescent devices and displays. Laser & Photonics Reviews, 2024, 18(11): 2400358.
+
+[3] Nam, M., Chang, J., Kim, H., et al. Highly reliable and stretchable OLEDs based on facile patterning method: toward stretchable organic optoelectronic devices. npj Flexible Electronics, 2024, 8(1): 17.
+
+[4] Cho, E. H., Kim, Y. W., Sim, J., et al. Recent advances in flexible and wearable OLEDs for biomedical applications: a review. Materials Horizons, 2025.
+
+[5] Yin, D., Feng, J., Ma, R., et al. Efficient and mechanically robust stretchable organic light-emitting devices by a laser-programmable buckling process. Nature Communications, 2016, 7(1).
+
+[6] Kim, S. B., Lee, D., Kim, J., et al. 3D height-alternant island arrays for stretchable OLEDs with high active area ratio and maximum strain. Nature Communications, 2024, 15(1): 7802.
+
+[7] Nimbalkar, A., Irfan, A. & Suh, M. C. Creating highly efficient stretchable OLEDs with nanowavy structures for angle-independent narrow band emission. npj Flexible Electronics, 2024, 8(1): 57.
+
+[8] Yin, H., Zhu, Y., Youssef, K., et al. Structures and materials in stretchable electroluminescent devices. Advanced Materials, 2022, 34(22): 2106184.
+
+[9] Kim, J. H. & Park, J. W. Intrinsically stretchable organic light-emitting diodes. Science Advances, 2021, 7(9): eabd9715.
+
+[10] Zhou, H., Kim, H. W., Jeong, W. J. & Lee, T. W. Toward intrinsically stretchable oleds with high efficiency. Advanced Materials, 2025, 37(14): 2420008.
+
+[11] Zhang H., Jia S., Yin D. & Feng J. Research progress of stretchable light-emitting devices based on island-bridge structure. Chinese Journal of Luminescence, 2023, 44(9), 1606-1620.
+
+[12] Sun, N., Jiang, C., Li, Q., et al. Performance of OLED under mechanical strain: a review. Journal of Materials Science: Materials in Electronics, 2020, 31(23): 20688-20729.
+
+[13] Liu, W., Zhang, C., Alessandri, R., et al. High-efficiency stretchable light-emitting polymers from thermally activated delayed fluorescence. Nature materials, 2023, 22(6): 737-745.
+
+[14] Li, X. C., Yao, L., Song, W., et al. Intrinsically stretchable electroluminescent elastomers with self‐confinement effect for highly efficient non‐blended stretchable OLEDs. Angewandte Chemie International Edition, 2023, 62(2): e202213749.
+
+[15] Keum, K., Yang, S., Kim, K. S., et al. Recent progress of stretchable displays: a comprehensive review of materials, device architectures, and applications. Soft Science, 2024, 4(4).
+
+Downloads
+---------
+
+*   [PDF](https://drpress.org/ojs/index.php/ajst/article/view/33002/32289)
+
+Published
+---------
+
+28-12-2025
+
+Issue
+-----
+
+[Vol. 18 No. 1 (2025)](https://drpress.org/ojs/index.php/ajst/issue/view/v18n1)
+
+Section
+-------
+
+ Articles 
+
+License
+-------
+
+Copyright (c) 2025 Academic Journal of Science and Technology
+
+[![Image 2: Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png)](https://creativecommons.org/licenses/by/4.0/)
+This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+
+How to Cite
+-----------
+
+Hu, X., & Yang, Z. (2025). Recent Progress in Stretchable OLED Design and Applications. _Academic Journal of Science and Technology_, _18_(1), 388-395. [https://doi.org/10.54097/wwn7g748](https://doi.org/10.54097/wwn7g748)
+
+ More Citation Formats 
+
+*   [ACM](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/acm-sig-proceedings?submissionId=33002&publicationId=32981&issueId=913)
+*   [ACS](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/acs-nano?submissionId=33002&publicationId=32981&issueId=913)
+*   [APA](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/apa?submissionId=33002&publicationId=32981&issueId=913)
+*   [ABNT](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/associacao-brasileira-de-normas-tecnicas?submissionId=33002&publicationId=32981&issueId=913)
+*   [Chicago](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/chicago-author-date?submissionId=33002&publicationId=32981&issueId=913)
+*   [Harvard](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/harvard-cite-them-right?submissionId=33002&publicationId=32981&issueId=913)
+*   [IEEE](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/ieee?submissionId=33002&publicationId=32981&issueId=913)
+*   [MLA](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/modern-language-association?submissionId=33002&publicationId=32981&issueId=913)
+*   [Turabian](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/turabian-fullnote-bibliography?submissionId=33002&publicationId=32981&issueId=913)
+*   [Vancouver](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/vancouver?submissionId=33002&publicationId=32981&issueId=913)
+*   [AMA](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/get/ama?submissionId=33002&publicationId=32981&issueId=913)
+
+ Download Citation 
+
+*   [Endnote/Zotero/Mendeley (RIS)](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/download/ris?submissionId=33002&publicationId=32981&issueId=913)
+*   [BibTeX](https://drpress.org/ojs/index.php/ajst/citationstylelanguage/download/bibtex?submissionId=33002&publicationId=32981&issueId=913)
+
+[](https://drpress.org/ojs/index.php/ajst/article/view/33002)[](https://drpress.org/ojs/index.php/ajst/article/view/33002)[](https://drpress.org/ojs/index.php/ajst/article/view/33002)[](https://drpress.org/ojs/index.php/ajst/article/view/33002)[](https://drpress.org/ojs/index.php/ajst/article/view/33002)[](https://drpress.org/ojs/index.php/ajst/article/view/33002)
+
+![Image 3: Crossref](https://drpress.org/ojs/plugins/generic/citations/images/crossref.png)
+
+0
+
+![Image 4: Scopus](https://drpress.org/ojs/plugins/generic/citations/images/scopus.png)
+
+0
+
+[![Image 5: Google Scholar](https://drpress.org/ojs/plugins/generic/citations/images/scholar.png)](https://scholar.google.com/scholar?q=10.54097/wwn7g748)
+
+[![Image 6: Europe PMC](https://drpress.org/ojs/plugins/generic/citations/images/pmc.png) 0](https://europepmc.org/search?scope=fulltext&query=10.54097/wwn7g748)
+
+![Image 7](https://drpress.org/ojs/index.php/ajst/article/view/33002)
+
+Indexing & Abstracting
+----------------------
+
+![Image 8](https://drpress.org/ojs/public/harvardlibrary.png)
+
+![Image 9](https://drpress.org/ojs/public/site/images/acukh/CPCI.png)
+
+![Image 10](https://drpress.org/ojs/public/site/images/acukh/CNKI.png)
+
+![Image 11: CrossRef](https://drpress.org/ojs/public/site/images/acukh/crossref.png)
+
+![Image 12: ResearchGate](https://drpress.org/ojs/public/site/images/acukh/researchgate.png)
+
+![Image 13: J-Gate](https://drpress.org/ojs/public/site/images/acukh/j-gate.png)
+
+![Image 14: Scilit](https://drpress.org/ojs/public/site/images/acukh/scilit.png)
+
+![Image 15: Google Scholar](https://drpress.org/ojs/public/google.png)
+
+![Image 16: Semanticscholar](https://drpress.org/ojs/public/site/images/acukh/semanticscholar.png)
+
+![Image 17: PKP-LN](https://drpress.org/ojs/public/site/images/acukh/pkp.png)![Image 18](https://drpress.org/ojs/public/site/images/acukh/doi.png)
+
+Most Read Articles
+*   [Application of Machine Learning-Based K-means Clustering for Financial Fraud Detection](https://drpress.org/ojs/index.php/ajst/article/view/19142)  3211 
+*   [Process Design of Isopropyl Alcohol Synthesis Section of 80,000 Tons/Yea](https://drpress.org/ojs/index.php/ajst/article/view/521)  2849 
+*   [Design and Implementation of Smart Community Property Management System Based on Spring Boot](https://drpress.org/ojs/index.php/ajst/article/view/2928)  1981 
+*   [Research on Generative Artificial Intelligence for Virtual Financial Robo-Advisor](https://drpress.org/ojs/index.php/ajst/article/view/19151)  1879 
+*   [Optimization of the Preparation Process of Marinated Beef Tendons and The Development of Low-fat Kederan Rubber Tendon Beef Patties](https://drpress.org/ojs/index.php/ajst/article/view/18333)  1237 
+
+Latest publications
+-------------------
+
+*   [![Image 19: Atom logo](https://drpress.org/ojs/lib/pkp/templates/images/atom.svg)](https://drpress.org/ojs/index.php/ajst/gateway/plugin/WebFeedGatewayPlugin/atom)
+*   [![Image 20: RSS2 logo](https://drpress.org/ojs/lib/pkp/templates/images/rss20_logo.svg)](https://drpress.org/ojs/index.php/ajst/gateway/plugin/WebFeedGatewayPlugin/rss2)
+*   [![Image 21: RSS1 logo](https://drpress.org/ojs/lib/pkp/templates/images/rss10_logo.svg)](https://drpress.org/ojs/index.php/ajst/gateway/plugin/WebFeedGatewayPlugin/rss)
+
+[](https://drpress.org/ojs/index.php/ajst/article/view/33002)
+
+Academic Journal of Science and Technology (ISSN: 2771-3032)
+
+AJST@DRPress.org
+
+Darcy & Roy Press is a Member of CrossRef.
+
+[![Image 22: More information about the publishing system, Platform and Workflow by OJS/PKP.](https://drpress.org/ojs/templates/images/ojs_brand.png)](https://drpress.org/ojs/index.php/ajst/about/aboutThisPublishingSystem)

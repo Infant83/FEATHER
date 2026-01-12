@@ -1,0 +1,26 @@
+Connecting you to content on EBSCOhost
+
+
+
+Title
+:   # Applications of quantum computing for investigations of electronic transitions in phenylsulfonyl-carbazole TADF emitters.
+
+Authors
+:   ## [Gao, Qi](/results?sid=ebsco:ocu:record&bquery=AU+Gao, Qi&link_origin=none&searchDescription=Gao, Qi); [Jones, Gavin O.](/results?sid=ebsco:ocu:record&bquery=AU+Jones, Gavin O.&link_origin=none&searchDescription=Jones, Gavin O.); [Motta, Mario](/results?sid=ebsco:ocu:record&bquery=AU+Motta, Mario&link_origin=none&searchDescription=Motta, Mario); [Sugawara, Michihiko](/results?sid=ebsco:ocu:record&bquery=AU+Sugawara, Michihiko&link_origin=none&searchDescription=Sugawara, Michihiko); [Watanabe, Hiroshi C.](/results?sid=ebsco:ocu:record&bquery=AU+Watanabe, Hiroshi C.&link_origin=none&searchDescription=Watanabe, Hiroshi C.); [Kobayashi, Takao](/results?sid=ebsco:ocu:record&bquery=AU+Kobayashi, Takao&link_origin=none&searchDescription=Kobayashi, Takao); [Watanabe, Eriko](/results?sid=ebsco:ocu:record&bquery=AU+Watanabe, Eriko&link_origin=none&searchDescription=Watanabe, Eriko); [Ohnishi, Yu-ya](/results?sid=ebsco:ocu:record&bquery=AU+Ohnishi, Yu-ya&link_origin=none&searchDescription=Ohnishi, Yu-ya); [Nakamura, Hajime](/results?sid=ebsco:ocu:record&bquery=AU+Nakamura, Hajime&link_origin=none&searchDescription=Nakamura, Hajime); [Yamamoto, Naoki](/results?sid=ebsco:ocu:record&bquery=AU+Yamamoto, Naoki&link_origin=none&searchDescription=Yamamoto, Naoki)
+
+Abstract
+:   ## A quantum chemistry study of the first singlet (S1) and triplet (T1) excited states of phenylsulfonyl-carbazole compounds, proposed as useful thermally activated delayed fluorescence (TADF) emitters for organic light emitting diode (OLED) applications, was performed with the quantum Equation-Of-Motion Variational Quantum Eigensolver (qEOM-VQE) and Variational Quantum Deflation (VQD) algorithms on quantum simulators and devices. These quantum simulations were performed with double zeta quality basis sets on an active space comprising the highest occupied and lowest unoccupied molecular orbitals (HOMO, LUMO) of the TADF molecules. The differences in energy separations between S1 and T1 (ΔEST) predicted by calculations on quantum simulators were found to be in excellent agreement with experimental data. Differences of 17 and 88 mHa with respect to exact energies were found for excited states by using the qEOM-VQE and VQD algorithms, respectively, to perform simulations on quantum devices without error mitigation. By utilizing state tomography to purify the quantum states and correct energy values, the large errors found for unmitigated results could be improved to differences of, at most, 4 mHa with respect to exact values. Consequently, excellent agreement could be found between values of ΔEST predicted by quantum simulations and those found in experiments.
+
+Publication
+:   ## [NPJ Computational Materials, 2021, Vol 7, Issue 1, p1](/results?sid=ebsco:ocu:record&bquery=IS+2057-3960+AND+VI+7+AND+IP+1+AND+DT+2021&link_origin=none&searchDescription=NPJ%20Computational%20Materials%2C%202021%2C%20Vol%207%2C%20Issue%201)
+
+ISSN
+:   ## 2057-3960
+
+Publication type
+:   ## Academic Journal
+
+DOI
+:   ## 10.1038/s41524-021-00540-6
+
+Applications of quantum computing for investigations of electronic transitions in phenylsulfonyl-carbazole TADF emitters. | EBSCOhost

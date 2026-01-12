@@ -1,0 +1,24 @@
+## PDF/보고서(1차 소스: Microsoft Research / Microsoft AI Economy Institute)
+
+- **Global AI Adoption in 2025 — A Widening Digital Divide (January, 2026)**  
+  - 전 세계 생성형 AI 도입(확산)이 2025년 하반기(H2)에 **상반기 대비 1.2%p 증가**했고, “전 세계적으로 대략 6명 중 1명(one in six)”이 생성형 AI 도구를 사용 중이라고 요약함. 또한 **Global North의 채택 증가 속도가 Global South보다 거의 2배**라서 격차가 커졌다고 밝힘. Global North **24.7%**, Global South **14.1%**. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - ‘AI diffusion(확산)’의 정의를 **“보고 기간 동안 생성형 AI 제품을 사용한 사람의 비율”**로 두고, 이 측정치는 **집계·익명화된 Microsoft telemetry**에서 도출한 뒤 **OS/디바이스 시장점유율, 인터넷 보급, 국가 인구** 차이를 반영하도록 보정했다고 명시. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - 상위권 국가(도입 선도)로 **United Arab Emirates(UAE), Singapore, Norway, Ireland, France, Spain** 등을 들며, UAE는 2025년 말 기준 **64.0%**로 1위이고 Singapore는 **60.9%**로 2위라고 설명. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - **United States(미국)**은 AI 인프라와 프런티어 모델 개발에서 선도하지만, 근로연령 인구 대비 사용률은 **28.3%**로 **23위→24위 하락**했다고 서술(“혁신·인프라 리더십만으로 광범위 채택이 자동으로 따라오진 않는다”). [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - **South Korea(대한민국)**는 2025년 하반기 “연말의 가장 분명한 성공 사례”로 제시되며, **25위→18위(7계단 상승)**. 원인으로 **정부 정책, 한국어에서의 프런티어 모델 성능 개선, 대중에게 ‘먹힌’ 소비자 기능**을 듦. 또 생성형 AI가 **학교·직장·공공서비스**에서 사용되고, 한국이 **ChatGPT의 가장 빠르게 성장하는 시장 중 하나**여서 OpenAI가 서울 오피스를 열었다고 언급. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - 2025년 글로벌 판도를 바꾼 병렬 사건으로 **DeepSeek**의 급부상을 제시: **MIT license 오픈소스 공개**, **완전 무료 챗봇 제공**으로 비용·기술 장벽을 낮춰 접근성을 높였다고 설명. 강한 채택 지역으로 **China, Russia, Iran, Cuba, Belarus**, 그리고 **Africa**에서의 급성장을 언급하며(예: **Huawei**와 같은 기업과의 홍보/파트너십 도움), 이를 **미·중 AI 경쟁이 ‘모델 개발’뿐 아니라 ‘자국 모델 확산’ 경쟁으로 확장**되는 신호로 해석. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - 2025년 하반기 수치 요약: 전 세계 생성형 AI 도입이 **15.1% → 16.3%**, 지역 격차가 **9.8%p → 10.6%p**로 확대되었다고 명시. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+  - 상위 30개국의 H1/H2 순위·비율 표를 제시하며, 예를 들어 **South Korea: 25.9%→30.7%(+4.8%p)**, **UAE: 59.4%→64.0%** 등 변화를 보여줌. [https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf] [archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt]  
+
+## Microsoft 웹페이지(공식 게시/다운로드 허브)
+
+- **Microsoft Corporate Responsibility / AI DIFFUSION REPORT 페이지**  
+  - 페이지 제목이 “**Global AI Adoption in 2025—A Widening Digital Divide**”로 게시되어 있고, “**AI Diffusion Report 2025**” 및 다운로드 링크(aka.ms 단축 URL)를 제공. [https://www.microsoft.com/en-us/corporate-responsibility/topics/ai-economy-institute/reports] [supporting/20260113_062656/web_extract/003_microsoft.com_en-us_corporate-responsibility_topics_ai-economy-institute_reports-a274d278.txt]  
+  - Executive summary에서 PDF와 동일하게: H2 2025에 **+1.2%p**, Global North **24.7%** vs Global South **14.1%**, 지표 정의(telemetry 기반 + 보정), South Korea의 7계단 상승, DeepSeek의 오픈소스/무료 전략 등을 반복·확인 가능. [https://www.microsoft.com/en-us/corporate-responsibility/topics/ai-economy-institute/reports] [supporting/20260113_062656/web_extract/003_microsoft.com_en-us_corporate-responsibility_topics_ai-economy-institute_reports-a274d278.txt]  
+
+## 언론/3자 요약(보조 근거·맥락)
+
+- **CIO.inc (ISMG) – “A Reality Check on Global AI Adoption” (Jan 10, 2026)**  
+  - Microsoft AI Economy Institute의 “AI Diffusion Report 2025 (H2)”를 인용해, 전 세계 도입이 **16.3%(이전 15.1%)**로 증가했지만 개발/개도국 간 격차가 커졌다고 설명. [https://www.cio.inc/a-reality-check-on-global-ai-adoption-a-30489] [supporting/20260113_062656/web_extract/002_cio.inc_reality-check-on-global-ai-adoption-a-30489-0f7d4022.txt]  
+  - 보고서가 **연구·컴퓨트·투자 대신 ‘사용(usage)’**에 초점을 둬 “확산(diffusion)이 누가 이익을 얻는지 결정”한다는 프레이밍을 강조한다고 요약. [https://www.cio.inc/a-reality-check-on-global-ai-adoption-a-30489] [supporting/20260113_062656/web_extract/002_cio.inc_reality-check-on-global-ai-adoption-a-30489-0f7d4022.txt]  
+  - 확산 지표의 한계도 언급: “한 번의 챗봇 사용”과 “업무 핵심 시스템 내 통합”을 동일하게 카운트하므로, 생산성/임금/공공성과 같은 결과 지표와 직접 연결되지는 않는다고 지적. [https://www.cio.inc/a-reality-check-on-global-ai-adoption-a-30489] [supporting/20260113_062656/web_extract/002_cio.inc_reality-check-on-global-ai-adoption-a-30489-0f7d4022.txt]

@@ -1,0 +1,61 @@
+{
+  "date": "2026-01-04",
+  "src_file": "examples\\instructions\\20260104.txt",
+  "root_dir": "runs\\20260104_basic-oa",
+  "out_dir": "runs\\20260104_basic-oa\\archive",
+  "query_id": "20260104_basic-oa",
+  "set_id": "basic-oa",
+  "lang_pref": null,
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 8,
+  "download_pdf": true,
+  "citations_enabled": true,
+  "queries": [
+    "oled",
+    "quantum computing",
+    "recent 30 days"
+  ],
+  "query_specs": [
+    {
+      "text": "oled",
+      "hints": [
+        "arxiv"
+      ]
+    },
+    {
+      "text": "quantum computing",
+      "hints": [
+        "arxiv"
+      ]
+    },
+    {
+      "text": "recent 30 days",
+      "hints": [
+        "arxiv"
+      ]
+    }
+  ],
+  "local_paths": [],
+  "urls": [
+    "https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q",
+    "https://www.nature.com/articles/s41467-025-67312-4_reference.pdf"
+  ],
+  "arxiv_ids": [],
+  "site_hints": [
+    "arxiv"
+  ],
+  "raw_lines": [
+    "arxiv",
+    "oled",
+    "quantum computing",
+    "recent 30 days",
+    "https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q",
+    "https://www.nature.com/articles/s41467-025-67312-4_reference.pdf"
+  ]
+}

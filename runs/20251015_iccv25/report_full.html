@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HiDair Feather Report - 20251015_iccv25</title>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      font-family: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">HiDair Feather</div>
+      <div class="report-title">HiDair Feather Report - 20251015_iccv25</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h2>Executive Summary</h2>
+<p>본 런( Query ID: <code>20251015_iccv25</code>)은 <code>github</code>, <code>iccv 2025</code>, <code>iccv 2025 open access</code>, <code>iccv 2025 paper code</code> 등 키워드로 <strong>ICCV 2025 공식 정보·오픈액세스(OA)·코드(GitHub) 단서를 수집</strong>하는 목적에 가깝게 설계되었으나, 실제 산출물은 (1) Tavily 웹 검색을 통해 <strong>CVF/ICCV 공식 페이지 및 CVF Open Access 저장소, GitHub 큐레이션 리포지토리</strong>를 유의미하게 확보한 반면, (2) OpenAlex 기반 PDF 수집은 <strong>ICCV 2025 본 컨퍼런스 논문 OA와 직접 연결되지 않는 arXiv/저널/워크샵·챌린지 리포트</strong> 위주로 혼입되어 목적 적합성이 상대적으로 낮았습니다. 또한 OpenAlex PDF 다운로드 과정에서 MIT Press(direct.mit.edu) 및 MDPI 도메인에서 <code>403 Forbidden</code>이 다수 발생해 수집 커버리지가 제한되었습니다. [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>], [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>], [<a href="./archive/_log.txt">/archive/_log.txt</a>]</p>
+<p>핵심적으로, <strong>ICCV 2025 OA 접근의 가장 신뢰 가능한 허브는 CVF Open Access(본 컨퍼런스/워크샵)</strong>이며, <strong>코드 연계는 GitHub “papers-with-code”류 큐레이션 리포(예: <code>amusi/ICCV2025-Papers-with-Code</code>)가 출발점</strong>으로 확인됩니다. [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<h3>범위</h3>
+<ul>
+<li>대상: ICCV 2025 관련 <strong>공식 사이트/프로그램/accepted papers</strong>, <strong>CVF Open Access 리포지토리</strong>, <strong>“paper + code” GitHub 단서</strong>.</li>
+<li>기간 설정: 실행 인덱스에 <code>range: last 180 days</code>로 기록. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</li>
+</ul>
+<h3>방법</h3>
+<ol>
+<li><strong>Instruction 기반 쿼리 실행</strong>: <code>github</code>, <code>iccv 2025</code>, <code>international conference on computer vision 2025</code>, <code>iccv 2025 open access</code>, <code>iccv 2025 paper code</code> 키워드 사용. [/instruction/20251015.txt]</li>
+<li><strong>Tavily Search 수집</strong>: 웹 문서 결과를 JSONL로 저장(각 결과 summary 포함). [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>OpenAlex 검색 및 OA PDF 다운로드/텍스트 변환</strong>: <code>--openalex --oa-max-results 5 --download-pdf</code> 옵션으로 수행, PDF→TEXT 변환 진행. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>], [<a href="./archive/_log.txt">/archive/_log.txt</a>]</li>
+<li><strong>인덱스/로그 점검</strong>: 인덱스 요약(Queries/URLs 표기)와 실제 JSONL 내용 간 불일치 여부 및 다운로드 실패 사유 확인. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>], [<a href="./archive/_log.txt">/archive/_log.txt</a>]</li>
+</ol>
+<hr />
+<h2>Key Findings</h2>
+<h3>1) ICCV 2025 공식/준공식 정보 허브는 명확히 확보됨 (Tavily)</h3>
+<ul>
+<li><strong>ICCV 2025 메인 사이트 (The Computer Vision Foundation)</strong>: 행사 포털로 기능(공지/일정/비디오 등).  </li>
+<li>URL: <a href="https://iccv.thecvf.com/">https://iccv.thecvf.com/</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>ICCV 2025 Accepted Papers (공식 리스트 페이지)</strong>: accepted paper 목록 및 세션/포스터 메타 포함.  </li>
+<li>URL: <a href="https://iccv.thecvf.com/Conferences/2025/AcceptedPapers">https://iccv.thecvf.com/Conferences/2025/AcceptedPapers</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>ICCV 2025 Papers (virtual site 내 papers 리스트)</strong>: 날짜/세션 기반 논문 항목 노출.  </li>
+<li>URL: <a href="https://iccv.thecvf.com/virtual/2025/papers.html">https://iccv.thecvf.com/virtual/2025/papers.html</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>Main conference program PDF(EventHosts)</strong>: 메인 프로그램 PDF 문서로 확인.  </li>
+<li>URL: <a href="https://media.eventhosts.cc/Conferences/ICCV2025/iccv25_main_program.pdf">https://media.eventhosts.cc/Conferences/ICCV2025/iccv25_main_program.pdf</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+</ul>
+<p><strong>해석(근거 기반):</strong> 목적(공식 정보/논문 목록 정리)에 가장 직접적인 1차 소스는 위 CVF/ICCV 공식 페이지 및 프로그램 PDF이며, OA/코드 연계 작업의 기준점(정합성 검증용)으로 활용 가치가 큼.</p>
+<hr />
+<h3>2) 오픈액세스(OA) 경로는 CVF Open Access로 수렴</h3>
+<ul>
+<li><strong>ICCV 2025 Open Access Repository (All Papers)</strong>: ICCV 2025 본 컨퍼런스 논문 OA 페이지(논문별 pdf/supp/arXiv 링크 및 bibtex 제공으로 요약됨).  </li>
+<li>URL: <a href="https://openaccess.thecvf.com/ICCV2025?day=all">https://openaccess.thecvf.com/ICCV2025?day=all</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>ICCV 2025 Workshops - CVF Open Access</strong>: 워크샵 논문 OA 메뉴(워크샵 리스트) 제공.  </li>
+<li>URL: <a href="https://openaccess.thecvf.com/ICCV2025_workshops/menu">https://openaccess.thecvf.com/ICCV2025_workshops/menu</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li><strong>CVF Open Access 홈</strong>: CVF OA 전반의 게이트 페이지.  </li>
+<li>URL: <a href="https://openaccess.thecvf.com/">https://openaccess.thecvf.com/</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+</ul>
+<p>또한 워크샵 메뉴 페이지는 “워터마크를 제외하면 accepted 버전과 동일”하며 “최종 proceedings는 IEEE Xplore”라는 고지를 포함하는 것으로 요약되어, CVF OA의 문서 성격(배포 목적/저작권 고지)을 드러냅니다. [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<hr />
+<h3>3) “paper code / github” 단서: 큐레이션 리포와 개별 ‘official implementation’ 리포가 공존</h3>
+<p>Tavily 결과에는 다음 두 유형이 함께 등장합니다.</p>
+<p><strong>(A) ICCV 2025 논문-코드 매핑을 지향하는 큐레이션 리포</strong>
+- <code>amusi/ICCV2025-Papers-with-Code</code><br />
+  - URL: <a href="https://github.com/amusi/ICCV2025-Papers-with-Code">https://github.com/amusi/ICCV2025-Papers-with-Code</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>DmitryRyumin/ICCV-2023-25-Papers</code><br />
+  - URL: <a href="https://github.com/DmitryRyumin/ICCV-2023-25-Papers">https://github.com/DmitryRyumin/ICCV-2023-25-Papers</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<p><strong>(B) 개별 논문의 “Official implementation” 주장 리포(예시)</strong>
+- <code>flymin/MagicDrive-V2</code> — “[ICCV 2025] Official implementation …”<br />
+  - URL: <a href="https://github.com/flymin/MagicDrive-V2">https://github.com/flymin/MagicDrive-V2</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>Adam-duan/DiT4SR</code><br />
+  - URL: <a href="https://github.com/Adam-duan/DiT4SR">https://github.com/Adam-duan/DiT4SR</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>MILVLG/twigvlm</code><br />
+  - URL: <a href="https://github.com/MILVLG/twigvlm">https://github.com/MILVLG/twigvlm</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>mapolinario94/CODE-CL</code><br />
+  - URL: <a href="https://github.com/mapolinario94/CODE-CL">https://github.com/mapolinario94/CODE-CL</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>NK-CS-ZZL/DiscretizedSDF</code><br />
+  - URL: <a href="https://github.com/NK-CS-ZZL/DiscretizedSDF">https://github.com/NK-CS-ZZL/DiscretizedSDF</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]
+- <code>ekazakos/grove</code><br />
+  - URL: <a href="https://github.com/ekazakos/grove">https://github.com/ekazakos/grove</a> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<p><strong>해석(근거 기반):</strong> “코드 허브 구축” 관점에서 큐레이션 리포는 초기 인덱스 역할(많은 논문 링크/코드 링크 집약)을 하고, 개별 리포는 ‘공식 구현’ 여부/재현성 문서화 수준 등 품질 편차가 클 수 있어 별도의 검증 프로세스가 필요합니다(아래 Risks &amp; Gaps 참조). [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<hr />
+<h3>4) OpenAlex 기반 PDF 수집은 목적 적합성이 낮고, 다운로드 실패(403)로 결손 발생</h3>
+<h4>(1) 수집 문서의 성격 혼입</h4>
+<p>OpenAlex <code>works.jsonl</code>에는 <code>iccv 2025</code>, <code>iccv 2025 open access</code>, <code>iccv 2025 paper code</code> 질의에 대해 arXiv/저널(예: Scientific Reports, IEEE GRSM) 및 기타 문서가 포함됩니다. 예:<br />
+- arXiv: “R-LiViT: A LiDAR-Visual-Thermal Dataset” (pdf: <a href="https://arxiv.org/pdf/2503.17122">https://arxiv.org/pdf/2503.17122</a>) [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>]<br />
+- Scientific Reports PDF: “Trajectory prediction via proposal guided transformer …” (pdf: <a href="https://www.nature.com/articles/s41598-025-97244-4.pdf">https://www.nature.com/articles/s41598-025-97244-4.pdf</a>) [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>]<br />
+- IEEE GRSM 관련: “Vision-Language Modeling Meets Remote Sensing…”는 arXiv PDF 링크가 잡힘 (<a href="https://arxiv.org/pdf/2505.14361">https://arxiv.org/pdf/2505.14361</a>) [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>]</p>
+<p>인덱스에서도 OpenAlex PDF 11건이 별도 목록으로 정리되어 있으며, “ICCV 2025 본 컨퍼런스 proceedings/오픈액세스”라기보다는 arXiv/저널/워크샵·챌린지 리포트 중심임이 드러납니다. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</p>
+<h4>(2) 다운로드 실패(403 Forbidden)</h4>
+<p>실행 로그에서 다음 도메인에서 <code>403 Forbidden</code>이 확인됩니다.
+- MIT Press(direct.mit.edu) PDF 1건: <a href="https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf">https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf</a> [<a href="./archive/_log.txt">/archive/_log.txt</a>]
+- MDPI PDF 다수: 예) <a href="https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382">https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382</a> 등 [<a href="./archive/_log.txt">/archive/_log.txt</a>]</p>
+<p><strong>사실:</strong> 로그에 동일 URL에 대한 실패가 반복 기록되어 있으며, 성공적으로 다운로드/텍스트 변환된 대상은 주로 arXiv 및 일부 도메인임. [<a href="./archive/_log.txt">/archive/_log.txt</a>]</p>
+<hr />
+<h3>5) 산출물 메타데이터(인덱스) 불일치 이슈 존재</h3>
+<p>인덱스에는 “Queries: 4 | URLs: 0”로 표기되지만, <code>tavily_search.jsonl</code>에는 다수 URL 결과가 명시적으로 포함됩니다. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>], [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<p><strong>해석(근거 기반):</strong> 런 리포팅(인덱스 생성) 단계에서 URL 카운팅/집계 로직이 Tavily JSONL 구조를 제대로 반영하지 못했을 가능성이 있으며, 재현/감사 관점에서 지표의 신뢰도를 떨어뜨립니다.</p>
+<hr />
+<h2>Trends &amp; Implications</h2>
+<h3>1) ICCV 2025의 “공식 공개 경로”는 CVF Open Access + ICCV 포털의 이원 체계</h3>
+<ul>
+<li>ICCV 포털(accepted papers/virtual papers)은 프로그램·메타 정보 제공에 강점. (<a href="https://iccv.thecvf.com/">https://iccv.thecvf.com/</a>) [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li>CVF Open Access는 논문별 PDF/Supp/Bibtex 등 <strong>실물 파일 접근</strong>에 강점. (<a href="https://openaccess.thecvf.com/ICCV2025?day=all">https://openaccess.thecvf.com/ICCV2025?day=all</a>) [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+</ul>
+<p><strong>함의:</strong> “논문-코드 매핑” 또는 “OA 크롤링” 파이프라인은 (A) ICCV 포털에서 논문 메타(세션/저자/제목) 확보 → (B) CVF OA에서 PDF/supp 및 영구 링크 확보 → (C) GitHub/프로젝트 페이지/아카이브 링크로 코드 연결의 순서가 구조적으로 타당합니다.</p>
+<h3>2) “Papers with Code”류 GitHub 큐레이션의 중요성 증가</h3>
+<p>검색 상위에 큐레이션 리포(<code>amusi/ICCV2025-Papers-with-Code</code>)가 등장하고, 개별 리포들도 스스로 “[ICCV 2025] official”을 표방합니다. [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</p>
+<p><strong>함의:</strong> 공식 채널(CVF/ICCV)이 코드 링크를 표준화해 제공하지 않는 경우(또는 제공 범위가 제한적인 경우), 커뮤니티 큐레이션이 실무적 디스커버리 레이어가 됩니다. 다만 신뢰성 검증이 필수(아래 Risks &amp; Gaps).</p>
+<h3>3) OpenAlex 기반 ‘키워드 매칭’ 수집은 컨퍼런스 프로시딩 식별에 취약</h3>
+<p>OpenAlex 결과는 “ICCV 2025”와 직접 관련이 없는 저널/서베이/워크샵 보고서까지 혼입됩니다. [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>]</p>
+<p><strong>함의:</strong> ICCV 2025 본 컨퍼런스 OA/프로시딩을 목표로 할 때, OpenAlex 단독은 노이즈가 커서 <strong>CVF OA를 기준 데이터로 삼고 OpenAlex는 보조(확장)로 제한</strong>하는 편이 합리적입니다.</p>
+<hr />
+<h2>Risks &amp; Gaps</h2>
+<h3>A. 수집/다운로드 리스크</h3>
+<ol>
+<li><strong>403 Forbidden로 인한 결손</strong>: direct.mit.edu 및 MDPI에서 PDF 다운로드 실패가 반복됨. [<a href="./archive/_log.txt">/archive/_log.txt</a>]  </li>
+<li>사실: 해당 URL들은 OpenAlex works에 OA로 표기되어도, 자동화 다운로드는 차단될 수 있음.</li>
+<li><strong>인덱스 지표 불일치</strong>: “URLs: 0” 표기는 Tavily 결과의 존재와 모순. [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>], [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]  </li>
+<li>영향: 후속 자동 리포트/대시보드 품질 저하 및 감사 추적성 약화.</li>
+</ol>
+<h3>B. 목적 적합성(정합성) 갭</h3>
+<ol>
+<li><strong>OpenAlex 수집 문서의 주제 혼입</strong>: “ICCV 2025 OA/프로시딩” 목적에 비해 arXiv/저널 일반 문서 비중이 큼. [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>], [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</li>
+<li><strong>코드 ‘공식성’ 검증 부재</strong>: GitHub 리포의 “official implementation” 표기는 사실 주장일 뿐이며, 본 런 산출물만으로는 (예: 논문 OA 페이지/저자/프로젝트 페이지와의 상호 링크) 검증이 이루어지지 않음. [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+</ol>
+<hr />
+<h2>Appendix: Key Files (Run Artifacts)</h2>
+<ul>
+<li>Instruction (query keywords): <code>/instruction/20251015.txt</code> [/instruction/20251015.txt]</li>
+<li>Run index/summary: <code>/archive/20251015_iccv25-index.md</code> [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</li>
+<li>Execution log (download errors 포함): <code>/archive/_log.txt</code> [<a href="./archive/_log.txt">/archive/_log.txt</a>]</li>
+<li>Tavily web search results (JSONL): <code>/archive/tavily_search.jsonl</code> [<a href="./archive/tavily_search.jsonl">/archive/tavily_search.jsonl</a>]</li>
+<li>OpenAlex works metadata (JSONL): <code>/archive/openalex/works.jsonl</code> [<a href="./archive/openalex/works.jsonl">/archive/openalex/works.jsonl</a>]</li>
+<li>OpenAlex downloaded PDFs (11): <code>/archive/openalex/pdf/W*.pdf</code> (인덱스에 개별 파일/원본 URL 매핑) [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</li>
+<li>Extracted texts (11): <code>/archive/openalex/text/W*.txt</code> [<a href="./archive/20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>]</li>
+</ul>
+<hr />
+<h2>References (Original URLs)</h2>
+<h3>ICCV/CVF official &amp; OA</h3>
+<ul>
+<li>ICCV 2025 (The Computer Vision Foundation): <a href="https://iccv.thecvf.com/">https://iccv.thecvf.com/</a>  </li>
+<li>ICCV 2025 Accepted Papers: <a href="https://iccv.thecvf.com/Conferences/2025/AcceptedPapers">https://iccv.thecvf.com/Conferences/2025/AcceptedPapers</a>  </li>
+<li>ICCV 2025 Papers (virtual): <a href="https://iccv.thecvf.com/virtual/2025/papers.html">https://iccv.thecvf.com/virtual/2025/papers.html</a>  </li>
+<li>ICCV 2025 main program PDF (EventHosts): <a href="https://media.eventhosts.cc/Conferences/ICCV2025/iccv25_main_program.pdf">https://media.eventhosts.cc/Conferences/ICCV2025/iccv25_main_program.pdf</a>  </li>
+<li>CVF Open Access (home): <a href="https://openaccess.thecvf.com/">https://openaccess.thecvf.com/</a>  </li>
+<li>ICCV 2025 Open Access Repository (all papers): <a href="https://openaccess.thecvf.com/ICCV2025?day=all">https://openaccess.thecvf.com/ICCV2025?day=all</a>  </li>
+<li>ICCV 2025 Workshops - CVF Open Access: <a href="https://openaccess.thecvf.com/ICCV2025_workshops/menu">https://openaccess.thecvf.com/ICCV2025_workshops/menu</a>  </li>
+</ul>
+<h3>GitHub (papers with code / example repos)</h3>
+<ul>
+<li>amusi/ICCV2025-Papers-with-Code: <a href="https://github.com/amusi/ICCV2025-Papers-with-Code">https://github.com/amusi/ICCV2025-Papers-with-Code</a>  </li>
+<li>DmitryRyumin/ICCV-2023-25-Papers: <a href="https://github.com/DmitryRyumin/ICCV-2023-25-Papers">https://github.com/DmitryRyumin/ICCV-2023-25-Papers</a>  </li>
+<li>flymin/MagicDrive-V2: <a href="https://github.com/flymin/MagicDrive-V2">https://github.com/flymin/MagicDrive-V2</a>  </li>
+<li>Adam-duan/DiT4SR: <a href="https://github.com/Adam-duan/DiT4SR">https://github.com/Adam-duan/DiT4SR</a>  </li>
+<li>MILVLG/twigvlm: <a href="https://github.com/MILVLG/twigvlm">https://github.com/MILVLG/twigvlm</a>  </li>
+<li>mapolinario94/CODE-CL: <a href="https://github.com/mapolinario94/CODE-CL">https://github.com/mapolinario94/CODE-CL</a>  </li>
+<li>NK-CS-ZZL/DiscretizedSDF: <a href="https://github.com/NK-CS-ZZL/DiscretizedSDF">https://github.com/NK-CS-ZZL/DiscretizedSDF</a>  </li>
+<li>ekazakos/grove: <a href="https://github.com/ekazakos/grove">https://github.com/ekazakos/grove</a>  </li>
+</ul>
+<h3>기타(검색 결과에 포함된 관련 페이지)</h3>
+<ul>
+<li>OpenReview group (ICCV 2025 Conference): <a href="https://openreview.net/group?id=thecvf.com/ICCV/2025/Conference">https://openreview.net/group?id=thecvf.com/ICCV/2025/Conference</a>  </li>
+<li>WikiCFP ICCV 2025: <a href="http://www.wikicfp.com/cfp/servlet/event.showcfp?copyownerid=90704">http://www.wikicfp.com/cfp/servlet/event.showcfp?copyownerid=90704</a>&amp;eventid=181069  </li>
+</ul>
+<h3>OpenAlex 다운로드에 사용된 원문 PDF 예시(런 인덱스/메타에 포함)</h3>
+<ul>
+<li>Nature Scientific Reports PDF: <a href="https://www.nature.com/articles/s41598-025-97244-4.pdf">https://www.nature.com/articles/s41598-025-97244-4.pdf</a>  </li>
+<li>IJFMR PDF: <a href="https://www.ijfmr.com/papers/2025/3/44280.pdf">https://www.ijfmr.com/papers/2025/3/44280.pdf</a>  </li>
+<li>arXiv PDF (예): <a href="https://arxiv.org/pdf/2505.14361">https://arxiv.org/pdf/2505.14361</a> , <a href="https://arxiv.org/pdf/2503.17122">https://arxiv.org/pdf/2503.17122</a> , <a href="https://arxiv.org/pdf/2509.06413">https://arxiv.org/pdf/2509.06413</a>  </li>
+</ul>
+<p>(로그상 403 실패 사례)
+- MIT Press direct.mit.edu PDF: <a href="https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf">https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf</a><br />
+- MDPI PDF 예: <a href="https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382">https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382</a>  </p>
+<hr />
+<h2>References</h2>
+<ul>
+<li><a href="https://machinelearning.apple.com/updates/apple-at-iccv-2025">International Conference on Computer Vision (ICCV) 2025</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="http://www.wikicfp.com/cfp/servlet/event.showcfp?copyownerid=90704&amp;eventid=181069">ICCV 2025 : International Conference on Computer Vision - WikiCFP</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.amazon.science/conferences-and-events/iccv-2025">ICCV 2025 - Amazon Science</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://media.eventhosts.cc/Conferences/ICCV2025/iccv25_main_program.pdf">[PDF] PROGRAM - MAIN CONFERENCE - EventHosts</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.mmlab-ntu.com/conference/iccv2025/index.html">ICCV 2025 Accepted Papers - MMLab@NTU</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://openaccess.thecvf.com/ICCV2025_workshops/menu">ICCV 2025 Workshops - CVF Open Access</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://iccv.thecvf.com/Conferences/2025/AcceptedPapers">ICCV 2025 Accepted Papers</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://iccv.thecvf.com/virtual/2025/papers.html">ICCV 2025 Papers</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://iccv.thecvf.com/">2025 Conference - The Computer Vision Foundation</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://wildlabs.net/event/international-conference-computer-vision-iccv-2025">International Conference on Computer Vision, ICCV 2025 | WILDLABS</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://openreview.net/group?id=thecvf.com/ICCV/2025/Conference">ICCV 2025 Conference</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://r6.ieee.org/hawaii/event/2025-ieee-cvf-international-conference-on-computer-vision-iccv/">2025 IEEE/CVF International Conference on Computer Vision (ICCV)</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://infoscience.epfl.ch/entities/event/cdcc37e6-56e0-4261-9ecd-0cc7956d58b8">International Conference on Computer Vision 2025 - Infoscience</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://cs.uiowa.edu/news/2025/11/weekend-vision-and-waves-professor-yes-iccv-2025-experience-hawaii">A Weekend of Vision and Waves: Professor Ye's ICCV 2025 ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://openaccess.thecvf.com/ICCV2025?day=all">All Papers - ICCV 2025 Open Access Repository</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://medium.com/@yoshitomo-matsubara/open-sourced-iccv-2025-works-6ae99c8aa020">Open-sourced ICCV 2025 works</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://openaccess.thecvf.com/">CVF Open Access</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/DmitryRyumin/ICCV-2023-25-Papers">DmitryRyumin/ICCV-2023-25-Papers</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/Adam-duan/DiT4SR">DiT4SR: Taming Diffusion Transformer for Real-World Image Super ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/mapolinario94/CODE-CL">[ICCV] CODE-CL: Conceptor-Based Gradient Projection for ... - GitHub</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/MILVLG/twigvlm">GitHub - MILVLG/twigvlm: Implementation of ICCV 2025 paper ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/NK-CS-ZZL/DiscretizedSDF">NK-CS-ZZL/DiscretizedSDF: Official Release of ICCV 2025 paper</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/ekazakos/grove">GitHub - ekazakos/grove: Code implementation for the paper ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/flymin/MagicDrive-V2">GitHub - flymin/MagicDrive-V2: [ICCV 2025] Official ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/amusi/ICCV2025-Papers-with-Code">ICCV 2025 论文和开源项目合集 (Papers with Code) - GitHub</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2503.17122">R-LiViT: A LiDAR-Visual-Thermal Dataset</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2509.02969">VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods and Results</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2509.10463">The 1st International Workshop on Disentangled Representation Learning for Controllable Generation (DRL4Real): Methods and Results</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2509.06413">VQualA 2025 Challenge on Image Super-Resolution Generated Content Quality Assessment: Methods and Results</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2509.17500">SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.36948/ijfmr.2025.v07i03.44280">OpenCV for Computer Vision Applications</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.1162/coli.a.16">🧜Siren’s Song in the AI Ocean: A Survey on Hallucination in Large Language Models</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.70711/aitr.v2i9.6879">Research on Multi-Modal Retrieval System of E-Commerce Platform Based on Pre-Training Model</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2508.21080">2COOOL: 2nd Workshop on the Challenge Of Out-Of-Label Hazards in Autonomous Driving</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.46254/sa6.2025">Proceedings of the International Conference on Industrial Engineering and Operations Management</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.3390/s25092794">A Survey of the Multi-Sensor Fusion Object Detection Task in Autonomous Driving</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.3390/drones9050369">WRRT-DETR: Weather-Robust RT-DETR for Drone-View Object Detection in Adverse Weather</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2505.14361">Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i></a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.3390/info16070591">Multimodal Artificial Intelligence in Medical Diagnostics</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.3390/s25123668">A Survey of Deep Learning-Driven 3D Object Detection: Sensor Modalities, Technical Architectures, and Applications</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.3390/fire8050183">YOLOv8n-SMMP: A Lightweight YOLO Forest Fire Detection Model</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+<li><a href="https://doi.org/10.1038/s41598-025-97244-4">Trajectory prediction via proposal guided transformer with out way attention</a> [source: openalex; archive: <a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a>]</li>
+</ul>
+    </main>
+  </div>
+</body>
+</html>

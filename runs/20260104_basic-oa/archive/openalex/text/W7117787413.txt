@@ -1,0 +1,378 @@
+
+
+===== PAGE 1 =====
+388 
+Recent Progress in Stretchable OLED Design and Applications 
+Xuesong Hu1, * and Zixin Yang2 
+1Shanghai Weiyu international school, Shanghai, 200231, China 
+2Ulink College Guangzhou, Guangzhou, 511458, China 
+*Corresponding author: w19947931721@163.com 
+Abstract. With the recently rapid development of flexible electronics, stretchable OLEDs has 
+become a significant direction to study because of its strong potential, like its ultra-thin structure, 
+self-emissive nature, bendability, and stretchability. This new technology not only overcomes the 
+limitations of traditional rigid screens, but also provides new opportunities in developing other fields, 
+for example healthcare and human-computer interaction. From this perspective, the existing 
+technology of OLED and its applications in different fields deserve attention. Firstly, it introduces the 
+laser programming Buckling Process, three different island-bridge structures, Fold Bridge and 
+Curved Bridge, Serpentine Bridge and Fractal Bridge, and talks about the Intrinsically stretchable 
+materials. It then gives a few examples of applications in different fields, including Heart rate and 
+blood oxygen monitoring, Variable-size screens and wearable devices and Phototherapy. This article 
+not only makes a conclusion of current technological achievements and challenges of stretchable 
+OLEDs but also makes a foundation for the future development of this field. 
+Keywords: Stretchable OLED; recent advance; wearable devices; phototherapy. 
+1. Introduction 
+Nowadays, the two major types of displays used in daily life are LCD (Liquid Crystal Display) 
+displays and OLED (Organic Light-Emitting Diode) displays. The LCD displays use Backlight Units 
+as the light source, and their colors are controlled by the deflection of liquid crystals and RGB pixels. 
+This makes their contrast weaker than that of OLED displays, and they cannot be stretched. In contrast, 
+OLED displays are composed of small, individual light-emitting diodes made from organic 
+compounds—these compounds emit light in response to an electric current. This enables OLED 
+displays to show pure black simply by not applying an electric current to the diodes. Additionally, it 
+eliminates the need for a backlight unit, simplifying its structure and resulting in a thinner profile that 
+saves space and reduces power consumption. Without a backlight unit, OLED displays also produce 
+softer light and enable stretchability [1]. Thus, this stretchable potential makes them highly demanded 
+in wearable devices and the healthcare field. 
+Wearable devices leverage stretchable OLED displays by shaping them into various forms, which 
+enhances wearing comfort and increases the display area. What’s more, extensibility also allows these 
+displays to be used in more scenarios—they no longer need a fixed shape and can even be designed 
+as spheres or cylinders. Another advantage of OLED displays lies in their healthcare applications: 
+their flexibility allows them to adhere more closely to the skin, enabling more accurate data collection 
+and a more comfortable wearing experience [2]. This is particularly useful for pulse rate monitoring, 
+pulse oximetry, and biosignal visualization. Additionally, stretchable OLEDs can also be applied in 
+medical phototherapy. 
+At the current research stage, there are mainly three solutions to achieve stretchability in OLED 
+displays: (1) Laser-Programmed Buckling Process: A technique that uses laser patterning to allow 
+OLEDs to bend locally, instead of stretching or compressing globally; (2) 3D Height-Alternating 
+Island Structure: A special design where display components (arranged as "islands") are placed at 
+alternating heights and connected by stretchable materials; (3) Intrinsically Stretchable Materials: A 
+method where all components of the OLED display are made from stretchable materials. 
+This review summarizes the latest developments in stretchable OLEDs. The three main solutions 
+for stretchable OLED are highlighted, describing how each solution achieves stretchability, its 
+
+
+===== PAGE 2 =====
+389 
+advantages, as well as the main limitations and challenges currently faced [3]. In addition, the 
+application of stretchable OLEDs will be studied, and the requirements of these applications will be 
+compared with the capabilities of current technology. By delving into these aspects, detailed 
+comparisons can be made between different technologies, and future prospects can be outlined by 
+emphasizing the main challenges currently faced by researchers [4]. 
+2. Overview of Stretchable OLED Background and Existing Technologies 
+2.1. Laser Programming Buckling Process 
+This solution was proposed by a research group from Jilin University in China [5]. In their study, 
+they presented a technique for fabricating highly stretchable OLEDs that exhibit both high efficiency 
+and mechanical durability. This OLED is manufactured via a laser-programmable buckling process, 
+which enables the OLED to form an ordered buckling profile—this profile supports controlled 
+stretch-and-release cycles. From their experimental data, they demonstrated that the device achieved 
+a maximum efficiency of 72.5, 68.5, and 70.0 cd A⁻¹ at a mechanical strain of 0%, 40%, and 70%, 
+respectively [5]. The OLEDs can withstand a tensile strain of up to 100% and exhibit only minor 
+fluctuations in performance over 15,000 stretch-release cycles. In addition, this method also features 
+ease of application and low cost, which makes it stand out among all existing solutions. The process 
+is shown in Fig. 1. 
+ 
+Fig. 1 The process of Laser Programming Buckling [5] 
+Researchers used femtosecond laser ablation to create a one-dimensional grating with a 570 μm 
+period in the elastomeric layer (3M VHB 4905). They then used an ultra-thin OLED/polymer (~10 
+μm thick) film in a “pre-stretch-attach-release” strategy to achieve ordered buckling—particularly on 
+top of the grooves of the one-dimensional grating—rather than random wrinkling. These stretchable 
+displays could be stretched up to 70% strain with a 120% pre-strain; by increasing the pre-strain to 
+200%, a maximum stretch of 100% could be achieved [6]. Even when attached to a bending finger 
+joint (experiencing ~55–60% strain), the devices’ buckles remained ordered, demonstrating great 
+application value in wearable electronics. This is because the ordered layout of both electrodes 
+ensured that the devices’ conductivity did not change significantly even under maximum strain. 
+
+
+===== PAGE 3 =====
+390 
+Benefiting from the ultra-smooth polymer substrates (surface roughness: 0.35 nm), researchers 
+deposited small-molecule materials via thermal evaporation—with the emissive layer using 
+Ir(ppy)₃—and developed highly flexible OLEDs with efficiency exceeding all previously reported 
+levels. Notably, after fabricating these OLEDs on elastomeric substrates, they could emit light even 
+when stretched from 0–100%. At a driving voltage of 4 V, the Current Efficiency (CE) remained high 
+across the entire stretch range: 72.5 cd/A at 0% strain, 68.5 cd/A at 40% strain, and 70 cd/A at 70% 
+strain. This performance exceeded that of the reference planar device (fabricated on silicon wafers), 
+which had a CE of ~71 cd/A (the same as the stretchable device at the corresponding strain). 
+Importantly, the stretchable OLEDs’ performance was much higher than any reported data to date. 
+Finally, in long-term tests, the devices showed excellent endurance: after over 15,000 stretch/release 
+cycles in a 0–20% strain range, only ~16% luminance loss was observed; even in a higher-strain range 
+(0–40%), only 25% luminance loss occurred after ~6,000 cycles. In fact, the current efficiency 
+increased slightly, likely due to lower current density resulting from the ordered layout. 
+This work showed that the maximum tensile strain of the devices could be precisely tuned by 
+laser-programming both the groove width and line width of the gratings [7]. For a fixed line width 
+(400 μm), the maximum strain increased with groove width. Controlling the grooves revealed that 
+increasing the groove width reduced the buckling frequency and the area required for failure; however, 
+the maximum strain of the structures decreased with increasing groove width and increased with 
+increasing line width. For a fixed groove width (170 μm), the maximum strain decreased as the line 
+width increased. Strain was mainly concentrated in the grooves, enabling “on-demand design” of the 
+buckling behavior and ultimate stretching capability of the devices. 
+To fabricate these OLEDs, a commercial femtosecond laser microfabrication system (wavelength: 
+800 nm, pulse width: 100 fs, repetition rate: 1 kHz) was used to create one-dimensional grating 
+structures on the surface of 3M VHB 4905 elastomeric substrates. A laser fluence of 6,000 W/cm2 
+was selected, and different scanning paths were used to create regular 4 × 4 cm2 groove arrays with 
+a 570 μm period. The key effect of the laser process was removing surface adhesion in the groove 
+regions without affecting the high surface adhesion in the grating line regions (90° peel strength: 21 
+N/cm) [8]. This enabled subsequent selective adhesion of the devices. 
+Next, a 10 μm flexible thin-film device was fabricated by spin-coating photosensitive NOA43 
+onto an ultra-smooth silicon wafer (surface roughness: 0.35 nm) followed by UV curing. The 
+functional layer stack—Ag anode (80 nm)/MoO₃ hole injection layer (3 nm)/NPB hole transport layer 
+(40 nm)/mCP:Ir(ppy)3 (6%, 20 nm) emissive layer/TPBi electron transport layer (35 nm)/Ca/Ag 
+cathode (3/18 nm)—was then deposited via thermal evaporation. The fully completed functional stack 
+could be freely delaminated from the rigid silicon substrate to form free-standing ultrathin light-
+emitting OLED films. 
+Second, the patterned elastomeric substrates were pre-stretched to 120–200% strain using a 
+precision stretching stage, causing the grating period to increase accordingly. The prepared ultrathin 
+OLED devices were then transferred onto the surface of the stretched elastomeric substrates. Using 
+the difference in adhesion between the substrates and devices, the devices bonded to the grating line 
+regions but remained suspended over the groove regions. When the initial pre-strain was released, the 
+elastomeric substrates experienced compressive strain, resulting in ordered buckling and forming a 
+three-dimensional wavy morphology of the light-emitting regions (suspended in the grooves). 
+Deformable eutectic gallium-indium (EGaIn) liquid metal connections were used to maintain stable 
+electrical transmission while the devices were stretched [9]. EGaIn is a eutectic mixture of gallium 
+and indium with good stretchability, low resistivity (29.4 × 10-6 Ω·cm), and low toxicity—making it 
+safe for use as a connecting electrode in stretchable and wearable electronics. 
+2.2. Island-Bridge Structure 
+In the island-bridge structure, for non-stretchable sensor components, the luminescent parts are 
+regarded as "islands". These islands serve functions such as sensing or computing. The "bridges" refer 
+to stretchable wire segments that connect the islands. These lines link all the luminescent parts and 
+
+
+===== PAGE 4 =====
+391 
+transmit signals. A key feature of the island-bridge structure is that it enables the lines to function like 
+elastic iron wires: when the lines are under stress, they can stretch and bend without being damaged 
+or broken. The "islands" remain unaffected and suffer almost no damage. Such islands can well 
+provide a stable foundation for integrating today’s OLEDs into flexible electronic devices. There are 
+different types of islands, and common bridge designs include folded bridges, bending bridges, fractal 
+bridges, and serpentine bridges. 
+2.2.1 Fold bridge and curved bridge 
+Folded bridges and curved bridges are similar to each other, with comparable mechanisms for 
+withstanding mechanical stress and exhibiting elasticity. The wires are attached to the bottom of each 
+non-stretchable component, which are the "islands". When pressure is applied to the devices, the 
+bridges undergo compression. This process is reversible, so waves form on the bridges while the 
+wires remain undamaged [10]. The difference between folded bridges and curved bridges is that 
+curved bridges are fully attached to the substrate, whereas folded bridges are only attached to the 
+"islands" at both ends, as shown in Fig. 2. These two types of interconnecting bridges have the 
+advantages of simple fabrication and the ability to withstand relatively high mechanical stress. 
+However, they also have shortcomings: they cannot be used in large-sized devices and cannot be 
+mass-produced. 
+ 
+Fig.2 (a) Schematic diagram of arc bridge (b) Schematic diagram of wrinkled bridge [11] 
+2.2.2 Serpentine bridge. 
+Serpentine bridges are more stretchable in comparison with the other two types of bridges, 
+making them the most common type of bridge. A serpentine bridge can either be fully attached to the 
+substrate or only attached to the "islands" at the two ends—this design allows it to change its shape 
+freely between the two ends. When the mechanical stress applied to the bridge is small, the bridge’s 
+arched structure gradually unfolds and straightens. When the mechanical stress applied to the bridge 
+increases, the arched structure begins to fold. Its deformation from 2D to 3D enables the bridge to 
+easily withstand greater mechanical stress. 
+2.2.3 Fractal bridge 
+To form this type of bridge (note: typically referring to "fractal bridges" based on context), wires 
+and non-stretchable components are combined to form a complex geometric pattern. It is similar to 
+serpentine bridges but offers more efficient space utilization, as it can unfold in multiple directions. 
+Mechanical stress is distributed more evenly across it, allowing it to withstand higher levels of 
+mechanical stress than serpentine bridges. However, it has shortcomings: its complex structure makes 
+it difficult to design and fabricate. 
+
+
+===== PAGE 5 =====
+392 
+3. Intrinsically Stretchable Materials 
+Existing methods—such as incorporating rigid nanostructures or engineering deformations in 
+elastomers—allow for stretching but often result in degraded device performance or resolution. 
+Research has focused on electroluminescent layers (EMLs), where stretchability is improved by 
+blending polymers, adding additives (e.g., Triton X-100), or modifying molecular structures. 
+However, relatively little attention has been paid to other functional layers and the overall device 
+fabrication process. 
+In intrinsically stretchable solution-processed organic light-emitting diodes (is-OLEDs), solvent 
+incompatibility is a major challenge, as it can disrupt the morphological structure of underlying layers. 
+Lamination techniques are often used to address this issue, but this approach leads to orientation 
+errors, spacing issues, and poor durability under repeated stretching. Electrodes represent another 
+bottleneck: metals like silver (Ag) and aluminum (Al) have excellent conductivity but lack 
+stretchability, while alternative materials (e.g., silver nanowires, graphene, or PEDOT:PSS) require 
+complex transfer steps and exhibit lower conductivity. Therefore, there is an urgent need to develop 
+intrinsically stretchable OLEDs with improved transport layers and electrodes, as well as simplified 
+preparation processes. The research team led by Professor Jionghui Wu at Nanjing University has 
+achieved a latest breakthrough in this field. In their study, an intrinsically stretchable OLED (is-
+OLED) was developed using a systematic fabrication process: (1) The light-emitting layer (LEL) was 
+prepared by mixing the commercial polymer Super Yellow (SY) with the surfactant Triton X-100 
+(TX); 
+(2) 
+The 
+hole 
+transport 
+layer 
+(HTL) 
+was 
+fabricated 
+by 
+mixing 
+poly(3,4-
+ethylenedioxythiophene):poly(styrenesulfonate) (PEDOT:PSS) with isopropanol and TX; (3) The 
+electron transport layer (ETL) consisted of polyfluoroalkylbenzene bromide (PFN-Br) and 
+poly(ethyleneimine ethoxylated) (PEIE); TX was added to preserve the morphology of the underlying 
+ETL. (4) Additionally, a top ETL of PEIE doped with cesium carbonate (denoted as d-PEIE) was 
+introduced to enhance electron injection efficiency [12]. 
+For device fabrication, elastomeric polydimethylsiloxane (PDMS) was used as the substrate. 
+After plasma treatment, each organic layer was coated sequentially. The mechanical properties of the 
+layers were evaluated via crack onset strain (COS) testing [13]. Three device configurations were 
+prepared for testing: (1) A rigid OLED with indium tin oxide (ITO) as the anode; (2) An electron-
+dominant device with silver as the anode and aluminum as the cathode; (3) A fully stretchable 
+OLED—with silver nanowires (NWs) integrated into PDMS as the anode and aluminum as the 
+cathode. 
+For the fully stretchable device, the PDMS substrate (with integrated Ag NWs as the anode) was 
+sequentially coated with the positive organic layer (HTL), emissive organic layer (EML), and top 
+organic layer (ETL). A silver cathode was then formed over the entire device via vacuum evaporation, 
+followed by the deposition of a thin d-PEIE layer on top of the cathode. 
+This unique hybrid fabrication method—combining solution coating of device layers with 
+controlled metal evaporation—enables layer-by-layer analysis of morphology, deformation behavior, 
+and optoelectronic properties, laying the foundation for manufacturing high-performance intrinsically 
+stretchable OLEDs. The process also provides a practical approach to obtaining conductive metal 
+materials without complex and costly procedures [14]. Here, low-resistance, low-cost, highly 
+conductive, and stable silver is achieved, retaining key metallic properties—including contributing to 
+the ultra-long lifetime of the stretchable OLEDs. Furthermore, due to its unique adaptability to 
+mechanical deformation, this OLED retains at least 75% of its initial brightness after 300 cycles under 
+high-d eformation conditions, making it a promising candidate for potential applications. The 
+schematics and images of the key device fabrication steps in this study are consistent with those 
+described above. 
+
+
+===== PAGE 6 =====
+393 
+4. Application 
+With the development and popularization of OLED, it began to involve into many different fields, 
+such as healthcare, biomedicine, and portable devices. 
+4.1. Heart Rate and Blood Oxygen Monitoring 
+Heart rate is detected by measuring changes in blood vessel volume. A heart rate monitor emits 
+light into the human skin; this light is then reflected or transmitted by the blood vessels and received 
+by a light receiver. When the heart beats, it contracts and relaxes, which is followed by a change in 
+the volume of blood vessels. This causes the reflected light detected by the receiver to start 
+changing—thus, heart rate can be determined by analyzing this light signal. OLEDs, as superior light 
+sources, can provide more stable and efficient light. Additionally, they are more flexible, making 
+them relatively ideal light sources for application in heart rate monitors. 
+Previous researchers have made numerous innovations and improvements in this field. For 
+example, one research team added a polarizer to OLEDs: when the light emitted by the OLEDs passes 
+through the polarizer, it becomes polarized light. The receiver then only detects this polarized light, 
+so no interfering light is received by the receiver. This improvement aims to reduce interference and 
+improve detection efficiency. 
+4.2. Variable-Size Screens and Wearable Devices 
+Organic Light-Emitting Diodes (OLEDs) hold great promise for the next generation of wearable 
+displays, whether integrated into fibres, fabrics, or attached to human skin. (1) Via techniques such 
+as direct thermal evaporation on rotating fibres and solution dip-coating, OLED fibres were woven 
+into textiles and integrated into garments for illumination. By optimizing the structure of the 
+"monorail" anode, good performance was achieved—for example, a current efficiency of up to 70.89 
+cd/A; (2) Using techniques like template stripping to create smooth surfaces on rough fabrics enables 
+the fabrication of highly flexible OLEDs with excellent light confinement (e.g., an external quantum 
+efficiency (EQE) of ~78%). These OLEDs can withstand repeated folding and feature water- and 
+moisture-resistant encapsulation; (3) Flexible, bendable display panels that conform to human skin 
+are ultra-thin (~3 μm thick) and have low stiffness, allowing them to fit comfortably on stretchable 
+skin. They can utilize either clickable or inherently deformable structures. These panels can withstand 
+deformations of up to 20% and are suitable for precision applications such as health monitoring and 
+biosensing, as they can move in sync with the body. 
+4.3. Phototherapy 
+Organic Light Emitting Diode (OLED) phototherapy technology offers innovative applications 
+in the medical field, mainly in photodynamic therapy (PDT) and photobiomodulation therapy (PBM) 
+[15]. In photodynamic therapy, OLED light sources can be used to activate photosensitisers that 
+produce cytotoxic substances specifically targeting cancer cells or microbes. For example, flexible 
+red organic light-emitting diode patches have been used to treat skin cancer with comparable efficacy 
+to conventional methods, but with less pain and ease of use. A new generation of parallel array organic 
+light-emitting diodes (PAOLEDs) with a power density of even more than 100 mW/cm2 can 
+effectively suppress melanoma. Even implantable wireless active light-emitting diodes have been 
+developed for metabolic photodynamic therapy of deep organs through continuous low-intensity light. 
+Organic Light-Emitting Diodes (OLEDs) offer innovative applications in phototherapy within 
+the medical field, primarily in photodynamic therapy (PDT) and photobiomodulation therapy (PBM). 
+In photodynamic therapy, OLED light sources can activate photosensitizers, which produce 
+cytotoxic substances that specifically target cancer cells or microbes. For example, flexible red OLED 
+patches have been used to treat skin cancer, with efficacy comparable to conventional methods but 
+with less pain and greater ease of use. A new generation of parallel array OLEDs (PAOLEDs) with a 
+power density exceeding 100 mW/cm2 can effectively inhibit melanoma growth. Researchers have 
+
+
+===== PAGE 7 =====
+394 
+even developed implantable wireless OLEDs for metabolic photodynamic therapy of deep organs, 
+using continuous low-intensity light. 
+In PBM, OLEDs show potential for promoting tissue repair and enhancing cellular activity. Red 
+OLEDs accelerate wound healing and fibroblast proliferation, with effects comparable to laser light. 
+Ultra-thin conformable OLEDs (~10 μm thick) are ideally suited for at-home skin treatment; studies 
+have shown that light at a wavelength of 670 nm is particularly effective in promoting cell migration 
+and proliferation. Additionally, OLED applications are being expanded to specialized therapeutic 
+areas—for instance, blue OLEDs for treating neonatal jaundice (by photodegrading bilirubin) and red 
+OLEDs (which have been shown to significantly promote hair growth by stimulating hair follicle 
+stem cells and improving local microcirculation). 
+Owing to their thin profile, flexibility, low heat generation, and biocompatibility, OLEDs are 
+well-suited for developing portable phototherapy devices that conform to the human body’s curved 
+surfaces. This provides a new technical direction for at-home and emergency medical treatments. 
+5. Conclusion 
+Stretchable OLED technology is a key advancement in the field of flexible electronics, offering 
+revolutionary potential for wearable electronics and biomedical applications. This study focuses on 
+three main strategies to achieve stretchability: laser-induced buckling structures, island-bridge 
+structures, and intrinsically stretchable materials. Each approach has its advantages and limitations: 
+(1) The laser-programmed buckling technique is characterized by high efficiency (over 70 cd/A) and 
+mechanical durability—it can withstand over 15,000 stretch cycles with minimal performance 
+degradation. Additionally, it is cost-effective and enables high-precision deformation control. 
+However, the femtosecond laser-based preparation process is complex and not suitable for mass 
+production; (2) Island-bridge structures enable efficient system stretching by combining rigid 
+functional elements ("islands") with stretchable connecting wires ("bridges"). Among these, 
+serpentine and fractal structures excel in stretchability and space utilization. However, this structure 
+results in large pixel pitches, leading to poor luminance uniformity and making it difficult to fabricate 
+high-resolution, large area displays; (3) Strategies using intrinsically stretchable materials aim to 
+render all functional layers (including electrodes and transport layers) flexible. Thanks to recent 
+research, devices can maintain 75% of their initial brightness at 40% deformation by integrating a 
+ternary transport layer with an optimized metal cathode. The biggest challenge, however, lies in 
+simultaneously achieving high conductivity and excellent mechanical elasticity; additionally, solvent 
+compatibility issues in multilayer solution processing persist. 
+In terms of applications, stretchable OLED technology is directly driving the development of 
+next-generation portable medical devices. It offers significant advantages for continuous health 
+monitoring (e.g., heart rate and blood oxygen monitoring), where motion artifacts can be effectively 
+reduced, and signal accuracy improved by conforming to the body. Meanwhile, the field of 
+phototherapy—such as photodynamic therapy (PDT) for cancer treatment and photobiomodulation 
+(PBM) for wound healing and hair growth therapy—also holds great potential to extend treatments 
+from clinical settings to portable home care. 
+Moving forward, the development of stretchable OLEDs will continue to focus on balancing 
+performance, durability, and mass production. Key research priorities include developing new 
+materials with both high carrier mobility and good ductility; advancing mass production processes 
+such as roll-to-roll printing; and developing flexible packaging technologies that can effectively block 
+water and oxygen while withstanding repeated deformation. As these core technologies continue to 
+mature, stretchable OLEDs are expected to become a critical component of next-generation portable 
+devices and exert a profound impact on key fields such as interactive textiles, foldable screens, and 
+even personalized medicine. 
+
+
+===== PAGE 8 =====
+395 
+Authors Contribution 
+All the authors contributed equally and their names were listed in alphabetical order. 
+Reference 
+[1] Zhao, J., Chi, Z., Yang, Z., et al. Recent developments of truly stretchable thin film electronic and 
+optoelectronic devices. Nanoscale, 2018, 10(13): 5764-5792. 
+[2] Zhang, H. Y., Jia, S. X., Yin, D. & Feng, J. Challenges and opportunities of stretchable electroluminescent 
+devices and displays. Laser & Photonics Reviews, 2024, 18(11): 2400358. 
+[3] Nam, M., Chang, J., Kim, H., et al. Highly reliable and stretchable OLEDs based on facile patterning 
+method: toward stretchable organic optoelectronic devices. npj Flexible Electronics, 2024, 8(1): 17. 
+[4] Cho, E. H., Kim, Y. W., Sim, J., et al. Recent advances in flexible and wearable OLEDs for biomedical 
+applications: a review. Materials Horizons, 2025. 
+[5] Yin, D., Feng, J., Ma, R., et al. Efficient and mechanically robust stretchable organic light-emitting 
+devices by a laser-programmable buckling process. Nature Communications, 2016, 7(1). 
+[6] Kim, S. B., Lee, D., Kim, J., et al. 3D height-alternant island arrays for stretchable OLEDs with high 
+active area ratio and maximum strain. Nature Communications, 2024, 15(1): 7802. 
+[7] Nimbalkar, A., Irfan, A. & Suh, M. C. Creating highly efficient stretchable OLEDs with nanowavy 
+structures for angle-independent narrow band emission. npj Flexible Electronics, 2024, 8(1): 57. 
+[8] Yin, H., Zhu, Y., Youssef, K., et al. Structures and materials in stretchable electroluminescent devices. 
+Advanced Materials, 2022, 34(22): 2106184. 
+[9] Kim, J. H. & Park, J. W. Intrinsically stretchable organic light-emitting diodes. Science Advances, 2021, 
+7(9): eabd9715. 
+[10] Zhou, H., Kim, H. W., Jeong, W. J. & Lee, T. W. Toward intrinsically stretchable oleds with high 
+efficiency. Advanced Materials, 2025, 37(14): 2420008. 
+[11] Zhang H., Jia S., Yin D. & Feng J. Research progress of stretchable light-emitting devices based on island-
+bridge structure. Chinese Journal of Luminescence, 2023, 44(9), 1606-1620. 
+[12] Sun, N., Jiang, C., Li, Q., et al. Performance of OLED under mechanical strain: a review. Journal of 
+Materials Science: Materials in Electronics, 2020, 31(23): 20688-20729. 
+[13] Liu, W., Zhang, C., Alessandri, R., et al. High-efficiency stretchable light-emitting polymers from 
+thermally activated delayed fluorescence. Nature materials, 2023, 22(6): 737-745. 
+[14] Li, X. C., Yao, L., Song, W., et al. Intrinsically stretchable electroluminescent elastomers with self‐
+confinement effect for highly efficient non‐blended stretchable OLEDs. Angewandte Chemie 
+International Edition, 2023, 62(2): e202213749. 
+[15] Keum, K., Yang, S., Kim, K. S., et al. Recent progress of stretchable displays: a comprehensive review 
+of materials, device architectures, and applications. Soft Science, 2024, 4(4). 
+ 
+ 

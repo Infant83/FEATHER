@@ -7,8 +7,4 @@ build/
 dist/
 *.egg-info/
 
-runs/
-archive/
 .backup/
-*.pdf
-*.jsonl

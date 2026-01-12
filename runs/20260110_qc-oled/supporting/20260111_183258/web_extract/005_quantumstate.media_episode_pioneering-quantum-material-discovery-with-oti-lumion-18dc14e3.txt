@@ -1,0 +1,210 @@
+[truncated]
+Pioneering Quantum Material Discovery with OTI Lumionics
+
+===============
+
+New Episodes Available Bi-Weekly!
+
+[![Image 1: The Quantum State](https://images.beamly.com/fetch/https%3A%2F%2Fsites.beamly.com%2F650f6523770829cf3c974f04%2Fmedia%2F54dc8178715c0a966cc5.png?w=150&dpr=2&q=90p)](https://quantumstate.media/)
+
+*   [Home](https://quantumstate.media/)
+*   [Episodes](https://quantumstate.media/episodes)
+*   [YouTube](https://quantumstate.media/youtube)
+*   [About](https://quantumstate.media/about)
+*   [Contact](https://quantumstate.media/contact)
+*   Subscribe
+
+*   [](https://twitter.com/TheQuantumState "twitter")
+*   [](https://www.youtube.com/@TheQuantumState "youtube")
+*   [](https://www.instagram.com/btqglobal/ "instagram")
+*   [](https://open.spotify.com/show/4pJEerrfCHz6NFqfAqHpD7?si=d57b0e1feb1b4680 "open.spotify")
+*   [](https://podcasts.apple.com/us/podcast/the-quantum-state/id1706971515 "podcasts.apple")
+
+![Image 2: Pioneering Quantum Material Discovery with OTI Lumionics](https://images.beamly.com/fetch/https%3A%2F%2Fsites.podcastpage.io%2F650f6523770829cf3c974f04%2Fmedia%2F5342bcc8df618749f3e1.png?w=365&dpr=1)
+
+ Subscribe Now 
+
+[The Quantum State](https://quantumstate.media/podcast/the-quantum-state)April 01, 2024
+
+[1](https://quantumstate.media/season/1)
+
+_x_
+
+15
+
+57:51 108.73 MB
+
+Pioneering Quantum Material Discovery with OTI Lumionics
+========================================================
+
+Audio Player
+
+Current time 00:00
+
+00:00
+
+Total duration 00:00
+
+[](https://quantumstate.media/)
+
+1x
+
+*   2x 
+*   1.5x 
+*   1.25x 
+*   1x 
+*   0.75x 
+
+[](https://traffic.libsyn.com/secure/56d82df9-895c-47f6-b82c-8715851cc59a/quantum_state_ep_151.mp3?dest-id=4090032)
+
+In this engaging episode, Scott Genin, VP of Materials Discovery at OTI Lumionics, delves into the transformative impact of quantum computing on material science. Scott shares insights into how quantum simulations are revolutionizing the accuracy of quantum chemistry calculations and facilitating the design of intricate materials. He discusses the specific challenges in developing materials for advanced applications like OLEDs and automotive displays, and how OTI Lumionics leverages quantum-inspired methods to overcome these hurdles.
+
+🔬 Quantum Simulations: Discover the pivotal role of quantum simulations in enhancing the accuracy of quantum chemistry calculations, enabling the creation of complex materials with unparalleled precision.
+
+🚗 Material Challenges for OLEDs and Automotive Displays: Explore the specific challenges in designing materials for cutting-edge applications, including the need for exceptional accuracy, reliability, and rigorous testing protocols.
+
+🌐 OTI Lumionics' Quantum Approach: Learn about the quantum-inspired solutions and algorithms that OTI Lumionics employs to expedite the material discovery process, addressing key industry challenges.
+
+🔋 Impact on Electronics and Automotive: Delve into the transformative effect of computational materials design on the next generation of consumer electronics and automotive applications, driving innovation in display technologies.
+
+🎛 Adoption Across Industries: Uncover the factors driving the adoption of quantum computing across different sectors, emphasizing the synergy with legacy systems and the quest for accelerated material validation.
+
+💡 Future Trends in Display Technology: Get insights into potential industry shifts, including the optimization of OLEDs for blue color and longevity, and the advent of transparent and heads-up displays in automotive.
+
+🚀 Quantum Hardware for Chemistry: Discuss the promising types of quantum hardware for quantum chemistry applications, including programmable bosonic modes and stable qubits.
+
+🤝 Collaboration and Training: Highlight the importance of aligning academic research with industry needs, the essential training for scientists in quantum technologies, and the potential of collaborations with firms like Nord Quantique to advance materials discovery.
+
+[https://www.linkedin.com/in/scott-genin-943a9118](https://www.linkedin.com/in/scott-genin-943a9118)
+
+[https://otilumionics.com/](https://otilumionics.com/)
+
+🎧 Stay Updated: Dive deeper into the intertwining worlds of quantum technologies and blockchain by subscribing and hitting the notification bell for more insightful episodes of The Quantum State.
+
+[[00:00:00](https://quantumstate.media/)] Welcome to The Quantum State, a podcast exploring the latest research and innovation in quantum computing. Join us as we dive into ground-breaking breakthroughs, trends and use shaping the quantum landscape.
+
+[[00:00:31](https://quantumstate.media/)] Hey everyone and welcome back to The Quantum State. Today we have Scott Jenner, the vice president of materials discovery at OTI Lumionics.
+
+[[00:00:41](https://quantumstate.media/)] So Scott thank you so much for coming on the show and talking to us about really interesting world of quantum computing and how the materials all come together.
+
+[[00:00:51](https://quantumstate.media/)] Thank you for having me.
+
+[[00:00:53](https://quantumstate.media/)] Definitely and so can you share a little bit about your journey into the field of material science and how quantum computing has become a part of your work.
+
+[[00:01:00](https://quantumstate.media/)] There's been a lot of interesting advances in the field over the many years that people have been doing quantum computing, but one of the big scalability challenges we talk about on this podcast is in the materials especially for systems.
+
+[[00:01:14](https://quantumstate.media/)] Yeah, please tell us a bit about your career journey and what you all are doing at OTI Lumionics.
+
+[[00:01:20](https://quantumstate.media/)] Yes, our journey with quantum computing actually began in 2017. I had Michael Lylender convinced me to move from my previous job that working in the sign far from
+
+[[00:01:34](https://quantumstate.media/)] to start the idea of using mathematics and see that issue tools to improve design and solving different real stuff around was a historical design field.
+
+[[00:01:47](https://quantumstate.media/)] I feel those doing for former and you know we're plugging around with easy quantum, some methods and what the dynamics of this and a much larger is the model developments for predicting.
+
+[[00:02:02](https://quantumstate.media/)] I'm sure you all is putting how material behavior manufacturing etc and then one day he went to a conference in Quebec City and he carried on away back from that conference.
+
+[[00:02:16](https://quantumstate.media/)] I was in a conference with a professor at the VCR area in Moe who was and recently invested in a world of star up with the quantum computing and they are chatting and well as well.
+
+[[00:02:31](https://quantumstate.media/)] You know, I would did a doing quantum computing for material simulations and then he took my back at Toronto and he asked me to send us in motion.
+
+[[00:02:40](https://quantumstate.media/)] I was a little bit of a work and then they just well aligned up the creative destruction. I have a new program that they opened for getting so we applied and got it for that and absolutely with spread out journey into quantum computing.
+
+[[00:02:59](https://quantumstate.media/)] Can you explain how OTI luminatics utilizes quantum simulations and machine learnings or developing new materials for OIDs?
+
+[[00:03:10](https://quantumstate.media/)] Yes, so the quantum computing is really a insellering or replacement for conventional quantum chemistry calculations done on the possible computer.
+
+[[00:03:23](https://quantumstate.media/)] So quantum computing really enhances the accuracy why it's a quantum chemistry by essentially because we specifically are trying to solve the Schrodinger equation for any basis of this ill and understatement.
+
+[[00:03:39](https://quantumstate.media/)] You know, at least the ordinary 600 and is in the conventional framework that you have to use on classical computer, at least how it was formulated.
+
+[[00:03:56](https://quantumstate.media/)] There are a circular significant chaos in terms of day, night, accuracy versus D. So to get the perfect solution on classical computer is with that using conventional frameworks, respectively possible or you know, all at any old model.
+
+[[00:04:14](https://quantumstate.media/)] I think it is as fast as the entire time is here or at least until there's sun is done to, you know, definitely so fast for us exploring using computer kind.
+
+[[00:04:25](https://quantumstate.media/)] The algorithm is simply computer on this tiny so we have to go along on computers but that's not unexpected.
+
+[[00:04:32](https://quantumstate.media/)] It's how it works so people knew what I'll say with a cloud computer there are kind of other trade off so you can actually get to a near perfect solution.
+
+[[00:04:46](https://quantumstate.media/)] There are consequences of great off the make but it's no longer as fast as the only.
+
+[[00:04:52](https://quantumstate.media/)] So that means that there is full guy you don't know that it's possible to solve the life structure of complex materials like local or old materials are not felt on classes.
+
+[[00:05:05](https://quantumstate.media/)] You know, it breaks all day within a global day, they very little in holidays but we're always really been focusing on this basically very.
+
+[[00:05:15](https://quantumstate.media/)] The purpose of this is to build off the manulators just to do a form of research or calculations.
+
+[[00:05:21](https://quantumstate.media/)] And so that has really enabled us today's lead to near perfect simulations, very high accuracy for large monitors it does it still take the same amount I yes the slow calculation that runs for a week.
+
+[[00:05:37](https://quantumstate.media/)] So by you know we're able to basically outperform conventional methods in terms of accuracy precision of a grow it here design properties.
+
+[[00:05:47](https://quantumstate.media/)] Using the mathematics of how to work with your actual will still do the problem structure.
+
+[[00:05:53](https://quantumstate.media/)] How big are those molecules that you're seeing and in manage for.
+
+[[00:05:57](https://quantumstate.media/)] So the multis are about 70 atoms but it's not just about that it's like these molecules will have a metal center to do like a fifth row a little internet so that is to me it produces something like you know in a word of 70 electrons.
+
+[[00:06:14](https://quantumstate.media/)] And you know risk or introduce us so.
+
+[[00:06:18](https://quantumstate.media/)] It's not just that as some of the atoms it also has some pretty big atoms in there bringing a lot of electrons and those also create a lot of additional other complexities in the calculations itself like relativistic effects become important.
+
+[[00:06:34](https://quantumstate.media/)] And so these are the Hamiltonian and generally have a form of complicated.
+
+[[00:06:39](https://quantumstate.media/)] And you know these are problems that conventional methods sometimes struggle with but the quantum key methods you know they they're able to somehow through the room eight you know how they're exiting operations.
+
+[[00:06:51](https://quantumstate.media/)] They seem to handle these edge cases significant better.
+
+[[00:06:57](https://quantumstate.media/)] So can we dive a little deeper into that the the challenges that you have for designing materials for these applications and how you all are addressing these challenges like you mentioned already the center is a little bit different than just a general molecule so are you all.
+
+[[00:07:12](https://quantumstate.media/)] You know looking at parts of the molecule or what other challenges are you facing there.
+
+[[00:07:17](https://quantumstate.media/)] So in terms of the overall design of an old molecule be the real challenge is that unless you actually have a billion dollar or multi go your old foundry and it will into throw 30 million dollars a week at it.
+
+[[00:07:31](https://quantumstate.media/)] To testing materials, you have to be really confident that your material needs justification.
+
+[[00:07:37](https://quantumstate.media/)] That's one of the challenges of the old industry is that you know and materials not material in close task has to question both Asia.
+
+[[00:07:47](https://quantumstate.media/)] And to do mass production both Asians easily over every million all enough commits a massive company as an OLED foundry to do that test.
+
+[[00:07:57](https://quantumstate.media/)] That's the way one of the big challenges so the idea of using the quantum you know what the methods is really to make sure that the properties of dictate for we consider the size of the rules are going to be incredibly accurate.
+
+[[00:08:10](https://quantumstate.media/)] And so you know not only does it look like I focused on making very accurate on a chemistry simulations you'll be having higher.
+
+[[00:08:18](https://quantumstate.media/)] Not divisions departments dedicated to actually doing is hearing around poll and make actually equipment.
+
+[[00:08:26](https://quantumstate.media/)] You know, we have a pilot scale, all in manufacturing.
+
+[[00:08:30](https://quantumstate.media/)] A production line in the quantum.
+
+[[00:08:34](https://quantumstate.media/)] And so with that we can test things like how does the material decompose over a week he costly heated.
+
+[[00:08:43](https://quantumstate.media/)] And that's really that's kind of the two sides in that you know it's why.
+
+[[00:08:49](https://quantumstate.media/)] You know, accessible in this area is because we're able to approach the material design for kind of multiple directions.
+
+[[00:08:56](https://quantumstate.media/)] We're able to really accelerate and you know then present to our customers very accurate why would they so that they know and they have confidence that will be sent in material is going to work.
+
+[[00:09:08](https://quantumstate.media/)] So you mentioned that you're with these kinds of molecules you have to really pay attention to effects like relativistic corrections and so forth.
+
+[[00:09:20](https://quantumstate.media/)] So I'm wondering like you know there's been some work on the theory side for quantum simulations of chemistry and so forth.
+
+[[00:09:32](https://quantumstate.media/)] Are you are you having to sort of come up with new approaches to quantum algorithms and do you have a team that you can work with that that you help develop those.
+
+[[00:09:44](https://quantumstate.media/)] Yeah, so actually a lot of people on the materials don't reside there.
+
+[[00:09:48](https://quantumstate.media/)] They're dedicated for development in quantum algorithms. If that's O.K. I.S.
+
+[[00:09:52](https://quantumstate.media/)] I'm in the general or sort of answers to the key bit of cluster method.
+
+[[00:09:58](https://quantumstate.media/)] That myself was a very kind of long journey because others, you know, I mentioned that go 2018.
+
+[[00:10:06](https://quantumstate.media/)] But it started from you know opening up the you know started from downloading Fermi live, which is the over for the honest the open source can't live and start from Google.
+
+[[00:10:19](https://quantumstate.media/)] So we get to see the water and then sitting there and then it's if they ask them what is the you know where is the issue that water sold within two hours.
+
+[[00:10:30](https://quantumstate.media/)] And then we'll think of the entire circuit that prints out and saying wow that's just a lot of really big circuit and sassy part is getting smaller so you know we invented an entire algorithm for carrying quantum chemistry circuits that is still be theoretically most compact form.
+
+[[00:10:48](https://quantumstate.media/)] And it still has not been exceeded in terms of the generating the fewest number of quantum circuits of like fiscal feed operations.
+
+[[00:11:00](https://quantumstate.media/)] They won't be speaking at the nab of sex.
+
+[[00:11:04](http

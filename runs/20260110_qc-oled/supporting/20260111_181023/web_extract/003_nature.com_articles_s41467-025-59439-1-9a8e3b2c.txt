@@ -1,0 +1,84 @@
+[truncated]
+Thank you for visiting nature.com. You are using a browser version with limited support for CSS. To obtain the best experience, we recommend you use a more up to date browser (or turn off compatibility mode in Internet Explorer). In the meantime, to ensure continued support, we are displaying the site without styles and JavaScript.
+
+* [View all journals](https://www.nature.com/siteindex)
+* [Search](#search-menu)
+* [Log in](https://idp.nature.com/auth/personal/springernature?redirect_uri=https://www.nature.com/articles/s41467-025-59439-1?error=cookies_not_supported&code=62536b06-9678-4d09-96b1-e0324ae893dc)
+
+* [Content Explore content](#explore)
+* [About the journal](#about-the-journal)
+* [Publish with us](#publish-with-us)
+
+* [Sign up for alerts](https://journal-alerts.springernature.com/subscribe?journal_id=41467)
+* [RSS feed](https://www.nature.com/ncomms.rss)
+
+Using GNN property predictors as molecule generators
+
+[Download PDF](/articles/s41467-025-59439-1.pdf)
+
+[Download PDF](/articles/s41467-025-59439-1.pdf)
+
+* Article
+* [Open access](https://www.springernature.com/gp/open-science/about/the-fundamentals-of-open-access-and-open-research)
+* Published:
+
+# Using GNN property predictors as molecule generators
+
+* [Félix Therrien](#auth-F_lix-Therrien-Aff1)  [ORCID: orcid.org/0000-0003-1074-7805](https://orcid.org/0000-0003-1074-7805)[1](#Aff1),
+* [Edward H. Sargent](#auth-Edward_H_-Sargent-Aff1)  [ORCID: orcid.org/0000-0003-0396-6495](https://orcid.org/0000-0003-0396-6495)[1](#Aff1) &
+* [Oleksandr Voznyy](#auth-Oleksandr-Voznyy-Aff1)  [ORCID: orcid.org/0000-0002-8656-5074](https://orcid.org/0000-0002-8656-5074)[1](#Aff1)
+
+[*Nature Communications*](/ncomms) **volume 16**, Article number: 4301 (2025) [Cite this article](#citeas)
+
+* 16k Accesses
+* 8 Citations
+* 3 Altmetric
+* [Metrics details](/articles/s41467-025-59439-1/metrics)
+
+### Subjects
+
+* [Cheminformatics](/subjects/cheminformatics)
+* [Computational science](/subjects/computational-science)
+
+## Abstract
+
+Graph neural networks (GNNs) have emerged as powerful tools to accurately predict materials and molecular properties in computational and automated discovery pipelines. In this article, we exploit the invertible nature of these neural networks to directly generate molecular structures with desired electronic properties. Starting from a random graph or an existing molecule, we perform a gradient ascent while holding the GNN weights fixed in order to optimize its input, the molecular graph, towards the target property. Valence rules are enforced strictly through a judicious graph construction. The method relies entirely on the property predictor; no additional training is required on molecular structures. We demonstrate the application of this method by generating molecules with specific energy gaps verified with density functional theory (DFT) and with specific octanol-water partition coefficients (logP). Our approach hits target properties with rates comparable to or better than state-of-the-art generative models while consistently generating more diverse molecules. Moreover, while validating our framework we created a dataset of 1617 new molecules and their corresponding DFT-calculated properties that could serve as an out-of-distribution test set for QM9-trained models.
+
+### Similar content being viewed by others
+
+### [Selecting molecules with diverse structures and properties by maximizing submodular functions of descriptors learned with graph neural networks](https://www.nature.com/articles/s41598-022-04967-9?fromPaywallRec=false)
+
+Article Open access 21 January 2022
+
+### [Targeted molecular generation with latent reinforcement learning](https://www.nature.com/articles/s41598-025-99785-0?fromPaywallRec=false)
+
+Article Open access 30 April 2025
+
+### [MoleculeFormer is a GCN-transformer architecture for molecular property prediction](https://www.nature.com/articles/s42003-025-09064-x?fromPaywallRec=false)
+
+Article Open access 25 November 2025
+
+## Introduction
+
+One of the ultimate goals of computational materials science is to rapidly identify promising material structures and compositions with specific properties to guide experimental scientists and automated laboratories[1](/articles/s41467-025-59439-1#ref-CR1 "Zunger, A. Inverse design in search of materials with target functionalities. Nat. Rev. Chem. 2, 1–16 (2018)."). This is particularly true in the time-critical fields of pharmacy and materials for energy and sustainability where a number of large scale autonomous experimentation initiatives are underway[2](/articles/s41467-025-59439-1#ref-CR2 "Stach, E. et al. Autonomous experimentation systems for materials development: A community perspective. Matter 4, 2702–2726 (2021)."),[3](/articles/s41467-025-59439-1#ref-CR3 "Abolhasani, M. & Kumacheva, E. The rise of self-driving labs in chemical and materials sciences. Nat. Synth. 2, 483–492 (2023)."). In the past decades, computational materials discovery has been achieved by going through large databases of existing materials and computing properties from first principles using methods such as density functional theory (DFT) and molecular dynamics[4](/articles/s41467-025-59439-1#ref-CR4 "Lu, Z. Computational discovery of energy materials in the era of big data and machine learning: a critical review. Mater. Reports: Energy 1, 100047 (2021)."),[5](/articles/s41467-025-59439-1#ref-CR5 "Therrien, F., Jones, E. B. & Stevanović, V. Metastable materials discovery in the age of large-scale computation. Appl. Phys. Rev. 8, 031310 (2021)."). These methods have proven to be successful in many cases[6](#ref-CR6 "Gorai, P., Stevanović, V. & Toberer, E. S. Computationally guided discovery of thermoelectric materials. Nat. Rev. Mater. 2, 1–16 (2017)."),[7](#ref-CR7 "Garrity, K. F. High-throughput first-principles search for new ferroelectrics. Phys. Rev. B 97, 024115 (2018)."),[8](#ref-CR8 "Curtarolo, S. et al. The high-throughput highway to computational materials design. Nat. Mater. 12, 191–201 (2013)."),[9](/articles/s41467-025-59439-1#ref-CR9 "Alberi, K. et al. The 2019 materials by design roadmap. J. Phys. D: Appl. Phys. 52, 013001 (2018)."), but suffer from two main limitations: (1) they are computationally expensive and (2) they cover a small subspace of all possible materials.
+
+In an effort to alleviate the first problem, machine learning (ML) based property prediction methods have become an integral part of materials science[10](/articles/s41467-025-59439-1#ref-CR10 "Schmidt, J., Marques, M. R., Botti, S. & Marques, M. A. Recent advances and applications of machine learning in solid-state materials science. npj Computational Mater. 5, 1–36 (2019)."),[11](/articles/s41467-025-59439-1#ref-CR11 "Butler, K. T., Davies, D. W., Cartwright, H., Isayev, O. & Walsh, A. Machine learning for molecular and materials science. Nature 559, 547–555 (2018)."). Various models exploit different materials representations (e.g., graphs, fingerprints)[12](/articles/s41467-025-59439-1#ref-CR12 "Reiser, P. et al. Graph neural networks for materials science and chemistry. Commun. Mater. 3, 93 (2022)."),[13](/articles/s41467-025-59439-1#ref-CR13 "Wigh, D. S., Goodman, J. M. & Lapkin, A. A. A review of molecular representation in the age of machine learning. Wiley Interdiscip. Reviews: Computational Mol. Sci. 12, e1603 (2022)."), model architectures (e.g., neural networks, random forests)[14](/articles/s41467-025-59439-1#ref-CR14 "Wei, J. et al. Machine learning in materials science. InfoMat 1, 338–358 (2019).") and datasets (experimental or computed) and their accuracy has been steadily increasing, often competing with that of DFT[10](/articles/s41467-025-59439-1#ref-CR10 "Schmidt, J., Marques, M. R., Botti, S. & Marques, M. A. Recent advances and applications of machine learning in solid-state materials science. npj Computational Mater. 5, 1–36 (2019)."). The success and adoption of these models is due largely to the powerful tools developed by the ML and data science communities (such as Pytorch[15](/articles/s41467-025-59439-1#ref-CR15 "Paszke, A. et al. Pytorch: An imperative style, high-performance deep learning library. Advances in neural information processing systems 32 (2019)."), Tensorflow[16](/articles/s41467-025-59439-1#ref-CR16 "Abadi, M. et al. TensorFlow: Large-scale machine learning on heterogeneous systems (2015). 
+                  https://www.tensorflow.org/
+                  
+                . Software available from tensorflow.org"), Pandas[17](/articles/s41467-025-59439-1#ref-CR17 "pandas development team, T. pandas-dev/pandas: Pandas. 
+                  https://doi.org/10.5281/zenodo.3509134
+                  
+                 (2020)."), etc.). However, despite their promising performance on benchmark datasets, ML property predictors still suffer from poor generalizability[18](/articles/s41467-025-59439-1#ref-CR18 "Li, K., DeCost, B., Choudhary, K., Greenwood, M. & Hattrick-Simpers, J. A critical examination of robustness and generalizability of machine learning prediction of materials properties. npj Computational Mater. 9, 55 (2023)."), exhibiting much lower performance on out-of-distribution data, i.e., materials that are different from what they have been trained on.
+
+Materials and molecule generation can alleviate the second limitation: it can theoretically explore the full space of all possible materials. Traditionally this has been done using minima hopping[19](/articles/s41467-025-59439-1#ref-CR19 "Goedecker, S. Minima hopping: An efficient search method for the global minimum of the potential energy surface of complex molecular systems. J. Chem. Phys. 120, 9911–9917 (2004)."), metadynamics[20](/articles/s41467-025-59439-1#ref-CR20 "Martoňák, R., Laio, A. & Parrinello, M. Predicting crystal structures: the parrinello-rahman method revisited. Phys. Rev. Lett. 90, 075503 (2003).") and evolutionary approaches[21](#ref-CR21 "Glass, C. W., Oganov, A. R. & Hansen, N. Uspex—evolutionary crystal structure prediction. Computer Phys. Commun. 175, 713–720 (2006)."),[22](#ref-CR22 "Jensen, J. H. A graph-based genetic algorithm and generative model/monte carlo tree search for the exploration of chemical space. Chem. Sci. 10, 3567–3572 (2019)."),[23](/articles/s41467-025-59439-1#ref-CR23 "Oganov, A. R., Pickard, C. J., Zhu, Q. & Needs, R. J. Structure prediction drives materials discovery. Nat. Rev. Mater. 4, 331–348 (2019)."), but machines can also learn to generate realistic materials[4](/articles/s41467-025-59439-1#ref-CR4 "Lu, Z. Computational discovery of energy materials in the era of big data and machine learning: a critical review. Mater. Reports: Energy 1, 100047 (2021)."). The goal is no longer to predict properties but to predict realistic structures[24](/articles/s41467-025-59439-1#ref-CR24 "Sanchez-Lengeling, B. & Aspuru-Guzik, A. Inverse molecular design using machine learning: Generative models for matter engineering. Science 361, 360–365 (2018)."). Materials and molecular generation using ML is a rapidly evolving field with a large body of recent methods including variational autoencoders[25](#ref-CR25 "Jin, W., Barzilay, R. & Jaakkola, T. Junction tree variational autoencoder for molecular graph generation. In International conference on machine learning, 2323–2332 (PMLR, 2018)."),[26](#ref-CR26 "Gómez-Bombarelli, R. et al. Automatic chemical design using a data-driven continuous representation of molecules. ACS Cent. Sci. 4, 268–276 (2018)."),[27](/articles/s41467-025-59439-1#ref-CR27 "Eckmann, P. et al. Limo: Latent inceptionism for targeted molecule generation. In International Conference on Machine Learning, vol. 162, 5777–5792 (PMLR, 2022)."), flow-based models[28](/articles/s41467-025-59439-1#ref-CR28 "Bengio, E., Jain, M., Korablyov, M., Precup, D. & Bengio, Y. Flow network based generative models for non-iterative diverse candidate generation. Adv. Neural Inf. Process. Syst. 34, 27381–27394 (2021)."),[29](/articles/s41467-025-59439-1#ref-CR29 "Roy, J., Bacon, P.-L., Pal, C. & Bengio, E. Goal-conditioned gflownets for controllable multi-objective molecular design. arXiv preprint arXiv:2306.04620 (2023)."), diffusion models[30](/articles/s41467-025-59439-1#ref-CR30 "Vignac, C. et al. Digress: Discrete denoising diffusion for graph generation. In International Conference on Learning Representations (2023)."),[31](/articles/s41467-025-59439-1#ref-CR31 "Xu, M. et al. Geodiff: A geometric diffusion model for molecular conformation generation. In International Conference on Learning Representations (2022)."), models based on reinforcement learning (RL)[32](/articles/s41467-025-59439-1#ref-CR32 "Guimaraes, G. L., Sanchez-Lengeling, B., Outeiral, C., Farias, P. L. C. & Aspuru-Guzik, A. Objective-reinforced generative adversarial networks (organ) for sequence generation models. arXiv preprint arXiv:1705.10843 (2017)."),[33](/articles/s41467-025-59439-1#ref-CR33 "You, J., Liu, B., Ying, Z., Pande, V. & Leskovec, J. Graph convolutional policy network for goal-directed molecular graph generation. Advances in neural information processing systems 31 (2018).") and many others[34](/articles/s41467-025-59439-1#ref-CR34 "Kong, D., Pang, B., Han, T. & Wu, Y. Molecule design by latent space energy-based modeling and gradual distribution shifting. Conference on Uncertainty in Artificial Intelligence. 
+                  https://arxiv.org/abs/2306.14902v1
+                  
+                 (2023)."),[35](/articles/s41467-025-59439-1#ref-CR35 "Nigam, A., Pollice, R. & Aspuru-Guzik, A. Parallel tempered genetic algorithm guided by deep neural networks for inverse molecular design. Digital Discovery 1, 390–404 (2022).").
+
+In this paper, we exploit one of the most important and fundamental features of neural networks, their differentiability, to directly optimize a target property with respect to the graph representation itself starting from a pre-trained predictive model. This concept sometimes termed *gradient ascent*, or *input optimization*, has been used extensively in other fields[36](/articles/s41467-025-59439-1#ref-CR36 "Trabucco, B., Geng, X., Kumar, A. & Levine, S. Design-bench: Benchmarks for data-driven offline model-based optimization. In International Conference on Machine Learning, vol. 162, 21658–21676 (PMLR, 2022)."),[37](/articles/s41467-025-59439-1#ref-CR37 "Linder, J. & Seelig, G. Fast activation maximization for molecular sequence design. BMC Bioinforma. 22, 1–20 (2021).") and a similar idea has been applied to molecular generation with SELFIES[38](/articles/s41467-025-59439-1#ref-CR38 "Shen, C., Krenn, M., Eppel, S. & Aspuru-Guzik, A. Deep molecular dreaming: Inverse machine learning for de-novo molecular design and interpretability with surjective representations. Mach. Learning: Sci. Technol. 2, 03LT02 (2021)."). Here we apply input optimization to molecular GNNs. We describe how carefully constraining the molecular representation makes this “naive” approach possible and show that it can generate molecules with requested properties as verified with density functional theory and empirical models. It does so with comparable or better performance than existing methods while consistently generating the most diverse set of molecules.
+
+## Results
+
+### Rationale and workflow overview
+
+Our method can technically be applied to any GNN architecture that uses molecular graphs. To train our GNN we use (1) an explicit representation of the adjacency matrix, *A*, where non-zero elements are the bond orders and (2) a feature matrix, *F*, often referred to as a *feature vector*, that contains a one-hot representation of the atoms. These two matrices fully describe the graph and contain exactly the same information as a SMILES string. Since all functions in the GNN have well-defined gradients (allowing it to be trained in the first place), the adjacency matrix and the feature vector can be optimized through a gradient descent with respect to a target property as illustrated in Fig. [1](/arti

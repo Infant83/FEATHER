@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-01-11T11:11:01.888141",
+  "queries": [
+    "High aspect ratio organic light-emitting diodes site:nature.com s41467-025-67312-4 \"external light extraction\" lifetime EQE 2025",
+    "\"High aspect ratio organic light-emitting diodes\" Nature Communications 2025 PDF \"methods\" \"device area\" \"outcoupling\"",
+    "\"Recent Progress in Stretchable OLED Design and Applications\" PDF \"Academic Journal of Science and Technology\" OLED review citations",
+    "inkjet printing OLED \"Adv. Optical Materials\" 2024 2025 open access \"Research Progress on the Preparation of OLED Based on the Inkjet Printing\""
+  ],
+  "summary": "Web research queries: 4\nWeb search results stored: web_search.jsonl\nWeb extracts stored: web_extract",
+  "report_prompt": "Focus on OLED technology trends, materials advances, and near-term industry implications.\nPrioritize insights from papers, open-access journals, and credible industry sources.\nIdentify 3-5 key technical inflection points, their evidence, and likely applications.\nCompare research vs. commercial adoption (manufacturing, yield, cost, lifetime, efficiency).\nCall out contradictions or gaps, and suggest follow-up questions for decision-makers."
+}

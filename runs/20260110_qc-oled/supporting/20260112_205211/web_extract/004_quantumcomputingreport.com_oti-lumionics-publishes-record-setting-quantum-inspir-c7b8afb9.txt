@@ -1,0 +1,23 @@
+[Skip to content](#content)
+
+# OTI Lumionics Publishes Paper on Record-Setting Quantum-Inspired Algorithm for OLED Materials Simulation
+
+OTI Lumionics Publishes Paper on Record-Setting Quantum-Inspired Algorithm for OLED Materials Simulation
+
+[OTI Lumionics](https://otilumionics.com/) has unveiled a major advancement in quantum-inspired chemistry simulations, demonstrating that highly accurate quantum electronic structure calculations can now be performed on classical hardware. The breakthrough, described in the [Journal of Chemical Theory and Computation](https://pubs.acs.org/doi/10.1021/acs.jctc.5c00345), introduces a new method for optimizing deep Qubit Coupled Cluster (QCC) circuits, allowing simulations of real-world molecules at scales previously limited to future quantum computers.
+
+While quantum hardware remains constrained by qubit quality and gate fidelity, OTI’s research presents a hybrid quantum-classical framework that efficiently optimizes quantum circuits with up to 80 algorithmic qubits and over a million entangling gates. The approach enables full simulation on modest classical infrastructure—reportedly 24 CPUs in under 24 hours—covering challenging molecular targets like Ir(F₂ppy)₃, a key emitter compound in OLED displays. The result demonstrates not only computational efficiency, but also high fidelity in predicting electronic states critical for materials design.
+
+OTI’s work offers a scalable, practical solution for industrial materials discovery pipelines that need quantum precision today without waiting for fault-tolerant quantum computers. It specifically accelerates OLED R&D by simulating excited-state dynamics with greater accuracy than traditional ab initio methods. The paper’s authors include VP of Materials Discovery Scott Genin, alongside researchers Ilya G. Ryabinkin and Seyyed Mehdi Hosseini Jenab.
+
+Read the official press release [here](https://www.globenewswire.com/news-release/2025/06/18/3101674/0/en/OTI-Lumionics-Releases-Breakthrough-Algorithms-for-Quantum-Chemistry-Simulations.html) and the full research paper via JCTC [here](https://pubs.acs.org/doi/10.1021/acs.jctc.5c00345) and via arXiv [here](https://arxiv.org/abs/2502.17587).
+
+June 18, 2025
+
+[Mohamed Abdel-Kareem](https://quantumcomputingreport.com/author/mohamed-abdel-kareem/ "Posts by Mohamed Abdel-Kareem")2025-06-21T13:15:26-07:00
+
+[Page load link](#)
+
+[Go to Top](#)
+
+ 

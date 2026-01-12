@@ -1,0 +1,415 @@
+Optimization of the Qubit Coupled Cluster Ansatz on classical computers
+Ilya G. Ryabinkin,1, ∗Seyyed Mehdi Hosseini Jenab,1 and Scott N. Genin1
+1OTI Lumionics Inc., 3415 American Drive Unit 1,
+Mississauga, Ontario L4V 1T4, Canada
+Immense interest in quantum computing has prompted development of electronic structure methods
+that are suitable for quantum hardware. However, the slow pace at which quantum hardware
+progresses, forces researchers to implement their ideas on classical computers despite the obvious loss
+of any “quantum advantage.” As a result, the so-called quantum inspired methods emerge. They
+allow one to look at the electronic structure problem from a different angle; yet, to fully exploit their
+capacity, efficient implementations are highly desirable. Here we report two schemes for improving the
+amplitude optimisation in the iterative qubit coupled cluster (iQCC) method—a variational quantum
+eigensolver-type approach which is based on the qubit coupled cluster (QCC) Ansatz. Our first
+scheme approximates the QCC unitary as a sum of symmetrical polynomials of generators up to a
+given order. The resulting energy expression allows for a flexible control of computational complexity
+via the order parameter. It also guaranties smoothness of trial energies and their derivatives, which
+is important for gradient-based optimization strategies. The second scheme limits the size of the
+expansion space in which the QCC unitary is generated. It provides better control of memory
+requirements, but in general may lead to the non-smooth variation of energy estimates upon changes
+in amplitudes. It can be used, however, to extrapolate energies for a given set of amplitudes towards
+the exact QCC value. Both schemes allow for a larger number of generators to be included into the
+QCC form compared to the exact formulation. This reduces the number of iterations in the iQCC
+method and/or leads to higher accuracy. We assess capabilities of the new schemes to perform QCC
+amplitudes optimization for a few molecular systems: dinitrogen (N2, 16 qubits), water (H2O, 36
+qubits), and tris(2-(2,4-difluorophenyl)pyridine) iridium(III), (Ir(F2ppy)3, 80 qubits).
+I.
+INTRODUCTION
+Quantum computing is a rapidly evolving area of com-
+putational science that employs engineered quantum
+systems—quantum computers—to perform calculations
+that are otherwise difficult for classical computers [1–3].
+One of the promising applications of quantum computing
+is finding the electronic structure [4] of molecules and
+materials to model their chemical and optical proper-
+ties [5]. Solving the electronic structure problem amounts
+to finding eigenvalues—ground and excited states—of the
+electronic Hamiltonian of a system of interest. The first
+method proposed for solving this problem on quantum
+computers was the quantum phase estimation (QPE) al-
+gorithm [6–12]. It quickly became clear, however, that
+reliable estimate of eigenvalues with QPE requires very
+complex quantum circuits and long coherence times. For
+example, simulations of the electronic structure of the
+iron-molybdenum cofactor (FeMoco)—an active site of
+Mo-dependent nitrogenase—were estimated to use an as-
+tronomical (1014 −1016) number of T-gate operations
+with run time varying from a few months to several
+years [13]. Subsequently, the variational quantum eigen-
+solver (VQE) [14–19] was suggested as a more frugal
+alternative to QPE. The VQE method finds the ground
+electronic state of an arbitrary qubit Hamiltonian
+ˆH =
+X
+i
+Ci ˆPi,
+(1)
+∗ilya.ryabinkin@otilumionics.com
+in which Ci are numerical coefficients and
+ˆPi = ˆσi1 . . . ˆσiq, 0 ≤q ≤(n −1)
+(2)
+are tensor products of Pauli elementary qubit operators
+ˆσj ∈{ˆxj, ˆyj, ˆzj} for n qubits (“Pauli words” for short). In
+the context of the electric structure problem, the Hamilto-
+nian (1) is derived from the active-space electronic Hamil-
+tonian of a molecular system [4] using fermion-to-qubit
+mappings, such as Jordan–Wigner (JW), Bravyi–Kitaev
+(BK) or the more recent ternary-tree mapping [20, 21].
+Trial energy
+E(t) = ⟨0| ˆU †(t) ˆH ˆU(t)|0⟩
+(3)
+is evaluated on a quantum computer by measuring ˆPi in
+Eq. (1) on a state ˆU(t) |0⟩of a quantum register [22–27]
+and summing up the outcomes with coefficients Ci. Here,
+ˆU(t) is a parametrized unitary which must be realized
+as a quantum circuit and |0⟩is a reference (initial) qubit
+state. Subsequently, the measured trial energies E(t) for
+different values of parameters t = t1, t2, . . . are passed to
+a classical computer to find a minimum with respect to t.
+By the variational principle,
+min
+t
+E(t) ≥E0,
+(4)
+where E0 is the exact ground-state energy of the Hamilto-
+nian ˆH. We note that not only energies, but also energy
+gradients can be measured using a parameter-shift rule [28–
+30], which allows for using more efficient gradient-based
+miminization techniques.
+The parametrized unitary ˆU(t) is a central quantity in
+VQE [14–19, 31–36]. Different flavours of VQE differ in
+arXiv:2502.17587v1  [quant-ph]  24 Feb 2025
+
+2
+the way how ˆU(t) is constructed. One specific form is the
+qubit coupled cluster (QCC) Ansatz [32] inspired by the
+variational approach introduced in Ref. 31. It is defined
+as a product of exponents of generators ˆTk,
+ˆU(t) =
+M
+Y
+k=1
+exp
+
+−itk ˆTk/2
+
+,
+(5)
+that are themselves Pauli words. Initially, it was pro-
+posed to screen the entire space of all possible ˆTk whose
+dimensionality is 4n, to include only generators that have
+non-zero values of the first energy derivatives
+gk = dE[ ˆTk]
+dt
+= −i
+2
+D
+0
+ [ ˆH, ˆTk]
+ 0
+E
+,
+(6)
+where [ ˆH, ˆTk] is a commutator. It was later recognized [37]
+that exponentially hard screening can be replaced by a
+construction of all such generators given the qubit Hamil-
+tonian, and this procedure has linear complexity with
+respect to the number of terms in ˆH. If ˆH is a qubit
+image of the molecular electronic Hamiltonian, the pro-
+posed algorithm produces qubit analogs of all single and
+double excitations for a given set of molecular orbitals.
+The corresponding Ansatz is, therefore, similar to the
+factorized (“disentangled”) [38–40] form of a generalized
+unitary coupled cluster (GUCC) wave function [17, 41, 42].
+Reference 37 also introduces an iterative scheme of build-
+ing the QCC form and transforming Hamiltonian, which
+allows for systematic convergence of energy estimates to
+the exact ground-state energy of a given ˆH. If all steps,
+including evaluation and optimization of trial electronic
+energies (3), are done by a classical computer, this iter-
+ative qubit coupled cluster (iQCC) method becomes a
+quantum inspired algorithm.
+The iQCC method [37] can use as few as one generator
+per iteration at expense of more iterations. Every iteration
+produces a new dressed Hamiltonian
+ˆH(i) =
+
+ˆU (i)(t(i)
+opt)
+† ˆH(i−1) ˆU (i)(t(i)
+opt), i = 1, . . .
+(7)
+where ˆH(i) is the Hamiltonian at the i-th iteration, ˆH(0) is
+the initial qubit-mapped active-space electronic Hamilto-
+nian, and ˆU (i)(t(i)
+opt) is a QCC unitary constructed at the
+i-th iteration evaluated at the optimized values of ampli-
+tudes t(i)
+opt. However, dressing causes the Hamiltonian to
+quickly expand [43], taxing CPU and memory of a classical
+computer. Additionally, using only a small number of gen-
+erators poses a dilemma of artificial symmetry breaking,
+if not all generators that preserve local or approximate
+symmetries can be included into the Ansatz. Thus, en-
+abling lengthier QCC Ans¨atze improves computational
+efficiency of the iQCC method making it competitive to
+the “traditional” quantum chemistry methods.
+The current paper reports algorithm developments that
+allow as many as hundred thousands of generators to be
+simultaneously optimized. We propose two different ap-
+proaches to simplify evaluation and optimization of trial
+energies given by Eq. (3). In the first one, we expand the
+QCC unitary (5) in a series where terms are symmetric
+polynomials of generators and retain all low-order terms
+up to a certain order. In the second, we recursively con-
+struct a trial qubit state ˆU(t) |0⟩and drop the terms with
+smallest numerical coefficients to keep the total number
+of them fixed.
+We use three molecular systems in our study: dini-
+trogen (N2, 16 qubits), water (H2O, 36 qubits), and
+Tris[2−(2,4−difluorophenyl)pyridine]Ir(III) (Ir(F2ppy)3,
+80 qubits) [44–46]. For the first system we consider molec-
+ular configurations with equilibrium N−N distance (a
+weakly correlated case) and a highly stretched geometry
+(a strongly correlated case), as well as compute the entire
+potential energy curve (PEC) to study the convergence of
+energy and amplitudes in transition from one to another.
+Water molecule is an illustration of an extrapolation tech-
+nique using the second scheme. Finally, the last system is
+used to demonstrate scalability of our approach to large,
+industrially relevant molecules.
+II.
+THEORY
+A.
+Symmetric-polynomial expansion of the QCC
+unitary
+Every exponent in the QCC Ansatz (5) can be evaluated
+in a closed form as
+exp(−it ˆT/2) = cos (t/2) −i sin (t/2) ˆT,
+(8)
+because any Pauli word is involutory, ˆT 2 = ˆE, where
+ˆE is the identity operator.
+There are 2M algebraic-
+independent terms in a superposition which encodes the
+state ˆU(t) |0⟩on a quantum computer. This exponential
+complexity is a clear obstacle for classical computers.
+Expanding the product in the right-hand side of Eq. (5)
+using the identity (8) we obtain
+
+3
+ˆU(t) =
+M
+Y
+k=1
+cos (tk/2) −i
+M
+X
+j=1
+sin (tj/2) ˆTj
+M
+Y
+k̸=j
+cos (tk/2)
+−
+M
+X
+i<j
+sin (ti/2) sin (tj/2) ˆTi ˆTj
+M
+Y
+k̸={i,j}
+cos (tk/2) + . . .
+=
+M
+Y
+k=1
+cos (tk/2)
+
+1 −i
+M
+X
+j=1
+tan (tj/2) ˆTj −
+M
+X
+i<j
+tan (ti/2) tan (tj/2) ˆTi ˆTj + . . .
+
+
+(9)
+Equation (9) uses specific grouping of terms that can be
+better explained on the following simple example. Con-
+sider a unitary (5) with M = 3 generators:
+ˆU(t1, t2, t3) = c1c2c3
+(0-th order)
+−i
+
+s1c2c3 ˆT1 + c1s2c3 ˆT2 + c1c2s3 ˆT3
+
+(1-st order)
+−
+
+s1s2c3 ˆT1 ˆT2 + s1c2s3 ˆT1 ˆT3 + c1s2s3 ˆT2 ˆT3
+
+(2-nd order)
++ is1s2s3 ˆT1 ˆT2 ˆT3
+(3-rd order),
+(10)
+where we use a short-hand notation cj = cos (tj/2), sj =
+sin (tj/2). We collect and explicitly label terms in Eq. (10)
+by orders of the formal parameter λ that can be attached
+to every ˆTj and then set to 1 at the end of derivation [47].
+In Eq. (10) one can recognize that products of generators
+at each order are terms of the elementary symmetric
+polynomial [48, Ch. 1.2] of that order. For example, ˆT1 ˆT2,
+ˆT1 ˆT3, and ˆT2 ˆT3 are terms of the elementary symmetric
+polynomial of the order 2 in three variables.
+In a general case, Eq. (9), there are (M + 1) groups
+corresponding to orders λ from 0 to M. Every elementary
+symmetric polynomial of the order K in M variables
+contains
+ M
+K
+
+=
+M!
+K!(M−K)! terms, and a sum of them from
+K = 0 to M gives 2M various products of M generators,
+again demonstrating the exponential complexity of the
+QCC form.
+Non-commutativity of generators has no
+consequences because of the condition i < j < k < . . . in
+the definition of the elementary symmetric polynomials
+(functions) [48, Ch. 1.2].
+Grouping by orders of λ can be further exploited. After
+the factoring out the product of cosines of amplitudes
+QM
+k=1 cos (tk/2) in Eq. (9), the amplitude-dependent co-
+efficients in parentheses are the terms of elementary sym-
+metrical polynomials in tan(tk/2). If ∀k tan(tk/2) < 1, at
+every order the products of generators are multiplied by
+more quantities that are smaller than 1, so that their nu-
+merical contributions diminish. Broadly defining a weakly
+correlated regime as having all tan(tk/2) < 1, one may ex-
+pect that keeping only groups from 0 to K < M in Eq. (9)
+provides a fair approximation to the full expression.
+The parenthesized expression in the last line of Eq. (9)
+can be interpreted as a rank decomposition of the operator-
+valued unitary ˆU(t) = ˆU(t1, t2, . . . tM) of the rank M (as
+it depends on M “indices” ti) as a sum of lower-rank
+operators having the rank from K = 0 to M.
+Rank
+decomposition is a powerful tool for investigating complex
+quantum systems, which is behind such approaches as
+the density-matrix renormalization group (DMRG) [49],
+or, more general, matrix product states (MPS) [50], and
+Tree Tensor Networks [51].
+Let us denote ˆU [K](t) an approximation to the exact
+ˆU(t) in which all groups up to a K-th order in λ are kept.
+Then, an approximate energy functional could be defined
+as
+W [K](t) = ⟨0|( ˆU [K])†(t) ˆH ˆU [K](t)|0⟩.
+(11)
+However, in general, W [K](t) is not variationally bound
+because ˆU [K](t) is not unitary unless K = M,
+
+U [K]†
+U [K] ̸= E, K < M.
+(12)
+We anticipate poor quality of energies given by W [K](t)
+functional unless enough terms are retained. The upper-
+boundary property of Eq. (4), however, can be restored if
+we define
+E[K](t) = ⟨0|( ˆU [K])†(t) ˆH ˆU [K](t)|0⟩
+⟨0|(U [K])†(t)U [K](t)|0⟩,
+(13)
+
+4
+which is our first, symmetric-polynomial approximate
+energy functional. Its implementation is reported in Ap-
+pendix A.
+It must be emphasized that neither W [K](t) nor E[K](t)
+coincide with an expression that follows from the expan-
+sion of the QCC energy, Eq. (3), either in the commutator
+or in perturbation-theory order [52].
+B.
+Limiting the expansion space
+Formal algebraic independence of terms in Eq. (9) does
+not imply linear independence of individual terms in the
+vector ˆU(t) |0⟩. Every contribution to ˆU(t) |0⟩has a form
+κ¯q(t) ˆT¯q |0⟩, where ˆT¯q = ˆTq1 · · · ˆTqr, 1 ≤r ≤M is a Pauli
+word and κ¯q(t) are functions of amplitudes. Any ˆT¯q can
+be uniquely factorized as
+ˆT¯q = ϕ¯q ˆX¯q ˆZ¯q,
+(14)
+where ϕ¯q = {±1, ±i} is a factorization phase, and ˆX¯q
+and ˆZ¯q are some Pauli words that are products of only ˆx
+or ˆz Pauli elementary operators [cf. Eq. (2)], respectively.
+Because our reference state |0⟩is an eigenvector of ˆZ¯q for
+any ¯q: ˆZ¯q |0⟩= f¯q |0⟩, f¯q = ±1, we can write
+ˆT¯q |0⟩= ϕ¯q ˆX¯q ˆZ¯q |0⟩= ϕ¯qf¯q ˆX¯q |0⟩.
+(15)
+Vectors (“excited states”) ˆX |0⟩are linearly independent
+for different ˆX. It may occur, however, that different
+products of generators (i.e. with different ¯q) factorize to
+the same ˆX operator, thus producing identical vectors
+albeit with different phases and different κ(t). This coa-
+lescence of terms inevitably happen if M > n as it is not
+possible to generate more than 2n linearly independent
+vectors in the Hilbert space of dimensionality 2n (for n
+qubits).
+The idea of approximating the vector ˆU(t) |0⟩rather
+than the QCC unitary comes out naturally. This vector
+lives in a 2n-dimensional Hilbert space and evaluating
+and storing it on a classical computer is impossible for
+sufficiently large n and M. Hence, confining it in an N-
+dimensional subspace, N ≪2n, would be highly desirable.
+The main challenge is how to find a basis of that subspace,
+which, for example, maximizes the projection of ˆU(t) |0⟩
+onto it.
+Consider a step-by-step application of the unitary (5) to
+the reference vector |0⟩[53]. Initially we have v0 = |0⟩and
+V0 = span{|0⟩}. Obviously, v0 ∈V0. Then, applying
+exponents from the QCC unitary (5) starting from the
+rightmost factor exp
+
+−itM ˆTM/2
+
+, we have:
+v1 = cos(tM/2)v0 −i sin(tM/2) ˆTMv0,
+(16)
+V1 = span{|0⟩, −i ˆTM |0⟩}
+v2 = cos(tM−1/2)v1 −i sin(tM−1/2) ˆTM−1v1,
+(17)
+V2 = span{|0⟩, −i ˆTM |0⟩, −i ˆTM−1 |0⟩, −ˆTM−1 ˆTM |0⟩}
+. . .
+vk = cos(tM−k+1/2)vk−1 −i sin(tM−k+1/2) ˆTM−1vk−1,
+(18)
+Vk = span{|0⟩, −i ˆTM |0⟩, . . . −i ˆTM−k+1 |0⟩, . . . , (−i)k
+0
+Y
+j=k−1
+ˆTM−j |0⟩}
+2 < k ≤M
+Here we use QCC generators multiplied by the factor (−i)
+because those products have purely real matrix elements
+in the computational basis set.
+If no truncation is done up to the k-th level and no
+redundancy occurs, then dim Vk = 2k. If, additionally,
+k = M then dim VM = 2M recovering the exponential
+complexity of the QCC unitary with respect to the number
+of generators. During this expansion stage the action of
+every exponential factor in the QCC unitary is represented
+exactly.
+To suppress exponential growth the following strategy
+is followed: when the dimensionality of Vk exceeds a
+pr

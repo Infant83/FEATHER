@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HiDair Feather Report - 20260109_sectioned</title>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      font-family: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">HiDair Feather</div>
+      <div class="report-title">HiDair Feather Report - 20260109_sectioned</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h2>Executive Summary</h2>
+<p>본 보고서는 런(<code>20260109_sectioned</code>)에서 수집된 <strong>메타데이터/요약 중심 결과물</strong>(Tavily 검색 요약, YouTube 영상 메타데이터, arXiv 초록 메타)을 근거로 2026년 AI 트렌드 중 <strong>agentic AI(에이전트형 AI)</strong>와 <strong>physical AI(로보틱스/디바이스 등 물리 세계 적용)</strong>의 주요 신호를 정리했다. 본 런은 설정상 <strong>YouTube 자막 수집과 arXiv PDF 다운로드가 비활성화</strong>되어 있어, 기사 원문/영상 발화/논문 본문에 대한 정밀 검증은 제한된다. 그럼에도 불구하고, 수집된 요약·메타는 2026년 트렌드를 다음처럼 압축한다.</p>
+<ul>
+<li><strong>Agentic AI는 “데모 → 일상 업무/시스템 통합”으로 이동</strong>하는 담론이 강해지고, 이를 촉진하는 요소로 <strong>도구연결 표준(MCP)</strong>, <strong>멀티 에이전트 오케스트레이션</strong>, <strong>거버넌스·비용(FinOps) 체계화</strong>가 반복적으로 언급된다. (TechCrunch, MachineLearningMastery 요약 근거)  </li>
+<li><strong>Physical AI는 로보틱스/웨어러블/산업 현장 중심으로 상용 파일럿 확대</strong>가 강조되며, 특히 제조·물류에서 ROI와 안전성 검증이 핵심 과제로 제시된다. (Forbes 요약 근거)  </li>
+<li>산업 영역에서는 <strong>Siemens–NVIDIA “Industrial AI Operating System”</strong>, 디지털 트윈, IT/OT 브리징(Industrial Copilot) 등 <strong>산업용 AI 스택의 플랫폼화</strong> 신호가 YouTube 메타데이터로 관찰된다. (Siemens CES 2026 키노트 메타 근거)</li>
+</ul>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<h3>1) 범위(고정 주제 및 쿼리)</h3>
+<ul>
+<li>주제: “AI trends for 2026 (agentic AI, physical AI)”로 고정. [instruction/20260109.txt]</li>
+<li>쿼리(3개):<br />
+  1) “AI trends for 2026 (agentic AI, physical AI)”<br />
+  2) “agentic AI demos open source code”<br />
+  3) “industrial AI deployment talks” [archive/_job.json]</li>
+</ul>
+<h3>2) 수집 소스 및 실행 설정</h3>
+<ul>
+<li>Tavily 검색 3회, YouTube 검색 2회, arXiv ID fetch 1건 및 recent search 1회 수행. [archive/_log.txt]</li>
+<li>중요한 제약(런 설정):</li>
+<li><code>youtube_transcript: false</code> → 영상 자막 미수집. [archive/_job.json]</li>
+<li><code>download_pdf: false</code> → arXiv PDF 미다운로드 및 본문 추출 없음. [archive/_job.json]</li>
+<li><code>openalex_enabled: false</code> → OpenAlex 기반 학술 확장 수집 없음. [archive/_job.json]</li>
+<li>인덱스도 “URLs 0 / YouTube transcript 0 / arXiv PDF 0”으로 메타 중심 런임을 명시. [archive/20260109_sectioned-index.md]</li>
+</ul>
+<h3>3) 분석 방법</h3>
+<ul>
+<li>(사실) Tavily 결과의 <code>content/summary</code>, YouTube의 제목·설명·태그·채널·게시일, arXiv의 제목·초록·카테고리를 근거로 트렌드 신호를 정리.</li>
+<li>(해석) “반복 출현 키워드/서술 구조”를 바탕으로 2026년 트렌드 프레임(표준화, 운영체계화, 산업 적용)을 도출하되, <strong>원문/자막/논문 본문 부재로 인해 단정적 결론을 피함</strong>.</li>
+</ul>
+<hr />
+<h2>Key Findings</h2>
+<h3>1) Agentic AI: “연결 표준 + 오케스트레이션 + 운영체계”로 무게중심 이동</h3>
+<p><strong>(사실)</strong> TechCrunch 요약에서는 MCP를 “USB‑C for AI”에 비유하며, 에이전트가 DB/검색/API 같은 외부 도구와 상호작용하기 위한 “missing connective tissue”로 설명한다. 또한 OpenAI/Microsoft의 MCP 수용, Anthropic의 Linux Foundation(Agentic AI Foundation) 기부, Google의 managed MCP 서버 언급이 포함되어 있다. 더불어 “agentic workflows finally move from demos into day-to-day practice”라는 전환(데모→일상) 내러티브가 제시된다. (요약 텍스트 근거)<br />
+- 출처: TechCrunch “In 2026, AI will move from hype to pragmatism” <a href="https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/">https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/</a> (Tavily 요약: [archive/tavily_search.jsonl])</p>
+<p><strong>(사실)</strong> MachineLearningMastery는 2026 트렌드를 <strong>multi-agent orchestration</strong>, <strong>MCP/A2A 프로토콜</strong>, <strong>FinOps for agents</strong>, <strong>거버넌스 성숙</strong> 등으로 정리하며, multi-agent orchestration을 “microservices moment”에 비유한다. (요약 텍스트 근거)<br />
+- 출처: MachineLearningMastery “7 Agentic AI Trends to Watch in 2026” <a href="https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/">https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/</a> (Tavily 요약: [archive/tavily_search.jsonl])</p>
+<p><strong>(해석)</strong> 위 두 자료의 공통점은 “에이전트 자체 성능”보다 <strong>(1) 도구/시스템 연결 표준화, (2) 멀티 에이전트 분업·조정, (3) 비용·거버넌스 같은 운영 역량</strong>을 2026년 전환점으로 본다는 점이다. 다만 MachineLearningMastery 요약에 포함된 Gartner 수치 등은 본 런에서 원문 교차검증이 불가하므로 그대로 사실로 확정하지 않는다.</p>
+<hr />
+<h3>2) Physical AI: 휴머노이드·웨어러블·산업현장 “파일럿→상용 확대” 담론</h3>
+<p><strong>(사실)</strong> Forbes 요약은 “physical AI”를 <strong>humanoid robotics</strong> 및 제조/물류 현장 적용으로 연결하며, “warehouses and factories”에서의 <strong>targeted commercial pilots</strong>, 안전·ROI 검증, 그리고 제조업이 파일럿을 넘어 “enterprise-wide real-world production”으로 이동한다는 서술을 담고 있다. 또한 “multi-agent orchestration”과 “agentic AI runs logistics and production end-to-end” 같은 전망이 함께 제시된다.<br />
+- 출처: Forbes “Agentic AI Takes Over — 11 Shocking 2026 Predictions” <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/">https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/</a> (Tavily 요약: [archive/tavily_search.jsonl])</p>
+<p><strong>(사실)</strong> TechCrunch 요약 역시 “Physical AI will hit the mainstream in 2026”라는 표현과 함께 로보틱스/AV/드론/웨어러블 등 물리 애플리케이션 확장을 언급한다. (요약 텍스트 근거)<br />
+- 출처: TechCrunch <a href="https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/">https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/</a> (Tavily 요약: [archive/tavily_search.jsonl])</p>
+<p><strong>(해석)</strong> 두 기사 요약이 공통적으로 보여주는 방향성은, 2026년 physical AI를 <strong>새 폼팩터(웨어러블) + 비용/배치 현실성 + 산업 현장 파일럿 확장</strong>의 관점에서 설명한다는 점이다. 단, 이는 요약 기반 관찰이며 실제 시장 규모·도입 속도는 추가 데이터가 필요하다.</p>
+<hr />
+<h3>3) 산업(Industrial) AI 배치: “플랫폼/OS + 디지털 트윈 + IT/OT 브리징” 키워드 부상(영상 메타 근거)</h3>
+<p><strong>(사실)</strong> YouTube 검색 결과(자막 없음)에서 Siemens의 CES 2026 키노트 영상 설명은 다음을 포함한다:<br />
+- Siemens &amp; NVIDIA 파트너십 확장, “Industrial AI Operating System” 구축 언급<br />
+- “Digital Twin Composer”(mid-2026 제공)<br />
+- PepsiCo 사례(시뮬레이션으로 90% 이슈 사전 탐지)<br />
+- Microsoft와의 IT/OT 브리징 및 “9 new Industrial Copilots” 언급<br />
+- Meta Ray-Ban AI Glasses의 shop floor 효율 연계 언급<br />
+- 영상 URL: <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs">https://www.youtube.com/watch?v=R4Wm6YdoZSs</a> (메타데이터: [archive/youtube/videos.jsonl])</p>
+<p><strong>(사실)</strong> Bloomberg Television 영상 메타에서도 “Nvidia, Siemens to Build Industrial AI Operating System” 인터뷰가 확인된다.<br />
+- 영상 URL: <a href="https://www.youtube.com/watch?v=orXtu_otjIQ">https://www.youtube.com/watch?v=orXtu_otjIQ</a> (메타데이터: [archive/youtube/videos.jsonl])</p>
+<p><strong>(해석)</strong> 자막이 없기 때문에 세부 주장 검증은 불가하지만, 메타데이터 수준에서 2026년 산업 AI 담론이 <strong>(1) 산업용 AI 운영체계/플랫폼, (2) 디지털 트윈 기반 엔지니어링, (3) IT/OT 통합 및 코파일럿 제품군</strong>으로 구조화되는 신호가 관찰된다.</p>
+<hr />
+<h3>4) 오픈소스/데모 생태계: “에이전트형 코딩/워크플로우 데모”가 YouTube·GitHub에서 두드러짐</h3>
+<p><strong>(사실)</strong> “agentic AI demos open source code” 관련 YouTube 메타데이터에서 다음 유형이 두드러진다.
+- LangGraph 기반 GraphRAG 워크플로우(Neo4j Cypher 생성/실행) 데모: SambaNova 영상 <a href="https://www.youtube.com/watch?v=2cwvj07cY8s">https://www.youtube.com/watch?v=2cwvj07cY8s</a> [archive/youtube/videos.jsonl]
+- “agentic coding LLM” 리뷰(Devstral 2, GLM-4.7 등) 및 벤치마크/터미널 워크플로우 강조:<br />
+  - <a href="https://www.youtube.com/watch?v=UcLDeH9PaI0">https://www.youtube.com/watch?v=UcLDeH9PaI0</a><br />
+  - <a href="https://www.youtube.com/watch?v=8ua4mszi_ss">https://www.youtube.com/watch?v=8ua4mszi_ss</a><br />
+  - <a href="https://www.youtube.com/watch?v=nB_L-wiA9Qc">https://www.youtube.com/watch?v=nB_L-wiA9Qc</a> [archive/youtube/videos.jsonl]
+- 코딩 에이전트 운영 도구 성격(“Auto Claude”): <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg">https://www.youtube.com/watch?v=s9nt8xaXFdg</a> (설명에 GitHub 링크 포함) [archive/youtube/videos.jsonl]</p>
+<p><strong>(사실)</strong> Tavily의 GitHub site 검색 결과로 “Agentic---Gen-AI”와 Udacity의 “agentic-ai-c4-exercises-demos” 등이 노출된다(요약/일부 텍스트만 확보).<br />
+- <a href="https://github.com/itsual/Agentic---Gen-AI">https://github.com/itsual/Agentic---Gen-AI</a> (Tavily 요약: [archive/tavily_search.jsonl])<br />
+- <a href="https://github.com/udacity/agentic-ai-c4-exercises-demos">https://github.com/udacity/agentic-ai-c4-exercises-demos</a> (Tavily 결과 일부: [archive/tavily_search.jsonl])</p>
+<p><strong>(해석)</strong> 오픈소스/콘텐츠 생태계의 초점이 “에이전트가 실제 도구를 호출해 과업을 수행하는 형태(코딩·RAG·터미널)”로 모이는 모습이며, 이는 앞서 언급된 “도구연결 표준(MCP)·워크플로우의 일상화” 담론과 상호 보강 관계로 해석 가능하다(단, 본 런만으로 인과를 단정할 수는 없음).</p>
+<hr />
+<h3>5) arXiv: 지시된 ID는 주제 부합 낮고, recent search에서 로보틱스 연결 후보가 관찰</h3>
+<p><strong>(사실)</strong> 지시문에 포함된 arXiv ID <code>2401.01234v1</code>은 생존분석/통계(“Mixture cure semiparametric additive hazard models…”)로 agentic/physical AI 트렌드와 직접 관련성이 낮다.<br />
+- Abs: <a href="http://arxiv.org/abs/2401.01234v1">http://arxiv.org/abs/2401.01234v1</a><br />
+- PDF: <a href="https://arxiv.org/pdf/2401.01234v1">https://arxiv.org/pdf/2401.01234v1</a><br />
+- 메타데이터: [archive/arxiv/papers.jsonl]</p>
+<p><strong>(사실)</strong> 반면 recent search 결과에는 로보틱스와의 접점이 명시된 컴퓨터비전 논문이 포함된다. 예: <code>2601.04194v1</code> “Choreographing a World of Dynamic Objects”(CHORD) – 2D 비디오에서 모션 정보를 증류해 4D 동역학을 생성하고 “robotics manipulation policies” 적용 가능성을 초록에 언급.<br />
+- Abs: <a href="http://arxiv.org/abs/2601.04194v1">http://arxiv.org/abs/2601.04194v1</a><br />
+- PDF: <a href="https://arxiv.org/pdf/2601.04194v1">https://arxiv.org/pdf/2601.04194v1</a><br />
+- 메타데이터: [archive/arxiv/papers.jsonl]</p>
+<hr />
+<h2>Trends &amp; Implications</h2>
+<p>1) <strong>에이전트 표준화 경쟁(연결·호환성)이 2026 논의의 중심축으로 부상</strong><br />
+- (사실 근거) TechCrunch 요약에서 MCP가 “missing connective tissue” 및 사실상 표준으로 빠르게 자리 잡는다고 서술. <a href="https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/">https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/</a><br />
+- (시사점/해석) 조직 관점에서는 “모델 선택”만이 아니라 <strong>도구 커넥터/권한/감사 로깅/런타임 정책</strong> 같은 표준 적합성이 도입의 속도를 좌우할 가능성이 커진다.</p>
+<p>2) <strong>멀티 에이전트는 ‘기능 확장’이 아니라 ‘시스템 아키텍처 변화’로 다뤄짐</strong><br />
+- (사실 근거) Forbes와 MachineLearningMastery 요약에서 multi-agent orchestration을 반복적으로 강조.<br />
+  - Forbes: <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/">https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/</a><br />
+  - MachineLearningMastery: <a href="https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/">https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/</a><br />
+- (시사점/해석) 분업형 에이전트가 늘수록 <strong>오류 전파, 책임 소재, 안전 제약(guardrails) 설계</strong>가 핵심 엔지니어링 이슈로 이동.</p>
+<p>3) <strong>Physical AI는 ‘하드웨어’보다 ‘배치 현실(비용/안전/ROI) + 적용처’ 프레임이 강함</strong><br />
+- (사실 근거) Forbes 요약의 “targeted commercial pilots… proving safety and ROI”, 제조에서 “enterprise-wide production” 이동 서술. <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/">https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/</a><br />
+- (시사점/해석) 2026년에는 “가능해 보이는 데모”보다 <strong>현장 KPI(결함률, 사이클 타임, 안전사고 등)로 검증 가능한 영역</strong>이 우선 상용화될 가능성이 시사된다.</p>
+<p>4) <strong>산업 AI는 ‘제품(모델)’이 아니라 ‘운영체계(OS)·디지털 트윈·IT/OT 통합’의 플랫폼 게임</strong><br />
+- (사실 근거) Siemens CES 2026 키노트 메타에서 Industrial AI Operating System, Digital Twin Composer, Industrial Copilots 등을 전면에 둠. <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs">https://www.youtube.com/watch?v=R4Wm6YdoZSs</a><br />
+- (시사점/해석) 공급망/제조 기업은 단일 PoC보다 <strong>엔지니어링 데이터 흐름(디지털 트윈)과 운영 시스템(OT)까지 관통하는 아키텍처</strong>가 중요해질 수 있다.</p>
+<hr />
+<h2>Risks &amp; Gaps (런 한계 및 추가 과제)</h2>
+<p>1) <strong>원문/자막/논문 본문 부재로 인한 검증 공백</strong>
+- (사실) <code>youtube_transcript: false</code>, <code>download_pdf: false</code> 설정으로 자막/논문 텍스트가 수집되지 않았다. [archive/_job.json]<br />
+- (영향/해석) 기사 요약에 포함된 수치·인용(예: Gartner/Forrester 등)과 영상에서의 구체 주장(예: “90% issue detection”의 조건/맥락)은 <strong>원문 확인 없이는 사실 확정이 불가</strong>하다.</p>
+<p>2) <strong>인덱스/메타 중심 런으로 URL 큐레이션이 제한</strong>
+- (사실) 인덱스에 “URLs 0”로 표기. [archive/20260109_sectioned-index.md]<br />
+- (영향/해석) Linkedin/news/github 등 “site hints”는 있었지만, 실제로는 Tavily 요약과 일부 GitHub 결과만 남아 <strong>근거 다양성이 제한</strong>된다.</p>
+<p>3) <strong>arXiv 지시 ID의 주제 부정합</strong>
+- (사실) <code>2401.01234v1</code>은 통계/생존분석 논문. <a href="http://arxiv.org/abs/2401.01234v1">http://arxiv.org/abs/2401.01234v1</a> [archive/arxiv/papers.jsonl]<br />
+- (영향/해석) “지시된 ID를 포함”해야 하는 형식적 요건은 충족했으나, 트렌드 분석의 학술 근거로는 기여도가 낮다. 대신 recent search 후보(예: <code>2601.04194v1</code>)가 physical AI 관점에서 더 직접적이다.</p>
+<p>4) <strong>권고되는 후속 수집(사실/검증 영역)</strong>
+- YouTube 자막 수집 활성화(<code>youtube_transcript: true</code>)로 Siemens/Bloomberg/GAEA Talks 등의 <strong>발화 내용 기반 인용</strong> 확보
+- arXiv PDF 다운로드 및 텍스트 추출로 <code>2601.04194v1</code> 등 <strong>로보틱스 연결 논문 본문 검토</strong>
+- TechCrunch/Forbes/Deloitte 페이지는 원문 전체를 별도 캡처하여 <strong>요약 왜곡 가능성 최소화</strong>(특히 수치·기관 인용)</p>
+<hr />
+<h2>Appendix: Key Files (본 런 산출물)</h2>
+<ul>
+<li>Instruction: <code>instruction/20260109.txt</code>  </li>
+<li>Run index: <code>archive/20260109_sectioned-index.md</code>  </li>
+<li>Job config: <code>archive/_job.json</code>  </li>
+<li>Log: <code>archive/_log.txt</code>  </li>
+<li>Tavily results: <code>archive/tavily_search.jsonl</code>  </li>
+<li>YouTube video metadata: <code>archive/youtube/videos.jsonl</code>  </li>
+<li>arXiv paper metadata: <code>archive/arxiv/papers.jsonl</code></li>
+</ul>
+<hr />
+<h2>References (원문 URL 포함)</h2>
+<ol>
+<li>Instruction file: <code>instruction/20260109.txt</code> (run artifact)  </li>
+<li>Run index: <code>archive/20260109_sectioned-index.md</code> (run artifact)  </li>
+<li>Job config: <code>archive/_job.json</code> (run artifact)  </li>
+<li>Log: <code>archive/_log.txt</code> (run artifact)  </li>
+<li>Forbes — “Agentic AI Takes Over — 11 Shocking 2026 Predictions” <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/">https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/</a> (Tavily 요약: <code>archive/tavily_search.jsonl</code>)  </li>
+<li>TechCrunch — “In 2026, AI will move from hype to pragmatism” <a href="https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/">https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/</a> (Tavily 요약: <code>archive/tavily_search.jsonl</code>)  </li>
+<li>MachineLearningMastery — “7 Agentic AI Trends to Watch in 2026” <a href="https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/">https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/</a> (Tavily 요약: <code>archive/tavily_search.jsonl</code>)  </li>
+<li>Deloitte — “AI goes physical: Navigating the convergence of AI and robotics” <a href="https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/physical-ai-humanoid-robots.html">https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/physical-ai-humanoid-robots.html</a> (Tavily 요약: <code>archive/tavily_search.jsonl</code>)  </li>
+<li>Deloitte — “The agentic reality check: Preparing for a silicon-based workforce” <a href="https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/agentic-ai-strategy.html">https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/agentic-ai-strategy.html</a> (Tavily 요약: <code>archive/tavily_search.jsonl</code>)  </li>
+<li>YouTube (SambaNova) — “Running Agentic GraphRAG workflows…” <a href="https://www.youtube.com/watch?v=2cwvj07cY8s">https://www.youtube.com/watch?v=2cwvj07cY8s</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (WorldofAI) — “Mistral Devstral 2…” <a href="https://www.youtube.com/watch?v=UcLDeH9PaI0">https://www.youtube.com/watch?v=UcLDeH9PaI0</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (Universe of AI) — “GLM-4.7…” <a href="https://www.youtube.com/watch?v=8ua4mszi_ss">https://www.youtube.com/watch?v=8ua4mszi_ss</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (Open Box Tech) — “GLM-4.7…” <a href="https://www.youtube.com/watch?v=nB_L-wiA9Qc">https://www.youtube.com/watch?v=nB_L-wiA9Qc</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (André Mikalsen) — “Auto Claude (Free &amp; Opensource)” <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg">https://www.youtube.com/watch?v=s9nt8xaXFdg</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (Bloomberg Television) — “Nvidia, Siemens to Build Industrial AI Operating System” <a href="https://www.youtube.com/watch?v=orXtu_otjIQ">https://www.youtube.com/watch?v=orXtu_otjIQ</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>YouTube (Siemens) — “The Industrial AI Revolution: Siemens Keynote at CES 2026” <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs">https://www.youtube.com/watch?v=R4Wm6YdoZSs</a> (<code>archive/youtube/videos.jsonl</code>)  </li>
+<li>arXiv — <code>2401.01234v1</code> <a href="http://arxiv.org/abs/2401.01234v1">http://arxiv.org/abs/2401.01234v1</a> ; PDF <a href="https://arxiv.org/pdf/2401.01234v1">https://arxiv.org/pdf/2401.01234v1</a> (<code>archive/arxiv/papers.jsonl</code>)  </li>
+<li>arXiv — <code>2601.04194v1</code> <a href="http://arxiv.org/abs/2601.04194v1">http://arxiv.org/abs/2601.04194v1</a> ; PDF <a href="https://arxiv.org/pdf/2601.04194v1">https://arxiv.org/pdf/2601.04194v1</a> (<code>archive/arxiv/papers.jsonl</code>)</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/">Agentic AI Takes Over — 11 Shocking 2026 Predictions - Forbes</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://techcrunch.com/2026/01/02/in-2026-ai-will-move-from-hype-to-pragmatism/">In 2026, AI will move from hype to pragmatism | TechCrunch</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://machinelearningmastery.com/7-agentic-ai-trends-to-watch-in-2026/">7 Agentic AI Trends to Watch in 2026 - MachineLearningMastery.com</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/physical-ai-humanoid-robots.html">AI goes physical: Navigating the convergence of AI and robotics</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/agentic-ai-strategy.html">The agentic reality check: Preparing for a silicon-based workforce</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/itsual/Agentic---Gen-AI">All projects related to Agentic and Gen AI - GitHub</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/udacity/agentic-ai-c4-exercises-demos">udacity/agentic-ai-c4-exercises-demos</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/Dash10107/agentic-ai">Dash10107/agentic-ai - GitHub</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/topics/agentic-ai">agentic-ai · GitHub Topics</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://github.com/simular-ai/Agent-S">Agent S: an open agentic framework that uses computers like a human</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.youtube.com/watch?v=2KwAkKBfSS4">Industrial AI: Transforming Manufacturing - YouTube</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.youtube.com/watch?v=tU2vtWhfWEc">MICCAI Industrial Talk: Real-World Lessons from Deploying AI ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.youtube.com/watch?v=sDaMtFXWCkY">Let's Talk Evolution #7 - AI in Traditional Industries - YouTube</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.youtube.com/watch?v=wyJdekiTdas">Beyond the hype, how industries are deploying AI at the heart of ...</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs">The Industrial AI Revolution: Siemens Keynote at CES 2026</a> [source: tavily; archive: <a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>]</li>
+<li><a href="http://arxiv.org/abs/2401.01234v1">Mixture cure semiparametric additive hazard models under partly interval censoring -- a penalized likelihood approach</a> [source: arxiv; archive: <a href="./archive/arxiv/papers.jsonl">./archive/arxiv/papers.jsonl</a>]</li>
+</ul>
+    </main>
+  </div>
+</body>
+</html>

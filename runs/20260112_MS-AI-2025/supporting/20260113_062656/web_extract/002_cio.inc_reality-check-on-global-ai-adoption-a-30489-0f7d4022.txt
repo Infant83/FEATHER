@@ -1,0 +1,208 @@
+**TRENDING:**
+
+* [AI in Cybersecurity: Insights from Palo Alto Networks Unit 42®](https://www.bankinfosecurity.com/blogs/ai-in-cybersecurity-insights-from-palo-alto-networks-unit-42-p-3772)•
+
+[Artificial Intelligence & Machine Learning](https://www.cio.inc/artificial-intelligence-machine-learning-c-469)
+
+# A Reality Check on Global AI Adoption
+
+Microsoft Report Identifies Uneven AI Usage Across 30 Global Markets  [Sandhya Michu](https://www.cio.inc/authors/sandhya-michu-i-6183) • January 10, 2026     
+
+* [Credit Eligible](/premium/pricing "As a BankInfoSecurity.com annual member, this content can be used toward your membership credits and transcript tracking.")
+
+Microsoft researchers say global adoption of generative AI tools reached 16.3% of the world’s population in the three months ending in December, up from 15.1% in the previous quarter. Yet the divide of AI adoption in developed and developing countries is widening, according to the AI Diffusion Report 2025 (H2) released by the Microsoft AI Economy Institute.
+
+**See Also:** [Traditional M365 Data Protection No Longer Enough](https://www.cio.inc/traditional-m365-data-protection-no-longer-enough-a-30074?rf=RAM_SeeAlso)
+
+"AI is diffusing at extraordinary speed, but not evenly," the report said. Advanced digital economies are integrating AI into everyday work far faster than emerging markets. The findings underscore a shift in the AI race from model development to real-world deployment in which diffusion, not innovation alone, determines who benefits most.
+
+Microsoft CEO Satya Nadella in a recent blog said, "The next phase of the AI will be defined by execution at scale rather than discovery. The industry is moving from model breakthroughs to the harder work of building systems that deliver real-world value."
+
+Among the top 30 countries, rankings remained largely stable between H1 and H2 2025. The United Arab Emirates recorded among the strongest gains, reaching 64.0% adoption - up 4.6% from H1. Singapore held steady at 60.9%, followed by Norway, Ireland, France and Spain. These countries have shown early and sustained investment in digital infrastructure, enterprise readiness and skills development, the report said.
+
+Globally, the number of AI users reached 16.3% in H2 2025, indicating that roughly one in six working-age individuals has used generative AI tools. By focusing on usage rather than research output or compute capacity, the report positions diffusion as the decisive factor shaping productivity, competitiveness and long-term economic advantage.
+
+The AI user share gap between the Global South and Global North continued to wide in 2025. (Image: Microsoft AI Economy Institute)
+
+Despite overall growth, the gap between regions continues to expand. Adoption in the Global North grew nearly twice as fast as in the Global South, widening from 9.8% to 10.6% in the past six months.
+
+At the lower end of the spectrum, countries such as Rwanda and Uzbekistan reported adoption rates of 5% to 6%, with gains of only 0.2% to 0.6%. An estimated 4 billion people are still outside the AI adoption wave, constrained by limited access to broadband, devices and digital skills.
+
+Although the United States dominates AI research and model development, it was ranked 24th in diffusion at 28.3%, recording a slight dip in H2. The data highlights a disconnect between technological leadership and broad-based usage.
+
+Nadella observed, "What matters is not the power of any given model, but how people choose to apply it to achieve their goals."
+
+Microsoft defines AI diffusion as the proportion of working-age individuals who have used generative AI tools within a defined period. This usage-based measurement shifts attention from venture funding, compute ownership or research output to real-world interaction including how AI is entering daily workflows, from coding and analysis to communication and content creation.
+
+### Alternative Paths and Structural Barriers
+
+The report also showed emerging AI diffusion paths outside traditional Western technology ecosystems. In parts of Africa and other developing regions, Chinese AI models such as DeepSeek are gaining traction by lowering barriers related to cost, compute intensity and language support. This suggests that AI adoption is increasingly shaped by ecosystem access and geopolitical alignment, not just technology leadership.
+
+Infrastructure gaps persist, language limitations reduce the effectiveness of many generative AI systems, and skills shortages constrain adoption when education and workforce training have not kept pace. Institutional capacity also plays a role, influencing trust, governance and public-sector deployment.
+
+At the same time, the diffusion metric captures breadth, not depth. A one-time interaction with a chatbot is measured the same as embedding AI into mission-critical enterprise systems. As a result, the report does not directly link usage to productivity gains, job quality, wage growth or public-sector outcomes metrics that matter most to policymakers and business leaders.
+
+Nadella predicted the next phase of AI progress will be "messy," defined less by technical breakthroughs and more by execution, equity and systems-level change.
+
+* [Artificial Intelligence & Machine Learning](https://www.cio.inc/artificial-intelligence-machine-learning-c-469)
+
+* [Credit Eligible](/premium/pricing "As a BankInfoSecurity.com annual member, this content can be used toward your membership credits and transcript tracking.")
+
+[Previous  
+Nvidia's Groq Deal: How AI Firms Are Avoiding Antitrust Risk](https://www.cio.inc/nvidias-groq-deal-how-ai-firms-are-avoiding-antitrust-risk-a-30478)
+
+[Next The Push for Agentic AI Standards Is Well Underway](https://www.cio.inc/push-for-agentic-ai-standards-well-underway-a-30490)
+
+  
+
+#### About the Author
+
+#### [Sandhya Michu](https://www.cio.inc/authors/sandhya-michu-i-6183)
+
+*Senior Assistant Editor - CIO.inc Editorial, ISMG*
+
+Michu is an experienced professional with over 10 years of expertise in the ICT industry. She has worked with leading media groups such as Cybermedia, 9.9 media and The Indian Express. Michu's focus areas include enterprise technology and government tech initiatives.
+
+---
+
+### You might also be interested in …
+
+##### [OnDemand | AI-Driven Endpoint Security: Adapting to Industry Changes](https://www.cio.inc/webinars/ondemand-ai-driven-endpoint-security-adapting-to-industry-changes-w-5742?rf=RAM_AlsoBeInterestedIn "OnDemand | AI-Driven Endpoint Security: Adapting to Industry Changes")
+
+##### [The Anatomy of a Deepfake: What if You Can’t Trust Your Own Eyes and Ears?](https://www.cio.inc/whitepapers/anatomy-deepfake-what-if-you-cant-trust-your-own-eyes-ears-w-13840?rf=RAM_AlsoBeInterestedIn "The Anatomy of a Deepfake: What if You Can’t Trust Your Own Eyes and Ears?")
+
+##### [From Cost Center to Strategic Asset: Automating Cyber Risk and Compliance](https://www.cio.inc/whitepapers/from-cost-center-to-strategic-asset-automating-cyber-risk-compliance-w-13834?rf=RAM_AlsoBeInterestedIn "From Cost Center to Strategic Asset: Automating Cyber Risk and Compliance")
+
+##### [Unlock the Future of Governance, Risk, and Compliance](https://www.cio.inc/whitepapers/unlock-future-governance-risk-compliance-w-13833?rf=RAM_AlsoBeInterestedIn "Unlock the Future of Governance, Risk, and Compliance")
+
+##### [The Need for a New Integrated GRC Architecture](https://www.cio.inc/whitepapers/need-for-new-integrated-grc-architecture-w-13832?rf=RAM_AlsoBeInterestedIn "The Need for a New Integrated GRC Architecture")
+
+##### [OnDemand | Protecting Your AI: Strategies for Securing AI Systems](https://www.cio.inc/webinars/ondemand-protecting-your-ai-strategies-for-securing-ai-systems-w-5549?rf=RAM_AlsoBeInterestedIn "OnDemand | Protecting Your AI: Strategies for Securing AI Systems")
+
+##### [The Total Economic Impact™ Of Palo Alto Networks Software Firewalls](https://www.cio.inc/whitepapers/total-economic-impact-palo-alto-networks-software-firewalls-w-13527?rf=RAM_AlsoBeInterestedIn "The Total Economic Impact™ Of Palo Alto Networks Software Firewalls")
+
+##### [IDC Whitepaper I Business Value of Dell VxRail HCI](https://www.cio.inc/whitepapers/idc-whitepaper-i-business-value-dell-vxrail-hci-w-13394?rf=RAM_AlsoBeInterestedIn "IDC Whitepaper I Business Value of Dell VxRail HCI")
+
+##### [OnDemand | Europe Under Siege: State-Backed Cyber Threats Unleash Malware - AI's Tactical Response](https://www.cio.inc/webinars/ondemand-europe-under-siege-state-backed-cyber-threats-unleash-malware-w-5387?rf=RAM_AlsoBeInterestedIn "OnDemand | Europe Under Siege: State-Backed Cyber Threats Unleash Malware - AI's Tactical Response")
+
+### Around the Network
+
+[##### Getting a Tighter Grip on Third-Party AI Risk in Healthcare](https://www.bankinfosecurity.asia/interviews/getting-tighter-grip-on-third-party-ai-risk-in-healthcare-i-5512)
+
+[##### How AI Will Reshape Health Data Breach, Attack Trends](https://www.bankinfosecurity.asia/interviews/how-ai-will-reshape-health-data-breach-attack-trends-i-5511)
+
+[##### Preparing Healthcare Workers for Secure, Responsible AI Use](https://www.bankinfosecurity.asia/interviews/preparing-healthcare-workers-for-secure-responsible-ai-use-i-5510)
+
+[##### AI-Driven Attacks and the Future of Security](https://www.bankinfosecurity.asia/interviews/ai-driven-attacks-future-security-i-5516)
+
+[##### How to Talk to the Board About Agentic AI](https://www.bankinfosecurity.asia/interviews/how-to-talk-to-board-about-agentic-ai-i-5508)
+
+[##### Reducing Cyber, Privacy Risks in Healthcare Sector M&As](https://www.bankinfosecurity.asia/interviews/reducing-cyber-privacy-risks-in-healthcare-sector-mas-i-5513)
+
+[##### Red Team Brainstorming With GPTs Accelerates Threat Modeling](https://www.bankinfosecurity.asia/interviews/red-team-brainstorming-gpts-accelerates-threat-modeling-i-5517)
+
+[##### Why Smart Glasses in Hospitals Are Not a Bright Idea](https://www.bankinfosecurity.asia/interviews/smart-glasses-in-hospitals-are-bright-idea-i-5509)
+
+[##### Implantable Brain Devices: Top Cyber and Privacy Concerns](https://www.bankinfosecurity.asia/interviews/implantable-brain-devices-top-cyber-privacy-concerns-i-5514)
+
+[##### AI Use Cases in Healthcare: Growth, Governance and Risk](https://www.bankinfosecurity.asia/interviews/ai-use-cases-in-healthcare-growth-governance-risk-i-5515)
+
+### Subscribe
+
+Continue »
+
+[Continue to site »](javascript:void(0))
+
+### Operation Success!
+
+[Continue to site »](javascript:void(0))
+
+## Risk Management Framework: Learn from NIST
+
+## [Risk Management Framework: Learn from NIST](https://www.cio.inc/webinars/risk-management-framework-learn-from-nist-w-255)
+
+90 minutes · Premium OnDemand
+
+* Twitter
+* Facebook
+* LinkedIn
+
+From heightened risks to increased regulations, senior leaders at all levels are pressured to improve their organizations' risk management capabilities. But no one is showing them how - until now.
+
+Learn the fundamentals of developing a risk management program from the man who wrote the book on the topic: Ron Ross, computer scientist for the National Institute of Standards and Technology. In an exclusive presentation, Ross, lead author of NIST Special Publication 800-37 - the bible of risk assessment and management - will share his unique insights on how to:
+
+* Understand the current cyber threats to all public and private sector organizations;
+* Develop a multi-tiered risk management approach built upon governance, processes and information systems;
+* Implement NIST's risk management framework, from defining risks to selecting, implementing and monitoring information security controls.
+
+## Presented By
+
+## [Presented By](/authors/ron-ross-i-558)
+
+#### [Ron Ross](/authors/ron-ross-i-558)
+
+*Sr. Computer Scientist & Information Security Researcher, National Institute of Standards and Technology (NIST)*
+
+[Continue to site »](javascript:void(0))
+
+#### A Reality Check on Global AI Adoption
+
+Was added to your briefcase
+
+[Visit My Briefcase](/my-briefcase) or [Close this Dialog](javascript:void(0))
+
+### Request to Republish Content
+
+### Email this Content
+
+### Join the ISMG Community
+
+### Join the ISMG Community
+
+---
+
+##### Need help registering?
+
+Contact Support
+
+### Sign in to ISMG
+
+---
+
+#### Don't have one of these accounts?
+
+Create an ISMG account now
+
+[Create an ISMG account now](#dynamic-popup)
+
+---
+
+Need help registering?  
+ Contact support
+
+### Forgot Your Password?
+
+---
+
+#### Already have an ISMG account?
+
+[Sign in now](javascript:void(0))
+
+---
+
+Need help registering?  
+ [Contact support](javascript:void(0))
+
+### Forgot Your Password Message:
+
+### Contact Us
+
+---
+
+#### Already have an ISMG account?
+
+[Sign in now](javascript:void(0))
+
+Our website uses cookies. Cookies enable us to provide the best experience possible and help us understand how visitors use our website. By browsing cio.inc, you agree to our use of cookies.
+
+ 

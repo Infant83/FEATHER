@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>OLED 발광재료를 위한 양자컴퓨팅 - 수동 리뷰</title>
+  <style>
+    :root {
+      --ink: #1f1c18;
+      --muted: #5a5450;
+      --accent: #8b3f2d;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e6ded0;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 15% -10%, #f0ece4 0%, #f7f4ee 45%, #fdfcf9 100%);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      line-height: 1.65;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    header {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-size: 0.82rem;
+    }
+    h1 {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 2.2rem;
+      margin: 8px 0 6px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    main {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    h2 {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 1.5rem;
+      margin-top: 2.2rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    h3 {
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      font-size: 1.1rem;
+      margin-top: 1.4rem;
+    }
+    p { font-size: 1.05rem; }
+    ul { padding-left: 1.4rem; }
+    li { margin: 0.4rem 0; }
+    a { color: #1d4e89; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .note {
+      background: var(--paper-alt);
+      border-left: 3px solid var(--accent);
+      padding: 0.6rem 1rem;
+      margin: 1.2rem 0;
+      color: var(--muted);
+    }
+    .refs ol { padding-left: 1.2rem; }
+    .refs li { margin: 0.5rem 0; }
+    .misc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 1.2rem;
+    }
+    .misc ul { margin: 0.4rem 0 0.8rem 1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="kicker">수동 리뷰</div>
+      <h1>OLED 발광재료를 위한 양자컴퓨팅: 근거 기반 리뷰</h1>
+      <div class="subtitle">실행: 20260110_qc-oled (instruction + archive 기반 수동 종합)</div>
+    </header>
+    <main>
+      <h2>요약</h2>
+      <p>
+        OLED 발광재료에 양자컴퓨팅을 적용했다는 가장 직접적인 근거는 IBM 주도의 양자화학 연구다.
+        이 연구는 OLED 효율에 중요한 TADF 발광체의 여기 상태 에너지를 목표로 하며,
+        현재 장비에서 오류 완화 기법을 사용했다.<a href="#ref-1">[1]</a><a href="#ref-2">[2]</a><a href="#ref-4">[4]</a>
+      </p>
+      <p>
+        산업계의 소재 탐색 신호는 OTI Lumionics 같은 전문 소재 기업에 집중되어 있다.
+        이들은 고전 하드웨어로 양자 워크플로를 모사하면서도,
+        양자화학 알고리즘이 OLED 발광체 설계 파이프라인을 가속한다고 주장한다.<a href="#ref-5">[5]</a>
+      </p>
+      <p>
+        분자 생성용 AI 파이프라인(GNN property predictors)은 목표 전자 특성에 맞는 후보 분자를
+        생성하고 DFT로 검증할 만큼 성숙했으며, OLED 탐색 스택에서 양자 접근을 보완하는
+        현실적인 단기 대안이다.<a href="#ref-8">[8]</a>
+      </p>
+      <p>
+        대형 디스플레이 OEM(삼성디스플레이, LG디스플레이)은 QD-OLED와 소재/공정 혁신을 강조하지만,
+        OLED R&amp;D 파이프라인에서 양자컴퓨팅 사용을 공개적으로 언급하지 않는다. UDC 공개 자료도
+        공급 및 라이선스에 초점이 맞춰져 있다.<a href="#ref-11">[11]</a><a href="#ref-12">[12]</a><a href="#ref-13">[13]</a><a href="#ref-14">[14]</a>
+      </p>
+
+      <h2>범위 및 방법론</h2>
+      <p>
+        본 보고서는 instruction 파일 <a href="./instruction/20260110.txt">./instruction/20260110.txt</a>과
+        이번 실행의 archive 소스를 사용한다. archive에는 웹 검색 인덱스
+        (<a href="./archive/tavily_search.jsonl">./archive/tavily_search.jsonl</a>)와 OpenAlex PDF/텍스트
+        (<a href="./archive/openalex/works.jsonl">./archive/openalex/works.jsonl</a> 및 추출 텍스트)가 포함된다.
+        대상 기간은 지난 365일이며, 이번 실행에서는 arXiv ID가 포함되지 않았다
+        (참고: <a href="./archive/20260110_qc-oled-index.md">./archive/20260110_qc-oled-index.md</a>).
+      </p>
+      <p class="note">
+        OpenAlex 항목 중에는 주제와 거리가 있는 자료가 있다. 본 리뷰는 OLED 소재 탐색,
+        양자컴퓨팅, AI 기반 소재 설계에 실질적으로 기여하는 자료만 인용했다.
+      </p>
+
+      <h2>핵심 발견</h2>
+      <h3>1) OLED 발광체 물성에 대한 직접적인 양자컴퓨팅 증거</h3>
+      <ul>
+        <li>
+          IBM 및 공동 연구는 OLED 효율에 관련된 TADF 발광체의 여기 상태를
+          VQE/qEOM-VQE/VQD와 오류 완화 기법으로 계산했다고 보고한다.<a href="#ref-1">[1]</a><a href="#ref-4">[4]</a>
+        </li>
+        <li>
+          IBM 뉴스룸 자료는 20-큐비트 규모의 양자화학 연구가 OLED 소재와 연결된다고 밝힌다.<a href="#ref-2">[2]</a>
+        </li>
+        <li>
+          Mitsubishi Chemical / IBM Q Hub 문서는 OLED 소재의 광학 특성 예측을 다루며,
+          더 정확한 발광체 설계로 이어질 수 있는 경로로 설명한다.<a href="#ref-3">[3]</a>
+        </li>
+      </ul>
+
+      <h3>2) 산업적 소재 탐색 신호: 전문 소재 기업이 더 빠르다</h3>
+      <ul>
+        <li>
+          OTI Lumionics는 qubit coupled cluster ansatz 등 양자화학 알고리즘이
+          현재 하드웨어 한계를 우회하면서도 OLED 소재 탐색에 생산적으로 활용 가능하다고 주장한다.<a href="#ref-5">[5]</a>
+        </li>
+        <li>
+          UDC 공개 자료는 장기 공급 및 라이선스에 집중되어 있으며,
+          양자컴퓨팅 방법론은 명시되지 않는다.<a href="#ref-14">[14]</a>
+        </li>
+      </ul>
+
+      <h3>3) AI 기반 소재 생성은 단기 가속기로 현실적</h3>
+      <ul>
+        <li>
+          Nature Communications 연구는 GNN 특성 예측기를 분자 생성기로 사용해
+          분자 그래프를 직접 최적화하고 DFT로 검증하는 파이프라인을 제시한다.<a href="#ref-8">[8]</a>
+        </li>
+        <li>
+          Quantum-AI 시너지 리뷰는 화학·소재가 단기 응용에 유력하다고 보면서도,
+          NISQ 한계와 오류 정정 필요성을 강조한다.<a href="#ref-7">[7]</a>
+        </li>
+      </ul>
+
+      <h3>4) OLED 소재 설계는 다변수·고차원 문제</h3>
+      <ul>
+        <li>
+          유기 발광체 리뷰는 전기방사·형광 유기 나노닷 등 다양한 제작 경로를 제시하며,
+          고차원 설계 공간이 계산 가속에는 유리하지만 검증을 복잡하게 만든다.<a href="#ref-9">[9]</a>
+        </li>
+        <li>
+          삼성·LG의 공개 커뮤니케이션은 QD-OLED 소재/공정 혁신과 공급망 진전을 강조하며,
+          양자컴퓨팅 채택은 공개적으로 드러나지 않는다. 이는 QC가 공개 OEM 파이프라인보다는
+          상류 단계 또는 연구 컨소시엄에서 진행되고 있음을 시사한다.<a href="#ref-11">[11]</a><a href="#ref-12">[12]</a><a href="#ref-13">[13]</a>
+        </li>
+      </ul>
+
+      <h2>동향 및 시사점</h2>
+      <ul>
+        <li>
+          <strong>단기 가치는 ‘좁고 깊게’ 나타난다.</strong> 가장 강한 QC 근거는 특정 TADF 발광체의
+          여기 상태 계산에 집중되어 있다. 이는 QC가 고전적 스크리닝을 대체하기보다는,
+          후보 분자에 대한 정밀 검증 도구로 먼저 쓰일 가능성을 시사한다.<a href="#ref-1">[1]</a><a href="#ref-4">[4]</a>
+        </li>
+        <li>
+          <strong>하이브리드 파이프라인이 가장 현실적이다.</strong> AI 기반 분자 생성(GNN 특성 최적화)이
+          고가치 후보군을 축소해 QC 또는 DFT 검증으로 연결하면,
+          조합 탐색 부담을 줄일 수 있다.<a href="#ref-8">[8]</a>
+        </li>
+        <li>
+          <strong>산업 채택은 전문 업체에 집중된다.</strong> 전문 소재 기업(OTI Lumionics)이 대형 OEM보다
+          QC 활용 의지를 명시하는 사례가 많아, QC 통합이 OEM 연구소보다 공급망을 통해
+          확산될 가능성이 있다.<a href="#ref-5">[5]</a>
+        </li>
+        <li>
+          <strong>양자 소재 연구가 하드웨어 발전의 토대다.</strong> 양자 소재 리뷰는 강상관·위상·양자
+          가둠 효과를 미래 양자기술의 핵심 동인으로 지목하며, 이는 OLED 소재 탐색이 기대는
+          양자 하드웨어 확장의 전제 조건이다.<a href="#ref-6">[6]</a>
+        </li>
+      </ul>
+
+      <h2>리스크 및 공백</h2>
+      <ul>
+        <li>
+          <strong>하드웨어 한계가 여전히 병목이다.</strong> NISQ 시대 장비는 오류 완화에 크게 의존하며,
+          완전한 오류 내성은 아직 실용 규모에 이르지 못했다. 이는 직접 모델링 가능한
+          분자 크기와 복잡도를 제한한다.<a href="#ref-7">[7]</a><a href="#ref-10">[10]</a>
+        </li>
+        <li>
+          <strong>OEM 채택의 공개 증거가 부족하다.</strong> 삼성/LG/UDC의 공개 커뮤니케이션은
+          제품·공급망 성과에 집중되어 있어, 연구 파트너십을 넘어선 산업 적용 여부를
+          확인하기 어렵다.<a href="#ref-11">[11]</a><a href="#ref-12">[12]</a><a href="#ref-13">[13]</a><a href="#ref-14">[14]</a>
+        </li>
+        <li>
+          <strong>소재 복잡성이 알고리즘 능력을 상회할 수 있다.</strong> OLED 성능은 안정성, 수명,
+          계면 효과, 적층 구조 통합에 좌우된다. 현재 QC 데모는 고립 분자의 여기 상태에
+          집중되어 있어, 시스템의 일부만 다룬다.
+        </li>
+        <li>
+          <strong>소스 이질성이 노이즈를 만든다.</strong> 검색 결과에는 비관련 분야(예: 적응형 외피, 종양학)
+          자료가 포함되어 있어, 자동화 파이프라인에서 더 강한 필터와 도메인 제약이 필요하다.
+        </li>
+      </ul>
+
+      <h2>비평</h2>
+      <p>
+        신중한 비평가라면 OLED-양자컴퓨팅 서사는 아직 “약속”에 더 가깝다고 말할 것이다.
+        가장 뚜렷한 근거는 특정 여기 상태 연구와 보도자료이며, 재현 가능한 대규모 산업 적용
+        사례는 드물다. 현재 시점에서 가장 실행 가능한 혁신은 AI 기반 분자 생성과 고전
+        양자화학 개선일 수 있으며, QC는 제한된 분자와 검증 작업에 쓰이는 고위험·고보상
+        계층으로 남을 가능성이 높다. 오류 내성 시스템이 성숙하기 전까지는 OEM이
+        QC 파이프라인보다 p-도펀트, QD-OLED 공정 수율 등 점진적 소재 개선을 선호할 수 있다.
+      </p>
+
+      <h2>부록</h2>
+      <div class="refs">
+        <h3>참고문헌</h3>
+        <ol>
+          <li id="ref-1">IBM Research 블로그: <a href="https://research.ibm.com/blog/quantum-for-oled">https://research.ibm.com/blog/quantum-for-oled</a></li>
+          <li id="ref-2">IBM 뉴스룸 라운드테이블(OLED + 양자화학): <a href="https://newsroom.ibm.com/archive-IBM-research?item=32320">https://newsroom.ibm.com/archive-IBM-research?item=32320</a></li>
+          <li id="ref-3">Mitsubishi Chemical / IBM Q Hub PDF: <a href="https://www.mcgc.com/english/news_mcc/2021/__icsFiles/afieldfile/2021/05/26/qhubeng.pdf">https://www.mcgc.com/english/news_mcc/2021/__icsFiles/afieldfile/2021/05/26/qhubeng.pdf</a></li>
+          <li id="ref-4">npj Computational Materials(TADF 발광체): <a href="https://www.nature.com/articles/s41524-021-00540-6">https://www.nature.com/articles/s41524-021-00540-6</a></li>
+          <li id="ref-5">OTI Lumionics 보도자료: <a href="https://www.globenewswire.com/news-release/2025/06/18/3101674/0/en/OTI-Lumionics-Releases-Breakthrough-Algorithms-for-Quantum-Chemistry-Simulations.html">https://www.globenewswire.com/news-release/2025/06/18/3101674/0/en/OTI-Lumionics-Releases-Breakthrough-Algorithms-for-Quantum-Chemistry-Simulations.html</a></li>
+          <li id="ref-6">양자 소재 리뷰(텍스트): <a href="./archive/openalex/text/W4406477905.txt">./archive/openalex/text/W4406477905.txt</a> (DOI: <a href="https://doi.org/10.1186/s40712-024-00202-7">10.1186/s40712-024-00202-7</a>)</li>
+          <li id="ref-7">Quantum-AI 시너지 리뷰(텍스트): <a href="./archive/openalex/text/W4417018335.txt">./archive/openalex/text/W4417018335.txt</a> (DOI: <a href="https://doi.org/10.63721/25JPAIR0118">10.63721/25JPAIR0118</a>)</li>
+          <li id="ref-8">GNN 특성 예측기(텍스트): <a href="./archive/openalex/text/W4410193211.txt">./archive/openalex/text/W4410193211.txt</a> (DOI: <a href="https://doi.org/10.1038/s41467-025-59439-1">10.1038/s41467-025-59439-1</a>)</li>
+          <li id="ref-9">유기 발광체 리뷰(텍스트): <a href="./archive/openalex/text/W4406330631.txt">./archive/openalex/text/W4406330631.txt</a> (DOI: <a href="https://doi.org/10.1007/s10904-024-03567-6">10.1007/s10904-024-03567-6</a>)</li>
+          <li id="ref-10">양자칩→뉴로모픽 예측 챕터(텍스트): <a href="./archive/openalex/text/W4410446803.txt">./archive/openalex/text/W4410446803.txt</a> (DOI: <a href="https://doi.org/10.70593/978-93-49910-47-8_12">10.70593/978-93-49910-47-8_12</a>)</li>
+          <li id="ref-11">LG Display + LG Chem p-도펀트 공개: <a href="https://www.lgcorp.com/media/release/26853">https://www.lgcorp.com/media/release/26853</a></li>
+          <li id="ref-12">Samsung Quantum Dot 가이드: <a href="https://news.samsung.com/ca/real-quantum-dot-guide-samsungs-innovations-redefine-picture-quality-standards">https://news.samsung.com/ca/real-quantum-dot-guide-samsungs-innovations-redefine-picture-quality-standards</a></li>
+          <li id="ref-13">Samsung Quantum Dots 인터뷰: <a href="https://news.samsung.com/global/how-samsungs-engineering-feat-became-a-catalyst-for-scientific-and-industry-advancement-interview-on-real-quantum-dots-part-2">https://news.samsung.com/global/how-samsungs-engineering-feat-became-a-catalyst-for-scientific-and-industry-advancement-interview-on-real-quantum-dots-part-2</a></li>
+          <li id="ref-14">UDC 보도자료(공급/라이선스): <a href="https://ir.oled.com/newsroom/press-releases/press-release-details/2026/Tianma-and-Universal-Display-Corporation-Enter-into-Long-Term-OLED-Agreements/default.aspx">https://ir.oled.com/newsroom/press-releases/press-release-details/2026/Tianma-and-Universal-Display-Corporation-Enter-into-Long-Term-OLED-Agreements/default.aspx</a></li>
+        </ol>
+      </div>
+
+      <div class="misc">
+        <h3>기타</h3>
+        <ul>
+          <li>Codex가 수동으로 작성함(DeepAgents 및 hidair 실행 없음).</li>
+          <li>사용한 소스: 이 실행 폴더의 instruction 및 archive 내용.</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

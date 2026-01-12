@@ -1,0 +1,372 @@
+ 
+1 
+Applications of Quantum Computing for Investigations 
+of Electronic Transitions in Phenylsulfonyl-carbazole 
+TADF Emitters 
+Qi Gao1,2*, Gavin O. Jones3*, Mario Motta3, Michihiko Sugawara2, Hiroshi C. Watanabe2,Takao Kobayashi1, 
+Eriko Watanabe1,2, Yu-ya Ohnishi2,4, Hajime Nakamura2,5, Naoki Yamamoto2 
+1Mitsubishi Chemical Corporation, Science & Innovation Center, 
+1000, Kamoshida-cho, Aoba-ku, Yokohama 227-8502, Japan 
+2Quantum Computing Center, Keio University, Hiyoshi 3-14-1, Kohoku, Yokohama 223-8522, Japan 
+3IBM Quantum, IBM Research – Almaden, 650 Harry Road, San Jose, CA 95120, USA 
+4Materials Informatics Initiative, Yokkaichi Research Center, 
+JSR Corporation, 100 Kawajiri-cho, Yokkaichi, Mie, 510-8552, Japan 
+5IBM Research – Tokyo, 19-21 Nihonbashi Chuo-ku, Tokyo 103-8510, Japan 
+6Department of Applied Physics and Physico-Informatics, Keio University, Hiyoshi 3-14-1, Kohoku, Yokohama 223-
+8522, Japan 
+A quantum chemistry study of the first singlet (S1) and triplet (T1) excited states of phenylsulfonyl-
+carbazole compounds, proposed as useful thermally activated delayed fluorescence (TADF) emitters for 
+organic light emitting diode (OLED) applications, was performed with the quantum Equation-Of-Motion 
+Variational Quantum Eigensolver (qEOM-VQE) and Variational Quantum Deflation (VQD) algorithms on 
+quantum simulators and devices. These quantum simulations were performed with double zeta quality 
+basis sets on an active space comprising the highest occupied and lowest unoccupied molecular orbitals 
+(HOMO, LUMO) of the TADF molecules. The differences in energy separations between S1 and T1 (∆𝐸!") 
+predicted by calculations on quantum simulators were found to be in excellent agreement with 
+experimental data. Differences of 16 and 88 mHa with respect to exact energies were found for excited 
+states by using the qEOM-VQE and VQD algorithms, respectively, to perform simulations on quantum 
+devices without error mitigation. By utilizing error mitigation by state tomography to purify the quantum 
+states and correct energy values, the large errors found for unmitigated results could be improved to 
+differences of, at most, 3 mHa with respect to exact values. Consequently, excellent agreement could be 
+found between values of ∆𝐸!" predicted by quantum simulations and those found in experiments. 
+ 
+Introduction 
+ One of the major constraints of modern electronic 
+ 
+*Corresponding authors. E-mail: caoch@user.keio.ac.jp; gojones@us.ibm.com  
+structure methods used for quantum chemical 
+calculations on classical computing architecture is 
+
+ 
+2 
+the difficulty of finding eigenvalues of eigenvectors of 
+the electronic Hamiltonian. [1] The advent of 
+quantum computing, which has demonstrated 
+tremendous synergistic advances in both hardware 
+and software capabilities in recent years, may 
+provide invaluable support in the investigation of the 
+electronic structure of molecules and materials, 
+especially with regards to dynamical properties. 
+However, quantum computing is still, in many ways, 
+a nascent technology, and quantum devices are 
+currently 
+hamstrung 
+by 
+noisiness 
+and 
+short 
+decoherence times. Thus, quantum algorithms, such 
+as the Variational Quantum Eigensolver (VQE) 
+algorithm, [2] are currently being used to find 
+eigenvalues for approximate Ansätze suitable for 
+constructing relatively short circuits that can be used 
+for quantum chemistry calculations. [3]  
+ A number of quantum computing use cases for 
+chemistry have been investigated on quantum 
+devices in the recent past. One of the first 
+applications highlighted the construction of ground 
+state dissociation profiles of hydrogen, lithium 
+hydride and beryllium hydride via computation using 
+an IBM Q quantum device. [3] Researchers have also 
+performed computational studies on the mechanism 
+of the rearrangement of the lithium superoxide dimer 
+using larger devices. [4] In the latter case, the orbital 
+determinants 
+of 
+the 
+stationary 
+points 
+were 
+extensively examined to identify a suitable orbital 
+active space for which a reduced number of qubits 
+could be used for computation given the current 
+limitations of these devices. Simulations performed 
+on classical hardware reproduced calculations 
+involving the exact eigensolver known as Full 
+Configuration Interaction (Full CI or FCI) for this 
+process. 
+However, 
+calculations 
+performed 
+on 
+quantum devices using hardware efficient Ansätze 
+such as Ry were less capable of reproducing exact 
+energies due to noise.  
+ In addition to using the VQE algorithm to 
+compute energies for the dissociation profiles of 
+molecules and the potential energy surfaces for 
+reactions, various algorithms, among them the 
+Quantum Equation-of-Motion VQE (qEOM-VQE) [5] 
+and 
+Variational 
+Quantum 
+Deflation 
+(VQD) 
+algorithms [6], have been developed in order to 
+compute excited states of molecules. In particular, 
+Ollitrault et al. have demonstrated computation of the 
+first three excited states on the dissociation profile for 
+lithium hydride on IBM Quantum hardware. [5] 
+ Here, we take an initial step towards the 
+application of algorithms such as qEOM-VQE and 
+VQD to determine excitation energies of industrially 
+relevant molecules. The subject of this study is 
+thermally activated delayed fluorescence (TADF) 
+emitters suitable for organic light emitting diode 
+(OLED) 
+applications. [7] 
+Once 
+the 
+separation 
+between the first singlet (S1) and triplet (T1) excited 
+states (∆𝐸!" ) is sufficiently small, non-emissive T1 
+excitons can be thermally excited to an emissive S1 
+state, providing the emission mechanism of TADF 
+emitters. The mechanism enables OLED devices 
+comprised of TADF emitters to potentially perform 
+with 100% internal quantum efficiency, in contrast to 
+devices comprising conventional fluorophores for 
+which the quantum efficiencies are inherently limited 
+to 25%. TADF emitters have been demonstrated as 
+next-generation emission materials for a range of 
+fluorophores and have been utilized in the fabrication 
+of efficient OLEDs. [7–12] 
+ To date there have been a number of 
+computational studies on predictions of ∆𝐸!" to aid in 
+the design of novel TADF materials. [12–17] Based 
+on those investigations, a well-established strategy 
+for designing TADF molecules involves identifying 
+emitters in which HOMO and LUMO are spatially 
+separated and localized on appropriate moieties. 
+Previous demonstrations have shown that a series of 
+phenylsulfonyl-9H-carbazole (PSPCz) molecules are 
+useful as TADF emitters due to the fact that the ∆𝐸!" 
+
+ 
+3 
+of these molecules can be finely tuned by modifying 
+their electronic properties. [18] We have elected to 
+perform quantum chemical investigations on the 
+molecules, PSPCz, 2F-PSPCz, 4F-PSPCz (Figure 
+1), using quantum devices and simulators.  
+ 
+Fig 1. Molecular structures of the PSPCz, 2F-PSPCz and 
+4F-PSPCz molecules. 
+ Notably, all three molecules of interest require 
+the use of many more qubits than are currently 
+available on useful quantum hardware or that can be 
+reliably simulated using classical architecture. Thus, 
+qubit reduction techniques must be applied in order 
+to simulate the transition amplitudes of interest to this 
+study. We have reduced the number of spatial 
+orbitals to those that are absolutely necessary to 
+describe the processes under investigation and have 
+thus focused on transitions involving the HOMO and 
+LUMO active space for each molecule. This strategy 
+has allowed reduction of the number of qubits to just 
+two after applying spin parity reduction.   
+ Simulations of the qEOM-VQE and VQD 
+algorithms were performed on classical devices using 
+heuristic Ansätze, in order to assess the accuracy of 
+these techniques. Particular attention was paid to 
+comparisons with experimental data  [18] which 
+indicate that these procedures produce meaningful 
+data for predicting the ∆𝐸!"  of TADF emitters. 
+Moreover, we have shown that these simulations can 
+provide a detailed picture about how structural 
+variation in phenylsulfonyl/carbazole molecules tunes 
+the S1 and T1 excitations. Finally, we have found that 
+simulations performed on a quantum device without 
+error mitigation were much less reliable than results 
+provided by quantum simulators. This is attributed to 
+the fact that the quantum state of the ground state 
+predicted on devices is a mixed state.  
+ We have examined various strategies to solve 
+this issue and have found that the most accurate 
+procedure involves the use of state tomography to 
+purify the mixed ground state obtained from the 
+quantum device prior to application of readout error 
+mitigation to the calculation involving the excited 
+state. We note that since the state tomography 
+purification approach can, in principle, be applied to 
+other methods for computing excited states on 
+quantum computers  [19,20], and can be extended to 
+systems requiring large number of qubits by purifying 
+the 
+quantum 
+state 
+using 
+a 
+computationally 
+inexpensive iterative approach, [21] or by applying 
+quantum principal component analysis, [22] or 
+variational quantum state diagonalization, [23] we 
+believe that it can be generally useful for quantum 
+chemistry simulations of excited states on near-term 
+quantum devices. 
+ 
+Methods  
+Four computational steps were performed in 
+order to evaluate the electronic transitions between 
+the singlet and triplet excited states of the PSPCz 
+molecules: (i) structural optimization on classical 
+architecture, (ii) computation of ground state (GS) 
+energies on quantum simulators and quantum  
+devices utilizing the HOMO-LUMO active space, (iii) 
+error mitigation applied to ground state energies 
+obtained from quantum devices, (iv) computation of 
+the first singlet and triplet excited states (S1 and T1), 
+using quantum simulators and quantum devices.  
+Optimized geometries of the first triplet excited 
+state (T1) of all PSPCz molecules were generated 
+using the TDDFT routines contained in the 
+Gaussian16 computational suite of programs [24] 
+using the CAM-B3LYP/6-31G(d) method and basis 
+set. The Tamm-Dancoff approximation (TDA) [25], 
+which has been reported to be accurate for the 
+calculation 
+of 
+triplet 
+excited 
+states [26], 
+was 
+employed for all TDDFT calculations. For the sake of 
+simplicity, the optimized geometries of the T1 excited 
+
+ 
+4 
+states were used for both the S1 and T1 excited states 
+based on the fact that the HOMO-LUMO overlap (i.e. 
+exchange integral) in TADF molecules is so small that 
+the properties of the S1 and T1 states should be quite 
+similar, except for the spin component, and the 
+structures of these excited states should also be 
+similar.  
+The HOMO and LUMO was chosen as the active 
+space for calculating the ground state (S0), and S1 
+and T1 excited states because the HOMO and LUMO 
+of the target molecules are spatially fairly well-
+separated as shown in Figure 2, and both the S1 and 
+T1 states can be well described by a transition arising 
+from the HOMO, with atomic orbitals localized on the 
+carbazole moiety, to the LUMO, with atomic orbitals 
+localized on the diarylsulfone (ArSO2Ar-) moieties. 
+ 
+ 
+Fig 2. HOMO and LUMO orbitals of the triplet state 
+optimized structures of PSPCz, 2F-PSPCz and 4F-PSPCz, 
+respectively. 
+Calculations were performed to obtain ground 
+state energies on quantum simulators and devices by 
+utilizing the VQE algorithm and the Ry heuristic 
+Ansätze with a circuit depth equal to 1. Energies were 
+computed using the STO-3G minimal basis set and 
+the split-level double zeta basis set 6-31G(d). The 
+parity mapping technique [27], which allows the 
+number of qubits to be reduced by two, was used to 
+map molecular spin-orbitals to qubits. The Aqua 
+module contained in Qiskit version 0.14  [28] with an 
+interface to the PySCF [29] program was used for all 
+VQE calculations. 
+Calculations 
+were 
+performed 
+using 
+the 
+statevector and qasm simulators contained in the 
+Aer module of Qiskit, as well as on the 
+ibmq_boeblingen and ibmq_singapore 20-
+qubit quantum devices. The statevector simulator 
+computes wavefunctions and expectation values 
+exactly, by means of linear algebra operations. In 
+contrast, the qasm simulator samples quantum 
+mechanical probability distributions that can be 
+determined exactly by means of linear algebra 
+operations, or by approximating actual decoherence 
+processes occurring on hardware when used with 
+noise models. The user specifies the number of 
+statistical samples, or shots, drawn from the target 
+probability distribution when using the qasm 
+simulator.  
+The Sequential Least SQuares Programming 
+(SLSQP) method [30], which uses the exact gradient 
+for energy minimization and has been found to 
+provide 
+accurate 
+predictions 
+without 
+noise 
+present, [31] was used for calculations using the 
+statevector 
+simulator. 
+The 
+Simultaneous 
+Perturbation 
+Stochastic 
+Approximation 
+(SPSA) [32,33] method, which is a good optimizer in 
+the presence of noise, [34] was used for calculations 
+on quantum devices.  
+The readout error mitigation and quantum state 
+tomography techniques provided in Qiskit were used 
+to mitigate errors in the generation of variational 
+parameters, q, and ground state energies.  
+The four basis states of the two-qubit system, 
+namely |00>, |01>, |10> and |11>, were measured for 
+the readout error mitigation technique. A vector with 
+the probability for the four basis states was created 
+for every measurement, and the combination of all 
+four vectors resulted in the formation of a 4x4 matrix 
+from which a calibration matrix was generated by 
+least-squares fitting. The calibration matrix was 
+applied to the measurement of Pauli terms in the VQE 
+calculation to correct the energy value of ground 
+state. The values of q in Ry were then calculated 
+using a classical optimizer..  
+
+ 
+5 
+ 
+Fig 3. Quantum circuit implementing the Ry Ansätze for 2 
+qubits. 
+ 
+The quantum state tomography technique 
+involves purification of the state by diagonalizing the 
+density matrix and selection of the pure state with the 
+maximum eigenvalue resulting from this process. The 
+ground state energy is then refined by computing the 
+expectation value of the Hamiltonian with respect to 
+the obtained pure state. The Ry q values 
+corresponding to the purified ground state were 
+determined by fitting the vector of the Ansätze to the 
+purified maximum eigenstate. Figure 3 shows that the 
+Ry circuit for the two-qubit system produces an output 
+state Y(q) that can be represented as a linear 
+combination of the four basis states |00>, |01>, |10> 
+and |11>, with coefficients given by Equation 1. 
+Note that 300 iterations were performed without 
+error mitigation prior to application of the readout 
+error mitigation or quantum state tomography 
+techniques to obtain a quantum state which is close 
+to the ground state generated without noise. The 
+optimized parameters obtained from VQE without 
+error mitigation was used as the initial state for VQE 
+calculations combined with readout error mitigation, 
+and the optimized wavefunction was determined by 
+using previously published protocols. [34] The 
+optimized wavefunction obtained from the use of 
+quantum state tomography was determined by using 
+the density matrix of the final result obtained from 
+VQE without error mitigation contained in the 
+tomography module of the Ignis element of Qiskit. 
+The optimized wavefunction found by application 
+of the readout error mitigation and quantum state 
+tomography techniques to ground states computed 
+with VQE were used to compute the energies of the 
+S1 and T1 excited states by the use of the qEOM-
+VQE [5] and VQD  [6,31] algorithms. The values of 
+matrix elements of the EOM (equation of motion) 
+were computed on quantum devices using the 
+qEOM-VQE algorithm with the GS obtained from 
+VQE as the reference state. The matrix was then 
+diagonalized on a classical computer and the first and 
+second eigenvalues regarded as the en

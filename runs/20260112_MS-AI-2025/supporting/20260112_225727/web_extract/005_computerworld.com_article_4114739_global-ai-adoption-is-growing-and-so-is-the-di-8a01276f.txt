@@ -1,0 +1,264 @@
+[truncated]
+* [Latest](https://www.computerworld.com/news/)
+* [Newsletters](https://www.computerworld.com/newsletters/signup/)
+* [Resources](https://us.resources.computerworld.com/)
+* [Buyer’s Guides](https://www.computerworld.com/enterprise-buyers-guide/)
+* [Events](https://www.computerworld.com/events/)
+
+## Topics
+
+* [Generative AI](https://www.computerworld.com/generative-ai/)
+* [Office Suites](https://www.computerworld.com/office-suites/)
+* [Collaboration Software](https://www.computerworld.com/collaboration-software/)
+* [Productivity Software](https://www.computerworld.com/productivity-software/)
+* [Windows](https://www.computerworld.com/windows/)
+* [Android](https://www.computerworld.com/android/)
+* [Apple](https://www.computerworld.com/apple/)
+* [Augmented Reality](https://www.computerworld.com/augmented-reality/)
+* [Emerging Technology](https://www.computerworld.com/emerging-technology/)
+* [Mobile](https://www.computerworld.com/mobile/)
+* [Hybrid and Remote Work](https://www.computerworld.com/remote-work/)
+* [Artificial Intelligence](https://www.computerworld.com/artificial-intelligence/)
+* [Operating Systems](https://www.computerworld.com/operating-systems/)
+* [Careers](https://www.computerworld.com/careers/)
+* [IT Leadership](https://www.computerworld.com/it-leadership/)
+* [IT Management](https://www.computerworld.com/it-management/)
+* [IT Operations](https://www.computerworld.com/it-operations/)
+* [Industry](https://www.computerworld.com/industry/)
+* [Cloud Computing](https://www.computerworld.com/cloud-computing/)
+* [Computers and Peripherals](https://www.computerworld.com/computers-and-peripherals/)
+* [Analytics](https://www.computerworld.com/analytics/)
+* [Data Center](https://www.computerworld.com/data-center/)
+* [Enterprise Applications](https://www.computerworld.com/enterprise-applications/)
+* [Networking](https://www.computerworld.com/networking/)
+* [Security](https://www.computerworld.com/security/)
+* [Vendors and Providers](https://www.computerworld.com/vendors-and-providers/)
+* [Enterprise Buyer’s Guides](https://www.computerworld.com/enterprise-buyers-guide/)
+
+## About
+
+* [About Us](https://www.computerworld.com/about-us/)
+* [Advertise](https://foundryco.com/our-brands/computerworld/)
+* [Contact Us](https://www.computerworld.com/contact-us/)
+* [Editorial Ethics Policy](https://www.computerworld.com/editorial-ethics-policy/)
+* [Foundry Careers](https://foundryco.com/work-here/)
+* [Reprints](https://www.computerworld.com/contact-us/#republication-permissions)
+* [Newsletters](https://www.computerworld.com/newsletters/signup/)
+* [Contribute to Computerworld](https://www.computerworld.com/expert-contributor-network/)
+
+## Policies
+
+* [Terms of Service](https://foundryco.com/terms-of-service-agreement/)
+* [Privacy Policy](https://foundryco.com/privacy-policy/)
+* [Cookie Policy](https://foundryco.com/cookie-policy/)
+* [Copyright Notice](https://foundryco.com/copyright-notice/)
+* [Member Preferences](https://www.computerworld.com/member-preferences/)
+* [About AdChoices](https://foundryco.com/ad-choices/)
+* [Your California Privacy Rights](https://foundryco.com/ccpa/)
+
+## Our Network
+
+* [CIO](https://www.cio.com/)
+* [CSO](https://www.csoonline.com/)
+* [InfoWorld](https://www.infoworld.com/)
+* [Network World](https://www.networkworld.com/)
+
+## More
+
+* [News](https://www.computerworld.com/news/)
+* [Features](https://www.computerworld.com/feature/)
+* [Opinion](https://www.computerworld.com/opinion/)
+* [Blogs](https://www.computerworld.com/blogs/)
+* [BrandPosts](https://www.computerworld.com/brandposts/)
+* [Events](https://www.computerworld.com/events/)
+* [Podcasts](https://www.computerworld.com/podcasts/)
+* [Videos](https://www.computerworld.com/videos/)
+* [Enterprise Buyer’s Guides](https://www.computerworld.com/enterprise-buyers-guide/)
+
+by [Paul Barker](https://www.computerworld.com/profile/paul-barker/)
+
+# Global AI adoption is growing, and so is the digital divide
+
+news
+
+Jan 8, 20266 mins
+
+## A Microsoft AI Economy Institute study shows stark differences between nations located in 'Global North' versus 'Global South'.
+
+Global adoption of AI in the second half of 2025 rose by 1.2 percentage points compared to the first half of the year, a report released Thursday by the Microsoft AI Economy Institute (AIEI) indicates.
+
+According to the [findings](https://www.microsoft.com/en-us/corporate-responsibility/topics/AI-Economy-Institute/reports/Global-AI-Adoption-2025/) from the Microsoft [think tank](https://www.microsoft.com/en-us/research/group/aiei/), whose principle mandate is to shape what it calls an inclusive, trustworthy AI economy, despite one person in six now using generative AI (genAI) tools, there exists what it described as a “widening divide.”
+
+The adoption rate in nations that are situated in the region known as the [Global North](https://www.britannica.com/topic/Global-North-and-Global-South), a term used for developed nations regardless of their geographic location, is at 24.7% of the working age population, far higher than the 14.1% figure in the Global South, those countries either under development or least developed.
+
+Other key findings revealed that:
+
+* Nations that invested early in digital infrastructure, AI skilling, and government adoption, such as the United Arab Emirates, Singapore, Norway, Ireland, France, and Spain, continue to lead.
+* The top 10 nations with the largest increases in AI adoption share are all high-income economies.
+* While the US is the leader in both AI infrastructure and frontier model development, it fell from 23rd to 24th place in AI usage by its working age population, with a 28.3% usage rate. It lags far behind smaller, more highly digitized and AI-focused economies such as Ireland (44%), New Zealand (40.5%), Belgium (36%), and Canada (35%). South Korea (30.7%) led the world in growth, with usage surging by almost 5% in the second half of the year..
+* A parallel development that reshaped the global landscape was the rapid rise of [DeepSeek](https://www.computerworld.com/article/3815603/deepseek-latest-news-and-insights.html). Its success, the AIEI contends, reflects growing Chinese momentum across Africa, which is a trend that could continue in 2026.
+
+To track the overall global increase of 1.2%, the executive summary stated, “we measure AI diffusion as the share of people worldwide who have used a genAI product during the reporting period. This measure is derived from aggregated and anonymized Microsoft telemetry and then adjusted to reflect differences in OS and device market share, internet penetration, and country population.”
+
+## Methodology limitations
+
+[Brian Jackson](https://www.infotech.com/profiles/brian-jackson), principal research director at Info-Tech Research Group, said, “one thing worth noting is that when they say Microsoft telemetry, what they mean is they have data on what some Windows users are doing (those who agree to share their data with Microsoft), and then they are making some adjustments to try to account for AI use on mobile platforms. So, if a user with an Android phone or iOS device is using ChatGPT, Microsoft isn’t capturing that, but at least they try to acknowledge that through some sort of methodology.”
+
+Jackson pointed out that the researchers address these shortcomings in their methodology in a [separate document](https://arxiv.org/pdf/2511.02781) that is part of  the report’s references list, saying, “Nevertheless, our methodology carries some limitations. Because our metric originates with Microsoft telemetry, it is inherently biased toward desktop platforms and the Microsoft user demographic.”
+
+They go on to say, “although we apply rigorous adjustments and scaling factors, our results implicitly assume that user behavior in Microsoft products approximates that in other platforms, which may not always hold true. Future iterations of this research could mitigate this limitation by integrating data from mobile app analytics providers such as Sensor Tower or leveraging web traffic analytics from tools like Semrush or SimilarWeb.”
+
+However, Jackson noted, “aside from that methodology quirk, the findings are generally positive for genAI firms because the usage is up across the board. That means there’s still a growing appetite to at least try these tools. The researchers mostly want to draw attention to how AI use will contribute to the growing digital divide. They conclude that internet access is a big limiter of AI adoption in developing countries, but there is a big demand for it.”
+
+[Sanchit Vir Gogia](https://greyhoundresearch.com/svg/), chief analyst at Greyhound Research, added, “the biggest mistake in reading these adoption numbers is assuming generative AI is a single behavior that everyone moves through in the same way. It isn’t. What we’re seeing instead is a split.”
+
+## Usage becoming more intentional
+
+Some people, he said, “try AI out of curiosity and move on. Others keep it for a small number of tasks where it clearly helps, like drafting, analysis, coding, or summarizing. And in many organizations, AI is no longer something people consciously ‘use’ at all. It’s being built into systems, platforms, and workflows, quietly doing work in the background. When you collapse all of that into one metric, the data naturally looks confusing.”
+
+Gogia said that, yes, some early experimentation does drop off, and that’s completely normal. “But that doesn’t mean people are abandoning AI,” he said. “What’s really happening is that usage becomes more intentional. Once someone restructures how they work around AI assistance, that habit tends to stick.”
+
+Individuals, he explained, “may open fewer tools and spend less time prompting, but the work itself has changed [in that] genAI doesn’t behave like a consumer social app that needs constant engagement. It behaves more like infrastructure. Its value comes from replacing steps, not grabbing attention. When a step disappears, so does visible usage, even though dependence increases.”
+
+This trend, said Gogia, “[also] helps explain why many developed economies look surprisingly weak on first-use measures. These markets aren’t falling behind. They’re actually further along in absorption. In digitally mature environments, AI increasingly arrives as an upgrade or a default feature, not as a shiny new tool you actively opt into.”
+
+People inherit the capability, he said, rather than consciously adopting it, so they under-report its usage. But at the same time, he noted, “governance moves slowly. Legal review, procurement, and risk assessments delay official rollout, but behavior doesn’t wait. Employees experiment quietly, teams prototype locally, and real adoption builds long before institutions catch up.”
+
+Inside enterprises, “the clearest signal that AI is sticking is what happens when it’s taken away,” Gogia observed. “In organizations that have pulled back AI after pilot phases, teams consistently report slower work, more friction, and real frustration. That reaction matters. It tells you AI has crossed from experimentation into reliance.”
+
+Budgets tell the same story. “GenAI is no longer fighting for innovation funding,” he said. “It’s being folded into operating spend, security planning, and governance models. Those are the kinds of conversations organizations only have when a capability is becoming unavoidable.”
+
+[Artificial Intelligence](https://www.computerworld.com/artificial-intelligence/)[Generative AI](https://www.computerworld.com/generative-ai/)
+
+SUBSCRIBE TO OUR NEWSLETTER
+
+### From our editors straight to your inbox
+
+Get started by entering your email address below.
+
+by [Paul Barker](https://www.computerworld.com/profile/paul-barker/)
+
+Paul Barker is a freelance journalist whose work has appeared in a number of technology magazines and online, including [IT World Canada](https://www.itworldcanada.com/author/paulbarker), [Channel Daily News](https://channeldailynews.com/author/paulbarker), and Financial Post. He covers topics ranging from cybersecurity issues and the evolving world of edge computing to information management and artificial intelligence advances.
+
+Paul was the founding editor of Dot Commerce Magazine, and held editorial leadership positions at Computing Canada and ComputerData Magazine. He earned a B.A. in Journalism from Ryerson University.
+
+## More from this author
+
+* [news
+
+  ### Mozilla appoints new CEO, unveils new AI focus
+
+  Dec 16, 2025 5 mins](https://www.computerworld.com/article/4107464/mozilla-appoints-new-ceo-unveils-new-ai-focus.html)
+* [news
+
+  ### It’s everyone but Meta in a new AI standards group
+
+  Dec 10, 2025 5 mins](https://www.computerworld.com/article/4104554/its-everyone-but-meta-in-a-new-ai-standards-group-2.html)
+* [news
+
+  ### Microsoft lets shopping bots loose in a sandbox
+
+  Nov 7, 2025 8 mins](https://www.computerworld.com/article/4086907/microsoft-lets-shopping-bots-loose-in-a-sandbox.html)
+* [news
+
+  ### Windows 10’s market share is more than hanging in there despite being at end of support
+
+  Nov 4, 2025 6 mins](https://www.computerworld.com/article/4084497/windows-10s-market-share-is-more-than-hanging-in-there-despite-being-at-end-of-support.html)
+* [news
+
+  ### OpenAI spends even more money it doesn’t have
+
+  Nov 3, 2025 6 mins](https://www.computerworld.com/article/4083715/openai-spends-even-more-money-it-doesnt-have-2.html)
+* [news
+
+  ### OpenAI preps models to replace banking, consulting jobs
+
+  Oct 30, 2025 5 mins](https://www.computerworld.com/article/4082222/openai-preps-models-to-replace-banking-consulting-jobs.html)
+* [news
+
+  ### Otter.ai launches features to embed it in the enterprise
+
+  Oct 7, 2025 6 mins](https://www.computerworld.com/article/4069224/otter-ai-launches-features-to-embed-it-in-the-enterprise.html)
+* [news
+
+  ### Qualcomm defeats Arm’s final legal arguments in licensing trial
+
+  Oct 1, 2025 4 mins](https://www.computerworld.com/article/4066729/qualcomm-defeats-arms-final-legal-arguments-in-licensing-trial.html)
+
+## Show me more
+
+[news
+
+### Global AI adoption is growing, and so is the digital divide
+
+By Paul Barker
+
+Jan 8, 20266 mins
+
+Artificial IntelligenceGenerative AI](https://www.computerworld.com/article/4114739/global-ai-adoption-is-growing-and-so-is-the-digital-divide.html)
+
+[news
+
+### Microsoft scraps criticized change in Exchange Online
+
+By Mikael Markander
+
+Jan 8, 20261 min
+
+Collaboration SoftwareEmail ClientsMicrosoft Exchange](https://www.computerworld.com/article/4114627/microsoft-scraps-criticized-change-in-exchange-online.html)
+
+[news
+
+### JP Morgan Chase wins the hunt for the Apple Card
+
+By Jonny Evans
+
+Jan 8, 20265 mins
+
+AppleFinancial Services IndustryMarkets](https://www.computerworld.com/article/4114448/jp-morgan-chase-wins-the-hunt-for-the-apple-card.html)
+
+[podcast
+
+### AI Threatens Bank Jobs, Nvidia Licenses Groq, Gmail Changes | Ep. 32
+
+By Arnold Davick
+
+Jan 7, 20262 mins
+
+BankingGmailNvidia](https://www.computerworld.com/podcast/4113951/ai-threatens-bank-jobs-nvidia-licenses-groq-gmail-changes-ep-32.html)
+
+[podcast
+
+### Ransomware Guilty Pleas, Cheaper AI, Meta Deal | Ep. 31
+
+By Arnold Davick
+
+Jan 6, 20262 mins
+
+Artificial IntelligenceCybercrimeRansomware](https://www.computerworld.com/podcast/4113334/ransomware-guilty-pleas-cheaper-ai-meta-deal-ep-31.html)
+
+[podcast
+
+### Inbox AI, buggy AI code, and “slop” | Ep. 30
+
+By Arnold Davick
+
+Dec 23, 20252 mins
+
+Artificial IntelligenceCode Security](https://www.computerworld.com/podcast/4111264/inbox-ai-buggy-ai-code-and-slop-ep-30.html)
+
+[### The AI divide is growing for SMBs — Here’s how they can still win
+
+Jan 8, 202635 mins
+
+Artificial IntelligenceGenerative AI](https://www.computerworld.com/video/4114547/the-ai-divide-is-growing-for-smbs-heres-how-they-can-still-win.html)
+
+[video
+
+### AI Threatens Bank Jobs, Nvidia Licenses Groq, Gmail Changes | Ep. 32
+
+By Arnold Davick
+
+Jan 7, 20262 mins
+
+BankingGmailNvidia](https://www.computerworld.com/video/4113959/ai-threatens-bank-jobs-nvidia-licenses-groq-gmail-changes-ep-32

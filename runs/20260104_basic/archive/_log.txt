@@ -1,0 +1,8 @@
+[2026-01-08 22:47:56] JOB START: 20260104.txt date=2026-01-04 days=30 max_results=8
+[2026-01-08 22:47:56] LINKEDIN EMBED EXTRACT: https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q
+[2026-01-08 22:47:57] TAVILY EXTRACT: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf
+[2026-01-08 22:47:58] TAVILY SEARCH: oled
+[2026-01-08 22:48:03] TAVILY SEARCH: quantum computing
+[2026-01-08 22:48:05] TAVILY SEARCH: recent 30 days
+[2026-01-08 22:48:10] ARXIV RECENT SEARCH: query='quantum computing' days=30
+[2026-01-08 22:48:12] JOB END

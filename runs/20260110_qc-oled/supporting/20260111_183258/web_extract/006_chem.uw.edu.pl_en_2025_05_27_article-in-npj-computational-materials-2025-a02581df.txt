@@ -1,0 +1,32 @@
+Ta strona wykorzystuje ciasteczka ("cookies") w celu zapewnienia maksymalnej wygody w korzystaniu z naszego serwisu. Czy wyrażasz na to zgodę?
+
+[Czytaj więcej](https://www.uw.edu.pl/polityka-obslugi-cookies-ciasteczek-w-serwisach-uw/ "Czytaj więcej o plikach cookies wykorzystywanych w domenie uw.edu.pl")
+
+
+
+# Article in npj Computational Materials (2025)
+
+27  05 2025
+
+**Photochemistry on your laptop**
+
+Simulating photophysical and photochemical processes — such as photoisomerization, intersystem crossing, or charge transfer — is essential for understanding how biological photoreceptors, solar cells, or molecular switches work. However, realistic modeling of molecular dynamics in excited states requires access to accurate information on multiple electronic potential energy surfaces and their couplings, making such simulations computationally very demanding. For years, theoretical photochemistry has been seeking a balance between accuracy and efficiency — and now, with the advent of machine learning, new opportunities are emerging in this field.
+
+**Machine learning for excited states**
+
+In a study published in *npj Computational Materials*, **researchers from the Faculty of Chemistry at the University of Warsaw — Dr. Joanna Jankowska and Mikołaj Martyka, MSc** — in collaboration with a team from Xiamen University, proposed a new type of neural network designed to simultaneously model multiple electronic states in molecules. The architecture of this model enables better treatment of correlations between excited electronic states while also improving accuracy for the ground state.
+
+In addition, the team developed an *active learning* protocol that allows artificial intelligence to learn how to simulate a molecule’s photochemistry based solely on its structure. A key innovation is the use of *gap-driven dynamics* — a strategy that guides the active learning algorithm toward the most critical regions of conformational space, where energy gaps between states are smallest and the dynamics most complex. As a result, the model achieves high accuracy at a significantly lower computational cost.
+
+**What’s next?**
+
+The proposed method represents the first step toward a universal machine learning model capable of efficiently describing molecular dynamics in excited states. Future work will focus on extending the method to more complex, photoreactive systems. In parallel, the team is working on a general-purpose model trained on large photochemical datasets, which could serve as a precise and universal predictor of molecular behavior in excited states.
+
+**Publication:**
+
+*Charting electronic-state manifolds across molecules with multi-state learning and gap-driven dynamics via efficient and robust active learning*  
+ Mikołaj Martyka, Lina Zhang, Fuchun Ge, Yi-Fan Hou, Joanna Jankowska\*, Mario Barbatti\*, Pavlo O. Dral\*  
+ **npj Computational Materials**  
+ (2025), DOI: 10.1038/s41524-025-01636-z
+
+« [Seminar 11.06.2025](https://www.chem.uw.edu.pl/en/2025/05/23/seminar-11-06-2025/)[Article in Science Advances (2025)](https://www.chem.uw.edu.pl/en/2025/05/27/article-in-science-advances-2025/) »

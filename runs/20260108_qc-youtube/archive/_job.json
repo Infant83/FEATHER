@@ -1,0 +1,95 @@
+{
+  "date": "2026-01-08",
+  "src_file": "C:\\Users\\angpa\\myProjects\\HiDair-feather\\examples\\instructions\\20260108.txt",
+  "root_dir": "runs\\20260108_qc-youtube",
+  "out_dir": "runs\\20260108_qc-youtube\\archive",
+  "query_id": "20260108_qc-youtube",
+  "set_id": "qc-youtube",
+  "lang_pref": null,
+  "openalex_enabled": false,
+  "openalex_max_results": 5,
+  "youtube_enabled": true,
+  "youtube_max_results": 5,
+  "youtube_transcript": true,
+  "youtube_order": "date",
+  "days": 30,
+  "max_results": 5,
+  "download_pdf": false,
+  "queries": [
+    "quantum computing AI industry use cases recent 30 days",
+    "quantum machine learning industry applications overview",
+    "quantum computing for AI acceleration tutorial",
+    "quantum computing for AI engineers lecture",
+    "quantum computing AI industrial use cases panel",
+    "Nature quantum computing AI applications",
+    "Nature Communications quantum computing AI open access",
+    "Science quantum computing AI applications",
+    "IEEE Spectrum quantum computing industry",
+    "PRX Quantum quantum machine learning"
+  ],
+  "query_specs": [
+    {
+      "text": "quantum computing AI industry use cases recent 30 days",
+      "hints": []
+    },
+    {
+      "text": "quantum machine learning industry applications overview",
+      "hints": []
+    },
+    {
+      "text": "quantum computing for AI acceleration tutorial",
+      "hints": []
+    },
+    {
+      "text": "quantum computing for AI engineers lecture",
+      "hints": []
+    },
+    {
+      "text": "quantum computing AI industrial use cases panel",
+      "hints": []
+    },
+    {
+      "text": "Nature quantum computing AI applications",
+      "hints": []
+    },
+    {
+      "text": "Nature Communications quantum computing AI open access",
+      "hints": []
+    },
+    {
+      "text": "Science quantum computing AI applications",
+      "hints": []
+    },
+    {
+      "text": "IEEE Spectrum quantum computing industry",
+      "hints": []
+    },
+    {
+      "text": "PRX Quantum quantum machine learning",
+      "hints": []
+    }
+  ],
+  "urls": [
+    "https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s"
+  ],
+  "arxiv_ids": [
+    "2401.01234",
+    "2311.12345"
+  ],
+  "site_hints": [],
+  "raw_lines": [
+    "quantum computing AI industry use cases recent 30 days",
+    "quantum machine learning industry applications overview",
+    "quantum computing for AI acceleration tutorial",
+    "quantum computing for AI engineers lecture",
+    "quantum computing AI industrial use cases panel",
+    "Nature quantum computing AI applications",
+    "Nature Communications quantum computing AI open access",
+    "Science quantum computing AI applications",
+    "IEEE Spectrum quantum computing industry",
+    "PRX Quantum quantum machine learning",
+    "arXiv:2401.01234",
+    "arXiv:2311.12345",
+    "https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s"
+  ]
+}

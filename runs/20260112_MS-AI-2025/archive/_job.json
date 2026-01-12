@@ -1,0 +1,30 @@
+{
+  "date": "2026-01-12",
+  "src_file": "examples\\instructions\\20260112.txt",
+  "root_dir": "runs\\20260112_MS-AI-2025",
+  "out_dir": "runs\\20260112_MS-AI-2025\\archive",
+  "query_id": "20260112_MS-AI-2025",
+  "set_id": "MS-AI-2025",
+  "lang_pref": null,
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 8,
+  "download_pdf": true,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf"
+  ],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf"
+  ]
+}

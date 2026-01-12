@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-01-12 23:57:34",
+  "started_at": "2026-01-12 23:46:41",
+  "duration_seconds": 653.2,
+  "duration_hms": "00:10:53",
+  "model": "gpt-5.2",
+  "quality_model": "gpt-5.2",
+  "quality_iterations": 1,
+  "quality_strategy": "pairwise",
+  "template": "nature_journal",
+  "output_format": "html",
+  "pdf_status": "disabled"
+}

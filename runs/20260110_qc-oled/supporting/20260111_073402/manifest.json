@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-01-11T07:34:26.556657",
+  "queries": [
+    "quantum computing excited-state chemistry TADF emitter \"VQE\" \"VQD\" qEOM-VQE 2023..2026 site:nature.com s41524 OLED",
+    "\"Unlocking today's quantum computers for OLED applications\" IBM Research blog quantum-for-oled date 2024..2026"
+  ],
+  "summary": "Web research queries: 2\nWeb search results stored: web_search.jsonl\nWeb extracts stored: web_extract",
+  "report_prompt": "지난 12개월 동안의 양자컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광재료 개발 관점에서 분석해줘.\n특히 다음을 포함해 정리해줘:\n- 양자컴퓨팅이 재료 탐색/설계에 쓰이는 주요 흐름(알고리즘, 워크플로, 데이터 파이프라인)\n- OLED 발광재료(형광/인광/TADF/CP-OLED 등) 탐색에 적용된 접근과 성과\n- 삼성디스플레이, LG디스플레이, UDC 등 산업계의 시도와 공개 정보의 한계\n- 학계 연구 흐름과 산업 적용 간의 간극, 가장 큰 병목과 해결 과제\n- 2~3개의 대표적 연구/산업 시나리오를 근거와 함께 제시\n- 향후 12~24개월 내 기대되는 변화와 의사결정자용 후속 질문\n\n출처는 논문/리뷰/공식 발표/신뢰 가능한 업계 자료를 우선으로 하고, 웹 검색으로 보강한 내용은 “supporting”으로 구분해 활용해줘."
+}

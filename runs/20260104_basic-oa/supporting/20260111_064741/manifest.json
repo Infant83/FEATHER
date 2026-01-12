@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-01-11T06:48:31.575829",
+  "queries": [
+    "\"High aspect ratio organic light-emitting diodes\" Nature Communications 2025 corrugated substrate VTE lifetime 2.7x light extraction 40%",
+    "s41467-025-67312-4 \"high aspect ratio OLED\" supplementary information thickness uniformity deposition angle shadowing defect yield",
+    "\"Recent Progress in Stretchable OLED Design and Applications\" island-bridge buckling intrinsically stretchable electrode encapsulation water vapor barrier cycles 15000",
+    "stretchable OLED encapsulation \"ultrathin barrier\" WVTR 10^-6 \"cyclic stretching\" failure mode crack propagation"
+  ],
+  "summary": "Web research queries: 4\nWeb search results stored: web_search.jsonl\nWeb extracts stored: web_extract",
+  "report_prompt": "Focus on OLED technology trends, materials advances, and near-term industry implications.\nPrioritize insights from papers, open-access journals, and credible industry sources.\nIdentify 3-5 key technical inflection points, their evidence, and likely applications.\nCompare research vs. commercial adoption (manufacturing, yield, cost, lifetime, efficiency).\nCall out contradictions or gaps, and suggest follow-up questions for decision-makers."
+}

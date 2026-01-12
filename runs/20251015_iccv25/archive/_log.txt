@@ -1,0 +1,49 @@
+[2026-01-08 22:49:29] JOB START: 20251015.txt date=2025-10-15 days=180 max_results=8
+[2026-01-08 22:49:29] TAVILY SEARCH: iccv 2025
+[2026-01-08 22:49:33] TAVILY SEARCH: international conference on computer vision 2025
+[2026-01-08 22:49:37] TAVILY SEARCH: iccv 2025 open access
+[2026-01-08 22:49:40] TAVILY SEARCH: iccv 2025 paper code site:github.com
+[2026-01-08 22:49:48] OPENALEX SEARCH: iccv 2025
+[2026-01-08 22:49:50] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2503.17122 -> W4417156065.pdf
+[2026-01-08 22:49:52] PDF->TEXT: W4417156065.pdf
+[2026-01-08 22:49:52] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2509.02969 -> W4417409712.pdf
+[2026-01-08 22:49:52] PDF->TEXT: W4417409712.pdf
+[2026-01-08 22:49:52] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2509.10463 -> W4415090288.pdf
+[2026-01-08 22:49:52] PDF->TEXT: W4415090288.pdf
+[2026-01-08 22:49:52] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2509.06413 -> W4414756887.pdf
+[2026-01-08 22:49:53] PDF->TEXT: W4414756887.pdf
+[2026-01-08 22:49:53] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2509.17500 -> W4415254644.pdf
+[2026-01-08 22:49:53] PDF->TEXT: W4415254644.pdf
+[2026-01-08 22:49:54] OPENALEX SEARCH: international conference on computer vision 2025
+[2026-01-08 22:49:55] OPENALEX PDF DOWNLOAD: https://www.ijfmr.com/papers/2025/3/44280.pdf -> W4410841160.pdf
+[2026-01-08 22:49:58] PDF->TEXT: W4410841160.pdf
+[2026-01-08 22:49:58] OPENALEX PDF DOWNLOAD: https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf -> W4412158322.pdf
+[2026-01-08 22:49:58] ERROR openalex pdf download failed query=international conference on computer vision 2025 err=HTTPError('403 Client Error: Forbidden for url: https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf') urls=['https://direct.mit.edu/coli/article-pdf/doi/10.1162/coli.a.16/2535477/coli.a.16.pdf']
+[2026-01-08 22:49:58] OPENALEX PDF DOWNLOAD: https://ojs.scineer-pub.com/index.php/AITR/article/download/6879/6579 -> W4411466105.pdf
+[2026-01-08 22:50:01] PDF->TEXT: W4411466105.pdf
+[2026-01-08 22:50:01] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2508.21080 -> W4415986821.pdf
+[2026-01-08 22:50:01] PDF->TEXT: W4415986821.pdf
+[2026-01-08 22:50:01] OPENALEX PDF DOWNLOAD: https://ieomsociety.org/proceedings/brazil2025/2.pdf -> W4413273993.pdf
+[2026-01-08 22:50:03] PDF->TEXT: W4413273993.pdf
+[2026-01-08 22:50:04] OPENALEX SEARCH: iccv 2025 open access
+[2026-01-08 22:50:05] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382 -> W4409904069.pdf
+[2026-01-08 22:50:05] ERROR openalex pdf download failed query=iccv 2025 open access err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382') urls=['https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382']
+[2026-01-08 22:50:05] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2504-446X/9/5/369/pdf?version=1747218861 -> W4410367179.pdf
+[2026-01-08 22:50:05] ERROR openalex pdf download failed query=iccv 2025 open access err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2504-446X/9/5/369/pdf?version=1747218861') urls=['https://www.mdpi.com/2504-446X/9/5/369/pdf?version=1747218861']
+[2026-01-08 22:50:05] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2505.14361 -> W4411143162.pdf
+[2026-01-08 22:50:06] PDF->TEXT: W4411143162.pdf
+[2026-01-08 22:50:06] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2078-2489/16/7/591/pdf?version=1752112909 -> W4412197197.pdf
+[2026-01-08 22:50:06] ERROR openalex pdf download failed query=iccv 2025 open access err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2078-2489/16/7/591/pdf?version=1752112909') urls=['https://www.mdpi.com/2078-2489/16/7/591/pdf?version=1752112909']
+[2026-01-08 22:50:06] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582 -> W4411208469.pdf
+[2026-01-08 22:50:06] ERROR openalex pdf download failed query=iccv 2025 open access err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582') urls=['https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582']
+[2026-01-08 22:50:07] OPENALEX SEARCH: iccv 2025 paper code
+[2026-01-08 22:50:08] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2571-6255/8/5/183/pdf?version=1746280182 -> W4410070872.pdf
+[2026-01-08 22:50:08] ERROR openalex pdf download failed query=iccv 2025 paper code err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2571-6255/8/5/183/pdf?version=1746280182') urls=['https://www.mdpi.com/2571-6255/8/5/183/pdf?version=1746280182']
+[2026-01-08 22:50:08] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382 -> W4409904069.pdf
+[2026-01-08 22:50:08] ERROR openalex pdf download failed query=iccv 2025 paper code err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382') urls=['https://www.mdpi.com/1424-8220/25/9/2794/pdf?version=1745915382']
+[2026-01-08 22:50:08] OPENALEX PDF REUSE: https://arxiv.org/pdf/2505.14361 -> W4411143162.pdf
+[2026-01-08 22:50:08] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582 -> W4411208469.pdf
+[2026-01-08 22:50:08] ERROR openalex pdf download failed query=iccv 2025 paper code err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582') urls=['https://www.mdpi.com/1424-8220/25/12/3668/pdf?version=1749654582']
+[2026-01-08 22:50:08] OPENALEX PDF DOWNLOAD: https://www.nature.com/articles/s41598-025-97244-4.pdf -> W4409578551.pdf
+[2026-01-08 22:50:10] PDF->TEXT: W4409578551.pdf
+[2026-01-08 22:50:11] JOB END

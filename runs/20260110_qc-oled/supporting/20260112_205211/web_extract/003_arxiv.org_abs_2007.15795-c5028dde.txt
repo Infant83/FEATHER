@@ -1,0 +1,131 @@
+We gratefully acknowledge support from the Simons Foundation, [member institutions](https://info.arxiv.org/about/ourmembers.html), and all contributors. [Donate](https://info.arxiv.org/about/donate.html)
+
+> [quant-ph](/list/quant-ph/recent) > arXiv:2007.15795
+
+
+
+# Quantum Physics
+
+**arXiv:2007.15795** (quant-ph)
+
+[Submitted on 31 Jul 2020]
+
+# Title:Applications of Quantum Computing for Investigations of Electronic Transitions in Phenylsulfonyl-carbazole TADF Emitters
+
+Authors:[Qi Gao](https://arxiv.org/search/quant-ph?searchtype=author&query=Gao,+Q), [Gavin O. Jones](https://arxiv.org/search/quant-ph?searchtype=author&query=Jones,+G+O), [Mario Motta](https://arxiv.org/search/quant-ph?searchtype=author&query=Motta,+M), [Michihiko Sugawara](https://arxiv.org/search/quant-ph?searchtype=author&query=Sugawara,+M), [Hiroshi C. Watanabe](https://arxiv.org/search/quant-ph?searchtype=author&query=Watanabe,+H+C), [Takao Kobayashi](https://arxiv.org/search/quant-ph?searchtype=author&query=Kobayashi,+T), [Eriko Watanabe](https://arxiv.org/search/quant-ph?searchtype=author&query=Watanabe,+E), [Yu-ya Ohnishi](https://arxiv.org/search/quant-ph?searchtype=author&query=Ohnishi,+Y), [Hajime Nakamura](https://arxiv.org/search/quant-ph?searchtype=author&query=Nakamura,+H), [Naoki Yamamoto](https://arxiv.org/search/quant-ph?searchtype=author&query=Yamamoto,+N)
+
+View a PDF of the paper titled Applications of Quantum Computing for Investigations of Electronic Transitions in Phenylsulfonyl-carbazole TADF Emitters, by Qi Gao and 8 other authors
+
+[View PDF](/pdf/2007.15795)
+> Abstract:A quantum chemistry study of the first singlet (S1) and triplet (T1) excited states of phenylsulfonyl-carbazole compounds, proposed as useful thermally activated delayed fluorescence (TADF) emitters for organic light emitting diode (OLED) applications, was performed with the quantum Equation-Of-Motion Variational Quantum Eigensolver (qEOM-VQE) and Variational Quantum Deflation (VQD) algorithms on quantum simulators and devices. These quantum simulations were performed with double zeta quality basis sets on an active space comprising the highest occupied and lowest unoccupied molecular orbitals (HOMO, LUMO) of the TADF molecules. The differences in energy separations between S1 and T1 ($\Delta E\_{st}$) predicted by calculations on quantum simulators were found to be in excellent agreement with experimental data. Differences of 16 and 88 mHa with respect to exact energies were found for excited states by using the qEOM-VQE and VQD algorithms, respectively, to perform simulations on quantum devices without error mitigation. By utilizing error mitigation by state tomography to purify the quantum states and correct energy values, the large errors found for unmitigated results could be improved to differences of, at most, 3 mHa with respect to exact values. Consequently, excellent agreement could be found between values of $\Delta E\_{st}$ predicted by quantum simulations and those found in experiments.
+
+|  |  |
+| --- | --- |
+| Comments: | 18 pages, 14 figures |
+| Subjects: | Quantum Physics (quant-ph); Chemical Physics (physics.chem-ph); Computational Physics (physics.comp-ph) |
+| Cite as: | [arXiv:2007.15795](https://arxiv.org/abs/2007.15795) [quant-ph] |
+|  | (or  [arXiv:2007.15795v1](https://arxiv.org/abs/2007.15795v1) [quant-ph] for this version) |
+|  | <https://doi.org/10.48550/arXiv.2007.15795> arXiv-issued DOI via DataCite |
+| Journal reference: | npj Computational Materials 7, 70 (2021) |
+| Related DOI: | <https://doi.org/10.1038/s41524-021-00540-6> DOI(s) linking to related resources |
+
+## Submission history
+
+From: Gavin Jones [[view email](/show-email/74b9b12d/2007.15795)]   
+ **[v1]** Fri, 31 Jul 2020 01:34:09 UTC (1,503 KB)
+
+Full-text links:
+
+## Access Paper:
+
+View a PDF of the paper titled Applications of Quantum Computing for Investigations of Electronic Transitions in Phenylsulfonyl-carbazole TADF Emitters, by Qi Gao and 8 other authors
+
+* [View PDF](/pdf/2007.15795)
+
+[view license](http://arxiv.org/licenses/nonexclusive-distrib/1.0/ "Rights to this article")
+
+Current browse context:
+
+quant-ph
+
+[< prev](/prevnext?id=2007.15795&function=prev&context=quant-ph "previous in quant-ph (accesskey p)")    |    [next >](/prevnext?id=2007.15795&function=next&context=quant-ph "next in quant-ph (accesskey n)")
+
+[new](/list/quant-ph/new)  |  [recent](/list/quant-ph/recent)  | [2020-07](/list/quant-ph/2020-07)
+
+Change to browse by:
+
+[physics](/abs/2007.15795?context=physics)  
+ [physics.chem-ph](/abs/2007.15795?context=physics.chem-ph)  
+ [physics.comp-ph](/abs/2007.15795?context=physics.comp-ph)
+
+### References & Citations
+
+* [INSPIRE HEP](https://inspirehep.net/arxiv/2007.15795)
+* [NASA ADS](https://ui.adsabs.harvard.edu/abs/arXiv:2007.15795)
+* [Google Scholar](https://scholar.google.com/scholar_lookup?arxiv_id=2007.15795)
+* [Semantic Scholar](https://api.semanticscholar.org/arXiv:2007.15795)
+
+export BibTeX citation Loading...
+
+## BibTeX formatted citation
+
+×
+
+Data provided by:
+
+### Bookmark
+
+# Bibliographic and Citation Tools
+
+Bibliographic Explorer *([What is the Explorer?](https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer))*
+
+Connected Papers *([What is Connected Papers?](https://www.connectedpapers.com/about))*
+
+Litmaps *([What is Litmaps?](https://www.litmaps.co/))*
+
+scite Smart Citations *([What are Smart Citations?](https://www.scite.ai/))*
+
+# Code, Data and Media Associated with this Article
+
+alphaXiv *([What is alphaXiv?](https://alphaxiv.org/))*
+
+CatalyzeX Code Finder for Papers *([What is CatalyzeX?](https://www.catalyzex.com))*
+
+DagsHub *([What is DagsHub?](https://dagshub.com/))*
+
+Gotit.pub *([What is GotitPub?](http://gotit.pub/faq))*
+
+Hugging Face *([What is Huggingface?](https://huggingface.co/huggingface))*
+
+Papers with Code *([What is Papers with Code?](https://paperswithcode.com/))*
+
+ScienceCast *([What is ScienceCast?](https://sciencecast.org/welcome))*
+
+# Demos
+
+Replicate *([What is Replicate?](https://replicate.com/docs/arxiv/about))*
+
+Hugging Face Spaces *([What is Spaces?](https://huggingface.co/docs/hub/spaces))*
+
+TXYZ.AI *([What is TXYZ.AI?](https://txyz.ai))*
+
+# Recommenders and Search Tools
+
+Influence Flower *([What are Influence Flowers?](https://influencemap.cmlab.dev/))*
+
+CORE Recommender *([What is CORE?](https://core.ac.uk/services/recommender))*
+
+* Author
+* Venue
+* Institution
+* Topic
+
+# arXivLabs: experimental projects with community collaborators
+
+arXivLabs is a framework that allows collaborators to develop and share new arXiv features directly on our website.
+
+Both individuals and organizations that work with arXivLabs have embraced and accepted our values of openness, community, excellence, and user data privacy. arXiv is committed to these values and only works with partners that adhere to them.
+
+Have an idea for a project that will add value for arXiv's community? [**Learn more about arXivLabs**](https://info.arxiv.org/labs/index.html).
+
+[Which authors of this paper are endorsers?](/auth/show-endorsers/2007.15795) | [Disable MathJax](javascript:setMathjaxCookie()) ([What is MathJax?](https://info.arxiv.org/help/mathjax.html))

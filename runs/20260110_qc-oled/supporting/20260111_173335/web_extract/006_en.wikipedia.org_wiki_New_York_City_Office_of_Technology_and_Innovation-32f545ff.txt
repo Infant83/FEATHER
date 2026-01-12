@@ -1,0 +1,164 @@
+[truncated]
+[Jump to content](#bodyContent)
+
+[Search](/wiki/Special:Search "Search Wikipedia [f]")
+
+## Contents
+
+* [(Top)](#)
+* [1 Mission](#Mission)
+* [2 Key initiatives](#Key_initiatives)
+  + [2.1 Data center consolidation](#Data_center_consolidation)
+  + [2.2 Executive Order 140 of 2010](#Executive_Order_140_of_2010)
+  + [2.3 Citywide software license agreements](#Citywide_software_license_agreements)
+  + [2.4 Telecommunications franchise](#Telecommunications_franchise)
+  + [2.5 311](#311)
+  + [2.6 NYC Open Data](#NYC_Open_Data)
+  + [2.7 Harlem WiFi](#Harlem_WiFi)
+* [3 See also](#See_also)
+* [4 References](#References)
+* [5 External links](#External_links)
+
+# New York City Office of Technology and Innovation
+
+* [Français](https://fr.wikipedia.org/wiki/New_York_City_Department_of_Information_Technology_and_Telecommunications "New York City Department of Information Technology and Telecommunications – French")
+
+[Edit links](https://www.wikidata.org/wiki/Special:EntityPage/Q7013174#sitelinks-wikipedia "Edit interlanguage links")
+
+* [Article](/wiki/New_York_City_Office_of_Technology_and_Innovation "View the content page [c]")
+* [Talk](/wiki/Talk:New_York_City_Office_of_Technology_and_Innovation "Discuss improvements to the content page [t]")
+
+* [Read](/wiki/New_York_City_Office_of_Technology_and_Innovation)
+* [Edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit "Edit this page [e]")
+* [View history](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=history "Past revisions of this page [h]")
+
+
+
+Tools
+
+Actions
+
+* [Read](/wiki/New_York_City_Office_of_Technology_and_Innovation)
+* [Edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit "Edit this page [e]")
+* [View history](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=history)
+
+General
+
+* [What links here](/wiki/Special:WhatLinksHere/New_York_City_Office_of_Technology_and_Innovation "List of all English Wikipedia pages containing links to this page [j]")
+* [Related changes](/wiki/Special:RecentChangesLinked/New_York_City_Office_of_Technology_and_Innovation "Recent changes in pages linked from this page [k]")
+* [Upload file](//en.wikipedia.org/wiki/Wikipedia:File_Upload_Wizard "Upload files [u]")
+* [Permanent link](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&oldid=1328158049 "Permanent link to this revision of this page")
+* [Page information](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=info "More information about this page")
+* [Cite this page](/w/index.php?title=Special:CiteThisPage&page=New_York_City_Office_of_Technology_and_Innovation&id=1328158049&wpFormIdentifier=titleform "Information on how to cite this page")
+* [Get shortened URL](/w/index.php?title=Special:UrlShortener&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FNew_York_City_Office_of_Technology_and_Innovation)
+* [Download QR code](/w/index.php?title=Special:QrCode&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FNew_York_City_Office_of_Technology_and_Innovation)
+
+Print/export
+
+* [Download as PDF](/w/index.php?title=Special:DownloadAsPdf&page=New_York_City_Office_of_Technology_and_Innovation&action=show-download-screen "Download this page as a PDF file")
+* [Printable version](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&printable=yes "Printable version of this page [p]")
+
+In other projects
+
+* [Wikidata item](https://www.wikidata.org/wiki/Special:EntityPage/Q7013174 "Structured data on this page hosted by Wikidata [g]")
+
+Appearance
+
+From Wikipedia, the free encyclopedia
+
+New York City government agency
+
+Office of Technology and Innovation
+
+| Office overview |
+| Jurisdiction | [New York City](/wiki/New_York_City "New York City") |
+| Headquarters | 2 [MetroTech Center](/wiki/MetroTech_Center "MetroTech Center") [New York, NY](/wiki/New_York_City "New York City") |
+| Employees | 1,666 (FY 2024) |
+| Annual budget | $783.6 million (FY 2024) |
+| Office executive | * [Matt Fraser](/w/index.php?title=Matthew_C._Fraser&action=edit&redlink=1 "Matthew C. Fraser (page does not exist)"), Commissioner & Citywide CTO |
+| Key document | * [New York City Charter](/wiki/New_York_City_Charter "New York City Charter") |
+| Website | [www.nyc.gov/content/oti/pages/](https://www.nyc.gov/content/oti/pages/) |
+
+The **New York City Office of Technology and Innovation** (**OTI**), formerly known as the **Department of Information Technology and Telecommunications** (**DoITT**), is the department of the [government of New York City](/wiki/Government_of_New_York_City "Government of New York City")[[1]](#cite_note-1) that oversees the City's "use of existing and emerging technologies in government operations, and its delivery of services to the public".[[2]](#cite_note-About_DOITT-2) Although the agency's primary purpose is to facilitate the technology needs of other New York City agencies, the department is best known by city residents for running the city's [311](/wiki/3-1-1 "3-1-1") "citizens' hotline," established in 2003. Its regulations are compiled in title 67 of the *[New York City Rules](/wiki/New_York_City_Rules "New York City Rules")*.
+
+In 2022, DoITT was renamed the **Office of Technology and Innovation** as part of a process that consolidated the former Mayor's Office of the Chief Technology Officer (NYC CTO), NYC Cyber Command (NYC3), the Mayor's Office of Data Analytics (MODA), the Mayor's Office of Information Privacy (MOIP), and staff from the office of the Algorithms Management and Policy Officer (AMPO) into a single department under unified leadership.[[3]](#cite_note-3)
+
+## Mission
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=1 "Edit section: Mission")]
+
+The office is a Mayoral agency charged with operating, maintaining, and modernizing the City's [IT infrastructure](/wiki/IT_infrastructure "IT infrastructure"), and to make City government more transparent and accountable to taxpayers, and use innovative solutions to enable and improve the delivery of City services. The agency has approximately 1,200 employees, an operating budget of $350 million and a capital budget of approximately $1 billion. The agency operates from five locations across two boroughs.[[4]](#cite_note-4)
+
+In its role as the City's IT utility, OTI establishes the City's IT strategic direction, security policies and standards; procures citywide IT services, and evaluates [emerging technologies](/wiki/Emerging_technologies "Emerging technologies"); provides [project management](/wiki/Project_management "Project management"), application development and [quality assurance](/wiki/Quality_assurance "Quality assurance") services; maintains the NYC.gov website, new media development and operations, and [Geographic Information Systems](/wiki/Geographic_Information_Systems "Geographic Information Systems") (GIS); operates the City's [data center](/wiki/Data_center "Data center"), a dedicated wireless network (NYCWiN) and a dedicated wired network (CityNet), the Citywide Service Desk, and [telecommunications systems](/wiki/Telecommunications_systems "Telecommunications systems"); administers telecommunications franchise contracts providing fiber, cable television, pay telephones, and mobile telecom equipment installed on City property and streets; leads CITIServ, a citywide IT infrastructure consolidation program; supports the Emergency Communications Transformation Program, the Mayor's Office of Media and Entertainment, and the Health and Human Services Connect and Accelerator programs; administers NYC311; and fosters public-private partnerships to improve IT service delivery.
+
+The agency maintains a large complex of IBM mainframe computers that run hundreds of application programs used by over a dozen City agencies and thousands of users.
+
+## Key initiatives
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=2 "Edit section: Key initiatives")]
+
+### Data center consolidation
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=3 "Edit section: Data center consolidation")]
+
+The Citywide IT Services (CITIServ) program consolidates the City's more than 50 separate [data centers](/wiki/Data_centers "Data centers") into a modern, unified, shared services environment.[[5]](#cite_note-5)[[6]](#cite_note-6) This "[cloud computing](/wiki/Cloud_computing "Cloud computing")" solution generates approximately $100 million in cost savings and avoidance for taxpayers over the duration of the 5-year program.
+
+### Executive Order 140 of 2010
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=4 "Edit section: Executive Order 140 of 2010")]
+
+In October 2010, Mayor Bloomberg signed Executive Order 140 giving DoITT the responsibility and authority for planning and executing New York City's IT infrastructure consolidation and working across City IT departments to establish standards and guidelines to better enable New York City to operate as a unified IT enterprise rather than a collection of individual departments.[[7]](#cite_note-7)
+
+### Citywide software license agreements
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=5 "Edit section: Citywide software license agreements")]
+
+In 2010, Commissioner [Carole Post](/wiki/Carole_Post "Carole Post") led negotiations for a citywide licensing agreement with [Microsoft](/wiki/Microsoft "Microsoft") which leverages the City's buying power on behalf of all city agencies.[[8]](#cite_note-8) This agreement consolidates dozens of disparate licensing agreements across the City into one and provides more than 100,000 City employees with computing power. It is projected to save New York City's taxpayers an estimated $50 million over five years.
+
+In 2010, Post completed negotiations with [McAfee](/wiki/McAfee "McAfee") to procure enterprise workstation security software and services for a five-year term, achieving an estimated savings of $18 million over that period. This agreement also makes a wide array of security services and features accessible to every City agency - including several [network monitoring](/wiki/Network_monitoring "Network monitoring") tools that have never been made available before.[*[citation needed](/wiki/Wikipedia:Citation_needed "Wikipedia:Citation needed")*]
+
+### Telecommunications franchise
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=6 "Edit section: Telecommunications franchise")]
+
+OTI also manages telecommunications franchises for New York City, including cable television, public pay telephones, mobile telecommunications, and local high capacity telecommunications. A franchise is a contract entered into by the City with a private entity to provide a public service using the City's streets and such facilities. Telecommunications franchises allow the installation and maintenance of wire, cable, optical fiber, conduit, antennae, and other structures on, over, and under City streets to transmit video, voice, and data. In Fiscal Year 2013, the City collected $8,076,089 in franchise fees.[[9]](#cite_note-9)
+
+Current cable/telecommunications/information franchisee's include:[[10]](#cite_note-10)[[11]](#cite_note-11)
+
+* [Altice USA](/wiki/Altice_USA "Altice USA")
+* [Spectrum](/wiki/Spectrum_(brand) "Spectrum (brand)")
+* [Stealth Communications](/wiki/Stealth_Communications "Stealth Communications")[[12]](#cite_note-12)
+* [Verizon](/wiki/Verizon "Verizon")
+
+### 311
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=7 "Edit section: 311")]
+
+Since March 2003 New York City has operated a single 24-hour phone number for government information and non-emergency services. The number, [3-1-1](/wiki/3-1-1 "3-1-1"), is toll-free from any phone in the city. The services provided by NYC311 have gradually expanded since its start, including information on hundreds of City services, agencies, and events. New Yorkers call 311 for recycling schedules, complaints about garbage pick-up, street parking rules, noise complaints, landlord disputes and information about health insurance, information relating to recreation centers, public pools, golf courses and other facilities, or to schedule inspections by the Department of Buildings. 311 is also used by city agencies to direct resources and improve management. Outside of New York City, NYC's 311 service can be accessed by calling (212) NEW-YORK (212-639-9675) (dialing 3-1-1 outside of New York City may contact the local municipality's 311 service). There is also a website and a mobile app to access the 311 service.[[13]](#cite_note-13)
+
+Between 2003 and 2006 NYC311 received more than 30 million calls. Services are provided in over 170 languages, and calls are taken at a call center in downtown Manhattan.[[14]](#cite_note-14) On December 20, 2005, the first day of the [2005 New York City transit strike](/wiki/2005_New_York_City_transit_strike "2005 New York City transit strike"), NYC311 received over 240,000 phone calls, setting a new daily record for the city.[[15]](#cite_note-15)
+
+### NYC Open Data
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=8 "Edit section: NYC Open Data")]
+
+New York City’s open data legislation creates a comprehensive citywide policy – a common set of standards and guidelines for the City’s ongoing open government efforts and provides a centralized location for the City’s Open Data – the Open Data Portal. As of fiscal year 2018, the NYC Open Data platform contained over 2,000 datasets.[[16]](#cite_note-16) The City also supports NYC Open Data Week, an annual series of events promoting open data use in New York City.[[17]](#cite_note-17)[[18]](#cite_note-18) Available data spans the full range of City operations, including cultural affairs, education, health, housing, property, public safety, social services, transportation, and more. These data power other initiatives like the NYC BigApps competition and the work of the Mayor’s Office of Data Analytics, and pave the way for new initiatives to use technology and data to engage the public, guide decision-making and make government more effective. [[19]](#cite_note-19) For example, in 2016 a resident showed that since 2008 the city had "ticketed thousands of cars that were actually parked legally."[[20]](#cite_note-20)
+
+### Harlem WiFi
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=9 "Edit section: Harlem WiFi")]
+
+The outdoor Harlem WiFi network extends 95 city blocks, from 110th to 138th Streets between Frederick Douglass Boulevard and Madison Avenue making it the largest continuous free outdoor public wireless network in the nation. The network increases digital access for approximately 80,000 Harlem residents, as well as businesses and visitors in the area. The free public network will serve the community for an initial five-year term and is funded through a generous donation from the Fuhrman Family Foundation to the Mayor’s Fund to Advance New York City.[[21]](#cite_note-21)
+
+## See also
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=10 "Edit section: See also")]
+
+* [New York City BigApps](/wiki/New_York_City_BigApps "New York City BigApps")
+
+## References
+
+[[edit](/w/index.php?title=New_York_City_Office_of_Technology_and_Innovation&action=edit&section=11 "Edit section: References")]
+
+1. **[^](#cite_ref-1)** [New York City Charter](/wiki/New_York_City_Charter "New York City Charter") § 1070; "There shall be a department of information technology and telecommunications the head of which shall be the commissioner of information technology and telecommunications and the chief information officer of the city."
+2. **[^](#cite_ref-Ab

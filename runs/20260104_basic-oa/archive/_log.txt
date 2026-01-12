@@ -1,0 +1,23 @@
+[2026-01-10 18:48:09] JOB START: 20260104.txt date=2026-01-04 days=30 max_results=8
+[2026-01-10 18:48:09] LINKEDIN EMBED EXTRACT: https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q
+[2026-01-10 18:48:11] TAVILY EXTRACT: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf
+[2026-01-10 18:48:12] WEB PDF DOWNLOAD: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf -> s41467-025-67312-4_reference.pdf
+[2026-01-10 18:48:15] PDF->TEXT: s41467-025-67312-4_reference.pdf
+[2026-01-10 18:48:15] TAVILY SEARCH: oled
+[2026-01-10 18:48:16] TAVILY SEARCH: quantum computing
+[2026-01-10 18:48:18] TAVILY SEARCH: recent 30 days
+[2026-01-10 18:48:22] OPENALEX SEARCH: oled
+[2026-01-10 18:48:23] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adom.202502807 -> W7117713363.pdf
+[2026-01-10 18:48:23] ERROR openalex pdf download failed query=oled err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adom.202502807') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/adom.202502807']
+[2026-01-10 18:48:23] OPENALEX PDF DOWNLOAD: https://drpress.org/ojs/index.php/ajst/article/download/33002/32289 -> W7117787413.pdf
+[2026-01-10 18:48:25] PDF->TEXT: W7117787413.pdf
+[2026-01-10 18:48:25] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/agt2.70240 -> W4417348289.pdf
+[2026-01-10 18:48:25] ERROR openalex pdf download failed query=oled err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/agt2.70240') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/agt2.70240']
+[2026-01-10 18:48:26] OPENALEX SEARCH: quantum computing
+[2026-01-10 18:48:28] OPENALEX SEARCH: recent 30 days
+[2026-01-10 18:48:29] OPENALEX PDF DOWNLOAD: https://lirias.kuleuven.be/bitstream/123456789/82197/1/UNESCOENGELS.pdf -> W2522369617.pdf
+[2026-01-10 18:48:30] ERROR openalex pdf download failed query=recent 30 days err=HTTPError('404 Client Error: Not Found for url: https://lirias.kuleuven.be/bitstream/123456789/82197/1/UNESCOENGELS.pdf') urls=['https://lirias.kuleuven.be/bitstream/123456789/82197/1/UNESCOENGELS.pdf']
+[2026-01-10 18:48:30] OPENALEX PDF DOWNLOAD: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2025JG009028 -> W7118067651.pdf
+[2026-01-10 18:48:30] ERROR openalex pdf download failed query=recent 30 days err=HTTPError('403 Client Error: Forbidden for url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2025JG009028') urls=['https://onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2025JG009028']
+[2026-01-10 18:48:31] ARXIV RECENT SEARCH: query='quantum computing' days=30
+[2026-01-10 18:48:31] JOB END
