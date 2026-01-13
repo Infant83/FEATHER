@@ -1,0 +1,958 @@
+
+
+===== PAGE 1 =====
+  
+186 
+ 
+ 
+Chapter 12: Forecasting the future: 
+From quantum chips to neuromorphic 
+engineering and bio-integrated 
+processors  
+12.1 Introduction to Advanced Computing Technologies 
+Computing is at the forefront of advances in human civilization and technology. 
+Alongside communication, it is a critical technology that often drives improvements in 
+many other scientific fields. Over the last 60 years, computing has achieved 
+unprecedented advances attributed to scaling laws predicted by Moore’s law, whereby 
+the number of components on a chip doubles every two years, and Dennard’s voltage 
+scaling, whereby the voltage of components is also halved. However, continuous similar 
+advances are no longer necessarily guaranteed, leading to the potential emergence of the 
+so-called ‘Beyond Moore’s Law’ era. Even while traditional transistor scaling is ending, 
+the demand for computing continues to grow in all sectors of the economy by almost 
+orders of magnitude. The end of traditional scaling is expected to result in a computing 
+crunch due to an energy crisis, necessitating the exploration of renewable sources of 
+energy and computers that consume far less energy. Among many possible alternative 
+computing architectures, neuromorphic computing based on brain-inspired computing is 
+one of the most promising (Feng et al., 2018; Himelstein, 2022; Schell, 2024). 
+New unconventional computing paradigms have emerged to contend with the traditional 
+computing challenges in the five challenge arenas. In the energy-cost arena, they exploit 
+new multiple physical phenomena such as memristive devices, ferromagnetic 
+nanomagnets and spintronic logic. In the computational-speed arena, they leverage the 
+unique temporal dynamics of a wide variety of oscillators based on magnetic, photonic, 
+ferro electromagnetic and nanomaterial technologies. In the footprint arena, they take 
+advantage of in-memory computing, flexible and low-footprint nanomaterials and 3D 
+integration. In the cyber-resilience arena, they leverage a plethora of nanomaterial-based 
+Deep Science Publishing  
+https://doi.org/10.70593/978-93-49910-47-8_12 
+
+
+===== PAGE 2 =====
+  
+187 
+ 
+technologies with built-in fault-tolerance mechanisms. In the data arena, they utilize a 
+new generational speedup of the data deluge with hybrid mixed-dimensional nano-
+material systems with advanced consensus-led strategies. They provide a roadmap 
+towards the realization of a novel, energy-efficient, ultra-fast, compact, secure, resilient, 
+and capable computing technology for the Big Data Age that will complement today’s 
+dominant computing technology based on CMOS transistors. Just as nanotechnology 
+broadly focused on experimental materials and devices ushered in the 21st century, 
+unconventional computing galvanized by nanotechnology will be a critical driver of 
+advances in the 21st century and beyond (Nvidia, 2025a; Nvidia, 2025b). 
+ 
+Fig 12.1: Quantum Chips to Neuromorphic Engineering. 
+12.1.1. Background And Significance 
+Information technology is expected to play a major role in determining the future 
+direction of biotechnology. Current genetically-engineered DNA chips, protein chips, 
+and micro-array systems for studying networks of molecular interactions in 
+bioinformatics are mostly passive. They allow for monitoring of concentration variations 
+upon perturbation of a biological system. This is akin to the arrangement of channels in 
+a classic neuro-computer. Information on the dynamics of the system can be extracted 
+only after the fact, and cannot allow for perturbations of a biological system based on 
+the collected information. This is also the case for transistor-based logic chips. The 
+
+
+===== PAGE 3 =====
+  
+188 
+ 
+integration of increasingly smaller components has led to a diminishing presentation of 
+asymmetries in IR spectra, an increasingly larger number of metal connections, and, 
+ultimately, to systems that are nothing more than a layer of metal connections. The 
+answer to the question on which process had led to the full complement of the micro-
+tubular machinery in a neuron may not be found out by these types of continuous variable 
+technology. For this reason, it would appear that present generation biotechnology and 
+information technology need a new direction. 
+The merger of nanotechnology, biotechnology, and quantum physics may allow for the 
+formulation of the basic principles of a radically different form of information 
+technology. The foundation of the new technology must not exclude the vast spectrum 
+of plurality of organization, nor optimize a single type of computation or representation. 
+Rather, the new technology should lend itself to an open-ended development that allows 
+for a suitably rich interaction between different types of agents. The characterization of 
+the sources of novelty as expressed in biological and social evolution provide a useful 
+starting point. The basic principles of any realizable system of the technology to be 
+elaborated are: (i) At all stages of natural evolution physical systems are subject to basic 
+physical processes. These processes select from a wide set of equally possible initially 
+realizable states a complementary pair of physical geometries and continuous variables. 
+The asymmetries thus produced are used as a source of continuous variable information, 
+while acceptors of this information simultaneously operate on its flow by selecting on 
+the basis of their own idiosyncrasies the probabilities of the selected complementary set 
+of physical processes and are changed by so doing. 
+12.2. Quantum Computing: Principles and Applications 
+Quantum computing has gone from strength to strength in the past couple of decades. 
+Indeed, it is commonly accepted now that, next to neuromorphic computing, quantum 
+computing is the best-known alternative to conventional, transistor-based computing. 
+Perhaps, especially because of the competition between rival tech giants, companies like 
+IBM, Google, Intel, and others make it inevitable that the newest developments within 
+quantum computing receive significant media attention with promises of revolutionary 
+speed-ups in some computational classes and threats that existing cryptography could be 
+broken. The technology to build universal quantum computers has not quite arrived, 
+however. Recent noise-scaling and fidelity-improvement techniques have indeed pushed 
+computation results to error rates that are orders of magnitude more favorable for some 
+sparse-matrix-matrix-multiplications, consequently increasing interest from the 
+computational chemistry community. However, high-fidelity gates in larger devices 
+remain out of reach in practical applications. Yet even when these first modest 
+
+
+===== PAGE 4 =====
+  
+189 
+ 
+applications are securely demonstrated, it is unlikely that they will alleviate the need for 
+the widespread development of alternative schemes of computation. 
+There are a couple of reasons for this need. First, interest in quantum computation is not 
+limited to numerical questions. All of quantum mechanics — throughout its derivation 
+from more long-standing interpretations of von Neumann — has a computational angle 
+by permutation of vector spaces. Thus, in a wider sense, all of quantum mechanics 
+represents an immense defeat for classical theories of all kinds, complicated or not, and 
+the unprecedented parallelism related to it is, arguably, the most significant development 
+in the last century of physics. What should be expected of quantum computation within 
+the realms of quantum mechanics is far from clear and anything but modest. For future 
+quantum computational paradigms to be fully realized, this original interest in quantum 
+computing based on something more foundational than hardware would likely need to 
+gain momentum as the number of qubit and compute cycles required for an initial 
+universal quantum computer scales unfavorably. 
+Second, preliminary estimates of speed-ups by quantum computing currently rely on 
+assumptions of significantly higher coherence times than those typically expected in 
+projected devices. Further, they involve very sizable amounts of number-crunching that 
+seem feasible only to classical computation, raising fundamental questions on variances 
+amongst cosmological constants far beyond any observed value. Indeed, even assuming 
+this possibility, it would seem counterintuitive that such a remarkable need for quantum 
+computation would not have been anticipated and catalyzed before. Similar 
+consideration applies for the eradication of this need by the computational discoveries 
+themselves. The models on which preliminary estimates of speed-ups and artefacts of 
+classical computation in quantum domains rely become almost intractable themselves as 
+conditions deviate from ideal symmetry assumptions. 
+12.2.1. Fundamentals of Quantum Mechanics 
+The vast development of technology enabled by the progress in material science, 
+nanotechnology, electronics, optoelectronics, etc. is believed to experience a 
+technological road bump, broadly defining a virtuous circle of discovery => invention 
+=> adoption => improvement that sustains the rapid technological progress. 
+Equivalently, one can view this as a wave of technological progress that continues until 
+it reaches a valley caused by a workload voice or some other issues necessitating a 
+different technology to improve the signal-to-noise ratio, response time, functionality, 
+etc. 
+Quantum computing (QC) is believed to be a potential candidate to alleviate 
+computational bottlenecks imposed by classical computing (CC) for problem types 
+
+
+===== PAGE 5 =====
+  
+190 
+ 
+based on quantum phenomena such as quantum systems simulation, non-polynomial 
+complete problems, data security, etc. On the other hand, some believe that quantum-
+inspired algorithms executed on a mapped CC might achieve practical speedup. 
+Nonetheless, even amongst the believers, not all are pessimistic, since there are many 
+paths toward QC based on different qubit physic approaches such as superconductor 
+qubit, trapped-ion, neutral atoms, photonic qubit, etc. These recently developed 
+techniques are so unique and have algorithmically nondirajuable variation that the finite 
+testing on specific tasks such as number factoring or quantum state sampling could lead 
+one approach a few hundred years of gain - hardly dismissible. 
+Nonetheless, it is important to leverage existing devices and work toward synergistically 
+combining classical and quantum devices such as building locally high-performance 
+devices within the already-existing versions of devices and embedding them on chips. 
+Indeed, guillotine waveguides for low-loss waveguide couplings between nanosystems 
+and electromechanical waveguide combarrays demonstrate the ability to be integrated 
+alongside photonic circuits. Helios spin qubits are extremely tunable and a large number 
+of designs and models are optimized at the device and circuit netlist levels. Yet, many 
+essential tasks remain to be met on the architectures and proof tests. 
+The competition of different devices’ papers on intelligent computing chips draws 
+attention to broad niches - beyond understanding classical computer systems - yet little 
+integration is demonstrated. To this end, a bio-integrated ultra-low-energy 2D all-solid-
+state tomographic imaging brain-state monitoring and nanomaterial-based fluorescence-
+active chemical components synthesis system on a bio-interface chip was fabricated. 
+12.2.2. Quantum Algorithms and Their Impact 
+Among the quantum algorithms found up to now, the most cited is Shor’s algorithm that 
+uses quantum superposition to factor large integers into primes in polynomial time, while 
+the best classical algorithms need time exponential in the number of digits of the number. 
+This algorithm would render today’s famous cryptographic systems, based on the 
+difficulty of factoring large numbers, useless. Other well-known quantum algorithms 
+exploit similar ideas: quantum algorithms for simulation of quantum systems with the 
+next best algorithm considered to be Grover’s search, which uses quantum interference 
+instead of superposition for searching an N-# database and finds the answer in O(√N) 
+instead of O(N) classically. The impact of quantum computing has been studied as a 
+whole and by subjects or sectors. If successful, quantum computing will be a general 
+purpose technology (GPT) that will fundamentally alter some sectors and create new 
+products, services, and, thus, companies. Research is focused on algorithms and 
+applications for quantum computers that do not exist yet and are based on a technology 
+that might never be viable. Still, it is reasonable to assume that quantum computers will 
+
+
+===== PAGE 6 =====
+  
+191 
+ 
+exist at some point and that the initial assumptions will be mostly correct. At the core of 
+the forecast is the analysis of the philosophies and methodologies that have been used in 
+the past to analyze the impact of emerging general purpose technologies, with an 
+emphasis on the impact of computers and of the Internet as a general purpose technology.  
+12.2.3. Challenges in Quantum Hardware Development 
+In the wake of Moore’s law, quantum computing is envisaged to transcend the 
+limitations of classical computing. Quantum chips based on superconducting and hybrid 
+systems are being explored for their quantum advantage in real-world applications. A 
+roadmap covering the next 5–10 years, exploring the hurdles to scale-up to larger 
+systems, is proposed that is applicable to a range of physical realizations. 
+Moore’s law predicted an exponential increase in transistor density that would result in 
+a commensurate increase in logic performance. For several decades, this prediction held, 
+resulting in an exponential increase in the economy of integrated circuits (ICs)—the 
+engine behind the computing and information technology revolution. An accompanying 
+decrease in the price per transistor and, therefore, improved performance on an 
+unprecedented scale had wide-ranging impacts across many sectors: communications, 
+information storage, transportation, health care, logistics, security, biotechnology, 
+finance, materials, construction, education, and entertainment. However, for the last 
+decade, skeptics have pointed out that the exponential increase in transistor density that 
+has driven the productivity of the IC industry will soon cease. As transistors shrink 
+towards the size of a few silicon atoms, accelerating power dissipation and leakage 
+currents threaten even larger but improbable chips. In addition to these physical 
+limitations, a fundamental conundrum arises: What will happen to the net performance 
+of large computing systems when billions of transistors capable of executing a billion 
+operations per second are packed into a unit volume? On the one hand, the collapse of 
+Moore’s law connotes the end of a robust and successful trajectory. On the other hand, 
+this event has been anticipated and will be overcome, just as the end of horse-drawn 
+carriages was matched by the arrival of the automobile. 
+12.3. Neuromorphic Engineering: Mimicking the Brain 
+The human brain is an incredibly well-architected biological structure made of neurons, 
+which work in concert to convey an exquisite combination of functionality and physical 
+design. The most conspicuous merit of the brain architecture is its efficiency in 
+information handling, in terms of energy expended per solved task. Neuromorphic 
+engineering (NE) is a new highly interdisciplinary branch of engineering, which aims at 
+mimicking aspects of the functionality, dynamics and physics of the brain in artificial 
+
+
+===== PAGE 7 =====
+  
+192 
+ 
+systems. The NEW approach uses architectures and algorithms inspired by biological 
+systems, in contrast to the present mainstream high-performance computing based on 
+the Von Neumann architecture. Efforts in NE are driven by the consideration that the 
+brain is a captivating example of natural design and engineering, whose solutions are 
+frequently incredibly efficient and optimized for a wide variety of tasks. 
+NE has a twofold and intertwined objective: one, a scientific goal to understand, from a 
+computational perspective, how intelligent behavior arises from biological neural 
+systems; second, an engineering goal to exploit the known properties of biological 
+systems to design and implement for engineering applications efficient devices. The 
+interesting aspect NEs try to exploit is the architecture of large scale neural systems and 
+the associated parallelism of information handling at different time-scales and 
+processing levels. The emergence of Large Scale Integrations (LSI) technologies permits 
+the insertion of a number of components in two-dimensional spaces and power supplies 
+that makes it possible to emulate hardware neural on-chip models with complex 
+dynamics such as spiking background noise or chaotic behavior. The third, and last, 
+aspect is related to the effort to design architectures suited for the emulation of brain-
+like computation, thanks to complex neuro-inspired architectures designed to reproduce 
+specific aspects of neuron and synapses, or assemblies of them, originally proposed 
+within neurological and biological studies. 
+ 
+    Fig 12.2: Neuromorphic engineering: mimicking the brain. 
+12.3.1. Overview of Neuromorphic Systems 
+Neuromorphic systems attempt to implement in hardware specific computational 
+rules that are used by the biological brain via a multitude of interconnected 
+
+
+===== PAGE 8 =====
+  
+193 
+ 
+neurons communicating using spikes. The main distinction between the 
+neuromorphic and non-neuromorphic systems is the mechanism of 
+communication and processing. This section provides an overview of the more 
+advanced and interesting candidate neuromorphic systems that are currently 
+under development across the world. 
+In the same way that the transistor revolutionized classical computing by 
+allowing electronic communication and processing in the form of charge packets 
+in integrated circuits, several breakthroughs in devices, architectures, and 
+interconnect technologies for radiation or bio/chemical sensors are currently 
+promising to transform neuromorphic sensing and computation. Indeed, a host of 
+neuromorphic architectures inspired by the biological principles of information 
+processing in the brain are being developed today to cope with the flood of data 
+generated by pixels in high-resolution image sensors, emitters, and antennas, and 
+with the demands of low energy and ultra-fast learning when scaling up to very 
+large numbers of sensors. 
+Currently, there are several neuromorphic systems that are computationally able 
+to implement more sophisticated integrative/sustainable knowledge extraction 
+processes involving several steps. On-going proposed implementations and their 
+anticipated performance in terms of accuracy, learning speed, density, and energy 
+consumption are discussed. In particular, it is shown that they can all implement 
+beyond real-time learning, in which the weight updates are performed on a spike-
+by-spike basis, as well as a type of short-term plasticity based on weight-
+dependent spike-timing windows, which is the mechanism believed to confer the 
+temporal dynamics for the high ordering of the visual scene encoded in onion-
+like structures formed by the rat retina, LGN, and V1. Finally, it is suggested that 
+they can be integrated in a single chip. 
+12.3.2. Applications in Artificial Intelligence 
+Emerging devices such as memristor and RRAM are promising candidates for low-
+power and highly parallelized inference processes. However, due to highly non-ideal 
+behaviours of the devices, the path from edge to cloud is found to be ill-posed. Correcting 
+for the nonidealities of the devices is therefore crucial for deploying the emerging 
+architectures in real-world applications. This chapter discusses the challenges of real-
+time learning with emerging devices and some possible solutions. 
+Recent years have seen a surge in the R&D of low-power and highly parallelized 
+hardware accelerators for deep learning. Several critical bottlenecks, however, are 
+
+
+===== PAGE 9 =====
+  
+194 
+ 
+inherited from the compute-heavy nature of current algorithms and architectures. They 
+include the heavyweight matrix multiplication and the proliferation of memory in deep 
+learning models. In-memory computers in which computation occurs in the memory and 
+the memory nodes are also the computing nodes are attractive candidates to address these 
+challenges caused by the von Neumann bottleneck. A class of emerging devices, i.e. 
+resistive switching based devices, is promising for real-time and highly parallelized 
+inference. 
+The fundamental non-idealities common in non-volatile memory include read and write 
+noise, nonlinear read/write current-voltage characteristics as well as nonuniformity of 
+the switching threshold voltage distribution. In this context, the critical paths to be 
+corrected to make accurate inference on neuromorphic processors with RRAM based 
+crossbar would be discussed. Possible solutions relying on the digital controller 
+electronics as well as the analog circuit would be introduced. Nonidealities of the 
+emerging devices may be inferred from an auxiliary in-situ small-scaled crossbar and 
+therefore be corrected in real-time. 
+12.3.3. Comparative Analysis of Neuromorphic and Traditional Computing 
+The brain can be viewed as a massively parallel information processing device, which 
+exhibits great flexibility and robustness despite its inherently noisy circuits and nonideal 
+components. Following the recent advances in various computing technologies, there 
+has been a growing interest in building brain-inspired large-scale computing machines 
+that match the size, energy efficiency, dynamic range, robustness to noise, and fault 
+tolerance of biological systems. Extensive studies at multiple spatiotemporal scales have 
+resulted in the development of exciting new computational paradigms including 
+quantum computers, neuromorphic processors, and bio-integrated implementable 
+systems. In addition, innovative architectural styles and algorithmic designs have been 
+proposed to leverage these different approaches to building brain-like computing 
+machines. A comparative review of these emerging computing paradigms is discussed 
+in terms of their theoretical and practical merits and challenges in their synergies for 
+building next-generation ultra-large-scale computing devices. It focuses on recent 
+experimental advances in the four different computing approaches, fundamental ideas 
+and breakthroughs underlying their computational principles, and comparative analysis 
+of their strengths and weaknesses in their practical implementations, possible physical 
+realizations, and versatility to tackle specific problems. 
+
+
+===== PAGE 10 =====
+  
+195 
+ 
+12.4. Bio-Integrated Processors: The Future of Computing 
+Bio-integrated computing systems, resembling the cyborgs of science fiction movies, 
+combine living components with synthetic ones, potentially altering how computing is 
+perceived. Such systems utilize signal-processing principles often overlooked, which, 
+when implemented with CMOS technology, cannot be scaled due to high power 
+consumption and limited integration density. Optic flow computations, ubiquitous in 
+biological or animal solutions, have inspired an innovative high-performance CMOS 
+chip that exploits massively parallel and asynchronous spike communication, achieving 
+unprecedented performance at ultra-low power consumption. 
+Electrical signals generated by biological neurons are used rather than chemical signals 
+in hybrid biocomputers. Such a setup permits reducing both the electrical thresholds and 
+amounts of the ions applied for long-term potentiation/depression with bulk and 
+individual electrodes, both with the advantage of reducing the power consumption. 
+Biohybrid area-efficient spike detector networks producing an output event driven by 
+the incoming spike train discriminated on the temporal features of the spikes were 
+conceived for the integration of biological neurons on a chip and tested using an 
+excitatory spike train from a simple hardware spike generator with active on-chip 
+components. 
+These biohybrids are envisaged for future spike event-driven computing in superefficient 
+integration and learning in a massively parallel manner. Successfully closing the spike-
+communication loop between biological and synthetic spiking neurons, it is 
+demonstrated locally on the same chip, facilitating biohybrid neuromorphic computing 
+to directly solve biologically inspired computational tasks. Continuing the improvement 
+of the flocking biohybrid device group that robustly exhibits flocking behavior and 
+extending the experiments with more biohybrid entities has been proposed. In parallel, 
+the modeling approaches based on the Hidden Markov Model and Dynamic Bayesian 
+Network have to be significantly improved, especially in the input-output formalism. 
+12.4.1. Definition and Importance of Bio-Integration 
+Bio-integration is a technology to integrate biological and artificial systems. Bio-
+integrated systems, that embed organic donor materials in electrical components, have 
+meritorious biocompatibility and bioactivity with high performance for bio-application. 
+To achieve bio-integration of field-effect transistors (FETs), organic semiconductor-
+based device technologies as well as screening of candidate materials with benign 
+chemical properties are required. Organic devices show great promise in wearable and 
+implantable bio-electronics due to their complementary properties such as high 
+flexibility, sustainability, and biocompatibility. These organic devices can be integrated 
+
+
+===== PAGE 11 =====
+  
+196 
+ 
+with biological systems with little or no physiologically harmful effects as compared to 
+inorganic counterparts. This encouraging property is due to the organic materials which 
+are readily amenable to synthetic modifications that create numerous candidate materials 
+with benign bioactivity. A few examples of bio-integrated devices using organic 
+semiconductors include a bio-integrated organic amplifier and bio-integrated organic 
+phototransistors. Bio-integrated devices show promising performance for bio-signal 
+monitoring and modulation. However, they are still insufficient for device technology 
+maturity. In this section, a complete solution for the bio-integration of FETs would be 
+presented. First, bio-compatible conducting polymers are developed to replace the gate 
+dielectric of organic FETs. In-depth characterizations are performed to investigate the 
+biocompatibility and stability of organic devices in aqueous environments. High-
+performance organic ion-sensitive FETs (ISFETs) are demonstrated for the first time 
+based on bio-integrated FETs, and their great potential for bio-application is verified. 
+The biocompatible conductive polymer as well as advanced device technology will pave 
+the way to bio-integration of a wide range of organic devices. 
+12.4.2. Current Research and Developments 
+Several computer engineering groups have recently begun exploring ways to rethink the 
+fundamental architectures and processes of classical computing systems using quantum 
+constructs. Ultimately, such a project entails achieving what has no classical analogue: 
+a quantum computational process that produces classically non-equivalent results using 
+a collection of qubits, each transitioning under continued control by programmable 
+Hamiltonians between energy states that are entangled in ways not possible with 
+classical bit states. Several groups explore on-chip applications designed to offer 
+fundamentally useful devices but built using well-understood solid-state fabrication. 
+Exploiting coherent multi-qubit operations within solid-state devices is advantageous in 
+terms of scalability, yield, integration density, manufacturability and interoperability 
+with other systems. Research ranges from implementation of quantum gates and devices 
+to benchmarking, error mitigation, and simulation of exotic physical processes. 
+Examples include spin qubits based on electrostatically confined electrons in silicon 
+quantum dots, as well as superconducting qubits based on Josephson junction circuits 
+and lattice optical systems for neutral atoms. Additionally, promising results concern the 
+integration of these platforms with high-performance photonic systems for hybrid 
+quantum networks, as well as physically independent systems operating in parallel. 
+Researchers actively engage in emerging technologies, including neuromorphic devices 
+and systems, as they explore new horizons and devices for devices fabricated using 21st 
+century materials and processes. Generally conceived as an alternative to the von 
+Neumann computing paradigm, the study of neuromorphic devices and systems focuses 
+
+
+===== PAGE 12 =====
+  
+197 
+ 
+primarily on implementing physical neural processing systems using contemporary 
+physics. The biologically inspired neuromorphic devices are presently a wide variety of 
+device types, material systems, and geometries. These would-be biological neurons 
+employ varistors and semiconductor heterostructures, ionic drift and electrolysis, 
+electrically-active 2D materials and ferroelectric polymers, as well as superconductors 
+and photonics. Global fabrication technologies employed in such studies typically 
+include MEMS, hybrid processes, and 21st century 2D materials. Numerous groups have 
+examined architecturally limited nonlinear devices, using only a few materials or 
+devices, yet pursuing essentially parallel networks employing massive parallel 
+connection of lossy, low-state, slow response devices considered biologically acceptable 
+alternatives to CMOS processing techniques. More ambitiously, there are groups 
+exploring architecturally unlimited systems that implement physics other than formal 
+neural systems. 
+12.4.3. Ethical Considerations in Bio-Integration 
+The proliferation of biointegration technologies that merge artificial and biological 
+systems raises ethical considerations across a number of domains, with implications for 
+justice, autonomy, safety, workmanship, workplace, warfare, and freedom. While a full 
+discussion of these issues is beyond the scope of this text, the area of biointegration 
+pertinent to the neuroscience and neuro-technological frontier is presented here; two 
+major areas of focus are highlighted, along with several questions to prompt deeper 
+ethical consideration for implementation of the technologies. 
+Broadly, biointegration refers to technologies that are implanted or otherwise 
+incorporated into the human body or psyche; these devices affect the biological system 
+either directly (via mechanical inputs or organic output); or indirectly (via the 
+transmission or invocation of chemical, electrical, or pharmacological processes); and 
+they can be generally classified into a number of categories based on their application 
+and function, including: neural implants, emotion bears, and neurological addition. With 
+advances in electronic miniaturization and polymer-based biointegration materials, bio-
+integrated devices that are supple, safe, and reliable are now available, and examples 
+include temperature sensors, pressure sensors, blood oxygen levels, and neural probes. 
+Each of these examples carries a large downstream impact for the individual, individual 
+relationships with family, friends and neighbors, larger social systems, democracy, and 
+harmony with the Earth. 
+
+
+===== PAGE 13 =====
+  
+198 
+ 
+12.5. Interdisciplinary Approaches to Computing 
+Although current advancements focus on ways to accelerate existing binary 
+computational architectures, there is a growing recognition of the need for intelligent 
+systems (IS) that will inevitably require novel concepts and architectures. In the ‘beyond 
+Moore’s law’ era, domain-specific computing will become increasingly important as 
+edge intelligence becomes more ubiquitous. Recently, a plethora of new unconventional 
+computing paradigms have emerged to tackle these challenges, covering a considerable 
+part of the computing performance and efficiency spectrum. For some of these, new 
+scientific principles have recently been unveiled, providing the first glimpse of practical 
+systems, be they dedicated hardware or programmable algorithms, that employ them for 
+real-world applications. 
+To bring together the widest possible spectrum of nanotechnologies that can potentially 
+be adopted for the implementation of unconventional computing — that is, new 
+computer architectures beyond the silicon digital paradigm, while also addressing the 
+unavoidable emergence of quantum effects — this roadmap focuses on emerging 
+nanotechnologies and interface science. It chiefly concerns computing platforms based 
+on hybrid approaches that intertwine devices, searching for synergetic properties that are 
+not obtainable without an ample toolbox of technologies. The intersection of discrete 
+and continuous variables, analog and digital, classical and quantum technologies, as well 
+as on-chip and off-chip computations, is expected to give rise to unexplored yet fruitful 
+research avenues, benefitting energy cost, computational speed, reduced footprint, and 
+data processing prowess. 
+     
+Fig :  Future of Neuromorphic Engineering and Bio-Integrated Processors. 
+
+
+===== PAGE 14 =====
+  
+199 
+ 
+Assuredly, the canonical microelectronics scaling of classic transistor-based 
+architectures is reaching its limits, with economies of scale diminishing rapidly. New 
+scientific principles and paradigms will have to be embraced to make progress in 
+computational efficiency, speed, and energy costs. By bringing together a wide spectrum 
+of CMOS-compatible nanotechnologies for unconventional computing, the roadmap 
+outlines an interdisciplinary research agenda that may have a decisive impact on 
+computing in the decades to come. Through novel approaches — such as extensive 
+relying on non-standard architectures; employing physics beyond standard energy 
+barriers; conceiving materials and devices with no counterpart in today’s standard 
+platforms; and hybridizing them in systems-on-chip — an elevated degree of computing 
+versatility, efficiency, and power (both in senses of per unit energy costs and shadow) is 
+expected in the near future. 
+12.5.1. Collaboration Between Fields 
+Collaboration between fields, or cross-pollination, is generally slower compared to the 
+improvement of one's own field in applied technologies. One way to overcome this lag 
+is the concept of international collaboration such as hosting international workshops, 
+conferences or competitions. These events would bring together institutions globally and 
+provide an interdisciplinary playground for young researchers. The young researchers 
+would be prospective future leaders who have the most extensive knowledge of the 
+current technology. It would be especially helpful to have leaders in attending such 
+events. 
+The brain is different from any existing computing architecture. Follow-up education is 
+crucial to enable those who focus mainly on electrical engineering or physics to develop 
+an understanding of and possibly a passion for neuroscience. This includes the brain’s 
+biochemical and neurobiology whereas existing education on brain-inspired technology 
+would only cover superficial operation principles. Such an initiative requires many 
+experts in neuroscience and profound knowledge of all aspects of computing and 
+computing hardware. In addition to hosting an initial event, a continuous endeavor is 
+required to maintain a stream of updated knowledge. Internet-based video courses could 
+be a useful tool, although careful design is required to create engaging courses that lead 
+to a profound understanding of concepts, not just rote memorization. 
+One possible long-term perspective is that such a challenge could be partially overcome 
+through the development of generalized co-between computing hardware. This would 
+be potentially useful to establish interactivity between the Pepsi challenge and the glass 
+box understanding of shallow networks. However, it would be impossible to tackle the 
+challenge with technology developed in today’s von Neumann’s architecture due to 
+severe bottlenecks in speed and power. Mindism, which rests on reshaping electrical and 
+
+
+===== PAGE 15 =====
+  
+200 
+ 
+chemical waves into discrete activities, could not only provide a new perspective for 
+understanding the brain but also offers a new potential for the future of computing 
+hardware and neuroscience unlike the existing technology-oriented ideas in the 
+neuromorphic computing community. Such a breakthrough would open up many new 
+questions, including ethical ones. 
+12.5.2. Case Studies of Successful Interdisciplinary Projects 
+This section provides several case studies of successful interdisciplinary projects on chip 
+scale computing systems leveraging unorthodox state variables. The assemblage of 
+project teams, a consortium of academic institutions, universities, research laboratories, 
+and start-ups is presented. Two projects are considered, exploring neuromorphic 
+engineering and designing bio-integrated processors. 
+Neuromorphic computing, the efficient handling of big data, is pursued under various 
+approaches. As with prior technologies, special-purpose devices based on new concepts 
+will be needed to complement general-purpose processors. Many disciplines are 
+advancing devices based on physical systems mimicking the operation of the brain. 
+These endeavors have achieved demonstrators substantially more capable than existing 
+general-purpose processors, performing complex tasks with far fewer resources. 
+At the same time, designs and proposals of architectures, networks, and programming 
+approaches are in rapid evolution. Networked neuromorphic systems differ from 
+conventional systems, giving rise to new computing paradigms. The physics community 
+is engaged in a plethora of studies to determine the capacity of various networks, the 
+impact of topology on function, and other esoteric questions. Advances in bio-inspired 
+learning approaches are important as energy and time are at a premium. The 
+implementation of learning and other algorithms will also demand heterogeneous 
+systems, involving an ever-growing mix of processors capable of different tasks and 
+running code targeting their properties. These horizons naturally motivate the 
+involvement of theorists and experimentalists from diverse fields. 
+The goal is to build a complementary education and training network, bringing together 
+leading institutions, knowledge, and resources across disciplines relevant to 
+neuromorphic systems. Knowledge transfer between disciplines is facilitated, including 
+computer science, mathematics and theoretical physics, biology, neuroscience, and 
+device physics and engineering. The importance of integrating knowledge across 
+disciplines is highlighted by neuroethology, studying how the brain evolves to 
+accomplish differently. Asynchronous, loosely coupled, transient, perturbed dynamics 
+governed by local interactions are emphasized, contrasting with traditional codes studied 
+in computer science. 
+
+
+===== PAGE 16 =====
+  
+201 
+ 
+The interdisciplinary approach ensures knowledge transfer within the domains of 
+computer science, mathematics, biology and neuroscience, and device physics and 
+engineering. Understanding the kernel of the neuromorphic revolution allows the 
+overlap of research programs in the five disciplines. Within the computational, 
+theoretical, and mathematical component, the development of techniques to quantify and 
+exploit the nonlinear response of dynamical systems has the potential to greatly reduce 
+the complexity and energy cost of learning algorithms. Systems that are intrinsically 
+complex and operate close to bifurcation survive perturbations, enhance efficiency, and 
+exhibit outputs approximating a broad class of functions. In addition to the development 
+of standard mathematical tools, the removal of description mismatches, greatly 
+inhibiting the transfer of knowhow from scientific communities, is pursued. 
+12.6. Future Trends in Computing Technologies 
+Many alternative computing systems are being explored to meet the high demand for 
+computing systems posed by machine learning AI workloads. These alternatives span 
+multiple scientific disciplines and include a diverse range of systems and mechanisms. 
+Each alternative has merits and challenges that may enable or hinder its wider adoption 
+in the foreseeable future. 
+Advances in programmable quantum chips provide great promise for significant 
+performance gains in scientific simulation and other areas, as well as questions of interest 
+to the foundations of all physics. Building practical quantum chips with several dozen 
+entangled qubits will be an expansive necessary first step to building useful quantum 
+chips. 
+Neuromorphic engineering taps the past and present of the biological basis of 
+computation. Integration of programmable nanodevice arrays designed to mimic post-
+synaptic neuron phenomena, forming a nonlinear computational model, is wed to high-
+level programming languages and data flow architectures. This area has a wide range of 
+potential applications but faces a notable market challenge with the difficulty of 
+persuading silicon designers to adopt a fundamentally new architectural model. 
+Bio-integrated processors complement neuromorphic systems. Predictive monitoring of 
+chemical and biological states will benefit from integrating sensor nanoelectronics with 
+probabilistic natures and reservoirs that can learn as a natural part of their dynamics. 
+Disease diagnostic chips and chips that leverage an organism’s own immunity to defend 
+against disease merit consideration for both the positive impact they will bring and the 
+ethical challenges they invoke. Chip designs leveraging the inherent distinction between 
+self and non-self may provide an intriguing new model of computation. However, the 
+
+
+===== PAGE 17 =====
+  
+202 
+ 
+complexity of and fitness of these models for dealing with real-world problems, as well 
+as ethical use of such powerful devices, requires deeper contemplation. 
+12.6.1. Predictions for Quantum Computing 
+Scientific progress is usually based on predictions made by the specialists in the 
+corresponding field. These predictions on one side should be realistic, taking into 
+account known principles, and on the other side should point out the astonishing 
+potential of future development. In what follows the near and nobody-expecting future 
+for quantum chips and computers, neuromorphic engineering, and bio-integrated 
+processors will be considered. 
+The harvesting of quantum chips and simulations. Small quantum computers and 
+simulators are emerging. It is now possible to implement quantum algorithms and 
+protocols on systems with 10-20 qubits, and operational systems with 50-100 qubits will 
+be available or perhaps have already been created. There will be a lot of joint engineering 
+work ahead to improve the new type of tools for research in quantum computing, 
+quantum simulators, and other applications of quantum information technologies. 
+Besides hardware and software, it will be necessary to construct and develop projects for 
+quantum algorithms and protocols. Focused long-term research in these new directions 
+will be really fruitful and progress in other fields. The proposals made at a very early 
+stage, such as testing quantum advantage, applications in chemistry and condensed 
+matter, and more, will slowly develop and gradually be realized. At that time the systems 
+developed above will hardly be more complex than those used above OLED displays. 
+12.6.2. The Role of Neuromorphic Chips in Future AI 
+The human brain can learn and reliably respond to millions of stimuli in just a few 
+hundred milliseconds, while computers are limited in their ability to analyze big data 
+within a meaningful timeframe. A significant part of this superiority is due to the parallel 
+organization and in-memory data storage of biological neurons. While colossal advances 
+have been achieved in hardware and algorithms, the core distinct characteristics of the 
+brain cannot be fully employed and explored in standard computers. Massively parallel 
+stochastically operating processors with time-continuous dynamics, which are tightly 
+networked with billions of synaptic connections, are required to enable machines that 
+are capable of learning in real-time. It is a long-term goal of computer science to 
+construct machines that emulate the human brain and thus mimic its extraordinary 
+performance in recognition, categorization, and adaptive control tasks. The construction 
+of such machines is termed neuromorphic engineering, and the term also covers the 
+application of unconventional computing devices inspired by biological information 
+
+
+===== PAGE 18 =====
+  
+203 
+ 
+processing. With this focus, neuromorphic engineering could turn into a disruptive 
+technology in a similar way to conventional microelectronics. 
+Early academic works introduced unconventional cell types, synaptic implementation 
+principles, and the application of methods. It set the stage for introducing novel devices 
+and their application in neuromorphic engineering. This category includes nanoscale 
+devices exhibiting stochastic dynamics, resistive switching devices, and integration of 
+memristors on the same die as components. The general approach is continuing to be 
+seen in non-traditional computing substrates. With these innovations, new and 
+unprecedented cells can be investigated, and a multitude of novel concepts can be 
+explored. The demonstration of a system capable of answering real-time queries on large 
+visual stimuli is also addressed. The current challenges comprise devices’ reliability, 
+noise suppression, and gain control in the analog domain, the development of scalable 
+architectures, the establishment of algorithms exploiting the hardware capabilities, and 
+the construction of useful applications. Many groups undertake significant acceptances 
+in these emerging fields within computer engineering, physics, and biotechnology. The 
+proliferation of neuromorphic hardware and system-level architectures, traditional and 
+innovative devices, as well as potential applications in a plethora of fields from artificial 
+intelligence to food safety and invasive species detection is demonstrated. 
+12.6.3. Emerging Trends in Bio-Integrated Systems 
+The possibility of bio-integrated electronic systems, such as circuits and computers with 
+embedded biological parts, presents great potential for the future. A brief survey is 
+provided here of a few selected devices being developed, following a look at some of 
+the underlying philosophies and potential applications in bioelectronics. 
+Neuro-pixel arrays made of neurons growing on a substrate with electrodes embedded 
+in it have been previously proposed. These devices use spikes from the neurons or pre-
+synaptic currents as signals, and spikes cause postsynaptic currents by means of matrix 
+multiplication of the spikes and the weight vector. Behaviour similar to that of hardware 
+spiking neural networks is re-created in a biointegrated manner. Testing with 
+hippocampal cultures and in silico modelling suggest that these technologies could offer 
+significant advantages in chronic temporal memory acquisition, similar to larger 
+mammalian brains compared to rodent brains using RSN, improving the autonomy of 
+implanted technologies. 
+Bioelectronic sensors are envisioned, for example relying on enzyme biocatalyzed 
+reactions for detection, with the sensitivity provided through an ionic-to-electronic 
+signal conversion. A special approach involves the untargeted broadened analysis of 
+biofunctionalized proteins, the detection of which is achieved in-situ on a flexible 
+
+
+===== PAGE 19 =====
+  
+204 
+ 
+transistor array. The transformative advantage of bio-integrated devices in such sensors 
+is potentially tremendous, allowing powerful early feedback systems to be constructed, 
+e.g. for predicting and preventing events such as seizures. 
+Neuromorphic engineering offers an opportunity to use the principles of biological 
+information processing systems to develop new neuro-inspired computing devices. Such 
+devices and architectures can overcome the limitations of computing devices based on 
+CMOS-devices and von-Neumann architectures. One of the many drivers in this space 
+is the emerging need for low-latency, low-power computation for edge devices such as 
+robotics, drones, ASI detectors, high-throughput genome analysis, and many more . In 
+society today, many IoT devices sample heterogeneous sensory data like audio, vision, 
+data streams from accelerometers, etc. Traditional computing solutions currently in 
+flight today for edge devices do not scale from these scenarios owing to increasingly 
+large data; von Neumann-architecture computers face the fundamental limiting factor of 
+increasing numbers of transistor switches on chips. There is therefore a key opportunity 
+to develop novel devices and architectures that are fundamentally different. 
+12.7. Societal Implications of Advanced Computing 
+Novel computing technologies will play an important role in future societies. They will 
+introduce new challenges but will also offer opportunities to overcome existing problems 
+and to solve problems that were previously considered unsolvable. Large-scale tax 
+regulation or government budgeting can serve as examples. Advances in artificial 
+intelligence and advanced computing hardware will be crucial to develop preparation 
+approaches that can save completed time. Novel dedicated hardware will be needed for 
+this purpose, together with associated software for their control, training, interfacing, 
+and integration in larger systems. 
+Traditional artificial intelligence relies mostly on digital processors in the von Neumann 
+architecture. This architecture is characterized by speed and memory limitations, 
+preventing further speed improvements regarding digital general-purpose hardware. 
+Emerging hardware will follow varied implementations that diverge from von Neumann 
+architectures either through no longer relying on electrical charges, and instead relying 
+on other mechanisms, or employing exotic properties. It is unclear whether substrates 
+closer to implementation will become dominant or whether it might still be an open race. 
+However, the prevalent approach of focusing investment on mathematical formalisms 
+that are already complemented with the most superior hardware can be questioned. This 
+is especially the case for prospective target applications within pervasive systems in 
+terms of number of instances and simultaneously occurring entities, dimensions, 
+environments, processing latencies, and needed robustness. 
+
+
+===== PAGE 20 =====
+  
+205 
+ 
+An argument for following an engineering-informed approach in selecting potential 
+formalisms provides market opportunities for smaller hardware engineering enterprises. 
+Co-evolution between novel mathematical approaches and newly devised dedicated 
+hardware is expected to give rise to further novel systems and maybe breakthroughs in 
+various areas. Such co-evolution will follow a concatenated strategy involving hyper-
+parameter optimization on dedicated hardware generating novel forms and individual 
+adaptations of equations and logically sound models, alongside hardware re-engineering 
+and evolution producing dedicated hardware at different abstraction levels. Likewise, 
+hardware engineering should explore possibilities to dispense with software 
+implemented learning processes. 
+Advanced computing hardware is expected to obey vastly different physical principles 
+and to significantly differ in speed, power consumption, miniaturization, robustness to 
+hardware-induced failures, parallelism, and mismatch. Some models and variational 
+formalisms might have close-knot hardware possibilities that cannot be handled by any 
+of the other formalisms. So far mostly orthogonal approaches have been taken. Open 
+questions that might guide future research include how to classify substrates in 
+functionally meaningful ways regarding underlying principles and how materials 
+properties relate to computability. Similarly, for a better understanding of properties of 
+dedicated hardware, it is essential to find a formalism describing the performance of a 
+mathematical approach regarding a task independent of its mathematical nature. 
+Modeling formalism performance might come with its own set of unexpected 
+discoveries. 
+12.7.1. Impact on Employment and Workforce 
+Advances in deep learning, massively parallel processing, sensors, and storage have 
+fueled the rapid adoption of artificial intelligence and machine learning across many 
+sectors. Such advancements must be complemented by hardware efficiency to ensure 
+sustainable growth and utility. As computational requirements grow exponentially, there 
+is a growing consensus around the need for architectural and technological paradigm 
+shifts for both digital and analogue scaling. Even with advances in extreme scaling 
+CMOS and materials innovation reducing energy costs of standard digital workloads, 
+the increasing complexity of applications, such as deep learning and generative AI, will 
+inevitably lead to compute surpassing memory bandwidth, potentially placing a hard 
+ceiling on the continued improvement in energy efficiency of generic computing 
+subcircuits. This trend is further exacerbated by the ever-expanding footprints and costs 
+of data centres housing traditional workloads. Analog and in-memory computing 
+architectures, efficacious devices, and associated adaptive algorithms have emerged in 
+recent years to potentially ensure continuity beyond the physical limits of silicon scaling. 
+
+
+===== PAGE 21 =====
+  
+206 
+ 
+Computing is a crucial engine in an increasingly digital world, with enormous social and 
+economic implications. While the key challenges of efficiency, non-linearity, 
+complexity, and very large sizes of computing systems remain, modelling and 
+simulations of the physical processes necessary to implement computation on different 
+energy and time scales have become significantly more sophisticated. New and 
+unconventional devices and systems exploiting these processes are being developed for 
+both classical analogue and emerging quantum paradigms of computation. Robust, 
+general algorithms for these new devices and systems, with an emphasis on their 
+implementation on existing ecologically efficient devices, are also a focus of intense 
+research activity. 
+These updates on tasks, benchmarks, devices/systems, and algorithms arise amid a 
+dizzying array of choices for each of the components of the roadmaps. Freeing 
+devices/systems from the burden of digitisation is crucial since power is a crushed 
+variable in the quest for energy efficiency. Robust thermalisation/refractory states need 
+to be made exploitable, stressing the need for separate write/read/erase strategies as well 
+as tolerant architectures. The urgency of broadening access to non-traditional systems is 
+highlighted to test the scalability of pseudo-random networks with many-connected 
+oscillator nodes, with an emphasis on benchmarking. This work shows that, as the use 
+of AI expands, so too do worries about its ecological impact and biases. 
+12.7.2. Privacy and Security Concerns 
+In a world flooded with AI and machine learning algorithms, a data-leakage incident 
+could not only destroy the worth of millions of euros, but it could also spark a loss of 
+credibility for a scientist, a research group, a company, or a country . Despite many 
+cryptography and data protection efforts, concerns are mounting regarding unpublished 
+algorithms being captured through side-channel attacks, like storing and monitoring 
+electromagnetic emissions, or through the analysis on the inputs and outputs of a 
+function in the case of model extraction. Data poisoning and Trojan attacks have proven 
+to be a possibility even in training of AI nets, with these attacks resulting in control of 
+unfavorably biased decisions. Understanding the privacy risks stemming from an AI 
+algorithm, a biomarker, or a life-science data, preventing the leaking of information, and 
+improving technology and know-how security are crucial in the AI era. Methods for both 
+post-processing prevention of data leakage and prevention of attacks and data 
+monitoring will be needed. Likewise, the massive adoption of neuromorphic ICs and 
+XNNs in the Internet of Things and automotive applications will elicit additional sensors 
+against electromagnetic emissions and possible privacy breaches. Efforts will be 
+necessary in coming to MTBF predictions and in the design of fail-proof functionally 
+redundant XNNs with detection counters against both bit-flipping and Trojan attacks. 
+
+
+===== PAGE 22 =====
+  
+207 
+ 
+An overarching concern will go beyond the privacy of the specific logic function of a 
+deep net, or of the specific gain and weights of a trained XNN, and will regard the need 
+for multilevel protection of knowledge and know-how. Global efforts will be required 
+for prevention or limited usage of very large scale training of generative models and 
+graph neural networks trained on sets of personal data. 
+12.7.3. Potential for Social Change 
+While neuroscience research enables surrogate philosophical realms, efforts to integrate 
+in mental life might raise irresistible social demands. This is because preceding social 
+changes usually reinforce metaphysical conceptions that inspire the newly, bio 
+politicized social wishes. Such cultural milieu prefers irreversibility over ulterior 
+theorization by neutral inquiry. Thus, public fear-managing settings via heuristics based 
+on ‘artificial’ versus ‘natural’ develop, leading to superficial and ideologized debates. 
+Nevertheless, as language fully capitalizes on the biomechanics of thought, the science 
+of human psychology precludes abstract knowledge margins. Some philosophical 
+conceptions initiated by a mechanization of reasoning attempt to construe ubiquitous 
+culture passages. Accordingly, future consciousness-affecting devices must be at least 
+neutral on some features fundamental to thought activity. Thus, a knowledge regime of 
+more singular standards must occur, comprising techniques able to model accidental 
+mental endowments by building parallel counterpart cognitive machines. These would 
+be intelligible on an abstract level to the bio-sensitive techniques, through which third-
+party mechanization of a default mental life would be unfeasible at least with respect to 
+some essential mental truths. Such preventive article displays that neuroscientific 
+research based on either Hartrian propositional knowledge or ordinal signaling 
+mechanistically observable structures naturally arrives at post-empiricist versions of the 
+finitudinal metaphysics rejected by phenomenology, radically abiding translations 
+across diligence frames. Thereby, neurophilosophy might detect patterns of concept laws 
+opposing thoroughly or making non-perceptually plausible cultural mechanisms 
+possible. Nevertheless, even in the latter case, several unavoidable scenarios would loom 
+prior to the advent of general conscious-affecting techniques, including the necessity of 
+adopting some access-precaution regime up to which original cognitive machinery 
+cannot reach and perhaps risks could be valently perceived. 
+12.8. Conclusion 
+This roadmap discusses recent progress in unconventional computing paradigms which 
+exploit advanced nanotechnology and a research agenda for new logic, interconnect, and 
+memory devices that can handle this information explosion. Diverse devices and 
+emerging science which underlies them are described, including their design challenges 
+
+
+===== PAGE 23 =====
+  
+208 
+ 
+posed by physical limitations; these may be addressed by new materials, jagged 
+geometries, and/or non-equilibrium operation; all device classes ultimately require novel 
+computational architectures to exploit their unique physics. Directions in hybrid 
+materials and device settings, which might enable innovations in non-local nonlinear 
+processing, high-fidelity quantum circuits, spiking/reservoir and low-power trained 
+networks, and simulation of emergent states in quantum matter, are highlighted. This 
+emerging phase of coupled progress in new science, materials, devices, and algorithms 
+can empower groundbreaking advances in adaptable context-sensitive machine 
+intelligence and megaFLOPS per watt semiconductor chips with tiny footprints, which 
+will better integrate computing with controls, sensing, and actuation in the energy-
+efficient cyber-physical Internet of Things. 
+Beyond CMOS, novel devices derived from electrodynamics and thermodynamics of 
+non-equilibrium systems offer new computational capabilities that outperform 
+conventional silicon transistors. In spintronics, the HTTP of ferromagnets encodes 1’s 
+and 0’s, coherence controls switching rates, skyrmion twist generates a foray, and a 
+nano-oscillator group fires solitons on amperes. Coherence in memristors generates new 
+types of neural networks which riff on proposed math to solve NP problems. Glassy 
+thermodynamics allows extreme parallelism with nanoMacs waived quantum devices. 
+Besides exceeding exponentials, devices derived from fractals shrink footprint by orders 
+of magnitudes but offer no speedup. The provably universally efficient R paradigm re-
+formulates functions as finite unitary operations on n-particle entangled states. Unlike 
+any non-universal model, it can perform any conventional computation faster. Requiring 
+the discrete Fourier transform of qubits, both quantum and ion-trap approaches are likely 
+to work. Outcome probabilities can be read-out by a specialized classical computer or 
+revealing an entire probability distribution directly. Workspace moves us beyond non-
+locality to re-insert vanished power, enhancing effort-based predictions while uniting 
+mathematical and physical facets. Next-generation hardware platforms are now matured 
+and being integrated with task-solving algorithms. Future research directions include 
+special-purpose real-world chips and delayed querying where question format is bi-
+directional. 
+12.8.1. Future Trends 
+These five example systems showcase the diversity and potential of such devices that 
+have been considered for future computing applications. In each example, a system 
+design was elaborated to evaluate the performance, in many cases through collaboration 
+between multiple institutions. Some systems considered novel functions such as 
+accelerating quantum processing, using light intensity modulations instead of states, or 
+handling multiple programming schemes. Others focused on the emphasis of novel 
+
+
+===== PAGE 24 =====
+  
+209 
+ 
+fabrication routes for scaling up the implementation and a better integration with 
+platform-standard materials or methods. In all cases, modeling was instrumental in 
+quantifying the systems, advancing the developments in proof-of-concept prototypes, 
+and enabling the early stages of technology transfer and industrial interest. 
+Quantum computing systems based on a potential future quantum chip show ample 
+potential. Being the farthest on the path from research-to-industry, first rounds of funded 
+hardware development are actively pursued by leading industrial players. Hybrid 
+quantum-classical schemes and platforms are presently the focus of recent initiatives, 
+however, today’s photonic quantum chips are still far from ideal performance. 
+Faster optical size frequency combs could alleviate some production strains. Silicene 
+and germanene precursor materials could allow the production of better-targeted chips. 
+The chip modeling tools developed partly address the manufacturing shortcoming, 
+however, materials and time-constraints limit the applicability of these models to such 
+systems. Nanowaveguide-exciton-polariton systems offer unprecedented applicability in 
+non-linear photonics. The many-body effects describe perfectly the slow, dissipative 
+motion of exciton-polaritons in continuous wave regime. However, the implementation 
+of those models remains a challenge in time-dependent implementations and for the time 
+scales relevant for such devices. 
+In neuromorphic engineering, there is a compelling good conventional path towards the 
+future, which is strictly orthogonal to that of the other listed systems. A comprehensive 
+theory-based approach could provide fully-calibrated solutions, already today, for large-
+scale implementations at low-risk and unseen performance that offer higher fidelity 
+hardware co-design. 
+References 
+Feng, F., Li, L., Wang, K., Fu, Y., He, G., & Pan, H. (2018). Design and Application Space 
+Exploration of a Domain-Specific Accelerator System. Electronics, 7(4), 45. MDPI 
+Schell, P. (2024). RISC-V Processors Addressing Edge AI Devices to Reach 129 Million 
+Shipments by 2030. ABI Research. ABI Research 
+Himelstein, M. (2022). RISC-V AI Chips Will Be Everywhere. IEEE Spectrum. IEEE Spectrum 
+Nvidia. (2025). Nvidia's Next-Generation GPUs Will Take AI to the Next Level. Barron's. 
+Barron's 
+Nvidia. (2025). Nvidia announces Blackwell Ultra GB300 and Vera Rubin, its next AI 
+'superchips'. The Verge. 
+ 
+ 
+ 

@@ -1,0 +1,34 @@
+Template: nature_reviews
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\nature_reviews.md
+Latex: nature_journal.tex
+Sections:
+- Abstract
+- Introduction
+- Current Landscape
+- Mechanisms & Methods
+- Comparative Evidence
+- Key Points
+- Challenges & Limitations
+- Outlook
+- Appendix
+
+Guidance:
+Template description: Nature Reviews-style technical overview.
+
+Template tone: Formal, comprehensive, evidence-weighted.
+
+Template audience: Researchers and R&D leaders.
+
+Section guidance:
+- Abstract: short summary of scope, key findings, and gaps.
+- Introduction: define scope, terms, and historical context.
+- Current Landscape: categorize approaches and evidence strength.
+- Mechanisms & Methods: detail workflows, algorithms, or experiments.
+- Comparative Evidence: contrast methods with pros/cons and data quality.
+- Key Points: 4-6 bullet highlights (consensus + caveats).
+- Challenges & Limitations: reproducibility, data limits, scaling issues.
+- Outlook: near- and mid-term trajectories with decision questions.
+
+Template writing guidance:
+Use precise citations and clarify uncertainty.
+Separate consensus findings from speculative signals.

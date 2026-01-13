@@ -20,9 +20,13 @@ all = ["arxiv", "pymupdf", "youtube-transcript-api", "python-docx", "python-pptx
 
 [project.scripts]
 feather = "feather.cli:main"
+federlicht = "federlicht.report:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+federlicht = ["templates/**/*.md", "templates/**/*.css", "templates/**/*.tex", "templates/**/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

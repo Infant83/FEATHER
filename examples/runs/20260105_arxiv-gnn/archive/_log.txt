@@ -1,0 +1,17 @@
+[2026-01-14 00:44:53] JOB START: 20260105_arxiv-gnn.txt date=2026-01-05 days=30 max_results=8
+[2026-01-14 00:44:53] LINKEDIN EMBED EXTRACT: https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q
+[2026-01-14 00:44:54] TAVILY SEARCH: graph neural networks
+[2026-01-14 00:44:57] OPENALEX SEARCH: graph neural networks
+[2026-01-14 00:44:58] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2512.16051 -> W4417529673.pdf
+[2026-01-14 00:44:58] PDF->TEXT: W4417529673.pdf
+[2026-01-14 00:44:58] OPENALEX PDF REUSE: https://arxiv.org/pdf/2512.16051 -> W4417529673.pdf
+[2026-01-14 00:44:58] OPENALEX PDF DOWNLOAD: https://pos.sissa.it/512/080/pdf -> W4417330266.pdf
+[2026-01-14 00:45:02] PDF->TEXT: W4417330266.pdf
+[2026-01-14 00:45:02] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2601.01123 -> W7119235243.pdf
+[2026-01-14 00:45:02] PDF->TEXT: W7119235243.pdf
+[2026-01-14 00:45:03] ARXIV ID FETCH: 2101.00001
+[2026-01-14 00:45:04] WARN citations lookup failed arxiv_id=2101.00001v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2101.00001')
+[2026-01-14 00:45:04] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/2101.00001v1 -> 2101.00001v1.pdf
+[2026-01-14 00:45:04] PDF->TEXT: 2101.00001v1.pdf
+[2026-01-14 00:45:05] ARXIV RECENT SEARCH: query='graph neural networks' days=30
+[2026-01-14 00:45:07] JOB END

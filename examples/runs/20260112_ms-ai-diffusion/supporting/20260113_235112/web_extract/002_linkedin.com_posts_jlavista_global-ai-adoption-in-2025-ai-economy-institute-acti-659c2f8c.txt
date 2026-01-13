@@ -1,0 +1,113 @@
+# Juan M. Lavista Ferres’ Post
+
+[Juan M. Lavista Ferres](https://www.linkedin.com/in/jlavista?trk=public_post_feed-actor-name)
+
+* [Report this post](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=POST&_f=guest-reporting)
+
+Today, we are releasing our AI Economy Institute AI diffusion report. Global adoption of generative AI kept climbing in the second half of 2025, reaching 16.3% of the world’s population, up from 15.1% in the first half. In other words, roughly 1 in 6 people worldwide are now using genAI tools to learn, work, or solve problems. But the same data also shows a widening digital divide: AI usage among the working-age population is now 24.7% in the Global North vs. 14.1% in the Global South. A few notable signals from the rankings and market dynamics: UAE remains #1 at 64.0% working-age usage; Singapore follows at 60.9%. The U.S. leads in infrastructure and frontier development, yet sits at 28.3% working-age usage and ranked 24th in usage share. DeepSeek’s rapid rise is a reminder that diffusion is shaped as much by access and availability as by model quality, an open-source model and a free chatbot can remove barriers and scale quickly in markets underserved by traditional providers. If you’re working on AI strategy in 2026, this report is worth a read, especially for what it implies about infrastructure, skills, language, and public-sector adoption. Listen to the full episode: [aka.ms/toolsandweapons](https://www.linkedin.com/redir/redirect?url=http%3A%2F%2Faka%2Ems%2Ftoolsandweapons&urlhash=aByJ&trk=public_post-text) Read the report: [https://lnkd.in/eBrr\_REb](https://www.linkedin.com/redir/redirect?url=https%3A%2F%2Flnkd%2Ein%2FeBrr_REb&urlhash=85ve&trk=public_post-text)
+
+[Global AI Adoption in 2025 – AI Economy Institute | Microsoft   microsoft.com](https://www.linkedin.com/redir/redirect?url=https%3A%2F%2Fwww%2Emicrosoft%2Ecom%2Fen-us%2Fcorporate-responsibility%2Ftopics%2Fai-economy-institute%2Freports%2Fglobal-ai-adoption-2025%2F&urlhash=cYo1&trk=public_post_feed-article-content)
+
+[160](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_social-actions-reactions)   [8 Comments](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_social-actions-comments)
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_like-cta)   [Comment](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment-cta)
+
+[John 'Femi Abe](https://no.linkedin.com/in/johnfemiabe?trk=public_post_comment_actor-name)   22h 
+
+* [Report this comment](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=COMMENT&_f=guest-reporting)
+
+Interesting data, Juan. The gap in AI diffusion is a significant concern for global industrial decarbonization; we need these tools active in the Global South to optimize CCUS and energy assets at scale. It is notable that high infrastructure doesn't automatically mean high usage. From my work in subsea facilities, the 'last mile' is always the hardest. Do you see open-source models as the pragmatic fix for this adoption gap, or is the hardware bottleneck still the main issue? A very timely report for 2026
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_like) [Reply](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_reply)  1 Reaction
+
+[Alexia Cambon](https://www.linkedin.com/in/alexiacambon?trk=public_post_comment_actor-name)   1d 
+
+* [Report this comment](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=COMMENT&_f=guest-reporting)
+
+Have been looking forward to this! Congratulations to the entire team on publication!
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_like) [Reply](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_reply)  1 Reaction
+
+[Rahul Sachdeva](https://fr.linkedin.com/in/rahul-sachdevaa?trk=public_post_comment_actor-name)   23h 
+
+* [Report this comment](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=COMMENT&_f=guest-reporting)
+
+Congratulations on the release of the AI diffusion report. It's vital to recognize the progress in generative AI adoption while also addressing the widening digital divide. Understanding these dynamics will be crucial for shaping effective AI strategies in the coming years. I appreciate the insights shared.
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_like) [Reply](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_reply)  1 Reaction
+
+[Achref Karoui](https://tn.linkedin.com/in/achref-karoui-08ab60189?trk=public_post_comment_actor-name)   7h 
+
+* [Report this comment](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=COMMENT&_f=guest-reporting)
+
+Can't wait to dive into the findings! Congratulations on the release.
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_like) [Reply](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_reply)  1 Reaction
+
+[alejandro villanueva](https://mx.linkedin.com/in/alejandro-villanueva-a927ba15?trk=public_post_comment_actor-name)   1d 
+
+* [Report this comment](/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_ellipsis-menu-semaphore-sign-in-redirect&guestReportContentType=COMMENT&_f=guest-reporting)
+
+Very interesting! Thank you! Much to do in the Global South.
+
+[Like](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_like) [Reply](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_comment_reply)  1 Reaction
+
+ [See more comments](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_see-more-comments) 
+
+To view or add a comment, [sign in](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_feed-cta-banner-cta)
+
+33,179 followers
+
+* [415 Posts](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fin%2Fjlavista%2Frecent-activity%2F&trk=public_post_follow-posts)
+* [23 Articles](https://www.linkedin.com/today/author/jlavista?trk=public_post_follow-articles)
+
+[View Profile](https://www.linkedin.com/in/jlavista?trk=public_post_follow-view-profile)   [Follow](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Ffeed%2Fupdate%2Furn%3Ali%3Aactivity%3A7415163607237373952&trk=public_post_follow)
+
+## More from this author
+
+* [### High-Level Solutions Dialogue on Accelerating Early Warning and Extreme Heat Solutions
+
+  Juan M. Lavista Ferres   3mo](https://www.linkedin.com/pulse/high-level-solutions-dialogue-accelerating-early-heat-lavista-ferres-knjkc?trk=public_post)
+* [### Beyond English: Ensuring AI Works for Every Language
+
+  Juan M. Lavista Ferres   5mo](https://www.linkedin.com/pulse/beyond-english-ensuring-ai-works-every-language-lavista-ferres-nistc?trk=public_post)
+* [### Mapping global floods with 10 years of satellite radar data
+
+  Juan M. Lavista Ferres   6mo](https://www.linkedin.com/pulse/mapping-global-floods-10-years-satellite-radar-data-lavista-ferres-4b4oc?trk=public_post)
+
+## Explore content categories
+
+* [Career](https://www.linkedin.com/top-content/career/)
+* [Productivity](https://www.linkedin.com/top-content/productivity/)
+* [Finance](https://www.linkedin.com/top-content/finance/)
+* [Soft Skills & Emotional Intelligence](https://www.linkedin.com/top-content/soft-skills-emotional-intelligence/)
+* [Project Management](https://www.linkedin.com/top-content/project-management/)
+* [Education](https://www.linkedin.com/top-content/education/)
+* [Technology](https://www.linkedin.com/top-content/technology/)
+* [Leadership](https://www.linkedin.com/top-content/leadership/)
+* [Ecommerce](https://www.linkedin.com/top-content/ecommerce/)
+* [User Experience](https://www.linkedin.com/top-content/user-experience/)
+
+## Sign in to view more content
+
+Create your free account or sign in to continue your search
+
+## Welcome back
+
+By clicking Continue to join or sign in, you agree to LinkedIn’s [User Agreement](/legal/user-agreement?trk=public_post_contextual-sign-in-modal_sign-in-modal_auth-button_user-agreement), [Privacy Policy](/legal/privacy-policy?trk=public_post_contextual-sign-in-modal_sign-in-modal_auth-button_privacy-policy), and [Cookie Policy](/legal/cookie-policy?trk=public_post_contextual-sign-in-modal_sign-in-modal_auth-button_cookie-policy).
+
+New to LinkedIn? [Join now](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_contextual-sign-in-modal_sign-in-modal_join-link)
+
+or
+
+New to LinkedIn? [Join now](https://www.linkedin.com/signup/cold-join?session_redirect=https%3A%2F%2Fwww%2Elinkedin%2Ecom%2Fposts%2Fjlavista_global-ai-adoption-in-2025-ai-economy-institute-activity-7415163607237373952-BBsH&trk=public_post_contextual-sign-in-modal_join-link)
+
+By clicking Continue to join or sign in, you agree to LinkedIn’s [User Agreement](/legal/user-agreement?trk=linkedin-tc_auth-button_user-agreement), [Privacy Policy](/legal/privacy-policy?trk=linkedin-tc_auth-button_privacy-policy), and [Cookie Policy](/legal/cookie-policy?trk=linkedin-tc_auth-button_cookie-policy).
+
+Never miss a beat on the app
+
+Don’t have the app? Get it in the Microsoft Store.
+
+ [Open the app](ms-windows-store://pdp/?ProductId=9WZDNCRFJ4Q7&mode=mini&cid=guest_desktop_upsell_post2)
+
+ 

@@ -1,0 +1,45 @@
+{
+  "date": "2026-01-06",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\instructions\\20260106_mixed.txt",
+  "root_dir": "examples\\runs\\20260106_mixed",
+  "out_dir": "examples\\runs\\20260106_mixed\\archive",
+  "query_id": "20260106_mixed",
+  "lang_pref": null,
+  "openalex_enabled": false,
+  "openalex_max_results": 5,
+  "youtube_enabled": false,
+  "youtube_max_results": 5,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 5,
+  "download_pdf": false,
+  "citations_enabled": true,
+  "queries": [
+    "quantum computing"
+  ],
+  "query_specs": [
+    {
+      "text": "quantum computing",
+      "hints": [
+        "linkedin"
+      ]
+    }
+  ],
+  "local_paths": [],
+  "urls": [
+    "https://example.com/blog/post"
+  ],
+  "arxiv_ids": [
+    "2101.00001"
+  ],
+  "site_hints": [
+    "linkedin"
+  ],
+  "raw_lines": [
+    "linkedin",
+    "quantum computing",
+    "https://example.com/blog/post",
+    "arXiv:2101.00001"
+  ]
+}

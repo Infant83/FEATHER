@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W7119235243.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W7119235243.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> Learning from Historical Activations in Graph Neural Networks</p><p><strong>Authors:</strong> Yaniv Galron, Hadar Sinai, Haggai Maron, Moshe Eliasof</p><p><strong>Journal:</strong> arXiv (Cornell University)</p><p><strong>Published:</strong> 2026-01-03</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2601.01123">http://arxiv.org/abs/2601.01123</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W7119235243.pdf">./archive/openalex/pdf/W7119235243.pdf</a></p><p><strong>Summary:</strong><br />Graph Neural Networks (GNNs) have demonstrated remarkable success in various domains such as social networks, molecular chemistry, and more. A crucial component of GNNs is the pooling procedure, in which the node features calculated by the model are combined to form an informative final descriptor to be used for the downstream task. However, previous graph pooling schemes rely on the last GNN layer features as an input to the pooling or classifier layers, potentially under-utilizing important activations of previous layers produced during the forward pass of the model, which we regard as historical graph activations. This gap is particularly pronounced in cases where a node&#x27;s representation can shift significantly over the course of many graph neural layers, and worsened by graph-specific challenges such as over-smoothing in deep architectures. To bridge this gap, we introduce HISTOGRAPH, a novel two-stage attention-based final aggregation layer that first applies a unified layer-wise attention over intermediate activations, followed by node-wise attention. By modeling the evolution of node representations across layers, our HISTOGRAPH leverages both the activation history of nodes and the graph structure to refine features used for final prediction. Empirical results on multiple graph classification benchmarks demonstrate that HISTOGRAPH offers strong performance that consistently improves traditional techniques, with particularly strong robustness in deep GNNs.</p></div><pre>
+
+===== PAGE 1 =====
+LEARNING FROM HISTORICAL ACTIVATIONS IN GRAPH
+NEURAL NETWORKS
+Yaniv Galron
+Technion – Israel Institute of Technology
+yaniv.galron@campus.technion.ac.il
+Hadar Sinai
+Technion – Israel Institute of Technology
+hadarsi@campus.technion.ac.il
+Haggai Maron
+Technion – Israel Institute of Technology
+NVIDIA
+haggaimaron@technion.ac.il
+Moshe Eliasof
+Ben-Gurion University of the Negev
+University of Cambridge
+eliasof@bgu.ac.il
+ABSTRACT
+Graph Neural Networks (GNNs) have demonstrated remarkable success in various
+domains such as social networks, molecular chemistry, and more. A crucial compo-
+nent of GNNs is the pooling procedure, in which the node features calculated by the
+model are combined to form an informative final descriptor to be used for the down-
+stream task. However, previous graph pooling schemes rely on the last GNN layer
+features as an input to the pooling or classifier layers, potentially under-utilizing
+important activations of previous layers produced during the forward pass of the
+model, which we regard as historical graph activations. This gap is particularly
+pronounced in cases where a node’s representation can shift significantly over the
+course of many graph neural layers, and worsened by graph-specific challenges
+such as over-smoothing in deep architectures. To bridge this gap, we introduce
+HISTOGRAPH, a novel two-stage attention-based final aggregation layer that first
+applies a unified layer-wise attention over intermediate activations, followed by
+node-wise attention. By modeling the evolution of node representations across
+layers, our HISTOGRAPH leverages both the activation history of nodes and the
+graph structure to refine features used for final prediction. Empirical results on mul-
+tiple graph classification benchmarks demonstrate that HISTOGRAPH offers strong
+performance that consistently improves traditional techniques, with particularly
+strong robustness in deep GNNs.
+1
+INTRODUCTION
+Graph Neural Networks (GNNs) have achieved strong results on graph-structured tasks, including
+molecular property prediction and recommendation (Ma et al., 2019; Gilmer et al., 2017; Hamilton
+et al., 2017). Recent advances span expressive layers (Maron et al., 2019; Morris et al., 2023; Frasca
+et al., 2022; Zhang et al., 2023a;b; Puny et al., 2023), positional and structural encodings (Dwivedi
+et al., 2023; Rampášek et al., 2022; Eliasof et al., 2023a; Belkin &amp; Niyogi, 2003; Maskey et al.,
+2022; Lim et al., 2023; Huang et al., 2024), and pooling (Ying et al., 2018; Lee et al., 2019; Bianchi
+et al., 2020; Wang et al., 2020; Vinyals et al., 2015; Zhang et al., 2018; Gao &amp; Ji, 2019; Ranjan et al.,
+2020; Yuan &amp; Ji, 2020). However, pooling layers still underuse intermediate activations produced
+during message passing, limiting their ability to capture long-range dependencies and hierarchical
+patterns (Alon &amp; Yahav, 2020; Li et al., 2019; Xu et al., 2019).
+In GNNs, layers capture multiple scales: early layers model local neighborhoods and motifs, while
+deeper layers encode global patterns (communities, long-range dependencies, topological roles) (Xu
+et al., 2019), mirroring CNNs where shallow layers detect edges/textures and deeper layers capture
+object semantics (Zeiler &amp; Fergus, 2014). Greater depth can overwrite early information (Li et al.,
+2018; Eliasof et al., 2022) and cause over-smoothing, making node representations indistinguish-
+able (Cai &amp; Wang, 2020; Nt &amp; Maehara, 2019; Rusch et al., 2023). We address this by leveraging
+1
+arXiv:2601.01123v1  [cs.LG]  3 Jan 2026
+
+
+===== PAGE 2 =====
+Figure 1: Overview of HISTOGRAPH. (1) Given input node features X0 and adjacency A, a backbone
+GNN produces historical graph activations X1, .., XL−1. (2) The Layer-wise attention module uses
+the final-layer embedding as a query to attend over all historical states while averaging across nodes,
+yielding per-node aggregated embeddings H. (3) A Node-wise self-attention module refines H by
+modeling interactions across nodes, producing Z, then averaged if graph embeddings G is wanted.
+historical graph activations, the representations from all layers, to integrate multi-scale features at
+readout (Xu et al., 2018).
+Several works have explored the importance of deeper representations, residual connections, and
+expressive aggregation mechanisms to overcome such limitations (Xu et al., 2018; Li et al., 2021;
+Bresson &amp; Laurent, 2017). Close to our approach are specialized methods like state space (Ceni
+et al., 2025) and autoregressive moving average (Eliasof et al., 2025) models on graphs, that consider
+a sequence of node features obtained by initialization techniques. Yet, these efforts often focus
+on improving stability during training, without explicitly modeling the internal trajectory of node
+features across layers. That is, we argue that a GNN’s computation path and the sequence of node
+features through layers can be a valuable signal. By reflecting on this trajectory, models can better
+understand which transformations were beneficial and refine their final predictions accordingly.
+In this work, we propose HISTOGRAPH, a self-reflective architectural paradigm that enables GNNs
+to reason about their historical graph activations. HISTOGRAPH introduces a two-stage self-attention
+mechanism that disentangles and models two critical axes of GNN behavior: the evolution of node
+embeddings through layers, and their spatial interactions across the graph. The layer-wise module
+treats each node’s layer representations as a sequence and learns to attend to the most informative
+representation, while the node-wise module aggregates global context to form richer, context-aware
+outputs. HISTOGRAPH design enables learning representations without modifying the underlying
+GNN architecture, leveraging the rich information encoded in intermediate representations to enhance
+many graph related predictions (graph classification, node classification and link prediction).
+We apply HISTOGRAPH in two complementary modes: (1) end-to-end joint training with the
+backbone, and (2) post-processing as a lightweight head on a frozen pretrained GNN. The end-to-end
+variant enriches intermediate representations, while the post-processing variant trains only the head,
+yielding substantial gains with minimal overhead. HISTOGRAPH consistently outperforms strong
+GNN and pooling baselines on TU and OGB benchmarks (Morris et al., 2020; Hu et al., 2020),
+2
+
+
+===== PAGE 3 =====
+demonstrating that computational history is a powerful, general inductive bias. Figure 1 overviews
+HISTOGRAPH.
+Main contributions. (1) We introduce a self-reflective architectural paradigm for GNNs that leverages
+the full trajectory of node embeddings across layers; (2) We propose HISTOGRAPH, a two-stage
+self-attention mechanism that disentangles the layer-wise node embeddings evolution and spatial
+aggregation of node features; (3) We empirically validate HISTOGRAPH on graph-level classification,
+node classification and link prediction tasks, demonstrating consistent improvements over state-of-
+the-art baselines; and, (4) We show that HISTOGRAPH can be employed as a post-processing tool to
+further enhance performance of models trained with standard graph pooling layers.
+2
+RELATED WORKS
+Table 1: Comparison of pooling methods based on inter-
+mediate representation usage, structural considerations,
+and layer-node modeling.
+Method
+Int.
+Repr. Struct. Layer-Node
+Model.
+JKNet (Xu et al., 2018)
+Yes
+No
+No
+Set2Set (Vinyals et al., 2015)
+No
+Yes
+No
+SAGPool (Lee et al., 2019)
+No
+Yes
+No
+DiffPool (Ying et al., 2018)
+No
+Yes
+No
+SSRead (Lee et al., 2021)
+No
+Yes
+No
+DKEPool (Chen et al., 2023)
+No
+Yes
+No
+SOPool (Wang &amp; Ji, 2023)
+No
+Yes
+No
+GMT (Baek et al., 2021)
+No
+Yes
+No
+Mean/Max/Sum Pool
+No
+No
+No
+HISTOGRAPH (Ours)
+Yes
+Yes
+Yes
+Graph Neural Networks. GNNs propa-
+gate and aggregate messages along edges
+to produce node embeddings that cap-
+ture local structure and features (Scarselli
+et al., 2008; Gilmer et al., 2017). GNN
+architectures are typically divided into
+two families:
+spectral GNNs, defining
+convolutions with the graph Laplacian
+(e.g., ChebNet (Defferrard et al., 2016),
+GCN (Kipf &amp; Welling, 2016)), and spa-
+tial GNNs, aggregating neighborhoods di-
+rectly (e.g., GraphSAGE (Hamilton et al.,
+2017), GAT (Veliˇckovi´c et al., 2017)).
+Greater GNN depth expands receptive
+fields but introduces over-smoothing (Cai
+&amp; Wang, 2020; Nt &amp; Maehara, 2019;
+Rusch et al., 2023; Li et al., 2018) and over-
+squashing (Alon &amp; Yahav, 2020). Mitigations include residual and skip connections (Chen et al.,
+2020; Xu et al., 2018), graph rewiring (Topping et al., 2021), and global context via positional
+encodings or attention (Graphormer (Ying et al., 2021), GraphGPS (Rampášek et al., 2022)). Several
+models preserve multi-hop information for robustness and expressivity. HISTOGRAPH maintains
+node-embedding histories across propagation and fuses them at readout. Unlike per-layer mixing, this
+yields a consolidated multi-scale summary, mitigating intermediate feature degradation and retaining
+local and long-range information.
+Pooling in Graph Learning. Graph-level tasks (e.g., molecular property prediction, graph classifi-
+cation) require a fixed-size summary of node embeddings. Early GNNs used permutation-invariant
+readouts such as sum, mean, and max (Gilmer et al., 2017; Zaheer et al., 2017), as in GIN (Xu
+et al., 2019). Richer structure motivated learned pooling: SortPool sorts embeddings and selects
+top-k (Zhang et al., 2018); DiffPool learns soft clusters for hierarchical coarsening (Ying et al.,
+2018); SAGPool scores nodes and retains a subset (Lee et al., 2019). Set2Set uses LSTM atten-
+tion for iterative readout (Vinyals et al., 2015), while GMT uses multi-head attention for pairwise
+interactions (Baek et al., 2021). SOPool adds covariance-style statistics (Wang &amp; Ji, 2023). A
+recent survey (Liu et al., 2022) reviews flat and hierarchical techniques on TU and OGB benchmarks.
+Hierarchical approaches (e.g., Graph U-Net (Gao &amp; Ji, 2019)) capture multi-scale structure but add
+complexity and risk information loss. In contrast, HISTOGRAPH directly pools historical activations:
+layer-wise attention fuses multi-depth features, node-wise attention models spatial dependencies, and
+normalization stabilizes contributions. This preserves information across propagation depths without
+clustering or node dropping. Table 1 summarizes design choices and shows HISTOGRAPH is the only
+method combining intermediate representations with structural information.
+Residual Connections. Residuals are pivotal for deep GNNs and multi-scale features. Jumping
+Knowledge flexibly combines layers (Xu et al., 2019), APPNP uses personalized PageRank to
+preserve long-range signals (Gasteiger et al., 2018), and GCNII adds initial residuals and identity
+mappings for stability (Chen et al., 2020). In pooling, Graph U-Net links encoder–decoder via
+skips (Gao &amp; Ji, 2019), and DiffPool’s cluster assignments act as soft residuals preserving early-layer
+3
+
+
+===== PAGE 4 =====
+information (Ying et al., 2018). Other methods show that learnable residual connections can mitigate
+oversmoothing (Eliasof et al., 2023b), and allow a dynamical system perspective on graphs (Eliasof
+et al., 2024). Differently, our HISTOGRAPH departs by introducing historical pooling: at readout, it
+accumulates node histories across layers, creating a global shortcut at aggregation that revisits and
+integrates multi-hop features into the final representation unlike prior models that apply residuals
+only within node updates or via hierarchical coarsening.
+3
+LEARNING FROM HISTORICAL GRAPH ACTIVATIONS
+We introduce HISTOGRAPH, a learnable pooling operator that improves graph representation learning
+across downstream tasks by integrating layer evolution and spatial interactions in an end-to-end
+differentiable framework. Unlike pooling that operates on the last GNN layer, HISTOGRAPH treats
+hidden representations as a sequence of historical activations. It computes node embeddings by
+querying each node’s history with its final-layer representation, then applies spatial self-attention to
+produce a fixed-size graph representation. Details appear in Appendix B and Algorithm 1; Figure 1
+overviews HISTOGRAPH, and Table 1 compares to other methods.
+Notations. Let X ∈RN×L×Din be a batch of historical graph activations, where N is the number of
+nodes in the batch, L is the number of GNN layers or time steps, and Din is the feature dimensionality.
+Each node has L historical embeddings corresponding to different depths of message passing. We
+assume that all GNN layers produce activations with the same dimensionality Din.
+We denote by X = [X(1), . . . , X(L−1)] the activation history of the GNN computations across L
+layers. The initial representation is given by X(0) = Embin(F), where F ∈RN×Din is the input node
+features and Emb is a linear layer. For each subsequent layer l = 1, . . . , L −1, the representations
+are computed recursively as X(l) = GNN(l)(X(l−1)), where GNN(l) denotes the l-th GNN layer.
+Input Projection and Per Layer Positional Encoding. We first project input features to a common
+hidden dimension D using a linear transformation:
+X′ = Embhist(X) ∈RN×L×D.
+(1)
+To encode layer ordering, we add fixed sinusoidal positional encodings as in Vaswani et al. (2017):
+Pl,2k = sin
+
+l
+100002k/D
+
+,
+Pl,2k+1
+= cos
+
+l
+100002k/D
+
+,
+(2)
+for 0 ≤l &lt; L, 0 ≤k &lt; D/2, resulting in P ∈RL×D, to obtain layer-aware features eX = X′ + P.
+Layer-wise Attention and Node-wise Attention. We view each node through its sequence of
+historical activations and use attention to learn which activations are most relevant. We use only the
+last-layer embedding as the query to attend over all historical states:
+Q = eXL−1W Q ∈RN×1×D,
+K
+= eXW K ∈RN×L×D,
+V = eX ∈RN×L×D.
+(3)
+We apply scaled dot-product attention and average across nodes, obtaining a layer weighting scheme:
+c = Average
+QK⊤
+√
+D
+
+∈R1×L.
+(4)
+Rather than softmax, which enforces non-negative weights and suppresses negative differences, we
+apply a normalization that permits signed contributions αl =
+cl
+PL−1
+l′=0 cl′ . This allows the model to
+express additive or subtractive relationships between layers, akin to finite-difference approximations
+in dynamical systems. The cross-layer pooled node embeddings are computed as:
+H =
+L−1
+X
+l=0
+αl · eXl =
+L−1
+X
+l=0
+cl
+PL−1
+l′=0 cl′
+· eXl
+∈RN×D.
+(5)
+Graph-level Representation. We first aggregate each node’s history weighted by relevance to
+the final state, with a residual recency bias from the final-layer query, into H. Next, we obtain
+4
+
+
+===== PAGE 5 =====
+a graph-level representation by applying multi-head self-attention across nodes, omitting spatial
+positional encodings to preserve permutation invariance:
+Z = MHSA(H, H, H) ∈RN×D,
+(6)
+optionally followed by residual connections and LayerNorm. Averaging over nodes yields G =
+Average(Z) ∈RD, which then feeds the final prediction head (typically an MLP). Early message-
+passing layers capture local interactions, whereas deeper layers encode global ones (Gasteiger et al.,
+2019; Chien et al., 2020). By attending across layers and nodes, HISTOGRAPH fuses local and global
+cues, retaining multi-scale structure and validating our motivation.
+Computational Complexity. Layer-wise attention costs O(LD) per node; spatial attention over N
+nodes costs O(N 2D). Thus the per-graph complexity is
+O(NLD + N 2D) = O(N(L + N)D),
+(7)
+with memory O(L + N 2) from attention maps. A naïve joint node–layer attention costs O(L2N 2D),
+which is prohibitive. Our two-stage scheme—first across layers (O(LD) per node), then across
+nodes (O(N 2D))—avoids this. Since L ≪N in practice, the dominant cost is O(N 2D), matching
+a single graph-transformer layer, whereas standard graph transformers stack L such layers (Yun et al.,
+2019). This decomposition keeps historical activations tractable despite the quadratic node term.
+Empirically, HISTOGRAPH adds only a slight runtime over a standard GNN forward pass (Figure </pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

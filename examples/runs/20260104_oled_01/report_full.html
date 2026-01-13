@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260104_oled_01</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-nature_reviews,
+body.template-nature_journal {
+  --ink: #1b1a18;
+  --muted: #5a5a5a;
+  --accent: #c4232e;
+  --link: #1d4f7a;
+  --page-bg: linear-gradient(120deg, #f6f1f0 0%, #fdf9f8 55%, #ffffff 100%);
+  --body-font: "Georgia", "Iowan Old Style", "Charter", "Palatino Linotype", serif;
+  --heading-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-nature_reviews .kicker,
+body.template-nature_journal .kicker {
+  font-weight: 600;
+}
+
+body.template-nature_reviews .article h2,
+body.template-nature_journal .article h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 1.05rem;
+  border-top: 2px solid rgba(196, 35, 46, 0.3);
+}
+
+  </style>
+</head>
+<body class="template-nature_reviews">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260104_oled_01</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 01:03</p>
+<h2>Abstract</h2>
+<p>본 보고서는 최근 30일 범위에서 수집된 제한적 아카이브(1차 논문 1편, OpenAlex 메타데이터 4편 요약, 웹 2차 자료 일부)를 근거로 OLED 기술 트렌드를 “증거 가중(evidence-weighted)” 방식으로 정리한다. 가장 강한 1차 근거는 <em>Nature Communications</em>의 “High aspect ratio organic light-emitting diodes”(2025)로, 패널 대비 발광 활성면적을 기하학적으로 증대(면적 증대계수 AE 최대 1.4×)하여 동일 패널 휘도에서 전류밀도를 낮추고, 그 결과로 수명(2.7×)과 광추출(최대 40%↑)을 동시에 개선할 수 있음을 실험적으로 제시한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>). OpenAlex 기반 신호는 (i) deep-blue PHOLED 안정성/측정 표준 문제, (ii) 잉크젯 프린팅(IJP) 기반 제조전환, (iii) 스트레처블 OLED 구조(버클링, island-bridge, intrinsically stretchable)로 요약되나, 대부분 원문 PDF 부재로 인해 정량 비교에는 한계가 있다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>, <a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">[3]</a>). 산업 채택 지연의 배경으로 DOE는 OLED 일반조명 확산의 핵심 장애를 “high cost”로 명시하며(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>), 기술 성숙도·원가·공정창·측정 표준화가 단기 의사결정의 핵심 질문으로 도출된다.</p>
+<h2>Introduction</h2>
+<p>OLED(organic light-emitting diode)는 자발광 면광원으로, 디스플레이에서는 초박형·고명암·유연성 등 장점으로 상용화가 성숙했으나, 일반조명에서는 비용·수명·효율 목표를 동시에 만족시키기 어렵다는 구조적 제약이 지속되어 왔다. 특히 조명용 OLED는 디스플레이 대비 약 한 자릿수(“roughly an order of magnitude”) 높은 휘도를 요구하며, OLED 효율과 수명은 전류밀도(따라서 휘도 증가)와 함께 저하된다는 점이 트레이드오프의 핵심으로 제시된다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).<br />
+본 보고서는 (1) 소자/광학 구조적 인플렉션(예: 고종횡비 텍스처), (2) 재료·스펙트럼 난제(blue), (3) 제조 패러다임 전환(IJP), (4) 폼팩터 확장(스트레처블) 신호를 중심으로, 연구 성과와 상업 채택 간 갭(원가·수율·재현성·표준)을 비교한다. 단, 본 런(run)의 데이터는 “최근 30일” 자동 수집 결과로 스코프 외 문헌(quantum computing)이 섞여 있어, OLED와 직접 무관한 항목은 제외한다(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[5]</a>, <a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</p>
+<h2>Current Landscape</h2>
+<h3>1) 조명용 OLED의 성능-수명 트레이드오프를 겨냥한 “기하학적 면적 증대” 접근(강한 1차 근거)</h3>
+<p><em>Nature Communications</em> 논문은 조명 응용에서 “수명은 휘도에 역비례”하고 “조명은 디스플레이보다 ~10× 높은 휘도”를 요구한다는 문제정의를 명확히 한 뒤, <strong>패널 면적당 활성 OLED 면적을 늘려 동일 패널 휘도에서 전류밀도를 낮추는</strong> 전략을 제시한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>). 이는 재료를 바꾸지 않고도 전류밀도-열-열화의 연결고리를 완화하는 “구조/제조 기반” 해법으로 분류된다.</p>
+<h3>2) 디스플레이 핵심 난제: deep-blue 발광(중간~약한 근거; 메타데이터 수준)</h3>
+<p>OpenAlex에 포함된 <em>Advanced Materials</em> Perspective는 blue 픽셀이 디스플레이 전력의 약 50%를 소비하며, deep-blue PHOLED의 안정성 표준 미달이 25년간 상용화를 지연시켰다고 요약한다. 또한 분자설계, graded doping, triplet radiative lifetime 단축(광학적 DOS 증가), outcoupling 등을 결합해 수명이 green에 근접한다는 “진전 신호”와 함께, 양자효율·수명 측정의 지속적 문제(재현성/표준화)를 지적한다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>). 다만 본 아카이브에는 원문 PDF가 없어, 정량 수치/측정 프로토콜 논쟁을 직접 인용할 수 없다.</p>
+<h3>3) 제조 전환 신호: 잉크젯 프린팅(IJP) OLED(약한 근거; 메타데이터 수준)</h3>
+<p><em>Advanced Optical Materials</em> 리뷰(메타데이터)는 열증착 기반 대면적 균일 제조의 비용·복잡성이 장애이며, IJP가 비접촉·재료 이용률↑·roll-to-roll 호환으로 “대면적 제조 유력 후보”임을 주장한다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>). 그러나 수율/결함/수명에 대한 정량 성과는 원문 확보가 필요하다.</p>
+<h3>4) 폼팩터 확장: 스트레처블 OLED(약한 근거; 저널 신뢰도 주의)</h3>
+<p>OpenAlex에서 PDF가 실제로 확보된 스트레처블 OLED 리뷰는 (i) laser-programmed buckling, (ii) island-bridge(serpentine/fractal 등), (iii) intrinsically stretchable materials로 분류하고, 버클링 사례에서 0/40/70% strain에서 72.5/68.5/70.0 cd A⁻¹, 100% strain, 15,000회 사이클 등의 수치를 인용한다(<a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">[3]</a>). 다만 OpenAlex 메타에서 cited_by_count=0이고 저널 위상이 메이저 저널 대비 낮아, 핵심 의사결정 근거로 쓰기 전 원출처 추적이 필요하다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</p>
+<h3>5) 상업 채택 지연의 공통 배경(보조 근거; 웹 2차)</h3>
+<p>DOE는 OLED가 일반조명에서 “widespread use”까지는 시간이 더 필요하며, 그 주된 이유가 “high cost”라고 명시한다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). OLED-Info 또한 OLED 조명이 균일 면광원/유연성 등의 장점에도 불구하고 mass production에 아직 도달하지 못했고 automotive 등 니치 채택이 증가 중이라고 요약한다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). 이는 기술 성능 외에 제조원가·공급망·품질보증(QA) 문제가 채택의 병목임을 시사한다.</p>
+<h2>Mechanisms &amp; Methods</h2>
+<h3>A) High aspect ratio OLED(고종횡비 텍스처)의 핵심 메커니즘</h3>
+<p>고종횡비 접근은 패널 평면적($A_\mathrm{pan}$) 대비 실제 소자 활성면적($A_\mathrm{dev}$)을 늘려 동일 패널 휘도($L_\mathrm{pan}$)에서 <strong>소자 국부 전류밀도($J_\mathrm{dev}$)</strong>를 낮추는 기하학적 스케일링에 기반한다. 논문은 면적 증대계수(Area enhancement)를
+$$
+AE \equiv \frac{A_\mathrm{dev}}{A_\mathrm{pan}}=\sqrt{1+(2\beta)^2},\quad \beta=\frac{h}{w}
+$$
+로 정의하고, 다른 조건이 같다면 동일 패널 휘도를 얻기 위한 전류밀도 감소가 대략 $AE$에 비례함을 설명한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</p>
+<h3>B) 공정/제조 방법(재현성·스케일업 논점에 직결)</h3>
+<ul>
+<li><strong>기판 형성:</strong> microprism 시트로 PDMS 몰드를 만든 뒤 UV 경화 에폭시를 유리 위에 복제 몰딩하여 삼각 코루게이션을 형성(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>전극/적층:</strong> ITO는 RF 스퍼터, 유기층+캐소드는 표준 VTE로 적층(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>두께 보정의 필연성:</strong> VTE는 방향성이 강해 로컬 증착각이 변하므로, 평탄 기판과 동일한 로컬 두께를 유지하려면 유기층/캐소드 <strong>명목 두께를 $[ \cos(\theta_\mathrm{dep}) ]^{-1}=AE$만큼 증가</strong>시켜야 한다고 명시한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>균일도 지표:</strong> 활성 면적 대부분을 차지하는 facet 기준 두께 변동(표준편차/평균)이 <strong>5% 미만</strong>이라고 보고한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>공정창 한계 신호:</strong> AE2.0 기하에서는 “빠르게 실패하고 재현성이 낮음”을 언급하여(기하학 확장의 실용 한계) 제조 리스크를 드러낸다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h3>C) 성능 평가 방법(측정 조건의 중요성)</h3>
+<ul>
+<li>수명 비교에서 outcoupling 차이를 혼입시키지 않기 위해, blue 디바이스의 fade test는 <strong>상수 패널 전류밀도($J_\mathrm{pan}=3$ mA cm$^{-2}$)</strong> 조건으로 수행되며, LT95(초기 휘도의 95%까지 도달 시간)를 사용한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li>논문은 문헌 전반에 존재하는 수명-전류밀도 경험식을 $\mathrm{LT95}\propto J_\mathrm{dev}^{-\gamma}$, $\gamma\approx1.5\text{–}2.5$로 제시하며, 면적 증대에 따른 전류밀도 감소가 수명 향상으로 연결됨을 정당화한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h2>Comparative Evidence</h2>
+<p>아래 비교는 “현재 아카이브에 존재하는 직접 증거”와 “메타데이터/리뷰 요약 수준의 신호”를 구분해 해석한다.</p>
+<h3>1) 인플렉션 포인트 #1: 고종횡비(High aspect ratio) 텍스처 OLED — <strong>강한 증거(실험 논문)</strong></h3>
+<ul>
+<li><strong>장점(정량):</strong> AE 최대 1.4× 구현, 동일 패널 전류밀도에서 <strong>수명 2.7× 증가</strong>, <strong>외부 광추출 효율 최대 40% 증가</strong>(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>의미:</strong> 전류밀도 저감은 재료 열화/발열/효율 롤오프에 구조적으로 작용하며, outcoupling 향상(산란 기반)과 결합될 때 동일 휘도에서 “전류밀도 절반 이하” 가능성을 제시한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>제약:</strong> AE2.0에서 재현성 실패, 텍스처 추가 공정으로 파티클/클리닝 문제(다크스팟) 악화 가능성이 논의된다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>적용영역:</strong> 저자들은 산란 유발 cross talk 및 고해상도 패터닝 문제로 <strong>디스플레이에는 부적합</strong>할 수 있음을 명시하고, 조명용에 더 적합하다고 논한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h3>2) 인플렉션 포인트 #2: deep-blue PHOLED 수명/측정 표준 — <strong>중간 이하(메타데이터)</strong></h3>
+<ul>
+<li><strong>장점 신호:</strong> graded doping, 광학적 DOS 증가로 triplet radiative lifetime 단축, outcoupling 결합 등 “해결책 조합”이 성숙하고 있다는 서술(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+<li><strong>핵심 리스크:</strong> 효율·수명 측정의 “persistent problems”를 지적(재현성/표준)하나, 본 런에서는 원문 부재로 구체적 프로토콜·수치 인용 불가(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+<li><strong>의사결정 해석:</strong> 기술적으로는 진전 신호가 있으나, 산업 채택 관점에서는 “표준화된 수명/효율 측정”이 재료 혁신만큼 중요할 가능성을 시사한다(단, 현재는 요약 기반).</li>
+</ul>
+<h3>3) 인플렉션 포인트 #3: IJP 기반 제조전환 — <strong>약한 증거(메타데이터)</strong></h3>
+<ul>
+<li><strong>기대효과:</strong> 비접촉·재료 이용률↑·R2R 호환으로 대면적 제조의 비용/복잡성 병목을 완화할 잠재력(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+<li><strong>갭:</strong> 수율·결함(예: 커피링, 노즐-잉크 안정성, 건조/상분리), 수명 열화, 대면적 균일도 등 핵심 KPI가 본 아카이브에선 검증되지 않음 → 원문 확보 필요.</li>
+</ul>
+<h3>4) 인플렉션 포인트 #4: 스트레처블 OLED(버클링/island-bridge/재료) — <strong>약한 증거(리뷰 1편; 신뢰도 주의)</strong></h3>
+<ul>
+<li><strong>장점 신호:</strong> 버클링 등 기계 설계로 높은 strain과 반복 내구성을 달성했다는 정량 주장(예: 15,000 cycles) 존재(<a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">[3]</a>).</li>
+<li><strong>증거 강도 제한:</strong> cited_by_count=0, 저널 위상 불확실 → 본문이 인용하는 원논문(예: “Jilin University” 그룹 연구)으로의 역추적이 필요(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>, <a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">[3]</a>).</li>
+</ul>
+<h3>5) 연구-상업 채택 갭(공통): 비용·대면적·공정창</h3>
+<p>DOE가 일반조명 확산의 주된 제약을 비용으로 명시한 점은, (i) 공정 단계 추가(예: 텍스처 몰딩), (ii) 장비 호환성(VTE/스퍼터의 각도/throw distance), (iii) 결함/청정도 관리가 최종 원가·수율·보증비용에 미치는 영향이 기술 성능만큼 중요함을 지지한다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). 고종횡비 OLED 논문에서도 추가 공정이 파티클 유발 결함을 악화시킬 수 있음을 관찰해, “성능 향상”과 “제조 복잡도 증가”의 긴장을 동일 문헌 내에서 확인할 수 있다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</p>
+<h2>Key Points</h2>
+<ul>
+<li><strong>(합의에 가까운 실험 근거)</strong> 고종횡비(텍스처) 기반 AE 증대는 동일 패널 휘도에서 전류밀도를 낮추는 직접적 기하학 전략이며, AE 1.4×에서 수명 2.7× 및 광추출 최대 40% 향상이 보고되었다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>(제조 관점 핵심)</strong> VTE의 방향성 때문에 로컬 두께 보정을 위해 명목 두께를 AE만큼 증가시키는 설계가 필요하며, facet 기준 두께 변동 &lt;5%로 보고되었으나 AE2.0에서 재현성 저하가 나타난다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>(응용 분화)</strong> 산란 기반 outcoupling/표면 텍스처는 조명에는 유리하지만, 픽셀 cross talk·해상도 패터닝 문제로 디스플레이 적용에는 구조적 제약이 크다는 점이 명시된다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>(신호 수준)</strong> deep-blue PHOLED는 해결책 조합이 진전되고 있으나, 효율·수명 측정의 표준/재현성 문제가 지속된다는 지적이 있다(원문 부재로 정량 검증 불가)(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+<li><strong>(채택 병목의 공통분모)</strong> 일반조명에서 OLED 확산의 큰 장애가 비용(high cost)이라는 DOE의 진술은, 공정 단순화·수율 향상·품질보증 체계가 기술 인플렉션의 필수 조건임을 강화한다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</li>
+</ul>
+<h2>Challenges &amp; Limitations</h2>
+<p>1) <strong>증거 포트폴리오의 비대칭성</strong>: 본 런에서 강한 1차 증거는 사실상 Nat Commun 1편에 집중되어 있으며, blue/IJP 관련은 메타데이터 수준이라 정량 비교(수명, EQE, 비용/수율) 표준을 제시하기 어렵다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).<br />
+2) <strong>재현성·공정창</strong>: 고종횡비 OLED는 AE2.0에서 “fail quickly” 및 “not reproducible”을 명시해, 기하학 확장 시 공정창이 급격히 좁아질 수 있음을 보여준다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).<br />
+3) <strong>청정도/결함 관리</strong>: 텍스처 형성의 추가 공정이 파티클 유발 핀홀/다크스팟을 악화시킬 수 있으며, 이는 조명 패널의 신뢰성·수율에 직접 연결된다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).<br />
+4) <strong>폼팩터 분야의 근거 질</strong>: 스트레처블 OLED 리뷰는 정량 수치를 포함하나, 저널/인용지표 측면에서 근거 강도가 낮아, 인용된 원연구를 재검증하지 않으면 기술 로드맵 근거로는 취약하다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).<br />
+5) <strong>스코프 혼입 데이터의 관리 필요</strong>: 인스트럭션에 “quantum computing”이 포함되어 OpenAlex 결과에 오프토픽 문헌이 섞였고, 본 보고서는 이를 제외했다(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[5]</a>, <a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</p>
+<h2>Outlook</h2>
+<h3>단기(6–18개월): “구조 기반 수명 향상”의 제조 적합성 검증</h3>
+<ul>
+<li>고종횡비 OLED의 다음 단계는 AE 1.4× 수준에서 <strong>대면적 확장 시 수율/결함 밀도/청정 공정</strong>이 유지되는지, 그리고 in-line 코팅 장비(짧은 throw distance, 다양한 증착각)에서의 <strong>두께 균일도 재현</strong> 여부를 확인하는 것이다. 논문은 in-line 시스템이 고종횡비 기판에 유리할 수 있음을 제안한다(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>).</li>
+<li>의사결정 질문: (i) AE 스케일업 한계는 기판 기하(β)인가, 장비(각 분포/회전/planetary)인가? (ii) 텍스처 공정 추가로 증가하는 결함을 어떤 클린/캡슐레이션/검사 체계로 상쇄할 수 있는가?</li>
+</ul>
+<h3>중기(18–36개월): 제조 패러다임(IJP)·blue 안정성·표준화의 동시 압력</h3>
+<ul>
+<li>IJP는 비용 병목을 정면으로 겨냥하지만, 현재 아카이브로는 수율·수명 정량 KPI가 비어 있다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>). 따라서 “원문 확보→벤치마크 지표 정의(결함/균일도/수명/재료 이용률)”가 필요하다.</li>
+<li>deep-blue PHOLED는 “성숙 신호”와 “측정 문제”가 동시에 제기되므로, 단기적으로는 <strong>측정 표준(전류/휘도 조건, LT 정의, 열관리, 캘리브레이션)</strong>을 내부적으로 고정하고 외부 데이터의 비교 가능성을 선별하는 것이 R&amp;D 리스크를 낮춘다(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+</ul>
+<h2>Appendix</h2>
+<h3>A1. 본 런에서 도출한 3–5개 기술 인플렉션 포인트(증거 강도 매트릭스)</h3>
+<table>
+<thead>
+<tr>
+<th>인플렉션 포인트</th>
+<th>핵심 주장</th>
+<th>현재 아카이브 근거</th>
+<th>증거 강도(본 런 기준)</th>
+<th>추가 확보 필요</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>High aspect ratio OLED(면적 증대+산란 outcoupling)</td>
+<td>AE로 전류밀도↓ → 수명/효율↑</td>
+<td>Nat Commun 원문 텍스트에 정량(2.7×, 40%↑, AE1.4) 포함(<a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">[1]</a>)</td>
+<td>높음</td>
+<td>대면적/수율/원가 데이터</td>
+</tr>
+<tr>
+<td>deep-blue PHOLED 성숙 + 측정 문제</td>
+<td>수명이 green에 근접, 측정 표준 문제 존재</td>
+<td>OpenAlex 초록 요약(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>)</td>
+<td>중간 이하</td>
+<td>원문 PDF/정량 수치/측정 프로토콜</td>
+</tr>
+<tr>
+<td>IJP OLED 제조전환</td>
+<td>비접촉·재료 이용률↑·R2R</td>
+<td>OpenAlex 초록 요약(<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>)</td>
+<td>낮음</td>
+<td>원문 PDF, 수율/결함/수명 비교</td>
+</tr>
+<tr>
+<td>Stretchable OLED 구조(버클링/island-bridge/재료)</td>
+<td>높은 strain/내구성 사례</td>
+<td>리뷰 원문 텍스트 존재(<a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">[3]</a>)</td>
+<td>낮음(신뢰도 주의)</td>
+<td>인용된 원논문 역추적, 독립 검증</td>
+</tr>
+</tbody>
+</table>
+<h3>A2. 제외/보류 항목</h3>
+<ul>
+<li>OpenAlex에 포함된 quantum computing 문헌은 본 보고서(OLED 기술 트렌드)와 무관하여 제외(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[5]</a>, <a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">[2]</a>).</li>
+<li>LinkedIn 기반 “AI molecular design” 링크는 OLED 소자/소재와의 직접 연결 고리가 본 아카이브에서 불충분하여 핵심 근거에서 제외(필요 시 별도 부록 확장 가능)(<a href="report_views/archive_20260104_oled_01-index.md-1636fa8f.html" data-viewer="report_views/archive_20260104_oled_01-index.md-1636fa8f.html" data-raw="archive/20260104_oled_01-index.md" class="viewer-link">[6]</a>).</li>
+</ul>
+<h2>Figures</h2>
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_s41467-025-67312-4_reference.pdf-dabfdc19.png" alt="Figure from ./archive/web/pdf/s41467-025-67312-4_reference.pdf (page 22)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-viewer="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-raw="archive/web/pdf/s41467-025-67312-4_reference.pdf" class="viewer-link">./archive/web/pdf/s41467-025-67312-4_reference.pdf</a> (page 22)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_s41467-025-67312-4_reference.pdf-e836dcec.png" alt="Figure from ./archive/web/pdf/s41467-025-67312-4_reference.pdf (page 22)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-viewer="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-raw="archive/web/pdf/s41467-025-67312-4_reference.pdf" class="viewer-link">./archive/web/pdf/s41467-025-67312-4_reference.pdf</a> (page 22)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_s41467-025-67312-4_reference.pdf-d587a0b2.png" alt="Figure from ./archive/web/pdf/s41467-025-67312-4_reference.pdf (page 22)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-viewer="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-raw="archive/web/pdf/s41467-025-67312-4_reference.pdf" class="viewer-link">./archive/web/pdf/s41467-025-67312-4_reference.pdf</a> (page 22)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_s41467-025-67312-4_reference.pdf-d5edce85.png" alt="Figure from ./archive/web/pdf/s41467-025-67312-4_reference.pdf (page 22)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-viewer="report_views/archive_web_pdf_s41467-025-67312-4_reference.pdf-870742d4.html" data-raw="archive/web/pdf/s41467-025-67312-4_reference.pdf" class="viewer-link">./archive/web/pdf/s41467-025-67312-4_reference.pdf</a> (page 22)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7117787413.pdf-62be955c.jpeg" alt="Figure from ./archive/openalex/pdf/W7117787413.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7117787413.pdf-bfc3f709.html" data-viewer="report_views/archive_openalex_pdf_W7117787413.pdf-bfc3f709.html" data-raw="archive/openalex/pdf/W7117787413.pdf" class="viewer-link">./archive/openalex/pdf/W7117787413.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7117787413.pdf-9e3d8a9c.png" alt="Figure from ./archive/openalex/pdf/W7117787413.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7117787413.pdf-bfc3f709.html" data-viewer="report_views/archive_openalex_pdf_W7117787413.pdf-bfc3f709.html" data-raw="archive/openalex/pdf/W7117787413.pdf" class="viewer-link">./archive/openalex/pdf/W7117787413.pdf</a> (page 4)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Focus on OLED technology trends, materials advances, and near-term industry implications.
+Prioritize insights from papers, open-access journals, and credible industry sources.
+Identify 3-5 key technical inflection points, their evidence, and likely applications.
+Compare research vs. commercial adoption (manufacturing, yield, cost, lifetime, efficiency).
+Call out contradictions or gaps, and suggest follow-up questions for decision-makers.</p>
+<h2>References</h2>
+<ol>
+<li>s41467-025-67312-4_reference.txt — <a href="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-viewer="report_views/archive_web_text_s41467-025-67312-4_reference.txt-cbe975ea.html" data-raw="archive/web/text/s41467-025-67312-4_reference.txt" class="viewer-link">file</a></li>
+<li>OpenAlex works index (<a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a>) — selected sources:</li>
+<li>OLED TDDI Market Overview — <a href="https://doi.org/10.5281/zenodo.17862627" target="_blank" rel="noopener">link</a> <small>citations: 0</small></li>
+<li>Perspective: OLED Displays Singing with the Blues — <a href="https://doi.org/10.1002/adma.202519327" target="_blank" rel="noopener">link</a> <small>citations: 0</small></li>
+<li>Research Progress on the Preparation of OLED Based on the Inkjet Printing — <a href="https://doi.org/10.1002/adom.202502807" target="_blank" rel="noopener">link</a> <small>citations: 0</small></li>
+<li>Recent Progress in Stretchable OLED Design and Applications — <a href="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-viewer="report_views/archive_openalex_text_W7117787413.txt-7ff9459d.html" data-raw="archive/openalex/text/W7117787413.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Tavily search index (<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>) — selected sources:</li>
+<li>An introduction to OLED displays - OLED-Info — <a href="https://www.oled-info.com/oled-introduction" target="_blank" rel="noopener">link</a></li>
+<li>OLED Basics | Department of Energy — <a href="https://www.energy.gov/eere/ssl/oled-basics" target="_blank" rel="noopener">link</a></li>
+<li>20260104_oled.txt — <a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">file</a></li>
+<li>20260104_oled_01-index.md — <a href="report_views/archive_20260104_oled_01-index.md-1636fa8f.html" data-viewer="report_views/archive_20260104_oled_01-index.md-1636fa8f.html" data-raw="archive/20260104_oled_01-index.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 04:03:13</li>
+<li>Duration: 03:04:44 (11084.91s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: nature_reviews</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

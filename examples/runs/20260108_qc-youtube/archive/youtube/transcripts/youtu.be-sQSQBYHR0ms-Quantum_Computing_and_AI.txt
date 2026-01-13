@@ -1,0 +1,309 @@
+Title: Quantum Computing and AI
+URL: https://www.youtube.com/watch?v=sQSQBYHR0ms
+Direct URL: https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s
+Video ID: sQSQBYHR0ms
+Channel: Caleb Writes Code
+Published: 2025-10-19T17:46:02Z
+Tags: Quantum Computing, Quantum Computers, Quantum Computers and AI, How will quantum computing affect AI, Will Quantum Computing make AI, AI and Quantum Computing, NVIDIA Quantum Computing, IBM Quantum Computing, How many qubits do we have, Training AI with Quantum Computers
+Hashtags: #ai, #quantumcomputing, #llm
+Summary: Quantum Computers are approaching a turning point where it is starting to bring values to other industries, and one of the first seems to be AI and Machine Learning. #ai #quantumcomputing #llm My X account: https://x.com/calebwrites0101 Sammy's X account: https://x.com/monkesammy Chapters 00:00 Intro 00:20 LLM Training 02:35 CPU to GPU to QPU 06:14 Quantum Computing Industry 07:58 Scaling in Quant
+Source: direct_url
+
+[00:00] One of the biggest expectations around
+[00:02] quantum computers is that one day
+[00:03] quantum computers will train AI models
+[00:06] significantly faster. And that begs the
+[00:08] question, what is it about quantum
+[00:10] computers that actually make this
+[00:11] faster? Let's start with what goes into
+[00:13] training a large language model and look
+[00:15] at how quantum computers might disrupt
+[00:17] the AI industry. Quick shout out to
+[00:19] Sammy for helping me research this
+[00:21] video. Let's start with an open model
+[00:22] from Meta called Llama 3.1 from 2024.
+[00:25] Lama 3.1 is a 405 billion parameter
+[00:28] model that used 15 trillion tokens for
+[00:30] pre-training, which means using just one
+[00:33] GPU, it would take around 4,486
+[00:36] years just to train this model. And in
+[00:38] order to reduce this insane number to
+[00:40] something more tangible, we can simply
+[00:42] throw more GPUs at the problem. Let's
+[00:44] say 16,000 GPUs all dedicated to
+[00:46] training this model, which brings the
+[00:48] number down to 3 months as opposed to
+[00:50] 4,000 years. In classical computers, we
+[00:53] call this type of work parallel
+[00:55] computing. And parallel computing is
+[00:57] what enables us to train this massive
+[00:59] model in such short amount of time by
+[01:01] basically dividing up massive
+[01:03] computational workload into smaller
+[01:05] distributed tasks across hundreds of
+[01:07] thousands of GPUs. So, as you can see,
+[01:09] if parallel computing in classical
+[01:11] computers is undeniably effective at
+[01:14] training AI models, what about quantum
+[01:16] computers? How exactly does a quantum
+[01:18] computer actually compare against
+[01:20] parallel computing in classical
+[01:22] computers? The reason why the llama 3.1
+[01:24] model takes 4,486
+[01:26] years to train in the first place is
+[01:28] because underneath most AI models that
+[01:30] we train today, including modalities
+[01:32] outside of LLMs, the underlying
+[01:34] computation that needs to be done is
+[01:36] this matrix multiplication. Matrix
+[01:39] multiplication refers to multiplying
+[01:41] large grids of numbers together. And
+[01:43] underneath neural network-based
+[01:44] architectures, which is predominantly
+[01:46] the case for all AI models now, the
+[01:48] calculations that typically go into
+[01:50] training are all done by multiplying
+[01:53] many matrices of numbers. And these
+[01:55] operations are measured in what's called
+[01:57] floatingpoint operations or flops. And
+[02:00] for the Llama 3.1 model, the total
+[02:02] floatingoint operations to train the
+[02:04] model require 10 to the^ of 25 flops,
+[02:07] which is a lot of calculations that need
+[02:09] to be done. So that means in order for
+[02:11] quantum computers to compete with
+[02:13] classical computers, it needs to at
+[02:14] least match in processing this
+[02:17] unfathomable 10 to the^ of 25
+[02:19] floatingoint operations somehow. So the
+[02:21] natural question to ask here is this. If
+[02:23] we have to do 10 to the^ of 25 math
+[02:25] operations in order to train this model,
+[02:28] can't quantum computers just do all that
+[02:30] math simultaneously like it was
+[02:32] promised? And this line of thinking is
+[02:34] actually very natural to think that way.
+[02:36] I mean after all that's what we saw when
+[02:38] we went from CPU to GPU. In other words,
+[02:40] when we saw that CPUs have their upper
+[02:43] limit in what it can do, companies like
+[02:45] Nvidia stepped up and made GPUs to
+[02:48] essentially outsource computationally
+[02:50] heavy operations. So following the same
+[02:52] trajectory that might actually cause us
+[02:54] to think for quantum computers the same
+[02:56] way. And the line of thinking goes,
+[02:57] okay, well, since CPU outsource heavy
+[03:00] computations to GPU, can't GPU then also
+[03:04] outsource heavy computation to quantum
+[03:06] computers or QPU? The leap that we made
+[03:08] from CPU to GPU works somewhat
+[03:11] seamlessly given that they are both
+[03:13] transistor-based architecture that
+[03:14] processed information in a binary
+[03:16] format. So carrying bunch of zeros and
+[03:18] ones through electrical signals. But the
+[03:21] leap from GPU to QPU is a completely
+[03:24] different game. In other words, both the
+[03:26] CPU and the GPU store data in a
+[03:28] deterministic way because the underlying
+[03:30] architecture information is either a
+[03:32] zero or one. But in quantum computing,
+[03:35] they can be both zero and one at the
+[03:37] same time. So the leap that we need to
+[03:39] make from going from GPU to QPU is going
+[03:42] from a deterministic state of zeros and
+[03:44] ones to now a probabilistic state where
+[03:47] you have a varying probability of being
+[03:48] a zero while at the same time varying
+[03:51] probability of being a one. Which means
+[03:52] if we wanted to outsource heavy
+[03:54] computation from GPU to QPU, the tokens
+[03:57] that are used to train AI models which
+[03:59] are stored in zeros and ones need to
+[04:01] somehow be encoded to a quantum state.
+[04:04] But how how do we actually take a
+[04:06] deterministic state of information and
+[04:08] encoded into a probabilistic state? One
+[04:11] knive approach to this question might be
+[04:13] this. Well, if information that CPU and
+[04:16] GPU use are stored in zeros and ones,
+[04:18] can you just store them in cubits in
+[04:20] zeros and ones as well? In other words,
+[04:22] if the data is zero in a classical
+[04:24] computers, can you just say 100% of zero
+[04:27] and a 0% of one and vice versa for data
+[04:30] that is one? Well, you certainly can do
+[04:32] that. But if you are going to do that,
+[04:34] why use quantum computers in the first
+[04:36] place? In other words, why force quantum
+[04:38] computers to think deterministically if
+[04:40] the entire point of using quantum
+[04:42] computers in the first place was
+[04:44] leveraging the superp position where you
+[04:46] have the phenomenon of having
+[04:47] combinations of both states. Also, we
+[04:50] just saw how effective parallel
+[04:52] computing was where it reduced a task
+[04:53] that takes 4,486 years down to just 3
+[04:57] months. That to me is an indication that
+[04:59] something is actually working pretty
+[05:01] well. So, the follow-up question to this
+[05:02] might be this. What are quantum
+[05:04] computers actually good for when it
+[05:05] comes to AI? This is the question that
+[05:08] top researchers and scientists are still
+[05:10] trying to figure out, which is where do
+[05:12] quantum computers actually fit when it
+[05:14] comes to AI innovation? because
+[05:16] competing against an already working
+[05:17] method which is parallel computing to
+[05:19] train AI models seems a little bit
+[05:21] counterintuitive. And here's a good
+[05:23] analogy going back to the transition
+[05:25] from CPU to GPU. What I mean by that is
+[05:28] that even though GPUs are clearly better
+[05:30] than CPU when it comes to parallel tasks
+[05:32] that require heavy computation, we
+[05:35] actually still use CPUs for practically
+[05:37] most things that we do on a daily basis
+[05:39] like browsing the internet, crunching
+[05:41] numbers on Excel, and checking emails.
+[05:43] We don't need to actually use GPUs for
+[05:45] this since they just work fine using a
+[05:47] CPU. In the same way, this question
+[05:50] emerges. Do we really need to have
+[05:51] quantum computers take on the burden of
+[05:53] training AI models when parallel
+[05:55] computing seems to be getting the job
+[05:57] done fine? And this is exactly where a
+[05:59] lot of skepticisms are being formed
+[06:01] around where exactly quantum computers
+[06:04] fit into the picture when it comes to
+[06:05] AI. Are we aiming the gun at the right
+[06:08] target and solving the right problem by
+[06:10] trying to apply quantum computers for AI
+[06:12] and machine learning? And this exact
+[06:15] conundrum points to the harsh reality
+[06:17] when it comes to quantum computing. If
+[06:19] you want quantum computers to succeed,
+[06:21] we need a market for quantum computers
+[06:23] because having a market creates
+[06:25] incentives and incentives drive
+[06:27] innovation, investments, and
+[06:28] competition. And one of the biggest
+[06:30] markets that we have now is AI, which
+[06:32] means there's excess capital flowing
+[06:34] around the AI industry, which I covered
+[06:36] in a separate video called AI hype. And
+[06:38] some amount of this excess capital could
+[06:41] actually flow towards improving quantum
+[06:43] computing as long as they work
+[06:44] synerggetically with GPUs rather than
+[06:47] rendering them completely irrelevant.
+[06:49] And Jensen Wong, the CEO of Nvidia, said
+[06:51] that Nvidia will be a relic of the past,
+[06:53] pointing to the true potential of
+[06:55] quantum computers overtaking the GPU
+[06:58] market in the same way how the GPU
+[07:00] market completely overtook the CPU
+[07:02] market over the decades. Jensen also
+[07:04] sympathized with the harsh reality of
+[07:06] quantum computing industry by reflecting
+[07:08] back to when Nvidia had to compete for
+[07:11] funding when most R&D budget went
+[07:13] towards CPU. But Nvidia saw that there
+[07:15] was a huge market with a low bar in the
+[07:18] gaming industry. So Nvidia leveraged the
+[07:20] gaming industry to grow their footprint
+[07:22] from there. And now GPU is where all the
+[07:25] public attention is going towards.
+[07:27] Nvidia is literally the most valuable
+[07:29] company in the world, bigger than all
+[07:31] the banks in the US and Canada all
+[07:33] combined. And in the similar way to GPUs
+[07:35] when it was trying to compete with CPU,
+[07:38] investing in QPU or quantum computing
+[07:40] seems a little bit risky despite its
+[07:42] potential given its highly experimental
+[07:45] nature. So this might lead you to wonder
+[07:47] this question. If QPUs and quantum
+[07:49] computers aren't providing anything
+[07:51] meaningful to the society yet, why is
+[07:53] there so much hype going towards the
+[07:55] quantum computers? Is quantum computing
+[07:57] just a nothing burger? The quantum
+[07:59] computing industry has been in the race
+[08:01] to scale over the past several years.
+[08:03] But scaling here might not be actually
+[08:05] what you think it is, at least in what
+[08:07] we're used to seeing in the classical
+[08:09] computing sense. In classical computing,
+[08:11] scaling was largely guided by what's
+[08:13] called Moors law, which is an
+[08:15] observation of how fast transistors on
+[08:17] chips double every 2 years
+[08:19] approximately. But in quantum computing,
+[08:22] following the Moors law would actually
+[08:23] be a limiting factor. Meaning Moore's
+[08:25] law is actually not good enough. If you
+[08:27] look at most frontier quantum labs in
+[08:29] 2024, the number of cubits was in the
+[08:32] hundreds cubits range. So following
+[08:34] Moore's law, doubling every two years
+[08:36] would put them only at less than 10,000
+[08:38] cubits by the year 2034. So yeah,
+[08:40] Moore's law isn't going to cut it. So
+[08:43] this leads to the next natural question.
+[08:45] Okay, if Frontier Labs now have quantum
+[08:47] computers with hundreds of cubits
+[08:49] available right now, why can't we
+[08:51] actually use that to train AI models
+[08:53] today? While 100 cubits seems like it
+[08:56] could do a lot, it's extremely common to
+[08:58] have errors. And this error is more or
+[09:00] less a feature in quantum computers
+[09:02] rather than a bug. And for classical
+[09:04] computers, errors are completely
+[09:06] intolerable because we need things to be
+[09:08] deterministic, either zero or one. But
+[09:10] the probabilistic nature of cubits make
+[09:13] it incredibly sensitive. And harnessing
+[09:15] the quantum mechanics that power this
+[09:17] also requires a completely different
+[09:19] algorithm than what we saw in classical
+[09:21] computing. and as well as quantum gates
+[09:24] which help us manipulate cubits in a
+[09:26] more precise way. On top of that,
+[09:28] companies like ion, quantum, Alison,
+[09:31] Bob, IBM, Regetti, D-Wave, Nvidia, and
+[09:34] Microsoft to name the few are all trying
+[09:36] to employ different hardware techniques
+[09:38] like trapping ions, superconducting,
+[09:41] annealing. All of which I encourage you
+[09:42] to read more about what different
+[09:44] approaches these companies are taking to
+[09:47] overcome common roadblocks in quantum
+[09:49] computers like coherence time,
+[09:51] scalability, and gate fidelity. And as
+[09:53] you can see, there's a lot to unpack
+[09:54] here, but also a lot of potential for
+[09:57] early adopters to take risks and
+[09:59] innovate newer algorithms, newer gates,
+[10:01] and newer methods of leveraging quantum
+[10:04] state space in ways that we haven't
+[10:06] imagined yet. So the ultimate question
+[10:08] is how will quantum computers actually
+[10:10] pair up with AI? Do you think that
+[10:12] quantum computers are better off
+[10:14] focusing on a different industry other
+[10:16] than AI? And will LLMs be something that
+[10:19] we run on GPUs in the future just like
+[10:21] how we just run Excel on GPU? In other
+[10:24] words, do LLMs solve a niche problem of
+[10:27] processing language just like how Excel
+[10:30] solve a niche problem of processing
+[10:32] numbers? Are we going to come up with a
+[10:34] new way of harnessing knowledge that we
+[10:36] couldn't even consider before with
+[10:38] classic computers?

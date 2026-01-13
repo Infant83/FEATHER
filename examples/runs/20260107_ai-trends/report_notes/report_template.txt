@@ -1,0 +1,32 @@
+Template: mit_tech_review_10_breakthroughs
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\mit_tech_review_10_breakthroughs.md
+Latex: default.tex
+Sections:
+- Executive Summary
+- How We Chose
+- Breakthroughs (Top 10)
+- Cross-Cutting Themes
+- Industry Implications
+- Risks & Gaps
+- Appendix
+
+Guidance:
+Template description: MIT Technology Review 10 Breakthrough Technologies-style list report.
+
+Template tone: Clear, editorial, evidence-backed, forward-looking.
+
+Template audience: Technical leaders, policy makers, strategists.
+
+Section guidance:
+- Executive Summary: 5-7 sentences; highlight overall signals and time horizon.
+- How We Chose: state selection criteria (impact, feasibility, evidence, timeframe).
+- Breakthroughs (Top 10): use H3 numbered entries; each entry includes "What it is", "Why it matters", "Key players", "Availability".
+- Cross-Cutting Themes: 3-5 themes derived from the list; cite evidence.
+- Industry Implications: near-term adoption paths and decision points.
+- Risks & Gaps: where evidence is weak; possible overhype.
+
+Template writing guidance:
+Keep each breakthrough entry concise and comparable.
+Use short paragraphs and bullet lists inside each entry.
+Avoid hype; separate observed evidence from projection.
+Use consistent sublabels per item (What it is / Why it matters / Key players / Availability).

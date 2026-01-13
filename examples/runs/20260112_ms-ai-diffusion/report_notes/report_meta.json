@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-01-14 00:06:35",
+  "started_at": "2026-01-13 23:49:18",
+  "duration_seconds": 1037.0,
+  "duration_hms": "00:17:17",
+  "model": "gpt-5.2",
+  "quality_model": "gpt-5.2",
+  "quality_iterations": 2,
+  "quality_strategy": "pairwise",
+  "template": "default",
+  "output_format": "html",
+  "pdf_status": "disabled"
+}

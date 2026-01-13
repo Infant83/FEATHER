@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4417409712.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4417409712.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods and Results</p><p><strong>Authors:</strong> Dasong Li, Sizhuo Ma, Hang Hua, Wenjie Li, Jianliang Wang, Cunliu Zhou, Fengbin Guan, Xin Li, Zihao Yu, Yiting Lu, Ru-Ling Liao, Ye Yan, Zhibo Chen, Wei Sun, Linhan Cao, Yuqin Cao, Weixia Zhang, Wen Wen, Kaiwei Zhang, Zhong‐Xiu Chen, Fangfang Lu, Xiongkuo Min, Erjia Xiao, Lingfeng Zhang, Zhan Su, Hao Cheng, Yu Liu, Renjing Xu, Long Chen, Xiaoshuai Hao, Zhimin Zeng, Jianqin Wu, Xuxu Wang, Qian Yu, Bo Hu, Weiwei Wang, Pinxin Liu, Yunlong Tang, Luchuan Song, Jian‐Jun He, Jiaru Wu, Hanjia Lyu, Lyu, Hanjia</p><p><strong>Journal:</strong> arXiv (Cornell University)</p><p><strong>Published:</strong> 2025-09-03</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2509.02969">http://arxiv.org/abs/2509.02969</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4417409712.pdf">./archive/openalex/pdf/W4417409712.pdf</a></p><p><strong>Summary:</strong><br />This paper presents an overview of the VQualA 2025 Challenge on Engagement Prediction for Short Videos, held in conjunction with ICCV 2025. The challenge focuses on understanding and modeling the popularity of user-generated content (UGC) short videos on social media platforms. To support this goal, the challenge uses a new short-form UGC dataset featuring engagement metrics derived from real-world user interactions. This objective of the Challenge is to promote robust modeling strategies that capture the complex factors influencing user engagement. Participants explored a variety of multi-modal features, including visual content, audio, and metadata provided by creators. The challenge attracted 97 participants and received 15 valid test submissions, contributing significantly to progress in short-form UGC video engagement prediction.</p></div><pre>
+
+===== PAGE 1 =====
+VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods
+and Results
+Dasong Li∗
+Sizhuo Ma∗
+Hang Hua∗
+Wenjie Li∗
+Jian Wang∗
+Chris Wei Zhou∗
+Fengbin Guan
+Xin Li
+Zihao Yu
+Yiting Lu
+Ru-Ling Liao
+Yan Ye
+Zhibo Chen
+Wei Sun
+Linhan Cao
+Yuqin Cao
+Weixia Zhang
+Wen Wen
+Kaiwei Zhang
+Zijian Chen
+Fangfang Lu
+Xiongkuo Min
+Guangtao Zhai
+Erjia Xiao
+Lingfeng Zhang
+Zhenjie Su
+Hao Cheng
+Yu Liu
+Renjing Xu
+Long Chen
+Xiaoshuai Hao
+Zhenpeng Zeng
+Jianqin Wu
+Xuxu Wang
+Qian Yu
+Bo Hu
+Weiwei Wang
+Pinxin Liu
+Yunlong Tang
+Luchuan Song
+Jinxi He
+Jiaru Wu
+Hanjia Lyu
+Abstract
+This paper presents an overview of the VQualA 2025 Chal-
+lenge on Engagement Prediction for Short Videos, held in
+conjunction with ICCV 2025. The challenge focuses on un-
+derstanding and modeling the popularity of user-generated
+content (UGC) short videos on social media platforms. To
+support this goal, the challenge uses a new short-form UGC
+dataset featuring engagement metrics derived from real-
+world user interactions. This objective of the Challenge is
+to promote robust modeling strategies that capture the com-
+plex factors influencing user engagement. Participants ex-
+plored a variety of multi-modal features, including visual
+content, audio, and metadata provided by creators. The
+challenge attracted 97 participants and received 15 valid
+test submissions, contributing significantly to progress in
+short-form UGC video engagement prediction.
+1. Introduction
+With the rapid rise of social media, a growing number
+of content creators are sharing short videos that capture
+their daily lives on platforms like TikTok, Instagram Reels,
+YouTube Shorts, and Snapchat Spotlight. At the same time,
+a large share of users are spending significant amounts of
+time watching this type of content across these platforms.
+Social media platforms receive a constant stream of
+∗Dasong Li (dasongli@link.cuhk.edu.hk), Sizhuo Ma (sma@snap.com),
+Hang Hua (hhua2@cs.rochester.edu), Wenjie Li (wenjie.li@snap.com),
+Jian
+Wang
+(jwang4@snap.com),
+and
+Chris
+Wei
+Zhou
+(zhouw26@cardiff.ac.uk) are the challenge organizers of this chal-
+lange.
+The other authors are participants of the VQualA 2025 EVQA-SnapUGC:
+Engagement prediction for short videos Challenge.
+The
+project
+page
+is
+https : / / github . com / dasongli1 /
+SnapUGC_Engagement/tree/main/ECR_inference
+newly published short videos. The effective dissemination
+of newly published videos remains a core objective for so-
+cial media platforms.
+Recommending high-quality User
+Generated Content (UGC) videos enhances viewer engage-
+ment and consequently encourages content creators, espe-
+cially novice creators. The effective dissemination of newly
+published videos remains a core goal of social media plat-
+forms. However, owing to their limited user reactions, ac-
+curate recommendation of such cold-start items is usually
+a challenge. Typically, platforms would present each new
+video to a restricted number of users, such as one hundred.
+The latent popularity of each video is estimated based on the
+engagement metrics such as watch times from these initial
+users, serving as a basis for further recommendations. The
+cold start problem [23, 34, 44, 59] arises from the sampling
+bias in such limited initial interactions, resulting in noisy
+and inaccurate predictions of recommendation extents. Ad-
+ditionally, this conventional approach can result in time-
+sensitive short videos not being broadcast promptly, caus-
+ing them to miss critical attention. Furthermore, emerging
+creators may struggle to gain sufficient visibility and rec-
+ommendations, limiting their potential impact. Content cre-
+ators may also face delays in gauging their videos’ popular-
+ity, slowing their adjustments based on viewer feedback and
+thus discouraging them from posting more quality content.
+Consequently, an ineffective cold-start process may creates
+a negative feedback loop within the ecosystem, hindering
+the recommendation of high-quality videos to users, espe-
+cially for some small-size or mid-size social media plat-
+forms.
+A potential method for predicting engagement lev-
+els from video content is through user-generated content
+(UGC) video quality assessment (VQA). UGC VQA meth-
+ods can be broadly classified into three categories based on
+the availability of reference information: full-reference [39,
+1
+arXiv:2509.02969v1  [cs.CV]  3 Sep 2025
+
+
+===== PAGE 2 =====
+Figure 1. Sample frames of the short videos in SnapUGC dataset [28].
+Multi-Modal Content
+Metrics
+Video
+Audio
+Text
+Annotators number
+Metric Sources
+VQA datasets [19, 37, 46, 52, 53]
+✓
+✗
+✗
+≤40
+Labeling Scores
+Our dataset [28]
+✓
+✓
+✓
+≥1000
+Real User Interactions
+Table 1. We provide a detailed comparison with the VQA datasts. Our dataset contains multi-modal content to better measure the quality
+of videos. Moreover, our metrics are derived from thousands of real-world user interactions.
+56], reduced-reference [32, 38], and no-reference ap-
+proaches [16, 40, 43, 54].
+The previous learning-based
+VQA methods [4, 5, 8, 15, 24, 30, 46, 53, 57] extract deep
+features via pre-trained models [12, 17, 18, 21, 42] and uti-
+lize these features to predict the MOS scores.
+With the
+emergence of large language models (LLMs) and large mul-
+timodal models (LMMs), recent studies [31, 48, 49] lever-
+age their reasoning and interpretability capabilities to en-
+hance the interactivity and explainability of VQA frame-
+works.
+Despite the advancements in UGC VQA methods, Li et
+al. [28] demonstrated that VQA models [46, 47, 53] trained
+on existing VQA datasets [19, 37, 46, 52, 53] struggle to
+predict the popularity of short videos. This indicates that
+the mean opinion scores (MOS) annotated by small groups
+of human raters in video quality assessment datasets show a
+poor correlation with the popularity levels of these videos.
+This discrepancy may arise from the biases inherent in sub-
+jective MOS scores, which are influenced by the diverse
+preferences and limited participation of raters. As a result,
+these scores may not accurately reflect a video’s appeal to
+its broader audience, as assessed by metrics like average
+watch time. Furthermore, while VQA methods primarily
+focus on video visuals, short video engagement can be af-
+fected by additional factors such as background music, con-
+tent category, and titles. Therefore, engagement prediction
+and video quality assessment are distinct tasks due to the
+differing nature of their datasets.
+To address these limitations, we introduce a large-scale
+SnapUGC dataset of publicly accessible short videos on
+Snapchat Spotlight directly model the engagement lev-
+els [3, 50, 55]. Unlike prior datasets, SnapUGC leverages
+real engagement data from over 2,000 users to mitigate the
+bias introduced by small-scale subjective annotation. We
+introduce two robust metrics to quantify engagement:
+1. Normalized Average Watch Percentage (NAWP):
+Measures overall user engagement normalized across
+videos of varying lengths.
+2. Engagement Continuation Rate (ECR): Represents
+the probability that a viewer watches beyond the initial
+5 seconds, indicating the video’s ability to capture atten-
+tion early on.
+NAWP provides an indication of the overall engagement
+level for videos with different durations and ECR assesses
+2
+
+
+===== PAGE 3 =====
+Sparse
+Dense
+(a) Average watch time (AWT).
+(b) Fitting top 3 % of AWT.
+(c) NAWP
+(d) Engagement continuation rate (ECR)
+(e) Distribution of ECR
+(f) Correlation between ECR and NAWP
+Figure 2. (a), (d): The distributions of average watch time (AWT) and engagement continuation rate (ECR), respectively. ECR, calculated
+as the probability of watch time exceeding 5 seconds: P (watch &gt; 5s), is more duration-independent. (b): We fit top 3% of average watch
+times to derive a universal metric for videos of different durations. (d): Further normalization of the average time is achieved by fitting a
+line, resulting in the normalized average watch percentage (NAWP). A color mapping is used to encode the distribution densities in (a), (c),
+(d). (e): Distributions of ECR. ECR follows a bimodal distribution, reflecting the unique property of user’s swiftly skipping uninteresting
+videos or spend relative longer time on their interesting videos in short videos platforms. (f): The strong correlation between ECR and
+NAWP.
+whether the video’s outset is captivating enough to re-
+tain viewers’ interest in continuing to watch. These met-
+rics are computed in aggregate to ensure individual user
+privacy—no personal information or user histories are in-
+cluded in the dataset.
+To further advance research on user engagement mod-
+eling for short-form videos, we are organizing the Engage-
+ment Prediction for Short Videos Challenge (EVQA) as part
+of the VQualA 2025 Workshop @ ICCV. This challenge
+aims to establish a practical and comprehensive benchmark
+for predicting viewer engagement, with a specific focus on
+Engagement Continuation Rate (ECR) prediction as the
+core task, selected for simplicity and clarity. We are grate-
+ful to participants from both academia and industry for con-
+tributing to this shared goal of advancing short-form video
+quality assessment and engagement prediction.
+This Challenge is one of VQualA 2025 Workshop as-
+sociated challenges on: ISRGC-Q-image super-resolution
+generated content quality assessment [29], FIQA-face im-
+age quality assessment [33], Visual quality comparison for
+large multimodel models [58], GenAI-Bench AIGC video
+quality assessment [9], and Document Image Quality As-
+sessment [20].
+2. Challenge Dataset
+2.1. SnapUGC Datasset Collection
+To precisely model the engagement levels of real UGC short
+videos, we first collect a large-scale short video dataset,
+named SnapUGC. Our dataset comprises 120,651 short
+videos, all of which were published on Snapchat Spotlight.
+For each video, we have curated corresponding aggregated
+engagement data derived from viewing statistics. All short
+videos in our dataset have a duration ranging from 5 to 60
+seconds. To mitigate sampling bias from small number of
+views, only short videos with view numbers exceeding 2000
+are selected. The dataset is notably diverse, encompassing
+a wide range of video types, including Family, Food &amp; Din-
+ing, Pets, Hobbies, Travel, Music Appreciation, Sports, etc.
+Several frames are shown in Figure 1. We provide a com-
+prehensive comparison with traditional VQA datasets in Ta-
+ble 1. The dataset is shown in the following:
+3
+
+
+===== PAGE 4 =====
+Rank
+Team name
+Team leader
+Final Score
+SROCC
+PLCC
+Features
+Large Multi-modal Models
+-
+Baseline
+-
+0.660
+0.657
+0.665
+Multi-Modal
+-
+1
+ECNU-SJTU VQA
+Wei Sun
+0.710
+0.707
+0.714
+Multi-Modal
+Video-LLaMA (1.7B), Qwen2.5-VL (7B)
+1*
+IMCL-DAMO
+Fengbin Guan
+0.698
+0.696
+0.702
+Multi-Modal
+Qwen2.5-VL (7B)
+3
+HKUST-Cardiff-MI-BAAI
+Xiaoshuai Hao
+0.680
+0.677
+0.684
+Visual Only
+-
+4
+MCCE
+Zhenpeng Zeng
+0.667
+0.666
+0.668
+Multi-Modal
+-
+4*
+EasyVQA
+Bo Hu
+0.667
+0.664
+0.671
+Multi-Modal
+-
+6
+Rochester
+Pinxin Liu
+0.449
+0.405
+0.515
+Multi-Modal
+Skywork-VL-Reward (7B)
+7
+brucelyu
+Hanjia Lyu
+0.441
+0.439
+0.444
+Textual Only
+-
+Table 2. Result of engagement prediction challenge.
+1. Train set: 106,192 short-form videos. Each video is ac-
+companied with title and descriptions provided by cre-
+ators.
+2. Validation set: 6000 short-form videos. Each video is
+accompanied with title and descriptions provided by cre-
+ators.
+3. Test set: 8,459 short-form videos. Each video is accom-
+panied with title and descriptions provided by creators.
+2.2. Engagement Metrics
+Average watch time (AWT) is a naive and common met-
+ric to measure viewer engagement. However, AWT faces
+limitations when comparing videos of different durations.
+We first analyze the distribution and drawback of AWT,
+and then propose normalized average watch percentage
+(NAWP) as a novel engagement metric. Recognizing that
+users swiftly navigate through uninteresting content but per-
+sist in watching engaging videos, we introduce an additional
+metric: engagement continuation rate (ECR). Calculated for
+each video, this metric represents the proportion of viewers
+who watched the video for at least 5 seconds. It serves as
+an indicator of a video’s ability to captivate viewers at the
+beginning. Unlike Kim et al. [22] measuring entire videos’
+dropout probability, ECR focuses on the contents of first
+several seconds, which determines whether the users would
+continue to watch and substantially affects watch times.
+Average watch time (AWT). We analyze average watch
+times (AWT) of various video durations d in Figure 2(a).
+Importantly, the distributions of AWT vary for different
+video durations, showing diverse user engagement patterns.
+Therefore comparing the popularity of short videos with
+different durations using AWT is challenging.
+Normalized average watch percentage (NAWP). We in-
+troduce a straightforward metric called normalized average
+watch percentage (NAWP) to provide a generalized mea-
+sure for videos with different durations. It is observed in
+Figure 2(a) that the largest values under different durations
+align with a linear trend.
+Based on the observation, we
+make the assumption that videos with top 3% of highest
+AWT, regardless of their durations, are equally most popu-
+lar, while videos with an average watch time of 0 seconds
+are deemed the least popular. The maximum average watch
+time fmax(d) for most popular videos and minimum aver-
+age watch time fmin(d) for the least popular videos can be
+modeled by two linear functions:
+fmax(d) = α × d + β; fmin(d) = 0.
+(1)
+fmax(d) is shown in Figure 2(b). The NAWP for any video
+of d seconds, with average watch time t is derived through
+normalization between fmin(d) and fmax(d):
+NAWP(AWT, d) = min
+ AWT −fmin(d)
+fmax(d) −fmin(d), 1
+
+.
+(2)
+The relationship between the video duration and NAWP is
+depicted in Figure 2(c). The NAWP falls within the range
+of [0, 1] and NAWP of videos with top 3% average watch
+time is set to be 1.
+Engagement continuation rate (ECR). As shown in Fig-
+ure 2(e), engagement continuation rate (ECR), calculated as
+P (watch &gt;5s), demonstrates stable behavior across differ-
+ent video durations. The majority of values fall within the
+range of [0, 0.8].
+ECR for the Challenge. the α and β in NAWP may vary
+across different datasets or different platforms. The ECR
+and NAWP are observed to have a strong correlation of
+0.928 in Figure 2(f). Therefore, we select ECR as the met-
+rics in EVQA Challenge. To protect the private information
+of creators, the ECR used in this challenge is derived from
+normalizing the ranking of real ECR.
+3. Challenge Results
+The challenge results are summarized in Table 2, including
+the performance of all teams that submitted their fact sheets.
+As this is a novel task involving multi-modal features, we
+did not impose restrictions on model size in order to explore
+the upper bound of model capacity. We provide a baseline
+model achieving an SROCC of 0.660 and a PLCC of 0.657,
+based on the approach proposed by Li et al. [28].
+The teams with top performances including ECNU-
+SJTU VQA, ICML-DAMO, HKUST-Cardiff-MI-BAAI,
+MCCE(MCCE (Media Convergence and Communication
+Experimental)), EasyVQA achieved excellent results in
+both PLCC and SROCC, exceeding our baseline. Among
+4
+
+
+===== PAGE 5 =====
+MLP
+Q
+KV
+Cross Attention
+Concat
+“a group of people are racing on 
+a race track”
+“Music, Vehicle, Motor vehicle 
+(road), Car, Skateboard”
+Title: “McLarens Fastest Pit in 2023!”
+Description: “#F1 #Fast #McLaren”
+Title &amp; Description
+Distortion
+Features
+Captioning
+Features
+Asethetic
+Features
+Motion
+Features
+!&quot;
+#
+!&quot;
+Text 
+Encoder
+Text 
+Encoder
+Text 
+Encoder
+Sound Classification
+Generated Caption
+Q
+KV
+Q
+KV
+Q
+KV
+&quot;&quot;
+Semantic
+Features
+Figure 3. The overview framework of baseline.
+LLM 
+decoder
+Visual 
+projector
+Visual 
+encoder
+: The  video frames:&lt;frames tokens&gt;&lt;frames tokens&gt; … …&lt;frames tokens&gt;, the audio :&lt;audio tokens&gt;: how would you 
+judge the engagement continuation rate of the given content, where engagement continuation rate represents the probability of 
+watch time exceeding 5 seconds. The titl</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+{
+  "date": "2026-01-09",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\instructions\\20260109_sectioned.txt",
+  "root_dir": "examples\\runs\\20260109_sectioned",
+  "out_dir": "examples\\runs\\20260109_sectioned\\archive",
+  "query_id": "20260109_sectioned",
+  "lang_pref": null,
+  "openalex_enabled": false,
+  "openalex_max_results": 5,
+  "youtube_enabled": true,
+  "youtube_max_results": 5,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 5,
+  "download_pdf": false,
+  "citations_enabled": true,
+  "queries": [
+    "AI trends for 2026 (agentic AI, physical AI)",
+    "agentic AI demos open source code",
+    "industrial AI deployment talks"
+  ],
+  "query_specs": [
+    {
+      "text": "AI trends for 2026 (agentic AI, physical AI)",
+      "hints": [
+        "linkedin",
+        "news"
+      ]
+    },
+    {
+      "text": "agentic AI demos open source code",
+      "hints": [
+        "youtube",
+        "github"
+      ]
+    },
+    {
+      "text": "industrial AI deployment talks",
+      "hints": [
+        "youtube",
+        "github"
+      ]
+    }
+  ],
+  "local_paths": [],
+  "urls": [],
+  "arxiv_ids": [
+    "2401.01234"
+  ],
+  "site_hints": [
+    "linkedin",
+    "news",
+    "youtube",
+    "github"
+  ],
+  "raw_lines": [
+    "AI trends for 2026 (agentic AI, physical AI)",
+    "linkedin",
+    "news",
+    "youtube",
+    "github",
+    "agentic AI demos open source code",
+    "industrial AI deployment talks",
+    "arXiv:2401.01234"
+  ]
+}

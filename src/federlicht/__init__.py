@@ -1,0 +1,1 @@
+"""Federlicht report generator package."""

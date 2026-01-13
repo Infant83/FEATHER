@@ -1,0 +1,167 @@
+{
+  "date": "2026-01-07",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\instructions\\20260107_ai-trends.txt",
+  "root_dir": "examples\\runs\\20260107_ai-trends",
+  "out_dir": "examples\\runs\\20260107_ai-trends\\archive",
+  "query_id": "20260107_ai-trends",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 2,
+  "youtube_enabled": false,
+  "youtube_max_results": 5,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 5,
+  "download_pdf": true,
+  "citations_enabled": true,
+  "queries": [
+    "AI trends 2025",
+    "AI trends 2026",
+    "emerging AI technologies 2026",
+    "agentic AI",
+    "physical AI robotics",
+    "recent 30 days AI industry trends",
+    "CES 2026 AI industrial automation",
+    "CES 2026 industrial robotics AI",
+    "site:technologyreview.com AI trends 2025",
+    "site:ieee.org AI trends 2025",
+    "site:ieee.org AI systems 2026",
+    "site:venturebeat.com AI trends 2025",
+    "site:arstechnica.com CES 2026 AI",
+    "site:theverge.com CES 2026 AI",
+    "site:nature.com Nature Communications AI open access",
+    "NeurIPS 2025 best papers AI trends",
+    "ICLR 2025 agentic AI",
+    "ICML 2025 AI trends",
+    "CVPR 2025 physical AI robotics",
+    "ICCV 2025 best papers",
+    "ACL 2025 AI trends",
+    "AAAI 2025 AI trends"
+  ],
+  "query_specs": [
+    {
+      "text": "AI trends 2025",
+      "hints": []
+    },
+    {
+      "text": "AI trends 2026",
+      "hints": []
+    },
+    {
+      "text": "emerging AI technologies 2026",
+      "hints": []
+    },
+    {
+      "text": "agentic AI",
+      "hints": []
+    },
+    {
+      "text": "physical AI robotics",
+      "hints": []
+    },
+    {
+      "text": "recent 30 days AI industry trends",
+      "hints": []
+    },
+    {
+      "text": "CES 2026 AI industrial automation",
+      "hints": []
+    },
+    {
+      "text": "CES 2026 industrial robotics AI",
+      "hints": []
+    },
+    {
+      "text": "site:technologyreview.com AI trends 2025",
+      "hints": []
+    },
+    {
+      "text": "site:ieee.org AI trends 2025",
+      "hints": []
+    },
+    {
+      "text": "site:ieee.org AI systems 2026",
+      "hints": []
+    },
+    {
+      "text": "site:venturebeat.com AI trends 2025",
+      "hints": []
+    },
+    {
+      "text": "site:arstechnica.com CES 2026 AI",
+      "hints": []
+    },
+    {
+      "text": "site:theverge.com CES 2026 AI",
+      "hints": []
+    },
+    {
+      "text": "site:nature.com Nature Communications AI open access",
+      "hints": []
+    },
+    {
+      "text": "NeurIPS 2025 best papers AI trends",
+      "hints": []
+    },
+    {
+      "text": "ICLR 2025 agentic AI",
+      "hints": []
+    },
+    {
+      "text": "ICML 2025 AI trends",
+      "hints": []
+    },
+    {
+      "text": "CVPR 2025 physical AI robotics",
+      "hints": []
+    },
+    {
+      "text": "ICCV 2025 best papers",
+      "hints": []
+    },
+    {
+      "text": "ACL 2025 AI trends",
+      "hints": []
+    },
+    {
+      "text": "AAAI 2025 AI trends",
+      "hints": []
+    }
+  ],
+  "local_paths": [],
+  "urls": [],
+  "arxiv_ids": [],
+  "site_hints": [
+    "linkedin",
+    "arxiv",
+    "github"
+  ],
+  "raw_lines": [
+    "linkedin",
+    "arxiv",
+    "github",
+    "AI trends 2025",
+    "AI trends 2026",
+    "emerging AI technologies 2026",
+    "agentic AI",
+    "physical AI robotics",
+    "recent 30 days AI industry trends",
+    "CES 2026 AI industrial automation",
+    "CES 2026 industrial robotics AI",
+    "site:technologyreview.com AI trends 2025",
+    "site:ieee.org AI trends 2025",
+    "site:ieee.org AI systems 2026",
+    "site:venturebeat.com AI trends 2025",
+    "site:arstechnica.com CES 2026 AI",
+    "site:theverge.com CES 2026 AI",
+    "site:nature.com Nature Communications AI open access",
+    "NeurIPS 2025 best papers AI trends",
+    "ICLR 2025 agentic AI",
+    "ICML 2025 AI trends",
+    "CVPR 2025 physical AI robotics",
+    "ICCV 2025 best papers",
+    "ACL 2025 AI trends",
+    "AAAI 2025 AI trends"
+  ]
+}

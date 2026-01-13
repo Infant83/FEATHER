@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4411143162.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4411143162.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> Vision-Language Modeling Meets Remote Sensing: &lt;i&gt;Models, datasets, and perspectives&lt;/i&gt;</p><p><strong>Authors:</strong> Xingxing Weng, Chao Pang, Gui-Song Xia</p><p><strong>Journal:</strong> IEEE Geoscience and Remote Sensing Magazine</p><p><strong>Published:</strong> 2025-06-09</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2505.14361">http://arxiv.org/abs/2505.14361</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4411143162.pdf">./archive/openalex/pdf/W4411143162.pdf</a></p><p><strong>Summary:</strong><br />Vision-language modeling (VLM) aims to bridge the information gap between images and natural language. Under the new paradigm of first pre-training on massive image-text pairs and then fine-tuning on task-specific data, VLM in the remote sensing domain has made significant progress. The resulting models benefit from the absorption of extensive general knowledge and demonstrate strong performance across a variety of remote sensing data analysis tasks. Moreover, they are capable of interacting with users in a conversational manner. In this paper, we aim to provide the remote sensing community with a timely and comprehensive review of the developments in VLM using the two-stage paradigm. Specifically, we first cover a taxonomy of VLM in remote sensing: contrastive learning, visual instruction tuning, and text-conditioned image generation. For each category, we detail the commonly used network architecture and pre-training objectives. Second, we conduct a thorough review of existing works, examining foundation models and task-specific adaptation methods in contrastive-based VLM, architectural upgrades, training strategies and model capabilities in instruction-based VLM, as well as generative foundation models with their representative downstream applications. Third, we summarize datasets used for VLM pre-training, fine-tuning, and evaluation, with an analysis of their construction methodologies (including image sources and caption generation) and key properties, such as scale and task adaptability. Finally, we conclude this survey with insights and discussions on future researc <em>[truncated]</em></p></div><pre>
+
+===== PAGE 1 =====
+arXiv:2505.14361v1  [cs.CV]  20 May 2025
+1
+Vision-Language Modeling Meets Remote Sensing:
+Models, Datasets and Perspectives
+Xingxing Weng, Chao Pang, and Gui-Song Xia
+Abstract—Vision-language modeling (VLM) aims to bridge
+the information gap between images and natural language.
+Under the new paradigm of first pre-training on massive image-
+text pairs and then fine-tuning on task-specific data, VLM in
+the remote sensing domain has made significant progress. The
+resulting models benefit from the absorption of extensive general
+knowledge and demonstrate strong performance across a variety
+of remote sensing data analysis tasks. Moreover, they are capable
+of interacting with users in a conversational manner. In this
+paper, we aim to provide the remote sensing community with
+a timely and comprehensive review of the developments in
+VLM using the two-stage paradigm. Specifically, we first cover
+a taxonomy of VLM in remote sensing: contrastive learning,
+visual instruction tuning, and text-conditioned image genera-
+tion. For each category, we detail the commonly used network
+architecture and pre-training objectives. Second, we conduct a
+thorough review of existing works, examining foundation models
+and task-specific adaptation methods in contrastive-based VLM,
+architectural upgrades, training strategies and model capabilities
+in instruction-based VLM, as well as generative foundation
+models with their representative downstream applications. Third,
+we summarize datasets used for VLM pre-training, fine-tuning,
+and evaluation, with an analysis of their construction method-
+ologies (including image sources and caption generation) and
+key properties, such as scale and task adaptability. Finally, we
+conclude this survey with insights and discussions on future
+research directions: cross-modal representation alignment, vague
+requirement comprehension, explanation-driven model reliability,
+continually scalable model capabilities, and large-scale datasets
+featuring richer modalities and greater challenges.
+Index Terms—Remote Sensing, Vision-Language Modeling,
+Contrastive Learning, Visual Instruction Tuning, Diffusion Model
+I. INTRODUCTION
+V
+ISION-language modeling (VLM) in remote sensing,
+aiming to bridge the information gap between remote
+sensing images and natural language, facilitates a deeper
+understanding of remote sensing scene semantics like the
+attributes of ground objects and their relationship, and enables
+more natural human interaction with intelligent remote sensing
+data analysis models or methods [17], [164]. Since the intro-
+duction of remote sensing tasks such as image captioning [62],
+visual question answering [54], text-image (or image-text)
+retrieval [166], and text-based image generation [165], VLM
+in remote sensing has achieved significant success, driven by
+advancements in deep learning.
+X. Weng, C. Pang, and G.-S. Xia are with the School of Computer Science,
+Wuhan University, Wuhan 430072, China. C. Pang, and G.-S. Xia are also
+with the School of Artificial Intelligence, Wuhan University, Wuhan 430072,
+China.
+Corresponding Author: Gui-Song Xia (guisong.xia@whu.edu.cn)
+0
+5
+10
+15
+20
+25
+2022
+2023
+2024
+Number of Papers
+Contrastive-Based VLM
+Instruction-Based VLM
+Generation-Based VLM
+Datasets For VLM
+Research Hotspot
+GeoCLIP, CSP, 
+GeoChat, SATIN,
+DIOR-RSVG, …
+GeoRSCLIP, SkyCLIP,
+EarthGPT, LHRS-Bot, 
+DiffusionSat, CRS-Diff, 
+VRSBench, UrBench, …
+Fig. 1. The number of publications on visual-language modeling in remote
+sensing using the pre-training and fine-tuning paradigm.
+Early works on VLM primarily emphasize the careful
+design of model architectures, followed by supervised training
+from scratch on small-scale datasets. For example, in image
+captioning research, many efforts [167]–[170] have been made
+to effectively combine convolutional neural networks (e.g.
+VGG [171] and ResNet [172]) with sequential models (e.g.
+LSTM [173] and Transformer [174]) before training on UCM-
+captions [62] and Sydney-captions [62] datasets. Under this
+classical construction paradigm, deep models often excel on
+test datasets but struggle to perform satisfactorily in large-scale
+deployments. Moreover, although these models are capable of
+describing image content, they fall short when tasked with
+answering questions about the images. In other words, they
+struggle to accomplish related tasks, such as visual question
+answering. The task-specific nature of these models seriously
+limits their applicability across diverse scenarios.
+Recently, a new paradigm of pre-training followed by fine-
+tuning provides a promising solution to address the challenges
+mentioned above. The core idea is to first pre-train a model
+on massive image-text data, enabling it to capture general
+knowledge that covers a wide range of visual and textual
+concepts, along with their underlying correspondence. The
+pre-trained model is then fine-tuned on task-specific training
+data. The integration of general knowledge has been shown
+to enhance the model’s generalization ability in a single
+task [7], [8], while also making it more versatile and capable of
+handling a variety of downstream tasks [1], [3]. Consequently,
+vision-language modeling with this new paradigm has emerged
+as a prominent research focus in the field of remote sensing.
+
+
+===== PAGE 2 =====
+2
+Vision-Language Modeling Meets Remote Sensing
+Datasets
+Contrastive-Based VLM
+Instruction-Based VLM
+Generation-Based VLM
+Foundation Model Construction
+n training datasets
+n pre-training objectives
+n encoder architectures
+n performance evaluation
+Effective Adaptation Methods
+n image captioning
+n cross-modal retrieval
+n zero-shot scene classification
+n dense prediction tasks
+n broader scope of application
+Model Architecture
+n vision encoder
+n vision-language connector
+Training Strategy
+n only SFT
+n pre-training followed by SFT
+Model Capability
+n common capabilities
+n unique capabilities
+Generative Foundation Models
+n enhancing reliability
+n improving diversity
+n performance evaluation
+Downstream Applications
+n captioning
+n pansharpening
+n zero-shot target recognition
+n cloud removal
+n urban prediction
+Pre-training Datasets
+n image collection
+n caption generation
+n dataset property
+Instruction-Following Datasets
+n conversation generation
+n impressive datasets
+Benchmark Datasets
+n instruction-specific datasets
+n general-purpose datasets
+Fig. 2. Overview of this survey.
+To date, significant progress has been achieved, as illus-
+trated in Fig. 1. This includes works based on 1) contrastive
+learning [175], such as GeoRSCLIP [7], SkyCLIP [8] and
+RemoteCLIP [2], which have driven substantial advancements
+in various cross-modal tasks and zero-shot image understand-
+ing tasks. 2) learning an implicit joint distribution between
+text and images, like RS-SD [7], DiffusionSat [38] and CRS-
+Diff [39], which allow for image generation from text prompts.
+3) visual instruction tuning [201], such as GeoChat [3], LHRS-
+Bot [9], and SkySenseGPT [11], which have demonstrated
+improved performance, diverse capabilities, and conversational
+interactions in remote sensing data analysis.
+Despite these remarkable achievements, it is widely ac-
+knowledged that VLM remains an open challenge. Indeed, ex-
+isting works have not yet achieved the level of remote sensing
+experts in processing remote sensing data. To provide clarity
+and motivation for further advances in the research community,
+several surveys have reviewed vision-language modeling in
+remote sensing. For instance, Li et al. [17] summarize vision-
+language models from an application perspective and suggest
+potential research opportunities. However, due to time con-
+straints, they primarily concentrate on vision-only foundation
+models and early works. Zhou et al. [16] review recent devel-
+opments but lack an in-depth analysis of key designs, which
+is significant for inspiring future research. Moreover, datasets,
+as a prerequisite of visual-language modeling research, have
+not been given adequate attention in existing surveys.
+In this work, we aim to provide a timely and comprehensive
+review of the literature, with a focus on vision-language
+modeling based on the pre-training and fine-tuning paradigm
+in the field of remote sensing. Specifically, we cover: 1) a
+taxonomy of VLM in remote sensing, detailing commonly
+used network architectures and pre-training objectives for
+each category; 2) the latest advancements in contrastive-based,
+instruction-based, and generation-based vision-language mod-
+eling in remote sensing, highlighting key designs and down-
+stream applications; 3) progress in datasets for VLM pre-
+training, fine-tuning, and evaluation; 4) several challenges and
+potential research directions. Fig. 2 presents an overview of
+this paper.
+II. THE TAXONOMY OF VISUAL-LANGUAGE MODELING
+IN REMOTE SENSING
+Under the pre-training and fine-tuning paradigm, vision-
+language modeling in remote sensing can be divided into
+three distinct groups based on their strategies for bridging the
+two modalities in the pre-training phase: contrastive learning,
+visual instruction tuning, and text-conditioned image gener-
+ation. In this section, we present commonly used network
+architectures and pre-training objectives within each group.
+Contrastive Learning: The motivation behind applying
+contrastive learning to vision-language modeling is training a
+model to map vision and language into a shared representation
+space, where an image and its corresponding text share similar
+representations while differing from other texts, which was
+first implemented by the pioneering work CLIP [86] in the
+field of computer vision. As illustrated in Fig.3 (a), CLIP uti-
+lizes two independent encoders responsible for encoding visual
+and textual information. Given a batch of N image-text pairs
+{(xi, yi)}N
+i=1, the embeddings extracted by the two encoders
+followed by normalization are {eI
+i , eT
+i }N
+i=1. To achieve the
+similarity between visual and textual representations, CLIP is
+trained to maximize the cosine similarity of the embeddings
+of the ith image and the corresponding ith text (i ∈[N] with
+[N] = {1, 2, . . . , N}), while minimizing the cosine similarity
+of the embeddings of the ith image and jth text (i, j ∈[N],
+i ̸= j). The loss is computed using InfoNCE [176] as follows:
+LInfoNCE = −1
+2N
+PN
+i=1
+ log στ(sI
+ii, {sI
+ij}N
+j=1) + log στ(sT
+ii, {sT
+ij}N
+j=1)
+, (1)
+where sI
+ij = S(eI
+i , eT
+j ) and sT
+ij = S(eT
+i , eI
+j) are the similarity
+scores between the image and text embeddings, as com-
+puted by the function S(e, e
+′) =
+e·e
+′
+|e||e′|. στ(si, {sj}N
+j=1) =
+
+
+===== PAGE 3 =====
+3
+Vision
+Encoder
+Text
+Encoder
+an aerial photo of
+cars on the road
+𝐼!𝑇!
+𝐼!𝑇&quot;
+…
+𝐼!𝑇#
+𝐼&quot;𝑇!
+𝐼&quot;𝑇&quot;
+…
+𝐼&quot;𝑇#
+…
+…
+…
+𝐼#𝑇!
+𝐼#𝑇&quot;
+…
+𝐼#𝑇#
+𝐼!
+𝐼&quot;
+…
+𝐼#
+𝑇!
+𝑇&quot;
+…
+𝑇#
+…
+(a) Contrastive-based VLM
+Vision
+Encoder
+Pre-trained Large Language Model
+Connector
+Language 
+Instruction: Please 
+describe this image.
+Language Response: an aerial photo of cars on the road
+…
+…
+(b) Instruction-based VLM
+an aerial photo of
+cars on the road
+VAE
+Encoder
+Text
+Encoder
+Denoising U-Net
+𝑧$
+𝑧%
+Diffusion Process
+𝑧%
+𝑧%&amp;!
+…
+VAE 
+Decoder
+̃𝑧$
+×(𝑇−1)
+(c) Generation-based VLM
+Fig. 3.
+Based on the strategies employed to bridge remote sensing images and natural language during the pre-training phase, vision-language modeling
+(VLM) in remote sensing can be categorized into three groups: (a) contrastive learning, (b) visual instruction tuning, and (c) text-conditioned image generation.
+This image is recreated by us based on [86], [201], [203].
+exp(si/τ)/(PN
+j=1 exp(sj/τ)) is the softmax function, which
+normalizes the similarity score sI
+ii or sT
+ii over the correspond-
+ing sets {sI
+ij}N
+j=1 or {sT
+ij}N
+j=1. τ is the temperature.
+The original CLIP model was trained on 400 million image-
+text pairs collected from the Internet and has demonstrated
+impressive results across various computer vision tasks [177]–
+[179]. These advancements spark interest in extending its
+capability to advance vision-language modeling in remote
+sensing. Two primary lines of research have been actively
+explored. The first, following the CLIP learning way, focuses
+on pre-training foundation models that are task-agnostic but
+specifically adapted for remote sensing domain. This includes
+efforts such as constructing large-scale image-text datasets [7],
+[8] and developing novel pre-training objectives [4], [26]. The
+second line explores effective adaptation of pre-trained CLIP
+models toward diverse downstream tasks, including image
+captioning [14], [19], zero-shot scene classification [20], [25],
+image-text retrieval [15], [31], etc.
+Visual Instruction Tuning: Optimizing a model from
+scratch for image-text alignment is extremely resource-
+intensive due to the need for vast amounts of data and
+computational power. Fortunately, many pre-trained vision
+encoders and language models have been released. Pre-trained
+vision encoders can provide high-quality visual representa-
+tions, while pre-trained language models, particularly large
+language models (LLMs), demonstrate advanced language un-
+derstanding capabilities. As a result, recent works increasingly
+leverage these models to achieve image-text alignment through
+visual instruction tuning, as introduced by LLaVA [201] and
+MiniGPT-4 [129]. Fig.3 (b) illustrates a network architecture
+for this type of work, consisting of three key components: a
+pre-trained vision encoder, a connector, and a large language
+model. Specifically, the vision encoder compresses remote
+sensing images into compact visual representations, while the
+connector maps image embeddings into the word embedding
+space of the LLM. The LLM then receives both visual
+information and language instructions to perform reasoning
+tasks. Different from CLIP, which directly takes images and
+corresponding texts as input, this type of work preprocesses
+image-text pairs to instruction-following data. In this setup,
+each image is accompanied by a question, or language in-
+struction, requiring the LLM to describe the image, while the
+corresponding text serves as the ground truth for the LLM’s
+predictions. Denote a batch of instruction-following data as
+{(xi, qi, yi)}N
+i=1, where qi is the question associated with the
+ith image. The pre-training objective is defined as:
+LVIT = −1
+N
+N
+X
+i=1
+1
+Li
+Li
+X
+j=1
+log P(wj|xi, qi, yi,&lt;j),
+(2)
+where Li is the length of the caption yi = {w1, w2, . . . , wLi},
+yi,&lt;j denotes the masked sequence that contain only the
+first j −1 words, and P(wj|xi, qi, yi,&lt;j) is the conditional
+probability of generating the caption word wj given the image
+xi, question qi and the previous words yi,&lt;j in the caption.
+During pre-training, the vision encoder and large language
+model are typically kept frozen, with only the parameters of
+the connector being trainable.
+In [129], [201], the authors demonstrated that pre-training
+with visual instruction tuning can align vision and language
+representations while preserving extensive knowledge. Since
+then, advances have been made by modifying network ar-
+chitectures and creating high-quality pre-training datasets [9],
+[202]. In addition to improving alignment, another line of re-
+search focuses on supervised fine-tuning, aiming to enable the
+model to perform a variety of remote sensing image analysis
+tasks and interact with users in a conversational manner. This
+includes efforts to generate task-specific instruction-following
+data [3], [5], [11], design novel training strategies [136], [202],
+and incorporate cutting-edge vision encoders [136].
+Text-Conditioned Image Generation: Taking advantage
+of the advances in conditional image generation, a group of
+works [7], [38], [39] uses off-the-shelf generative models,
+primarily Stable Diffusion [203], to generate remote sensing
+images given text prompts, which essentially learns an im-
+plicit joint distribution between images and texts. As illus-
+trated in Fig.3 (c), their network architecture comprises three
+main components: a text encoder, a variational autoencoder
+(VAE) [204], and a denoising U-Net.</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

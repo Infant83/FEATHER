@@ -1,0 +1,7 @@
+[2026-01-14 00:45:08] JOB START: 20260106_mixed.txt date=2026-01-06 days=30 max_results=5
+[2026-01-14 00:45:08] TAVILY EXTRACT: https://example.com/blog/post
+[2026-01-14 00:45:11] TAVILY SEARCH: quantum computing site:linkedin.com
+[2026-01-14 00:45:16] ARXIV ID FETCH: 2101.00001
+[2026-01-14 00:45:16] WARN citations lookup failed arxiv_id=2101.00001v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2101.00001')
+[2026-01-14 00:45:17] ARXIV RECENT SEARCH: query='quantum computing' days=30
+[2026-01-14 00:45:18] JOB END

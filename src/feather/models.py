@@ -26,7 +26,6 @@ class Job:
     root_dir: Path
     out_dir: Path
     query_id: str
-    set_id: Optional[str]
     lang_pref: Optional[str]
     openalex_enabled: bool
     openalex_max_results: int

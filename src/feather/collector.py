@@ -292,7 +292,6 @@ def build_job(
     src_file: Path,
     out_root: Path,
     query_id: str,
-    set_id: Optional[str],
     lang_pref: Optional[str],
     openalex_enabled: bool,
     openalex_max_results: int,
@@ -377,7 +376,6 @@ def build_job(
         root_dir=root_dir,
         out_dir=out_dir,
         query_id=query_id,
-        set_id=set_id,
         lang_pref=lang_pref,
         openalex_enabled=openalex_enabled,
         openalex_max_results=openalex_max_results,
@@ -403,7 +401,6 @@ def parse_job(
     txt_path: Path,
     out_root: Path,
     query_id: str,
-    set_id: Optional[str],
     lang_pref: Optional[str],
     openalex_enabled: bool,
     openalex_max_results: int,
@@ -424,7 +421,6 @@ def parse_job(
         src_file=txt_path,
         out_root=out_root,
         query_id=query_id,
-        set_id=set_id,
         lang_pref=lang_pref,
         openalex_enabled=openalex_enabled,
         openalex_max_results=openalex_max_results,
@@ -454,23 +450,50 @@ def infer_date(path: Path) -> dt.date:
     return parse_date_from_filename(path.stem) or parse_date_from_filename(path.parent.name) or dt.date.today()
 
 
-def build_query_id(date_val: dt.date, set_id: Optional[str], idx: int, total: int) -> str:
-    base = date_val.strftime("%Y%m%d")
-    if set_id:
-        sid = safe_filename(set_id, max_len=40).strip("_")
-        if sid:
-            base = f"{base}_{sid}"
-        if total > 1:
-            return f"{base}_{idx:03d}"
-        return base
-    return f"{base}_{idx:03d}"
+def normalize_query_id_base(value: str) -> str:
+    base = safe_filename(value, max_len=80).strip("_")
+    return base or "run"
+
+
+def derive_query_id_base_from_sections(sections: List[List[str]]) -> str:
+    for section in sections:
+        for line in section:
+            lower = line.lower()
+            if lower in SITE_HINTS:
+                continue
+            if lower.startswith(LOCAL_DIRECTIVES):
+                continue
+            if URL_RE.match(line):
+                continue
+            if ARXIV_ID_RE.search(line):
+                continue
+            return line
+    return "query"
+
+
+def build_query_id(base: str, output_root: Path, used_ids: set[str]) -> str:
+    base = normalize_query_id_base(base)
+    candidate = base
+    if candidate not in used_ids and not (output_root / candidate).exists():
+        used_ids.add(candidate)
+        return candidate
+    idx = 1
+    while True:
+        suffix = f"_{idx:02d}" if idx < 100 else f"_{idx}"
+        candidate = f"{base}{suffix}"
+        if candidate in used_ids:
+            idx += 1
+            continue
+        if not (output_root / candidate).exists():
+            used_ids.add(candidate)
+            return candidate
+        idx += 1
 
 
 def prepare_jobs(
     input_path: Optional[Path],
     query: Optional[str],
     output_root: Path,
-    set_id: Optional[str],
     lang_pref: Optional[str],
     openalex_enabled: bool,
     openalex_max_results: Optional[int],
@@ -483,12 +506,14 @@ def prepare_jobs(
     download_pdf: bool,
     citations_enabled: bool,
 ) -> List[Job]:
+    used_ids: set[str] = set()
     if query:
         sections = parse_query_text(query)
         if not sections:
             raise SystemExit("No instructions found in --query")
         date_val = dt.date.today()
-        query_id = build_query_id(date_val, set_id, 1, 1)
+        base = derive_query_id_base_from_sections(sections)
+        query_id = build_query_id(base, output_root, used_ids)
         src_file = Path("instruction.txt")
         return [
             build_job(
@@ -496,7 +521,6 @@ def prepare_jobs(
                 src_file=src_file,
                 out_root=output_root,
                 query_id=query_id,
-                set_id=set_id,
                 lang_pref=lang_pref,
                 openalex_enabled=openalex_enabled,
                 openalex_max_results=openalex_max_results or max_results,
@@ -519,17 +543,16 @@ def prepare_jobs(
     if not txt_files:
         raise SystemExit(f"No .txt files found in: {input_path}")
 
-    total = len(txt_files)
     jobs: List[Job] = []
-    for idx, txt in enumerate(txt_files, start=1):
+    for txt in txt_files:
         date_val = infer_date(txt)
-        query_id = build_query_id(date_val, set_id, idx, total)
+        base = txt.stem
+        query_id = build_query_id(base, output_root, used_ids)
         jobs.append(
             parse_job(
                 txt,
                 output_root,
                 query_id=query_id,
-                set_id=set_id,
                 lang_pref=lang_pref,
                 openalex_enabled=openalex_enabled,
                 openalex_max_results=openalex_max_results or max_results,
@@ -1342,8 +1365,6 @@ def build_index_md(job: Job) -> str:
             args += ["--yt-max-results", str(j.youtube_max_results)]
         if j.youtube_order and j.youtube_order != "relevance":
             args += ["--yt-order", j.youtube_order]
-        if j.set_id:
-            args += ["--set-id", j.set_id]
         return " ".join(shell_escape(a) for a in args)
 
     def load_youtube_transcript_meta(path: Path) -> dict:

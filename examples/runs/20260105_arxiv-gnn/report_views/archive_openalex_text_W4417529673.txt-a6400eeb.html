@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4417529673.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4417529673.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> Graph Neural Networks for Interferometer Simulations</p><p><strong>Authors:</strong> S. Kannan, P. Goodarzi, Evangelos E. Papalexakis, Jonathan W. Richardson</p><p><strong>Journal:</strong> arXiv (Cornell University)</p><p><strong>Published:</strong> 2025-12-18</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2512.16051">http://arxiv.org/abs/2512.16051</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4417529673.pdf">./archive/openalex/pdf/W4417529673.pdf</a></p><p><strong>Summary:</strong><br />In recent years, graph neural networks (GNNs) have shown tremendous promise in solving problems in high energy physics, materials science, and fluid dynamics. In this work, we introduce a new application for GNNs in the physical sciences: instrumentation design. As a case study, we apply GNNs to simulate models of the Laser Interferometer Gravitational-Wave Observatory (LIGO) and show that they are capable of accurately capturing the complex optical physics at play, while achieving runtimes 815 times faster than state of the art simulation packages. We discuss the unique challenges this problem provides for machine learning models. In addition, we provide a dataset of high-fidelity optical physics simulations for three interferometer topologies, which can be used as a benchmarking suite for future work in this direction.</p></div><pre>
+
+===== PAGE 1 =====
+Graph Neural Networks for Interferometer
+Simulations
+Sidharth Kannan
+College of Creative Studies
+University of California, Santa Barbara
+Santa Barbara, CA
+skannan@ucsb.edu
+Pooyan Goodarzi
+Department of Physics &amp; Astronomy
+University of California, Riverside
+Riverside, CA
+Evangelos E. Papalexakis
+Department of Computer Science &amp; Engineering
+University of California, Riverside
+Riverside, CA
+Jonathan W. Richardson
+Department of Physics &amp; Astronomy
+University of California, Riverside
+Riverside, CA
+Abstract
+In recent years, graph neural networks (GNNs) have shown tremendous promise
+in solving problems in high energy physics, materials science, and fluid dynamics.
+In this work, we introduce a new application for GNNs in the physical sciences:
+instrumentation design. As a case study, we apply GNNs to simulate models of
+the Laser Interferometer Gravitational-Wave Observatory (LIGO) and show that
+they are capable of accurately capturing the complex optical physics at play, while
+achieving runtimes 815 times faster than state of the art simulation packages. We
+discuss the unique challenges this problem provides for machine learning models.
+In addition, we provide a dataset of high-fidelity optical physics simulations for
+three interferometer topologies, which can be used as a benchmarking suite for
+future work in this direction.
+1
+Introduction
+Gravitational waves (GWs) are stretches or contractions in the fabric of spacetime, predicted by
+Albert Einstein in 1916 as a consequence of the general theory of relativity. Gravitational waves
+enable the study of the most extreme events in our universe, including black hole and neutron star
+mergers. To that end, multiple ground-based gravitational wave observatories have been built. LIGO
+is one observatory, which detects GWs using a dual recycled Michelson interferometer (DRMI).
+In order to detect GWs, LIGO and future observatories like Cosmic Explorer (CE) require extremely
+high sensitivities, meaning that the interferometer itself must be robust to real-world errors in manu-
+facturing. Searching for design parameters that are optimally robust is a challenging computational
+problem, which requires running thousands of costly high-fidelity optical simulations and perform-
+ing optimization in a high-dimensional, non-convex loss landscape [Richardson et al. (2022)].
+Neural networks have been used for data analysis and simulation of complex physical systems in
+fields from computational fluid dynamics to particle physics to cosmology. However, to date, their
+use in instrumentation design is less explored. Instrumentation design tasks are usually highly ap-
+plication specific, and have large search spaces and complex design constraints. Furthermore, there
+are often intricate physical relationships between the design parameters, and simulating a particular
+set of parameters to evaluate its performance can be extremely computationally expensive.
+39th Conference on Neural Information Processing Systems (NeurIPS 2025) Workshop: AI for Science work-
+shop (NeurIPS 2025).
+arXiv:2512.16051v1  [astro-ph.IM]  18 Dec 2025
+
+
+===== PAGE 2 =====
+These challenges make the application of deep learning to instrumentation design tasks particularly
+appealing. Furthermore, in many cases, the surrogate model does not need to extremely accurately
+capture the simulation output. For example, in the case of LIGO and CE, it is not necessary for
+a network to be able to predict the exact field amplitudes with high accuracy; even being able to
+identify designs that are unlikely to perform well would enable any optimization routine to quickly
+prune large segments of the parameter space, thus enabling far more efficient design optimization.
+We make the following contributions:
+1. We demonstrate, for the first time, that deep learning methods can accurately simulate
+electromagnetic (EM) field propagation in optical cavities at a fraction of the computational
+cost of traditional methods.
+2. We provide a dataset of high-fidelity optical simulations over 3 different interferometer
+topologies, which can be used for training more advanced models.
+2
+Related Work
+Classical methods for interferometer simulation rely on rely on representing the optical field in the
+interferometer, either using a modal decomposition (Bond et al. (2016)) or directly propagating the
+field.
+In the modal decomposition approach, the EM field is represented in a particular basis. In the
+simulations used to produce the dataset included with this paper, the field is represented in the HG
+basis of one of the cavities of the particular interferometer. The field propagation is then modelled
+via a series of “ABCD“ matrices, which model how the field amplitude and phase change either as
+the field passes through free space, or as it interacts with an optical component. Once these matrices
+are known, the field is propagated simply by multiplying a known field vector (usually at the laser),
+sequentially by the matrices representing each interaction it undergoes. This is the approach taken by
+the standard simulation package used to collect the dataset for this paper, FINESSE (Brown et al.).
+In this process, the main computational cost comes from the fact that a) in order to capture sharper
+spatial features, higher order modes must be included, and the dimension of each scattering matrix
+grows in O(n2), yielding a high dimensional system of equations to be solved, and b) computing the
+matrix elements themselves can be extremely computationally intensive, particularly when account-
+ing for higher order effects like thermal lensing and scattering due to the finite mirror apertures.
+Furthermore, in order to simulate a particular interferometer topology, multiple of these simulation
+subroutines must be run. This is because the interferometer must be “locked.” In effect, the mi-
+croscopic positions of the cavity mirrors must be adjusted in order to achieve resonance inside of
+the optical cavities, and determining this lock point requires iteratively adjusting mirror positions,
+re-running a simulation each time.
+Deep learning based approaches have shown great success at accelerating computationally costly
+physics simulation routines such as this. Previous works have applied neural networks towards the
+design of compound lens systems (Yang et al. (2024)). Other works have shown that neural networks
+can directly solve partial differential equations similar to those that govern EM-field propagation (Li
+et al. (2020), Alkin et al. (2024)), or emulate hydrodynamic simulations of the cosmic web (Zhang
+et al. (2023)). Some of these approaches give the neural network direct access to the underlying
+physics, while in most cases, the approach is the data-driven one: large quantities of simulation
+data are given to the network, and the underlying physics is then learned. We note two distinctions
+between our problem setting and those covered by recent physics foundation models (Alkin et al.
+(2024), Herde et al. (2024)). First, we are not concerned with the time evolution of the field, only
+the steady state fields achieved inside the interferometer cavities. Secondly, the model does not need
+to emulate the entire field in between optics in the interferometer; the primary points of interest are
+in the interactions between the field and optics.
+Graph neural networks in particular have been used simulating physical dynamics in settings where
+there is a natural spatial ordering, for example in mesh based simulation (Pfaff et al. (2021)) and
+in predicting the properties of molecules (Reiser et al. (2022)). GNNs can effectively capture local
+interactions between nodes (i.e. points on a mesh, or bonded atoms in a molecule), and through
+multiple rounds of message passing, can also incorporate long range dependencies. In the vein of
+2
+
+
+===== PAGE 3 =====
+Dataset
+FP
+Simple CC
+Arm-SRC CC
+Graphs
+30,000
+5,000
+30,000
+Nodes per Graph
+10
+18
+74
+Table 1: Size of each dataset. Each graph has 3 node features, and each edge has 2 features.
+this approach, we employ a graph-based architecture, that captures the spatial relationships between
+the different fields and optical components in the interferometer, and apply it to the problem of
+predicting steady state EM fields in interferometers.
+3
+GNNs for Interferometer Simulation
+3.1
+Dataset and Inteferometer Model
+Because the EM-field is modelled as interacting with a sequence of optics, this lends itself very
+naturally to a graph representation. In this dataset, each mirror is split into four nodes, two for each
+side of the mirror, and with the incoming and outgoing fields treated as separate nodes. The edges
+in the graphs represent the spatial connection between fields. For example, the incoming field to a
+mirror will be connected to both the reflected field and the transmitted field, while the outgoing field
+from that mirror would be connected to the node representing the incoming field at the next optic
+it interacts with. Each node has two features, meant to represent the reflectivity and the radius of
+curvature of the optic.
+At each node, the complex field amplitudes, beam parameter and powers of the even HG modes, up
+to sixth order, are recorded. We also provide helper functions to convert this information into the
+2D spatial intensity distribution at each node.
+This data is collected for three different interferometer topologies: a Fabry-Perot cavity, a coupled
+cavity, and a Arm-SRC coupled cavity setup, shown in Fig. 4. For each topology, a set of “base”
+configurations are chosen, and then a random walk is performed in the neighborhood of each of
+those base configurations, to collect the remaining data. The characteristics of each dataset are
+enumerated in Table
+The dataset is sampled in the following way. We start at an “ideal” interferometer configuration
+(i.e. all cavities and the laser are perfectly mode-matched), and then stochastically perturb the
+interferometer parameters and run a FINESSE simulation at each step, which serves as our ground-
+truth data. For each interferometer setup, 30,000 samples are collected.
+Over the course of the random walk, we modify the following optic properties: radius of curvature,
+reflectivity, and relative spacing. Other properties, like index of refraction are kept constant, as these
+are material properties, and perturbing them is not physically realistic.
+3.2
+Models
+We train a network to predict the incoming and outgoing field power at each point in the interfer-
+ometer, and a network to predict the spatial intensity distribution at each point in the interferometer,
+given the the interferometer topology, as a graph. Each node in the interferometer has three features:
+the radius of curvature of the wavefront, the reflectivity of the optic, and the angle at which it is
+oriented. Each edge in the graph has two features: its length and index of refraction. The model is
+trained on locked interferometer data but does not perform the locking procedure itself.
+3.2.1
+Learning the Powers
+Our task is to predict the incoming and outgoing powers at each optic in the interferometer. Points
+within optical cavities, particularly the arm cavities, have powers on the kilowatt (KW) scale, while
+powers exiting the interferometer may be on the milliwatt scale. To account for this scale separation,
+the power prediction model is trained to predict log P, instead of the raw power.
+The model architecture consists of 20 GATv2 layers (Brody et al. (2022)), followed by 6 feed-
+forward layers. LeakyReLU activation functions are used. Residual connections are placed between
+each pair of consecutive message passing layers, and between each pair of consecutive linear layers.
+3
+
+
+===== PAGE 4 =====
+Laser
+Mirror 1
+Mirror 1
+FINESSE Cavity Model
+Optical Graph
+GAT
+Layers
+KAN
+Layers
+Model
+Intensity Profile
+Radial
+Sweep
+Radial
+Distribution
+Figure 1: Interferometer simulation pipeline. The FINESSE interferometer model is converted into
+an optical graph, where each optic is broken down into a node for each incoming or outgoing field.
+This graph is fed to the model, which produces a radial intensity distribution, which is then rotated
+to produce the final intensity distribution.
+For all the alternate model architectures tested, the number of layers of each type is kept the same.
+For example, the GraphTransformer (Shi et al. (2021)) architecture, we use 20 graph transformer
+layers, followed by the same 6 MLP layers.
+The model is trained with a custom loss function, defined below:
+L = 1
+n
+N
+X
+n
+||yn −ˆyn||1 + λ||ˆyn −AT ˆyn||1
+(1)
+where y is the ground truth power vector, ˆy is the model prediction, A denotes the adjacency matrix
+of the input graph, and ||x||1 denotes the L1 norm of the vector. The first term is the standard mean
+absolute error loss, and the second term is a regularization term that penalizes model outputs where
+the sum of incoming powers to a node does not equal the power at that node (i.e. conservation of
+energy).
+We find that our model’s performance is not very sensitive to the size or number of message passing
+layers, and increasing the depth of the network incurs a high computational cost.
+3.2.2
+Learning the Intensity Distribution
+Limiting our model to predicting field powers does not capture the entirety of physically relevant
+phenomena for interferometer design. For example, we may be interested in the modal decomposi-
+tion of the field, to ensure that power mainly stays in the TEM-00 mode. This kind of information is
+captured in the field intensity distribution. In this section, we describe the model architecture used
+to predict the intensity distribution.
+The input interferometer graph is first passed through 15 GAT layers. The resulting node embedding
+is then passed to the Deep Kolmogorov Arnold Networks (KAN) described below.
+Taking advantage of the radial symmetry of the field representation, as can be seen in Eq. 6, we pass
+the node embeddings to a DeepKAN, which learns to approximate the radial intensity distribution,
+which is then rotated to form the full 2D intensity profile. This enforces the physical requirement
+that in the cases we consider, the EM-field is azimuthally symmetric on the mirror surface. It also
+has the advantage of reducing the number of degrees of freedom for the intensity map from O(n2)
+to O(n). This pipeline is shown in Fig. 1.
+4
+
+
+===== PAGE 5 =====
+The choice to use Kolmogorov Arnold Networks is informed by their demonstrated proficiency in
+learning other special functions from physics, such as the spherical harmonics (Liu et al. (2024))
+with fewer parameters than feed forward networks.
+4
+Results
+4.1
+Power Prediction Results
+For each interferometer topology, we report the mean absolute error (MAE) achieved by three dif-
+ferent models in Table 2. We also show some sample correlation plots in Fig. 2.
+Figure 2: Correlations between dataset and mixed model predictions for the Fabry-Perot cavity.
+Units are in watts. Best fit lines are plotted in blue. A slope close to 1 indicates strong agreement
+between model predictions and ground truth data. In order, the slopes of the lines of best fit are
+m = 1.00, 1.16, 0.95, 0.82.
+Training Dataset
+Arm-SRC CC
+Fabry Perot
+Simple CC
+FP
+∞
+0.52
+2.94
+GAT + MLP
+Mixed
+0.25
+0.54
+3.01
+Arm-SRC CC
+0.24
+1.36
+2.98
+FP
+0.58
+0.57
+0.89
+GAT + KAN
+Mixed
+0.38
+0.76
+1.09
+Arm-SRC CC
+0.39
+1.41
+1.68
+FP
+∞
+0.08
+5857.71
+MLP Only
+Mixed
+0.41
+1.32
+1380.19
+Arm-SRC CC
+4.89
+∞
+6.94
+FP
+∞
+0.055
+12.37
+KAN Only
+Mixed
+0.19
+33.98
+38.91
+Arm-SRC CC
+0.29
+4784.32
+104.83
+FP
+∞
+0.56
+2.04
+GraphTransformer + MLP
+Mixed
+0.34
+0.65
+1.71
+Arm-SRC CC
+0.39
+1.34
+1.65
+Table 2: L1 Losses on test datasets for each interferometer topology. Results of our final architecture
+are summarized in the top section. The remaining rows compare this architecture to other combina-
+tions of GNN layers and MLPs/KANs.
+The mixed model is trained on a training set comprised of 20,000 Fabry-Perot cavity simulations,
+and 4,000 Arm-SRC CC simulations. The remained two models are trained on 24,000 of a</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

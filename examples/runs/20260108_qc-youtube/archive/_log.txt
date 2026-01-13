@@ -1,0 +1,21 @@
+[2026-01-14 00:46:31] JOB START: 20260108_qc-youtube.txt date=2026-01-08 days=30 max_results=5
+[2026-01-14 00:46:31] TAVILY EXTRACT SKIP (youtube): https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s
+[2026-01-14 00:46:31] TAVILY SEARCH: quantum computing AI industry use cases recent 30 days
+[2026-01-14 00:46:37] TAVILY SEARCH: quantum machine learning industry applications overview
+[2026-01-14 00:46:39] TAVILY SEARCH: quantum computing for AI acceleration tutorial
+[2026-01-14 00:46:41] TAVILY SEARCH: quantum computing for AI engineers lecture
+[2026-01-14 00:46:44] TAVILY SEARCH: quantum computing AI industrial use cases panel
+[2026-01-14 00:46:47] TAVILY SEARCH: Nature quantum computing AI applications
+[2026-01-14 00:46:51] TAVILY SEARCH: Nature Communications quantum computing AI open access
+[2026-01-14 00:46:55] TAVILY SEARCH: Science quantum computing AI applications
+[2026-01-14 00:46:57] TAVILY SEARCH: IEEE Spectrum quantum computing industry
+[2026-01-14 00:47:05] TAVILY SEARCH: PRX Quantum quantum machine learning
+[2026-01-14 00:47:07] YOUTUBE SEARCH SKIP: no youtube hint or explicit site:youtube.com queries
+[2026-01-14 00:47:07] YOUTUBE DIRECT: https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s
+[2026-01-14 00:47:07] YOUTUBE TRANSCRIPT: sQSQBYHR0ms
+[2026-01-14 00:47:08] ARXIV ID FETCH: 2401.01234
+[2026-01-14 00:47:09] WARN citations lookup failed arxiv_id=2401.01234v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2401.01234')
+[2026-01-14 00:47:10] ARXIV ID FETCH: 2311.12345
+[2026-01-14 00:47:11] WARN citations lookup failed arxiv_id=2311.12345v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2311.12345')
+[2026-01-14 00:47:11] ARXIV RECENT SEARCH: query='quantum machine learning industry applications overview' days=30
+[2026-01-14 00:47:15] JOB END

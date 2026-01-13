@@ -1,0 +1,10 @@
+[2026-01-14 00:47:16] JOB START: 20260109_sectioned.txt date=2026-01-09 days=30 max_results=5
+[2026-01-14 00:47:16] TAVILY SEARCH: AI trends for 2026 (agentic AI, physical AI)
+[2026-01-14 00:47:19] TAVILY SEARCH: agentic AI demos open source code site:github.com
+[2026-01-14 00:47:22] TAVILY SEARCH: industrial AI deployment talks site:youtube.com
+[2026-01-14 00:47:25] YOUTUBE SEARCH: agentic AI demos open source code order=relevance max=5
+[2026-01-14 00:47:26] YOUTUBE SEARCH: industrial AI deployment talks order=relevance max=5
+[2026-01-14 00:47:28] ARXIV ID FETCH: 2401.01234
+[2026-01-14 00:47:28] WARN citations lookup failed arxiv_id=2401.01234v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2401.01234')
+[2026-01-14 00:47:29] ARXIV RECENT SEARCH: query='AI trends for 2026 (agentic AI, physical AI)' days=30
+[2026-01-14 00:47:33] JOB END

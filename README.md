@@ -1,9 +1,9 @@
 # Feather Collector
 
-Feather-light knowledge intake. This CLI ingests date-named text instructions (YYYYMMDD.txt), runs Tavily search/extract, fetches arXiv papers, and builds an offline-friendly archive of everything it collected. Input can be a single `.txt` file or a folder of `.txt` files.
+Feather-light knowledge intake. This CLI ingests text instructions (`.txt` files), runs Tavily search/extract, fetches arXiv papers, and builds an offline-friendly archive of everything it collected. Input can be a single `.txt` file or a folder of `.txt` files.
 
 ## Features
-- Parse natural-language instructions from date-named `.txt` files.
+- Parse natural-language instructions from `.txt` files.
 - Tavily search and content extraction (requires `TAVILY_API_KEY`).
 - Optional arXiv metadata fetch; optional PDF download and text extraction.
 - Optional YouTube search and transcript capture.
@@ -50,10 +50,10 @@ python -m pip install -r requirements.txt
 
 ## Usage
 ```bash
-feather --input ./instructions --output ./archive --set-id oled --download-pdf --max-results 8
+feather --input ./instructions --output ./archive --download-pdf --max-results 8
 
 # Inline query mode (separate items with ';' or newlines):
-feather --query "what is quantum computer; recent 30 days; arXiv:2401.01234; https://aaa.blog" --output ./runs --set-id qc --lang en
+feather --query "what is quantum computer; recent 30 days; arXiv:2401.01234; https://aaa.blog" --output ./runs --lang en
 
 # Open-access papers via OpenAlex (optional):
 feather --input ./instructions --output ./archive --openalex --download-pdf
@@ -63,33 +63,32 @@ feather --input ./instructions --output ./archive --youtube --yt-transcript
 
 # List or review existing runs:
 feather --list ./runs
-feather --review ./runs/20260104_basic
-feather --review ./runs/20260104_basic --review-full
+feather --review ./runs/20260104
+feather --review ./runs/20260104 --review-full
 feather --list ./runs --filter ai
-feather --review ./runs/20260104_basic --format json
-feather --review ./runs/20260104_basic/archive/tavily_search.jsonl
+feather --review ./runs/20260104 --format json
+feather --review ./runs/20260104/archive/tavily_search.jsonl
 
 # Or:
-python -m feather --input ./instructions --output ./archive --set-id oled --download-pdf --max-results 8
+python -m feather --input ./instructions --output ./archive --download-pdf --max-results 8
 
 # Or without installing (local runner):
-python run.py --input ./instructions --output ./archive --set-id oled --download-pdf --max-results 8
+python run.py --input ./instructions --output ./archive --download-pdf --max-results 8
 
-# Deepagents report generation (requires deepagents + LLM key):
-python scripts/deepagents_report.py --run ./runs/20260107_ai-trends --output ./runs/20260107_ai-trends/report.md --lang ko --prompt "Focus on trends, insights, and implications."
-# HTML output (markdown conversion requires the optional "markdown" package, included in the agents extra):
-python scripts/deepagents_report.py --run ./runs/20260107_ai-trends --output ./runs/20260107_ai-trends/report.html
-# Full, multi-step report (deepagents_report_full.py):
-python scripts/deepagents_report_full.py --run ./runs/20260104_basic-oa --output ./runs/20260104_basic-oa/report_full.html --lang ko --prompt-file ./examples/instructions/20260104_prompt_OLED.txt
-# See scripts/README_deepagents_report_full.md for detailed options.
+# Federlicht report generation (requires deepagents + LLM key):
+federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.md --lang ko --prompt-file ./examples/instructions/20260104_prompt_oled.txt
+# HTML output:
+federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.html --lang ko --prompt-file ./examples/instructions/20260104_prompt_oled.txt
+# (or: python scripts/federlicht_report.py --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.html --lang ko --prompt-file ./examples/instructions/20260104_prompt_oled.txt)
+# See scripts/README_federlicht_report.md for detailed options.
 
 # Windows wrappers (no install):
-# .\feather.ps1 --input .\instructions --output .\archive --set-id oled --max-results 8
-# .\feather.cmd --input .\instructions --output .\archive --set-id oled --max-results 8
+# .\feather.ps1 --input .\instructions --output .\archive --max-results 8
+# .\feather.cmd --input .\instructions --output .\archive --max-results 8
 ```
 
 Arguments:
-- `--input` (required): Folder containing one or more `YYYYMMDD.txt` instruction files, or a single `.txt` file.
+- `--input` (required): Folder containing one or more `.txt` instruction files, or a single `.txt` file.
 - `--query` (required if `--input` is not set): Inline instructions separated by `;` or newlines.
 - `--list`: List run folders under a path (default: current directory).
 - `--filter`: Filter list entries by queryID substring (case-insensitive). Use with `--list`.
@@ -112,14 +111,14 @@ Arguments:
 - `--yt-max-results`: Max YouTube results per query (defaults to `--max-results`).
 - `--yt-order`: YouTube search ordering (`relevance`, `date`, `viewCount`, `rating`).
 - `--yt-transcript`: Fetch YouTube transcripts (requires `youtube-transcript-api`).
-- `--set-id`: Optional keyword appended to the queryID. If omitted, jobs are numbered.
 
 QueryID rules:
-- Default: `YYYYMMDD_001`, `YYYYMMDD_002`, ...
-- With `--set-id oled`: `YYYYMMDD_oled` (or `YYYYMMDD_oled_001` if multiple input files).
+- Default: `safe_filename(file_stem)` (or `safe_filename(first_query_line)` for `--query`).
+- If the output folder already exists: suffix `_01`, `_02`, ...
+- To control run folder names, rename the instruction file (e.g., `ai_trends.txt`).
 
 ## Instruction File Format
-- File name must be `YYYYMMDD.txt`.
+- File name can be anything as long as it ends with `.txt`. If the stem starts with `YYYYMMDD`, that date is used for the run; otherwise today's date is used.
 - Lines are grouped into sections; blank lines or separator-only lines (`-_=*#`) split sections.
 - Site hints apply only to queries in the same section; repeat hints across sections if needed.
 - Multiple hint lines in a section are combined.

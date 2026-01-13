@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260107_ai-trends</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-mit_tech_review_10_breakthroughs {
+  --ink: #1f1d1a;
+  --muted: #5b5550;
+  --accent: #e04f3a;
+  --link: #0b4b66;
+  --page-bg: linear-gradient(120deg, #f6f3f0 0%, #fff7f1 50%, #ffffff 100%);
+  --body-font: "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Futura", "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+  --ui-font: "Futura", "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+}
+
+body.template-mit_tech_review_10_breakthroughs .article h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1.02rem;
+  border-top: 2px solid rgba(224, 79, 58, 0.35);
+}
+
+body.template-mit_tech_review_10_breakthroughs .article h3 {
+  border-left: 3px solid rgba(224, 79, 58, 0.6);
+  padding-left: 10px;
+}
+
+body.template-mit_tech_review_10_breakthroughs .article ul {
+  list-style: square;
+}
+
+  </style>
+</head>
+<body class="template-mit_tech_review_10_breakthroughs">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260107_ai-trends</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 06:38</p>
+<h2>Executive Summary</h2>
+<p>Across 2025–2026, the most consistent signal is a shift from “AI as a tool” to <strong>AI as a co-worker</strong>—autonomous or semi-autonomous agents that execute workflows, coordinate across systems, and increasingly require governance comparable to human teams. Multiple sources also converge on an “industrialization” phase: <strong>multi‑GW data centers</strong>, rising power constraints, and a move toward <strong>efficiency-first AI stacks</strong> that blend specialized models with purpose-built compute. At the same time, evidence suggests a corrective cycle: alongside rapid buildout and mainstream usage, there are explicit warnings that <strong>agentic AI hype may peak and dip</strong> as organizations confront reliability, oversight, and ROI realities. Scientific discovery is repeatedly highlighted as a high-upside domain, with AI moving from summarization to hypothesis generation and tool use in labs. Security and sovereignty themes intensify as AI becomes more embedded in operations and sensitive data flows. Overall horizon: near-term (12–24 months) for workflow-orchestrating AI, model specialization, and infrastructure shifts; mid-term (2–5 years) for quantum-assisted and deeper physical-digital orchestration—though the evidence in this run is largely strategic commentary rather than primary technical validation. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a>, <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[3]</a></p>
+<h2>How We Chose</h2>
+<p>This list follows the MIT Technology Review “breakthroughs” format, but it is constrained by what this run actually captured: two Tavily web searches plus run provenance files, with <strong>no downloaded papers/PDFs</strong> and one failed query (“emerging AI technologies 2026”). <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a><br />
+Selection criteria:</p>
+<ul>
+<li><strong>Impact potential</strong>: likely to change cost structures, operating models, or strategic risk (enterprise, science, infrastructure, policy).</li>
+<li><strong>Feasibility / readiness</strong>: evidence of pilots, organizational framing, or near-term deployability (not just speculative research).</li>
+<li><strong>Strength of evidence in the archive</strong>: repeated appearance across independent sources (e.g., Gartner + IBM + Microsoft + State of AI).</li>
+<li><strong>Timeframe</strong>: primarily 2025–2026 adoption signals, with explicit labeling when items are more forward-looking.</li>
+</ul>
+<h2>Breakthroughs (Top 10)</h2>
+<h3>1) Agentic AI as “Digital Colleagues”</h3>
+<p><strong>What it is</strong><br />
+Autonomous or semi-autonomous AI agents that go beyond chat interfaces to execute tasks (email triage, scheduling, negotiation, coordination) and operate with higher initiative. Spencer Stuart frames these as becoming “as commonplace as email or smartphones,” and Microsoft describes AI evolving “from instrument to partner.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Shifts AI value from content generation to <strong>execution in business processes</strong>.<br />
+- Forces new requirements for governance, oversight, and accountability when agents “make erroneous decisions.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Key players</strong><br />
+Enterprise platform vendors and integrators; trend coverage includes Microsoft’s ecosystem narrative and broad enterprise expectations. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Early deployments and scaling are implied for 2025–2026 (“pilot programmes to scale company-wide”), but maturity is uneven. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>2) Workflow Orchestration (AI Moves from Individuals to Teams)</h3>
+<p><strong>What it is</strong><br />
+AI systems coordinated at the <strong>team/workflow level</strong>: connecting data across departments, coordinating multi-step work, and moving projects “from idea to completion.” IBM (via Writer’s CSO quoted in IBM Think) emphasizes the shift from individual usage to “team and workflow orchestration.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Changes buying center from “productivity tool” budgets to <strong>core operations and transformation</strong> budgets.<br />
+- Increases integration requirements (identity, audit, data access control, observability).</p>
+<p><strong>Key players</strong><br />
+Enterprise AI platforms (e.g., Writer cited via IBM Think) plus broader ecosystem vendors providing orchestration layers. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Near-term: emerges as an enterprise scaling pattern in 2026 narratives. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>3) Multimodal “Perceive-and-Act” AI (Language + Vision + Action)</h3>
+<p><strong>What it is</strong><br />
+Multimodal models that “bridge language, vision and action,” enabling “multimodal digital workers” that can autonomously complete complex tasks (IBM example mentions healthcare cases). <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Broadens automation from text workflows to <strong>real-world, sensor-rich, UI-driven tasks</strong>.<br />
+- Raises safety and verification demands because “action” expands the blast radius of errors.</p>
+<p><strong>Key players</strong><br />
+IBM highlights multimodal direction; broader implication includes vendors building multimodal stacks. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Early: positioned as a 2026 trend with increasing capability, not as a universally solved product category. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>4) “Factory Infrastructure” for AI Adapters (Industrializing Customization)</h3>
+<p><strong>What it is</strong><br />
+Operational systems to produce and manage large numbers of <strong>AI adapters</strong>—lightweight customization layers that tailor models to enterprise needs. MIT Sloan Management Review describes growth of “factory” infrastructure for “AI adapters.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Reduces reliance on one-size-fits-all models; makes customization <strong>repeatable and governable</strong>.<br />
+- Aligns with a broader move to treat genAI as an “organizational resource” rather than an individual tool. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Key players</strong><br />
+Enterprises building internal AI platforms; vendors enabling adapter workflows. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Near-term: framed explicitly as a 2026 trend. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>5) Specialized / Smaller Models Over Massive GPU-Centric Scaling</h3>
+<p><strong>What it is</strong><br />
+A strategic shift “away from massive GPU clusters toward targeted, efficient AI solutions,” including “smaller, specialized models” optimized for compliance and cost. Cisco’s partner blog cites training costs “$4.6M to $12M per run” and “thousands of high-end GPUs” as a driver. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Changes unit economics: from “build the biggest model” to <strong>fit-for-purpose accuracy/latency/cost</strong>.<br />
+- Makes domain control and compliance more practical (at least as a goal) than general-purpose deployments.</p>
+<p><strong>Key players</strong><br />
+Enterprises, cloud providers, and model vendors offering domain-focused solutions; Cisco highlights ecosystem-level incentives. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Already underway in enterprise decision-making; acceleration expected in 2025. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>6) AI-Native Development Platforms</h3>
+<p><strong>What it is</strong><br />
+Platforms where software creation is deeply integrated with generative AI so “small, nimble teams” can build faster—described by Gartner as “AI-Native Development Platforms.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Compresses product cycles and shifts developer workflows toward <strong>specification + review + governance</strong>.<br />
+- Creates platform lock-in risks and amplifies the need for secure SDLC practices.</p>
+<p><strong>Key players</strong><br />
+Gartner frames the category; major platform vendors are implicitly positioned to deliver it. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Near-term: characterized as “increasingly enterprise-ready” for 2026. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>7) Confidential Computing for AI (Protect Data “While in Use”)</h3>
+<p><strong>What it is</strong><br />
+Security architectures that protect sensitive data during computation—Gartner: “Confidential Computing protects sensitive data while in use,” enabling AI/analytics across “untrusted infrastructure.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Enables broader deployment of AI on sensitive workloads (regulated industries, cross-organization collaboration).<br />
+- Addresses a practical bottleneck: security posture must strengthen as agents become “digital colleagues.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Key players</strong><br />
+Cloud and hardware ecosystem; Gartner positions it as a strategic trend. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Emerging enterprise pattern for 2026 planning. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>8) AI Supercomputing Platforms and the Multi‑GW Data Center Era</h3>
+<p><strong>What it is</strong><br />
+A combined trend of scaled AI compute platforms and the infrastructure buildout around them. Gartner highlights “AI Supercomputing Platforms,” while State of AI claims “multi‑GW data centers… backed by sovereign funds” with “power supply emerging as the new constraint.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Power becomes a strategic limiter (site selection, energy procurement, grid politics).<br />
+- Reinforces geopolitics and industrial policy dynamics around compute concentration. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Key players</strong><br />
+Cloud/hyperscalers, sovereign investors, and governments shaping permitting and energy strategy. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Active buildout now; constraints intensify through 2026. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>9) Sustainable AI Infrastructure as a First-Order Design Constraint</h3>
+<p><strong>What it is</strong><br />
+A push to make AI infrastructure “more efficient and sustainable,” including low-carbon building materials and increased use of carbon-free energy (wind, geothermal, nuclear, solar), highlighted by Microsoft Source. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Sustainability shifts from CSR to <strong>capacity enabling</strong> (energy access, public acceptance, long-term operating cost).<br />
+- Intersects with the “power constraint” narrative from State of AI. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Key players</strong><br />
+Hyperscalers (Microsoft explicitly), utilities, construction supply chains. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Ongoing; framed as a 2025 operational priority. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<hr />
+<h3>10) AI as a Lab Partner (Hypotheses + Tool Use in Scientific Discovery)</h3>
+<p><strong>What it is</strong><br />
+AI moving from literature and reporting assistance to participating in discovery: generating hypotheses and using tools/apps that control scientific experiments. Microsoft quotes Peter Lee: AI will “generate hypotheses, use tools and apps that control scientific experiments.” <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Why it matters</strong><br />
+- Potentially increases scientific throughput—Microsoft Research leader anticipates “measurable impact on the throughput” for sustainable materials and drug development. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a><br />
+- Introduces new validation requirements (reproducibility, automated experiment governance, safety).</p>
+<p><strong>Key players</strong><br />
+Research labs, AI infrastructure providers, and tool vendors integrating automation into lab workflows. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p><strong>Availability</strong><br />
+Near- to mid-term: described as the “next leap” in 2026 narratives; strong promise but this run lacks primary experimental evidence. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<h2>Cross-Cutting Themes</h2>
+<p>1) <strong>From model-centric to system-centric AI</strong><br />
+The sources repeatedly shift attention from “better models” to <strong>orchestration, platforms, and infrastructure</strong>: Gartner’s platform framing (AI-native dev, supercomputing, confidential computing) and IBM’s “workflow orchestration” language point to systems integration as the differentiator. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p>2) <strong>Efficiency becomes strategy, not optimization</strong><br />
+Cisco’s claim that LLM costs are “unsustainable” and IBM’s forecast of ASICs/chiplets/analog inference maturation align with State of AI’s “power supply… constraint.” The common implication: competitive advantage will come from <strong>efficient deployment architectures</strong> more than raw scale. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p>3) <strong>Governance and security move to the foreground as autonomy rises</strong><br />
+Spencer Stuart highlights governance/oversight/accountability risks for agents; Microsoft notes organizations “strengthening security” as agents become colleagues; Gartner emphasizes confidential computing. This is a cohesive signal that autonomy expands operational and regulatory risk. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<p>4) <strong>Industrialization + corrective hype cycle happen simultaneously</strong><br />
+HBS describes a “massive AI buildout,” while MIT SMR explicitly predicts agents will fall into a “trough of disillusionment” in 2026. The throughline: investment continues, but expectations recalibrate toward ROI and reliability. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></p>
+<h2>Industry Implications</h2>
+<ul>
+<li><strong>Enterprise operating model</strong>: Prepare for AI agents as workforce-like entities—assign “owners,” define escalation paths, and build auditability (who/what/when/why an agent acted). This aligns with explicit governance concerns raised about agent errors. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Architecture decisions in 2025–2026</strong>: Expect a portfolio approach—specialized models + adapter factories + orchestration—rather than one monolithic LLM. Cisco’s cost framing and MIT SMR’s “factory infrastructure” signal this shift. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Infrastructure and energy</strong>: Strategic planning must integrate power procurement and sustainability into AI roadmaps, consistent with State of AI’s power constraint and Microsoft’s sustainable build narrative. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Security baseline uplift</strong>: Confidential computing and stronger security programs become gating items for scaling AI into sensitive workflows and agentic operations. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Talent and partnership strategy</strong>: Cisco anticipates “accelerated re-skilling” and increased reliance on partnerships due to complexity and talent scarcity—suggesting build-vs-buy choices will be shaped by operational capacity, not just cost. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+</ul>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li><strong>Evidence quality skew</strong>: The archive is dominated by vendor/consulting perspectives (Microsoft, IBM, Cisco, Gartner, McKinsey) plus State of AI’s report-style synthesis; there are <strong>no primary technical papers or benchmarks</strong> captured in this run. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Coverage gaps due to run failure</strong>: The query “emerging AI technologies 2026 (English)” failed with an OS error, limiting breadth and likely excluding non-vendor technical reporting. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+<li><strong>Missing intended domains</strong>: Although the instruction list includes CES 2026, IEEE, conference best papers (NeurIPS/ICLR/ICML/CVPR/ACL/AAAI), and “physical AI robotics,” none of those were actually collected—so robotics/physical AI is under-evidenced here. <a href="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-viewer="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-raw="instruction/20260107_ai-trends.txt" class="viewer-link">[4]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+<li><strong>Agentic AI overhype risk</strong>: MIT SMR explicitly anticipates a “trough of disillusionment” for agents in 2026; organizations should interpret near-term productivity gains cautiously and demand measurable reliability and controls. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+<li><strong>Quantitative claims need validation</strong>: Examples include Cisco’s training-cost range and State of AI’s adoption survey stats; in this run we only have extracted snippets, not underlying methodologies. Treat as directional signals. <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a></li>
+</ul>
+<h2>Appendix</h2>
+<p><strong>Run provenance (what was actually executed)</strong><br />
+- Only two Tavily searches completed: “AI trends 2025 (English)” and “AI trends 2026 (English)”. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a><br />
+- The third search (“emerging AI technologies 2026 (English)”) failed due to <code>OSError(22, 'Invalid argument')</code>. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a><br />
+- Job config shows OpenAlex enabled and PDFs allowed, but <strong>no OpenAlex outputs or PDFs</strong> exist in the archive for this run (only <code>_job.json</code>, <code>_log.txt</code>, <code>tavily_search.jsonl</code>). <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[3]</a>  </p>
+<p><strong>Primary evidence files used (local paths)</strong><br />
+- <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[1]</a><br />
+- <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a><br />
+- <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[3]</a><br />
+- <a href="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-viewer="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-raw="instruction/20260107_ai-trends.txt" class="viewer-link">[4]</a></p>
+<h2>Report Prompt</h2>
+<p>Synthesize top breakthroughs and implications. Keep sections short and sharp.</p>
+<h2>References</h2>
+<ol>
+<li>Tavily search index (<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>) — selected sources:</li>
+<li>The top three AI trends of 2025 — according to AI… - Spencer Stuart — <a href="https://www.spencerstuart.com/research-and-insight/the-top-three-ai-trends-of-2025-according-to-ai" target="_blank" rel="noopener">link</a></li>
+<li>6 AI trends you'll see more of in 2025 - Microsoft Source — <a href="https://news.microsoft.com/source/features/ai/6-ai-trends-youll-see-more-of-in-2025/" target="_blank" rel="noopener">link</a></li>
+<li>McKinsey technology trends outlook 2025 — <a href="https://www.mckinsey.com/capabilities/tech-and-ai/our-insights/the-top-trends-in-tech" target="_blank" rel="noopener">link</a></li>
+<li>Six AI Predictions For 2025 That Will Reshape How We Think About ... — <a href="https://blogs.cisco.com/partner/six-ai-predictions-for-2025-that-will-reshape-how-we-think-about-enterprise-technology" target="_blank" rel="noopener">link</a></li>
+<li>Welcome to State of AI Report 2025 — <a href="https://www.stateof.ai/" target="_blank" rel="noopener">link</a></li>
+<li>Gartner Top 10 Strategic Technology Trends for 2026 — <a href="https://www.gartner.com/en/articles/top-technology-trends-2026" target="_blank" rel="noopener">link</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>20260107_ai-trends.txt — <a href="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-viewer="report_views/instruction_20260107_ai-trends.txt-172d59cd.html" data-raw="instruction/20260107_ai-trends.txt" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 06:38:51</li>
+<li>Duration: 00:04:17 (257.14s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: mit_tech_review_10_breakthroughs</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

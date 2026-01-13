@@ -1,0 +1,28 @@
+Template: trend_scan
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\trend_scan.md
+Latex: default.tex
+Sections:
+- Executive Summary
+- Signal Landscape
+- Trend Themes
+- Scenarios & Implications
+- Risks & Gaps
+- Appendix
+
+Guidance:
+Template description: Trend signal scan with implications and scenarios.
+
+Template tone: Analytical, exploratory, forward-looking.
+
+Template audience: Strategy and research teams.
+
+Section guidance:
+- Executive Summary: 5-7 sentences; include 1-2 signal highlights.
+- Signal Landscape: group signals by source type; note strength.
+- Trend Themes: 3-5 themes with evidence and counter-signals.
+- Scenarios & Implications: 2-3 scenarios with triggers and impacts.
+- Risks & Gaps: data gaps and false-positive risks.
+
+Template writing guidance:
+Separate weak signals from established findings.
+Note uncertainty and confidence levels explicitly.

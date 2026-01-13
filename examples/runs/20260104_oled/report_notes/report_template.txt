@@ -1,0 +1,26 @@
+Template: executive_brief
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\executive_brief.md
+Latex: default.tex
+Sections:
+- Executive Summary
+- Key Findings
+- Decision Implications
+- Risks & Gaps
+- Appendix
+
+Guidance:
+Template description: Short, decision-focused brief for executives.
+
+Template tone: Concise, high-signal, action-oriented.
+
+Template audience: Executive and product leadership.
+
+Section guidance:
+- Executive Summary: 4-6 sentences, no bullets; emphasize stakes.
+- Key Findings: 3-5 bullets, each with evidence and impact.
+- Decision Implications: 2-4 action recommendations with rationale.
+- Risks & Gaps: top 3 risks and what to validate next.
+
+Template writing guidance:
+Keep jargon minimal; define essential terms inline.
+Emphasize business impact and time horizons.

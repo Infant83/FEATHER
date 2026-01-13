@@ -1,0 +1,5 @@
+[2026-01-14 00:46:05] JOB START: 20260107_ai-trends.txt date=2026-01-07 days=30 max_results=5
+[2026-01-14 00:46:05] TAVILY SEARCH: AI trends 2025 (English)
+[2026-01-14 00:46:08] TAVILY SEARCH: AI trends 2026 (English)
+[2026-01-14 00:46:11] TAVILY SEARCH: emerging AI technologies 2026 (English)
+[2026-01-14 00:46:11] ERROR search query=emerging AI technologies 2026 err=OSError(22, 'Invalid argument')

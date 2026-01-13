@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4415254644.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4415254644.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge</p><p><strong>Authors:</strong> Yujie Xie, Hongyang Zhang, Zhihui Liu, S. N. Ruan</p><p><strong>Journal:</strong> arXiv (Cornell University)</p><p><strong>Published:</strong> 2025-09-22</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2509.17500">http://arxiv.org/abs/2509.17500</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4415254644.pdf">./archive/openalex/pdf/W4415254644.pdf</a></p><p><strong>Summary:</strong><br />Large-scale Video Object Segmentation (LSVOS) addresses the challenge of accurately tracking and segmenting objects in long video sequences, where difficulties stem from object reappearance, small-scale targets, heavy occlusions, and crowded scenes. Existing approaches predominantly adopt SAM2-based frameworks with various memory mechanisms for complex video mask generation. In this report, we proposed Segment Anything with Memory Strengthened Object Navigation (SAMSON), the 3rd place solution in the MOSE track of ICCV 2025, which integrates the strengths of stateof-the-art VOS models into an effective paradigm. To handle visually similar instances and long-term object disappearance in MOSE, we incorporate a long-term memorymodule for reliable object re-identification. Additionly, we adopt SAM2Long as a post-processing strategy to reduce error accumulation and enhance segmentation stability in long video sequences. Our method achieved a final performance of 0.8427 in terms of J &amp;amp;F in the test-set leaderboard.</p></div><pre>
+
+===== PAGE 1 =====
+SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge
+Yujie Xie1
+xyj@pixcakeai.com
+Hongyang Zhang1,2
+hongyangzhang1@link.cuhk.edu.cn
+Zhihui Liu1
+lzh@pixcakeai.com
+Shihai Ruan1
+rsh@pixcakeai.com
+1Truesight Research
+2School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen
+Abstract
+Large-scale Video Object Segmentation (LSVOS) addresses
+the challenge of accurately tracking and segmenting objects
+in long video sequences, where difficulties stem from object
+reappearance, small-scale targets, heavy occlusions, and
+crowded scenes. Existing approaches predominantly adopt
+SAM2-based frameworks with various memory mechanisms
+for complex video mask generation. In this report, we pro-
+posed Segment Anything with Memory Strengthened Object
+Navigation (SAMSON), the 3rd place solution in the MOSE
+track of ICCV 2025, which integrates the strengths of state-
+of-the-art VOS models into an effective paradigm. To han-
+dle visually similar instances and long-term object disap-
+pearance in MOSE, we incorporate a long-term memory
+module for reliable object re-identification. Additionly, we
+adopt SAM2Long as a post-processing strategy to reduce
+error accumulation and enhance segmentation stability in
+long video sequences. Our method achieved a final perfor-
+mance of 0.8427 in terms of J &amp;F in the test-set leader-
+board.
+1. Introduction
+Video object segmentation (VOS) is a fundamental prob-
+lem in computer vision, which aims to segment an arbitrary
+target throughout a video sequence, given a single anno-
+tated mask in the first frame [8, 12, 13]. While conventional
+VOS benchmarks are typically short video clips, long-term
+video object segmentation (LVOS) [2, 4, 6] extends this set-
+ting to much longer sequences, where substantial appear-
+ance changes, occlusions, and scene variations pose addi-
+tional challenges. The 7th LSVOS challenge tackles these
+difficulties through three tracks: Complex VOS, standard
+VOS, and Referring VOS, supported by the MOSEv2 [4],
+MOSEv1 [2], and MeViS[3], datasets, respectively. Our
+method is primarily developed for Track 2, which is based
+on the MOSEv1 dataset.
+The MOSEv1 dataset was introduced to advance video
+object segmentation (VOS) in complex scenes. Its succes-
+sor, MOSEv2, presents a more challenging benchmark by
+intensifying scene complexity and introducing underrepre-
+sented factors, including adverse weather (rain, snow, fog),
+low-light conditions (nighttime, underwater), and multi-
+shot sequences. These enhancements aim to better approx-
+imate real-world scenarios and narrow the gap between ex-
+isting VOS benchmarks and unconstrained environments.
+MeViS aims to segment and track target objects in videos
+based on natural language descriptions of their motions.
+This dataset involves handling diverse motion expressions
+that specify target objects within complex environments. It
+provides a benchmark for advancing language-guided video
+segmentation, where motion expressions serve as a primary
+cue to enhance object segmentation in challenging video
+scenes.
+Recent progress in video object segmentation (VOS) has
+increasingly emphasized memory-based approaches due to
+their clear advantages over alternatives. Building on image-
+based SAM, SAM2 [9] introduces a memory module that
+extends its capability to VOS tasks and delivers notable im-
+provements in segmentation performance. Nevertheless, its
+greedy segmentation strategy remains vulnerable to chal-
+lenging scenarios involving frequent occlusions and object
+reappearances, while the fixed 8-frame memory restricts
+its effectiveness in long-term video analysis. To address
+these limitations, Segment Concept (SeC) [15] introduces a
+concept-driven paradigm that shifts from feature matching
+to constructing and leveraging high-level object represen-
+tations. By equipping SAM2 with an enhanced long-term
+memory module, SeC achieves significant gains in VOS
+performance.
+In this work, we propose SAMSON, our 3rd place solu-
+tion for the MOSEv1 challenge. Witnessing the enhanced
+memory module of SeC, we further fine-tune its grounding
+1
+arXiv:2509.17500v1  [cs.CV]  22 Sep 2025
+
+
+===== PAGE 2 =====
+encoder through a two-stage training strategy on the MO-
+SEv2 dataset. To mitigate the error propagation inherent in
+the original SAM2 framework, we incorporate SAM2Long
+at inference, thereby improving segmentation robustness.
+Our approach achieves a J &amp;F of 0.8427, with J = 0.8182
+and F = 0.8671 on the MOSEv1 track of ICCV 2025. Be-
+yond this primary solution designed for the competition, we
+also conducted a series of exploratory experiments to ad-
+dress the fundamental trade-off between memory length and
+computational cost from a different perspective. These ex-
+plorations focused on designing a new memory paradigm,
+including enlarging the temporal perception field and refin-
+ing memory update mechanisms. Although this experimen-
+tal approach is still in its preliminary stages, it offers valu-
+able insights for tackling extreme challenges like long-term
+occlusions, which we discuss in a later section.
+2. Related Work
+2.1. Video Object Segmentation
+Video Object Segmentation (VOS) tasks, including semi-
+supervised and unsupervised segmentation, have been pri-
+marily evaluated on datasets like DAVIS [8] and YouTube-
+VOS [12].
+DAVIS offers high-quality, short-term video
+sequences with dense annotations, focusing on precise
+segmentation under occlusions and appearance changes.
+YouTube-VOS provides larger-scale, diverse videos, in-
+troducing challenges such as dynamic backgrounds and
+moderate-length tracking. However, their short-to-medium
+durations limit their ability to assess long-term temporal
+consistency required for real-world applications.
+Recent datasets such as LVOS [6] and MOSE [2] ad-
+dress long-term VOS with extended sequences featuring
+challenges like prolonged occlusions, object reappearances,
+and crowded scenes. LVOS emphasizes diverse categories
+and long-term tracking across thousands of frames, testing
+consistency, while MOSE focuses on occlusions and mo-
+tion blur in cluttered environments, posing significant chal-
+lenges. The core task is to maintain precision in long-term
+videos by combining the strengths of LVOS and MOSE.
+More recently, MOSEv2 [4] advances multi-object video
+segmentation by scaling data volume and diversity, with
+over 5,200 videos and 1.2M annotated frames. It covers
+broader categories, denser interactions, and harder condi-
+tions such as severe occlusions and illumination changes,
+providing a comprehensive benchmark for evaluating ro-
+bustness and generalization in video segmentation models.
+2.2. Memory based methods in VOS
+Memory-based frameworks have become an emerging
+paradigm in video object segmentation, leveraging stored
+temporal information to ensure consistency across frames.
+Key methods include XMem [1], which uses an Atkinson-
+Shiffrin memory model for long-term VOS, partitioning
+memory into short-term and long-term components. How-
+ever, it accumulates errors under heavy occlusions due to
+pixel-level matching without distractor filtering. Learning
+Quality-aware Dynamic Memory [7] updates memory by
+feature quality, enhancing robustness. RMem [16] restricts
+memory banks for relevant representations, lowering over-
+head. Still, both face memory overload and distractor inter-
+ference in long-term, crowded videos.
+Recent integrations with foundation models like SAM
+2 [9] have advanced the VOS. SAM2Long [5] uses a
+training-free memory tree for bidirectional propagation,
+addressing long-term occlusions but increasing complex-
+ity.
+DAM4SAM [11] employs distractor-aware memory
+for tracking, suppressing similar objects, yet struggles with
+pure segmentation in extended sequences. SAMURAI [14]
+leverages motion-aware memory for zero-shot tracking, but
+may miss static objects, risking context loss.
+Recently,
+SeC [15] utilizes Large Vision-Language Models (LVLMs)
+to progressively construct high-level, object-centric repre-
+sentations by integrating visual cues across frames, en-
+abling robust semantic reasoning. During inference, SeC
+builds comprehensive semantic representations from pro-
+cessed frames for accurate segmentation of subsequent
+frames. Additionally, SeC dynamically balances LVLM-
+based semantic reasoning with enhanced feature matching,
+adapting computational efforts to scene complexity.
+However, they still face the challengings: memory inef-
+ficiency and overload in long sequences (LVOS), handling
+uncertainty from occlusions and deformations (MOSE).
+3. Methods
+3.1. Overview
+Given a video sequence with T frames {It}T
+t=1, the ground-
+truth mask M1 of the target objects are provided in the first
+frame. The goal is to predict segmentation masks {Mt}T
+t=2
+for the remaining frames through the segmentation model
+fθ(·).
+Image Encoder.
+We adopt Hiera [10], a hierarchical
+masked autoencoder, as the image encoder. Its multiscale
+architecture enables effective capture of both local details
+and long-range dependencies, providing robust representa-
+tions for video segmentation.
+Mask Encoder. The mask encoder in SAM2 encodes seg-
+mentation masks by first embedding the input mask through
+a convolutional module, which projects it into the feature
+space. This embedding is then element-wise combined with
+the corresponding frame features from the image encoder,
+followed by lightweight convolutional layers for feature fu-
+sion. During tracking, only initialization masks or predicted
+masks are used, while interactive inputs such as clicks or
+bounding boxes are excluded to ensure full automation.
+2
+
+
+===== PAGE 3 =====
+This design refines mask representations in a compact and
+efficient manner, enabling precise segmentation and seam-
+less integration into the overall SAM2 pipeline.
+Memory Bank. The memory bank stores the initialization
+frame with its ground-truth mask and the six most recent
+frames with predicted masks. Temporal encodings are ap-
+plied to recent frames to preserve ordering, while the initial-
+ization frame remains unencoded to serve as a target prior.
+Mask Decoder.
+Current-frame features attend to mem-
+ory frames to obtain memory-conditioned representations,
+which are decoded into three candidate masks with IoU
+scores. The mask with the highest score is selected as out-
+put, and the memory is updated in a first-in-first-out manner,
+with the initialization frame permanently retained.
+Optimization.
+The training objective of the proposed
+method combines complementary losses for pixel-level ac-
+curacy, region alignment, overlap quality, and mask-score
+regression.
+Concretely, we use a binary cross-entropy
+(BCE) loss for pixel-wise foreground/background classifi-
+cation, an IoU loss for region-level alignment, a Dice loss
+to mitigate class imbalance, and a Mask loss to supervise
+the decoder’s predicted mask quality scores.
+L = λ1LBCE + λ2LIoU + λ3LDice + λ4LMask,
+(1)
+where the LMask term is defined as:
+LMask = 1
+K
+K
+X
+k=1
+ℓ
+ ˆsk, sk
+
+,
+sk = IoU( ˆ
+Mk, Mgt),
+(2)
+with ˆsk the decoder’s predicted IoU for candidate mask ˆ
+Mk,
+sk the ground-truth IoU computed against Mgt, K the num-
+ber of candidates per frame, and ℓ(·, ·) a regression loss (e.g.
+Smooth-L1 or MSE). The weights λ1..4 balance the terms.
+Since the SeC framework adaptively balances LVLM-
+based semantic reasoning with feature matching and dy-
+namically allocates computation according to scene com-
+plexity, and given its superior empirical performance over
+state-of-the-art methods such as SAM2 and its variants
+across multiple benchmarks, we adopt it as our baseline.
+The training framework for the second stage is illustrated in
+Figure.1.
+3.2. Long-Term Memory Update for SAM
+We utilize the grounding encoder from SeC model and en-
+hance the memory bank update mechanism by incorporat-
+ing a distractor-aware memory module, drawing inspira-
+tion from DAM4SAM, to improve robustness and accu-
+racy in video object segmentation. In the inference stage,
+SAM2Long [5] is adopted for robust long-term video object
+segmentation, using a training-free memory tree to mitigate
+error accumulation and enable accurate tracking across ex-
+tended sequences with occlusions.
+Figure 1.
+Overview of the proposed second stage of training
+pipeline, where only the memory attention module is fine-tuned
+during this process.
+3.2.1. Sec Model
+Inspired by the Segment Concept (SeC) framework, we
+adopt its progressive concept-grounding encoder to con-
+struct high-level, object-centric representations for video
+object segmentation. SeC model is trained by the strategy
+as below:
+Concept Guidance with LVLM. To strengthen concept-
+level reasoning, a sparse keyframe bank is maintained and
+updated during tracking. It retains the initialization frame
+and a few representative keyframes to ensure semantic di-
+versity. LVLM encodes this compact set, with a special
+&lt;SEG&gt; token extracting object-level concept guidance.
+Scene-Adaptive Activation. To avoid redundancy, a scene-
+adaptive strategy applies concept guidance only when no-
+table scene changes occur; otherwise, lightweight pixel-
+level matching is used.
+When activated, the LVLM-
+derived concept vector is fused with current frame features
+via cross-attention, enriching memory-enhanced represen-
+tations. This balances semantic priors with fine-grained vi-
+sual cues, ensuring robust segmentation across challenging
+scenarios.
+3.2.2. Distractor-Aware Memory Strategy
+To address long-term dependencies, we scale up the mem-
+ory module inspired by the design of a distractor-aware
+3
+
+
+===== PAGE 4 =====
+Figure 2. (a) Original design of the SAM2 memory mechanism and (b) proposed distractor-aware memory mechanism, both presented in
+[11]; (c) At each time step, multiple memory pathways are maintained, with the mask decoder generating candidate masks conditioned on
+memory banks. The pathway with the highest cumulative score is selected for propagation, adapted from [5].
+memory (DAM). Figure 2 illustrates the memory manage-
+ment mechanisms in video object segmentation. Figure.2
+(a) depicts the original SAM2 memory system with an
+always-update mechanism, featuring a FIFO buffer that pro-
+cesses frames from t = 6 to t = 1, with the initial frame
+fixed and the most recent frame always updated. Figure.2
+(b) shows the distractor-aware memory management, incor-
+porating a DFM FIFO for fixed initial frames (non-time-
+stamped), an RAM FIFO for dynamic frames from t = 2
+to t = 1, and an integrated memory management module
+for enhanced robustness against distractors. The target of it
+mainly focused on tracking design, our memory stores an
+expanded set of temporal features {Ft, Ct}T
+t=1, with a ca-
+pacity increased by a factor of k (e.g., k = 5) relative to
+DAM. This larger memory retains detailed object informa-
+tion, critical for handling reappearances after prolonged oc-
+clusions. The distractor-aware mechanism computes a sim-
+ilarity score to filter irrelevant objects:
+St = Sim(Ct, Mt),
+Mt = {Fi, Ci | i ∈[1, t −1]}, (3)
+where Sim(·, ·) is a cosine similarity function, and Mt is
+the memory bank. Low-scoring distractors are suppressed,
+ensuring focus on the target object. The distractor-aware
+mechanism, adapted from DAM4SAM, enhances accuracy
+by mitigating interference from similar objects.
+3.3. SAM2Long for inference
+During inference, we further introduce SAM2Long to im-
+prove robustness without introducing additional training
+costs. The method adopts a constrained tree memory struc-
+ture with uncertainty handling.
+The detailed information of constrained tree memory is
+illustrated in Figure.2 (c). Formally, given a set of memory
+nodes {mi}N
+i=1, each associated with an uncertainty score
+σi, the aggregated memory feature at time step t is com-
+puted as:
+ˆ
+Mt =
+N
+X
+i=1
+wi · mi,
+wi =
+exp (−σi)
+PN
+j=1 exp (−σj)
+,
+(4)
+where the weights wi are constrained by the tree hierarchy,
+ensuring that closer parent-child nodes in the memory tree
+receive consistent weighting. The uncertainty score σi is
+estimated from prediction confidence, allowing u</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

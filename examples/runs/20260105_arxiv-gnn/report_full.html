@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260105_arxiv-gnn</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-technical_deep_dive {
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+  </style>
+</head>
+<body class="template-technical_deep_dive">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260105_arxiv-gnn</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 06:30</p>
+<h2>Executive Summary</h2>
+<p>This FEATHER run (Query ID: <code>20260105_arxiv-gnn</code>) assembled a small but technically diverse corpus around “graph neural networks” spanning (i) <strong>GNN architectural/readout innovation</strong> (HISTOGRAPH), (ii) <strong>physics surrogate simulation</strong> for LIGO interferometer design, and (iii) <strong>production-scale scientific ML</strong> in particle physics (ATLAS b-tagging). The core technical trend across the three GNN-centric sources is the expanding role of <strong>attention/transformer-like mechanisms</strong> as a unifying tool for (a) <em>multi-scale representation fusion across depth</em> (HISTOGRAPH), (b) <em>high-capacity message passing for accurate surrogates with physics-regularized losses</em> (interferometers), and (c) <em>multimodal, multitask learning with auxiliary objectives for robustness and generalization</em> (ATLAS GN1/GN2).  </p>
+<p>Quantitatively, the interferometer surrogate reports <strong>815× runtime speedup</strong> versus traditional simulation packages while maintaining predictive fidelity for steady-state optical fields <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. ATLAS reports large operational gains in rejection power: GN2 improves <strong>light-jet rejection ~2× and c-jet rejection ~3×</strong> at a 70% working point in a (t\bar t) sample, and <strong>~4× (light) / ~3.5× (c)</strong> at a 30% working point in a high-(p_T) (Z') sample relative to DL1d <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>. HISTOGRAPH’s main empirical claim is consistent outperformance over strong pooling baselines on <strong>TU and OGB</strong> benchmarks, with particular robustness in deep GNNs <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.  </p>
+<p>One explicitly provided arXiv ID, <strong>arXiv:2101.00001</strong>, is a <strong>multi-armed bandits survey</strong> and is off-topic for GNN synthesis; it is treated as query drift rather than evidence about GNN methods <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">[8]</a>, <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a>. A LinkedIn post was archived but is <strong>non-primary</strong> and not GNN-centered; it is therefore excluded from technical evidence except as peripheral context <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt" class="viewer-link">[9]</a>.</p>
+<p>Actionable implications for R&amp;D leaders:
+- <strong>Readout/pooling remains a leverage point</strong>: fusing <em>historical activations</em> can mitigate depth pathologies (over-smoothing/over-squashing) without redesigning the backbone GNN <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.
+- <strong>Surrogate modeling benefits from “physics-shaped” objectives</strong>: adding constraints such as energy conservation as regularization can improve plausibility while preserving speedups <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- <strong>Multitask + auxiliary objectives are not optional at scale</strong>: ATLAS shows measurable rejection losses when auxiliary tasks are removed, indicating that representation learning for complex detectors benefits from structured inductive bias in the loss <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<h2>Scope &amp; Methodology</h2>
+<p><strong>Run configuration and corpus.</strong> FEATHER was invoked with <code>--days 30 --max-results 8 --download-pdf --openalex --oa-max-results 8</code> for the query “graph neural networks,” plus an explicit arXiv ID and one LinkedIn URL <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[11]</a>, <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a>. The archive contains <strong>4 PDFs with extracted text</strong>: three GNN-related works from OpenAlex and one arXiv paper (bandits survey) <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a>. Retrieval logs indicate OpenAlex deduplication/reuse for the interferometer paper PDF and a citation lookup failure for arXiv:2101.00001 due to an OpenAlex API error <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[12]</a>.</p>
+<p><strong>Evidence handling.</strong>
+- Primary technical evidence is drawn from the extracted full texts and PDFs of:
+  - <em>Learning from Historical Activations in Graph Neural Networks</em> (arXiv:2601.01123) <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>, <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">[1]</a>.
+  - <em>Graph Neural Networks for Interferometer Simulations</em> (arXiv:2512.16051) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>, <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">[3]</a>.
+  - <em>Flavour-Tagging with Graph Neural Network with the ATLAS Detector</em> (PoS(DIS2025)080) <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>, <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">[5]</a>.
+- Off-topic and non-primary items are explicitly segregated:
+  - <em>Etat de l’art sur l’application des bandits multi-bras</em> (arXiv:2101.00001v1) is not GNN-related <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">[8]</a>.
+  - LinkedIn extraction is treated as web-derived peripheral context only <a href="./archive/tavily_extract/...txt">[13]</a>.</p>
+<p><strong>Synthesis approach (설명형 리뷰).</strong> Instead of enumerating paper summaries, the report compares how each work uses graphs and attention: (i) as an architectural remedy for depth/pathologies (HISTOGRAPH), (ii) as a high-throughput surrogate for expensive scientific computation (interferometers), and (iii) as a mature, production-integrated model family with multi-objective training (ATLAS).</p>
+<h2>Technical Background</h2>
+<h3>Graph neural networks (GNNs) and message passing</h3>
+<p>Most modern GNNs can be expressed as iterative message passing over a graph (G=(V,E)), where node embeddings update as:
+[
+h_v^{(l+1)} = \phi\Big(h_v^{(l)}, \ \square_{u\in \mathcal{N}(v)} \psi(h_v^{(l)},h_u^{(l)}, e_{uv})\Big)
+]
+with aggregation operator (\square) (sum/mean/max/attention), message function (\psi), and update (\phi).</p>
+<p>A recurring depth-related challenge is that increasing (L) grows receptive field but can lead to:
+- <strong>Over-smoothing</strong>: node embeddings become indistinguishable across the graph in deep architectures <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.
+- <strong>Over-squashing</strong>: long-range information is “compressed” through narrow message channels, degrading distant dependency modeling <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<h3>Readout/pooling for graph-level tasks</h3>
+<p>Graph-level prediction requires collapsing node embeddings ({h_v}) into a fixed-size graph embedding (g). Baselines include permutation-invariant pooling (sum/mean/max) and learned pooling (DiffPool, SAGPool, Set2Set, attention readout, etc.). HISTOGRAPH’s core critique is that many pooling schemes use <strong>only the last layer</strong> node features, underusing intermediate representations (“historical graph activations”) that may encode different structural scales <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<h3>Attention and transformerization in graph learning</h3>
+<p>All three GNN-centric sources converge on attention as a central mechanism:
+- HISTOGRAPH uses <strong>layer-wise</strong> attention over historical activations and <strong>node-wise</strong> self-attention for refinement <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.
+- Interferometer surrogate uses deep <strong>GATv2</strong> stacks (20 layers) and compares against GraphTransformer layers as alternatives <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- ATLAS evolves from a GAT-based GN1 to a <strong>transformer-inspired attention mechanism</strong> in GN2, alongside optimization tactics (one-cycle LR, layer norm, dropout) <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<h2>Methods &amp; Data</h2>
+<h3>1) HISTOGRAPH: pooling via historical activations (arXiv:2601.01123)</h3>
+<p><strong>Problem framing.</strong> HISTOGRAPH treats intermediate node states ({X^{(0)},\dots,X^{(L-1)}}) as a sequence and argues that pooling should exploit this “trajectory,” especially when deep GNNs experience representation drift and over-smoothing <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p><strong>Representation tensor.</strong> The method formalizes historical activations as:
+[
+X \in \mathbb{R}^{N \times L \times D_{\text{in}}}
+]
+and applies a projection to hidden dimension (D) and adds layer positional encodings (sinusoidal) <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p><strong>Two-stage attention design.</strong>
+1) <strong>Layer-wise attention (per-node history fusion).</strong> Using the final-layer embedding as a query, it attends over all historical states:
+[
+Q = \tilde X_{L-1} W^Q,\quad K=\tilde X W^K,\quad V=\tilde X
+]
+and computes layer scores by averaging attention logits across nodes:
+[
+c = \text{Average}\left(\frac{QK^\top}{\sqrt{D}}\right) \in \mathbb{R}^{1\times L}
+]
+Then, instead of softmax, it normalizes to allow <strong>signed layer contributions</strong>:
+[
+\alpha_l = \frac{c_l}{\sum_{l'} c_{l'}};\quad
+H = \sum_{l=0}^{L-1} \alpha_l \tilde X_l
+]
+This design choice is explicitly motivated as enabling additive/subtractive cross-layer relationships <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p>2) <strong>Node-wise attention (spatial refinement).</strong> It applies multi-head self-attention over nodes:
+[
+Z = \text{MHSA}(H,H,H)
+]
+and obtains a graph embedding by averaging nodes (G=\text{Average}(Z)) (when graph-level output is needed) <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p><strong>Complexity.</strong> The decomposition avoids naive joint node-layer attention and yields per-graph cost:
+[
+O(NLD + N^2D) = O(N(L+N)D)
+]
+with the dominant term (O(N^2D)) akin to a single graph-transformer layer <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p><strong>Training modes.</strong> HISTOGRAPH can be trained end-to-end with the backbone or used as a lightweight post-processing head on a frozen pretrained GNN, training only the head for “substantial gains with minimal overhead” <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<h3>2) GNN surrogate for interferometer simulations (arXiv:2512.16051)</h3>
+<p><strong>Objective.</strong> Build a surrogate that predicts steady-state electromagnetic field quantities in LIGO-like interferometers for instrumentation design, emphasizing that traditional simulations (FINESSE) are expensive due to high-dimensional scattering matrices and iterative “locking” procedures <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Dataset construction.</strong>
+- Provides three interferometer topologies: Fabry–Perot cavity, coupled cavity, Arm-SRC coupled cavity <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- Reported dataset sizes include 30,000 graphs for FP and Arm-SRC CC, and 5,000 for Simple CC, with nodes per graph increasing up to 74 for Arm-SRC CC <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- Sampling method: start from an “ideal” configuration and perform stochastic perturbations (random walk) on optic parameters; ground truth generated by FINESSE at each step <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Graph representation.</strong>
+- Each mirror is split into four nodes (two per side), separating incoming/outgoing fields as distinct nodes; edges encode spatial field connections (reflection/transmission/propagation) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- Node features include optical properties (reflectivity, radius of curvature; later described as including orientation/angle) and edges include length and index of refraction <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Targets.</strong>
+- Power prediction at each node and intensity distribution prediction (via radial symmetry) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Architectures.</strong>
+- Power model: <strong>20 GATv2 layers</strong> + 6 feed-forward layers with LeakyReLU and residual connections <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.
+- Intensity model: 15 GAT layers feeding a <strong>Deep Kolmogorov–Arnold Network (KAN)</strong> to predict radial distribution, rotated to 2D intensity (enforcing azimuthal symmetry and reducing DoF from (O(n^2)) to (O(n))) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Physics-regularized loss.</strong> For power prediction, they introduce:
+[
+\mathcal{L}=\frac{1}{n}\sum_n |y_n-\hat y_n|_1 + \lambda|\hat y_n - A^\top \hat y_n|_1
+]
+where the second term penalizes violations of power conservation (“sum of incoming powers … equals the power at that node”) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. The model predicts (\log P) to handle scale separation (kW internal vs mW output) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<h3>3) ATLAS flavour tagging with GNNs (PoS(DIS2025)080)</h3>
+<p><strong>Task setting.</strong> b-jet identification relies on displaced tracks/vertices due to b-hadron lifetime and is central for Higgs/top/Beyond-SM analyses <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<p><strong>Graph formulation and evolution.</strong>
+- ATLAS transitions from a two-stage pipeline (low-level reconstruction then high-level classifier) to <strong>graph-based jet representations</strong>: tracks as nodes, learned edges represent relationships <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.
+- <strong>GN1</strong>: GAT-based architecture aggregating neighbor information <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.
+- <strong>GN2</strong>: transformer-inspired attention plus training optimizations (one-cycle LR, layer norm, dropout) for speed/stability <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<p><strong>Multimodal, multitask training.</strong>
+- Inputs: jet-level (p_T,\eta) plus variable-length track features; also vertices (heterogeneous inputs) <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.
+- Loss: jet flavour classification plus auxiliary objectives such as track origin prediction and vertex compatibility/vertex finding <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<p><strong>Operational discriminant.</strong> They present a b-tagging discriminant:
+[
+D_b = \log\left[\frac{p_b}{f_c p_c + (1-f_c)p_u}\right]
+]
+combining predicted class probabilities with a mixing factor (f_c) <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<h2>Results &amp; Evidence</h2>
+<h3>HISTOGRAPH: evidence of improved readout under depth stress</h3>
+<p>The paper’s central empirical statement is consistent gains over “strong GNN and pooling baselines” on <strong>TU</strong> and <strong>OGB</strong> benchmarks, with “particularly strong robustness in deep GNNs” <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>. Methodologically, the notable evidence-backed contribution is that HISTOGRAPH can be used as:
+- <strong>End-to-end</strong> enhancement of intermediate representations, or
+- <strong>Post-processing head</strong> on frozen backbones with “minimal overhead,” suggesting practical retrofitting onto existing GNN pipelines <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>.</p>
+<p>Even without enumerated benchmark numbers in the excerpted portion, the paper provides concrete design differentiators: it uniquely combines (a) intermediate representation use, (b) structural consideration, and (c) explicit layer–node modeling in its comparison table <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>. This situates HISTOGRAPH as an attempt to unify “Jumping Knowledge”-style depth fusion with transformer-style node interaction at readout.</p>
+<h3>Interferometer surrogate: speed–accuracy trade with physics constraints</h3>
+<p><strong>Runtime:</strong> The abstract reports <strong>815× faster runtimes</strong> than state-of-the-art simulation packages while capturing complex optical physics <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. This is the strongest headline metric in the corpus and directly addresses a common R&amp;D bottleneck: expensive simulation loops in design optimization.</p>
+<p><strong>Predictive fidelity (quantitative).</strong> The paper reports test-set L1/MAE outcomes across topologies and architectures. For example, Table 2 provides L1 losses for multiple model families including “GAT + MLP,” “GraphTransformer + MLP,” and non-graph baselines (MLP only, KAN only), and includes a mixed-training regime; it also shows cases where non-graph baselines fail catastrophically (very large errors) <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. Correlation plots for the Fabry–Perot cavity show best-fit slopes near 1 (e.g., “m=1.00” in at least one plot), consistent with good agreement between predictions and ground truth <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>.</p>
+<p><strong>Method-to-evidence link:</strong> The inclusion of a conservation-regularization term in the loss explicitly encodes a physical prior, bridging purely data-driven training with domain constraints <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. This is a reproducible, implementable tactic for other physics surrogate settings.</p>
+<h3>ATLAS GN1/GN2: production-relevant gains and ablation-supported multitask value</h3>
+<p><strong>Performance improvements (quantitative).</strong>
+- In a (t\bar t) sample at <strong>70%</strong> b-jet efficiency working point, <strong>GN2 improves light-jet rejection ~2× and c-jet rejection ~3×</strong> versus DL1d <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.
+- In a high-(p_T) (Z') sample at <strong>30%</strong> working point, improvements increase to <strong>~4× (light)</strong> and <strong>~3.5× (c)</strong> versus DL1d <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.</p>
+<p><strong>Ablation evidence for auxiliary tasks.</strong> Removing one or both auxiliary objectives significantly reduces c- and light-jet rejection; the combined auxiliary objectives yield optimal performance <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>. This is critical because it supports a causal claim: gains are not only architectural (GNN vs DNN), but also training-objective driven.</p>
+<p><strong>HL-LHC generalization signals.</strong> Under HL-LHC conditions (pileup (\langle\mu\rangle) up to 200) and the ITk detector upgrade, GN1 is reported to maintain high efficiency across (p_T) and (|\eta|) ranges (e.g., ~90% at 250 GeV at fixed light-jet rejection 100; ~50% at 5 TeV; stable &gt;75% up to (|\eta|&lt;3.5)) and shows “minimal impact” from pile-up contamination, suggesting robustness to new geometry <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>. While these are still simulation-based results as presented here, the emphasis is directly aligned with operational deployment constraints.</p>
+<h2>Limitations &amp; Open Questions</h2>
+<h3>Corpus and retrieval limitations (run-level)</h3>
+<ul>
+<li><strong>Small corpus / partial topical coverage.</strong> Only three GNN-centric primary sources were archived, all from late 2025–early 2026, which biases the synthesis toward very recent attention-heavy approaches and misses foundational or competing lines (e.g., classical GCN/GIN baselines, rewiring methods, scalable sampling GNNs) unless cited inside the papers <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a>.</li>
+<li><strong>Deduplication artifacts.</strong> Logs show PDF reuse for the interferometer paper due to duplicate OpenAlex records <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[12]</a>. This does not change technical conclusions but complicates metadata-based accounting.</li>
+<li><strong>Citation lookup failure.</strong> OpenAlex citations lookup for arXiv:2101.00001 failed due to an API request error <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[12]</a>. Since the paper is off-topic for GNN anyway, impact is limited, but it indicates a reproducibility issue in automated enrichment.</li>
+</ul>
+<h3>Technical limitations / open questions in the GNN methods</h3>
+<p><strong>(1) HISTOGRAPH (historical activation pooling)</strong>
+- <strong>Quadratic node attention cost.</strong> HISTOGRAPH’s node-wise MHSA scales as (O(N^2D)) <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>. For large graphs (common in industrial knowledge graphs or high-resolution physical meshes), this can dominate and may require sparse attention, clustering, or sampled attention variants—none of which are evidenced in this run.
+- <strong>Signed layer mixing stability.</strong> The choice to avoid softmax and permit signed layer contributions (\alpha_l) is conceptually appealing (finite-difference analogy) but raises questions about stability and interpretability of negative weights, especially across datasets with different depth/feature scaling <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>. More ablations would be needed to decide when signed mixing is beneficial versus risky.
+- <strong>Post-hoc head vs end-to-end tradeoff.</strong> HISTOGRAPH proposes both frozen-backbone and end-to-end modes <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a>. An open practical question is how much of the gain comes from better readout versus altered backbone representations when trained jointly—important for organizations considering retrofitting versus retraining.</p>
+<p><strong>(2) Interferometer GNN surrogate</strong>
+- <strong>Distribution shift and robustness.</strong> Data is generated by perturbing around “ideal” configurations via random walk <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. This invites a standard surrogate-model concern: how well does the model extrapolate to designs far from the sampled neighborhood, or to unmodeled physical effects (e.g., material variations held constant, non-azimuthal asymmetries)?
+- <strong>Locking procedure not modeled.</strong> The model is trained on locked interferometer data but “does not perform the locking procedure itself” <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>. For end-to-end design loops, integrating locking (or learning a differentiable approximation) may be necessary to avoid hidden feasibility gaps.
+- <strong>Uncertainty quantification.</strong> The paper motivates that approximate predictions may be sufficient for pruning designs <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a>, but the archived evidence does not show calibrated uncertainty measures. For design optimization, uncertainty (e.g., ensembles, Bayesian heads) is often as important as point accuracy.</p>
+<p><strong>(3) ATLAS GN1/GN2</strong>
+- <strong>Sim-to-real and long-term maintainability.</strong> The reported HL-LHC robustness is on simulated HL-LHC+ITk samples <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>. A standing open question is how performance transfers under detector aging, evolving calibrations, and real pile-up conditions—especially since these models are integrated into the ATLAS software stack <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>.
+- <strong>Compute and latency constraints.</strong> Transformer-inspired GN2 improves training stability and performance <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a>, but the run’s extracted evidence does not quantify inference cost/latency. For real-time or nearline triggers, compute constraints can change architectural choices.</p>
+<h3>Out-of-scope / drift items</h3>
+<ul>
+<li><strong>arXiv:2101.00001 is not GNN-related</strong>, despite being explicitly included in the instruction; it is a bandits survey focusing on exploration–exploitation and MAB taxonomies <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">[8]</a>, <a href="report_views/instruction_20260105_arxiv-gnn.txt-ee73c926.html" data-viewer="report_views/instruction_20260105_arxiv-gnn.txt-ee73c926.html" data-raw="instruction/20260105_arxiv-gnn.txt" class="viewer-link">[14]</a>. It should not be used to infer trends in GNN research.</li>
+<li><strong>LinkedIn extract is non-primary</strong> and addresses molecular design with closed-loop search components (MLM/DPO/MCTS) rather than GNNs <a href="./archive/tavily_extract/...txt">[13]</a>. It is excluded from technical claims here.</li>
+</ul>
+<h2>Appendix</h2>
+<h3>A1. Archived corpus (primary, GNN-related)</h3>
+<p>1) <strong>Learning from Historical Activations in Graph Neural Networks (HISTOGRAPH)</strong><br />
+- PDF: <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">[1]</a><br />
+- Extracted text: <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">[2]</a><br />
+- Source: arXiv PDF (2601.01123) <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a></p>
+<p>2) <strong>Graph Neural Networks for Interferometer Simulations</strong><br />
+- PDF: <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">[3]</a><br />
+- Extracted text: <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">[4]</a><br />
+- Source: arXiv PDF (2512.16051) <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a></p>
+<p>3) <strong>Flavour-Tagging with Graph Neural Networks with the ATLAS Detector (PoS(DIS2025)080)</strong><br />
+- PDF: <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">[5]</a><br />
+- Extracted text: <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">[6]</a><br />
+- Source: PoS SISSA PDF <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">[10]</a></p>
+<h3>A2. Archived but excluded from GNN technical synthesis</h3>
+<ul>
+<li><strong>Etat de l’art sur l’application des bandits multi-bras (arXiv:2101.00001v1)</strong>  </li>
+<li>PDF: <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">[7]</a>  </li>
+<li>Text: <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">[8]</a>  </li>
+<li>
+<p>Reason: multi-armed bandits survey; not about GNNs <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">[8]</a></p>
+</li>
+<li>
+<p><strong>LinkedIn post extraction (non-primary; not clearly GNN-centered)</strong>  </p>
+</li>
+<li>Extract: <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt" class="viewer-link">[9]</a>  </li>
+<li>Reason: web-derived commentary on molecular design framework, not a primary GNN paper.</li>
+</ul>
+<h3>A3. Run integrity notes (dedup / logging)</h3>
+<ul>
+<li>OpenAlex PDF reuse occurred for the interferometer simulation paper (duplicate record reuse) <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[12]</a>.  </li>
+<li>Citation lookup for arXiv:2101.00001 failed due to OpenAlex API HTTP 400 <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[12]</a>.</li>
+</ul>
+<h2>Figures</h2>
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417529673.pdf-3cf76a75.png" alt="Figure from ./archive/openalex/pdf/W4417529673.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">./archive/openalex/pdf/W4417529673.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417529673.pdf-449a7e9b.png" alt="Figure from ./archive/openalex/pdf/W4417529673.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">./archive/openalex/pdf/W4417529673.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417529673.pdf-d03dfbdf.png" alt="Figure from ./archive/openalex/pdf/W4417529673.pdf (page 5)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">./archive/openalex/pdf/W4417529673.pdf</a> (page 5)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417529673.pdf-a2110455.png" alt="Figure from ./archive/openalex/pdf/W4417529673.pdf (page 7)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">./archive/openalex/pdf/W4417529673.pdf</a> (page 7)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417330266.pdf-9cf1ac40.png" alt="Figure from ./archive/openalex/pdf/W4417330266.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">./archive/openalex/pdf/W4417330266.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417330266.pdf-1acd763f.png" alt="Figure from ./archive/openalex/pdf/W4417330266.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">./archive/openalex/pdf/W4417330266.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417330266.pdf-7677c4fb.png" alt="Figure from ./archive/openalex/pdf/W4417330266.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">./archive/openalex/pdf/W4417330266.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417330266.pdf-c0c1d69c.png" alt="Figure from ./archive/openalex/pdf/W4417330266.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">./archive/openalex/pdf/W4417330266.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7119235243.pdf-af636026.png" alt="Figure from ./archive/openalex/pdf/W7119235243.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">./archive/openalex/pdf/W7119235243.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7119235243.pdf-426a5669.png" alt="Figure from ./archive/openalex/pdf/W7119235243.pdf (page 6)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">./archive/openalex/pdf/W7119235243.pdf</a> (page 6)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7119235243.pdf-d55bfae2.png" alt="Figure from ./archive/openalex/pdf/W7119235243.pdf (page 6)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">./archive/openalex/pdf/W7119235243.pdf</a> (page 6)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W7119235243.pdf-4d4cf234.png" alt="Figure from ./archive/openalex/pdf/W7119235243.pdf (page 9)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">./archive/openalex/pdf/W7119235243.pdf</a> (page 9)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2101.00001v1.pdf-67107679.png" alt="Figure from ./archive/arxiv/pdf/2101.00001v1.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">./archive/arxiv/pdf/2101.00001v1.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2101.00001v1.pdf-f7a30538.png" alt="Figure from ./archive/arxiv/pdf/2101.00001v1.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">./archive/arxiv/pdf/2101.00001v1.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2101.00001v1.pdf-bf3b2e02.png" alt="Figure from ./archive/arxiv/pdf/2101.00001v1.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">./archive/arxiv/pdf/2101.00001v1.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2101.00001v1.pdf-d04f797d.png" alt="Figure from ./archive/arxiv/pdf/2101.00001v1.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">./archive/arxiv/pdf/2101.00001v1.pdf</a> (page 1)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Analyze main ideas, methods, and implications. Highlight trends and open problems.</p>
+<h2>References</h2>
+<ol>
+<li>Learning from Historical Activations in Graph Neural Networks — <a href="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-viewer="report_views/archive_openalex_pdf_W7119235243.pdf-e8b6ba27.html" data-raw="archive/openalex/pdf/W7119235243.pdf" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Learning from Historical Activations in Graph Neural Networks — <a href="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-viewer="report_views/archive_openalex_text_W7119235243.txt-7ba33c86.html" data-raw="archive/openalex/text/W7119235243.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Graph Neural Networks for Interferometer Simulations — <a href="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-viewer="report_views/archive_openalex_pdf_W4417529673.pdf-5760918b.html" data-raw="archive/openalex/pdf/W4417529673.pdf" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Graph Neural Networks for Interferometer Simulations — <a href="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-viewer="report_views/archive_openalex_text_W4417529673.txt-a6400eeb.html" data-raw="archive/openalex/text/W4417529673.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Flavour Tagging with Graph Neural Network with the ATLAS Detector — <a href="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-viewer="report_views/archive_openalex_pdf_W4417330266.pdf-8325d07c.html" data-raw="archive/openalex/pdf/W4417330266.pdf" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Flavour Tagging with Graph Neural Network with the ATLAS Detector — <a href="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-viewer="report_views/archive_openalex_text_W4417330266.txt-7ed66737.html" data-raw="archive/openalex/text/W4417330266.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>2101.00001v1.pdf — <a href="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-viewer="report_views/archive_arxiv_pdf_2101.00001v1.pdf-33820d48.html" data-raw="archive/arxiv/pdf/2101.00001v1.pdf" class="viewer-link">file</a></li>
+<li>2101.00001v1.txt — <a href="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-viewer="report_views/archive_arxiv_text_2101.00001v1.txt-5a105074.html" data-raw="archive/arxiv/text/2101.00001v1.txt" class="viewer-link">file</a></li>
+<li>0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt — <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt" class="viewer-link">file</a></li>
+<li>20260105_arxiv-gnn-index.md — <a href="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-viewer="report_views/archive_20260105_arxiv-gnn-index.md-badae007.html" data-raw="archive/20260105_arxiv-gnn-index.md" class="viewer-link">file</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>...txt — <a href="./archive/tavily_extract/...txt">file</a></li>
+<li>20260105_arxiv-gnn.txt — <a href="report_views/instruction_20260105_arxiv-gnn.txt-ee73c926.html" data-viewer="report_views/instruction_20260105_arxiv-gnn.txt-ee73c926.html" data-raw="instruction/20260105_arxiv-gnn.txt" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 06:30:24</li>
+<li>Duration: 00:05:13 (313.89s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: technical_deep_dive</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

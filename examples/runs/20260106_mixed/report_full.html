@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260106_mixed</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-trend_scan {
+  --ink: #1f2120;
+  --muted: #4b5a5d;
+  --accent: #1a7f73;
+  --link: #1b5f73;
+  --page-bg: radial-gradient(1200px 640px at 14% -12%, #e5f1ee 0%, #f4f6f2 50%, #ffffff 100%);
+  --body-font: "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-trend_scan .article {
+  border-radius: 18px;
+}
+
+body.template-trend_scan .article h2 {
+  border-top: 2px solid rgba(26, 127, 115, 0.35);
+}
+
+body.template-trend_scan .kicker {
+  color: var(--accent);
+}
+
+  </style>
+</head>
+<body class="template-trend_scan">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260106_mixed</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 06:34</p>
+<h2>Executive Summary</h2>
+<p>This 30-day signal scan (Query ID <code>20260106_mixed</code>) is heavily skewed toward LinkedIn content about “quantum computing,” with one attempted web URL extraction failing (404) and one arXiv record that is not directly about quantum computing (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[1]</a>, <a href="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-viewer="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-raw="archive/tavily_extract/0001_https_example.com_blog_post.txt" class="viewer-link">[2]</a>, <a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>). Across LinkedIn Pulse articles, a LinkedIn Learning resource, and a LinkedIn post, the dominant narrative is “cross-industry transformation,” repeatedly pointing to healthcare/drug discovery, finance/risk, optimization/logistics, AI/ML, and cryptography as priority application domains (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). A second strong signal is the “cybersecurity disruption + quantum-safe response” framing: quantum computing as both a threat to existing encryption and a catalyst for quantum-safe methods (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). A notable “access model” signal is the normalization of <strong>quantum cloud computing</strong> as the practical route for enterprise experimentation, explicitly positioned as removing the need to own specialized hardware (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). Commercialization timing and performance claims (e.g., “commercially available in 2025,” extremely large speedups) appear as <strong>weak, attribution-dependent signals</strong> because they are presented as social/announced claims within LinkedIn content without corroboration in this run’s archive (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). Overall confidence is <strong>medium</strong> on the <em>narrative directions</em> (because multiple LinkedIn items converge) but <strong>low</strong> on <em>specific milestones and quantified performance assertions</em> due to limited source diversity and a retrieval gap (<a href="report_views/archive_20260106_mixed-index.md-61c73616.html" data-viewer="report_views/archive_20260106_mixed-index.md-61c73616.html" data-raw="archive/20260106_mixed-index.md" class="viewer-link">[5]</a>).</p>
+<h2>Signal Landscape</h2>
+<p><strong>1) LinkedIn Pulse explainers / trend posts (primary but not independently validated; strength: Medium for narrative, Low for quant claims)</strong><br />
+- Transformation positioning: “on the brink of transforming industries” and “revolutionize… healthcare… finance, logistics, and AI” (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+- Broad “frontier” framing: “promises to revolutionize fields ranging from cryptography and drug discovery to artificial intelligence and financial modelling” (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+- High-performance framing: “hundreds of millions of times more quickly than today’s fastest supercomputers” (treated as hype-prone / unverified within this run) (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</p>
+<p><strong>2) LinkedIn Learning resource (practitioner-oriented; strength: Medium for enterprise framing and access model)</strong><br />
+- Positions quantum as business-relevant for “data analysis and optimization,” “cybersecurity,” and “AI/ML,” and explicitly defines “quantum cloud computing” as internet-based access that “eliminates the need” to own expensive, specialized hardware (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</p>
+<p><strong>3) LinkedIn post (announcement relay / milestone signaling; strength: Low, attribution-dependent)</strong><br />
+- Reports (as claims) commercialization intent and hardware milestones; also repeats the “break current encryption → need quantum-resistant alternatives” message (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</p>
+<p><strong>4) arXiv metadata (adjacent academic context; strength: Low for quantum, Medium for optimization motif)</strong><br />
+- The only arXiv item is a 2021 review on multi-armed bandits (exploration/exploitation; clinical trials; adaptive routing), which can <em>contextually</em> support “optimization as a key computational driver” but does not evidence quantum computing progress itself (<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>).</p>
+<p><strong>5) Retrieval / configuration constraints affecting the landscape (strength: High impact on interpretation)</strong><br />
+- URL extraction failed (404), removing a potential non-LinkedIn anchor (<a href="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-viewer="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-raw="archive/tavily_extract/0001_https_example.com_blog_post.txt" class="viewer-link">[2]</a>).<br />
+- OpenAlex disabled in config, and citation lookup failed for the arXiv ID (400 error), limiting triangulation (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[1]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a>).</p>
+<h2>Trend Themes</h2>
+<h3>Theme 1 — “Cross-industry transformation” as the dominant market narrative (Confidence: Medium)</h3>
+<p>Multiple LinkedIn items converge on a generalized claim that quantum computing is nearing broad impact across industries—explicitly naming healthcare/drug discovery (molecular simulation), finance/risk analysis, logistics/optimization, and AI/ML as early value pools (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). This convergence matters strategically because it suggests messaging and expectation-setting are coalescing around a relatively stable “application shortlist,” which often precedes portfolio experimentation and vendor positioning.<br />
+<strong>Counter-signal / uncertainty:</strong> within this run, these are largely <em>explanatory/promotional</em> claims; there is no technical benchmarking, deployment evidence, or independent reporting to distinguish near-term feasible workloads from aspirational use cases (platform skew: LinkedIn) (<a href="report_views/archive_20260106_mixed-index.md-61c73616.html" data-viewer="report_views/archive_20260106_mixed-index.md-61c73616.html" data-raw="archive/20260106_mixed-index.md" class="viewer-link">[5]</a>).</p>
+<h3>Theme 2 — Cybersecurity disruption paired with “quantum-safe” opportunity framing (Confidence: Medium)</h3>
+<p>A recurring motif is that quantum computing may “crack traditional encryption codes” / render “current encryption methods… obsolete,” simultaneously motivating “quantum-based encryption” or “quantum-safe encryption methods… in development” (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). This dual framing (threat + solution) is a common early signal for budget and policy activity: even absent immediate cryptographic breaks, organizations begin roadmapping migration and vendor evaluation.<br />
+<strong>Counter-signal / uncertainty:</strong> the materials do not specify which cryptosystems, timelines, or migration dependencies; this run contains no standards/regulatory citations or migration case studies, so the signal is directionally useful but operationally underspecified (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</p>
+<h3>Theme 3 — Quantum cloud computing as the practical adoption path (Confidence: Medium-High)</h3>
+<p>The LinkedIn Learning resource explicitly defines a cloud-based model that “eliminates the need” for businesses to own costly quantum hardware requiring specialized operating conditions (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). Interpreting this as a trend signal: adoption is framed less as “buying quantum computers” and more as <strong>accessing quantum capabilities as a service</strong>, enabling low-friction pilots, training, and proof-of-concept development.<br />
+<strong>Counter-signal / uncertainty:</strong> the run does not include pricing, performance/SLA details, or enterprise security/compliance considerations for quantum cloud usage; the “ease of access” narrative may understate integration complexity (hybrid workflows, talent, and problem selection) (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</p>
+<h3>Theme 4 — Commercialization and milestone signaling (Confidence: Low)</h3>
+<p>A LinkedIn post relays claims about “commercially available quantum computers starting in 2025,” references hardware announcements, and mentions performance milestones (e.g., IonQ “AQ 64”) (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). This suggests heightened “near-term commercialization” talk and competitive signaling among major vendors and platforms—often a precursor to increased partner ecosystems and enterprise marketing.<br />
+<strong>Counter-signal / uncertainty:</strong> within this archive, these are unverified secondary claims; the run lacks corroborating primary sources (press releases, technical notes, independent reporting), and the separate URL extract failed (404), reducing triangulation capacity (<a href="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-viewer="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-raw="archive/tavily_extract/0001_https_example.com_blog_post.txt" class="viewer-link">[2]</a>).</p>
+<h3>Theme 5 — Optimization as an anchoring application logic (adjacent support; Confidence: Low-Medium)</h3>
+<p>Several LinkedIn items emphasize optimization/logistics and large-scale data analysis as quantum-suited domains (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>). The lone arXiv record (multi-armed bandits) is not quantum-related, but it reinforces that many “promised” quantum use cases map to broader classes of decision/optimization problems (e.g., adaptive routing, clinical trials) where exploration–exploitation methods are relevant (<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>).<br />
+<strong>Counter-signal / uncertainty:</strong> because the scholarly input here is off-axis, we should treat this as <em>interpretive context</em> rather than evidence that quantum is currently outperforming classical methods in these domains (<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>).</p>
+<h2>Scenarios &amp; Implications</h2>
+<h3>Scenario A — “Cloud-first experimentation becomes the default enterprise posture” (Likelihood: Medium; Impact: Medium)</h3>
+<p><strong>Trigger signals:</strong> sustained messaging that quantum resources can be accessed over the internet without owning hardware; continued emphasis on business relevance (optimization, AI/ML, cybersecurity) (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+<strong>What happens:</strong> strategy and innovation teams run small pilots via quantum cloud platforms; talent development (internal training, small COEs) grows faster than on-prem hardware investment.<br />
+<strong>Implications:</strong> prioritize a <strong>hybrid experimentation stack</strong> (classical + quantum APIs), define a use-case intake funnel (problem suitability screens), and build vendor/partner optionality early; measure progress via learning KPIs (prototype throughput, skills) rather than ROI alone, given uncertainty.</p>
+<h3>Scenario B — “Quantum-risk compliance accelerates before quantum advantage arrives” (Likelihood: Medium; Impact: High in regulated sectors)</h3>
+<p><strong>Trigger signals:</strong> repeated claims that quantum could break current encryption and that quantum-safe methods are in development; rising executive attention to cybersecurity narratives (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+<strong>What happens:</strong> organizations treat quantum as a driver for crypto-agility programs (inventory, migration planning), even if practical threats remain medium-term.<br />
+<strong>Implications:</strong> establish a quantum-risk workstream under security architecture; map “crown jewels” and long-lived data exposure; engage vendors on quantum-safe roadmaps. <strong>Key caution:</strong> avoid over-rotating on vague timelines—this run provides no concrete horizon or standards guidance.</p>
+<h3>Scenario C — “Hype-driven milestone race creates misallocation risk” (Likelihood: Medium; Impact: Medium)</h3>
+<p><strong>Trigger signals:</strong> bold performance statements (e.g., orders-of-magnitude speedups) and commercialization-by-2025 claims presented without validation in-run (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+<strong>What happens:</strong> leadership pressure to “do quantum now” drives premature commitments or poorly scoped pilots that fail to translate into capability.<br />
+<strong>Implications:</strong> adopt a <strong>stage-gated investment</strong> model with clear exit criteria; insist on transparent benchmarks and third-party validation before scaling spend. Use communication guidelines internally to separate “potential,” “pilot,” and “production” readiness.</p>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li><strong>Platform skew / source monoculture:</strong> the meaningful signal set is almost entirely LinkedIn (Pulse/Learning/posts), which is valuable for narrative sensing but prone to marketing amplification and repetition effects (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).  </li>
+<li><strong>Retrieval failure removes triangulation:</strong> the only explicit non-LinkedIn URL failed extraction with “404 page not found,” eliminating an external anchor that might have diversified evidence (<a href="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-viewer="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-raw="archive/tavily_extract/0001_https_example.com_blog_post.txt" class="viewer-link">[2]</a>).  </li>
+<li><strong>Scholarly coverage gap:</strong> OpenAlex is disabled, and citation lookup errored for the arXiv item, so this run cannot cross-check claims against broader academic/peer-reviewed or bibliometric signals (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[1]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a>).  </li>
+<li><strong>Off-axis academic input:</strong> the single arXiv paper is about multi-armed bandits (optimization/learning), not quantum computing; it should not be used to “validate” quantum progress, only to contextualize why optimization narratives recur (<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>).  </li>
+<li><strong>False-positive risk (milestones &amp; numbers):</strong> commercialization dates and quantified performance claims are especially vulnerable to exaggeration in social content; treat these as hypotheses requiring primary-source confirmation (vendor technical reports, independent benchmarks) before strategic commitment (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).</li>
+</ul>
+<h2>Appendix</h2>
+<p><strong>Run scope &amp; configuration (for interpretation)</strong><br />
+- Query ID <code>20260106_mixed</code>; executed with 30-day lookback; 1 query, 1 URL, 1 arXiv ID; PDFs disabled (no arXiv full text captured) (<a href="report_views/archive_20260106_mixed-index.md-61c73616.html" data-viewer="report_views/archive_20260106_mixed-index.md-61c73616.html" data-raw="archive/20260106_mixed-index.md" class="viewer-link">[5]</a>, <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[1]</a>).<br />
+- Operational logs show the URL extraction attempt, LinkedIn-focused search, arXiv fetch, and a citations lookup warning (HTTP 400) (<a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a>).  </p>
+<p><strong>Primary signal sources included in this run</strong><br />
+- LinkedIn Pulse and LinkedIn Learning items captured in Tavily search output (claims about cross-industry impact, cybersecurity/quantum-safe, and quantum cloud access) (<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[4]</a>).<br />
+- arXiv metadata record (multi-armed bandits review; adjacent optimization context) (<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">[3]</a>).</p>
+<h2>Report Prompt</h2>
+<p>Identify cross-source trends and notable signals; cite sources.</p>
+<h2>References</h2>
+<ol>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>0001_https_example.com_blog_post.txt — <a href="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-viewer="report_views/archive_tavily_extract_0001_https_example.com_blog_post.txt-eda21ee0.html" data-raw="archive/tavily_extract/0001_https_example.com_blog_post.txt" class="viewer-link">file</a></li>
+<li>arXiv papers index (<a href=".&lt;a href=" . archive arxiv papers.jsonl">/archive/arxiv/papers.jsonl</a>">.<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">/archive/arxiv/papers.jsonl</a></a>) — selected sources:</li>
+<li>Etat de l'art sur l'application des bandits multi-bras — <a href="http://arxiv.org/abs/2101.00001v1" target="_blank" rel="noopener">link</a></li>
+<li>Tavily search index (<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>) — selected sources:</li>
+<li>Quantum Computing: The Future of Technology and ... — <a href="https://www.linkedin.com/pulse/quantum-computing-future-technology-jobs-create-morgan-feldman-i8sje" target="_blank" rel="noopener">link</a></li>
+<li>Quantum Computing: What It Is and How It's Being Used — <a href="https://www.linkedin.com/pulse/quantum-computing-what-how-its-being-used-gerges-dit-m-sc--o1k4c" target="_blank" rel="noopener">link</a></li>
+<li>Quantum Cloud Computing Tools, Tips and Tech — <a href="https://learning.linkedin.com/resources/learning-tech/quantum-cloud-computing-tools-tips-tech" target="_blank" rel="noopener">link</a></li>
+<li>7 Quantum Computing Trends That Will Shape Every ... — <a href="https://www.linkedin.com/pulse/7-quantum-computing-trends-shape-every-industry-2026-bernard-marr-efwke" target="_blank" rel="noopener">link</a></li>
+<li>5 Game-Changing Quantum Computing Use Cases ... — <a href="https://www.linkedin.com/posts/bernardmarr_5-game-changing-quantum-computing-use-cases-activity-7318155678542385152-1t1v" target="_blank" rel="noopener">link</a></li>
+<li>20260106_mixed-index.md — <a href="report_views/archive_20260106_mixed-index.md-61c73616.html" data-viewer="report_views/archive_20260106_mixed-index.md-61c73616.html" data-raw="archive/20260106_mixed-index.md" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 06:34:22</li>
+<li>Duration: 00:03:46 (226.81s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: trend_scan</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

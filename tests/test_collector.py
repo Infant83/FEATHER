@@ -21,11 +21,14 @@ def test_collect_instruction_files_with_file(tmp_path) -> None:
     assert files == [path]
 
 
-def test_build_query_id_rules() -> None:
-    date_val = dt.date(2026, 1, 4)
-    assert build_query_id(date_val, None, 1, 3) == "20260104_001"
-    assert build_query_id(date_val, "oled", 1, 1) == "20260104_oled"
-    assert build_query_id(date_val, "oled", 2, 3) == "20260104_oled_002"
+def test_build_query_id_rules(tmp_path) -> None:
+    output_root = tmp_path
+    used: set[str] = set()
+    assert build_query_id("alpha", output_root, used) == "alpha"
+    assert build_query_id("alpha", output_root, used) == "alpha_01"
+    (output_root / "beta").mkdir()
+    used.clear()
+    assert build_query_id("beta", output_root, used) == "beta_01"
 
 
 def test_parse_job_extracts_parts(tmp_path) -> None:
@@ -50,7 +53,6 @@ def test_parse_job_extracts_parts(tmp_path) -> None:
         path,
         tmp_path,
         query_id="20260104_test",
-        set_id=None,
         lang_pref=None,
         openalex_enabled=False,
         openalex_max_results=5,
@@ -85,7 +87,6 @@ def test_prepare_jobs_with_query(tmp_path) -> None:
         input_path=None,
         query="quantum computing; arXiv:2401.01234; https://example.com",
         output_root=tmp_path,
-        set_id="qc",
         lang_pref="en",
         openalex_enabled=False,
         openalex_max_results=None,
@@ -100,8 +101,7 @@ def test_prepare_jobs_with_query(tmp_path) -> None:
     )
     assert len(jobs) == 1
     job = jobs[0]
-    assert job.query_id.endswith("_qc")
-    assert job.set_id == "qc"
+    assert job.query_id == "quantum_computing"
     assert job.lang_pref == "en"
     assert job.urls == ["https://example.com"]
     assert job.arxiv_ids == ["2401.01234"]
@@ -117,7 +117,6 @@ def test_select_youtube_queries() -> None:
         root_dir=Path("out"),
         out_dir=Path("out/archive"),
         query_id="20260104_test",
-        set_id=None,
         lang_pref=None,
         openalex_enabled=False,
         openalex_max_results=5,

@@ -5,11 +5,11 @@
 Run example instruction files in ./examples/instructions.
 
 Usage:
-  python examples/test_run.py --output ./runs
-  python examples/test_run.py --only basic --only iccv25 --output ./runs
-  python examples/test_run.py --skip-download-pdf --output ./runs
-  python examples/test_run.py --no-openalex --output ./runs
-  python examples/test_run.py --no-youtube --output ./runs
+  python examples/test_run.py --output ./examples/runs
+  python examples/test_run.py --only oled-basic --only iccv25 --output ./examples/runs
+  python examples/test_run.py --skip-download-pdf --output ./examples/runs
+  python examples/test_run.py --no-openalex --output ./examples/runs
+  python examples/test_run.py --no-youtube --output ./examples/runs
   python examples/test_run.py --dry-run
 """
 
@@ -23,41 +23,39 @@ from pathlib import Path
 
 EXAMPLES = [
     {
-        "name": "basic",
-        "file": "20260104.txt",
-        "args": ["--set-id", "basic"],
+        "name": "oled-basic",
+        "file": "20260104_oled.txt",
+        "args": [],
     },
     {
-        "name": "basic-oa",
-        "file": "20260104.txt",
-        "args": ["--set-id", "basic-oa", "--download-pdf", "--oa-max-results", "5"],
+        "name": "oled-oa",
+        "file": "20260104_oled.txt",
+        "args": ["--download-pdf", "--oa-max-results", "5"],
     },
     {
-        "name": "arxiv",
-        "file": "20260105.txt",
-        "args": ["--set-id", "arxiv", "--download-pdf"],
+        "name": "arxiv-gnn",
+        "file": "20260105_arxiv-gnn.txt",
+        "args": ["--download-pdf"],
     },
     {
         "name": "mixed",
-        "file": "20260106.txt",
-        "args": ["--set-id", "mixed", "--max-results", "5"],
+        "file": "20260106_mixed.txt",
+        "args": ["--max-results", "5"],
     },
     {
         "name": "iccv25",
-        "file": "20251015.txt",
-        "args": ["--set-id", "iccv25", "--download-pdf", "--days", "180", "--oa-max-results", "5"],
+        "file": "20251015_iccv25.txt",
+        "args": ["--download-pdf", "--days", "180", "--oa-max-results", "5"],
     },
     {
         "name": "ai-trends",
-        "file": "20260107.txt",
-        "args": ["--set-id", "ai-trends", "--days", "30", "--max-results", "5", "--oa-max-results", "2", "--download-pdf", "--lang", "en"],
+        "file": "20260107_ai-trends.txt",
+        "args": ["--days", "30", "--max-results", "5", "--oa-max-results", "2", "--download-pdf", "--lang", "en"],
     },
     {
         "name": "qc-youtube",
-        "file": "20260108.txt",
+        "file": "20260108_qc-youtube.txt",
         "args": [
-            "--set-id",
-            "qc-youtube",
             "--max-results",
             "5",
             "--yt-max-results",
@@ -70,20 +68,20 @@ EXAMPLES = [
     },
     {
         "name": "sectioned",
-        "file": "20260109.txt",
-        "args": ["--set-id", "sectioned", "--max-results", "5", "--youtube"],
+        "file": "20260109_sectioned.txt",
+        "args": ["--max-results", "5", "--youtube"],
     },
     {
         "name": "qc-oled",
-        "file": "20260110.txt",
-        "args": ["--set-id", "qc-oled", "--download-pdf", "--days", "365", "--max-results", "5", "--oa-max-results", "5", "--lang", "en"],
+        "file": "20260110_qc-oled.txt",
+        "args": ["--download-pdf", "--days", "365", "--max-results", "5", "--oa-max-results", "5", "--lang", "en"],
     },
 ]
 
 
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Run example instruction files.")
-    ap.add_argument("--output", default="runs", help="Output root folder (default: runs)")
+    ap.add_argument("--output", default=None, help="Output root folder (default: examples/runs)")
     ap.add_argument("--python", default=sys.executable, help="Python executable (default: current)")
     ap.add_argument("--only", action="append", help="Run only the named example(s)")
     ap.add_argument("--skip-download-pdf", action="store_true", help="Skip --download-pdf steps")
@@ -122,7 +120,7 @@ def run() -> int:
     args = parse_args()
     base = Path(__file__).resolve().parent
     instr_dir = base / "instructions"
-    out_root = Path(args.output)
+    out_root = Path(args.output) if args.output else (base / "runs")
 
     selected = {name for name in (args.only or [])}
     examples = EXAMPLES if not selected else [ex for ex in EXAMPLES if ex["name"] in selected]

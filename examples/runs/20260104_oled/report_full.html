@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260104_oled</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-executive_brief {
+  --ink: #1b2224;
+  --muted: #4a555c;
+  --accent: #0f4c5c;
+  --link: #0d5a79;
+  --page-bg: linear-gradient(135deg, #eff3f4 0%, #f7f5f1 55%, #ffffff 100%);
+  --body-font: "Gill Sans", "Optima", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-executive_brief .article {
+  border-radius: 14px;
+  padding: 32px 36px;
+}
+
+body.template-executive_brief .article h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  border-top: 2px solid var(--accent);
+}
+
+body.template-executive_brief .report-deck {
+  font-family: var(--ui-font);
+  font-size: 0.95rem;
+}
+
+  </style>
+</head>
+<body class="template-executive_brief">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260104_oled</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 00:54</p>
+<h2>Executive Summary</h2>
+<p>이번 런(20260104_oled)에서 확보된 OLED 관련 1차 근거는 사실상 Nature Communications(2025) 논문 1편에 집중되어 있어, “3–5개 기술 변곡점”을 근거 기반으로 도출하기엔 데이터 커버리지가 구조적으로 부족합니다(<a href="report_views/archive_20260104_oled-index.md-7175c990.html" data-viewer="report_views/archive_20260104_oled-index.md-7175c990.html" data-raw="archive/20260104_oled-index.md" class="viewer-link">[1]</a>; <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[2]</a>; <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[3]</a>). 다만 해당 논문은 조명용 OLED의 핵심 병목(휘도↑ → 전류밀도↑ → 효율/수명↓)을 정면으로 다루고, “발광 면적 증가(Area Enhancement, AE)”라는 소자/패널 설계 레버로 전류밀도를 낮춰 수명과 광추출을 동시 개선했다는 점에서 단기 PoC(개념검증) 후보로 의미가 큽니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>; <a href="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-viewer="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-raw="archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt" class="viewer-link">[5]</a>). 특히 표준 VTE(진공 열증착) 장비에서 AE 1.4까지 구현, 두께 균일도(패싯 기준) 변동 &lt;5%, 수명 2.7배 및 외부 광추출 최대 40% 향상이라는 정량 근거가 있어 “연구-제조 호환성” 관점의 메시지가 분명합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 반면 AE 2.0은 “재현 불가/조기 실패”로 명시되어 있어, 스케일업 시 수율·결함·공정창 리스크가 핵심 검증 과제로 남습니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 경영/제품 의사결정 관점에서는, 지금 단계에서 ‘OLED 기술 트렌드 전반’ 결론을 내리기보다, (1) 해당 AE 접근을 조명·대면적 영역의 실용 개선축으로 평가할지, (2) 추가 수집(리뷰/산업자료/특허)로 나머지 변곡점(블루 소재, 탠덤, 봉지, 마스크리스 증착 등)을 빠르게 보강할지의 선택이 우선입니다(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[6]</a>).</p>
+<h2>Key Findings</h2>
+<ul>
+<li>
+<p><strong>변곡점 후보 #1(근거 충분): ‘고종횡비 텍스처로 AE를 키워 전류밀도를 낮추는’ 조명용 OLED 수명/효율 동시 개선 전략</strong><br />
+  논문은 “OLED lifetime is inversely proportional to luminance…”, “efficiency and operating lifetime both decline with increasing current density (and thus luminance)”로 조명 요구(고휘도)와 수명/효율 저하가 전류밀도 기반 트레이드오프임을 명시하고, 패널 면적 대비 유효 발광 면적을 늘려 같은 패널 휘도를 더 낮은 전류밀도로 달성하는 전략을 제안합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 이는 소재 성능을 ‘더 강하게’ 만드는 접근이 아니라, 패널 설계로 $J$를 낮춰 신뢰성을 끌어올리는 구조적 레버라서 조명/대면적에서 특히 의미가 큽니다.</p>
+</li>
+<li>
+<p><strong>정량 임팩트: 표준 VTE에서 AE 1.4 구현, 수명 2.7배·외부 광추출 최대 40% 향상(플래너 대비 조건 하)</strong><br />
+  연구진은 “area enhancement factors up to 1.4x using a standard thermal evaporator”, “2.7-fold increase in operating lifetime and up to a 40% increase in external light extraction efficiency”를 보고합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 즉, ‘특수 장비 전제’가 아니라 기존 OLED 증착 라인 친화적 메시지(표준 VTE)와 함께, 경영진이 바로 KPI(수명/효율)로 해석 가능한 수치를 제공합니다.</p>
+</li>
+<li>
+<p><strong>제조 관점의 긍정 신호: 패싯(thickness-critical 영역) 기준 막두께 변동 &lt;5%로 공정 가능성을 제시</strong><br />
+  고종횡비 텍스처에서 가장 큰 우려는 증착 두께 불균일/단락(hot spot)인데, 논문은 패싯 영역에서 “thickness variation… less than 5%”라고 정량 제시합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 이는 “연구실 데모”에서 “파일럿 검증”으로 넘어갈 최소 조건(공정 재현성/균일도)의 단서를 제공합니다.</p>
+</li>
+<li>
+<p><strong>제조/수율 리스크도 내부에서 확인: AE 2.0은 조기 실패·비재현, 몰드 결함이 다크스팟으로 연결</strong><br />
+  논문은 “Functional AE2.0 devices… fail quickly and were not reproducible”라고 한계를 인정하며, AE1.1의 다크스팟을 “defects in the master mold”로 귀속합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 즉, 핵심 병목이 ‘아이디어’보다 ‘마스터 몰드 품질/복제·내구/결함 관리’ 같은 제조 인프라 쪽으로 이동할 수 있음을 시사합니다.</p>
+</li>
+<li>
+<p><strong>이번 런의 ‘트렌드 보고서’로서 한계는 메타데이터로 확정: URLs 2개, arXiv 0개, 쿼리 설계가 OLED 커버리지를 희석</strong><br />
+  인덱스는 “Queries: 3 | URLs: 2 | arXiv IDs: 0”이며(<a href="report_views/archive_20260104_oled-index.md-7175c990.html" data-viewer="report_views/archive_20260104_oled-index.md-7175c990.html" data-raw="archive/20260104_oled-index.md" class="viewer-link">[1]</a>), 실제 로그는 arXiv recent search가 “quantum computing”에만 수행된 것으로 남아 OLED 논문 확장이 차단되었습니다(<a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[3]</a>). 또한 OpenAlex/YouTube 비활성화로(“openalex_enabled”: false, “youtube_enabled”: false) 리뷰/학회/산업 발표 채널이 닫혀 있어, 현재 결론은 “AE 기반 구조 변곡점 1개” 이상으로 확장하기 어렵습니다(<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[2]</a>; <a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[6]</a>).</p>
+</li>
+</ul>
+<h2>Decision Implications</h2>
+<ul>
+<li>
+<p><strong>(단기 4–8주) AE(고종횡비 텍스처) 접근을 ‘조명/대면적 OLED’ 파일럿 테마로 채택 여부 결정</strong><br />
+  표준 VTE 기반 AE 1.4, 수명 2.7배/광추출 40%는 “기술검증→공정검증”으로 바로 이어질 수 있는 수준의 신호입니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 다만 AE 2.0 비재현을 감안하면, 목표는 ‘최대 AE’가 아니라 ‘재현 가능한 AE 구간(예: 1.2–1.4)에서 수율·수명 이득이 유지되는지’로 설정하는 것이 합리적입니다.</p>
+</li>
+<li>
+<p><strong>(중기 1–2분기) 스케일업 핵심 과제를 “몰드/복제 결함관리 + 두께 균일도 + 초기 결점(다크스팟) KPI”로 재정의</strong><br />
+  논문에서 다크스팟 원인이 마스터 몰드 결함으로 지목되고, 높은 AE에서 조기 실패가 발생합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 따라서 의사결정 포인트는 ‘소자 물리’만이 아니라, (a) 마스터 몰드 제작/검사, (b) 복제 내구성/오염, (c) 결함밀도-수명 상관의 계측 체계에 투자할지로 이동합니다.</p>
+</li>
+<li>
+<p><strong>(즉시) 다음 수집 라운드에서 “변곡점 3–5개”를 만들 수 있도록 데이터 파이프라인부터 교정</strong><br />
+  현재 인스트럭션에 “quantum computing”, “recent 30 days”가 포함되어 검색이 분산되었고(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[6]</a>), OpenAlex/YouTube가 꺼져 있어 확장성이 떨어집니다(<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[2]</a>). 다음 런에서는 쿼리를 “OLED blue emitter lifetime”, “TADF hyperfluorescence stability”, “tandem OLED manufacturing yield”, “OLED encapsulation WVTR”, “FMM-free deposition OVJP/inkjet” 등으로 재설계하고, OpenAlex를 켜서(리뷰/인용 네트워크) 최소 10개 이상의 1차/리뷰 소스를 확보하는 것이 보고서 품질의 선행조건입니다.</p>
+</li>
+</ul>
+<h2>Risks &amp; Gaps</h2>
+<p>1) <strong>증거 편향(단일 1차 논문 중심)으로 ‘OLED 트렌드 3–5개 변곡점’ 결론을 내릴 근거가 부족</strong><br />
+   현재 아카이브는 URL 2개, 사실상 핵심 근거는 Nature Communications 1편입니다(<a href="report_views/archive_20260104_oled-index.md-7175c990.html" data-viewer="report_views/archive_20260104_oled-index.md-7175c990.html" data-raw="archive/20260104_oled-index.md" class="viewer-link">[1]</a>). 다음 검증: OpenAlex/리뷰 논문/산업 로드맵/특허를 추가해 (블루 소재, 탠덤, 봉지, 공정 전환) 축의 정량 KPI를 최소 2–3개씩 확보해야 합니다.</p>
+<p>2) <strong>AE 스케일업 리스크: AE 상향 시 재현성 붕괴 가능성(AE2.0 비재현) 및 결함 민감도(몰드 결함→다크스팟)</strong><br />
+   논문 자체가 AE2.0 조기 실패·비재현과 몰드 결함 영향을 보고합니다(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>). 다음 검증: (a) AE별 결함밀도/수율, (b) 몰드 수명(복제 횟수)과 결함 증가율, (c) 대면적 균일도/휘도 균일성(시각 품질) 데이터를 확보해야 합니다.</p>
+<p>3) <strong>2차 소스 품질 리스크: LinkedIn 자료는 OLED 직접 근거가 아니며 ‘방법론적 시사점’ 수준에 그침</strong><br />
+   LinkedIn 포스트는 분자설계 AI 프레임워크(Trio) 소개로 OLED 데이터가 없습니다(<a href="https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q" target="_blank" rel="noopener">[7]</a>; <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt" class="viewer-link">[8]</a>). 다음 검증: OLED 소재 탐색 자동화가 필요하다면, OLED 발광재료(특히 블루)와 연결된 피어리뷰/기업 발표/특허 기반으로 “속도/성공률/합성가능성” KPI를 재수집해야 합니다.</p>
+<h2>Appendix</h2>
+<ul>
+<li><strong>이번 런 커버리지(팩트)</strong>: Queries 3, URLs 2, arXiv IDs 0(<a href="report_views/archive_20260104_oled-index.md-7175c990.html" data-viewer="report_views/archive_20260104_oled-index.md-7175c990.html" data-raw="archive/20260104_oled-index.md" class="viewer-link">[1]</a>).  </li>
+<li><strong>커버리지 저하 원인(팩트)</strong>: 인스트럭션에 OLED 외 “quantum computing”, “recent 30 days” 포함(<a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">[6]</a>); arXiv recent search가 quantum computing으로만 실행(<a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[3]</a>); OpenAlex/YouTube 비활성(<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[2]</a>).  </li>
+<li><strong>핵심 1차 근거 파일</strong>: Nature Communications(2025) “High aspect ratio organic light-emitting diodes” PDF 추출본(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>; <a href="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-viewer="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-raw="archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt" class="viewer-link">[5]</a>).  </li>
+<li><strong>주요 개념(논문 정의)</strong>: 삼각 코러게이션에서 면적 증대 계수 $AE \equiv A_{dev}/A_{pan} = \sqrt{1 + (2\alpha)^2}$, $\alpha=h/w$(<a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">[4]</a>).</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Focus on OLED technology trends, materials advances, and near-term industry implications.
+Prioritize insights from papers, open-access journals, and credible industry sources.
+Identify 3-5 key technical inflection points, their evidence, and likely applications.
+Compare research vs. commercial adoption (manufacturing, yield, cost, lifetime, efficiency).
+Call out contradictions or gaps, and suggest follow-up questions for decision-makers.</p>
+<h2>References</h2>
+<ol>
+<li>20260104_oled-index.md — <a href="report_views/archive_20260104_oled-index.md-7175c990.html" data-viewer="report_views/archive_20260104_oled-index.md-7175c990.html" data-raw="archive/20260104_oled-index.md" class="viewer-link">file</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>www.nature.com/articles/s41467-025-67312-4_reference.pdf — <a href="https://www.nature.com/articles/s41467-025-67312-4_reference.pdf" target="_blank" rel="noopener">link</a></li>
+<li>0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt — <a href="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-viewer="report_views/archive_tavily_extract_0002_https_www.nature.com_articles_s41467-025-67312-4_ref-fbf675ac.html" data-raw="archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt" class="viewer-link">file</a></li>
+<li>20260104_oled.txt — <a href="report_views/instruction_20260104_oled.txt-ace1749c.html" data-viewer="report_views/instruction_20260104_oled.txt-ace1749c.html" data-raw="instruction/20260104_oled.txt" class="viewer-link">file</a></li>
+<li>www.linkedin.com/posts/fanli_ai-molecular-design-has-some-kno... — <a href="https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q" target="_blank" rel="noopener">link</a></li>
+<li>0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt — <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_posts_fanli_ai-molecular-desi-e032fdc8.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 00:54:20</li>
+<li>Duration: 00:05:11 (311.06s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: executive_brief</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

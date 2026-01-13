@@ -26,8 +26,8 @@ def append_jsonl(path: Path, obj: Dict[str, Any]) -> None:
 
 
 def parse_date_from_filename(name: str) -> Optional[dt.date]:
-    # expects YYYYMMDD
-    m = re.match(r"^(?P<y>\d{4})(?P<m>\d{2})(?P<d>\d{2})$", name)
+    # expects YYYYMMDD prefix
+    m = re.match(r"^(?P<y>\d{4})(?P<m>\d{2})(?P<d>\d{2})(?:\D|$)", name)
     if not m:
         return None
     try:

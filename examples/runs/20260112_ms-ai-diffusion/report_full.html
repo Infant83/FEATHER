@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260112_ms-ai-diffusion</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-default">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260112_ms-ai-diffusion</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 00:06</p>
+<h2>Executive Summary</h2>
+<p>Microsoft Research의 <em>“Global AI Adoption in 2025 — A Widening Digital Divide”</em> (2026년 1월, 일명 “Microsoft AI Diffusion Report (2025 H2)”)는 2025년 하반기에도 생성형 AI 사용이 늘었지만, <strong>‘확산의 속도’가 지역별로 달라 디지털 격차가 오히려 커졌다</strong>는 메시지를 전면에 둔다(<a href="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-viewer="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-raw="archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt" class="viewer-link">[1]</a>, PAGE 2,5). 전세계 생성형 AI 사용(확산) 비중은 <strong>H1 2025 15.1% → H2 2025 16.3%로 +1.2%p 증가</strong>했고, 보고서는 이를 “대략 6명 중 1명이 생성형 AI 도구를 사용”하는 수준이라고 요약한다(PAGE 2,5). 그러나 같은 기간 <strong>Global North는 22.9%→24.7%(+1.8%p)</strong>, <strong>Global South는 13.1%→14.1%(+1.0%p)</strong>로 증가 폭이 달라 <strong>격차가 9.8%p에서 10.6%p로 확대</strong>되었다고 명시한다(PAGE 2,5). 흥미롭게도 미국은 AI 인프라·프런티어 모델 개발의 리더임에도 사용 순위가 <strong>23위→24위(28.3%)</strong>로 내려가며 “혁신 리더십이 곧 대중 채택을 의미하진 않는다”는 역설을 보여준다(PAGE 3,6). 반면 한국은 <strong>25위→18위</strong>, <strong>25.9%→30.7%(+4.8%p)</strong>로 반기 기준 가장 큰 점프를 기록하며, 보고서는 이를 <strong>정책(제도화)·한국어 모델 성능 개선·바이럴 소비자 기능</strong>이 결합된 사례로 해석한다(PAGE 3,6~9). 종합하면 이 보고서는 “모델 성능 경쟁”만이 아니라 <strong>접근성(비용·유통·언어)과 제도 설계가 AI 확산을 좌우한다</strong>는 관점을, 북반구–남반구 격차의 ‘관측된 확대’로 뒷받침한다(PAGE 5,11).</p>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<p>본 원고는 FEATHER 실행 메타데이터 기준 <strong>URLs 1건, Queries 0건</strong>으로 수집된 <strong>단일 Microsoft Research PDF(1차 문서)</strong>만을 근거로 한다(<a href="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-viewer="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-raw="archive/20260112_ms-ai-diffusion-index.md" class="viewer-link">[2]</a>). 따라서 PDF의 References([1]~[21])에 포함된 외부 기사·블로그·기관 자료는 본 문서에서 <em>“보고서가 그렇게 인용했다”</em>는 수준으로만 다루며, 별도의 web_fetch로 교차검증하지 않는다(동일 인덱스에 supporting web 산출물이 없는 것으로 기록).</p>
+<p>보고서의 핵심 지표는 “AI diffusion(확산)”이며, <strong>“보고 기간 동안 생성형 AI 제품을 사용한 사람의 비중”</strong>으로 정의된다(PAGE 2). 데이터는 <strong>집계·익명화된 Microsoft telemetry</strong>로부터 산출하며, 국가 비교를 위해 <strong>OS/디바이스 시장점유율, 인터넷 보급률, 국가 인구 차이를 반영해 조정(adjusted)</strong>한다고 설명한다(PAGE 2). 동시에 보고서 자체가 “완벽한 단일 지표는 없다(No single metric is perfect…)”고 밝히며, 향후 생산성·과학적 발견 등 목적에 맞춘 보완 지표를 추가하겠다고 한계를 인정한다(PAGE 2). 이 때문에 본 리뷰는 수치를 “절대적 진짜 사용률”이라기보다 <strong>Microsoft의 관측·보정 체계 안에서의 상대적 변화와 분포</strong>로 해석한다.</p>
+<p>또 하나의 편집상 주의점은 분모 표현이다. Executive Summary에서는 “Global North/Global South의 <strong>working age population</strong>”을 분모로 명시하지만(PAGE 2), 전세계 수치 서술에서는 “world’s population” 표현이 함께 등장한다(PAGE 5). 따라서 본 문서는 <strong>북/남 비교와 격차 논지는 working age population 문맥으로</strong>, “전세계 16.3%”는 원문 표현을 그대로 따르되 <strong>같은 분모로 자동 등치하지 않는다</strong>(PAGE 2,5).</p>
+<p>시각자료(Figure)는 원문에 일관된 번호가 없으므로, 페이지 추적이 가능하도록 본 리뷰에서 임의로 구분해 서술에 활용한다. 핵심은 (1) PAGE 2의 지역별 요약 테이블/지도, (2) PAGE 4의 Top 30 순위표, (3) PAGE 5의 North–South 격차 그래프, (4) PAGE 7~9의 한국 사례(성장률·동인), (5) PAGE 10의 DeepSeek 지도다(PAGE 2,4,5,7~10).</p>
+<hr />
+<h2>Key Findings</h2>
+<p>1) <strong>전세계 확산은 늘었지만 ‘초기 국면’의 성격이 여전히 강하다.</strong><br />
+보고서는 2025년 하반기 전세계 생성형 AI 사용 비중이 <strong>15.1%→16.3%(+1.2%p)</strong>로 늘었다고 제시한다(PAGE 2,5). 이는 “주류에 들어온 지 얼마 안 된 기술치고 빠른 진전”이라는 톤이지만(PAGE 2), 같은 숫자는 반대로 <strong>대다수는 아직 사용하지 않는 상태</strong>임을 뜻한다는 점에서, 다음 확산의 파동이 어디에서 발생하느냐가 정책·산업 전략을 좌우할 수 있다(해석; PAGE 3,5의 문제의식과 정합).</p>
+<p>2) <strong>핵심 결론은 ‘확산의 증가’가 아니라 ‘확산의 비대칭’이다.</strong><br />
+Global North는 <strong>22.9%→24.7%(+1.8%p)</strong>, Global South는 <strong>13.1%→14.1%(+1.0%p)</strong>로 증가했고, 결과적으로 <strong>격차가 9.8%p→10.6%p로 확대</strong>되었다(PAGE 2,5). 보고서가 “benefits are expanding, but not equally”라고 정리하는 지점은, 채택의 평균보다 <strong>채택 속도의 차이</strong>가 장기적 격차를 만든다는 관찰에 가깝다(PAGE 5).</p>
+<p>3) <strong>선도국은 ‘조기 투자(인프라·스킬·정부 도입)’의 관성으로 상단을 고정한다.</strong><br />
+UAE·Singapore·Norway·Ireland·France·Spain 등은 디지털 인프라, AI 스킬링, 정부 도입에 선투자한 국가로 계속 상위권을 유지한다고 서술된다(PAGE 3). 실제로 UAE는 <strong>H2 2025 64.0%(H1 59.4%)</strong>로 1위, Singapore는 <strong>60.9%</strong>로 2위다(PAGE 3~4). 그리고 Top 30의 순위가 전반적으로 안정적이며 “상단이 포화(saturated)”되었다는 문장(PAGE 6)은 후발국의 추격이 구조적으로 쉽지 않을 수 있음을 암시한다(해석; 다만 원문이 직접 증명한 것은 ‘안정성’까지임).</p>
+<p>4) <strong>미국은 ‘공급 리더십’과 ‘대중 채택’이 분리될 수 있음을 보여주는 사례로 사용된다.</strong><br />
+보고서는 미국이 인프라·프런티어 모델 개발을 선도하지만 사용 순위는 <strong>23위→24위</strong>, 사용률은 <strong>28.3%</strong>라고 제시하며, “혁신과 인프라의 리더십만으로 광범위 채택이 자동으로 오지 않는다”고 강조한다(PAGE 3,6). 여기서 중요한 점은 미국이 “낮다”가 아니라, <strong>리더십의 형태(개발/인프라)와 확산의 형태(사용 비중)가 다른 축</strong>일 수 있다는 것이다(해석; 원문은 그 ‘원인 목록’을 체계적으로 나열하진 않는다).</p>
+<p>5) <strong>한국은 ‘제도화 + 한국어 성능 + 문화적 트리거’의 결합으로 가장 큰 상승을 기록한다.</strong><br />
+한국은 <strong>25위→18위</strong>, 사용률 <strong>25.9%→30.7%(+4.8%p)</strong>로 “해당 반기 최대 상승”이며(PAGE 3,4,6), 보고서는 이를 (1) 국가 정책, (2) 한국어 프런티어 모델 성능 개선, (3) 소비자 기능의 바이럴 확산으로 설명한다(PAGE 7~9). 특히 한국어 성능 개선은 Korean SAT(CSAT) 벤치마크 점수의 급상승으로 제시되는데, <strong>GPT‑3.5 16 → GPT‑4o 75 → GPT‑5 100</strong>이라는 수치를 명시한다(PAGE 8). 다만 이 벤치마크 산식·평가 절차는 본문에 충분히 풀어 쓰이지 않아, 수치 자체는 “보고서가 인용한 결과”로 취급하는 것이 안전하다(한계; PAGE 8).</p>
+<p>6) <strong>DeepSeek은 ‘오픈소스+무료’로 접근 장벽을 낮추며 지정학적 확산의 변수가 된다.</strong><br />
+DeepSeek은 모델을 <strong>MIT License로 공개</strong>하고 무료 챗봇을 제공함으로써 “금전적·기술적 장벽”을 제거했다고 서술된다(PAGE 3,10). 채택이 중국·러시아·이란·쿠바·벨라루스에서 강하고, 특히 아프리카에서 두드러진다고 하며 “다른 지역 대비 2~4배” 사용 추정치도 제시한다(PAGE 10). 보고서는 이를 “오픈소스 AI가 지정학적 도구가 될 수 있다”, 그리고 “standards and safety” 질문으로 연결한다(PAGE 11). 다만 ‘시장점유/2~4배’ 산출의 방법 상세는 본문에서 제한적이어서 해석의 여지를 남긴다(PAGE 10).</p>
+<hr />
+<h2>Trends &amp; Implications</h2>
+<p>첫째, 이 보고서가 밀어붙이는 큰 흐름은 <strong>“확산은 성능만으로 결정되지 않는다”</strong>는 주장이다. North–South 격차 확대(PAGE 5), 미국의 역설(PAGE 3,6), 한국의 급등(PAGE 7~9), DeepSeek의 부상(PAGE 10~11)을 한 줄로 묶으면, 채택은 모델 품질 경쟁을 넘어 <strong>접근성(가격·무료 전략·유통 채널), 언어/현지화, 제도적 통합(학교·직장·공공서비스)</strong>에 의해 가속되거나 지연될 수 있다는 결론에 도달한다(해석; 근거는 각 사례의 배치 방식).</p>
+<p>둘째, 국가·기업의 경쟁 축도 “최고 모델”에서 <strong>“채택 촉진(adoption race)”</strong>으로 확장되는 조짐이 보인다. 보고서는 DeepSeek의 아프리카 확산을 미·중 경쟁의 한 단면으로 읽으며, 다음 사용자 파동이 “역사적으로 기술 접근이 제한된 커뮤니티”에서 올 수 있다고 말한다(PAGE 3). 기술 리더 관점에서 이는 제품 전략이 곧 확산 전략이 되고, 확산 전략은 다시 <strong>결제/네트워크/파트너십/기기 생태계</strong> 같은 비기술 요소와 결합해야 한다는 뜻이다(해석; 원문은 접근성과 파트너십을 직접 언급, PAGE 3).</p>
+<p>셋째, 정책은 단순 규제가 아니라 <strong>확산을 ‘가능하게 하는 인프라’</strong>로 나타난다. 한국 사례에서 AI 조정기구 재구성과 AI Basic Act 언급은(PAGE 8), 규제·거버넌스가 혁신을 억누르는 장치라는 통념만으로는 설명하기 어려운 면을 보여준다. 보고서의 내러티브는 “제도화→공공/교육/업무로 확장”이라는 경로를 제시하며(PAGE 3,7~8), 정책이 확산의 마찰을 줄이거나 통합 비용을 낮추는 장치로도 작동할 수 있음을 시사한다(해석).</p>
+<hr />
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li>
+<p><strong>단일 문서 기반(교차검증 부재):</strong> 이번 결과물은 단일 PDF만 근거로 하며(<a href="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-viewer="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-raw="archive/20260112_ms-ai-diffusion-index.md" class="viewer-link">[2]</a>), 본문이 인용한 외부 출처([2]~[21])는 추가 수집/검증이 없다(PAGE 12~13). 예컨대 “한국은 ChatGPT 구독 2위” 같은 문장은 원문 내 인용을 재진술하는 수준을 넘기 어렵다(PAGE 7).</p>
+</li>
+<li>
+<p><strong>Telemetry 기반 측정의 대표성 문제:</strong> 지표가 Microsoft telemetry에 기반한다는 사실(PAGE 2)은 장점(대규모 관측)이지만, 반대로 <strong>Microsoft 접점이 약한 지역/플랫폼/행태</strong>에서 대표성 편향이 생길 수 있다. 특히 ‘generative AI product’에 어떤 제품/채널이 포함되는지 본문에서 열거되지 않아(PAGE 2), 국가별로 어떤 사용이 포착되고 누락되는지 평가하기 어렵다(핵심 공백).</p>
+</li>
+<li>
+<p><strong>Global North/South 분류 기준의 불투명성:</strong> 보고서는 이 구분을 강하게 사용하지만, 본문만으로는 포함 국가나 판정 규칙이 명확히 드러나지 않는다(PAGE 2~11). 따라서 본 리뷰는 해당 구분을 <strong>보고서의 프레임</strong>으로만 수용하며 자의적 보완을 하지 않는다.</p>
+</li>
+<li>
+<p><strong>DeepSeek “2~4배” 등 고임팩트 수치의 방법 투명성 부족:</strong> 아프리카 2~4배 추정치(PAGE 10)와 지도 기반 share는 함의가 큰 반면, 산출 근거·불확실성 범위가 충분히 제시되지 않는다. 메시지가 거버넌스/안전 논의(PAGE 11)로 이어지는 만큼, 이 공백은 해석 리스크를 키운다.</p>
+</li>
+<li>
+<p><strong>‘확산’과 ‘성과’의 연결은 미완:</strong> 보고서가 향후 생산성·과학적 발견 중심의 보완 지표를 예고하는 것(PAGE 2)은, 현재 지표가 주로 “누가 썼나”에 머물러 있고 “얼마나 유익했나/안전했나”를 직접 측정하지 못한다는 한계를 사실상 인정한 것으로 읽힌다(해석).</p>
+</li>
+</ul>
+<hr />
+<h2>Critics</h2>
+<h3>확산률 지도는 강력하지만, “좋은 확산”을 보장하진 않는다</h3>
+<p>이 보고서는 확산의 속도와 격차를 정교하게 ‘보이게’ 만드는 데 성공한다(PAGE 5). 다만 확산이 사회·경제적 성과로 어떤 경로를 통해 이어지는지, 혹은 부작용(오정보, 교육 환경의 혼란, 신뢰 하락 등)을 어떤 수준에서 동반하는지는 지표 설계 자체로는 답하기 어렵고, 원문도 단일 지표의 불완전성을 인정한다(PAGE 2). 따라서 이 보고서를 실행 전략으로 번역할 때는 “사용이 늘면 좋은 일”이라는 단선적 해석을 경계해야 한다.</p>
+<p>특히 한국 사례에서 ‘Ghibli-style 이미지 생성’ 바이럴이 신규 사용자 유입을 촉발했다는 서술(PAGE 9)은 확산 메커니즘 설명으로는 설득력이 있다. 그러나 바이럴은 <strong>‘진입’에는 강하지만 ‘정착’과 ‘역량 축적’으로 자동 연결된다고 단정할 수는 없다</strong>는 점에서, 조직·정책은 대중적 유입 이후의 교육/업무 통합 설계를 별도로 고민해야 한다(해석; 원문은 “추가 기능 탐색”의 가능성을 시사하는 수준).</p>
+<ul>
+<li>반론/견제 포인트</li>
+<li>“확산률”은 <strong>사용의 질·성과·안전</strong>을 대체하지 못한다(PAGE 2).</li>
+<li>바이럴 기반 확산은 빠르지만 <strong>지속성/제도적 내재화와는 별개</strong>일 수 있다(PAGE 9 맥락).</li>
+<li>오픈소스/무료 확산은 접근성을 높이는 동시에 <strong>표준·안전·감독의 난제</strong>를 확대할 수 있다(PAGE 11).</li>
+</ul>
+<hr />
+<h2>Appendix</h2>
+<h3>A. 원문 도표의 핵심 수치를 표로 재작성(페이지 추적용)</h3>
+<p><strong>[표 A-1] 지역별 AI diffusion 요약(H1 2025 → H2 2025)</strong> (원문 요약 테이블 기반, PAGE 2)  </p>
+<blockquote>
+<p>주: 원문은 지역 비교를 working age population 맥락에서 제시한다(PAGE 2).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th style="text-align: right;">H1 2025</th>
+<th style="text-align: right;">H2 2025</th>
+<th style="text-align: right;">변화(percentage points)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global North</td>
+<td style="text-align: right;">22.90%</td>
+<td style="text-align: right;">24.70%</td>
+<td style="text-align: right;">+1.8</td>
+</tr>
+<tr>
+<td>Global South</td>
+<td style="text-align: right;">13.10%</td>
+<td style="text-align: right;">14.10%</td>
+<td style="text-align: right;">+1.0</td>
+</tr>
+<tr>
+<td>World</td>
+<td style="text-align: right;">15.10%</td>
+<td style="text-align: right;">16.30%</td>
+<td style="text-align: right;">+1.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>[표 A-2] Top 30 중 주요 국가 변화(발췌)</strong> (원문 Top 30 표 기반, PAGE 4)</p>
+<table>
+<thead>
+<tr>
+<th>국가</th>
+<th style="text-align: right;">H1 순위</th>
+<th style="text-align: right;">H2 순위</th>
+<th style="text-align: right;">H1</th>
+<th style="text-align: right;">H2</th>
+<th style="text-align: right;">변화(p.p.)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>United Arab Emirates</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">59.4%</td>
+<td style="text-align: right;">64.0%</td>
+<td style="text-align: right;">+4.6</td>
+</tr>
+<tr>
+<td>Singapore</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">58.6%</td>
+<td style="text-align: right;">60.9%</td>
+<td style="text-align: right;">+2.3</td>
+</tr>
+<tr>
+<td>United States</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">26.3%</td>
+<td style="text-align: right;">28.3%</td>
+<td style="text-align: right;">+2.0</td>
+</tr>
+<tr>
+<td>South Korea</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">25.9%</td>
+<td style="text-align: right;">30.7%</td>
+<td style="text-align: right;">+4.8</td>
+</tr>
+</tbody>
+</table>
+<h3>B. 재현성/범위 메모</h3>
+<ul>
+<li>1차 근거: <a href="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-viewer="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-raw="archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt" class="viewer-link">[1]</a> (원문 PDF 텍스트 추출본; PAGE 인용은 여기 기준)  </li>
+<li>수집 범위 근거: <a href="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-viewer="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-raw="archive/20260112_ms-ai-diffusion-index.md" class="viewer-link">[2]</a> (Queries 0, URLs 1; 단일 PDF 기반)</li>
+</ul>
+<h2>Figures</h2>
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-7287640b.jpeg" alt="Figure from ./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-viewer="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-raw="archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf" class="viewer-link">./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-d04cf301.png" alt="Figure from ./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-viewer="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-raw="archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf" class="viewer-link">./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-22de441b.png" alt="Figure from ./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-viewer="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-raw="archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf" class="viewer-link">./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-dcda6a48.png" alt="Figure from ./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf (page 18)" />
+  <figcaption>Figure: <a href="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-viewer="report_views/archive_web_pdf_Microsoft-AI-Diffusion-Report-2025-H2.pdf-287c8344.html" data-raw="archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf" class="viewer-link">./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf</a> (page 18)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>MS 에서 발간한 AI 확산 보고서에 대해서 확인해주고 보고서를 작성해줘.
+영문으로 되어있는 내용에 대해 한글로 최대한 심도있게 보고서를 번역한다고 생각하고.</p>
+<p>문체는 설명형/서술형 리뷰로, 너무 딱딱한 학술문체를 피하고 자연스러운 연결 문장과 전환을 사용.
+문장 길이를 섞되, 요약-근거-해석 흐름이 읽히게 작성. 필요시 figure나 그림을 추출하여 리포트에 사용함.</p>
+<h2>References</h2>
+<ol>
+<li>Microsoft-AI-Diffusion-Report-2025-H2.txt — <a href="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-viewer="report_views/archive_web_text_Microsoft-AI-Diffusion-Report-2025-H2.txt-9107d67d.html" data-raw="archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt" class="viewer-link">file</a></li>
+<li>20260112_ms-ai-diffusion-index.md — <a href="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-viewer="report_views/archive_20260112_ms-ai-diffusion-index.md-2e3d77ea.html" data-raw="archive/20260112_ms-ai-diffusion-index.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 00:06:35</li>
+<li>Duration: 00:17:17 (1037.0s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality model: gpt-5.2</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 2</li>
+<li>Template: default</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

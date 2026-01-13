@@ -1,0 +1,11 @@
+{
+  "results": [],
+  "failed_results": [
+    {
+      "url": "https://example.com/blog/post",
+      "error": "404 page not found"
+    }
+  ],
+  "response_time": 1.59,
+  "request_id": "4d77fe3a-7d8b-4cb6-a322-7b922d944a69"
+}

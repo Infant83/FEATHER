@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-01-14 04:03:13",
+  "started_at": "2026-01-14 00:58:28",
+  "duration_seconds": 11084.91,
+  "duration_hms": "03:04:44",
+  "model": "gpt-5.2",
+  "quality_model": null,
+  "quality_iterations": 0,
+  "quality_strategy": "none",
+  "template": "nature_reviews",
+  "output_format": "html",
+  "pdf_status": "disabled"
+}
