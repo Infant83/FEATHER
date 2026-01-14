@@ -1,3 +1,0 @@
-Web research queries: 4
-Web search results stored: web_search.jsonl
-Web extracts stored: web_extract

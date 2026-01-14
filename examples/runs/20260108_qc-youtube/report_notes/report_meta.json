@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-01-14 07:45:57",
+  "started_at": "2026-01-14 07:40:19",
+  "duration_seconds": 337.95,
+  "duration_hms": "00:05:37",
+  "model": "gpt-5.2",
+  "quality_model": null,
+  "quality_iterations": 0,
+  "quality_strategy": "none",
+  "template": "quanta_magazine",
+  "output_format": "html",
+  "pdf_status": "disabled"
+}

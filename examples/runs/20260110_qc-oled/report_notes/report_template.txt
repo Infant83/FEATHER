@@ -1,0 +1,30 @@
+Template: review_of_modern_physics
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\review_of_modern_physics.md
+Latex: default.tex
+Sections:
+- Abstract
+- Introduction
+- Theory & Foundations
+- Methods & Experimental Evidence
+- Applications & Benchmarks
+- Synthesis & Outlook
+- Appendix
+
+Guidance:
+Template description: Review of Modern Physics-style deep technical survey.
+
+Template tone: Scholarly, rigorous, method-heavy.
+
+Template audience: Domain experts.
+
+Section guidance:
+- Abstract: concise scope and main results; signal limits.
+- Introduction: define scope and notation; position in literature.
+- Theory & Foundations: include equations or formal definitions.
+- Methods & Experimental Evidence: detail setups, datasets, or protocols.
+- Applications & Benchmarks: compare representative systems and metrics.
+- Synthesis & Outlook: reconcile findings and articulate open problems.
+
+Template writing guidance:
+Assume expert audience; be explicit about assumptions.
+Include precise references and methodological caveats.

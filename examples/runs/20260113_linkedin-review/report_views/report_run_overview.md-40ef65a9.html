@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>report/run_overview.md</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>report/run_overview.md</h1></header>
+  <main><h1>Run Overview</h1>
+<h2>Instruction</h2>
+<p>Source: <a href="./instruction/20260113_linkedin-review.txt">./instruction/20260113_linkedin-review.txt</a></p>
+<pre><code>https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/
+https://arxiv.org/abs/2511.16652
+https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale
+</code></pre>
+<h2>Archive Index</h2>
+<p>Source: <a href=".<a href="./archive/20260113_linkedin-review-index.md">/archive/20260113_linkedin-review-index.md</a>">.<a href="./archive/20260113_linkedin-review-index.md">/archive/20260113_linkedin-review-index.md</a></a></p>
+<h1>Archive 20260113_linkedin-review</h1>
+<ul>
+<li>Query ID: <code>20260113_linkedin-review</code></li>
+<li>Date: 2026-01-13 (range: last 30 days)</li>
+<li>Queries: 0 | URLs: 3 | arXiv IDs: 0</li>
+</ul>
+<h2>Run Command</h2>
+<ul>
+<li><code>python -m feather --input examples\instructions\20260113_linkedin-review.txt --output examples\runs --days 30 --max-results 5 --download-pdf --lang en --openalex --oa-max-results 5</code></li>
+</ul>
+<h2>Instruction</h2>
+<ul>
+<li><code>../instruction/20260113_linkedin-review.txt</code></li>
+</ul>
+<h2>Tavily Extract</h2>
+<ul>
+<li><code>./tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt</code></li>
+<li><code>./tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt</code></li>
+<li><code>./tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt</code></li>
+</ul></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

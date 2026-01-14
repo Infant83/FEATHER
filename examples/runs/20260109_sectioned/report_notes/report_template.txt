@@ -1,0 +1,29 @@
+Template: default
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\default.md
+Latex: default.tex
+Sections:
+- Executive Summary
+- Scope & Methodology
+- Key Findings
+- Trends & Implications
+- Risks & Gaps
+- Critics
+- Appendix
+
+Guidance:
+Template description: Journal-style technical review (current default).
+
+Template tone: Academic, evidence-based, critical.
+
+Template audience: Technical leaders and researchers.
+
+Section guidance:
+- Executive Summary: 5-7 sentences; claim -> evidence -> implication.
+- Key Findings: 3-6 items with evidence and caveats.
+- Trends & Implications: connect signals to near-term decisions.
+- Risks & Gaps: highlight missing evidence, constraints, and unknowns.
+- Critics: short headline + paragraphs + bullets; include contrarian views.
+
+Template writing guidance:
+Synthesize across sources; avoid lists of summaries.
+Separate facts from interpretation; label web-derived support.

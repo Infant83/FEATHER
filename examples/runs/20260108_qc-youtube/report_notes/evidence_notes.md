@@ -1,88 +1,54 @@
-## Run provenance / scope (what evidence exists and what’s missing)
+## Run scope & provenance (what this archive actually contains)
 
-- **Run scope & parameters**
-  - Run covers **“last 30 days”**, **10 queries**, **max-results=5**, YouTube enabled w/ transcript extraction; **PDF download disabled**. Source: run index + job config.  
-    Evidence: [archive/20260108_qc-youtube-index.md], [archive/_job.json]
-- **What was actually captured**
-  - **YouTube**: **1 video + 1 transcript** (primary long-form text).  
-    Evidence: [archive/20260108_qc-youtube-index.md], [archive/youtube/videos.jsonl], [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - **arXiv**: 2 IDs recorded but **no PDFs/texts extracted**.  
-    Evidence: [archive/20260108_qc-youtube-index.md]
-- **Extraction / lookup limitations**
-  - OpenAlex citation lookups for the arXiv IDs failed with HTTP 400 errors.  
-    Evidence: [archive/_log.txt]
+- **Run parameters (coverage constraints):** last **30 days**, **10** Tavily queries, **max 5 results/query**; **YouTube enabled** with **transcript extraction**; **OpenAlex disabled**; **no PDF downloads**. Source: run config JSON. [archive/_job.json]  
+- **Collected artifacts:** Tavily web search results (JSONL), **1 YouTube video + transcript**, arXiv metadata for **2 IDs** (but **no PDFs/texts**). Source: run index. [archive/20260108_qc-youtube-index.md]  
+- **Known collection gaps / issues:** YouTube search was skipped because there were **no `site:youtube.com` query hints**; transcript was gathered via the **direct URL**. OpenAlex citation lookups for arXiv IDs failed with HTTP 400. Source: execution log. [archive/_log.txt]
 
 ---
 
-## YouTube (primary narrative source)
+## Web sources (Tavily results → salient evidence snippets + URLs)
 
-- **Video metadata**
-  - Title: **“Quantum Computing and AI”**; Channel: **Caleb Writes Code**; Published: **2025-10-19**; Duration: **10m40s**; URL: https://www.youtube.com/watch?v=sQSQBYHR0ms  
-    Evidence: [archive/youtube/videos.jsonl], [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-- **Key claims / explanations in transcript (quotable narrative points)**
-  - Frames the common expectation that quantum computers will train AI models “significantly faster,” then asks what would make that true.  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - Describes LLM training scaling through classical **parallel computing** (example: many GPUs reduce training time dramatically).  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - Identifies **matrix multiplication** and FLOPs as the core computational burden in modern neural networks / LLM training.  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - Argues “GPU → QPU” is not seamless because classical data are deterministic bits while qubits are probabilistic superpositions; highlights the **data encoding** problem (classical tokens must be encoded into quantum states).  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - Raises the skeptical question: if classical parallelism already works well for training, **where exactly do quantum computers fit** for AI/ML?  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
-  - Notes market dynamics/hype: AI is a huge capital magnet and could fund quantum progress; references Jensen Huang remarks in this context (as presented by the speaker).  
-    Evidence: [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
+- **Quantum Computing Report — “News” (industry news roundup page)**
+  - Mentions **Quantum Computing Inc. (QCi) “Neurawave”** as a **photonics-based reservoir computing** system, described as **compact/room-temperature**, using **PCIe**, positioned for **edge-AI use cases** (e.g., “signal processing” and “time-series forecasting”), “leveraging optical computing with digital electronics for energy-efficient performance.”  
+    URL: https://quantumcomputingreport.com/news/  [archive/tavily_search.jsonl]
+  - Mentions **Aramco + Pasqal** deploying “Saudi Arabia’s first quantum computer for industrial applications,” described as a **neutral-atom** system “capable of controlling **200 qubits** in programmable two-dimensional arrays,” installed at **Aramco’s data center** to “accelerate the development of quantum applications across the energy, materials, and industrial sectors.”  
+    URL: https://quantumcomputingreport.com/news/  [archive/tavily_search.jsonl]
 
----
+- **Network World — “Top quantum breakthroughs of 2025” (enterprise/tech journalism framing)**
+  - Claims a **SAS survey of 500 global business leaders** found **60%** “actively investing in, or exploring opportunities, in quantum AI.”  
+  - Cites a **Bain** estimate: quantum could unlock “up to **$250B** of market value” (pharma/finance/logistics/materials science), while stating the “total market for quantum computing is **less than $1B today**.”  
+  - Includes an attribution that **Nvidia CEO Jensen Huang** said quantum is “**15 to 30 years** from being truly useful” (as reported in the article).  
+    URL: https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html  [archive/tavily_search.jsonl]
 
-## Web sources discovered via Tavily (URLs + salient extracted snippets)
-
-### Consortium / white paper (more “authoritative framing” than blogs/news)
-- **QED-C (Quantum Economic Development Consortium)** — *Quantum Computing and Artificial Intelligence Use Cases* (March 2025)  
-  - States QC and AI “can complement each other… in many significant and multidirectional ways”; examples include **AI assisting QC** (circuit design, applications, error correction, generating test data) and **QC assisting AI** via efficiency for “optimization and probabilistic tasks,” often in **hybrid approaches**.  
-  URL: https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/  
-  Evidence: [archive/tavily_search.jsonl]
-
-- **Quantum Flagship / qt.eu white paper (PDF)** — *Artificial intelligence and quantum computing white paper*  
-  - Discusses hybrid approaches including: quantum data preprocessing feeding classical AI; accelerating training using **NISQ variational algorithms** and future **fault-tolerant** devices; “quantum-enhanced AI” focused on subroutines like **optimization, sampling, high-dimensional data processing**; references near-term device scales (e.g., “100 to 200 physical qubits”) and longer-term “over 50 logical qubits” (as quoted in extracted snippet).  
-  URL: https://qt.eu/media/pdf/Artificial_Intelligence_and_Quantum_Computing_white_paper.pdf  
-  Evidence: [archive/tavily_search.jsonl]
-
-### Major lab / tooling hub
-- **Google Quantum AI — Educational Resources**
-  - Points to **TensorFlow Quantum tutorials** and other labs/tutorials; positioned as resources to “learn how to use quantum computing to accelerate machine learning workloads.”  
-  URL: https://quantumai.google/resources  
-  Evidence: [archive/tavily_search.jsonl]
-
-### Industry/news roundups (useful but treat as secondary / claims-by-announcement)
-- **Network World** — *Top quantum breakthroughs of 2025*  
-  - Mentions enterprise interest in “quantum and AI”; cites a **SAS survey** statistic (“60% … investing in, or exploring opportunities, in quantum AI”) and mentions market-sizing language attributed to Bain; also references public discourse contrasting AI hype vs quantum timelines (including Jensen Huang’s “15 to 30 years” remark, per the article excerpt).  
-  URL: https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html  
-  Evidence: [archive/tavily_search.jsonl]
-
-- **Quantum Computing Report — News page**
-  - Contains industry announcements, e.g., photonics-based reservoir computing “Neurawave” and a Pasqal/Aramco deployment claim (neutral-atom system “capable of controlling 200 qubits… for industrial applications”), per extracted snippet.  
-  URL: https://quantumcomputingreport.com/news/  
-  Evidence: [archive/tavily_search.jsonl]
-
-### General overviews / lower-authority sources (use cautiously)
-- **MDPI paper (overview)** — *Quantum Machine Learning—An Overview*  
-  - Overview framing and comparison of classical SVM vs quantum SVM; discusses challenges/limitations; useful as background but still a secondary overview.  
-  URL: https://www.mdpi.com/2079-9292/12/11/2379  
-  Evidence: [archive/tavily_search.jsonl]
-
-- Additional results in the run include vendor blogs / developer posts (SpinQ, dev.to, etc.) that describe QML benefits and applications; these are generally **promotional or non-peer-reviewed** and should be treated as illustrative rather than authoritative.  
-  Evidence: [archive/tavily_search.jsonl]
+- **Quantum Economic Development Consortium (QED‑C) / SRI International — “Quantum Computing and Artificial Intelligence Use Cases” (report page)**
+  - Frames QC and AI as “complement[ing] each other… in multidirectional ways,” including: **AI assisting QC** (circuit design, applications, error correction, generating test data) and **QC assisting AI** by solving “certain types of problems more efficiently, such as **optimization and probabilistic tasks**,” with an emphasis on **hybrid approaches** that “reduce algorithmic complexity” and improve “resource allocation.”  
+  - Provides a formal citation line indicating: “SRI International, **March 2025**.”  
+    URL: https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/  [archive/tavily_search.jsonl]
 
 ---
 
-## arXiv metadata (audit: appears off-topic vs QC+AI focus)
+## YouTube source (primary narrative transcript evidence)
 
-- **arXiv:2401.01234v1** — “Mixture cure semiparametric additive hazard models…” (survival analysis; stat.ME)  
-  URL: http://arxiv.org/abs/2401.01234v1 (PDF: https://arxiv.org/pdf/2401.01234v1)  
-  Evidence: [archive/arxiv/papers.jsonl]
-- **arXiv:2311.12345v1** — “Stable Diffusion For Aerial Object Detection” (computer vision; not quantum computing)  
-  URL: http://arxiv.org/abs/2311.12345v1 (PDF: https://arxiv.org/pdf/2311.12345v1)  
-  Evidence: [archive/arxiv/papers.jsonl]
+- **Caleb Writes Code — “Quantum Computing and AI” (video metadata)**
+  - Video title/channel/date/duration and topic framing: “Quantum Computers are approaching a turning point…” with chapters including “LLM Training,” “CPU to GPU to QPU,” “Quantum Computing Industry,” etc.  
+    URL: https://www.youtube.com/watch?v=sQSQBYHR0ms  (direct URL in archive: https://www.youtube.com/watch?v=sQSQBYHR0ms&t=374s)  [archive/youtube/videos.jsonl]
 
-These arXiv entries don’t support “quantum computing + AI” directly and—per the run—no full texts were downloaded anyway.
+- **Transcript — key definitional/claim passages (needs external corroboration if used as factual claims)**
+  - Claims about LLM training scale: uses Meta “Llama 3.1 (405B)” and asserts training on “just one GPU” would take “around **4,486 years**,” while “16,000 GPUs” brings it to “**3 months**.” [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
+  - Conceptual explanation: argues LLM training cost is dominated by **matrix multiplication** / FLOPs, gives a figure of “**10^25 flops**” for training, and questions whether quantum can “do all that math simultaneously.” [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
+  - Encoding/friction point: describes a key challenge as mapping classical deterministic bits (“zeros and ones”) into **probabilistic quantum states**; suggests naïvely encoding classical bits deterministically into qubits removes the point of quantum speedups. [archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt]
+
+---
+
+## arXiv metadata (off-topic / should be excluded from QC+AI use-case evidence)
+
+- **arXiv:2401.01234v1** — survival analysis additive hazard model under censoring (stat.ME), not about quantum/AI use cases.  
+  URL: http://arxiv.org/abs/2401.01234v1  [archive/arxiv/papers.jsonl]
+- **arXiv:2311.12345v1** — Stable Diffusion for aerial object detection (cs.CV/cs.AI), not about quantum computing.  
+  URL: http://arxiv.org/abs/2311.12345v1  [archive/arxiv/papers.jsonl]
+
+---
+
+## Method/limitations notes you can reuse in the report
+
+- Evidence base here is **(a)** Tavily-result snippets (not full-page extractions) and **(b)** one YouTube transcript; **no peer-reviewed full texts** were downloaded; OpenAlex was **disabled**, and arXiv citation lookup **failed**. [archive/_job.json] [archive/_log.txt]

@@ -1,22 +1,12 @@
-업데이트된 Plan(완료 표시 + 누락 단계 보강):
+업데이트된 Plan (완료 체크 및 누락 단계 보강)
 
-- [x] **범위·출처 확정** — 인덱스에 *Queries: 0 | URLs: 1 | PDFs: 1*로 명시되어 **“단일 URL(PDF 1건) 기반 번역·리뷰”**임을 근거와 함께 보고서 서두에 선언  
-  - 근거: `/archive/20260112_ms-ai-diffusion-index.md` (라인 5, 16~20)
-
-- [ ] **원문 구조 빠른 스캔** — `web/text`에서 Executive Summary → 랭킹/격차 → 한국 사례 → DeepSeek → References 순으로 섹션 흐름과 `===== PAGE N =====` 매핑
-
-- [ ] **핵심 수치·주장 채집** — 16.3%(세계), North 24.7 vs South 14.1, 격차 9.8→10.6p, 한국 25→18위/30.7% 등 **“인용 가능한 원문 문장 + 페이지”**로 정리
-
-- [ ] **한국(South Korea) 심층 파트 정리** — 정책(AI Basic Act/위원회)·모델(Korean CSAT 점수 변화)·문화적 촉발(지브리 스타일) 3요인을 **요약-근거-해석** 포맷으로 재구성
-
-- [ ] **Figure 후보 추출 계획** — PDF에서 (1) 확산 지도, (2) Top30 표/랭킹 변화, (3) North/South 막대그래프, (4) 한국 CSAT 성능 그래프, (5) DeepSeek 시장점유 지도 등을 **페이지+캡션+해석**으로 목록화
-
-- [ ] **텍스트 품질 검증** — `tavily_extract`와 대조해 끊김/누락 문장 보정, 최종 인용문은 가장 깨끗한 버전으로 통일
-
-- [ ] **번역·리뷰 보고서 골격 작성** — Executive Summary(5~7문장)→Key Findings→Trends & Implications→Risks & Gaps→Critics 순으로 **사실/해석 분리**해 초안 구성
-
-- [ ] **최종 원고 다듬기** — 딱딱한 학술체를 피하고 전환/연결문 강화, **페이지 인용·그림 캡션·출처 표기** 포함해 재현성 확보
-
-추가로 보강(누락 단계):
-- [ ] **인용/참조 규칙 확정** — 모든 인용문에 `(PAGE N)`을 강제하고, 표/그림은 `Figure X. 캡션 (PAGE N, Source URL)` 형식으로 통일(보고서 전체 일관성 확보)
-- [ ] **References 처리 방침 명시** — 본 런에는 추가 web_fetch 결과가 없으므로, PDF의 References([2]~[21])는 “보고서 내 소개/언급”까지만 하고 **외부 사실 검증은 본 산출물 범위 밖**임을 각주로 고지
+- [x] 아카이브/인덱스 실존 파일 확인 — `index.md`, `_job.json`, `_log.txt`, `web/pdf`, `web/text` 존재 확인 및 커버리지 확정  
+  - 수집물: PDF 1개(`/archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`), 변환 텍스트 1개(`/archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`), 인덱스/로그/잡 설정 정상
+- [x] 원문 텍스트(변환본) 구조 파악 — Executive Summary(초반) + 본문 섹션(한국/DeepSeek 등) + Appendix(국가별 테이블, PAGE 15부터 확인) 위치 파악 및 핵심 주장/지표(H1↔H2, North/South, 국가 순위, 한국, DeepSeek) 근거 구간 확인
+- [ ] PDF에서 핵심 Figure/표 추출 계획 수립 — **후보 리스트는 확보했으나**, 각 Figure/표의 **정확한 페이지 번호/캡션 매핑**이 아직 필요
+- [ ] PDF 원본에서 Figure/표 페이지 번호 확인 — 텍스트의 `===== PAGE N =====` 마커를 기준으로 Figure/표(지도, 막대그래프, Top 30, 한국 성장 그래프, DeepSeek 점유율 지도, Appendix 테이블)의 페이지를 확정
+- [ ] (누락 보강) Figure/표 “추출 실행” 단계 정의 — (필요 시) PDF → 이미지(페이지 렌더) → 크롭(그림 영역) → 파일명 규칙/캡션 정리 → 보고서 삽입 경로 확정
+- [ ] 연례 리뷰(annual_review) 템플릿에 매핑 — Abstract/Introduction/Year in Review/Theme/Questions/Future 섹션별로 어떤 근거(지표/사례/해석)를 넣을지 설계
+- [ ] 인용·근거 관리 규칙 정하기 — 파일+페이지(또는 텍스트 라인) 기반 인용 포맷 확정 + 수치/순위/정의 검증 체크리스트
+- [ ] 최종 보고서 작성 워크플로우 정의 — 번역(요약-근거-해석)→검수(용어·수치 일관성)→도표 삽입→한계/추가자료 명시 순서로 정리
+- [ ] (누락 보강) 최종 보고서 작성(한국어, 리뷰형) — 섹션별 원문 근거 인용을 달고, 도표/그림 삽입 위치를 표시하며 “번역+해설” 톤으로 본문 완성

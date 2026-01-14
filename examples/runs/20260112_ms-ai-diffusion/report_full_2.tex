@@ -1,0 +1,178 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\title{ Federlicht Report - 20260112\_ms-ai-diffusion }
+\author{ Hyun-Jung Kim / AI Governance Team }
+\date{ 2026-01-14 }
+\begin{document}
+\maketitle
+
+\noindent\textit{Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 23:02}
+
+\section{Abstract}
+Microsoft Research가 2026년 1월 공개한 \textit{Global AI Adoption in 2025 — A Widening Digital Divide}는 2025년 하반기(H2) 전 세계 생성형 AI 사용(보고서 용어로는 AI diffusion)이 상반기(H1) 대비 1.2\%p 증가했지만, 동시에 Global North와 Global South 간 격차가 더 벌어졌다는 점을 핵심 메시지로 제시한다. 세계적으로는 인구 기준 16.3\%가 생성형 AI 도구를 사용하며(“roughly one in six”), 북반구(선진권 묶음) 작업연령층 사용률은 24.7\%, 남반구(개도권 묶음)는 14.1\%로 관측된다. 격차는 H1의 9.8\%p에서 H2의 10.6\%p로 확대되었다는 서술이 명시적이다. 이 보고서는 Microsoft 텔레메트리 기반의 익명 집계 데이터를 OS/디바이스 점유율, 인터넷 보급률, 인구로 보정해 국가 간 비교 가능 지표를 만들었다고 설명하면서도, 단일 지표의 한계를 인정하고 후속 보완지표 도입을 예고한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]} \href{https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf}{[2]}.
+
+\section{Introduction}
+\subsection{범위와 목적}
+본 리뷰는 Microsoft Research의 단일 원문 보고서(2026년 1월 공개, 2025년 H1과 H2 비교)를 1차 근거로 삼아, (1) 2025년 한 해(특히 H1$\rightarrow$H2) 생성형 AI 확산의 변화, (2) 지역 및 국가별 격차의 구조, (3) 확산을 촉진하거나 제약한 요인에 대한 보고서의 해석을 한국어로 심층 번역하듯 설명하는 것을 목표로 한다. 데이터 자체를 재분석하기보다는, 보고서가 제시한 수치, 정의, 사례(미국, 한국, UAE, DeepSeek 등)의 논지 전개를 “요약-근거-해석” 흐름으로 재구성한다.
+
+\subsection{자료 선택 기준과 한계}
+본 런의 수집 대상 URL은 Microsoft Research PDF 1개로 제한되어 있으며(Queries 0, URLs 1), 따라서 본 리뷰는 단일 기관, 단일 데이터 소스(“aggregated and anonymized Microsoft telemetry”)에 기반한 관측이라는 제약이 있다 \href{./archive/20260112\_ms-ai-diffusion-index.md}{[3]} \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 보고서 내부 참고문헌으로 외부 기사 및 자료가 다수 열거되지만, 본 런 아카이브에는 해당 링크의 원문이 별도 수집되어 있지 않으므로, 외부 문헌 내용은 보고서가 인용한 ‘주장 구조’의 일부로만 취급하고 1차 실증근거로 격상하지 않는다.
+
+\subsection{핵심 개념: AI diffusion의 정의}
+보고서는 AI diffusion을 “reported period 동안 생성형 AI 제품을 사용한 사람의 비중(share of people who have used a generative AI product during the reported period)”으로 정의한다. 산출은 Microsoft 텔레메트리 기반 집계/익명 데이터로부터 도출하며, 국가 비교를 위해 OS/디바이스 시장점유율, 인터넷 보급률, 인구 차이를 보정했다고 설명한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이 정의는 직관적이지만, 어떤 제품군을 “generative AI product”로 포함했는지, 사용의 강도(일회성 체험 vs 반복 사용)나 사용 목적(업무 vs 오락)을 어떻게 구분하는지 등은 본문에서 제한적으로만 드러난다. 따라서 지표는 “접근 및 사용 경험의 확산”을 포착하는 데 강점이 있으나, “경제적 생산성 효과”나 “조직 내 정착도”까지 직접 대표한다고 해석하기에는 주의가 필요하다(이 점은 보고서도 “No single metric is perfect”라고 명시한다) \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\section{Year in Review}
+\subsection{1) 전 세계 확산은 상승했지만, 상승폭은 ‘가속’이라기보다 ‘완만한 누적’으로 나타남}
+보고서는 2025년 H2에 전 세계 생성형 AI 사용이 16.3\%로 올라 H1의 15.1\% 대비 1.2\%p 증가했다고 정리한다. 이 증가를 “early years”의 기술에서 “meaningful gain”으로 평가하면서, 동시에 “roughly one in six people”이 AI를 학습, 업무, 문제 해결에 사용한다고 서술한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 여기서 중요한 해석 포인트는, 2025년 하반기의 확산이 폭발적 급증이라기보다, 초기 대중화 국면에서 세계 평균이 점진적으로 밀려 올라가는 형태라는 점이다. 즉, “이미 AI가 화제가 된 뒤”의 2025년에도 사용층은 계속 늘었지만, 그 성격은 지역별, 국가별 ‘경로 의존성’에 강하게 묶여 있다.
+
+\subsection{2) ‘Widening Digital Divide’는 정성적 표어가 아니라, 격차의 수치 확대를 직접 제시함}
+보고서가 제목으로 내세운 “A Widening Digital Divide”는 메시지 차원이 아니라, 지표로 확인되는 격차 확대를 뜻한다. Global North의 작업연령층 AI 사용률은 24.7\%, Global South는 14.1\%이며, H1$\rightarrow$H2 증가폭은 각각 +1.8\%p와 +1.0\%p로 거의 2배 가까운 성장 속도 차이를 보인다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 더 직접적으로는 격차가 9.8\%p에서 10.6\%p로 확대되었다고 명시한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+이 대목에서 보고서는 “AI의 혜택이 확장되고 있으나, 동일하게 확장되는 것은 아니다(In short, AI’s benefits are expanding, but they are not expanding equally.)”라고 정리한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 즉, 2025년의 핵심 변화는 “확산 그 자체”만이 아니라 “확산의 편중이 더 선명해진 것”이다.
+
+\subsection{3) 상위권 국가는 ‘인프라-스킬링-정부도입’의 선행투자가 지속적으로 유리하게 작동}
+상위권 국가들은 전반적으로 순위 변동이 크지 않으며, 상단이 “saturated”되어 있다는 표현까지 등장한다. 그럼에도 보고서는 리더 집단의 공통분모를 비교적 명확히 제시한다. 즉, 디지털 인프라, AI 스킬링, 정부 부문 도입에 “early and consistently” 투자한 국가들이 계속 선도한다는 것이다. 대표로 UAE, Singapore, Norway, Ireland, France, Spain을 반복 언급한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+특히 UAE는 H1 59.4\%에서 H2 64.0\%로 상승하며 1위를 유지하고, Singapore(60.9\%)와의 격차를 3\%p 이상으로 벌렸다고 설명한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이 서술은 “선도국은 이미 높다”에서 끝나지 않고, 높은 수준에서조차 추가 상승이 가능함을 보여주며(즉, 포화라 해도 완전 정체는 아님), 동시에 후발국이 따라잡기 더 어려워지는 구조를 암시한다.
+
+\subsection{4) 미국 사례: 혁신과 인프라 리더십이 ‘대중적 사용률’로 자동 변환되지 않음}
+보고서는 미국을 매우 상징적으로 배치한다. 미국이 AI 인프라와 프런티어 모델 개발에서 선도한다는 점을 인정하면서도, 그것만으로 “broad AI adoption”을 보장하지 않는다고 못 박는다. 미국의 작업연령층 사용률은 28.3\%이며, 순위는 23위에서 24위로 하락했다는 점을 든다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+이 대목의 함의는 전략적으로 크다. 기술 공급(모델 개발, 인프라 우위)과 기술 수요(일상 및 업무에서의 실제 사용 확산)가 다른 정책 변수에 의해 매개될 수 있다는 것이다. 보고서는 그 “다른 변수”를 미국 파트에서 상세히 분해하지는 않지만, 최소한 국가 경쟁력을 “프런티어 개발” 하나로 환원하지 말라는 경고로 읽힌다.
+
+\subsection{5) 한국 사례: 정책-언어성능-소비자 기능의 결합이 단기간 급등을 만들었다는 내러티브}
+보고서는 South Korea를 “clearest end-of-year success story”로 부르며, H2에 25위에서 18위로 7계단 상승했다고 강조한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이어 별도 소절 “South Korea’s AI Surge: Policy, Models, and a Viral Cultural Moment”에서, 한국이 H2 2025에 “dramatic leap”을 이룬 거의 유일한 국가라고 표현한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+정량 근거로는 생성형 AI 사용이 약 26\%에서 30\% 이상으로 늘었고, 2024년 10월 이후 누적 성장률이 80\% 이상이며, 이는 global average 35\%, U.S. 25\%를 크게 상회한다고 쓴다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 또한 정책 측면에서는 2025년 9월 국가 AI 조정기구를 National AI Strategy Committee로 재구성하고, AI Basic Act를 제정해 인프라 확장, 규제 조정, 공공부문 도입의 공식 메커니즘을 만들었다고 설명한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+기술 측면에서는 한국어 성능 향상을 확산의 직접 동인으로 묘사한다. 예로 CSAT 벤치마크에서 GPT-3.5는 16점, GPT-4o는 75점, GPT-5는 100점이라는 상승을 제시하며, “below adult reading proficiency”에서 “top-tier college students” 수준으로 이동했다고 해석한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 여기에 2025년 4월 한국 SNS에서 “Ghibli-style images”가 바이럴이 되며 첫 사용자 유입을 촉발했다고 서술.  
+결과적으로 이 보고서가 제시하는 한국의 핵심 메커니즘은 “국가정책(제도화) + 언어 적합성(모델 품질) + 대중적 트리거(소비자 기능)”의 결합이다. 특히 “언어 성능 개선이 사용을 견인한다”는 관찰을 한국어 사례로 구체화해 보여준다.
+
+\subsection{6) DeepSeek: ‘개방성과 무료’가 새로운 확산 경로가 될 수 있음을 부각}
+보고서는 2025년의 또 다른 큰 변화로 DeepSeek의 부상을 제시하며, “openness”를 핵심 특성으로 강조한다. 모델 가중치를 MIT License로 공개하고, 웹/모바일에서 완전 무료 챗봇을 제공해 비용 및 기술 장벽을 제거했다는 것이다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 채택 지역은 북미/유럽에서 낮고, 중국, 러시아, 이란, 쿠바, 벨라루스 및 아프리카 전역에서 높다고 서술하며, 아프리카에서는 사용이 다른 지역 대비 2$\sim$4배 높게 “estimated”된다고 표현한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 또한 화웨이(Huawei) 같은 기업과의 파트너십, 통신 서비스 통합 등 “distribution”의 역할도 언급한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+흥미로운 지점은 보고서가 이를 단지 제품 경쟁이 아니라 미-중 AI 경쟁의 한 차원, 즉 “각자의 national models 채택을 촉진하는 경쟁(race to promote adoption of their respective national models)”으로 연결한다는 점이다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 다만 이 프레이밍은 지표(사용률)와 지정학(영향력)을 연결하는 해석이므로, 사실 서술과 해석을 분리해 읽어야 한다.
+
+\section{Cross-Cutting Themes}
+\subsection{1) 확산(adoption/diffusion)은 ‘기술의 존재’보다 ‘접근의 조건’에 더 민감하다}
+보고서 전반에서 반복되는 메시지는, AI 확산이 단순히 “모델이 좋아졌다”로만 설명되지 않는다는 점이다. Global North가 더 빠르게 확산하고, 상위 증가폭 10개국이 모두 고소득국이며, 한국과 UAE가 4\%p 이상 증가했다는 서술은 확산이 경제적 기반과 제도적 준비도에 좌우됨을 시사한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+DeepSeek 파트는 이를 다른 각도에서 강화한다. 모델 품질만이 아니라 “무료, 결제장벽 제거, 가용성, 배포 채널”이 채택을 바꾼다는 점을 직접적으로 강조하며, “global AI adoption is shaped as much by access and availability as by model quality”라는 문장으로 요약한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{2) ‘국가 단위’ 확산을 움직이는 세 가지 레버: 제도화, 언어/문화 적합성, 대중적 계기}
+한국 사례는 확산의 레버를 비교적 분해해 보여준다. 첫째, 정부 정책과 제도화(위원회 재구성, 법 제정, 교육 투자)는 공공부문과 제도권에서의 사용을 안정적으로 뒷받침한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 둘째, 언어 성능 개선은 “쓸 만함(practical and reliable)”의 문턱을 넘게 하여 대중 사용을 촉진한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 셋째, 이미지 생성 바이럴처럼 비기술적 대중 계기는 신규 사용자 유입을 촉발한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+이 세 요소는 서로 대체재라기보다 보완재로 제시된다. 즉 “바이럴만으로” 지속 확산이 되기 어렵고, “정책만으로” 개인 사용이 늘지 않을 수 있으며, “성능만으로” 제도권 도입이 저절로 발생하지 않을 수 있다. 보고서는 한국에서 이들이 결합해 단기간 급등을 만들었다고 본다.
+
+\subsection{3) ‘선도국 포화’는 정체가 아니라, 격차의 고착 위험을 뜻한다}
+상위 30개국의 순위가 대체로 안정적이며 상단이 포화되었다는 표현은, 선도국의 지배가 쉽게 깨지지 않는다는 뜻으로 읽힌다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이런 상황에서 Global North는 높은 수준에서 추가로 성장하고(+1.8\%p), Global South는 낮은 수준에서 더 느리게 성장(+1.0\%p)해 격차가 벌어진다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+따라서 2025년의 “확산”은 단순한 보급 확대가 아니라, 향후 디지털 생산성, 교육, 행정 서비스의 질에서 국가 간 분화가 더 커질 수 있는 전조로 해석된다. 물론 보고서는 생산성 지표를 직접 제시하지 않지만, “scientific discovery and productivity gains” 같은 우선순위를 언급하며 향후 지표 보완 방향을 시사한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{4) 측정의 정치경제학: 단일 기업 텔레메트리 기반 ‘세계지표’의 가능성과 한계}
+이 보고서의 강점은 동일한 기준으로 다수 국가를 관찰하려는 시도 자체에 있다. AI diffusion을 “cross-country measure”로 제공하고, OS/디바이스 점유율, 인터넷 보급률, 인구로 보정했다고 밝히는 점은 국가 비교의 기술적 난점을 정면으로 다룬다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+동시에 한계도 분명하다. 텔레메트리 기반 지표는 (1) Microsoft 생태계와의 접점에 의해 관측 가능성이 달라질 수 있고, (2) “생성형 AI 제품”의 범주 정의에 따라 값이 달라질 수 있으며, (3) 사용의 깊이, 품질(업무 성과), 위험(오남용) 등을 분리해 보여주지 못할 수 있다. 보고서도 “No single metric is perfect”라고 인정하며 향후 추가 지표를 예고한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이는 이 지표를 읽을 때, ‘정확한 세계 진실’이라기보다 ‘일관된 관측 창’으로 이해하는 것이 적절함을 뜻한다.
+
+\section{Outstanding Questions}
+\subsection{1) “reported period 동안 사용”은 어느 정도의 사용을 의미하는가}
+지표 정의는 명료하지만, 사용의 임계값(예: 한 번 사용 vs 반복 사용), 기간 내 중복 사용자 처리, 기업 계정과 개인 계정의 구분 등은 본문만으로는 완전히 드러나지 않는다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 향후 지표가 정책 및 투자 판단에 쓰일수록, “사용 경험의 확산”과 “실질적 정착”을 구분하는 보조지표가 요구된다.
+
+\subsection{2) Global North/Global South 구분의 기준과 작업연령층(working age) 정의}
+보고서는 Global North/Global South를 대비시키며 24.7\% vs 14.1\%를 제시하지만, 어떤 국가가 어느 범주에 포함되는지, 그리고 working age의 연령 범위가 무엇인지가 본문 발췌에서는 명시적으로 확인되지 않는다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 동일 수치라도 범주 정의에 따라 해석이 달라질 수 있으므로, 기술 문서(technical paper)와의 연결이 중요하다(보고서는 별도 technical paper를 안내) \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{3) 한국 사례에서 ‘모델 성능 향상’과 ‘정책/바이럴’의 기여도를 어떻게 분리할 것인가}
+보고서는 한국 급등의 동인을 세 갈래로 제시하지만, 각 요인의 기여도를 계량적으로 분해하지는 않는다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 예컨대 GPT-4o, GPT-5 릴리스 타이밍과 정책 이벤트, 바이럴 이벤트가 어떻게 상호작용했는지(대체/증폭 효과)까지는 추가 분석이 필요하다. 이는 다른 국가로 “한국 모델”을 이식하려는 전략가에게 특히 중요한 질문이다.
+
+\subsection{4) DeepSeek 확산의 서술에서 ‘추정(estimated)’과 ‘측정(measured)’의 경계}
+DeepSeek 파트는 아프리카에서 사용이 2$\sim$4배 높다고 “estimated”라고 표현하고, 지정학적 해석(영향력 도구)까지 연결한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 이 부분은 보고서 내 다른 수치(예: AI diffusion 16.3\%)에 비해 관측 및 추정의 방법이 덜 상세하게 제시되어, 독자가 사실과 해석의 경계를 더 엄격히 점검할 필요가 있다.
+
+\section{Future Directions}
+\subsection{1) 확산 측정의 다음 단계: 단일 diffusion 지표에서 ‘다중 지표 대시보드’로}
+보고서 자체가 단일 지표의 한계를 인정하고 추가 지표로 보완하겠다고 밝힌 만큼, 향후에는 (1) 사용 빈도/지속성, (2) 업무 및 교육 등 영역별 사용, (3) 생산성 및 학습성과와의 연결, (4) 안전 및 신뢰(오남용, 규제 준수) 지표가 함께 제시되는 형태가 자연스럽다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 특히 “adoption varies across countries in ways that best advance priorities such as scientific discovery and productivity gains”라는 문장은 확산을 ‘목적 지향적’으로 재측정하겠다는 방향성을 내포한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{2) 격차 축소 전략: 접근성(비용, 결제, 기기, 네트워크)과 언어 커버리지를 핵심 레버로 재정의}
+DeepSeek 사례가 보여주듯, 비용 및 결제 장벽 제거는 대규모 확산을 촉진할 수 있다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 동시에 한국 사례는 언어 성능 향상이 사용층 확대의 강력한 촉매가 될 수 있음을 시사한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.  
+따라서 Global South의 확산을 촉진하려면, “더 좋은 모델”만이 아니라 (1) 저비용 또는 공공접근 모델, (2) 로컬 언어 최적화, (3) 저사양 환경에서도 작동하는 UX, (4) 교육 및 공공서비스에 내장된 기본 제공 채널이 핵심이 될 가능성이 높다. 이는 보고서의 결론 문장, 즉 “innovation spreads in ways that help narrow divides rather than deepen them”이라는 문제의식과도 맞닿아 있다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{3) 국가 전략 관점: ‘프런티어 개발’과 ‘대중 채택’의 정책 포트폴리오를 분리 설계}
+미국 사례가 던지는 메시지는, 공급 측 리더십이 곧바로 대중적 사용률로 이어지지 않을 수 있다는 점이다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 향후 국가 전략은 (1) 모델/인프라 R\&D와 (2) 교육, 공공서비스, 업무도구 통합 같은 ‘사용 촉진 정책’을 분리해 설계하고, 각각의 성과를 서로 다른 지표로 점검하는 방식으로 정교해질 필요가 있다. 보고서가 “AI diffusion”이라는 사용 경험 지표를 전면에 둔 것 자체가, 국가 경쟁력을 ‘개발’뿐 아니라 ‘채택’까지 포함해 보라는 요구로 읽힌다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{4) 개방형 모델 시대의 거버넌스: 속도에 맞춘 표준/안전 체계의 동시 확장}
+보고서는 DeepSeek 사례를 통해, 오픈소스/무료 모델이 “limited oversight” 아래 빠르게 퍼질 수 있고, 그 결과 “standards and safety” 이슈가 커질 수 있음을 경고한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 따라서 다음 국면의 과제는 확산을 막는 것보다, (1) 배포 채널별 최소 안전 기준, (2) 지역별 리스크(예: 선거, 금융사기) 대응 프레임, (3) 책임 주체(배포자/호스팅/응용 개발자) 정렬을 포함하는 운영형 거버넌스를 ‘확산 속도’에 맞춰 설계하는 방향으로 수렴할 가능성이 크다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\section{Appendix}
+(본 섹션은 원문에서 확인된 근거 및 이번 런의 수집 메타를 정리하기 위해 추가되었다. 본문 내용과 동일한 출처를 사용하며, 새로운 주장을 추가하지 않는다.)
+
+\subsection{A. 수집 범위 및 한계(메타)}
+이번 런의 수집 범위는 ‘URL 1개(PDF 1건)’에 한정되며, 추가 검색(Queries)은 수행되지 않았다 \href{./archive/20260112\_ms-ai-diffusion-index.md}{[3]}. 수집 대상 URL도 Microsoft Research PDF 1개로 명시되어 있다 \href{./instruction/20260112\_ms-ai-diffusion.txt}{[4]}. 따라서 본 문서의 모든 실증적 진술은 해당 보고서 텍스트 추출본을 1차 근거로 한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{B. 핵심 지표 및 측정 방식(원문 요약)}
+보고서는 “AI diffusion”을 “reported period 동안 생성형 AI 제품을 사용한 사람의 비중”으로 정의하고, “aggregated and anonymized Microsoft telemetry”를 기반으로 OS/디바이스 시장점유율, 인터넷 보급률, 인구 차이를 반영하도록 조정했다고 밝힌다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 동시에 “No single metric is perfect”라는 문장으로 단일 지표의 한계를 인정하고, 추가 지표로의 보완을 예고한다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{C. 수치 하이라이트(원문 표/요약 문장 기반)}
+H1$\rightarrow$H2 변화로 보고서가 제시한 대표 수치는 다음과 같다: World 15.10\%$\rightarrow$16.30\%(+1.2\%p), Global North 22.90\%$\rightarrow$24.70\%(+1.8\%p), Global South 13.10\%$\rightarrow$14.10\%(+1.0\%p). 격차는 9.8\%p$\rightarrow$10.6\%p로 확대되었다고 명시된다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}. 또한 UAE(64.0\%), Singapore(60.9\%) 등 상위권 유지, 미국 28.3\%(23위$\rightarrow$24위), 한국 25위$\rightarrow$18위(급등) 등이 사례로 제시된다 \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{[1]}.
+
+\subsection{D. 보조 텍스트 스냅샷(Tavily extract) 위치}
+동일 PDF의 raw\_content 스냅샷은 다음 경로로 제공되며, 키워드 검색 및 인용 후보 문장 교차 확인용으로 활용 가능하다: \href{./archive/tavily\_extract/0001\_https\_www.microsoft.com\_en-us\_research\_wp-content\_uploads\_2026\_01\_Microsoft-AI-Diffusion-Report-2025-H2.pdf.txt}{[5]}.
+
+\section*{Figures}
+\paragraph{Figures referenced.} Figure~\ref{fig:1}: Source PDF: Microsoft-AI-Diffusion-Report-2025-H2.pdf Figure~\ref{fig:2}: Source PDF: Microsoft-AI-Diffusion-Report-2025-H2.pdf Figure~\ref{fig:3}: Source PDF: Microsoft-AI-Diffusion-Report-2025-H2.pdf Figure~\ref{fig:4}: Source PDF: Microsoft-AI-Diffusion-Report-2025-H2.pdf
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_web\_pdf\_Microsoft-AI-Diffusion-Report-2025-H2.pdf-7287640b.jpeg}
+\caption{Source: \\texttt{./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf}, page 1.}
+\label{fig:1}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_web\_pdf\_Microsoft-AI-Diffusion-Report-2025-H2.pdf-9c8cb5d4.png}
+\caption{Source: \\texttt{./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf}, page 1.}
+\label{fig:2}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_web\_pdf\_Microsoft-AI-Diffusion-Report-2025-H2.pdf-46e6962e.png}
+\caption{Source: \\texttt{./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf}, page 2.}
+\label{fig:3}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_web\_pdf\_Microsoft-AI-Diffusion-Report-2025-H2.pdf-dcda6a48.png}
+\caption{Source: \\texttt{./archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf}, page 18.}
+\label{fig:4}
+\end{figure}
+
+\section*{Report Prompt}
+\begin{verbatim}
+MS 에서 발간한 AI 확산 보고서에 대해서 확인해주고 보고서를 작성해줘.
+영문으로 되어있는 내용에 대해 한글로 최대한 심도있게 보고서를 번역한다고 생각하고.
+
+문체는 설명형/서술형 리뷰로, 너무 딱딱한 학술문체를 피하고 자연스러운 연결 문장과 전환을 사용.
+문장 길이를 섞되, 요약-근거-해석 흐름이 읽히게 작성. 필요시 figure나 그림을 추출하여 리포트에 사용함.
+\end{verbatim}
+\section*{References}
+\renewcommand{\labelenumi}{[\arabic{enumi}]}
+\begin{enumerate}
+\item Microsoft-AI-Diffusion-Report-2025-H2.txt --- \href{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}{\texttt{./archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt}}
+\item www.microsoft.com/en-us/research/wp-content/uploads/2026/01/M... --- \href{https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf}{link}
+\item 20260112\_ms-ai-diffusion-index.md --- \href{./archive/20260112\_ms-ai-diffusion-index.md}{\texttt{./archive/20260112\_ms-ai-diffusion-index.md}}
+\item 20260112\_ms-ai-diffusion.txt --- \href{./instruction/20260112\_ms-ai-diffusion.txt}{\texttt{./instruction/20260112\_ms-ai-diffusion.txt}}
+\item 0001\_https\_www.microsoft.com\_en-us\_research\_wp-content\_uploads\_2026\_01\_Microsoft-AI-Diffusion-Report-2025-H2.pdf.txt --- \href{./archive/tavily\_extract/0001\_https\_www.microsoft.com\_en-us\_research\_wp-content\_uploads\_2026\_01\_Microsoft-AI-Diffusion-Report-2025-H2.pdf.txt}{\texttt{./archive/tavily\_extract/0001\_https\_www.microsoft.com\_en-us\_research\_wp-content\_uploads\_2026\_01\_Microsoft-AI-Diffusion-Report-2025-H2.pdf.txt}}
+\end{enumerate}
+\section*{Miscellaneous}
+\small
+\begin{itemize}
+\item Generated at: 2026-01-14 23:02:08
+\item Duration: 00:13:13 (793.94s)
+\item Model: gpt-5.2
+\item Quality strategy: none
+\item Quality iterations: 0
+\item Template: annual\_review
+\item Output format: tex
+\item PDF compile: enabled
+\item Run overview: ./report/run\_overview.md
+\item Archive index: ./archive/20260112\_ms-ai-diffusion-index.md
+\item Instruction file: ./instruction/20260112\_ms-ai-diffusion.txt
+\end{itemize}
+\normalsize
+\end{document}

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import io
 import html as html_lib
 import hashlib
 import os
@@ -29,7 +30,7 @@ import sys
 import time
 import urllib.parse
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 
 DEFAULT_MODEL = "gpt-5.2"
@@ -57,6 +58,7 @@ DEFAULT_LATEX_TEMPLATE = r"""\documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
 \usepackage{amsmath,amssymb}
+\usepackage{braket}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{enumitem}
@@ -226,6 +228,16 @@ def parse_args() -> argparse.Namespace:
         help="Renderer for vector PDF pages when needed (default: auto).",
     )
     ap.add_argument("--figures-dpi", type=int, default=150, help="DPI for rendered PDF pages.")
+    ap.add_argument(
+        "--figures-mode",
+        choices=["select", "auto"],
+        default="select",
+        help="Figure insertion mode: select requires a selection file; auto inserts all candidates.",
+    )
+    ap.add_argument(
+        "--figures-select",
+        help="Path to a figure selection file (default: report_notes/figures_selected.txt).",
+    )
     ap.add_argument("--max-refs", type=int, default=200, help="Max references to append (default: 200).")
     ap.add_argument("--notes-dir", help="Optional folder to save intermediate notes (scout/evidence).")
     ap.add_argument("--author", help="Author name shown in the report header.")
@@ -281,6 +293,35 @@ def find_instruction_file(run_dir: Path) -> Optional[Path]:
         return None
     candidates = sorted(instr_dir.glob("*.txt"))
     return candidates[0] if candidates else None
+
+
+def write_run_overview(
+    run_dir: Path,
+    instruction_file: Optional[Path],
+    index_file: Optional[Path],
+) -> Optional[Path]:
+    if not instruction_file and not index_file:
+        return None
+    report_dir = run_dir / "report"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    overview_path = report_dir / "run_overview.md"
+    lines: list[str] = ["# Run Overview", ""]
+    if instruction_file and instruction_file.exists():
+        rel_instruction = f"./{instruction_file.relative_to(run_dir).as_posix()}"
+        lines.extend(["## Instruction", f"Source: {rel_instruction}", ""])
+        content = instruction_file.read_text(encoding="utf-8", errors="replace").strip()
+        lines.append("```")
+        lines.append(content)
+        lines.append("```")
+        lines.append("")
+    if index_file and index_file.exists():
+        rel_index = f"./{index_file.relative_to(run_dir).as_posix()}"
+        lines.extend(["## Archive Index", f"Source: {rel_index}", ""])
+        content = index_file.read_text(encoding="utf-8", errors="replace").strip()
+        lines.append(content)
+        lines.append("")
+    overview_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+    return overview_path
 
 
 def find_baseline_report(run_dir: Path) -> Optional[Path]:
@@ -478,6 +519,36 @@ def render_latex_document(
     return text
 
 
+def close_unbalanced_lists(text: str) -> str:
+    for env in ("itemize", "enumerate"):
+        begin = text.count(f"\\begin{{{env}}}")
+        end = text.count(f"\\end{{{env}}}")
+        if end < begin:
+            text = text.rstrip() + "\n" + "\n".join([f"\\end{{{env}}}"] * (begin - end)) + "\n"
+    return text
+
+
+def sanitize_latex_headings(text: str) -> str:
+    pattern = re.compile(r"(\\(?:sub)*section\\*?\\{)([^}]+)\\}")
+
+    def repl(match: re.Match[str]) -> str:
+        title = match.group(2).replace("&", "\\&")
+        return f"{match.group(1)}{title}}}"
+
+    return pattern.sub(repl, text)
+
+
+def ensure_korean_package(template_text: str) -> str:
+    if "kotex" in template_text:
+        return template_text
+    lines = template_text.splitlines()
+    for idx, line in enumerate(lines):
+        if line.strip().startswith("\\documentclass"):
+            lines.insert(idx + 1, "\\usepackage{kotex}")
+            return "\n".join(lines)
+    return "\\usepackage{kotex}\n" + template_text
+
+
 QUALITY_WEIGHTS = {
     "alignment": 0.2,
     "evidence_grounding": 0.15,
@@ -543,13 +614,33 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
     lines.append(f"Output format: {meta.get('output_format', '-')}")
     if meta.get("pdf_status"):
         lines.append(f"PDF compile: {meta.get('pdf_status')}")
+    if output_format != "html":
+        if meta.get("run_overview_path"):
+            lines.append(f"Run overview: {meta.get('run_overview_path')}")
+        if meta.get("archive_index_path"):
+            lines.append(f"Archive index: {meta.get('archive_index_path')}")
+        if meta.get("instruction_path"):
+            lines.append(f"Instruction file: {meta.get('instruction_path')}")
+        if meta.get("figures_preview_path"):
+            lines.append(f"Figure candidates: {meta.get('figures_preview_path')}")
     if output_format == "tex":
         block = ["", "\\section*{Miscellaneous}", "\\small", "\\begin{itemize}"]
         block.extend([f"\\item {latex_escape(line)}" for line in lines])
         block.extend(["\\end{itemize}", "\\normalsize"])
         return "\n".join(block)
     if output_format == "html":
-        items = "\n".join(f"<li>{html_lib.escape(line)}</li>" for line in lines)
+        items_list: list[str] = [f"<li>{html_lib.escape(line)}</li>" for line in lines]
+        def add_link(label: str, value: Optional[str]) -> None:
+            if not value:
+                return
+            safe = html_lib.escape(value)
+            items_list.append(f"<li>{html_lib.escape(label)}: <a href=\"{safe}\">{safe}</a></li>")
+
+        add_link("Run overview", meta.get("run_overview_path"))
+        add_link("Archive index", meta.get("archive_index_path"))
+        add_link("Instruction file", meta.get("instruction_path"))
+        add_link("Figure candidates", meta.get("figures_preview_path"))
+        items = "\n".join(items_list)
         return "\n".join(
             [
                 "",
@@ -862,18 +953,68 @@ def compile_latex_to_pdf(tex_path: Path) -> tuple[bool, str]:
     workdir = tex_path.parent
     if shutil.which("latexmk"):
         cmd = ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", tex_path.name]
-        result = subprocess.run(cmd, cwd=workdir, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd,
+            cwd=workdir,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         if result.returncode == 0:
+            cleanup_latex_artifacts(tex_path)
             return True, ""
-        return False, (result.stderr or result.stdout or "latexmk failed.")
+        last_error = result.stderr or result.stdout or "latexmk failed."
+    else:
+        last_error = None
     if shutil.which("pdflatex"):
         cmd = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex_path.name]
         for _ in range(2):
-            result = subprocess.run(cmd, cwd=workdir, capture_output=True, text=True)
+            result = subprocess.run(
+                cmd,
+                cwd=workdir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             if result.returncode != 0:
                 return False, (result.stderr or result.stdout or "pdflatex failed.")
+        cleanup_latex_artifacts(tex_path)
         return True, ""
+    if last_error:
+        return False, last_error
     return False, "No LaTeX compiler found (latexmk or pdflatex)."
+
+
+def cleanup_latex_artifacts(tex_path: Path) -> None:
+    base = tex_path.with_suffix("")
+    candidates = [
+        tex_path.with_suffix(".aux"),
+        tex_path.with_suffix(".log"),
+        tex_path.with_suffix(".out"),
+        tex_path.with_suffix(".toc"),
+        tex_path.with_suffix(".bbl"),
+        tex_path.with_suffix(".blg"),
+        tex_path.with_suffix(".lof"),
+        tex_path.with_suffix(".lot"),
+        tex_path.with_suffix(".fls"),
+        tex_path.with_suffix(".fdb_latexmk"),
+        tex_path.with_suffix(".synctex.gz"),
+    ]
+    for path in candidates:
+        try:
+            if path.exists():
+                path.unlink()
+        except Exception:
+            pass
+    for extra in ["-blx.bib", "-run.xml"]:
+        candidate = Path(f"{base}{extra}")
+        try:
+            if candidate.exists():
+                candidate.unlink()
+        except Exception:
+            pass
 
 
 def request_headers() -> dict[str, str]:
@@ -1229,6 +1370,7 @@ def extract_pdf_images(
         return []
     output_dir.mkdir(parents=True, exist_ok=True)
     records: list[dict] = []
+    candidates: list[dict] = []
     pdf_rel = f"./{pdf_path.relative_to(run_dir).as_posix()}"
     try:
         doc = fitz.open(str(pdf_path))
@@ -1252,31 +1394,52 @@ def extract_pdf_images(
             if width and height and width * height < min_area:
                 continue
             ext = (base.get("ext") or "png").lower()
+            image_bytes = base.get("image", b"")
+            if not image_bytes:
+                continue
+            pil = _pillow_image()
+            if pil is not None:
+                try:
+                    image = pil.open(io.BytesIO(image_bytes))
+                except Exception:
+                    continue
+                if not _image_is_probably_figure(image, min_area):
+                    continue
             tag = f"{pdf_rel}#p{page_index + 1}-{img_index + 1}"
-            name = f"{slugify_url(tag)}.{ext}"
+            candidates.append(
+                {
+                    "pdf_path": pdf_rel,
+                    "page": page_index + 1,
+                    "width": width,
+                    "height": height,
+                    "area": width * height,
+                    "tag": tag,
+                    "ext": ext,
+                    "image": image_bytes,
+                }
+            )
+    if candidates:
+        candidates.sort(key=lambda item: item["area"], reverse=True)
+        for candidate in candidates[:max_per_pdf]:
+            name = f"{slugify_url(candidate['tag'])}.{candidate['ext']}"
             img_path = output_dir / name
             if not img_path.exists():
                 try:
                     with img_path.open("wb") as handle:
-                        handle.write(base.get("image", b""))
+                        handle.write(candidate["image"])
                 except Exception:
                     continue
             img_rel = f"./{img_path.relative_to(run_dir).as_posix()}"
             records.append(
                 {
-                    "pdf_path": pdf_rel,
+                    "pdf_path": candidate["pdf_path"],
                     "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": width,
-                    "height": height,
+                    "page": candidate["page"],
+                    "width": candidate["width"],
+                    "height": candidate["height"],
                     "method": "embedded",
                 }
             )
-            if len(records) >= max_per_pdf:
-                doc.close()
-                return records
-        if len(records) >= max_per_pdf:
-            break
     doc.close()
     return records
 
@@ -1287,6 +1450,38 @@ def _pillow_image() -> Optional[object]:
     except Exception:
         return None
     return Image
+
+
+def _image_is_probably_figure(image, min_area: int) -> bool:
+    width, height = image.size
+    if width <= 0 or height <= 0:
+        return False
+    area = width * height
+    if area < min_area:
+        return False
+    aspect = width / height
+    if aspect > 6.0 or aspect < (1 / 6.0):
+        return False
+    if width < 80 or height < 80:
+        return False
+    try:
+        from PIL import ImageStat  # type: ignore
+    except Exception:
+        return True
+    try:
+        thumb = image.resize((128, 128))
+        gray = thumb.convert("L")
+        hist = gray.histogram()
+        total = max(sum(hist), 1)
+        white = sum(hist[246:]) / total
+        if white > 0.96:
+            return False
+        stats = ImageStat.Stat(gray)
+        if stats.var and stats.var[0] < 30:
+            return False
+    except Exception:
+        return True
+    return True
 
 
 def _crop_whitespace(image, min_area: int) -> Optional[object]:
@@ -1339,16 +1534,23 @@ def _detect_figure_regions(image, min_area: int) -> list[tuple[int, int, int, in
     height, width = gray.shape[:2]
     page_area = max(width * height, 1)
     boxes: list[tuple[int, int, int, int]] = []
+    min_w = max(int(width * 0.1), 80)
+    min_h = max(int(height * 0.08), 80)
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
         area = w * h
         if area < min_area:
             continue
+        if w < min_w or h < min_h:
+            continue
+        aspect = w / h if h else 0.0
+        if aspect > 6.0 or aspect < (1 / 6.0):
+            continue
         boxes.append((x, y, w, h))
     boxes.sort(key=lambda box: box[2] * box[3], reverse=True)
     if len(boxes) > 1:
         x, y, w, h = boxes[0]
-        if (w * h) / page_area > 0.9:
+        if (w * h) / page_area > 0.85:
             boxes = boxes[1:]
     return boxes
 
@@ -2555,6 +2757,7 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "    }\n"
         "    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }\n"
         "    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }\n"
+        "    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }\n"
         "    .viewer-overlay {\n"
         "      position: fixed;\n"
         "      inset: 0;\n"
@@ -2938,7 +3141,11 @@ def find_section_spans(text: str, output_format: str) -> list[tuple[str, int, in
     return spans
 
 
-def extract_pdf_captions(pdf_path: Path, max_pages: int) -> dict[int, list[str]]:
+def extract_pdf_captions(
+    pdf_path: Path,
+    max_pages: int,
+    pages: Optional[Iterable[int]] = None,
+) -> dict[int, list[str]]:
     try:
         import pdfplumber  # type: ignore
     except Exception:
@@ -2946,8 +3153,16 @@ def extract_pdf_captions(pdf_path: Path, max_pages: int) -> dict[int, list[str]]
     captions: dict[int, list[str]] = {}
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            page_count = min(len(pdf.pages), max_pages) if max_pages > 0 else len(pdf.pages)
-            for page_index in range(page_count):
+            if pages:
+                page_indices = sorted({page - 1 for page in pages if page > 0})
+                if max_pages > 0:
+                    page_indices = page_indices[:max_pages]
+            else:
+                page_count = min(len(pdf.pages), max_pages) if max_pages > 0 else len(pdf.pages)
+                page_indices = list(range(page_count))
+            for page_index in page_indices:
+                if page_index < 0 or page_index >= len(pdf.pages):
+                    continue
                 try:
                     text = pdf.pages[page_index].extract_text() or ""
                 except Exception:
@@ -3020,11 +3235,17 @@ def build_figure_plan(
         pdf_abs = (run_dir / pdf_path.lstrip("./")).resolve()
         if not pdf_abs.exists():
             continue
-        captions = extract_pdf_captions(pdf_abs, max_per_pdf)
-        caption_index: dict[int, int] = {page: 0 for page in captions}
         images = extract_pdf_images(pdf_abs, figures_dir, run_dir, max_per_pdf, min_area)
+        render_limit = max_per_pdf - len(images)
+        if renderer != "none" and render_limit > 0:
+            rendered = render_pdf_pages(pdf_abs, figures_dir, run_dir, renderer, dpi, render_limit, min_area)
+            if rendered:
+                images.extend(rendered)
         if not images:
-            images = render_pdf_pages(pdf_abs, figures_dir, run_dir, renderer, dpi, max_per_pdf, min_area)
+            continue
+        pages = {img.get("page") for img in images if img.get("page")}
+        captions = extract_pdf_captions(pdf_abs, max_per_pdf, pages)
+        caption_index: dict[int, int] = {page: 0 for page in captions}
         for image in images:
             caption = None
             page_caps = captions.get(image.get("page", 0))
@@ -3039,6 +3260,7 @@ def build_figure_plan(
                 "page": image["page"],
                 "width": image["width"],
                 "height": image["height"],
+                "area": int(image["width"]) * int(image["height"]),
                 "method": image.get("method"),
                 "caption": caption,
                 "source_path": info["source_path"],
@@ -3048,12 +3270,134 @@ def build_figure_plan(
             entries.append(entry)
 
     if entries:
-        notes_dir.mkdir(parents=True, exist_ok=True)
-        figures_path = notes_dir / "figures.jsonl"
-        with figures_path.open("w", encoding="utf-8") as handle:
-            for entry in entries:
-                handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        entries.sort(
+            key=lambda item: (
+                item.get("position", 1_000_000),
+                item.get("page") or 0,
+                -(item.get("area") or 0),
+            )
+        )
+        for idx, entry in enumerate(entries, start=1):
+            entry["candidate_id"] = f"fig-{idx:03d}"
     return entries
+
+
+def truncate_text(text: str, limit: int = 140) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
+
+
+def render_figure_callouts(
+    entries: list[dict],
+    output_format: str,
+    report_dir: Path,
+    run_dir: Path,
+) -> str:
+    items: list[str] = []
+    for entry in entries:
+        number = entry.get("figure_number")
+        if not number:
+            continue
+        caption = entry.get("caption")
+        if not caption:
+            pdf_name = Path(entry.get("pdf_path") or "").name
+            caption = f"Source PDF: {pdf_name}" if pdf_name else "Source PDF figure"
+        caption = truncate_text(caption, 120)
+        if output_format == "tex":
+            items.append(f"Figure~\\ref{{fig:{number}}}: {latex_escape(caption)}")
+        else:
+            safe_caption = html_lib.escape(caption)
+            items.append(f'<a href="#fig-{number}">Figure {number}</a>: {safe_caption}')
+    if not items:
+        return ""
+    if output_format == "tex":
+        return "\\paragraph{Figures referenced.} " + " ".join(items)
+    return '<p class="figure-callout">Figures referenced: ' + "; ".join(items) + "</p>"
+
+
+def write_figure_candidates(
+    entries: list[dict],
+    notes_dir: Path,
+    run_dir: Path,
+    report_dir: Path,
+    viewer_dir: Path,
+    max_preview: int = 32,
+) -> Optional[Path]:
+    if not entries:
+        return None
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    candidates_path = notes_dir / "figures_candidates.jsonl"
+    with candidates_path.open("w", encoding="utf-8") as handle:
+        for entry in entries:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    select_path = notes_dir / "figures_selected.txt"
+    if not select_path.exists():
+        select_path.write_text(
+            "# Add one candidate_id per line (e.g., fig-001)\n"
+            "# Lines starting with '#' are ignored.\n",
+            encoding="utf-8",
+        )
+
+    viewer_dir.mkdir(parents=True, exist_ok=True)
+    cards: list[str] = [
+        "<h1>Figure Candidates</h1>",
+        "<p>Review candidates and add their IDs to "
+        f"<code>{html_lib.escape(select_path.relative_to(run_dir).as_posix())}</code>, "
+        "then rerun Federlicht to insert selected figures.</p>",
+    ]
+    for entry in entries[:max_preview]:
+        candidate_id = entry.get("candidate_id") or "fig"
+        img_abs = (run_dir / entry["image_path"].lstrip("./")).resolve()
+        pdf_abs = (run_dir / entry["pdf_path"].lstrip("./")).resolve()
+        img_href = os.path.relpath(img_abs, viewer_dir).replace("\\", "/")
+        pdf_href = os.path.relpath(pdf_abs, viewer_dir).replace("\\", "/")
+        caption = html_lib.escape(entry.get("caption") or "")
+        cards.append(
+            "\n".join(
+                [
+                    "<div class=\"report-figure\">",
+                    f"<p><strong>{candidate_id}</strong> — {html_lib.escape(entry['pdf_path'])} (p.{entry.get('page')})</p>",
+                    f"<img src=\"{html_lib.escape(img_href)}\" alt=\"{candidate_id}\" />",
+                    f"<p>{caption}</p>" if caption else "",
+                    f"<p>Source: <a href=\"{html_lib.escape(pdf_href)}\">{html_lib.escape(entry['pdf_path'])}</a></p>",
+                    "</div>",
+                ]
+            )
+        )
+    if len(entries) > max_preview:
+        cards.append(f"<p><em>Showing first {max_preview} candidates.</em></p>")
+    preview_html = render_viewer_html("Figure Candidates", "\n".join(cards))
+    preview_path = viewer_dir / "figures_preview.html"
+    preview_path.write_text(preview_html, encoding="utf-8")
+    return preview_path
+
+
+def select_figures(
+    entries: list[dict],
+    selection_path: Path,
+) -> list[dict]:
+    if not selection_path.exists():
+        return []
+    raw = selection_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    tokens: set[str] = set()
+    for line in raw:
+        cleaned = line.split("|", 1)[0].strip()
+        if not cleaned or cleaned.startswith("#"):
+            continue
+        tokens.add(cleaned)
+    if not tokens:
+        return []
+    selected: list[dict] = []
+    for entry in entries:
+        candidate_id = entry.get("candidate_id")
+        img_path = entry.get("image_path")
+        if candidate_id in tokens:
+            selected.append(entry)
+            continue
+        if img_path in tokens or (isinstance(img_path, str) and img_path.lstrip("./") in tokens):
+            selected.append(entry)
+    return selected
 
 
 def render_figure_block(
@@ -3070,6 +3414,8 @@ def render_figure_block(
         img_href = os.path.relpath(img_abs, report_dir).replace("\\", "/")
         page = entry.get("page")
         caption = entry.get("caption")
+        number = entry.get("figure_number")
+        figure_label = f"{number}" if number else ""
         if output_format == "tex":
             if caption:
                 caption_text = (
@@ -3084,6 +3430,7 @@ def render_figure_block(
                         "\\centering",
                         f"\\includegraphics[width=\\linewidth]{{{latex_escape(img_href)}}}",
                         f"\\caption{{{caption_text}}}",
+                        f"\\label{{fig:{figure_label}}}" if figure_label else "",
                         "\\end{figure}",
                     ]
                 )
@@ -3094,17 +3441,16 @@ def render_figure_block(
             safe_label = html_lib.escape(entry["pdf_path"])
             safe_alt = html_lib.escape(f"Figure from {entry['pdf_path']} (page {page})")
             safe_caption = html_lib.escape(caption) if caption else ""
+            fig_id = f' id="fig-{figure_label}"' if figure_label else ""
+            figure_prefix = f"Figure {figure_label}" if figure_label else "Figure"
             if safe_caption:
-                fig_caption = (
-                    f"Figure: {safe_caption} "
-                    f"(Source: <a href=\"{safe_pdf}\">{safe_label}</a>, page {page})"
-                )
+                fig_caption = f"{figure_prefix}: {safe_caption} (Source: <a href=\"{safe_pdf}\">{safe_label}</a>, page {page})"
             else:
-                fig_caption = f"Figure: <a href=\"{safe_pdf}\">{safe_label}</a> (page {page})"
+                fig_caption = f"{figure_prefix}: <a href=\"{safe_pdf}\">{safe_label}</a> (page {page})"
             blocks.append(
                 "\n".join(
                     [
-                        '<figure class="report-figure">',
+                        f'<figure class="report-figure"{fig_id}>',
                         f'  <img src="{safe_img}" alt="{safe_alt}" />',
                         f"  <figcaption>{fig_caption}</figcaption>",
                         "</figure>",
@@ -3135,25 +3481,35 @@ def insert_figures_by_section(
 
     if not spans:
         block = render_figure_block(figure_entries, output_format, report_dir, run_dir)
+        callout = render_figure_callouts(figure_entries, output_format, report_dir, run_dir)
         if output_format == "tex":
-            return report_text.rstrip() + "\n\n\\section*{Figures}\n" + block + "\n"
-        return report_text.rstrip() + "\n\n## Figures\n" + block + "\n"
+            callout_block = f"{callout}\n\n" if callout else ""
+            return report_text.rstrip() + "\n\n\\section*{Figures}\n" + callout_block + block + "\n"
+        callout_block = f"{callout}\n\n" if callout else ""
+        return report_text.rstrip() + "\n\n## Figures\n" + callout_block + block + "\n"
 
     rebuilt = report_text[: spans[0][1]]
     for idx, (title, start, end) in enumerate(spans):
         section_text = report_text[start:end]
         entries = blocks.get(title.lower())
         if entries:
+            callout = render_figure_callouts(entries, output_format, report_dir, run_dir)
             block = render_figure_block(entries, output_format, report_dir, run_dir)
-            section_text = section_text.rstrip() + "\n\n" + block + "\n\n"
+            section_text = section_text.rstrip()
+            if callout:
+                section_text += "\n\n" + callout
+            section_text += "\n\n" + block + "\n\n"
         rebuilt += section_text
 
     if orphan:
+        callout = render_figure_callouts(orphan, output_format, report_dir, run_dir)
         block = render_figure_block(orphan, output_format, report_dir, run_dir)
         if output_format == "tex":
-            rebuilt = rebuilt.rstrip() + "\n\n\\section*{Figures}\n" + block + "\n"
+            callout_block = f"{callout}\n\n" if callout else ""
+            rebuilt = rebuilt.rstrip() + "\n\n\\section*{Figures}\n" + callout_block + block + "\n"
         else:
-            rebuilt = rebuilt.rstrip() + "\n\n## Figures\n" + block + "\n"
+            callout_block = f"{callout}\n\n" if callout else ""
+            rebuilt = rebuilt.rstrip() + "\n\n## Figures\n" + callout_block + block + "\n"
     return rebuilt
 
 
@@ -3603,6 +3959,7 @@ def main() -> int:
     run_dir = run_dir.resolve()
     index_file = find_index_file(archive_dir, query_id)
     instruction_file = find_instruction_file(run_dir)
+    overview_path = write_run_overview(run_dir, instruction_file, index_file)
     baseline_report = find_baseline_report(run_dir)
     backend = SafeFilesystemBackend(root_dir=run_dir)
     notes_dir = resolve_notes_dir(run_dir, args.notes_dir)
@@ -3667,28 +4024,27 @@ def main() -> int:
             payload["warning"] = warning
         return json.dumps(payload, indent=2, ensure_ascii=True)
 
-def read_text_file(path: Path, start: int, max_chars: int) -> str:
-    text = path.read_text(encoding="utf-8", errors="replace")
-    start = max(0, start)
-    return text[start : start + max_chars]
+    def read_text_file(path: Path, start: int, max_chars: int) -> str:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        start = max(0, start)
+        return text[start : start + max_chars]
 
-
-def normalize_rel_paths(text: str) -> str:
-    replacements = {
-        "../instruction/": "./instruction/",
-        "..\\instruction\\": "./instruction/",
-        "../archive/": "./archive/",
-        "..\\archive\\": "./archive/",
-        "../report_notes/": "./report_notes/",
-        "..\\report_notes\\": "./report_notes/",
-        "../supporting/": "./supporting/",
-        "..\\supporting\\": "./supporting/",
-        "archive/../instruction/": "./instruction/",
-        "archive\\..\\instruction\\": "./instruction/",
-    }
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    return text
+    def normalize_rel_paths(text: str) -> str:
+        replacements = {
+            "../instruction/": "./instruction/",
+            "..\\instruction\\": "./instruction/",
+            "../archive/": "./archive/",
+            "..\\archive\\": "./archive/",
+            "../report_notes/": "./report_notes/",
+            "..\\report_notes\\": "./report_notes/",
+            "../supporting/": "./supporting/",
+            "..\\supporting\\": "./supporting/",
+            "archive/../instruction/": "./instruction/",
+            "archive\\..\\instruction\\": "./instruction/",
+        }
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        return text
 
     def resolve_pdf_text(pdf_path: Path) -> Optional[Path]:
         if pdf_path.parent.name == "pdf":
@@ -3761,16 +4117,19 @@ def normalize_rel_paths(text: str) -> str:
         return align_notes
 
     context_lines = [
-        f"Run folder: {run_dir.as_posix()}",
-        f"Archive folder: {archive_dir.as_posix()}",
+        "Run folder: .",
+        "Archive folder: ./archive",
         f"Query ID: {query_id}",
     ]
     if instruction_file:
-        context_lines.append(f"Instruction file: {instruction_file.relative_to(run_dir).as_posix()}")
+        rel_instruction = instruction_file.relative_to(run_dir).as_posix()
+        context_lines.append(f"Instruction file: ./{rel_instruction}")
     if baseline_report:
-        context_lines.append(f"Baseline report: {baseline_report.relative_to(run_dir).as_posix()}")
+        rel_baseline = baseline_report.relative_to(run_dir).as_posix()
+        context_lines.append(f"Baseline report: ./{rel_baseline}")
     if index_file:
-        context_lines.append(f"Index file: {index_file.relative_to(run_dir).as_posix()}")
+        rel_index = index_file.relative_to(run_dir).as_posix()
+        context_lines.append(f"Index file: ./{rel_index}")
 
     language = normalize_lang(args.lang)
     report_prompt = load_report_prompt(args.prompt, args.prompt_file)
@@ -4019,6 +4378,8 @@ def normalize_rel_paths(text: str) -> str:
         "and extracted text/PDF/transcript files instead. "
         "Do not include a full References list; the script appends a Source Index automatically. "
         "Do not add Report Prompt or Clarifications sections; the script appends them automatically. "
+        "Do not add a separate section enumerating figures or page numbers; the script inserts figure callouts. "
+        "If you mention a figure, only do so when the source text explicitly explains it. "
         "When citing file paths, use relative paths like ./archive/... or ./instruction/... (avoid absolute paths). "
         f"{citation_instruction}"
         "When formulas are important, render them in LaTeX using $...$ or $$...$$ so they can be rendered in HTML. "
@@ -4273,7 +4634,7 @@ def normalize_rel_paths(text: str) -> str:
     report_dir = run_dir if not args.output else Path(args.output).resolve().parent
     figure_entries: list[dict] = []
     if args.extract_figures:
-        figure_entries = build_figure_plan(
+        candidates = build_figure_plan(
             report,
             run_dir,
             archive_dir,
@@ -4285,6 +4646,28 @@ def normalize_rel_paths(text: str) -> str:
             args.figures_dpi,
             notes_dir,
         )
+        viewer_dir = run_dir / "report_views"
+        preview_path = write_figure_candidates(candidates, notes_dir, run_dir, report_dir, viewer_dir)
+        selection_path = Path(args.figures_select) if args.figures_select else (notes_dir / "figures_selected.txt")
+        selection_path = selection_path if selection_path.is_absolute() else (run_dir / selection_path)
+        if args.figures_mode == "auto":
+            figure_entries = candidates
+        else:
+            figure_entries = select_figures(candidates, selection_path)
+            if not figure_entries:
+                print(
+                    "No figures selected. Add candidate IDs to "
+                    f"{selection_path.relative_to(run_dir).as_posix()} and rerun.",
+                    file=sys.stderr,
+                )
+        if figure_entries:
+            for idx, entry in enumerate(figure_entries, start=1):
+                entry["figure_number"] = idx
+            notes_dir.mkdir(parents=True, exist_ok=True)
+            figures_path = notes_dir / "figures.jsonl"
+            with figures_path.open("w", encoding="utf-8") as handle:
+                for entry in figure_entries:
+                    handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
     report_body, citation_refs = rewrite_citations(report.rstrip(), output_format)
     if figure_entries:
         report_body = insert_figures_by_section(report_body, figure_entries, output_format, report_dir, run_dir)
@@ -4312,6 +4695,14 @@ def normalize_rel_paths(text: str) -> str:
         "output_format": output_format,
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
     }
+    if overview_path:
+        meta["run_overview_path"] = f"./{overview_path.relative_to(run_dir).as_posix()}"
+    if index_file:
+        meta["archive_index_path"] = f"./{index_file.relative_to(run_dir).as_posix()}"
+    if instruction_file:
+        meta["instruction_path"] = f"./{instruction_file.relative_to(run_dir).as_posix()}"
+    if preview_path:
+        meta["figures_preview_path"] = f"./{preview_path.relative_to(run_dir).as_posix()}"
     report = f"{report.rstrip()}{format_metadata_block(meta, output_format)}"
     print_progress("Report Preview", report, args.progress, args.progress_chars)
 
@@ -4351,6 +4742,10 @@ def normalize_rel_paths(text: str) -> str:
         )
     elif output_format == "tex":
         latex_template = load_template_latex(template_spec)
+        if language == "Korean":
+            latex_template = ensure_korean_package(latex_template or DEFAULT_LATEX_TEMPLATE)
+        report = close_unbalanced_lists(report)
+        report = sanitize_latex_headings(report)
         rendered = render_latex_document(
             latex_template,
             f"Federlicht Report - {query_id}",

@@ -145,6 +145,26 @@ federlicht --run ./examples/runs/20260110_qc-oled --output ./examples/runs/20260
 Notes:
 - Requires `TAVILY_API_KEY` for web search support.
 
+### 8) LinkedIn-style practitioner review
+Uses `examples/instructions/20260113_linkedin-review.txt` and the `linkedin_review` template.
+
+```bash
+feather --input ./examples/instructions/20260113_linkedin-review.txt --output ./examples/runs --download-pdf
+federlicht --run ./examples/runs/20260113_linkedin-review --output ./examples/runs/20260113_linkedin-review/report_full.html --template linkedin_review --lang en --prompt-file ./examples/instructions/20260113_prompt_linkedin-review.txt --figures --figures-mode select
+```
+
+Notes:
+- First run creates `report_views/figures_preview.html` and `report_notes/figures_selected.txt`.
+- Add candidate IDs to `figures_selected.txt`, then rerun Federlicht to insert figures.
+
+### 7b) QC-OLED report in LaTeX (compile to PDF)
+```bash
+federlicht --run ./examples/runs/20260110_qc-oled --output ./examples/runs/20260110_qc-oled/report_full.tex --template review_of_modern_physics --lang ko --prompt-file ./examples/instructions/20260110_prompt_qc-oled.txt
+```
+
+Notes:
+- If `latexmk` or `pdflatex` is installed, the PDF is compiled automatically.
+
 ## Federlicht template suggestions per example
 Use the actual run folder (e.g., `20260104_oled`, `20260104_oled_01`, ...). Add `--figures --figures-renderer pdfium --figures-dpi 200` to embed cropped figures.
 
@@ -187,5 +207,12 @@ Use the actual run folder (e.g., `20260104_oled`, `20260104_oled_01`, ...). Add 
 - `20260112_ms-ai-diffusion` (industry report): `annual_review`
   ```bash
   federlicht --run ./examples/runs/20260112_ms-ai-diffusion --output ./examples/runs/20260112_ms-ai-diffusion/report_full.html --template annual_review --lang ko --prompt-file ./examples/instructions/20260112_prompt_ms-ai-diffusion2025.txt
+  ```
+  ```bash
+  federlicht --run ./examples/runs/20260112_ms-ai-diffusion --output ./examples/runs/20260112_ms-ai-diffusion/report_full.tex --template annual_review --lang ko --prompt-file ./examples/instructions/20260112_prompt_ms-ai-diffusion2025.txt
+  ```
+- `20260113_linkedin-review` (LinkedIn practitioner review): `linkedin_review`
+  ```bash
+  federlicht --run ./examples/runs/20260113_linkedin-review --output ./examples/runs/20260113_linkedin-review/report_full.html --template linkedin_review --lang en --figures --figures-mode select
   ```
 ```

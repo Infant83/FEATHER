@@ -1,0 +1,296 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{kotex}
+\title{ Federlicht Report - 20260110\_qc-oled }
+\author{ Hyun-Jung Kim / AI Governance Team }
+\date{ 2026-01-14 }
+\begin{document}
+\maketitle
+
+\noindent\textit{Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 21:38}
+
+\section{Abstract}
+본 리뷰는 지난 12개월(2025-01-10--2026-01-10) 동안 공개적으로 접근 가능한 자료(본 run 아카이브에 실제 수록된 PDF/텍스트 및 tavily가 제공한 원문 URL)에 근거하여, 양자컴퓨팅(quantum computing, QC) 기반 재료 연구 및 산업 적용 동향을 OLED 발광재료(형광/인광/TADF/CP-OLED 등) 개발 관점에서 비판적으로 정리한다. 결론적으로, 본 아카이브에서 \emph{OLED 발광재료에 대한 QC 적용을 직접적으로 뒷받침하는 1차 근거}는 IBM Research 블로그 및 Mitsubishi Chemical Group의 2021년 배포 PDF에 집중되어 있으며\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}, 지난 12개월 범위의 동향을 체계적으로 대표하기에는 자료 커버리지가 제한적이다(수집 로그에서 Wiley/ASME 등 다수 PDF가 403으로 실패)\href{./archive/\_log.txt}{[3]}. 그럼에도 2025년 Nature Communications 논문이 제시한 \emph{ML 예측기 기반 역설계(gradient ascent input optimization) + DFT 검증} 파이프라인은, QC가 투입될 수 있는 위치(고비용 전자구조 검증/여기상태 특성화)의 병목을 ‘간접’으로 조명하는 근거로 활용 가능하다\href{./archive/openalex/text/W4410193211.txt}{[4]}. 본문은 (i) QC-양자화학/여기상태 계산의 이론적 기반, (ii) NISQ 환경에서의 오류완화 중심 실증의 성격, (iii) OLED 발광재료 설계 워크플로에서의 적용 지점과 벤치마크 지표, (iv) 산업계(삼성디스플레이/LG디스플레이/UDC)의 공개정보 한계를 명시하고, 향후 12--24개월의 기술적 질문(자원추정, 화학정확도, 공정 호환성)을 정리한다.
+
+\section{Introduction}
+\subsection{범위, 출처 등급, 그리고 커버리지 한계}
+본 리뷰의 1차 목표는 \emph{지난 12개월(2025-01-10--2026-01-10)} 동향 분석이다. 그러나 본 run 아카이브의 tavily 결과는 IBM 블로그 및 Mitsubishi Chemical Group의 2021년 문서 등 \emph{범위 밖} 자료를 핵심 근거로 포함한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. 또한 OpenAlex를 통해 일부 2025년 논문 PDF/텍스트는 확보되었으나, 다수의 관련 후보가 403(Forbidden)로 다운로드 실패하여 커버리지 편향이 발생한다\href{./archive/\_log.txt}{[3]}. 따라서 본문에서는 각 주장마다 (i) 근거 강도, (ii) 기간 적합성(12개월 범위 내/외), (iii) 불확실성(자료 부재/간접 근거)을 명시한다.
+
+출처 등급은 다음과 같이 사용한다.
+\begin{itemize}
+\item \textbf{Industry primary}: 기업/기관의 공식 발표, 공식 PDF, 공식 블로그(마케팅적 요소 가능하나 발언 주체가 명확).
+\item \textbf{Scholarly}: 동료심사 논문/리뷰(본 아카이브에서 PDF/텍스트 확보된 것에 한함).
+\item \textbf{Supporting}: 업계 뉴스/포털 등(사실 확인의 2차 자료; 본 리뷰에서는 “기사 주장”으로만 취급).
+\end{itemize}
+
+\subsection{OLED 발광재료 문제 설정과 표기}
+OLED 발광재료 개발의 핵심 전자구조 목표는 (i) 발광색(대략 HOMO--LUMO gap 및 여기상태 에너지), (ii) 내부양자효율(IQE)과 발광 메커니즘(형광/인광/열활성화 지연형광(TADF)), (iii) 수명/열적 안정성/공정 적합성 등이다. IBM 블로그는 TADF가 이론적으로 100\% internal quantum efficiency 잠재력을 갖는다는 산업적 동기를 제시하며(형광체 25\% 제한과 대비)\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}, Mitsubishi Chemical PDF는 TADF emitter의 excited states 계산을 QC로 수행하고 오류완화로 정확도를 개선했다고 주장한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+
+이하에서 분자의 전자구조는 2차 양자화학 표기(2차 양자화)로 정리하며, 여기상태는 $E_0$ (바닥상태), $E_{S_1}$ (최저 단일항 여기상태), $E_{T_1}$ (최저 삼중항 여기상태)로 표기한다. TADF의 중요한 지표는 $\Delta E_{ST}=E_{S_1}-E_{T_1}$이며, 작은 $\Delta E_{ST}$는 역계간전이(RISC)를 통한 삼중항 활용을 가능하게 한다(본 아카이브에는 해당 물리의 직접 리뷰가 부족하므로, 이는 배경적 정의로만 사용).
+
+\subsection{보고서 구성(필수 섹션 스켈레톤에 따른 안내)}
+본 문서는 요구된 스켈레톤에 따라 Theory \& Foundations에서 전자구조 계산의 QC 정식화와 여기상태 알고리즘(VQE 계열)의 위치를 정리하고, Methods \& Experimental Evidence에서 OLED 발광재료 관련 1차 산업 사례(IBM--Mitsubishi Chemical--Keio--JSR)의 실증 성격과 한계를 기술한다. Applications \& Benchmarks에서는 OLED 발광재료 워크플로(생성--예측--검증) 관점에서 QC가 들어갈 수 있는 벤치마크 지점을 정의하고, 산업계(삼성디스플레이/LG디스플레이/UDC) 관련 공개정보의 부재를 ``부정적 결과''로서 명시한다\href{./archive/20260110\_qc-oled-index.md}{[5]}\href{./archive/\_log.txt}{[3]}. 마지막으로 Synthesis \& Outlook에서 학계-산업 간극의 핵심 병목을 구조화하고, 향후 12--24개월에 대한 의사결정자용 후속 질문을 제안한다(제안은 의견이며 근거와 분리하여 표기).
+
+\section{Theory \& Foundations}
+\subsection{전자구조 문제와 양자컴퓨팅의 계산 모델}
+분자 전자구조의 표준 출발점은 보른-오펜하이머 근사 하에서 전자 해밀토니언을 구성하고, 이를 2차 양자화로 표현하는 것이다.
+\begin{equation}
+\hat{H}=\sum_{pq} h_{pq}\, a_p^\dagger a_q + \frac{1}{2}\sum_{pqrs} g_{pqrs}\, a_p^\dagger a_q^\dagger a_r a_s,
+\end{equation}
+여기서 $a_p^\dagger, a_q$는 스핀궤도(spin-orbital) 생성/소멸 연산자이며, $h_{pq}, g_{pqrs}$는 일전자/이전자 적분이다. 양자컴퓨팅 기반 접근은 $\hat{H}$를 파울리 문자열의 합으로 매핑한다:
+\begin{equation}
+\hat{H}=\sum_j c_j \hat{P}_j,\quad \hat{P}_j\in\{I,X,Y,Z\}^{\otimes n}.
+\end{equation}
+측정 비용은 $\langle \hat{H}\rangle$ 추정에 필요한 shot 수와 파울리 항 수에 의해 지배되며, 이는 NISQ에서 가장 큰 병목 중 하나로 알려져 있다(본 아카이브 내 직접 근거는 제한적이므로, 이하에서는 IBM/Mitsubishi 문헌이 강조한 “noise/오류완화 필요성”으로 연결한다).
+
+\subsection{VQE 계열과 여기상태: qEOM-VQE 및 VQD}
+Mitsubishi Chemical의 공식 PDF는 TADF emitter의 여기상태 에너지 예측을 위해 qEOM-VQE(quantum Equation-of-Motion VQE) 및 VQD(Variational Quantum Deflation)를 사용했다고 명시한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. 이를 이론적으로 정리하면 다음과 같다.
+
+VQE는 매개변수화된 ansatz $|\psi(\boldsymbol{\theta})\rangle$에 대해 바닥상태 에너지
+\begin{equation}
+E(\boldsymbol{\theta})=\langle\psi(\boldsymbol{\theta})|\hat{H}|\psi(\boldsymbol{\theta})\rangle
+\end{equation}
+를 최소화한다. 여기상태로 확장하는 대표적 변분 접근 중 하나가 VQD로, $k$번째 상태를 구할 때 이전 상태들과의 직교성을 페널티로 부여한다:
+\begin{equation}
+\mathcal{L}_k(\boldsymbol{\theta})=\langle\psi(\boldsymbol{\theta})|\hat{H}|\psi(\boldsymbol{\theta})\rangle
++\sum_{i<k}\beta_i |\langle \psi(\boldsymbol{\theta})|\phi_i\rangle|^2.
+\end{equation}
+qEOM-VQE는 VQE로 얻은 근사 바닥상태를 기준으로 여기 연산자 공간에서 선형응답/여기 스펙트럼을 구성하는 계열로 이해할 수 있다(세부 수식은 원 논문에 의존하나, 본 아카이브에는 npj Computational Materials 본문이 포함되지 않아 개념적 정의로 제한됨).
+
+\subsection{오류완화(error mitigation)와 “화학정확도” 문제의 지위}
+Mitsubishi Chemical PDF는 (i) 기존 벤치마크가 단순 분자(H$_2$, LiH 등)에 치우쳤고, (ii) 현 디바이스 오류로 chemical accuracy 달성이 어렵다는 문제의식을 명시하며\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}, (iii) noisy QC에서 오류를 줄이는 새로운 스킴을 개발하여 정확도를 개선했다고 주장한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. IBM 블로그 역시 “noise” 및 제한된 qubit 자원 문제가 OLED 분자 적용의 본질적 도전임을 전면에 둔다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}.
+
+주장 $\rightarrow$ 근거: NISQ 단계의 OLED 관련 QC 적용은 “오류완화 + 제한된 큐비트에서의 알고리즘 구성”이 본질적이라는 관점이 공식 산업 자료에서 반복된다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. \\
+한계/불확실성: “정확도 개선”의 정량적 수준(예: 목표 오차, 실험 조건, 분자 활성공간 크기)은 npj 본문 부재로 재현성 평가가 제한된다. \\
+해석/의미: 산업 PoC의 핵심은 양자우위 자체라기보다, \emph{분자-특이(여기상태) 계산을 NISQ 하드웨어 제약 하에서 성립시키는 절차적 기술(알고리즘 선택, 측정/오류완화)}에 있다. 근거 강도: 중간(공식 PDF/블로그이지만 세부 데이터 부재).
+
+\subsection{OLED 발광재료 관점의 핵심 용어 정리(간단 정의 및 비교)}
+\textbf{형광(fluorescence)}은 단일항 여기상태($S_1$)에서의 방사 전이를 주로 활용하며, \textbf{인광(phosphorescence)}은 삼중항($T_1$) 방사를 활용한다. \textbf{TADF}는 $S_1$과 $T_1$ 사이의 작은 $\Delta E_{ST}$를 이용하여 열적으로 유도된 역계간전이(RISC)로 삼중항을 단일항으로 ``회수''하여 방사 효율을 높이는 메커니즘으로 이해된다(정의 수준). IBM 블로그는 기술 배경으로서 TADF가 100\% internal quantum efficiency 잠재력을 갖는다고 설명하며, 형광체는 25\%로 제한된다는 대비를 제시한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. \\
+주장 $\rightarrow$ 근거: OLED 발광재료에서 QC가 겨냥하는 관측량이 ``바닥상태''보다 ``전이/여기상태''라는 점은 IBM 및 Mitsubishi 문서에서 일관되게 등장한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. \\
+한계/불확실성: CP-OLED 등 스핀 선택규칙/키랄리티 관련 세부(예: 원편광 특성)는 본 아카이브에 직접 근거가 없어, 본 리뷰에서는 용어 수준 이상으로 확장하지 않는다. \\
+해석/의미: OLED에서 ``정확히 맞춰야 하는 값''이 무엇인지(예: $E_{S_1}$, $E_{T_1}$, 전이쌍극자, SOC 등)를 먼저 특정해야 QC 자원추정 및 벤치마크를 설계할 수 있다. 근거 강도: 낮음(정의 자체는 일반지식이며, OLED 맥락에서의 강조는 IBM/Mitsubishi에 근거).
+
+\section{Methods \& Experimental Evidence}
+\subsection{OLED 발광재료 맥락의 QC 실증: IBM--Mitsubishi Chemical--Keio--JSR}
+\subsubsection{주장: 상용(또는 산업용) TADF 후보 분자에서 여기상태 계산을 QC로 수행하려는 PoC가 보고되었다}
+근거: IBM Research 블로그는 arXiv 프리프린트에서 “industrial chemical compounds”의 여기상태(excited states) 양자 계산을 기술하며, phenylsulfonyl-carbazole(PSPCz) 분자의 electronic transitions를 조사했다고 밝힌다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. Mitsubishi Chemical 공식 PDF는 IBM/JSR/Keio와의 공동연구로 TADF emitters의 excited states를 계산했고, noisy QC에서 오류를 줄이는 스킴으로 정확도를 개선했다고 서술한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\\
+한계/불확실성: IBM 블로그가 언급한 arXiv 프리프린트 원문은 본 아카이브에 다운로드되어 있지 않아, 활성공간/회로 깊이/측정 샷/비교 기준(고전적 방법) 등을 직접 인용할 수 없다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. Mitsubishi PDF도 “npj Computational Materials” 출판을 언급하지만 논문 본문은 포함되지 않는다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\\
+해석/의미: OLED 발광재료에서 QC 적용의 “핵심 타깃”이 바닥상태보다 \emph{여기상태/전이(transition)}에 놓인다는 점이 공식 자료에서 확인된다. 근거 강도: 중간(공식 자료이나 원 논문 부재로 정량 검증 불가). 기간 적합성: 낮음(핵심 문서는 2021년).
+
+\subsubsection{주장: 여기상태 알고리즘으로 qEOM-VQE 및 VQD가 산업 자료에서 명시된다}
+근거: Mitsubishi Chemical PDF는 여기상태 에너지 예측을 위해 qEOM-VQE 및 VQD를 사용했다고 명시한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\\
+한계/불확실성: 구체적인 ansatz, 회로 자원, 측정 그룹화, 오류완화 프로토콜(예: ZNE/PEC류 여부) 등은 PDF 요약본만으로 확정할 수 없다.
+\\
+해석/의미: OLED 재료 문제는 최종적으로 \emph{스펙트럼/전이/여기상태 정밀도}가 요구되므로, 바닥상태 중심의 초기 VQE 벤치마크에서 “여기상태”로 관심이 이동했음을 시사한다. 근거 강도: 중간. 기간 적합성: 낮음.
+
+\subsubsection{주장: NISQ에서 오류완화는 ‘정확도 개선’의 필수 구성요소로 산업 문서에 서술된다}
+근거: Mitsubishi Chemical PDF는 noisy QC의 오류를 줄이는 새로운 스킴을 개발해 계산 정확도를 개선했다고 서술한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. IBM 블로그 역시 noise 감소와 제한된 qubit에서의 실용화가 핵심 도전임을 반복한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}.
+\\
+한계/불확실성: 개선 폭의 정량값 및 기준선(고전적 참값/실험값) 부재.
+\\
+해석/의미: OLED 발광재료의 QC 적용은 “양자하드웨어 성능 향상” 이전에, \emph{오류를 관리하는 소프트웨어적 계층(오류완화/회로 설계/측정 설계)}에서 산업적 학습효과가 축적될 가능성이 크다. 근거 강도: 중간. 기간 적합성: 낮음.
+
+\subsection{간접적(그러나 12개월 범위 내) 파이프라인 근거: ML 역설계 + DFT 검증}
+\subsubsection{주장: (QC 여부와 무관하게) 신물질 탐색 파이프라인에서 “검증(DFT)”이 병목이며, OOD 일반화 실패가 실용화를 제한한다}
+근거: Nature Communications(2025)은 GNN property predictor가 벤치마크에서는 강하지만 out-of-distribution 데이터에서 성능 저하가 발생함을 지적하며\href{./archive/openalex/text/W4410193211.txt}{[4]}, 목표 물성(예: HOMO--LUMO gap)을 위해 predictor 입력(분자 그래프)을 gradient ascent로 직접 최적화하여 분자를 생성하고, 생성 결과를 DFT로 검증한다고 명시한다\href{./archive/openalex/text/W4410193211.txt}{[4]}. 또한 “효율적 blue OLED materials”에 대한 관심 맥락에서 emission wavelength(에너지 갭) 타깃의 중요성을 언급한다\href{./archive/openalex/text/W4410193211.txt}{[4]}.
+\\
+한계/불확실성: 해당 논문은 QC 적용이 아니라 ML 생성 방법이며, OLED 발광재료의 실제 합성/소자지표(LT$_{50}$, EQE roll-off 등)까지 연결하지 않는다.
+\\
+해석/의미: QC 기반 전자구조 계산이 단기적으로 산업 워크플로에 편입되는 경로는 “\emph{ML 생성/선별 이후의 고정밀 검증 단계(특히 여기상태)}”일 가능성이 높다. 즉, QC는 ‘탐색 전 과정’의 대체가 아니라, \emph{검증 비용이 높고 오차 허용이 작은 구간}에 우선 투입될 공산이 크다. 근거 강도: 중간(학술 논문이나 QC와의 직접 연결은 해석). 기간 적합성: 높음(2025 수리/게재 정보 포함)\href{./archive/openalex/text/W4410193211.txt}{[4]}.
+
+\subsection{커버리지/재현성에 대한 방법론적 주의: 403 다운로드 실패}
+\subsubsection{주장: 본 run의 “최근 12개월 동향” 커버리지는 자료 접근 제약(403)으로 인해 불완전할 가능성이 크다}
+근거: 수집 로그에서 Wiley 및 ASME의 pdfdirect 링크가 403 Forbidden으로 반복 실패한다\href{./archive/\_log.txt}{[3]}.
+\\
+한계/불확실성: 실패한 문헌이 실제로 OLED$\times$QC 핵심 동향을 포함했는지 여부는 확인 불가(원문 미확보).
+\\
+해석/의미: 본 리뷰의 “부재”는 곧 “없음”이 아니라 “수집 실패/접근 제한”을 의미할 수 있다. 따라서 산업계(삼성/LG/UDC) 및 최신 리뷰에 대해 결론을 강하게 내리기보다, \emph{공개정보의 공백 자체를 기술적 리스크}로 다루어야 한다. 근거 강도: 높음(로그라는 사실 기록). 기간 적합성: 높음(본 run 수행 시점 기록)\href{./archive/\_log.txt}{[3]}.
+
+\section{Applications \& Benchmarks}
+\subsection{OLED 발광재료 설계에서 QC가 겨냥하는 벤치마크 대상}
+\subsubsection{주장: OLED 맥락에서 QC의 직접 응용 타깃은 ‘여기상태/전이’와 같은 광물성 예측이다}
+근거: IBM 블로그는 PSPCz 계열 TADF 후보의 electronic transitions(여기상태) 계산을 QC로 수행했다고 서술한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. Mitsubishi Chemical PDF도 TADF emitters의 excited states 계산을 핵심 성과로 둔다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\\
+한계/불확실성: (i) 여기상태 에너지의 목표 오차(예: 0.1 eV 수준) 달성 여부, (ii) 스핀-궤도 결합(SOC) 및 환경(용매/고체 매트릭스) 효과 반영 여부는 자료 부재.
+\\
+해석/의미: OLED에서 중요한 것은 단순 바닥상태 에너지보다 전이 에너지, 단일항/삼중항 분리, 방사/비방사 경로 등이다. 따라서 QC 벤치마크도 화학정확도(바닥상태)만으로 정의하기보다, \emph{소자 성능에 민감한 여기상태 관측량의 허용오차}로 재정의되어야 한다. 근거 강도: 중간.
+
+\subsection{워크플로 벤치마크: 생성--예측--검증에서의 QC 위치}
+\subsubsection{주장: 실용 워크플로는 (ML 생성/선별) + (고전 DFT/고급 계산) + (부분적으로 QC)로 구성될 가능성이 높다}
+근거: Nature Communications(2025)은 목표 HOMO--LUMO gap에 대해 GNN 예측기의 입력을 최적화하여 분자를 생성하고 DFT로 검증하는 전형적 파이프라인을 제시한다\href{./archive/openalex/text/W4410193211.txt}{[4]}. IBM/Mitsubishi 자료는 그 “검증 계산” 중에서도 여기상태를 QC로 계산하려는 시도를 명확히 보여준다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\\
+한계/불확실성: QC가 DFT 대비 어떤 스케일(활성공간 크기, 다중참조성)에서 우위를 갖는지에 대한 정량 벤치마크는 본 아카이브에서 제공되지 않는다.
+\\
+해석/의미: 단기(12--24개월)에는 QC가 “대규모 스크리닝”을 대체하기보다, \emph{후보 소수에 대한 고난도 전자상태(다중참조/여기상태) 정밀 평가}의 보조 엔진으로 채택될 공산이 크다. 근거 강도: 중간(직접+간접 결합).
+
+\subsection{산업계(삼성디스플레이, LG디스플레이, UDC) 공개 시도의 한계}
+\subsubsection{주장: 본 run 아카이브의 수집 결과만으로는 삼성디스플레이/LG디스플레이/UDC의 ‘QC 기반 OLED 발광재료 탐색’에 대한 1차 공개근거를 제시하기 어렵다}
+근거: instruction 파일은 해당 기업/사이트를 직접 질의했으나\href{./instruction/20260110\_qc-oled.txt}{[6]}, index 상 tavily에서 “URLs: 0”로 표시되어(실제 URL은 JSONL에 존재하나 로컬 스냅샷이 없음), 기업 공식 문서가 아카이브에 확보되지 않았다\href{./archive/20260110\_qc-oled-index.md}{[5]}. 또한 수집 로그는 OpenAlex 중심으로 일부 PDF만 확보되었고, 기업 관련 직접 근거는 포함되지 않는다\href{./archive/\_log.txt}{[3]}.
+\\
+한계/불확실성: “공개자료 부재”가 “해당 기업이 연구를 하지 않음”을 뜻하지 않는다. 단지 본 run 범위/수집 성공분 내에서 확인 불가이다.
+\\
+해석/의미: 의사결정 관점에서 이는 중요한 신호다. 즉, \emph{재료 R\&D에서 QC 적용은 대외 공개가 제한되거나, 특허/컨소시엄/클라우드 파트너십 형태로만 부분 노출될 수 있다}. 따라서 후속 조사는 (i) 특허(출원인/공동출원), (ii) SID/IMID/OLEDs 등 학회 발표, (iii) IR/연차보고서의 “quantum/quantum simulation” 키워드, (iv) IBM/AWS/Azure 등 QC 플랫폼 파트너 페이지를 축으로 설계하는 것이 타당하다(이는 제안이며, 본 아카이브 근거로 확정할 수 없음). 근거 강도: 높음(‘부재’ 자체는 아카이브 사실), 해석은 중간.
+
+\subsection{Supporting(업계 기사)로서의 QAOA/회로 압축 주장}
+\subsubsection{주장: Mitsubishi Chemical이 QAOA를 OLED emitter 소재 개발에 활용해왔고, 노이즈 누적이 정확도 문제라는 업계 기사 주장이 존재한다}
+근거: OLED-Info 기사는 Mitsubishi Chemical이 QAOA를 advanced OLED emitter materials 개발에 사용해왔으며, noise 누적 때문에 정확도 보장이 어려웠다고 서술한다\href{https://www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-classiq-manage-dramatically-improve}{[7]}.
+\\
+한계/불확실성: 업계 기사로서 원문(논문/공식발표/데이터) 확인이 필요하며, 본 아카이브에는 해당 기사의 추가 1차 근거가 포함되지 않는다.
+\\
+해석/의미: 만약 사실이라면 OLED 소재 설계에서 QC 활용 축이 (a) 전자구조(여기상태) 양자화학과 (b) 조합최적화(QAOA 기반 후보 탐색)로 분기될 수 있음을 시사한다. 그러나 현 단계에서는 \emph{가설 생성 수준의 supporting 근거}로만 취급해야 한다. 근거 강도: 낮음.
+
+\section{Synthesis \& Outlook}
+\subsection{학계 연구와 산업 적용의 간극: 무엇이 실제 병목인가}
+\subsubsection{병목 1: 재현 가능한 정량 벤치마크의 부재(특히 여기상태)}
+주장: OLED 발광재료에서 QC 활용의 성패는 “여기상태 예측”의 정량 벤치마크(목표 오차, 비교 참조, 데이터셋, 환경 효과 포함)에 달려 있으나, 본 아카이브의 핵심 1차 자료는 요약 수준이라 재현성 평가가 제한된다. \\
+근거: IBM 블로그는 PSPCz 등 TADF 후보에서 excited states/electronic transitions를 QC로 조사했다고 서술하지만, 실험 조건 및 수치 벤치마크의 세부는 블로그 수준에서 제한된다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. Mitsubishi Chemical PDF는 qEOM-VQE 및 VQD 사용과 오류완화로 정확도 개선을 주장하되, 정량 데이터 및 프로토콜 상세는 요약본만으로는 확정하기 어렵다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. \\
+한계/불확실성: npj Computational Materials 본문 및 IBM 블로그가 지칭한 arXiv 프리프린트 원문이 본 아카이브에 부재하여, 목표 오차(예: eV 단위), 참조 방법론(고전 고정밀법/실험) 및 활성공간 설정의 직접 인용이 불가하다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. \\
+해석/의미: 향후 12--24개월의 ``진전''은 새로운 알고리즘 이름의 등장이 아니라, (i) 동일 분자/동일 관측량에 대해 (ii) 자원(큐비트/깊이/샷)과 오차를 함께 보고하며 (iii) 고전 참조와의 비교를 재현 가능하게 공개하는지에 의해 평가되어야 한다. 근거 강도: 중간(주장은 해석이지만, 근거로 인용 가능한 자료의 한계가 사실로 확인됨).
+
+\subsubsection{병목 2: 데이터 파이프라인에서의 일반화(OOD)와 검증 비용의 구조적 충돌}
+주장: 탐색 단계에서는 ML이 속도를 제공하지만, 신규(분포 외) 후보의 신뢰성은 저하되고, 결국 검증(DFT/고급 계산) 비용이 병목으로 남는다. \\
+근거: Nature Communications(2025)은 ML property predictor가 OOD에서 성능 저하를 겪는다고 명시하며, 생성된 분자의 목표 물성은 DFT로 검증한다고 서술한다\href{./archive/openalex/text/W4410193211.txt}{[4]}. \\
+한계/불확실성: 해당 근거는 QC가 아니라 ML/DFT 파이프라인에 관한 것이며, OLED 소자 성능(수명/효율 롤오프 등)으로의 직접 연결은 제공되지 않는다\href{./archive/openalex/text/W4410193211.txt}{[4]}. \\
+해석/의미: QC의 산업적 포지셔닝은 ``ML을 대체''하는 방향보다, OOD 영역에서 고전적 근사(DFT)보다 신뢰할 수 있는 고정밀 전자구조 검증(특히 여기상태/전이)로의 ``부분적 투입''에서 현실성이 높다. 다만 이는 IBM/Mitsubishi의 OLED PoC가 시사하는 방향성과 ML 파이프라인 논문을 결합한 해석이며, OLED$\times$QC의 최근(12개월) 정량 성과를 의미하지는 않는다. 근거 강도: 중간(근거는 학술 논문, 결론은 해석).
+
+\subsubsection{병목 3: 산업 공개정보의 비대칭성과 의사결정 리스크}
+주장: 삼성디스플레이/LG디스플레이/UDC 등 주요 플레이어의 QC 기반 재료탐색에 대해, 본 run 자료만으로는 1차 공개근거를 제공하기 어려워 정보 비대칭이 존재한다. \\
+근거: 본 run 인덱스는 tavily 결과에서 URLs가 0으로 기록되어 있으며\href{./archive/20260110\_qc-oled-index.md}{[5]}, 수집 로그는 관련 후보의 다수가 403으로 차단되어 최신 학술 및 산업 문헌의 미확보 가능성을 시사한다\href{./archive/\_log.txt}{[3]}. 또한 instruction에는 해당 기업/도메인 기반 질의가 포함되어 있다\href{./instruction/20260110\_qc-oled.txt}{[6]}. \\
+한계/불확실성: 이는 “연구 부재”가 아니라 “이번 수집에서 확인 불가”를 의미한다. \\
+해석/의미: 디스플레이 산업에서 발광재료는 경쟁우위의 핵심 자산이며, QC 적용이 있다면 공개논문보다 (i) 컨소시엄/클라우드 파트너십, (ii) 내부 PoC, (iii) 특허/영업비밀로 우선 나타날 개연성이 있다(해석). 따라서 의사결정자는 “공개근거 부족” 자체를 기술 채택의 위험 요인(검증 비용, 인력/플랫폼 락인, IP 전략)으로 관리해야 한다. 근거 강도: 높음(부재 및 403 로그는 사실), 해석은 중간.
+
+\subsection{대표 시나리오(2--3개): 가능한 경로와 판단 기준}
+\subsubsection{시나리오 A: OLED(TADF) 후보의 여기상태 정밀 평가를 위한 NISQ PoC(오류완화 중심)}
+주장: 산업용 OLED(TADF) 후보 분자에서 여기상태 계산을 QC로 수행하고, 오류완화로 정확도를 개선하는 PoC가 산업 자료에 보고되었다. \\
+근거: IBM 블로그는 PSPCz 기반 TADF 후보의 electronic transitions/여기상태를 QC로 조사했다고 기술한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}. Mitsubishi Chemical PDF는 TADF emitters의 excited states 계산, qEOM-VQE/VQD 사용, noisy QC에서의 오류완화로 정확도 개선 및 ``상용 재료 여기상태 QC 적용 세계 최초'' 주장을 포함한다\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. \\
+한계/불확실성: 정량 지표(오차, 자원, 참조) 부재로 인해 과학적/산업적 유효성은 독립 검증이 필요하다. 기간 적합성은 낮다(2021 문서). \\
+해석/의미: 단기적 실무 교훈은 ``오류완화 및 측정 설계 역량''이 실제 적용의 관문이라는 점이며, OLED 발광재료에서는 여기상태가 우선 타깃이 된다는 점이다. 근거 강도: 중간.
+
+\subsubsection{시나리오 B: ML 생성(역설계) 이후 후보 소수에 대해 (DFT$\rightarrow$QC) 검증 단계를 이원화}
+주장: 최신(12개월 범위 내) 자료가 직접 제시하는 재료탐색 워크플로는 ML 생성 및 DFT 검증이며, QC는 이 검증 단계의 일부(특히 고난도 여기상태)로 접합될 여지가 크다. \\
+근거: Nature Communications(2025)은 GNN 예측기를 분자 생성기로 사용(입력 최적화)하고, 생성된 분자의 목표 물성을 DFT로 검증한다고 명시한다\href{./archive/openalex/text/W4410193211.txt}{[4]}. IBM/Mitsubishi 자료는 OLED 후보의 여기상태 계산을 QC로 수행하려는 방향을 제공한다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. \\
+한계/불확실성: 이 결합은 본 리뷰의 ``통합 해석''이며, 12개월 범위 내 OLED$\times$QC의 end-to-end 사례를 본 아카이브가 직접 제공하지는 않는다. \\
+해석/의미: 의사결정자는 QC 도입을 “전 공정 대체”가 아닌 “검증 비용이 급증하는 코너 케이스(예: 다중참조성/여기상태)” 중심의 단계적 도입으로 설계하고, 성공 기준을 (i) 검증 정확도, (ii) 비용/시간, (iii) 실험(합성/소자) 결과와의 상관으로 설정해야 한다. 근거 강도: 중간.
+
+\subsubsection{시나리오 C: 조합최적화(QAOA 등)를 통한 후보 탐색 보조(단, 근거는 supporting)}
+주장: QAOA를 OLED emitter 소재 개발에 활용했다는 업계 기사 주장이 존재하며, 노이즈 누적이 정확도 문제였다는 진술이 보고되었다. \\
+근거: OLED-Info 기사\href{https://www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-classiq-manage-dramatically-improve}{[7]}. \\
+한계/불확실성: 2차 기사이며 1차 데이터/공식문서로의 역추적이 본 아카이브에서 불가능하다. \\
+해석/의미: 사실이라면 ``전자구조 계산''과 별개로, 합성 가능한 조합공간(치환기/호스트-도펀트 조합/공정 조건)의 탐색에 조합최적화 계열 QC가 접목될 여지는 있다. 그러나 본 리뷰에서는 의사결정용 가설로만 취급한다. 근거 강도: 낮음.
+
+\subsection{향후 12--24개월에 기대되는 변화(증거 기반의 보수적 전망)}
+주장: 단기 변화는 ``OLED 재료에서 양자우위 달성''보다는, (i) 오류완화/측정 효율의 개선, (ii) 워크플로 통합(ML--DFT--QC), (iii) 자료 공개/재현성의 개선 여부로 나타날 가능성이 높다. \\
+근거: IBM/Mitsubishi의 OLED 사례는 NISQ/noise 및 오류완화 필요성을 전면에 둔다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}. Nature Communications(2025)은 자동화된 탐색 파이프라인에서 ML 생성과 DFT 검증의 결합을 명시한다\href{./archive/openalex/text/W4410193211.txt}{[4]}. 또한 본 run의 자료 수집은 403 차단으로 최신 문헌 확보에 구조적 제약이 있었음을 보여준다\href{./archive/\_log.txt}{[3]}. \\
+한계/불확실성: OLED$\times$QC의 최신(12개월) 정량 실적 자체가 본 아카이브에 부족하므로, 전망은 보수적으로 제시되어야 한다. \\
+해석/의미: 기업은 “기술 성숙”을 기다리기보다, 제한된 문제(분자/관측량/허용오차)를 선정하여 PoC를 반복하면서, 동시에 공개/비공개 정보망(특허/컨소시엄/플랫폼 파트너)을 구축하는 전략이 합리적이다(제안).
+
+\subsection{의사결정자용 후속 질문(현 자료의 공백을 줄이기 위한 체크리스트)}
+(아래는 질문 제안이며, 본 아카이브의 직접 근거가 아닌 의사결정 프레임이다.)
+\begin{itemize}
+\item (벤치마크 정의) 우리 조직이 실제로 필요한 관측량은 $E_{S_1}$/$E_{T_1}$/$\Delta E_{ST}$ 중 무엇이며, 허용 오차는 몇 eV인가?
+\item (자원추정) 해당 관측량을 목표 오차로 계산하기 위해 필요한 활성공간 규모(궤도 수), 큐비트 수, 회로 깊이, 샷 수의 초기 추정은 무엇인가? (현재는 본 아카이브에 수치 근거가 부족함.)
+\item (검증 전략) ML 생성 후보에 대해 DFT 이후 어떤 조건에서 QC 검증을 호출할 것인가(예: 다중참조성 지표, 오차 민감도, 실험 실패 비용)?
+\item (산업 공개정보) 삼성디스플레이/LG디스플레이/UDC는 공개적으로 QC를 언급하는가? 없다면 특허/컨소시엄/플랫폼 파트너 페이지에서 간접 신호를 어떻게 수집할 것인가\href{./instruction/20260110\_qc-oled.txt}{[6]}\href{./archive/20260110\_qc-oled-index.md}{[5]}?
+\item (재현성/공급망) 특정 QC 플랫폼/소프트웨어 스택에 대한 락인 위험과 IP(회로/오류완화 레시피) 귀속은 어떻게 관리할 것인가?
+\end{itemize}
+
+\section{Appendix}
+\subsection{본 run(20260110\_qc-oled) 자료 커버리지 메모(사실 요약)}
+\begin{itemize}
+\item 본 run 인덱스에는 “Queries: 9 | URLs: 0 | arXiv IDs: 0”로 기록되어, tavily 검색 결과의 로컬 URL 스냅샷이 생성되지 않았고 arXiv 원문도 아카이브에 확보되지 않았음을 시사한다\href{./archive/20260110\_qc-oled-index.md}{[5]}.
+\item 수집 로그는 Wiley/ASME 등에서 403 Forbidden으로 PDF 다운로드가 반복 실패했음을 보여, 최근 12개월 동향의 누락 가능성이 존재한다\href{./archive/\_log.txt}{[3]}.
+\item 본 리뷰에서 OLED 발광재료$\times$QC의 직접 1차 근거는 IBM Research 블로그 및 Mitsubishi Chemical 공식 PDF로 제한되며, 해당 문서들은 기간 적합성(지난 12개월) 측면에서 범위 밖(2021년)임을 명시했다\href{https://research.ibm.com/blog/quantum-for-oled}{[1]}\href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{[2]}.
+\item 12개월 범위 내에서 본 아카이브가 제공하는 학술적 근거는 ML 기반 생성--검증 파이프라인(DFT 검증 포함)을 다룬 Nature Communications(2025) 텍스트/PDF가 핵심이다\href{./archive/openalex/text/W4410193211.txt}{[4]}.
+\end{itemize}
+
+\subsection{Supporting 출처 사용 원칙(재확인)}
+\begin{itemize}
+\item 업계 기사(OLED-Info 등)는 2차 자료로서 ``기사 주장'' 수준으로만 사용하며, 1차 근거(논문/공식발표/데이터)로의 역추적이 불가한 경우 결론의 근거로 사용하지 않는다\href{https://www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-classiq-manage-dramatically-improve}{[7]}.
+\end{itemize}
+
+\section*{Figures}
+\paragraph{Figures referenced.} Figure~\ref{fig:1}: Source PDF: W4410193211.pdf Figure~\ref{fig:2}: Source PDF: W4410193211.pdf Figure~\ref{fig:3}: Source PDF: W4410193211.pdf Figure~\ref{fig:4}: Source PDF: W4410193211.pdf
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_openalex\_pdf\_W4410193211.pdf-5f54c461.png}
+\caption{Source: \\texttt{./archive/openalex/pdf/W4410193211.pdf}, page 3.}
+\label{fig:1}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_openalex\_pdf\_W4410193211.pdf-cfdd36b2.png}
+\caption{Source: \\texttt{./archive/openalex/pdf/W4410193211.pdf}, page 3.}
+\label{fig:2}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_openalex\_pdf\_W4410193211.pdf-2bfc23f2.png}
+\caption{Source: \\texttt{./archive/openalex/pdf/W4410193211.pdf}, page 3.}
+\label{fig:3}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{report\_assets/figures/.\_archive\_openalex\_pdf\_W4410193211.pdf-f85c1da4.png}
+\caption{Source: \\texttt{./archive/openalex/pdf/W4410193211.pdf}, page 3.}
+\label{fig:4}
+\end{figure}
+
+\section*{Report Prompt}
+\begin{verbatim}
+지난 12개월 동안의 양자컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광재료 개발 관점에서 분석해줘.
+특히 다음을 포함해 정리해줘:
+- 양자컴퓨팅이 재료 탐색/설계에 쓰이는 주요 흐름(알고리즘, 워크플로, 데이터 파이프라인)
+- OLED 발광재료(형광/인광/TADF/CP-OLED 등) 탐색에 적용된 접근과 성과
+- 삼성디스플레이, LG디스플레이, UDC 등 산업계의 시도와 공개 정보의 한계
+- 학계 연구 흐름과 산업 적용 간의 간극, 가장 큰 병목과 해결 과제
+- 2~3개의 대표적 연구/산업 시나리오를 근거와 함께 제시
+- 향후 12~24개월 내 기대되는 변화와 의사결정자용 후속 질문
+
+출처는 논문/리뷰/공식 발표/신뢰 가능한 업계 자료를 우선으로 하고, 웹 검색으로 보강한 내용은 “supporting”으로 구분해 활용해줘.
+
+작성 스타일/톤:
+- 학술/기술 전문가 리뷰 논문 수준의 엄밀한 서술체로 작성해줘. (교수식 서술, 과장/마케팅 톤 금지)
+- 각 핵심 주장마다 “주장 → 근거(출처) → 한계/불확실성 → 해석/의미” 흐름으로 구성해줘.
+- 근거의 강도를 짧게 표기해줘(예: 근거 강도: 높음/중간/낮음).
+- 기술적 메커니즘(알고리즘·실험 조건·데이터/공정 조건)을 가능한 한 명시하고, 재현성/스케일링 가능성도 평가해줘.
+- 학계 결과와 산업 적용의 간극(수율, 비용, 수명, 신뢰성, 공정 호환성 등)을 비판적으로 다뤄줘.
+- 핵심 용어는 짧게 정의하고, 유사 개념은 비교·대조해줘.
+- 인용은 “실제 출처” 기준으로 하며, 추론/의견은 명확히 구분해줘.
+\end{verbatim}
+\section*{References}
+\renewcommand{\labelenumi}{[\arabic{enumi}]}
+\begin{enumerate}
+\item research.ibm.com/blog/quantum-for-oled --- \href{https://research.ibm.com/blog/quantum-for-oled}{link}
+\item www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021... --- \href{https://www.mcgc.com/english/news\_mcc/2021/\_\_icsFiles/afieldfile/2021/05/26/qhubeng.pdf}{link}
+\item \_log.txt --- \href{./archive/\_log.txt}{\texttt{./archive/\_log.txt}}
+\item Using GNN property predictors as molecule generators --- \href{./archive/openalex/text/W4410193211.txt}{\texttt{./archive/openalex/text/W4410193211.txt}} \textit{citations: 8}
+\item 20260110\_qc-oled-index.md --- \href{./archive/20260110\_qc-oled-index.md}{\texttt{./archive/20260110\_qc-oled-index.md}}
+\item 20260110\_qc-oled.txt --- \href{./instruction/20260110\_qc-oled.txt}{\texttt{./instruction/20260110\_qc-oled.txt}}
+\item www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-c... --- \href{https://www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-classiq-manage-dramatically-improve}{link}
+\end{enumerate}
+\section*{Miscellaneous}
+\small
+\begin{itemize}
+\item Generated at: 2026-01-14 21:38:24
+\item Duration: 00:12:42 (762.3s)
+\item Model: gpt-5.2
+\item Quality strategy: none
+\item Quality iterations: 0
+\item Template: review\_of\_modern\_physics
+\item Output format: tex
+\item PDF compile: enabled
+\end{itemize}
+\normalsize
+\end{document}

@@ -1,42 +1,67 @@
-## 런/아카이브 메타(커버리지·신뢰도 진단)
+## 1) 인덱스/설정(런 커버리지·제약) 근거
 
-- **아카이브 요약(범위 한계 명시 근거)**  
-  - “Queries: 3 | URLs: 2 | arXiv IDs: 0”로, OLED 트렌드/소재/산업 함의를 다루기엔 수집량이 매우 제한적임. [archive/20260104_oled-index.md]  
-  - 실행 커맨드/입력 지시서 경로가 기록되어 재현 가능. [archive/20260104_oled-index.md]
+- 이번 런은 **Queries 3개, URLs 2개, arXiv IDs 0개**로 기록됨. 또한 Tavily search/extract 산출물 경로가 명시됨.  
+  - 근거: `archive/20260104_oled-index.md`에 “Queries: 3 | URLs: 2 | arXiv IDs: 0” 및 Tavily 파일 목록 기재. [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/20260104_oled-index.md ]
 
-- **채널 비활성/포커스 희석의 직접 근거**  
-  - `openalex_enabled=false`, `youtube_enabled=false`로 OA 저널/리뷰·영상 채널 확장이 막혀 있음. 또한 queries에 `"oled"`, `"quantum computing"`, `"recent 30 days"`가 함께 들어가 포커스가 희석됨. [archive/_job.json]  
-  - 로그에서 Tavily search는 3개 쿼리 모두 수행되었지만, **“ARXIV RECENT SEARCH: query='quantum computing' days=30”만 실행**되어 OLED 관련 arXiv 수집이 0건이 된 정황이 확인됨. [archive/_log.txt]
+- Instruction(입력 지시문)에는 `arxiv`, `oled`, `quantum computing`, `recent 30 days`가 함께 포함되어 있고, URL 2개(LinkedIn, Nature Communications PDF)가 지정됨.  
+  - 근거: `instruction/20260104_oled.txt` 원문 라인. [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/instruction/20260104_oled.txt ]
 
----
+- 파이프라인 설정상 **OpenAlex/YouTube가 비활성화(openalex_enabled=false, youtube_enabled=false)** 되어 있어 “논문/저널” 커버리지가 구조적으로 제한됨. 또한 `query_specs`에 arXiv 힌트가 걸려 있으나 `arxiv_ids`는 빈 배열임.  
+  - 근거: `archive/_job.json`의 `openalex_enabled:false`, `youtube_enabled:false`, `arxiv_ids:[]`. [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/_job.json ]
 
-## 1차 논문(PDF 추출 텍스트) — OLED 기술 변곡점/정량 근거
+- 로그상 arXiv recent search가 **‘quantum computing’에 대해서만 수행**됨(‘oled’로 arXiv recent search 수행 기록 없음).  
+  - 근거: `archive/_log.txt`에 “ARXIV RECENT SEARCH: query='quantum computing' days=30” 기록. [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/_log.txt ]
 
-- **Nature Communications (2025), “High aspect ratio organic light-emitting diodes” (Wang et al.)**  
-  - **문제정의(조명용 OLED의 구조적 난제):** 조명용은 디스플레이 대비 “order of magnitude higher luminance”가 필요하며, **효율·수명이 전류밀도/휘도 증가에 따라 감소**해 목표 수명 달성이 어렵다고 설명. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-  - **핵심 레버(기술 변곡점 후보):** “sub-mm, high aspect ratio surface texture”로 **패널 면적 대비 발광 ‘유효 소자 면적’을 증가(AE)**시켜, 동일 패널 휘도를 더 낮은 전류밀도로 달성하는 전략 제시. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-  - **정량 성과(효율·수명):** 평면 대비 **operating lifetime 2.7배**, **external light extraction efficiency 최대 40% 증가**를 보고. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-  - **제조/양산 관점 포인트(연구 vs 상용화 연결):**
-    - 표준 **VTE(진공 열증착)**로 **AE 최대 1.4x**까지 “good thickness uniformity” 확보했다고 명시. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-    - 유기층 두께 균일도: facet 중심으로 **두께 변동(표준편차/평균) < 5%**라고 보고. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-    - **재현성/신뢰성 경고 신호:** “Functional AE2.0 devices… tended to fail quickly and were not reproducible.” 즉, **AE를 더 키우면(고종횡비) 조기 실패·재현성 문제가 병목**이 될 수 있음을 스스로 인정. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]  
-    - 결함 민감도: AE1.1에서 “many dark spots… attributed to… defects in the master mold”로 **마스터 몰드 결함이 광학/균일도 결함으로 직결**됨을 시사. [https://www.nature.com/articles/s41467-025-67312-4_reference.pdf] [archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt]
 
----
+## 2) Tavily 검색 결과(출처 성격·오프토픽) 근거
 
-## 웹 검색 인덱스(Tavily Search) — 추가 근거 후보(단, 현재 아카이브에는 ‘검색 결과 요약’ 수준)
+- `oled` 검색 결과 상위는 Wikipedia, OLED-Info, DOE(energy.gov), Ossila 등 **개론/설명형**이 중심으로 나타남(산업 리포트/학회 프로시딩/시장조사 등 “의사결정용 정량 비교” 소스는 상위에 보이지 않음).  
+  - 근거: `archive/tavily_search.jsonl`의 `query="oled"` 결과 URL/요약에 Wikipedia/OLED-Info/DOE/Ossila 등이 포함. (실제 원문은 각 URL)  
+    - https://en.wikipedia.org/wiki/OLED  
+    - https://www.oled-info.com/oled-introduction  
+    - https://www.energy.gov/eere/ssl/oled-basics  
+    - https://www.ossila.com/pages/what-is-an-oled  
+  - [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/tavily_search.jsonl ]
 
-- **U.S. Department of Energy, “OLED Basics”**  
-  - OLED는 “diffuse-area light sources”, LED와 비교해 “widespread use… largely due to their high cost”라고 언급(조명 상용화 지연의 비용 요인). [https://www.energy.gov/eere/ssl/oled-basics] [archive/tavily_search.jsonl 내 해당 결과 요약]
+- `recent 30 days` 검색은 **OLED와 무관한 뉴스/유틸리티/기타 페이지**가 다수로 잡혀, 쿼리 오염(범위 불명확) 문제가 확인됨.  
+  - 근거: `archive/tavily_search.jsonl`의 `query="recent 30 days"` 결과에 avian flu 기사, 날짜 계산기, IMDb 등 포함. (실제 원문은 각 URL)  
+    - https://healthpolicy-watch.news/as-more-us-dairy-herds-infected-with-avian-flu-americans-in-the-dark-on-the-risks-of-raw-milk/  
+    - https://www.inchcalculator.com/days-from/30-days-ago-from-today/  
+    - https://www.imdb.com/title/tt19718422/  
+  - [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/tavily_search.jsonl ]
 
-- **OLED-Info, “An introduction to OLED displays” (Last updated 13/06/2025)**  
-  - OLED 조명은 “haven't yet managed to reach mass production… niche applications, mainly automotive, is on the rise”라고 기술(니치/자동차 중심 채택). [https://www.oled-info.com/oled-introduction] [archive/tavily_search.jsonl 내 해당 결과 요약]
 
-- (참고) Wikipedia 등 기초 설명성 출처 다수 포함 — 트렌드/소재/제조 이슈의 1차 근거로는 한계. [archive/tavily_search.jsonl]
+## 3) 오픈액세스 저널(PDF 추출 텍스트) — 핵심 기술 증거(Nature Communications, 2025)
 
----
+- 논문 식별/오픈액세스 라이선스: “High aspect ratio organic light-emitting diodes”, **Nat Commun (2025)**, DOI **10.1038/s41467-025-67312-4**, “Open Access … CC BY-NC-ND 4.0” 문구 포함.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: PDF 추출본 서두(doi/received/accepted/라이선스). [ /C:/Users/angpa/myProjects/FEATHER/examples/runs/20260104_oled/archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt ]
 
-## SNS/2차(맥락) — 직접 OLED 근거는 약함
+- 문제정의(상용 조명용 OLED의 핵심 난점): **OLED lifetime은 luminance에 반비례**하고 조명은 디스플레이 대비 **약 10배 높은 휘도 요구**, 효율/수명 모두 전류밀도 증가와 함께 저하.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: Abstract/Introduction에서 “OLED lifetime is inversely proportional to luminance… lighting applications demand high luminance… roughly an order of magnitude higher luminance than displays… efficiency and operating lifetime both decline with increasing current density”. [ /.../0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt ]
 
-- **LinkedIn post: “Trio Framework Addresses Molecular Design Challenges”**  
-  - 분자 설계 AI의 구조적 과제(유효성, 합성가능성, 다목적 최적화, 해석가능성)와 “Trio” 프레임워크를 소개하나, **OLED/발광재료/제조 트렌드에 대한 직접 증거는 없음**(소재 탐색 자동화 ‘맥락’으로만 제한적으로 사용 가능). [https://www.linkedin.com/posts/fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADrVxc4BEqb4PF0MiiEBRbbQJ7tfp6CkF3Q] [archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-7406324682192441344-60n3_utm_s.txt]
+- 제안(기술적 변곡점 후보): **sub‑mm high aspect ratio(고종횡비) 텍스처 기판(corrugated substrate)** 위에 OLED를 만들어 **패널 면적 대비 활성 면적을 증가(AE)** → 동일 패널 휘도를 더 낮은 전류밀도로 달성.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: Abstract/Results의 “constructing OLEDs on a substrate with sub-mm, high aspect ratio surface texture… more active OLED area per unit lighting panel area… current density decreases”, AE 정의(“AE ≡ Adev/Apan”). [ /.../0002_...pdf.txt ]
+
+- 정량 결과(효율/수명):  
+  - **AE up to 1.4×**(표준 thermal evaporator/VTE로 두께 균일도 확보)  
+  - planar 대비 **operating lifetime 2.7×(LT95 기준)**  
+  - **external light extraction efficiency 최대 40% 증가**  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: Abstract에 “area enhancement factors up to 1.4x… 2.7-fold increase in operating lifetime… up to a 40% increase in external light extraction efficiency”. [ /.../0002_...pdf.txt ]
+
+- 수명 측정 조건(해석에 중요한 실험 조건): **constant panel current density Jpan = 3 mA cm⁻²**, 초기 휘도 언급(대략 200 cd m⁻²), **LT95 = 초기 휘도의 95%까지 감소하는 시간**으로 정의. 또한 outcoupling 변화의 혼입을 피하기 위해 **constant luminance가 아닌 constant current**로 에이징했다고 명시.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: Results/Fig.7 설명 “2.7-fold increase in LT95… devices are aged at a constant panel current density of Jpan=3 mA cm-2… instead of constant panel luminance… LT95 defined as time required to reach 95% of initial luminance”. [ /.../0002_...pdf.txt ]
+
+- 제조/스케일업 리스크(상용화 비교에서 핵심):  
+  - **AE2.0(고 AE) 디바이스는 제작되었으나 빠르게 실패·재현성 낮음** (“Functional AE2.0 devices… tended to fail quickly and were not reproducible.”)  
+  - VTE의 방향성 증착 때문에 텍스처에서 **두께 보정(AE 배수 보정)**이 필요하고, 균일 코팅이 핵심 난제라고 명시.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: Results/Fig.5 근처 “Functional AE2.0… not reproducible”, Results/Fabrication에서 “directional nature of VTE… nominal thickness must be increased by factor AE… key challenge… uniform thickness/no hot spots”. [ /.../0002_...pdf.txt ]
+
+- 산업적 이해상충(credibility/industry tie): 일부 저자가 **OLEDWorks LLC 직원**이며 회사가 OLED lighting 제품을 제조한다고 “Competing interests”에 명시.  
+  - 원문 URL: https://www.nature.com/articles/s41467-025-67312-4_reference.pdf  
+  - 근거 텍스트: “R.M., D.C., and M.K. are employees of OLEDWorks, LLC, a company that manufactures OLED lighting products.” [ /.../0002_...pdf.txt ]

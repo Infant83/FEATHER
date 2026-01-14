@@ -1,0 +1,30 @@
+Template: quanta_magazine
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\quanta_magazine.md
+Latex: default.tex
+Sections:
+- Lede
+- Central Question
+- The Story So Far
+- How It Works
+- Why It Matters
+- Open Questions
+- Appendix
+
+Guidance:
+Template description: Quanta Magazine-style narrative explainer.
+
+Template tone: Narrative, conceptual, evidence-anchored.
+
+Template audience: Broad technical readership.
+
+Section guidance:
+- Lede: 2-3 paragraphs; narrative hook; no bullets.
+- Central Question: 2-4 sentences framing the mystery.
+- The Story So Far: chronological narrative; key papers/actors.
+- How It Works: conceptual mechanism; one equation only if clarifying.
+- Why It Matters: scientific and human implications; cite sources.
+- Open Questions: 3-5 questions; be explicit about uncertainty.
+
+Template writing guidance:
+Use metaphors sparingly; avoid hype.
+Keep warm, magazine tone without losing rigor.

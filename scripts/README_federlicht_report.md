@@ -42,6 +42,7 @@ Built-in templates live under `scripts/templates/` (repo) or `federlicht/templat
 - `technical_deep_dive`
 - `mit_tech_review`
 - `mit_tech_review_10_breakthroughs`
+- `linkedin_review`
 - `quanta_magazine`
 - `nature_reviews`
 - `review_of_modern_physics`
@@ -134,7 +135,9 @@ The script writes additional artifacts under the run folder:
 - `report_notes/quality_evals.jsonl`: per-iteration evaluation scores (when quality loops run).
 - `report_notes/quality_pairwise.jsonl`: pairwise comparison notes (pairwise strategy).
 - `report_notes/report_meta.json`: runtime metadata (duration, model, format, etc.).
-- `report_notes/figures.jsonl`: extracted PDF figure inventory (when figure extraction is enabled).
+- `report_notes/figures_candidates.jsonl`: figure candidates extracted from referenced PDFs.
+- `report_notes/figures_selected.txt`: user selection file (one candidate ID per line).
+- `report_notes/figures.jsonl`: selected figures inserted into the report.
 - `report_assets/figures/`: extracted PDF figures (PNG/JPG).
 - `report_views/`: HTML viewer pages for files (HTML output only).
 - `supporting/<timestamp>/`: web research outputs (when `--web-search` is enabled).
@@ -144,6 +147,12 @@ The report output also appends a small `Miscellaneous` section with runtime meta
 ## PDF figure extraction (optional)
 If enabled, embedded images are extracted from referenced PDFs and inserted near the section that cites the source.
 This preserves provenance (source PDF + page) without interpreting the chart content.
+
+Default workflow is two-stage:
+1) Run once to generate candidates and a preview (`report_views/figures_preview.html`).
+2) Add selected candidate IDs to `report_notes/figures_selected.txt` and rerun.
+
+Use `--figures-mode auto` to insert all candidates without manual selection.
 
 ```bash
 federlicht \
@@ -162,6 +171,8 @@ Options:
 - `--figures-min-area`: discard small icons/logos (area in pixels squared).
 - `--figures-renderer`: render vector pages when embedded images are absent (`auto`, `pdfium`, `poppler`, `mupdf`, `none`).
 - `--figures-dpi`: render quality for vector pages.
+- `--figures-mode`: `select` (default) or `auto`.
+- `--figures-select`: path to a selection file (defaults to `report_notes/figures_selected.txt`).
 
 Requires `pymupdf` (already included in `.[all]`). For vector-only PDFs, install:
 - `pypdfium2` + `pillow` (default, pure Python).

@@ -1,53 +1,67 @@
-## 아카이브 맵(coverage 파악) — 20260112_ms-ai-diffusion
-보고서 포커스(“MS 에서 발간한 AI 확산 보고서” 심층 번역/리뷰)에 맞는 소스는 **Microsoft Research PDF 1건**으로 거의 단일 출처입니다. OpenAlex/arXiv/YouTube 인덱스는 생성되지 않았고(조회 0), 보조 웹 리서치 산출물도 없습니다.
-
-### 1) 핵심 산출물(원문)
-- **`archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`** (1.9MB)  
-  - 원문 PDF. figure/표를 “추출해 리포트에 사용”하려면 최우선.
-- **`archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`** (29KB)  
-  - PDF 텍스트 추출본(페이지 마커 `===== PAGE N =====` 포함). 번역/요약/인용 작업에 가장 빠르게 활용 가능.
-- **`archive/tavily_extract/0001_https_...pdf.txt`** (27KB)  
-  - Tavily가 뽑은 raw_content(상당 부분이 `web/text`와 중복). 누락/깨짐 비교용 보조.
-
-### 2) 인덱스/작업 메타
-- **`archive/20260112_ms-ai-diffusion-index.md`**  
-  - 아카이브 구성 요약(어떤 파일이 무엇인지).
-- **`instruction/20260112_ms-ai-diffusion.txt`**  
-  - 입력 URL 1개(해당 PDF).
-- **`archive/_job.json`**, **`archive/_log.txt`**  
-  - 실행 설정/로그(재현성, 수집 범위 확인용). 내용 품질 자체에는 영향 적음.
-
-### 3) 부재(없음을 확인)
-- `archive/tavily_search.jsonl`, `archive/openalex/works.jsonl`, `archive/arxiv/papers.jsonl`, `archive/youtube/videos.jsonl`, `archive/local/manifest.jsonl`  
-  - **현재 run에는 존재하지 않음** → 외부 참고문헌/2차 자료 기반 확장은 아카이브만으로는 어렵고, PDF 내부의 참고 링크([1][2][3] 등) 정도만 활용 가능.
+## 아카이브 커버리지 빠른 요약 (20260112_ms-ai-diffusion)
+- **대상 보고서(원문)**: *Global AI Adoption in 2025 — A Widening Digital Divide* (January, 2026)  
+  - Microsoft Research / Microsoft AI Economy Institute 계열로 보이는 “AI Diffusion” 리포트
+- **수집 범위**: URL **1개**(PDF 1개)만 포함. (OpenAlex/arXiv/YouTube 인덱스는 없음)
+- **핵심 포커스**: 2025년 **H2(하반기)** 기준 생성형 AI 사용(확산) 지표, **Global North vs Global South 격차 확대**, 국가별 순위/증가폭, South Korea/DeepSeek 사례.
 
 ---
 
-## 우선순위 “읽기” 리스트(최대 12개) + 이유
-1. **`archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`**  
-   - figure/지도/표 등 시각자료를 정확히 반영해야 “번역+리뷰형 보고서” 품질이 올라감.
-2. **`archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`**  
-   - 빠른 전체 구조 파악, 장/섹션별 번역 초안 작성, 문장 인용에 최적.
-3. **`archive/tavily_extract/0001_https_...pdf.txt`**  
-   - 텍스트 추출 누락/오탈자 비교, 특정 문단이 `web/text`에서 깨졌을 때 백업.
-4. **`archive/20260112_ms-ai-diffusion-index.md`**  
-   - 작업 착수 시 파일 위치/구성 재확인(팀 작업/재현성에 도움).
+## 파일 인벤토리(구조화)
+
+### 1) 인스트럭션/인덱스/로그
+- `instruction/20260112_ms-ai-diffusion.txt`  
+  - 입력 URL 1개만 포함(보고서 PDF 링크)
+- `archive/20260112_ms-ai-diffusion-index.md`  
+  - 어떤 파일이 생성됐는지 요약 인덱스(탐색용)
+- `archive/_job.json`  
+  - 실행 옵션/수집 설정(재현성, 범위 확인)
+- `archive/_log.txt`  
+  - 다운로드/텍스트 변환 로그(오류 여부 확인)
+
+### 2) 본문 원천(가장 중요)
+- `archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`  
+  - 원문 PDF (그림/도표 추출은 여기서 해야 함)
+- `archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`  
+  - PDF를 텍스트로 변환한 버전(번역/요약/인용 작업에 최우선)
+
+### 3) 보조 추출물(중요도 중간)
+- `archive/tavily_extract/0001_https_www.microsoft.com_en-us_research_wp-content_uploads_2026_01_Microsoft-AI-Diffusion-Report-2025-H2.pdf.txt`
+  - Tavily가 뽑은 raw_content(JSON). 대체 텍스트 소스로 활용 가능(텍스트 파일 누락/깨짐 대비)
+
+---
+
+## “키 소스 파일” 하이라이트(보고서 작성에 직접 쓰일 것)
+- **원문 그림/표 포함**: `archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`
+- **번역/서술형 리뷰 본문 베이스**: `archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`
+
+(현재 텍스트 일부를 보면 Executive Summary, 국가별 확산 순위(H1 vs H2), Global North/South 비교 차트, South Korea 섹션, DeepSeek 언급 등이 포함됨)
+
+---
+
+## 우선순위 “읽기 계획”(최대 12개, 추천 순서 + 근거)
+1. **`archive/web/text/Microsoft-AI-Diffusion-Report-2025-H2.txt`**  
+   - 근거: 한글 심층 번역/리뷰 문장 작성의 메인 재료. 빠르게 전체 구조 파악 가능.
+2. **`archive/web/pdf/Microsoft-AI-Diffusion-Report-2025-H2.pdf`**  
+   - 근거: 보고서에서 “figure/그림 추출” 요구가 있어 필수. 도표/지도/랭킹표 등 시각자료 확인용.
+3. **`archive/20260112_ms-ai-diffusion-index.md`**  
+   - 근거: 아카이브 구성 한눈에 점검(누락/추가 소스 여부).
+4. **`archive/tavily_extract/0001_https_...pdf.txt`**  
+   - 근거: 텍스트 변환본과 대조해 누락된 문단/각주/표 텍스트가 있는지 확인하는 “세컨드 소스”.
 5. **`instruction/20260112_ms-ai-diffusion.txt`**  
-   - 원 출처 URL 확인(보고서 서지 정보/참조 링크 정리 시 필요).
+   - 근거: 입력이 단일 URL인지 확인(추가 참고문헌 수집이 필요한지 판단).
 6. **`archive/_job.json`**  
-   - 데이터 수집 범위(30일, URL 1개) 확인 → “이 보고서는 단일 출처 번역임”을 명확히 하는 근거.
+   - 근거: 수집 옵션 확인(queries=0인 이유, openalex 결과가 없는 이유 등 커버리지 한계 설명 가능).
 7. **`archive/_log.txt`**  
-   - 다운로드/추출 과정에서 오류 없었는지 확인(텍스트 누락 원인 추적용).
+   - 근거: PDF→TEXT 변환 성공 여부, 문제 발생 시 근거 확보.
 
-(실질 콘텐츠는 1~3이 전부라고 봐도 무방합니다.)
+(현 아카이브는 총 6개 파일이라, 사실상 위 7개 중 6개만 존재/중복 없이 모두 커버됩니다.)
 
 ---
 
-## 추천 읽기/작성 플로우(리딩 플랜)
-1) **`web/text`로 전체 스캔**: Executive Summary → 핵심 지표(16.3%, Global North 24.7% vs Global South 14.1% 등) → 국가 랭킹/변화 → 한국 관련 섹션(“South Korea’s AI Surge…”) 순으로 구조 잡기  
-2) **`pdf`로 figure/표 정확화**: 지도(“AI Diffusion by Economy H2 2025”), Top30 랭킹 표, Global North/South 격차 바 차트, 한국 SAT(CSAT) 모델 성능 그래프 등 “보고서에 넣을 그림 후보” 체크  
-3) **번역은 ‘요약-근거-해석’ 단락 단위로**: 원문 문단을 그대로 옮기기보다, (요약 2~3문장) → (원문 수치/사례 근거) → (의미/시사점 해석) 흐름으로 재서술  
-4) **중복/깨짐 검증**: 애매한 문장이나 끊긴 부분은 `tavily_extract`와 대조  
-5) **최종 보고서 구성 제안**: (1) 한눈에 보는 결론 (2) 측정 방법/한계 (3) 글로벌 격차(북/남) (4) 상위 국가와 미국의 ‘역설’ (5) South Korea 사례 심층 (6) DeepSeek/지정학적 확산 (7) 시사점/체크리스트
+## 커버리지 갭(추가로 있으면 좋은데 현재 아카이브에 없는 것)
+- 보고서에서 참조하는 **AI Diffusion technical paper [1]** 같은 “방법론 문서” 원문이 아카이브에 없음  
+  → 번역/심층 해석을 강화하려면 해당 기술문서도 추가 수집 권장.
+- South Korea/DeepSeek 관련 각주 [2][3][4] 등 **외부 참고자료**도 미수집  
+  → 보고서 리뷰에서 “근거 확장(맥락)”을 하려면 링크 수집 필요.
 
-원하면 제가 다음 단계로 **PDF에서 “리포트에 쓸 figure 후보(캡션/페이지/의미)” 목록을 먼저 뽑는 읽기 계획**으로 더 촘촘하게 쪼개드릴 수도 있어요.
+원하시면, 다음 단계로는 **PDF에서 핵심 figure 목록(페이지/캡션/의미)만 먼저 뽑는 계획**(예: AI Diffusion 세계지도, Global North vs South 막대그래프, 국가 Top30 변화표, South Korea 관련 그래프)을 제안드릴 수 있어요.

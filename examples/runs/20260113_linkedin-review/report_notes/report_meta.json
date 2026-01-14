@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-01-15 06:35:47",
+  "started_at": "2026-01-15 06:31:09",
+  "duration_seconds": 278.84,
+  "duration_hms": "00:04:38",
+  "model": "gpt-4o-mini",
+  "quality_model": null,
+  "quality_iterations": 0,
+  "quality_strategy": "none",
+  "template": "default",
+  "output_format": "html",
+  "pdf_status": "disabled",
+  "run_overview_path": "./report/run_overview.md",
+  "archive_index_path": "./archive/20260113_linkedin-review-index.md",
+  "instruction_path": "./instruction/20260113_linkedin-review.txt"
+}

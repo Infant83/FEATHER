@@ -1,24 +1,11 @@
-Updated plan (with completions + missing steps added):
+- [x] Confirm scope & success criteria — read `instruction/20260107_ai-trends.txt` (it defines the query set + hints: linkedin/arxiv/github; implies a “10 breakthroughs”-style output).  
+- [x] Audit available evidence — read `archive/_job.json` + `archive/_log.txt` (only Tavily ran; “emerging AI technologies 2026” failed; OpenAlex enabled but produced no artifacts; no linkedin/arxiv/github/CES/site-specific outputs present).  
+- [x] Extract source inventory from Tavily — parsed `archive/tavily_search.jsonl` (2 queries captured; 10 total results; needs dedupe if near-identical, but current set is already distinct).  
+- [x] Build candidate breakthrough pool (10–15) — can be clustered only from the limited 10 sources (agents; AI-for-science; AI infra/energy; specialized models; chips; confidential computing; AI-native dev; org-level genAI; multimodal; sovereignty/trust).  
+- [ ] Select final Top 10 — **blocked by evidence thinness** (current archive likely can’t credibly support 10 distinct “breakthroughs” with 1–2 strong URLs each without re-collecting missing query outputs).  
+- [ ] Draft each breakthrough entry — pending (requires final Top 10 selection + per-item template fields: What/Why/Players/Availability).  
+- [ ] Synthesize cross-cutting sections — pending (Exec Summary, How We Chose, Themes, Implications, Risks & Gaps; must explicitly note evidence limits).  
+- [ ] Add provenance & QA pass — pending (breakthrough→URLs→origin query; redundancy/hype/template compliance).  
 
-- [x] Review instruction/20260107_ai-trends.txt — scope/constraints check  
-  - Note: this “instruction” file is only a **query list** (no tone/template constraints embedded).
-
-- [x] Extract sources from archive/tavily_search.jsonl — pull all distinct titles/URLs/snippets and note credibility/limitations  
-  - Note: tavily_search.jsonl contains **only 2 lines** (two executed queries) and sources are mostly **vendor/consulting** + State of AI.
-
-- [x] Confirm whether any CES/conference/robotics-specific evidence exists in tavily_search.jsonl beyond the two executed queries; if not, mark as gap  
-  - Confirmed: **no CES/conference/robotics-specific** results captured in the archive; “emerging AI technologies 2026” query failed per _log.txt.
-
-- [ ] Add missing step: locate/confirm the **report template/format expectations** elsewhere (since instruction file has none); if none, define a minimal consistent template and note the assumption in Provenance
-
-- [ ] Cluster evidence into 6–8 trend buckets — group sources into buckets and identify strongest evidence per bucket
-
-- [ ] Select the “Top 10” breakthroughs — ensure coverage across agents, physical AI/robotics, chips/infra, governance/safety; avoid “10 variants of agents” given limited evidence
-
-- [ ] Draft the report in template structure — Executive Summary + How We Chose + 10 numbered H3 entries (What/Why/Key players/Availability)
-
-- [ ] Synthesize cross-cutting insights — 3–5 themes tied back to specific archived snippets/sources
-
-- [ ] Add decision-focused sections — Industry Implications + Risks & Gaps (explicitly call out missing CES/conference/robotics capture and the failed query)
-
-- [ ] Provenance + quality pass — use archive/_job.json and archive/_log.txt to document run limits; edit for clarity, consistency, traceability; MIT Tech Review-style tone
+Missing step to finish the report:
+- [ ] **Rebuild/refresh evidence**: re-run the failed/missing collectors/queries requested in the instruction file (agentic AI; physical AI/robotics; recent 30 days; CES 2026; TechReview/IEEE/VentureBeat; NeurIPS/ICLR/ICML/CVPR/etc.; plus linkedin/arxiv/github and OpenAlex outputs). If re-collection isn’t possible, add an explicit constraint section and **reduce scope/claims** accordingly.

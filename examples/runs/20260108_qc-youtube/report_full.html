@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260108_qc-youtube</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-quanta_magazine {
+  --ink: #1b1c22;
+  --muted: #4c5566;
+  --accent: #2f4b8f;
+  --link: #2f4b8f;
+  --page-bg: radial-gradient(1200px 700px at 15% -10%, #e9eef9 0%, #f4f6fb 45%, #ffffff 100%);
+  --body-font: "Baskerville", "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-quanta_magazine .report-title {
+  font-size: 2.8rem;
+}
+
+body.template-quanta_magazine .article {
+  border-radius: 20px;
+  box-shadow: 0 26px 70px rgba(43, 69, 121, 0.16);
+}
+
+body.template-quanta_magazine .article p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.2rem;
+  line-height: 1;
+  padding-right: 8px;
+  color: var(--accent);
+  font-family: var(--heading-font);
+}
+
+body.template-quanta_magazine .article h2 {
+  border-top: 1px solid rgba(47, 75, 143, 0.3);
+}
+
+  </style>
+</head>
+<body class="template-quanta_magazine">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260108_qc-youtube</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 07:45</p>
+<h2>Lede</h2>
+<p>In the last two years, the most visible form of “AI progress” hasn’t been a new theorem or a new chip design. It’s been a new kind of spending: warehouses of GPUs, booked months in advance, to multiply matrices fast enough to train ever-larger models. In the YouTube explainer <em>Quantum Computing and AI</em>, programmer Caleb H. uses Meta’s Llama-family scale as a narrative prop—then pivots to the question that keeps resurfacing whenever compute budgets hit a wall: could a quantum processor become the next accelerator, after GPUs? <a href="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-raw="archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt" class="viewer-link">[1]</a></p>
+<p>But when you look at what this run actually collected—three main web sources plus that single transcript—an interesting pattern emerges. The most concrete “quantum + AI” stories aren’t about training giant transformers on quantum hardware. They’re about narrower, hybrid workflows: optimization, probabilistic sampling, and specialty analog or photonic approaches that look “quantum-adjacent” in branding and business pitch, even when the core technique is not universal, fault-tolerant quantum computation. <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a> <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+<p>In other words, the real turning point may be less a sudden “QPU replaces GPU” moment—and more a slow redefinition of what counts as useful quantum computation in an AI-dominated world.</p>
+<h2>Central Question</h2>
+<p>Will quantum computing meaningfully accelerate AI—especially the expensive core of modern ML—on any timescale that matters to today’s industry? Or will “quantum + AI” settle into a more modest role: a toolbox of niche subroutines (optimization, sampling, simulation) that occasionally slot into larger classical pipelines? The evidence in this archive mostly supports the second interpretation, while showing why the first remains tantalizing—and unresolved. <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a> <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">[4]</a></p>
+<h2>The Story So Far</h2>
+<p>The newest part of the story is not a lab breakthrough but a reframing happening in public: quantum computing is increasingly discussed through the lens of AI’s economic gravity. Network World’s “Top quantum breakthroughs of 2025” explicitly places “quantum and AI” as an emerging enterprise use case and ties it to survey and market framing—reporting that in a SAS survey of 500 business leaders, 60% said they were “actively investing in, or exploring opportunities, in quantum AI,” and that Bain estimates up to $250B in market value unlocked across several industries, even while the market is “less than $1B today.” It also relays Jensen Huang’s public skepticism that quantum is still “15 to 30 years” from being truly useful. <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">[4]</a></p>
+<p>In parallel, consortium and policy-adjacent organizations have been trying to systematize the “use case” conversation. The QED‑C page for <em>Quantum Computing and Artificial Intelligence Use Cases</em> (cited there to SRI International, March 2025) describes QC and AI as complementary “in multidirectional ways”: AI can help quantum (circuit design, error correction, test data), while quantum can help AI particularly on “optimization and probabilistic tasks,” often via hybrid approaches that reduce complexity and improve resource allocation. This is a pragmatic, near-term posture: don’t wait for fully fault-tolerant machines; look for leverage points where small quantum components could matter. <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a></p>
+<p>Then there’s the industry-news layer: Quantum Computing Report’s news roundup includes two vignettes that illustrate how “AI adjacency” is becoming a product positioning strategy. One is Quantum Computing Inc.’s “Neurawave,” described as a photonics-based reservoir computing system aimed at edge-AI tasks like signal processing and time-series forecasting, packaged as compact, room-temperature, and PCIe-friendly—language that mirrors the integration story GPUs rode into the datacenter era. The second is Aramco and Pasqal deploying a neutral-atom system described as controlling 200 qubits, framed around industrial applications across energy/materials. Together, they show a split: some offerings market “AI acceleration” through alternative compute substrates (photonics/reservoir methods), while others push general quantum hardware into enterprise settings where optimization and simulation are plausible future wins. <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+<p>Finally, the YouTube explainer captures the popular mental model: if GPUs sped up AI by parallelizing matrix math, perhaps QPUs will do the same “simultaneously.” But it also lands on the central friction: classical AI data is deterministic bits; quantum states are probabilistic amplitudes; naïvely encoding classical bits into fixed basis states erases the very phenomena (superposition/entanglement) one hopes to exploit. The video’s quantitative claims about training time and FLOPs are not corroborated within this run’s evidence base, so they should be treated as illustrative rather than authoritative here. <a href="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-raw="archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt" class="viewer-link">[1]</a>  </p>
+<p>Methodologically, it matters that this archive is thin by design: 30-day window, limited Tavily results, YouTube search skipped (no explicit site hints), OpenAlex disabled, and no PDFs downloaded—so we are seeing a “surface slice” of discourse, not a comprehensive technical literature review. <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[5]</a> <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a> <a href="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-viewer="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-raw="archive/20260108_qc-youtube-index.md" class="viewer-link">[7]</a></p>
+<h2>How It Works</h2>
+<p>At a high level, “quantum helps AI” is best understood as <em>quantum helps certain computational primitives that appear inside some AI pipelines</em>—not as “quantum trains the whole model.”</p>
+<p>The QED‑C/SRI framing is explicit about which primitives are plausible: <strong>optimization</strong> and <strong>probabilistic tasks</strong>. Those two categories map cleanly onto places where many ML systems struggle:</p>
+<ul>
+<li>Optimization shows up in training (minimizing loss), in inference-time decision-making (planning, routing), and in resource allocation (scheduling, portfolio construction).</li>
+<li>Probabilistic tasks show up in sampling, uncertainty quantification, and some generative modeling workflows.</li>
+</ul>
+<p>One way to summarize the hybrid mindset is: keep the classical loop, and insert a quantum routine where the bottleneck is worst. In a toy abstraction, you can think of a workflow that repeatedly calls a quantum subroutine inside an outer classical optimizer:</p>
+<p>$$\theta_{t+1}=\theta_t-\eta \nabla_\theta \mathcal{L}(\theta_t,\; Q(\theta_t))$$</p>
+<p>Here $Q(\theta)$ is a quantum-assisted procedure (for example, a sampler or optimizer) whose output affects the loss $\mathcal{L}$. The point isn’t that gradients “run on a quantum computer” universally; it’s that some sub-computation might.</p>
+<p>The YouTube transcript adds a key engineering constraint: moving from GPU to QPU is not like moving from CPU to GPU, because the representation of information differs. If you load classical bits into qubits deterministically, you may end up doing classical work on expensive, noisy hardware—gaining little. This representation/encoding bottleneck is one reason many near-term proposals emphasize <strong>hybrid</strong> systems or tasks where quantum states are native (sampling, certain structured optimizations), rather than brute-force matrix multiplication for deep learning. <a href="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-raw="archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt" class="viewer-link">[1]</a> <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a></p>
+<p>Meanwhile, the Quantum Computing Report example of “Neurawave” shows a different “how it works” story: <strong>special-purpose analog/photonic approaches</strong> that aim to deliver AI-relevant compute efficiency without claiming universal quantum advantage. Reservoir computing, in particular, is often pitched as a physics-backed way to process time-series by exploiting a complex dynamical system as a feature generator; the news item frames this as edge-AI-ready through PCIe integration and energy efficiency. (This archive only contains the roundup snippet, so technical specifics should be verified in the linked “full article.”) <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+<h2>Why It Matters</h2>
+<p>Scientifically, the stakes are about <em>where computation’s hard core really is</em>. AI has made matrix multiplication the “steam engine” of contemporary computing; quantum computing historically promised speedups for very specific engines (factoring, unstructured search under constraints, simulation, some linear-algebraic subroutines). The open question is whether there is a deep overlap between what ML needs at scale and what quantum hardware can do robustly before fault tolerance. The QED‑C/SRI report page reflects a growing consensus that the overlap—if it arrives—will likely look hybrid and task-specific, not wholesale replacement. <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a></p>
+<p>Economically, “quantum + AI” talk is increasingly driven by timelines, investment narratives, and enterprise readiness. Network World’s piece captures the tension in one place: enthusiasm measured by executive surveys and market-sizing claims, versus high-profile skepticism about usefulness timelines (attributed there to Nvidia’s CEO). That tension shapes funding, talent pipelines, and what kinds of prototypes get built. <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">[4]</a></p>
+<p>Practically, the near-term impact may be less about breakthroughs and more about integration: devices that can live in existing compute environments, with familiar interfaces and workloads. That’s why the QCR note about a PCIe-connected, room-temperature “edge-AI” photonics reservoir system is revealing: it borrows the language of deployment and developer ergonomics from the GPU world, suggesting that—quantum or not—<em>compute that fits</em> can matter as much as compute that dazzles. <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+<p>Finally, there’s a human dimension: the “AI boom” is turning compute into a strategic resource. If quantum technologies can relieve pressure on energy use, hardware scarcity, or hard optimization problems in logistics and materials, they could have downstream impacts on drug discovery, supply chains, and energy systems—the same sectors invoked in both the Bain framing (as reported by Network World) and the Aramco/Pasqal industrial installation story. <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">[4]</a> <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+<h2>Open Questions</h2>
+<ol>
+<li>
+<p><strong>Which AI subproblems are “quantum-shaped” enough to yield reliable advantage on noisy, near-term hardware?</strong> The QED‑C/SRI page gestures at optimization and probabilistic tasks, but the boundary between a promising prototype and a defensible advantage remains unclear in this archive. <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">[2]</a></p>
+</li>
+<li>
+<p><strong>Can the data-encoding bottleneck be avoided, or will it dominate?</strong> The YouTube transcript identifies classical-to-quantum encoding as a core friction; without better schemes, the “QPU as a drop-in accelerator” analogy may fail. (This point is conceptual here; the quantitative examples in the video are not corroborated by other sources in this run.) <a href="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-raw="archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt" class="viewer-link">[1]</a></p>
+</li>
+<li>
+<p><strong>How much of “quantum AI” is actually non-quantum special-purpose computing (photonic/analog), and does that distinction matter?</strong> The “Neurawave” example is positioned as photonics reservoir computing for edge AI; whether that should be counted as quantum computing, optical computing, or simply new accelerators affects how we interpret progress signals. <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+</li>
+<li>
+<p><strong>What does “industrial deployment” really mean in 2025–2026?</strong> The Aramco/Pasqal installation is framed as a 200-qubit neutral-atom system for industrial applications, but this archive doesn’t provide details on workloads, benchmarks, or operational constraints (uptime, error rates, cost). <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">[3]</a></p>
+</li>
+<li>
+<p><strong>Are market narratives outpacing technical readiness—or correctly anticipating it?</strong> Network World’s survey/market figures and timeline skepticism coexist in the same article; resolving that discrepancy requires more primary technical evidence than this run collected (no PDFs, OpenAlex off). <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">[4]</a> <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[5]</a></p>
+</li>
+</ol>
+<h2>Appendix</h2>
+<p><strong>Archive scope &amp; limitations (provenance).</strong> This report is grounded in a constrained run: last 30 days, 10 Tavily queries with up to 5 results each; YouTube enabled with transcript extraction, but YouTube search was skipped because the queries contained no <code>site:youtube.com</code> hints; one video was processed via direct URL; OpenAlex was disabled; arXiv metadata was collected for two IDs but no PDFs/texts were downloaded, and OpenAlex citation lookups failed (HTTP 400). Accordingly, the evidence base is dominated by snippet-level web summaries and a single YouTube transcript rather than peer-reviewed primary literature. <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[5]</a> <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a> <a href="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-viewer="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-raw="archive/20260108_qc-youtube-index.md" class="viewer-link">[7]</a></p>
+<p><strong>Off-topic arXiv items.</strong> The two arXiv IDs in the run appear unrelated to “quantum computing + AI use cases” and are not used as evidence in the narrative. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a></p>
+<h2>Report Prompt</h2>
+<p>Write a narrative review with clear explanations and source citations.</p>
+<h2>References</h2>
+<ol>
+<li>youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt — <a href="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt-23db2f9a.html" data-raw="archive/youtube/transcripts/youtu.be-sQSQBYHR0ms-Quantum_Computing_and_AI.txt" class="viewer-link">file</a></li>
+<li>Quantum Computing and Artificial Intelligence Use Cases — <a href="https://quantumconsortium.org/publication/quantum-computing-and-artificial-intelligence-use-cases/" target="_blank" rel="noopener">link</a></li>
+<li>News — <a href="https://quantumcomputingreport.com/news/" target="_blank" rel="noopener">link</a></li>
+<li>Top quantum breakthroughs of 2025 | Network World — <a href="https://www.networkworld.com/article/4088709/top-quantum-breakthroughs-of-2025.html" target="_blank" rel="noopener">link</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>20260108_qc-youtube-index.md — <a href="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-viewer="report_views/archive_20260108_qc-youtube-index.md-fdd7fe30.html" data-raw="archive/20260108_qc-youtube-index.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 07:45:57</li>
+<li>Duration: 00:05:37 (337.95s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: quanta_magazine</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

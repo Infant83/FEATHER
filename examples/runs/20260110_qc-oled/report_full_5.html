@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260110_qc-oled</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-review_of_modern_physics {
+  --ink: #171717;
+  --muted: #4b4b4b;
+  --accent: #111111;
+  --link: #1b4b73;
+  --paper-alt: #f1f1f1;
+  --page-bg: linear-gradient(180deg, #f3f3f3 0%, #ffffff 100%);
+  --body-font: "Garamond", "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Palatino Linotype", "Book Antiqua", "Garamond", serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-review_of_modern_physics .article {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid #d7d7d7;
+}
+
+body.template-review_of_modern_physics .article h2 {
+  border-top: 1px solid #222222;
+  letter-spacing: 0.03em;
+}
+
+body.template-review_of_modern_physics .kicker {
+  color: #222222;
+}
+
+  </style>
+</head>
+<body class="template-review_of_modern_physics">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260110_qc-oled</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 23:54</p>
+<h2>Abstract</h2>
+<p>본 리뷰는 지난 12개월(대략 2025-01~2026-01) 범위에서 <strong>양자컴퓨팅(quantum computing, QC)이 재료 탐색·설계에 실제로 어떻게 결합되고 있는지</strong>를, 특히 <strong>OLED 발광재료(형광/인광/TADF/CP-OLED 등) 개발</strong> 관점에서 정리한다. 현재 아카이브에 포함된 1차 자료 중 OLED에 대한 “직접 적용”을 비교적 명확히 서술하는 것은 IBM Research Blog 및 Mitsubishi Chemical의 공식 PDF(기업 홍보/요약 성격)이 핵심이며, 양자 알고리즘·에러완화·여기상태 계산을 통해 <strong>TADF 후보 분자의 여기상태/전이</strong>를 다루었다는 점이 반복 확인된다([IBM blog], [qhubeng.pdf]). 반면, 동료평가 논문 형태의 상세 프로토콜(활성공간, 회로 깊이, 에러완화 파라미터, 정확도 지표 등)은 본 run 아카이브에 충분히 확보되지 않아, <strong>재현성·스케일링·“quantum advantage” 수준의 주장에는 강한 제한</strong>이 따른다. 또한 삼성디스플레이/LG디스플레이/UDC의 “QC 기반 OLED 발광재료 R&amp;D”에 대한 직접 공개 근거는 본 아카이브에서 확인되지 않는다(<a href="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-viewer="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-raw="instruction/20260110_qc-oled.txt" class="viewer-link">[1]</a>, <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>, <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>). 이에 본문은 (i) QC-for-chemistry의 표준 이론틀과 (ii) 클래식 ML+DFT 파이프라인의 비교 기준선을 명확히 한 뒤, (iii) OLED 사례는 확보된 1차 근거 중심으로 ‘무엇이 실제로 수행되었는지’와 ‘무엇이 아직 미해결인지’를 분리하여 논증한다.</p>
+<h2>Introduction</h2>
+<h3>범위 및 문제 설정</h3>
+<p>OLED 발광재료 설계는 (a) 발광 색·스펙트럼(에너지 갭/전이 에너지), (b) 여기상태 동역학(ISC/RISC, $\Delta E_{ST}$), (c) 양자수율 및 열·전기적 안정성, (d) 소자 구조·공정 호환성(호스트/도펀트, 수명, 열화) 등 다중 목적 최적화 문제로 귀결된다. 전통적으로는 TDDFT, 다참조 방법(CASPT2 등), 경험적/반경험 모델, 그리고 최근에는 ML 기반 예측기를 이용한 대규모 탐색이 병행된다. 그러나 여기상태 정확도(특히 CT 성격, 다참조성)와 비용(계산 스케일링), 탐색공간의 폭(조합 폭발)은 지속적인 병목이다.</p>
+<h3>본 리뷰의 핵심 질문</h3>
+<ol>
+<li>QC가 재료 탐색/설계에 들어오는 <strong>주요 알고리즘·워크플로·데이터 파이프라인</strong>은 무엇인가?</li>
+<li>OLED 발광재료(특히 TADF 등)에서 QC 적용이 “실제로” 어떤 형태로 보고되었는가?</li>
+<li>산업계(삼성/LG/UDC 포함)의 공개 정보는 어디까지이며, 부재/희소성은 어떻게 해석해야 하는가?</li>
+<li>학계 성과와 산업 적용 사이의 간극은 무엇이며, 향후 12–24개월의 관찰 지표는 무엇인가?</li>
+</ol>
+<h3>표기(Notation)</h3>
+<p>전자구조 문제는 2차 양자화된 분자 해밀토니안
+$$
+H = \sum_{pq} h_{pq} a_p^\dagger a_q + \frac{1}{2}\sum_{pqrs} h_{pqrs} a_p^\dagger a_q^\dagger a_r a_s
+$$
+로 두고, 페르미온-큐빗 매핑(Jordan–Wigner/Bravyi–Kitaev 등)을 통해 큐빗 해밀토니안 $H=\sum_j c_j P_j$ (Pauli string $P_j$의 선형결합)로 변환하는 것이 QC 기반 양자화학의 출발점이다(일반론). OLED 문맥에서는 주로 <strong>여기상태 에너지</strong>, 전이, $\Delta E_{ST}$, 발광 파장·효율에 연결되는 지표가 관심 타깃이다.</p>
+<h2>Theory &amp; Foundations</h2>
+<h3>1) QC 기반 전자구조·여기상태 계산의 기본 구성요소</h3>
+<p><strong>주장:</strong> NISQ(노이즈가 큰 중간 규모) 하드웨어에서 실용적 분자 계산은 보통 (i) 근사적 변분 알고리즘(VQE 계열)과 (ii) 에러완화(error mitigation) 및 (iii) 문제 축소(활성공간/임베딩/회로 압축)의 결합으로 구현된다.<br />
+- <strong>근거(출처):</strong> Mitsubishi Chemical 공식 PDF는 “현재 noisy quantum computers의 error”와 “chemical accuracy 달성의 어려움”을 전제로, <strong>qEOM‑VQE 및 VQD</strong>로 TADF 재료의 여기상태 에너지를 “reliably predict”하는 것을 목표로 삼았다고 명시한다([qhubeng.pdf]). IBM blog 역시 “noisy quantum computers”의 한계를 직접 언급하면서 “error mitigation”과 “novel quantum algorithms”를 통해 OLED 관련 분자의 여기상태 계산을 수행했다고 서술한다([IBM blog]).<br />
+- <strong>한계/불확실성:</strong> 본 아카이브에는 해당 연구의 동료평가 논문 본문(예: 활성공간 크기, ansatz, 샷 수, ZNE/PEC 여부, 기준선(TDDFT/CASPT2/CC) 비교)이 포함되어 있지 않다. 따라서 ‘어떤 에러완화가 정확도 개선을 어느 정도로 만들었는지’를 <strong>정량적으로 검증하기 어렵다</strong>.<br />
+- <strong>해석/의미:</strong> OLED 분자(특히 여기상태·전이)는 클래식 전자구조에서도 난이도가 높으므로, 기업-학계-플랫폼 협력에서 “여기상태 계산”이 QC 실증 주제로 선택된 것은 타당한 전략이다. 다만 현 단계의 설득력은 “가능성 시연(PoC)”에 가깝고, 산업 설계 루프에 들어가려면 <strong>정확도·비용·재현성</strong>의 표준화가 필요하다.<br />
+- <strong>근거 강도:</strong> 중간(공식 자료이나, 동료평가 상세 근거 부재).</p>
+<h3>2) OLED 발광 메커니즘과 QC 타깃의 연결(형광/인광/TADF)</h3>
+<p><strong>주장:</strong> OLED 발광재료에서 QC가 겨냥하는 물리량은 단순한 기저상태 에너지보다, <strong>여기상태 스펙트럼 및 전이(특히 TADF의 RISC와 연결되는 singlet–triplet 분리 $\Delta E_{ST}$)</strong>가 핵심이다.<br />
+- <strong>근거(출처):</strong> IBM blog는 phenylsulfonyl-carbazole(PSPCz) 분자의 “electronic transitions of high energy states”를 조사했으며, 이를 <strong>TADF emitters</strong> 후보로 연결한다([IBM blog]). Mitsubishi Chemical PDF는 TADF emitters의 “excited states” 계산을 수행했다고 반복적으로 말하고, 구체적으로 qEOM‑VQE/VQD로 “excited states energies” 예측을 목표로 삼았다고 언급한다([qhubeng.pdf]).<br />
+- <strong>한계/불확실성:</strong> TADF 성능은 분자 단독 물성(가스상)뿐 아니라 응집상, 호스트-도펀트 상호작용, 소자 구조/전하수송/열화와 얽혀 있다. 현재 자료는 주로 분자 수준 여기상태 계산을 강조하며, 소자 수명·안정성·공정 적합성으로의 연결은 제한적으로만 암시된다([IBM blog], [qhubeng.pdf]).<br />
+- <strong>해석/의미:</strong> QC가 “분자 여기상태”를 더 정밀·확장 가능하게 계산할 수 있다면(장기적으로), TADF뿐 아니라 인광(heavy metal complex), CP‑OLED(키랄 발광) 등에도 파급될 여지가 있다. 그러나 본 아카이브 근거만으로는 <strong>TADF 이외 범주로의 확장성</strong>을 실증했다고 말하기 어렵다.<br />
+- <strong>근거 강도:</strong> 중간.</p>
+<h3>3) ‘quantum materials’와 ‘quantum computing for materials’의 구분</h3>
+<p><strong>주장:</strong> “quantum materials” 리뷰 문헌은 양자구속/강상관/위상 등 응집물리 중심으로 서술되며, <strong>QC를 이용한 분자 재료 설계(quantum computing for chemistry/materials)</strong>와는 논점이 다르다.<br />
+- <strong>근거(출처):</strong> <em>Exploring quantum materials and applications: a review</em>는 QMs의 정의와 응용을 응집물리적 현상 중심으로 정리하며, “QMs are particularly crucial in the field of quantum computation”과 같은 연결을 언급하지만, OLED 발광분자 설계나 QC 기반 양자화학 워크플로를 제공하지 않는다(<a href="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-viewer="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-raw="archive/openalex/text/W4406477905.txt" class="viewer-link">[4]</a>).<br />
+- <strong>한계/불확실성:</strong> 본 리뷰가 다루는 ‘OLED×QC’의 기술적 세부를 보완하는 1차 자료로는 적합도가 낮다.<br />
+- <strong>해석/의미:</strong> OLED×QC 논의를 위해서는 “양자재료” 일반론보다 <strong>양자화학/전자구조의 QC 구현과 NISQ 제약</strong>을 다루는 자료가 핵심이다.<br />
+- <strong>근거 강도:</strong> 높음(문헌의 범위와 내용이 명확).</p>
+<h2>Methods &amp; Experimental Evidence</h2>
+<h3>1) OLED×QC “직접 적용”의 최소 단위 워크플로(본 아카이브 기준)</h3>
+<h4>(A) IBM–Mitsubishi Chemical–Keio–JSR 협력: TADF 분자 여기상태 계산</h4>
+<p><strong>주장:</strong> 기업-학계-플랫폼 협력에서 QC를 사용하여 <strong>산업용 화합물(TADF 후보)의 여기상태</strong>를 계산했고, 노이즈 문제를 전제로 <strong>에러완화 및 신규 알고리즘</strong>을 결합했다고 보고된다.<br />
+- <strong>근거(출처):</strong>
+  - IBM blog는 Mitsubishi Chemical(Keio University의 IBM Quantum Innovation Center 구성원)과 IBM 팀이 “error mitigation and novel quantum algorithms”로 “today’s noisy quantum computers”의 한계를 다루었다고 서술하며, arXiv preprint에서 PSPCz TADF emitter 후보의 “excited states” 양자 계산을 기술한다고 명시한다([IBM blog]).<br />
+  - Mitsubishi Chemical PDF는 TADF emitters의 excited states 계산을 위해 IBM/JSR/Keio와 공동 연구를 수행했고, “current noisy quantum computers”의 오류를 완화하는 “new scheme”을 개발해 정확도를 개선했다고 주장한다. 또한 qEOM‑VQE와 VQD를 사용해 TADF 재료의 excited state energies를 예측하는 것이 목표라고 적시한다([qhubeng.pdf]).<br />
+- <strong>한계/불확실성(방법론 관점):</strong>
+  1. <strong>재현성 단서 부족:</strong> 본 아카이브에는 해당 arXiv 프리프린트/npj 논문의 본문이 없어(현재 run 폴더에 다운로드된 PDF 없음), 회로 깊이, 측정 샷 수, 노이즈 모델, 에러완화 절차(ZNE/PEC/measurement mitigation 등), 기준선(예: TDDFT/CC/다참조) 대비 오차 등 핵심 요소가 확인되지 않는다.
+  2. <strong>스케일링 불명확:</strong> “상업용(industrial/commercial) 재료”라고 하나, 실제 활성공간/오비탈 수가 어느 정도인지가 불명확하다.<br />
+- <strong>해석/의미:</strong> 현 단계에서 확실한 것은 “OLED 후보 분자의 여기상태를 NISQ 장치에서 다루는 실증 시도”가 공식 채널에서 반복 언급된다는 점이다([IBM blog], [qhubeng.pdf]). 다만 “설계 의사결정에 충분한 정확도/비용”이라는 산업 요건을 만족했는지 여부는, 동료평가 원문 근거 없이는 결론 내리기 어렵다.<br />
+- <strong>근거 강도:</strong> 중간(공식 1차 자료이나 정량 프로토콜 부재).</p>
+<h4>(B) “world-first” 주장에 대한 방법론적 처리</h4>
+<p><strong>주장:</strong> “commercial materials의 excited states calculations에 QC를 적용한 world-first”라는 표현은, 사실 진술이라기보다 <strong>기업 문서의 홍보적 수사 가능성</strong>을 포함하므로, 학술 리뷰에서는 엄격히 제한적으로 인용해야 한다.<br />
+- <strong>근거(출처):</strong> Mitsubishi Chemical PDF에 해당 문구가 포함되어 있다([qhubeng.pdf]).<br />
+- <strong>한계/불확실성:</strong> “world-first”는 비교 집합(어떤 선행을 포함/배제하는지) 정의가 없고, 동료평가 문헌 메타분석 없이 검증이 불가능하다.<br />
+- <strong>해석/의미:</strong> 학술적 표현으로는 “상업적으로 관련된 TADF 분자에 대해 NISQ 장치에서 여기상태 계산을 수행했다고 보고” 정도로 엄밀히 축약하는 것이 적절하다.<br />
+- <strong>근거 강도:</strong> 낮음(검증 어려운 우월/최초 주장).</p>
+<h3>2) 2차(뉴스/업계) 자료의 위치: ‘supporting’로 제한</h3>
+<h4>(A) QAOA·회로 압축 내러티브</h4>
+<p><strong>주장:</strong> OLED-Info는 Mitsubishi Chemical이 OLED emitter 개발을 위해 QAOA를 “오랫동안 개발”했고, 노이즈 누적으로 정확도 보장이 어렵다는 문제 및 “quantum circuits compression”을 언급한다.<br />
+- <strong>근거(출처):</strong> OLED-Info 기사 본문 요약(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>에 포함된 URL).<br />
+- <strong>한계/불확실성:</strong> 2차 매체이며 원출처(논문/특허/공식 발표)의 상세 확인이 본 아카이브에 없다.<br />
+- <strong>해석/의미:</strong> 산업계가 ‘회로 압축’을 중시한다는 관찰은 유의미하지만, 본 리뷰에서는 <strong>supporting(보조 근거)</strong>로만 사용하고, 핵심 결론(성능·정확도)은 1차 자료에 한정해야 한다.<br />
+- <strong>근거 강도:</strong> 낮음(supporting).</p>
+<h4>(B) ML+QC 하이브리드로 deuterated Alq3 탐색(2023)</h4>
+<p><strong>주장:</strong> Phys.org 및 OLED-Info는 classical QC/ML 결합 워크플로로 deuterated derivative of Alq3의 고효율 emitter를 찾았다고 보도한다.<br />
+- <strong>근거(출처):</strong> Phys.org 기사 및 OLED-Info 기사 요약(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>).<br />
+- <strong>한계/불확실성:</strong> 기간(2023)이 “지난 12개월” 범위 밖일 가능성이 높고, 동료평가 원문(Intelligent Computing, DOI:10.34133/icomputing.0037)이 본 아카이브에 포함되어 있지 않다.<br />
+- <strong>해석/의미:</strong> 하이브리드 파이프라인(클래식 계산→데이터셋→ML→후보 제안)은 이후 2025–2026의 OLED×QC 논의를 위한 “배경 패턴”으로만 제한적으로 인용 가능하다.<br />
+- <strong>근거 강도:</strong> 낮음(supporting, 시간 범위 외).</p>
+<h2>Applications &amp; Benchmarks</h2>
+<h3>1) 클래식 기준선: ML 예측기+검증(DFT) 기반 생성/탐색</h3>
+<p><strong>주장:</strong> 최근(2025)에는 <strong>GNN property predictor를 고정</strong>한 채 입력 분자 그래프를 gradient ascent로 최적화하여 목표 물성(예: HOMO–LUMO gap, logP)을 맞추고, 결과를 <strong>DFT로 검증</strong>하는 파이프라인이 보고되었다. 이는 OLED(특히 발광 파장/갭 타깃팅)와 직접 연결되는 “클래식 비교 기준선”을 제공한다.<br />
+- <strong>근거(출처):</strong> <em>Using GNN property predictors as molecule generators</em>는 GNN의 differentiability를 이용해 분자 그래프를 직접 최적화하며, 생성 결과의 energy gap을 DFT로 검증했다고 명시한다. 또한 전통적 DFT/MD 탐색의 한계로 (1) 계산 비용과 (2) 제한된 탐색공간을 지적한다(<a href="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-viewer="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-raw="archive/openalex/text/W4410193211.txt" class="viewer-link">[5]</a>).<br />
+- <strong>한계/불확실성:</strong> 이 논문은 QC 적용이 아니라 ML+DFT의 고도화이며, OLED 성능(수명/안정성/소자 지표)을 직접 목표로 하지는 않는다. 또한 “proxy model의 OOD 일반화 실패”를 지적하며 생성 분자에서 MAE가 커질 수 있음을 보여준다(<a href="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-viewer="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-raw="archive/openalex/text/W4410193211.txt" class="viewer-link">[5]</a>).<br />
+- <strong>해석/의미:</strong> OLED 재료 설계에서 QC가 실용적 가치를 가지려면, 최소한 이와 같은 클래식 파이프라인 대비 (i) 정확도 향상(특히 여기상태), (ii) 특정 영역에서의 비용/시간 절감, 또는 (iii) 데이터 편향·OOD 문제를 완화하는 형태의 <strong>명확한 비교 우위</strong>가 정의되어야 한다.<br />
+- <strong>근거 강도:</strong> 높음(동료평가 논문, 방법·한계 명시).</p>
+<h3>2) OLED×QC 적용의 벤치마크 결손</h3>
+<p><strong>주장:</strong> 현재 아카이브의 OLED×QC 자료는 “여기상태 계산을 수행했다/정확도를 개선했다” 수준의 서술은 있으나, <strong>클래식 기준선 대비 정량 벤치마크(오차, 비용, 스케일, 재현성)</strong>는 부족하다.<br />
+- <strong>근거(출처):</strong> IBM blog와 Mitsubishi Chemical PDF는 방향성과 목표(여기상태, 에러완화, qEOM‑VQE/VQD)를 말하지만, 본 아카이브 내에 이를 검증할 논문 본문 데이터가 없다([IBM blog], [qhubeng.pdf]; 또한 run 인덱스에 해당 논문 PDF가 없음: <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>).<br />
+- <strong>한계/불확실성:</strong> 벤치마크 부재는 곧 “성과가 없다”는 뜻은 아니며, 단지 본 리뷰가 근거 기반으로 평가할 수 있는 범위가 제한된다는 의미다.<br />
+- <strong>해석/의미:</strong> 단기(12–24개월) 의사결정에서 중요한 질문은 “QC가 설계 루프에서 어떤 단계의 비용/정확도 병목을 실제로 줄였는가”이며, 이를 위해서는 논문/부록 수준의 계량 지표가 필수다.</p>
+<h3>3) 삼성디스플레이/LG디스플레이/UDC: 공개 정보의 한계(본 run 기준)</h3>
+<p><strong>주장:</strong> 본 run 아카이브의 검색·수집 결과만으로는 Samsung Display, LG Display, Universal Display Corporation(UDC)이 <strong>양자컴퓨팅 기반 OLED 발광재료 개발을 공개적으로 보고</strong>했다는 1차 근거(공식 발표/논문/IR/특허)가 확인되지 않는다.<br />
+- <strong>근거(출처):</strong> instruction 파일에는 관련 쿼리가 포함되어 있으나(<a href="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-viewer="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-raw="instruction/20260110_qc-oled.txt" class="viewer-link">[1]</a>), run 인덱스는 Tavily URL을 “0”으로 기록하고(<a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>), Tavily 수집 내용에서도 해당 기업의 직접 근거 URL이 핵심 결과로 확보되지 않았다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>).<br />
+- <strong>한계/불확실성:</strong> “부재”는 (i) 실제 R&amp;D 부재, (ii) 키워드/언어/채널 한계, (iii) 비공개(영업비밀/특허 출원 전) 중 어느 것일 수도 있다. 본 아카이브만으로 원인을 특정할 수 없다.<br />
+- <strong>해석/의미:</strong> 학술적으로는 “본 데이터 수집 범위·기간·키워드에서 확인된 공개 근거는 없다”로만 엄밀히 결론 내릴 수 있으며, 산업 동향 해석은 별도의 IR/특허/학회 발표 체계적 조사(추가 수집)로 보완되어야 한다.<br />
+- <strong>근거 강도:</strong> 높음(‘아카이브 내 미확보’라는 사실 자체에 대한 근거).</p>
+<h2>Synthesis &amp; Outlook</h2>
+<h3>1) 학계-산업 간극의 구조적 원인(본 아카이브로부터 도출 가능한 범위)</h3>
+<p><strong>주장:</strong> OLED×QC는 “분자 여기상태 계산”이라는 기술적으로 매력적인 과제를 갖지만, 산업 적용까지는 (i) NISQ 노이즈와 회로 깊이 제약, (ii) 정확도 검증 체계(클래식 기준선/실험 대응), (iii) 응집상·소자 물성으로의 스케일 업이라는 3중 간극이 존재한다.<br />
+- <strong>근거(출처):</strong> IBM blog는 노이즈와 제한된 큐빗 자원 문제를 전면에 두고 error mitigation을 강조한다([IBM blog]). Mitsubishi Chemical PDF도 “current noisy quantum computers”의 오류로 chemical accuracy가 어렵다는 맥락에서 error mitigation 및 qEOM‑VQE/VQD 목표를 제시한다([qhubeng.pdf]).<br />
+- <strong>한계/불확실성:</strong> 본 아카이브에 실험 검증(PLQY, 수명, EQE 등)과 QC 결과의 직접 대응 자료가 없으므로, 소자 수준 간극을 정량화할 수 없다.<br />
+- <strong>해석/의미:</strong> 단기적으로 QC는 “대규모 전면 대체”보다 <strong>클래식 파이프라인의 특정 취약점(여기상태/다참조성/강상관 구간) 보완</strong>에 위치해야 하며, 그때도 엄격한 벤치마크(DFT/고급 ab initio/실험)와 결합되어야 한다.</p>
+<h3>2) 근거 기반 대표 시나리오(2–3개)</h3>
+<h4>시나리오 1: TADF 후보 분자의 여기상태 에너지 예측 PoC (qEOM‑VQE/VQD + 에러완화)</h4>
+<ul>
+<li><strong>주장:</strong> TADF 분자에 대해 qEOM‑VQE/VQD를 적용하고 에러완화로 정확도 개선을 추구하는 워크플로는 이미 산업-학계 협력에서 명시적으로 채택되었다.  </li>
+<li><strong>근거:</strong> Mitsubishi Chemical PDF의 qEOM‑VQE/VQD 언급 및 에러완화 개발([qhubeng.pdf]); IBM blog의 excited states 계산 및 error mitigation 언급([IBM blog]).  </li>
+<li><strong>한계/불확실성:</strong> 정량 성능(오차·비용·재현성) 미제시.  </li>
+<li><strong>의미:</strong> “QC가 OLED 재료 설계에 직접 연결되는 계산 타깃(여기상태)을 다룬다”는 점에서 상징성이 크며, 후속 판단은 동료평가 원문/부록 확보가 관건.  </li>
+<li><strong>근거 강도:</strong> 중간.</li>
+</ul>
+<h4>시나리오 2: 클래식 생성(ML)→정밀 검증(QM) 루프에서 QC를 ‘검증자’로 삽입</h4>
+<ul>
+<li><strong>주장:</strong> 2025년 수준의 ML 기반 분자 생성/최적화는 DFT 검증을 핵심 안전장치로 삼고 있으며, QC는 장기적으로 DFT가 취약한 영역(특정 여기상태/강상관)의 “정밀 검증자(high-fidelity validator)”로 들어갈 가능성이 있다.  </li>
+<li><strong>근거:</strong> GNN predictor 기반 생성 후 DFT로 검증한다는 명시, 그리고 proxy의 OOD 실패로 인해 검증이 필수라는 논지(<a href="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-viewer="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-raw="archive/openalex/text/W4410193211.txt" class="viewer-link">[5]</a>).  </li>
+<li><strong>한계/불확실성:</strong> 본 아카이브에는 QC가 실제로 이 역할을 수행해 DFT 대비 우위를 입증한 벤치마크가 없다.  </li>
+<li><strong>의미:</strong> 단기적으로는 QC를 “대규모 스크리너”가 아니라 “표적 영역 정밀 계산기”로 포지셔닝하는 것이 현실적이다.  </li>
+<li><strong>근거 강도:</strong> 중간(클래식 측 근거는 높으나, QC 삽입은 해석적 연결).</li>
+</ul>
+<h4>시나리오 3: 회로 압축/에러완화 ‘엔지니어링’이 소재 탐색 효율을 좌우(지원 근거)</h4>
+<ul>
+<li><strong>주장:</strong> 산업 적용에서 핵심은 알고리즘 그 자체만이 아니라, 회로 압축과 노이즈 누적 억제가 “탐색 효율”을 좌우한다는 관점이 부상한다.  </li>
+<li><strong>근거:</strong> OLED-Info가 “noise accumulation”과 “quantum circuits compression”을 OLED 소재 탐색과 연결해 서술(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>의 OLED-Info URL).  </li>
+<li><strong>한계/불확실성:</strong> 2차 자료(supporting)이며 정량 근거 부재.  </li>
+<li><strong>의미:</strong> 향후 12–24개월의 관찰 포인트는 “새 ansatz”보다 “회로·노이즈 공학 + 벤치마크 공개”로 이동할 가능성이 있다.  </li>
+<li><strong>근거 강도:</strong> 낮음(supporting).</li>
+</ul>
+<h3>3) 향후 12–24개월: 기대 변화(관측 가능한 지표 중심)</h3>
+<ul>
+<li><strong>지표 A(필수):</strong> OLED×QC 관련 프로젝트가 <strong>동료평가 논문/부록</strong>에서 (i) 활성공간/ansatz, (ii) 에러완화 상세, (iii) 클래식 기준선 대비 오차·비용을 공개하는지 여부. (현재 아카이브에는 부재)  </li>
+<li>근거: 공식 자료가 에러완화·여기상태를 반복 강조하므로([IBM blog], [qhubeng.pdf]), 다음 단계는 정량 공개로 귀결되어야 함(해석).</li>
+<li><strong>지표 B:</strong> “분자 단독”에서 <strong>응집상/호스트 효과/소자 지표</strong>로 연결되는 멀티스케일 파이프라인(예: embedding, QM/MM, 데이터 동화)이 OLED×QC 사례에서 명시되는지 여부.  </li>
+<li>근거: 현재 자료는 분자 여기상태 중심([IBM blog], [qhubeng.pdf]).</li>
+<li><strong>지표 C(산업 공개성):</strong> 삼성/LG/UDC 등 주요 플레이어가 IR/학회/특허에서 QC 관련 키워드를 어떻게 다루는지(언급/부재 자체).  </li>
+<li>근거: 본 아카이브에서 직접 근거 미확보(<a href="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-viewer="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-raw="instruction/20260110_qc-oled.txt" class="viewer-link">[1]</a>, <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>, <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>).</li>
+</ul>
+<h3>4) 의사결정자용 후속 질문(근거 기반 게이트)</h3>
+<ol>
+<li>(벤치마크 게이트) OLED 후보 여기상태에서 <strong>클래식(예: TDDFT/고급 ab initio) 대비</strong> QC 계산이 개선한 항목은 무엇이며, 오차/비용의 절대값은? (현재 자료는 방향만 존재: [qhubeng.pdf], [IBM blog])  </li>
+<li>(재현성 게이트) 동일 분자·동일 활성공간에서 장치/날짜/파라미터 변경에 따른 분산은? 에러완화의 하이퍼파라미터는 어떻게 고정되는가? (아카이브 내 근거 부족)  </li>
+<li>(산업 전환 게이트) 계산 결과가 실제 합성·소자 제작 의사결정(후보 컷오프, 재료 다운셀렉션)에서 어떤 형태로 사용되었는가? (아카이브 내 직접 근거 부족)  </li>
+<li>(조직·IP 게이트) 삼성/LG/UDC 등은 공개를 안 하는가, 못 하는가, 혹은 다른 키워드/채널로 공개되는가? (현 run에서는 “확인 불가/부재”: <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>)</li>
+</ol>
+<h2>Appendix</h2>
+<h3>A. 본 run 아카이브에서 확인된 핵심 1차/동료평가 근거의 범위</h3>
+<ul>
+<li>OLED×QC 직접 적용(공식 1차): IBM Research Blog의 OLED 응용 글([IBM blog]); Mitsubishi Chemical 공식 PDF([qhubeng.pdf]).  </li>
+<li>클래식 비교 기준선(동료평가): Nature Communications 2025 GNN 기반 분자 생성 및 DFT 검증(<a href="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-viewer="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-raw="archive/openalex/text/W4410193211.txt" class="viewer-link">[5]</a>).  </li>
+<li>주제 비정합 확인(동료평가 리뷰): “quantum materials” 중심 리뷰(<a href="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-viewer="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-raw="archive/openalex/text/W4406477905.txt" class="viewer-link">[4]</a>).  </li>
+<li>supporting(2차): OLED-Info, Phys.org 기사(원논문 역추적 필요; 본 아카이브에서는 요약만 확인 가능: <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>).</li>
+</ul>
+<h3>B. 재현성·근거 강도 라벨링 규칙(본 보고서 적용)</h3>
+<ul>
+<li><strong>높음:</strong> 동료평가 논문에서 방법/수치/한계가 직접 확인 가능(예: GNN+DFT 검증 논문).  </li>
+<li><strong>중간:</strong> 기업/기관 공식 문서 또는 공식 블로그로 사실관계는 강하나, 정량 프로토콜이 부족(예: IBM blog, Mitsubishi PDF).  </li>
+<li><strong>낮음:</strong> 2차 매체 요약 또는 “최초/세계적” 등 검증 곤란한 주장.</li>
+</ul>
+<h3>C. 즉시 필요한 1차 근거 보강(본 run의 구조적 결손)</h3>
+<p>본 run 폴더에는 Mitsubishi PDF 원문 자체는 URL로만 등장하며, OLED×QC 핵심인 arXiv 프리프린트 및 npj Computational Materials 논문 PDF가 다운로드되어 있지 않다(<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">[3]</a>, <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">[2]</a>). 따라서 후속 업데이트에서는 (i) 해당 논문 원문/부록을 아카이브에 확보하고, (ii) qEOM‑VQE/VQD, 에러완화 기법, 기준선 비교를 정량 인용 가능한 형태로 재구성하는 단계가 필수이다.</p>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: Source PDF: W4406477905.pdf; <a href="#fig-2">Figure 2</a>: Source PDF: W4406477905.pdf; <a href="#fig-3">Figure 3</a>: Source PDF: W4406477905.pdf; <a href="#fig-4">Figure 4</a>: Source PDF: W4406477905.pdf; <a href="#fig-5">Figure 5</a>: Source PDF: W4410193211.pdf; <a href="#fig-6">Figure 6</a>: Source PDF: W4410193211.pdf; <a href="#fig-7">Figure 7</a>: Source PDF: W4410193211.pdf; <a href="#fig-8">Figure 8</a>: Source PDF: W4410193211.pdf</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4406477905.pdf-e43e51a2.jpeg" alt="Figure from ./archive/openalex/pdf/W4406477905.pdf (page 3)" />
+  <figcaption>Figure 1: <a href="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-viewer="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-raw="archive/openalex/pdf/W4406477905.pdf" class="viewer-link">./archive/openalex/pdf/W4406477905.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4406477905.pdf-44090d68.jpeg" alt="Figure from ./archive/openalex/pdf/W4406477905.pdf (page 4)" />
+  <figcaption>Figure 2: <a href="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-viewer="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-raw="archive/openalex/pdf/W4406477905.pdf" class="viewer-link">./archive/openalex/pdf/W4406477905.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4406477905.pdf-c7ff8ccb.jpeg" alt="Figure from ./archive/openalex/pdf/W4406477905.pdf (page 13)" />
+  <figcaption>Figure 3: <a href="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-viewer="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-raw="archive/openalex/pdf/W4406477905.pdf" class="viewer-link">./archive/openalex/pdf/W4406477905.pdf</a> (page 13)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4406477905.pdf-99be79bb.jpeg" alt="Figure from ./archive/openalex/pdf/W4406477905.pdf (page 32)" />
+  <figcaption>Figure 4: <a href="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-viewer="report_views/archive_openalex_pdf_W4406477905.pdf-ddc61c62.html" data-raw="archive/openalex/pdf/W4406477905.pdf" class="viewer-link">./archive/openalex/pdf/W4406477905.pdf</a> (page 32)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-5">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4410193211.pdf-5f54c461.png" alt="Figure from ./archive/openalex/pdf/W4410193211.pdf (page 3)" />
+  <figcaption>Figure 5: <a href="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-viewer="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-raw="archive/openalex/pdf/W4410193211.pdf" class="viewer-link">./archive/openalex/pdf/W4410193211.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-6">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4410193211.pdf-cfdd36b2.png" alt="Figure from ./archive/openalex/pdf/W4410193211.pdf (page 3)" />
+  <figcaption>Figure 6: <a href="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-viewer="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-raw="archive/openalex/pdf/W4410193211.pdf" class="viewer-link">./archive/openalex/pdf/W4410193211.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-7">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4410193211.pdf-2bfc23f2.png" alt="Figure from ./archive/openalex/pdf/W4410193211.pdf (page 3)" />
+  <figcaption>Figure 7: <a href="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-viewer="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-raw="archive/openalex/pdf/W4410193211.pdf" class="viewer-link">./archive/openalex/pdf/W4410193211.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-8">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4410193211.pdf-f85c1da4.png" alt="Figure from ./archive/openalex/pdf/W4410193211.pdf (page 3)" />
+  <figcaption>Figure 8: <a href="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-viewer="report_views/archive_openalex_pdf_W4410193211.pdf-21aff8ba.html" data-raw="archive/openalex/pdf/W4410193211.pdf" class="viewer-link">./archive/openalex/pdf/W4410193211.pdf</a> (page 3)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>지난 12개월 동안의 양자컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광재료 개발 관점에서 분석해줘.
+특히 다음을 포함해 정리해줘:
+- 양자컴퓨팅이 재료 탐색/설계에 쓰이는 주요 흐름(알고리즘, 워크플로, 데이터 파이프라인)
+- OLED 발광재료(형광/인광/TADF/CP-OLED 등) 탐색에 적용된 접근과 성과
+- 삼성디스플레이, LG디스플레이, UDC 등 산업계의 시도와 공개 정보의 한계
+- 학계 연구 흐름과 산업 적용 간의 간극, 가장 큰 병목과 해결 과제
+- 2~3개의 대표적 연구/산업 시나리오를 근거와 함께 제시
+- 향후 12~24개월 내 기대되는 변화와 의사결정자용 후속 질문</p>
+<p>출처는 논문/리뷰/공식 발표/신뢰 가능한 업계 자료를 우선으로 하고, 웹 검색으로 보강한 내용은 “supporting”으로 구분해 활용해줘.</p>
+<p>작성 스타일/톤:
+- 학술/기술 전문가 리뷰 논문 수준의 엄밀한 서술체로 작성해줘. (교수식 서술, 과장/마케팅 톤 금지)
+- 각 핵심 주장마다 “주장 → 근거(출처) → 한계/불확실성 → 해석/의미” 흐름으로 구성해줘.
+- 근거의 강도를 짧게 표기해줘(예: 근거 강도: 높음/중간/낮음).
+- 기술적 메커니즘(알고리즘·실험 조건·데이터/공정 조건)을 가능한 한 명시하고, 재현성/스케일링 가능성도 평가해줘.
+- 학계 결과와 산업 적용의 간극(수율, 비용, 수명, 신뢰성, 공정 호환성 등)을 비판적으로 다뤄줘.
+- 핵심 용어는 짧게 정의하고, 유사 개념은 비교·대조해줘.
+- 인용은 “실제 출처” 기준으로 하며, 추론/의견은 명확히 구분해줘.</p>
+<h2>References</h2>
+<ol>
+<li>20260110_qc-oled.txt — <a href="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-viewer="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-raw="instruction/20260110_qc-oled.txt" class="viewer-link">file</a></li>
+<li>20260110_qc-oled-index.md — <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">file</a></li>
+<li>Tavily search index (<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>) — selected sources:</li>
+<li>Unlocking today's quantum computers for OLED applications — <a href="https://research.ibm.com/blog/quantum-for-oled" target="_blank" rel="noopener">link</a></li>
+<li>Mitsubishi Chemical, Deloitte Tohmatsu and Classiq manage to ... — <a href="https://www.oled-info.com/mitsubishi-chemcial-deloitte-tohmatsu-and-classiq-manage-dramatically-improve" target="_blank" rel="noopener">link</a></li>
+<li>Better and faster design of organic light-emitting materials ... — <a href="https://phys.org/news/2023-07-faster-light-emitting-materials-machine-quantum.html" target="_blank" rel="noopener">link</a></li>
+<li>Researchers combine classical computing with quantum ... — <a href="https://www.oled-info.com/researchers-combine-classical-computing-quantum-computing-discover-promising" target="_blank" rel="noopener">link</a></li>
+<li>[PDF] A Joint Paper on Prediction of Optical Properties of OLED Materials ... — <a href="https://www.mcgc.com/english/news_mcc/2021/__icsFiles/afieldfile/2021/05/26/qhubeng.pdf" target="_blank" rel="noopener">link</a></li>
+<li>Exploring quantum materials and applications: a review — <a href="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-viewer="report_views/archive_openalex_text_W4406477905.txt-47e0d78d.html" data-raw="archive/openalex/text/W4406477905.txt" class="viewer-link">file</a> <small>citations: 22</small></li>
+<li>Using GNN property predictors as molecule generators — <a href="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-viewer="report_views/archive_openalex_text_W4410193211.txt-26bbeba6.html" data-raw="archive/openalex/text/W4410193211.txt" class="viewer-link">file</a> <small>citations: 8</small></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 23:54:13</li>
+<li>Duration: 00:09:56 (596.19s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: review_of_modern_physics</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-viewer="report_views/archive_20260110_qc-oled-index.md-b8193549.html" data-raw="archive/20260110_qc-oled-index.md" class="viewer-link">./archive/20260110_qc-oled-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-viewer="report_views/instruction_20260110_qc-oled.txt-aeb2ebd7.html" data-raw="instruction/20260110_qc-oled.txt" class="viewer-link">./instruction/20260110_qc-oled.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

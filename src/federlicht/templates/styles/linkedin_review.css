@@ -1,0 +1,44 @@
+body.template-linkedin_review {
+  --ink: #141414;
+  --muted: #5f5f5f;
+  --accent: #0a66c2;
+  --paper-alt: #f7f7f7;
+  --page-bg: radial-gradient(1000px 500px at 10% -10%, #eef2f6 0%, #f7f9fb 55%, #ffffff 100%);
+  --body-font: "Literata", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --ui-font: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+body.template-linkedin_review .page {
+  max-width: 980px;
+}
+
+body.template-linkedin_review .kicker {
+  letter-spacing: 0.22em;
+  color: var(--accent);
+}
+
+body.template-linkedin_review .title {
+  font-size: clamp(2.2rem, 4vw, 3rem);
+}
+
+body.template-linkedin_review .article {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #e6e9ef;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(20, 30, 50, 0.08);
+}
+
+body.template-linkedin_review .article h2 {
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
+}
+
+body.template-linkedin_review .article h3 {
+  color: var(--accent);
+}
+
+body.template-linkedin_review .meta {
+  background: #ffffff;
+  border: 1px solid #e6e9ef;
+}

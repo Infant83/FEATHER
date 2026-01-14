@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260109_sectioned</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-default">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260109_sectioned</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 07:50</p>
+<h2>Executive Summary</h2>
+<p>Across the collected (time-bounded) evidence, 2026 AI narratives converge on <em>agentic AI</em>, <em>physical AI</em>, and <em>sovereign AI</em> as a bundle that shifts AI from task assistance toward systems that act, interact with the physical world, and operate under tighter governance expectations. HealthVerity frames these forces as AI “taking on more responsibility,” moving into “real-world operations,” and facing stricter “transparency, control and compliance,” with explicit emphasis on pilots transitioning to production and the rise of monitoring/governance roles (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>). Deloitte similarly highlights “scaling pilots to production” and “increased focus on governance and compliance” as early 2026 predictions (<a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>). In contrast, MIT Sloan Management Review warns that agentic AI may enter a hype-cycle “trough of disillusionment” in 2026 even as organizations continue pursuing value (<a href="https://sloanreview.mit.edu/article/five-trends-in-ai-and-data-science-for-2026/" target="_blank" rel="noopener">[3]</a>). Open-source and demo signals (GitHub topic pages and YouTube descriptions) suggest rapid tooling maturation around orchestration, observability, and protocolization (e.g., MCP), but they do not by themselves validate enterprise outcomes (<a href="https://github.com/topics/agentic-ai" target="_blank" rel="noopener">[4]</a>; <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg" target="_blank" rel="noopener">[5]</a>; <a href="https://github.com/rh-aiservices-bu/agentic-examples" target="_blank" rel="noopener">[6]</a>). Industrial deployment talk metadata emphasizes “beyond POC” execution constraints—trust, governance, cost, and energy—alongside strategic “industrial AI operating system” messaging (<a href="https://www.youtube.com/watch?v=DBHc7tBkUPM" target="_blank" rel="noopener">[7]</a>; <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">[8]</a>). The included arXiv paper is unrelated to agentic/physical AI trends (it is a survival analysis methods paper), underscoring topical mismatch risk in broad trend queries (<a href="http://arxiv.org/abs/2401.01234v1" target="_blank" rel="noopener">[9]</a>).  </p>
+<h2>Scope &amp; Methodology</h2>
+<p>This report follows the section boundaries specified in <a href="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-viewer="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-raw="instruction/20260109_sectioned.txt" class="viewer-link">[10]</a>: (1) “AI trends for 2026 (agentic AI, physical AI)” with “linkedin” and “news” hints; (2) “youtube / github” evidence for “agentic AI demos open source code” and “industrial AI deployment talks”; and (3) “arXiv:2401.01234.” Evidence is drawn from the run archive index and artifacts described in <a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a>: Tavily search results (<code><a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a></code>), YouTube metadata (<code><a href=".&lt;a href=" . archive youtube videos.jsonl">/archive/youtube/videos.jsonl</a>">.<a href="report_views/archive_youtube_videos.jsonl-5aa84177.html" data-viewer="report_views/archive_youtube_videos.jsonl-5aa84177.html" data-raw="archive/youtube/videos.jsonl" class="viewer-link">/archive/youtube/videos.jsonl</a></a></code>), and arXiv metadata (<code><a href=".&lt;a href=" . archive arxiv papers.jsonl">/archive/arxiv/papers.jsonl</a>">.<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">/archive/arxiv/papers.jsonl</a></a></code>). Importantly, this run collected <strong>no YouTube transcripts</strong> and <strong>no arXiv PDFs/extracted texts</strong>, so video-based claims are limited to titles/descriptions and the arXiv assessment is limited to abstract-level metadata (<a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a>; <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[12]</a>). Search coverage is also constrained to <strong>last 30 days</strong> with <strong>max_results=5</strong> per query, which biases the sample toward high-visibility items rather than comprehensive coverage (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[12]</a>). Where evidence is “web-derived support,” it is treated as directional signal, not primary experimental validation.</p>
+<h2>Key Findings</h2>
+<ol>
+<li>
+<p><strong>Agentic + physical + sovereign AI are repeatedly packaged as a “next wave” tied to responsibility and compliance—not just capability.</strong><br />
+   HealthVerity explicitly groups agentic, physical, and sovereign AI as signals of AI moving closer to operational responsibility with higher expectations for transparency/control, and it highlights accountability/oversight needs as these systems mature (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>). Deloitte uses the same triad framing as “forces shaping the future” and ties it to “robust guardrails” and strategic planning (<a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>).<br />
+<em>Caveat:</em> these are perspective articles (not controlled studies) and are partially predictive.</p>
+</li>
+<li>
+<p><strong>“Pilot → production” and governance/compliance emerge as the operational center of gravity for 2026 narratives.</strong><br />
+   Deloitte’s “Three early predictions for 2026” explicitly includes “Scaling pilots to production” and “Increased focus on governance and compliance” for autonomous agents (<a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>). HealthVerity similarly predicts “Pilots move into production” and emphasizes validation/oversight plus new monitoring/governance roles (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>).<br />
+<em>Caveat:</em> neither source quantifies adoption rates; they outline plausible near-term enterprise priorities.</p>
+</li>
+<li>
+<p><strong>Open-source ecosystem signals concentrate on agent frameworks, observability/evaluation, and integration protocols (notably MCP), suggesting “engineering standardization” pressures.</strong><br />
+   The GitHub “agentic-ai” topic highlights toolkits for building/evaluating/deploying agents (e.g., google/adk-python) and observability/monitoring frameworks (e.g., RagaAI-Catalyst), plus MCP-adjacent utilities (e.g., git-mcp) (<a href="https://github.com/topics/agentic-ai" target="_blank" rel="noopener">[4]</a>). Red Hat’s <code>agentic-examples</code> repository centers “Agentic AI Apps &amp; Demos” and calls out Function Calling and “Model Context Protocol (MCP)” as enabling mechanisms (<a href="https://github.com/rh-aiservices-bu/agentic-examples" target="_blank" rel="noopener">[6]</a>).<br />
+<em>Caveat:</em> popularity (stars, topic visibility) does not imply reliability, security, or production readiness.</p>
+</li>
+<li>
+<p><strong>Video/demo metadata portrays agentic systems as tool-using workflows (GraphRAG, coding agents, file/terminal access), but evidence is descriptive rather than evaluative in this run.</strong><br />
+   A SambaNova demo description claims LangGraph-based “agentic GraphRAG workflows” over EHRs using tools that generate/execute Cypher queries on Neo4j, positioned for on-prem sensitive data contexts (<a href="https://www.youtube.com/watch?v=2cwvj07cY8s" target="_blank" rel="noopener">[13]</a>). Multiple “agentic coding” videos focus on terminal workflows, benchmarks, and autonomous file/command execution (e.g., GLM-4.7 review; Auto-Claude workflow features) (<a href="https://www.youtube.com/watch?v=8ua4mszi_ss" target="_blank" rel="noopener">[14]</a>; <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg" target="_blank" rel="noopener">[5]</a>).<br />
+<em>Caveat:</em> without transcripts or reproducible benchmarks in-archive, these remain “claimed capabilities.”</p>
+</li>
+<li>
+<p><strong>Industrial AI deployment talk metadata emphasizes an “industrial AI operating system” narrative alongside practical constraints (trust, ROI, energy, governance).</strong><br />
+   Siemens’ CES 2026 keynote description highlights an “Industrial AI Operating System” partnership with NVIDIA and positions “Industrial AI” as a strategic force, alongside digital twin tooling and “Industrial Copilots” bridging IT/OT (<a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">[8]</a>). A Bloomberg interview video description similarly states NVIDIA and Siemens plan to build an industrial AI operating system together (<a href="https://www.youtube.com/watch?v=orXtu_otjIQ" target="_blank" rel="noopener">[15]</a>). Separately, an enterprise-focused podcast description foregrounds why POCs fail and flags risks of rushing agentic/genAI into production, including governance, cost, and energy usage (<a href="https://www.youtube.com/watch?v=DBHc7tBkUPM" target="_blank" rel="noopener">[7]</a>).<br />
+<em>Caveat:</em> these sources are marketing/editorial in nature; deployment success metrics are not provided.</p>
+</li>
+</ol>
+<h2>Trends &amp; Implications</h2>
+<p>A notable synthesis across the trend articles and ecosystem signals is a shift from “model capability” talk to “system responsibility” talk. The HealthVerity and Deloitte pieces both treat agentic/physical/sovereign AI as a package whose primary <em>organizational</em> implication is governance maturity—oversight, validation, compliance controls, and staffing for ongoing monitoring (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>; <a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>). The GitHub and demo signals suggest why: agentic systems quickly become <em>integration-heavy software</em> (tools, databases, terminals, file systems), which amplifies security, auditability, and change-management demands relative to chat-centric copilots (<a href="https://github.com/topics/agentic-ai" target="_blank" rel="noopener">[4]</a>; <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg" target="_blank" rel="noopener">[5]</a>).  </p>
+<p>For near-term technical leadership decisions, the practical implication is that “agentic readiness” likely depends less on picking a single agent framework and more on building the surrounding platform: tool permissioning, environment isolation, observability/traceability, evaluation harnesses, and rollback-safe deployment. Red Hat’s emphasis on Function Calling and MCP indicates that protocols and standardized context/tool interfaces are becoming focal points for portability and governance (<a href="https://github.com/rh-aiservices-bu/agentic-examples" target="_blank" rel="noopener">[6]</a>). In industrial settings, the Siemens/Bloomberg “industrial AI OS” framing indicates a push toward vertically integrated stacks (edge inference + digital twins + IT/OT copilots), which could reduce integration friction but may increase vendor lock-in and complicate assurance arguments (<a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">[8]</a>; <a href="https://www.youtube.com/watch?v=orXtu_otjIQ" target="_blank" rel="noopener">[15]</a>).  </p>
+<p>Finally, MIT SMR’s hype-cycle caution suggests that 2026 may simultaneously be a year of broader deployment and heightened disappointment if governance and workflow redesign lag behind capability narratives (<a href="https://sloanreview.mit.edu/article/five-trends-in-ai-and-data-science-for-2026/" target="_blank" rel="noopener">[3]</a>). That tension—accelerating pilots-to-production while expectations reset—should inform roadmaps: prioritize measurable operational value and safety cases over “end-to-end autonomy” storytelling.</p>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li><strong>Evidence incompleteness (videos):</strong> this run collected <strong>no transcripts</strong>, so industrial and demo insights are derived from titles/descriptions only, limiting the ability to verify claims, nuances, or technical specifics (<a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a>; <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[12]</a>).  </li>
+<li><strong>Evidence incompleteness (papers):</strong> arXiv ingestion captured metadata only (no PDFs/extracted text), preventing methodological verification beyond the abstract (<a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a>; <a href="http://arxiv.org/abs/2401.01234v1" target="_blank" rel="noopener">[9]</a>).  </li>
+<li><strong>Search bias:</strong> the 30-day window and max-results cap can overweight timely marketing, press, and popular commentary while missing slower-moving empirical work or standards/regulatory documents (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[12]</a>).  </li>
+<li><strong>“linkedin/news” hint not substantiated in artifacts:</strong> although the instruction includes “linkedin” and “news,” the archived evidence here is primarily blogs (HealthVerity, Deloitte), popular press (Forbes), and an MIT SMR column—no LinkedIn-specific captures are present in the run artifacts (<a href="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-viewer="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-raw="instruction/20260109_sectioned.txt" class="viewer-link">[10]</a>; <a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a>).  </li>
+<li><strong>Topical mismatch risk:</strong> the included arXiv item (2401.01234) is a statistical survival analysis paper and does not support agentic/physical AI trend claims, illustrating how broad queries can pull irrelevant scholarly artifacts into a trend bundle (<a href="http://arxiv.org/abs/2401.01234v1" target="_blank" rel="noopener">[9]</a>).</li>
+</ul>
+<h2>Critics</h2>
+<p><strong>Headline: “Agents will disappoint until governance and economics are designed in—not bolted on.”</strong><br />
+MIT Sloan Management Review’s framing is the clearest internal critique in this evidence set: agents may follow generative AI into a “trough of disillusionment,” implying that organizational expectations and delivery reality may diverge in 2026 (<a href="https://sloanreview.mit.edu/article/five-trends-in-ai-and-data-science-for-2026/" target="_blank" rel="noopener">[3]</a>). The enterprise-deployment podcast metadata echoes a similar “beyond POC” skepticism, emphasizing trust, governance, cost, and energy as constraints that can outweigh raw capability (<a href="https://www.youtube.com/watch?v=DBHc7tBkUPM" target="_blank" rel="noopener">[7]</a>).  </p>
+<p>Contrarian/orthogonal considerations to surface for technical leaders:
+- <strong>Hype vs validation:</strong> Popular press predictions (e.g., “agentic AI runs logistics end-to-end,” humanoids scaling into pilots) are forward-looking assertions and not demonstrated outcomes in this run’s evidence (<a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/" target="_blank" rel="noopener">[16]</a>).<br />
+- <strong>Safety/security exposure expands with tool access:</strong> coding agents and file/terminal-connected assistants (as described in demos) increase the blast radius of prompt injection, supply-chain compromise, and authorization failures—risks not resolved by model quality alone (<a href="https://www.youtube.com/watch?v=s9nt8xaXFdg" target="_blank" rel="noopener">[5]</a>).<br />
+- <strong>Regulatory/assurance friction (implicit):</strong> multiple sources emphasize compliance and “AI assurance”-style accountability, suggesting that regulated industries will treat autonomy as an assurance problem as much as an engineering problem (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>; <a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>).<br />
+- <strong>Vendor-stack consolidation risk:</strong> “industrial AI OS” narratives can accelerate adoption but may constrain architectural freedom and complicate independent auditing if key components become proprietary or tightly coupled (<a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">[8]</a>; <a href="https://www.youtube.com/watch?v=orXtu_otjIQ" target="_blank" rel="noopener">[15]</a>).</p>
+<h2>Appendix</h2>
+<p><strong>Run configuration &amp; constraints (primary):</strong>
+- Archive index: <a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">[11]</a> (confirms days=30 scope, max-results behavior via command, and that YouTube transcripts/PDFs were not collected).<br />
+- Job configuration: <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[12]</a> (confirms <code>youtube_transcript: false</code>, <code>download_pdf: false</code>, queries executed, and site hints including “linkedin/news/youtube/github”).  </p>
+<p><strong>Primary evidence artifacts (as captured in-run):</strong>
+- Tavily web results: <code><a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a></code> (e.g., HealthVerity, Deloitte, Forbes, MIT SMR, MachineLearningMastery) (<a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">[1]</a>; <a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">[2]</a>; <a href="https://sloanreview.mit.edu/article/five-trends-in-ai-and-data-science-for-2026/" target="_blank" rel="noopener">[3]</a>; <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/" target="_blank" rel="noopener">[16]</a>).<br />
+- YouTube metadata (no transcripts): <code><a href=".&lt;a href=" . archive youtube videos.jsonl">/archive/youtube/videos.jsonl</a>">.<a href="report_views/archive_youtube_videos.jsonl-5aa84177.html" data-viewer="report_views/archive_youtube_videos.jsonl-5aa84177.html" data-raw="archive/youtube/videos.jsonl" class="viewer-link">/archive/youtube/videos.jsonl</a></a></code> (agentic demos and industrial deployment talks) (<a href="https://www.youtube.com/watch?v=2cwvj07cY8s" target="_blank" rel="noopener">[13]</a>; <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">[8]</a>; <a href="https://www.youtube.com/watch?v=DBHc7tBkUPM" target="_blank" rel="noopener">[7]</a>).<br />
+- arXiv metadata: <code><a href=".&lt;a href=" . archive arxiv papers.jsonl">/archive/arxiv/papers.jsonl</a>">.<a href="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-viewer="report_views/archive_arxiv_papers.jsonl-7fc7e56c.html" data-raw="archive/arxiv/papers.jsonl" class="viewer-link">/archive/arxiv/papers.jsonl</a></a></code> (single item, 2401.01234v1) (<a href="http://arxiv.org/abs/2401.01234v1" target="_blank" rel="noopener">[9]</a>; <a href="https://arxiv.org/pdf/2401.01234v1" target="_blank" rel="noopener">[17]</a>).</p>
+<h2>Report Prompt</h2>
+<p>Respect section structure and summarize each section with citations.</p>
+<h2>References</h2>
+<ol>
+<li>AI trends shaping healthcare in 2026: agentic, physical &amp; sovereign AI — <a href="https://blog.healthverity.com/ai-trends-shaping-healthcare-in-2026-agentic-physical-sovereign-ai" target="_blank" rel="noopener">link</a></li>
+<li>Three new AI breakthroughs shaping 2026: AI trends | Deloitte US — <a href="https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/new-ai-breakthroughs-ai-trends.html" target="_blank" rel="noopener">link</a></li>
+<li>Five Trends in AI and Data Science for 2026 — <a href="https://sloanreview.mit.edu/article/five-trends-in-ai-and-data-science-for-2026/" target="_blank" rel="noopener">link</a></li>
+<li>agentic-ai · GitHub Topics — <a href="https://github.com/topics/agentic-ai" target="_blank" rel="noopener">link</a></li>
+<li>www.youtube.com/watch — <a href="https://www.youtube.com/watch?v=s9nt8xaXFdg" target="_blank" rel="noopener">link</a></li>
+<li>Agentic AI Examples with Red Hat AI — <a href="https://github.com/rh-aiservices-bu/agentic-examples" target="_blank" rel="noopener">link</a></li>
+<li>www.youtube.com/watch — <a href="https://www.youtube.com/watch?v=DBHc7tBkUPM" target="_blank" rel="noopener">link</a></li>
+<li>The Industrial AI Revolution: Siemens Keynote at CES 2026 — <a href="https://www.youtube.com/watch?v=R4Wm6YdoZSs" target="_blank" rel="noopener">link</a></li>
+<li>Mixture cure semiparametric additive hazard models under partly interval censoring -- a penalized likelihood approach — <a href="http://arxiv.org/abs/2401.01234v1" target="_blank" rel="noopener">link</a></li>
+<li>20260109_sectioned.txt — <a href="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-viewer="report_views/instruction_20260109_sectioned.txt-cc7b4a65.html" data-raw="instruction/20260109_sectioned.txt" class="viewer-link">file</a></li>
+<li>20260109_sectioned-index.md — <a href="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-viewer="report_views/archive_20260109_sectioned-index.md-8bcd77ba.html" data-raw="archive/20260109_sectioned-index.md" class="viewer-link">file</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+<li>www.youtube.com/watch — <a href="https://www.youtube.com/watch?v=2cwvj07cY8s" target="_blank" rel="noopener">link</a></li>
+<li>www.youtube.com/watch — <a href="https://www.youtube.com/watch?v=8ua4mszi_ss" target="_blank" rel="noopener">link</a></li>
+<li>www.youtube.com/watch — <a href="https://www.youtube.com/watch?v=orXtu_otjIQ" target="_blank" rel="noopener">link</a></li>
+<li>Agentic AI Takes Over — 11 Shocking 2026 Predictions - Forbes — <a href="https://www.forbes.com/sites/markminevich/2025/12/31/agentic-ai-takes-over-11-shocking-2026-predictions/" target="_blank" rel="noopener">link</a></li>
+<li>arxiv.org/pdf/2401.01234v1 — <a href="https://arxiv.org/pdf/2401.01234v1" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 07:50:20</li>
+<li>Duration: 00:04:13 (253.72s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: default</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

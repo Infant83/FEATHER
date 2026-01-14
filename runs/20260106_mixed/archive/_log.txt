@@ -1,6 +1,0 @@
-[2026-01-08 22:49:15] JOB START: 20260106.txt date=2026-01-06 days=30 max_results=5
-[2026-01-08 22:49:15] TAVILY EXTRACT: https://example.com/blog/post
-[2026-01-08 22:49:19] TAVILY SEARCH: quantum computing site:linkedin.com
-[2026-01-08 22:49:27] ARXIV ID FETCH: 2101.00001
-[2026-01-08 22:49:28] ARXIV RECENT SEARCH: query='quantum computing' days=30
-[2026-01-08 22:49:29] JOB END

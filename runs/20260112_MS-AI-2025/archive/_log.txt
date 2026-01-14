@@ -1,5 +1,0 @@
-[2026-01-12 22:53:12] JOB START: 20260112.txt date=2026-01-12 days=30 max_results=8
-[2026-01-12 22:53:12] TAVILY EXTRACT: https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf
-[2026-01-12 22:53:14] WEB PDF DOWNLOAD: https://www.microsoft.com/en-us/research/wp-content/uploads/2026/01/Microsoft-AI-Diffusion-Report-2025-H2.pdf -> Microsoft-AI-Diffusion-Report-2025-H2.pdf
-[2026-01-12 22:53:14] PDF->TEXT: Microsoft-AI-Diffusion-Report-2025-H2.pdf
-[2026-01-12 22:53:14] JOB END

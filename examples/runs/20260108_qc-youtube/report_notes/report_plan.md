@@ -1,8 +1,8 @@
-- [ ] Verify report requirements & template constraints — confirm Quanta-style sections, citation style (inline links), and audience/tone from the prompt/template notes  
-- [ ] Establish scope from run provenance — read `archive/20260108_qc-youtube-index.md`, `_job.json`, `_log.txt` to state time window, query set, and extraction limitations  
-- [ ] Extract primary narrative thread from the YouTube transcript — pull key claims, timestamps, and framing quotes; capture publication metadata from `youtube/videos.jsonl` for accurate citation  
-- [ ] Curate and triage web sources from `tavily_search.jsonl` — shortlist the most authoritative URLs (e.g., QED‑C report, Google Quantum AI resources, credible industry coverage), tag each to themes it supports, and discard low-credibility items  
-- [ ] Audit arXiv entries for topical fit — review `arxiv/papers.jsonl`, document mismatch/off-topic IDs, and decide whether to exclude or mention as a retrieval/scope limitation  
-- [ ] Build an evidence-mapped outline — draft lede, central question, story-so-far chronology, “how it works” explanation, “why it matters,” and 3–5 open questions, each mapped to specific sources  
-- [ ] Write the narrative review with citations — synthesize claims cautiously, distinguish “promised” vs “demonstrated,” embed URLs/timestamps, and keep metaphors sparse  
-- [ ] Quality & rigor pass — remove hype, make uncertainty explicit, ensure every technical assertion has a supporting citation, and add a transparent “methods/limitations” paragraph consistent with run constraints
+Plan (updated):
+- [x] Review run scope and provenance — read the instruction, index, and `_job.json`/`_log.txt` to confirm collection parameters, coverage, and limitations  
+- [x] Extract authoritative web citations — mine `archive/tavily_search.jsonl` for the most credible, recent QC+AI industry use-case sources; capture outlet/date/URL plus the exact summary snippets  
+- [x] Extract narrative claims from YouTube — read `videos.jsonl` and the transcript; pull the key definitional passages and strong claims (with position markers) and tag which require verification  
+- [x] Build an evidence-backed outline — map extracted claims into the Quanta-style sections (lede → central question → story so far → how it works → why it matters → open questions)  
+- [x] Cross-check and annotate uncertainty — corroborate YouTube claims against the strongest web sources; explicitly note gaps (missing target outlets, off-topic arXiv IDs)  
+- [x] Draft the Quanta-style narrative — write the full narrative review with a restrained tone, clear explanations, and inline citations tied to extracted evidence  
+- [x] QA + finalize citations and methods note — ensure citation completeness/consistency, add a brief provenance/methods + limitations note, and deliver the final formatted report

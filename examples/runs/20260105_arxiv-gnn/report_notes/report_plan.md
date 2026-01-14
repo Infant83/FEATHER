@@ -1,11 +1,10 @@
-- [x] Ingest run manifest and job/log context — read `archive/20260105_arxiv-gnn-index.md`, `archive/_job.json`, and `archive/_log.txt` to confirm corpus scope and any retrieval issues  
-- [x] Extract key contributions from HISTOGRAPH paper — read `archive/openalex/text/W7119235243.txt` (and consult the PDF for figures/equations) to capture method, experiments, and evidence-backed claims  
-- [x] Extract key contributions from interferometer simulation GNN paper — read `archive/openalex/text/W4417529673.txt` (+ PDF as needed) focusing on graph construction, architecture, dataset design, and evaluation  
-- [x] Extract key contributions from ATLAS flavour tagging GNN paper — read `archive/openalex/text/W4417330266.txt` (+ PDF as needed) focusing on task setup, GN1/GN2 design, training objectives, and key metrics  
-- [x] Scan metadata indices for coverage and deduplication — review `archive/openalex/works.jsonl`, `archive/arxiv/papers.jsonl`, and flag off-topic/drift items (e.g., arXiv:2101.00001) and duplicates  
-- [ ] Verify any PDF-only details not present in extracted text — check PDFs for missing quantitative tables/figures (e.g., exact benchmark tables, ablation plots, hyperparameters) for the 3 primary GNN papers  
-- [ ] Synthesize cross-paper trends and implications — compare methods and applications to distill technical trends (depth/oversmoothing mitigation, readout/pooling, attention/transformerization, surrogate modeling, robustness)  
-- [ ] Compile limitations and open problems — extract and infer (with clear labeling) unresolved issues: scaling, uncertainty, generalization under distribution shift, interpretability, reproducibility, data/compute constraints  
-- [ ] Draft report aligned to `technical_deep_dive` — write Background → Methods & Data → Results & Evidence → Limitations/Open Questions, using consistent notation and primary-source citations  
-- [ ] Finalize citations and scope notes — document corpus boundaries, note query drift and web/LinkedIn content as non-primary context, and ensure claims are traceable to sources  
-- [ ] Add appendix: corpus/dedup table — list each included work with OpenAlex/arXiv IDs, URLs, and dedup mapping (helps transparency and reproducibility)
+Plan (updated):
+
+- [x] Load run instruction, index, and provenance logs — confirm scope, inputs, and any mismatches (e.g., off-topic arXiv ID) before drafting  
+- [x] Audit metadata indices (OpenAlex/arXiv/Tavily JSONL) — verify duplicates, identify any additional high-value GNN works, and select the final “must-cite” source set  
+- [x] Extract core contributions from HISTOGRAPH (W7119235243) — capture problem framing, algorithm/notation, training details, and ablations with exact evidence locations  
+- [x] Extract methods/results from interferometer-simulation GNN surrogate (W4417529673) — document graph construction, dataset, evaluation protocol, and key quantitative claims  
+- [x] Extract methods/results from ATLAS flavour-tagging GNN (W4417330266) — summarize architecture evolution (GN1/GN2 etc.), inputs/targets, and main performance metrics  
+- [x] Synthesize trends, implications, and open problems — compare across papers (depth/oversmoothing, efficiency/surrogates, domain constraints, uncertainty, scalability) and label any adjacent/off-scope items explicitly  
+- [ ] **(Missing)** Spot-check extracted text/PDFs for *exact* citation anchors (section/figure/table + page numbers) for the key quantitative claims and propositions  
+- [ ] Map synthesis into the technical_deep_dive template — produce section-aligned bullets and citation-ready references (file paths + where in text/PDF to cite)

@@ -1,64 +1,77 @@
-## 아카이브 맵(coverage 요약) — 20260104_oled
-- **리포트 포커스 요구사항**(OLED 트렌드/소재/산업 함의, 3–5 기술 변곡점, 연구 vs 상용화 비교, 모순·갭·추가질문)에 비해, 현 아카이브는 **실질적으로 1편의 핵심 논문 + 일반 검색 인덱스** 중심으로 커버리지가 매우 얕습니다.
-- **수집 채널 상태**
-  - OpenAlex: **비활성화(openalex_enabled=false)** → OA 저널/리뷰 논문 확장 수집이 막혀 있음
-  - arXiv: 힌트는 있으나 실제 recent search는 **‘quantum computing’만 수행**되어 OLED arXiv 0건
-  - YouTube: 비활성화
-- **실제 주요 근거로 쓸 만한 1차 소스는 Nature Communications 논문 1건**이 거의 전부입니다. LinkedIn은 OLED 직접 근거로는 약함.
+## 아카이브 맵(coverage 파악)
 
----
-
-## 구조화 인벤토리(관련도 중심)
-
-### A) 런/작업 메타(커버리지 진단용)
-- `archive/_job.json`  
-  - 쿼리/설정/활성화 채널 확인. **queries에 ‘quantum computing’, ‘recent 30 days’가 포함**되어 포커스가 희석.
-- `archive/_log.txt`  
-  - 실제 실행된 검색/추출 로그. **ARXIV RECENT SEARCH가 quantum computing만** 찍힘(원인 추적 핵심).
+### 1) 핵심 인덱스/설정 파일
 - `archive/20260104_oled-index.md`  
-  - “Queries: 3 | URLs: 2 | arXiv IDs: 0” 등 런 결과 요약 목차.
+  - 이번 런의 요약(쿼리/URL/산출물 위치). **arXiv ID 0개**, URL 2개.
+- `instruction/20260104_oled.txt`  
+  - 입력 지시문. 쿼리: `oled`, `quantum computing`, `recent 30 days` + URL 2개(LinkedIn, Nature Communications PDF).
+- `archive/_job.json`  
+  - 수집 파이프라인 설정. **openalex_enabled=false, youtube_enabled=false**, days=30, max_results=8.
+- `archive/_log.txt`  
+  - 실행 로그(에러/누락 원인 점검용).
 
-### B) 인덱스(JSONL) — 추가 읽을 출처 “선별”용
+### 2) 소스 인덱스(메타데이터 JSONL) — *반드시 열람*
 - `archive/tavily_search.jsonl`  
-  - tavily 검색 결과 전체 인덱스. 다수는 Wikipedia/기관 기초설명 성격이라 **트렌드·소재·제조 이슈에 직접 연결되는 결과만 골라야 함**.
+  - Tavily 검색 결과 인덱스. 현재 확인된 상위 결과는 Wikipedia, OLED-Info, DOE, Ossila 등 **개론/백과 성격 다수**.
 
-### C) 본문(추출 텍스트) — 실제 “증거” 소스
+> 주의: 요청하신 “papers, open-access journals, credible industry sources” 관점에서 **OpenAlex/ arXiv 인덱스가 생성되지 않았고(폴더/JSONL 없음)**, 실질적인 논문 원문은 Nature Communications PDF 1개만 확보된 상태입니다.
+
+### 3) 원문/추출 텍스트(실제 내용)
 - `archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt`  
-  - **Nature Communications (2025)**: *High aspect ratio organic light-emitting diodes* (Wang et al.)  
-  - 조명용 OLED의 **수명-휘도/전류밀도 트레이드오프**를 “고종횡비 텍스처(면적증대+outcoupling)”로 완화.  
-  - 정량 근거: **수명 2.7x**, **외부 광추출 효율 최대 +40%**, **표준 VTE 공정에서 AE 1.4까지**, 두께 변동 **<5%**, **AE2.0은 재현성 낮고 빠른 실패**.
-- `archive/tavily_extract/0001_https_www.linkedin.com_posts_...txt`  
-  - 분자설계 AI(Trio) 소개로 **OLED 직접 증거는 없음**(보조적 맥락 정도).
+  - **Nat Commun (2025) “High aspect ratio organic light-emitting diodes”** 초안(Article in Press) 텍스트 추출본.  
+  - 기술 포인트(이미 확인): corrugated substrate로 **AE~1.4x**, 수명 **2.7배**, 광추출/효율 **최대 40%↑** 등.
+- `archive/tavily_extract/0001_https_www.linkedin.com_posts_fanli_ai-molecular-design-has-some-known-challenges-activity-...txt`  
+  - Fan Li의 LinkedIn 포스트(Trio, molecular design)로 **OLED와 무관**.
 
 ---
 
-## 우선순위 “읽기 계획”(max 12) + 선정 이유
-1) **`archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt`**  
-   - 이유: 현재 아카이브에서 유일하게 포커스 요구(기술 변곡점, 정량 성능, 제조/재현성 이슈)를 **동시에 충족**하는 1차 논문.
-
-2) **`archive/tavily_search.jsonl`**  
-   - 이유: 커버리지가 빈약하므로, 여기서 **상용화/소재 트렌드/제조(inkjet/VTE/OVJP), blue emitter 수명, TADF/hyperfluorescence, tandem, encapsulation, microOLED/QD-OLED** 등으로 이어질 “그나마 쓸 만한” 산업·학술 출처를 선별해야 함.
-
-3) **`archive/_job.json`**  
-   - 이유: 왜 OLED 중심 수집이 안 되었는지(쿼리 설계/채널 비활성화) 진단 → 다음 라운드 수집 전략(특히 OpenAlex on) 근거.
-
-4) **`archive/_log.txt`**  
-   - 이유: arXiv OLED 0건의 직접 원인 확인(실제로 quantum computing만 arXiv recent search 수행) → 파이프라인/인스트럭션 수정 포인트 도출.
-
-5) **`archive/20260104_oled-index.md`**  
-   - 이유: 보고서에 “자료 범위 한계(coverage gap)”를 투명하게 명시할 때 근거로 사용.
-
-6) **`archive/tavily_extract/0001_https_www.linkedin.com_posts_...txt`**  
-   - 이유: OLED 직접 근거는 약하지만, “소재 발견 자동화/멀티목표 최적화” 트렌드 문단에 **매우 제한적으로만** 참고 가능(단, 핵심 근거로 쓰기엔 부적절).
+## 오프토픽/갭(보고서 품질 리스크)
+- `quantum computing`, `recent 30 days` 쿼리가 OLED와 무관하게 섞였고, 결과적으로 **OLED 관련 “최신 논문/산업자료” 커버리지가 매우 얕음**.
+- Tavily 검색 결과도 상당수가 **기초 설명 사이트**(Wikipedia, DOE, Ossila 등)로, “트렌드/소재 혁신/상용화 비교”에 필요한 **제조·수율·원가·수명·효율** 근거가 부족.
+- LinkedIn 소스는 내용 자체가 OLED가 아니라서 본 보고서에는 **제외 권장**.
 
 ---
 
-## 커버리지 갭/모순 포인트(의사결정자용 후속 질문으로 전환 가능)
-- **갭:** “OLED 기술 트렌드/소재(청색, TADF/PHOLED, hyperfluorescence), 제조/수율/비용, 디스플레이 상용 로드맵” 관련 1차/산업 소스가 아카이브에 사실상 없음.  
-- **모순/불확실성 후보:** 논문은 조명용 OLED에서 AE1.4까지 유효하나, **AE2.0 재현성 실패** → 스케일업/양산에서 텍스처 마스터몰드 결함·공정 윈도우가 병목일 가능성.
-- **후속 질문 예시**
-  - 고종횡비 텍스처가 **양산 수율/결함 밀도/검사 비용**에 미치는 영향은?
-  - 디스플레이(모바일/TV)와 조명용에서 **수명 메커니즘/전류밀도 한계**가 얼마나 다른가?
-  - VTE 외 **inkjet/OVJP** 같은 대면적 공정과의 호환성/비용 구조는?
+## 우선순위 읽기 목록 (최대 12개, 근거 포함)
 
-원하시면 `tavily_search.jsonl`에서 “트렌드/소재/제조/산업”에 직접 연결되는 결과만 추려서, **추가 수집해야 할 URL·쿼리 리스트(의사결정자 질문에 매핑)**까지 만들어 드릴 수 있습니다.
+1. `archive/tavily_extract/0002_https_www.nature.com_articles_s41467-025-67312-4_reference.pdf.txt`  
+   - **유일한 피어리뷰 저널급(오픈액세스) 기술 근거**. “기술 변곡점(수명/효율 개선)” 도출에 핵심.
+2. `archive/tavily_search.jsonl`  
+   - 어떤 출처들이 잡혔는지/산업성 소스가 있는지 스크리닝(필요시 추가 크롤링 질문 생성).
+3. `archive/20260104_oled-index.md`  
+   - 산출물 전체 구조/누락(예: arXiv 0개) 빠른 파악.
+4. `archive/_job.json`  
+   - 왜 OpenAlex/YouTube가 비활성인지 등 **커버리지 한계의 원인** 확인 및 재실행 제안 근거 마련.
+5. `archive/_log.txt`  
+   - 수집 실패/차단/필터링 여부 확인(특히 arXiv 힌트가 있는데도 ID 0개인 이유).
+6. `instruction/20260104_oled.txt`  
+   - 입력 자체가 OLED 트렌드 보고서 목적과 어긋난 부분(쿼리/URL) 확인 → 후속 의사결정 질문/재수집 플랜에 반영.
+7. `archive/tavily_extract/0001_https_www.linkedin.com_posts_...txt` *(읽되, 보고서 본문에는 보통 제외)*  
+   - 오프토픽 확인용. “갭/노이즈 소스”로 기록 가능.
+
+(현재 아카이브에 파일이 6개뿐이라, 실질적으로 읽을 수 있는 OLED 관련 심층 소스는 1개입니다.)
+
+---
+
+## 읽기/정리 플랜(Executive brief 작성용, 단계별)
+
+1) **논문 1개를 ‘변곡점 후보’로 구조화**  
+- (Nat Commun)에서: 문제정의(고휘도에서 수명↓), 제안(High aspect ratio corrugation), 정량 결과(AE 1.4x, lifetime 2.7x, outcoupling 40%↑), 제조 제약(VTE 두께 균일도/AE2.0 재현성 문제) 추출.
+
+2) **Tavily 검색 인덱스로 ‘산업 적용/상용화 단서’ 탐색**  
+- 현재는 개론 사이트 위주라, “상용화 비교(수율/원가/수명/효율)” 근거로는 약함 → 어떤 결과가 있는지 전체 결과 목록을 훑고, 산업 리포트/기업 발표/시장조사 출처가 있는지 선별.
+
+3) **갭/모순 포인트 명시**  
+- 연구(고각 텍스처로 수명↑) vs 상용(조명용 OLED 미확산: cost, lifetime, manufacturing complexity) 간 간극을 “근거 부족”으로 표시.  
+- AE2.0에서 재현성 낮음 등은 “스케일업/수율 리스크”로 연결.
+
+4) **의사결정자용 후속 질문 설계(추가 수집 필요)**  
+- (예) corrugated substrate 양산 공정(roll-to-roll 가능성?), 결함/수율 데이터, 광학 균일성/헤이즈 수용성, 자동차 조명 인증/신뢰성 테스트, 비용 모델 등.
+
+---
+
+## 권장: 다음 런에서 커버리지 확장(필요시)
+- OpenAlex 활성화(`openalex_enabled=true`) + 쿼리 구체화: “OLED blue emitter lifetime TADF phosphorescence hyperfluorescence”, “OLED manufacturing yield FMM evaporation”, “microOLED silicon backplane”, “inkjet printed OLED”, “tandem OLED lighting” 등.
+- 산업 소스 타깃: DSCC, Omdia, TrendForce, OLED-Info(뉴스/리포트), SID/Display Week proceedings, 주요 패널 메이커/소재사(Universal Display, Samsung Display, LG Display, BOE) 기술 발표자료.
+
+원하시면, 현재 아카이브 기준으로 “변곡점 3–5개”를 만들기엔 소스가 부족하므로 **(1) 현 소스만으로 작성 가능한 최소 브리프**와 **(2) 재수집 후 보강 브리프** 두 트랙으로 읽기 전략을 더 구체화해드릴 수 있습니다.

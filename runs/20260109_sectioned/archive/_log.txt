@@ -1,9 +1,0 @@
-[2026-01-08 22:57:24] JOB START: 20260109.txt date=2026-01-09 days=30 max_results=5
-[2026-01-08 22:57:24] TAVILY SEARCH: AI trends for 2026 (agentic AI, physical AI)
-[2026-01-08 22:57:27] TAVILY SEARCH: agentic AI demos open source code site:github.com
-[2026-01-08 22:57:30] TAVILY SEARCH: industrial AI deployment talks site:youtube.com
-[2026-01-08 22:57:33] YOUTUBE SEARCH: agentic AI demos open source code order=relevance max=5
-[2026-01-08 22:57:35] YOUTUBE SEARCH: industrial AI deployment talks order=relevance max=5
-[2026-01-08 22:57:36] ARXIV ID FETCH: 2401.01234
-[2026-01-08 22:57:37] ARXIV RECENT SEARCH: query='AI trends for 2026 (agentic AI, physical AI)' days=30
-[2026-01-08 22:57:40] JOB END
