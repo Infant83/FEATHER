@@ -1,20 +1,18 @@
-Alignment score: 88
+Alignment score: 92
 Aligned:
-- 스카우트(stage: scout) 목적에 맞게 아카이브 내 파일 구성/커버리지(3개 URL 텍스트 추출 중심)와 누락(OpenAlex/YouTube 등) 여부를 점검함.
-- 제공 소스(LinkedIn/arXiv/blog)별 “작성 시 역할”을 구분해 practitioner review 작성에 도움이 되는 포지셔닝을 제시함.
-- “supported vs inferred” 구분 필요성(특히 arXiv가 abs 페이지/초록 수준일 가능성)을 사전에 위험요소로 명확히 표시함.
-- 실행 계획(우선순위 읽기 플랜)과 caveat(LinkedIn 과장 가능성, 수치 검증 한계)를 포함해 다음 단계로 자연스럽게 연결됨.
-- 사용자 요구(LinkedIn-style practitioner review, 근거 기반 인사이트, ROI/제약, 리스크)와 정합되는 방향으로 준비 작업을 수행함.
+- 스카웃(stage: scout) 목적에 맞게 **아카이브 내 소스 커버리지/구성(원문 추출 vs 2차 산출물 vs 로그)**를 체계적으로 맵핑했다.
+- Run context에 주어진 **instruction/index 파일 및 tavily_extract 3개**를 핵심 근거 소스로 분류하고, “무엇이 1차 근거인지” 우선순위를 명확히 했다.
+- “Report focus prompt 없음 / user clarification 없음” 상황에서, 과도한 해석 없이 **파일 인벤토리 + 추천 읽기 순서** 중심으로 정리해 범위를 잘 지켰다.
+- 한국어로 작성 요구를 준수했다.
 
 Gaps/Risks:
-- 스카우트 산출물치고는 “이미 생성된 final 파일”들을 검토/비교하지 않아, 이후 단계에서 중복 작업(이미 있는 최종본 재생성) 위험이 남음.
-- arXiv 소스를 “초록/서지 페이지 텍스트”라고만 추정하고 있어, 실제로 어느 정도 본문/실험 정보가 포함됐는지 확인이 필요함(잘림/리다이렉트 포함).
-- 인덱스/인스트럭션 파일의 핵심 요구사항(형식, 길이, 인용 규칙 등)을 아직 구체적으로 확인한 근거가 제시되지 않음.
-- “핵심 클레임 요약”을 소스별로 실제 문장 단위로 뽑아두지 않아, 다음 단계(리뷰 작성)에서 근거-주장 매핑이 흔들릴 수 있음.
+- “JSONL 메타데이터 파일이 없다”는 단정은 **실제 `glob`/`ls` 기반 확인 결과가 제시되지 않아** 감사 관점에서 검증 가능성이 낮다(근거 부족 리스크).
+- final-v2~v5가 “거의 동일”하다는 추정도 **diff/라인 비교 근거 없이 용량만으로 판단**해 오판 가능.
+- LinkedIn 추출이 “raw_content(한국어)”라고 했지만, LinkedIn은 접근 제한이 잦아 **추출 품질(누락/요약/에러 페이지 포함 여부)** 점검 필요.
+- “최대 12개” 우선순위 리스트는 적절하나, scout 단계에서 흔히 포함하는 **파일별 핵심 섹션/필드(예: abstract 포함 여부, 코드/그림 유무)** 메모가 없어서 다음 단계 효율이 약간 떨어질 수 있음.
 
 Next-step guidance:
-- (1) `instruction/20260113_linkedin-review.txt`와 `archive/20260113_linkedin-review-index.md`를 먼저 읽고, 요구 포맷/길이/인용 규칙을 고정하세요.
-- (2) `tavily_extract` 3개 파일을 읽어 **소스별 핵심 주장 5~10개를 “직접 인용 후보 문장”**으로 추출하고, 각 문장에 [LinkedIn]/[arXiv]/[blog] 태그를 붙이세요.
-- (3) `archive/_log.txt`로 LinkedIn/arXiv 추출이 잘렸는지 확인하고, 잘렸다면 “근거 한계”를 Risks & Caveats에 명시하세요.
-- (4) `archive/20260113_linkedin-review-final*.md`를 빠르게 diff/대조해 이미 목표를 충족한 초안이 있는지 확인한 뒤, 필요 시 “개선 편집” 모드로 전환하세요(중복 작성 방지).
-- (5) 리뷰 작성 시 블로그/LinkedIn의 수치·강한 표현은 “2차 소스”로 라벨링하고, arXiv 텍스트로 교차검증 가능한 부분만 “supported”로 단정하세요.
+- 아카이브 루트/하위에서 `**/*.jsonl` `**/*index*` `**/*.pdf` 등을 **glob로 실제 존재 여부를 확인**하고, “없음” 판단에 근거를 붙여라.
+- `final.md` vs `final-v2~v5.md`는 **diff(또는 grep로 핵심 키워드 변화 추적)**로 “동일/차이”를 확정해라.
+- LinkedIn 추출 파일은 상단/하단을 열어 **로그인 월/에러/요약문 섞임 여부**를 먼저 확인해 신뢰도 태깅(OK/partial/bad)하라.
+- 다음 단계(예: deep read/verification)에서는 arXiv 추출이 초록만이면, 가능하면 **PDF/웹 섹션(Introduction/Method/Experiments) 확보 여부**를 점검해 근거 빈틈을 줄여라.

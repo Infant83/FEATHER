@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260113_linkedin-review</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-default">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260113_linkedin-review</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-15 06:48</p>
+<h2>Executive Summary</h2>
+<p>EGGROLL(Evolution Guided General Optimization via Low-rank Learning)은 <strong>backprop-free(gradient-free) 최적화</strong>를 “현대 대규모 신경망(수십억 파라미터)”과 “대규모 population”으로 스케일링하기 위해 설계된 Evolution Strategies(ES) 계열 알고리즘을 제안한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>, <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[2]</a>). 핵심은 각 레이어에서 full-rank 섭동 행렬 $E\in\mathbb{R}^{m\times n}$을 직접 만들지 않고, $A\in\mathbb{R}^{m\times r}$, $B\in\mathbb{R}^{n\times r}$를 샘플링하여 $AB^\top$ 형태의 <strong>low-rank perturbation</strong>을 사용함으로써 메모리·연산 병목을 줄이는 것이다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).</p>
+<p>실무 관점에서 이 접근은 (1) 미분 불가능/노이즈가 큰 목적함수, (2) 정수 연산 중심 모델 등에서 “backprop 기반 학습이 구조적으로 어렵거나 비효율적인” 영역을 재조명하게 만든다. 다만 이번 런의 1차 근거는 <strong>arXiv abs(초록/서지 페이지)</strong> 수준이며, LinkedIn/블로그의 구체 수치(예: population 262,144, 통신비용 0, LLM 생성 병렬성 1,024 vs 32 등)는 <strong>PDF 본문으로 1차 검증이 되지 않아</strong> ‘2차 주장’으로 격리해 해석해야 한다(출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>, <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[4]</a>; <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">[5]</a>, <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[6]</a>).</p>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<ul>
+<li><strong>범위(고정 입력 3개 URL)</strong>: (1) arXiv “Evolution Strategies at the Hyperscale” abs 페이지(초록 포함), (2) LinkedIn 한국어 포스트(실무자 내러티브), (3) 한국어 블로그 리뷰(논문 해설/요약). (출처: <a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">[7]</a>, <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">[8]</a>)</li>
+<li><strong>방법</strong>:<br />
+  1) 1차 근거(arXiv 초록)에서 <strong>메커니즘/복잡도 절감/이론·실험 ‘요약 claim’</strong>을 우선 확정하고,<br />
+  2) 2차(LinkedIn/블로그)에서 <strong>해석·확장 주장</strong>을 분리해 “supported vs. secondary/inferred”로 구획했다.  </li>
+<li><strong>중요한 제약</strong>: 이번 아카이브에는 arXiv <strong>PDF 본문(48p) 텍스트가 포함되지 않음</strong>. 따라서 성능 수치, 분산 통신 설계 디테일, 실험 세팅 등은 초록에서 직접 확인 가능한 범위 밖이며, 2차 소스의 수치/세부사항은 ‘참고’로만 다룬다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>, <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[2]</a>).</li>
+</ul>
+<hr />
+<h2>Key Findings</h2>
+<h3>1) “ES가 비싸서 못 쓴다”를 비용 구조(구현) 문제로 재정의</h3>
+<ul>
+<li><strong>Supported(1차)</strong>: 나이브 ES가 스케일에서 “prohibitively expensive”해지는 이유를, 각 레이어마다 $E\in\mathbb{R}^{m\times n}$ 섭동 생성과 per-member forward를 위한 배치 행렬곱의 <strong>계산·메모리 비용</strong>으로 명시한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Practical take</strong>: ES 자체의 원리(블랙박스 최적화/병렬화 가능성)보다, 실제 대형 모델에서 “노이즈 행렬을 어떻게 만들고 적용하느냐”가 채택을 막았다는 진단은 설계 논점을 바꾼다. 즉, 제품/연구 조직이 ES를 고려할 때도 “알고리즘이 느리다”가 아니라 “메모리 이동·연산 패턴이 비효율적이었다”로 병목을 분해할 여지가 생긴다.</li>
+</ul>
+<h3>2) Low-rank perturbation으로 레이어별 보조 메모리와 forward 비용을 구조적으로 절감</h3>
+<ul>
+<li><strong>Supported(1차)</strong>: full-rank $E$ 대신 $A\in\mathbb{R}^{m\times r}$, $B\in\mathbb{R}^{n\times r}$를 샘플링해 $AB^\top$ 형태 low-rank 섭동을 사용하며 $r\ll\min(m,n)$라고 한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Supported(1차)</strong>: 보조 저장공간을 레이어당 $mn \rightarrow r(m+n)$로, forward pass 비용을 $O(mn)\rightarrow O(r(m+n))$로 낮춘다고 claim한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Why it matters (ROI 관점)</strong>:  </li>
+<li><strong>메모리 압박 완화</strong>는 곧 “가능한 population 크기/배치 전략/모델 크기”의 상한을 올린다. ES는 population 기반이라 개체 수를 늘릴수록 비용이 폭발하는데, 여기서 레이어별 $mn$ 스케일을 $r(m+n)$로 낮추는 설계는 <strong>총소유비용(TCO) 곡선</strong>을 바꿀 잠재력이 있다(단, 실제 절감률은 $r$, 분산 토폴로지, 구현 최적화에 의존).  </li>
+<li>특히 대형 LLM 파라미터 행렬에서 $m,n$이 큰 레이어일수록 $mn$ vs $(m+n)$의 차이는 급격히 커질 수 있다(해석).</li>
+</ul>
+<h3>3) “Low-rank인데도 업데이트는 high-rank로 간다”는 population 평균의 역할</h3>
+<ul>
+<li><strong>Supported(1차)</strong>: 각 워커는 low-rank perturbation을 쓰지만, 전체 업데이트는 $N$ 워커의 평균이므로 결과적으로 “high-rank update”가 되며, 그럼에도 메모리·연산 절감을 얻는다고 설명한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Supported(2차, 1차 부분적으로 정합)</strong>: LinkedIn 포스트는 “population 전체에서 low-rank 업데이트를 평균 내면 full-rank ES 업데이트처럼 작동”한다고 강조한다(출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>). 이는 초록의 “high-rank update” 문장과 방향성은 일치하지만, <strong>‘full-rank ES와 동일’의 의미(동일한 기대값? 분산? 편향?)</strong>는 초록만으로는 엄밀히 확정하기 어렵다.</li>
+<li><strong>실무적 해석</strong>: 이 포인트는 “표현력 손실 우려”를 줄이기 위한 핵심 주장이다. 다만 실제로는 rank $r$, population $N$, 노이즈 분포/seed 설계가 업데이트의 분산과 수렴에 큰 영향을 주므로, 제품 적용 시에는 $r$–$N$ 트레이드오프를 <strong>실험 설계의 중심 파라미터</strong>로 봐야 한다.</li>
+</ul>
+<h3>4) 이론 claim: full-rank 업데이트로의 수렴 속도 $O(1/r)$</h3>
+<ul>
+<li><strong>Supported(1차)</strong>: low-rank 업데이트가 full-rank 업데이트로 빠르게 수렴하며 그 속도가 $O(1/r)$라고 제시한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Supported(2차)</strong>: 블로그도 노이즈 분포 대칭성 등을 근거로 $O(1/r)$ 수렴을 해설한다(출처: <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">[5]</a>).  </li>
+<li><strong>Why it matters</strong>: $r$이 커질수록 full-rank에 가까워진다는 주장은, 실무에서 “정확도 손실 vs 비용 절감”을 <strong>노브(knob)</strong>로 다룰 수 있음을 의미한다. 다만 초록만으로는 어떤 조건(가정) 하에서의 수렴인지, 유한 샘플(population)에서의 분산이 어떻게 행동하는지 확인이 어렵다.</li>
+</ul>
+<h3>5) 실험 ‘요약’ 수준 claim: RL/LLM reasoning/int-only RNN pre-training에서 유효</h3>
+<ul>
+<li><strong>Supported(1차, 단 요약)</strong>: 초록은 (1) tabula-rasa RL에서 더 빠르면서 ES 성능을 compromise하지 않았고, (2) LLM reasoning 개선에서 GRPO와 competitive이며, (3) purely integer datatypes로 동작하는 nonlinear recurrent language model의 stable pre-training을 가능하게 했다고 요약한다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).  </li>
+<li><strong>Practical take</strong>:  </li>
+<li>(3)은 특히 “미분 가능성/부동소수 연산” 전제를 약화시키는 사례로 해석될 수 있다. 정수-only 또는 비표준 연산이 섞인 모델/시뮬레이터를 다루는 조직에게는, backprop이 막히는 지점에서 대안 경로가 생긴다.  </li>
+<li>그러나 “competitive”의 기준(벤치마크, 학습 예산, 샘플 효율, wall-clock, 비용)은 본문 확인이 필요하다.</li>
+</ul>
+<hr />
+<h2>Trends &amp; Implications</h2>
+<h3>트렌드 1) ‘학습’과 ‘탐색/평가’의 경계가 다시 흐려짐</h3>
+<p>EGGROLL은 ES의 병렬화 잠재력을 “대규모 population”으로 끌어올리는 데 초점을 둔다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>). 이는 학습을 “gradient 계산” 중심으로만 보는 관점에서, <strong>대규모 생성/평가(rollout, sampling, inference-like throughput)</strong> 중심의 관점으로 일부 이동할 수 있음을 시사한다.<br />
+- 제품 측면 함의: 학습 인프라가 “역전파 최적화”뿐 아니라 “대규모 평가 파이프라인(분산 실행, seed 재현성, 결과 집계)” 역량을 경쟁력으로 만들 가능성이 있다.</p>
+<h3>트렌드 2) Low-rank가 ‘미세조정(LoRA)’를 넘어 ‘최적화 연산’ 자체로 확장</h3>
+<p>블로그는 EGGROLL이 LoRA의 아이디어를 차용해 거대한 노이즈 행렬 $E$를 $AB^\top$로 대체한다고 연결한다(출처: <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">[5]</a>).<br />
+- 해석: 산업계가 익숙해진 low-rank 기법이 “모델 파라미터 업데이트”뿐 아니라 “탐색 노이즈/섭동 생성”으로 확장되면서, 하드웨어 친화적 연산 패턴을 중심으로 알고리즘이 재설계되는 흐름과 맞닿아 있다.</p>
+<h3>트렌드 3) 비미분/정수/혼합형 모델에 대한 투자 논리 강화</h3>
+<p>LinkedIn 포스트는 “미분 없이도, backprop 없이도” 거대 모델 훈련이 가능하다는 톤으로, discrete/hybrid, simulation 기반, integer-only 등으로 적용 영역을 확장해 해석한다(출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>).<br />
+- 함의(조심스러운 결론): 실제로 모든 영역에서 backprop을 대체한다기보다, <strong>backprop이 불가능/비현실적인 구간</strong>에서 “학습 파이프라인을 닫지 않는” 전략 옵션으로 가치가 생길 수 있다(초록의 “non-differentiable or noisy objectives” 정합; 출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).</p>
+<hr />
+<h2>Risks &amp; Gaps</h2>
+<p>1) <strong>1차 근거(본문) 부재로 인한 검증 한계</strong><br />
+- 이번 런에서 확인 가능한 1차 근거는 arXiv <strong>초록</strong>뿐이다(출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>).<br />
+- 따라서 “GRPO와 competitive”, “더 빠르다”, “stable pre-training” 등의 비교는 <strong>어떤 비용/예산/세팅에서의 결론인지</strong> 확인이 불가능하다. 제품 의사결정(ROI)에는 핵심 변수인데, 현재 근거 수준에서는 결론을 내리기 어렵다.</p>
+<p>2) <strong>2차 소스의 스케일 수치(통신비용 0, population 262,144 등)는 미검증</strong><br />
+- LinkedIn 포스트는 counter-based RNG로 워커가 perturbation을 재현해 “통신 비용이 사실상 0”, population “262,144명” 확장 가능 등을 언급한다(출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>).<br />
+- 그러나 본문 근거가 없으므로, 이는 현 시점에서 <strong>홍보성 내러티브/요약의 가능성</strong>을 배제할 수 없다. 분산 환경에서 “0에 가까운 통신”이 가능하더라도, 실제로는 fitness 집계, 체크포인트, 장애 복구 등 운영 오버헤드가 남는다(해석).</p>
+<p>3) <strong>하드웨어 최적화/연산 순서의 실제 효과는 구현에 좌우</strong><br />
+- 블로그는 $AB^\top$를 명시적으로 만들지 않고 $(xB)A^\top$ 순서로 계산해 GPU에서 효율적이라고 설명한다(출처: <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">[5]</a>).<br />
+- 하지만 이는 특정 커널 최적화, 텐서 레이아웃, mixed precision, 통신 백엔드 등에 따라 성패가 갈릴 수 있다. “이론상 $O(r(m+n))$”이 “wall-clock 절감”으로 이어지는지는 별도 검증이 필요하다.</p>
+<p>4) <strong>샘플 효율/안정성(분산) 이슈는 ES의 고질적 리스크</strong><br />
+- ES는 병렬화가 강점이지만, 일반적으로 샘플 효율과 분산(variance) 문제가 따라붙는다. EGGROLL이 비용 병목을 줄였더라도, “더 많은 population으로 상쇄”하는 전략이 결국 계산 예산을 얼마나 요구하는지(총 평가 횟수), 학습 안정성이 어떤지(랜덤성, seed, reward 스케일링)는 본문 근거가 필요하다(해석; 초록만으로 판단 불가).</p>
+<hr />
+<h2>Critics</h2>
+<h3>“Backprop 대체” 프레임의 과잉 확대를 경계하라</h3>
+<p>LinkedIn 포스트는 ‘패러다임 전환’ 톤으로 해석을 확장하지만(출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>), 현 근거(초록)만으로는 <strong>대체 범위와 조건</strong>이 분명하지 않다.</p>
+<ul>
+<li><strong>비용은 줄었지만, 목적함수 평가 자체가 비싼 문제에서는 여전히 어렵다.</strong> ES는 업데이트 대신 “평가(rollout/inference/simulation)”에 비용이 몰릴 수 있다.</li>
+<li><strong>규제/책임 관점</strong>: 블랙박스 최적화는 업데이트 경로가 불투명해질 수 있어, 고위험 도메인에서의 설명가능성/감사 가능성 요구(EU AI Act류의 거버넌스 요구)에 불리할 수 있다(일반적 리스크; 본 소스에 직접 언급은 없음).</li>
+<li><strong>보안/안전</strong>: 대규모 분산 워커 기반 학습은 데이터/모델 유출면(attack surface)을 넓힐 수 있으며, seed 재현/로그 관리가 취약하면 재현성과 사고 분석이 어려워질 수 있다(해석).</li>
+</ul>
+<hr />
+<h2>Appendix</h2>
+<h3>A) 본 리뷰의 1차/2차 근거 구분 규칙</h3>
+<ul>
+<li><strong>1차(supported)</strong>: arXiv abs 초록에서 직접 확인 가능한 문장(메커니즘, 복잡도/메모리 claim, $O(1/r)$ 수렴, 실험 요약 3항). (출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>)</li>
+<li><strong>2차(secondary)</strong>: LinkedIn 포스트 및 블로그의 해설/수치/확장 해석. 본문(PDF)로 재검증 전에는 의사결정 근거로 단독 사용 금지. (출처: <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">[3]</a>, <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">[5]</a>)</li>
+</ul>
+<h3>B) 핵심 수식/복잡도(초록 기반)</h3>
+<ul>
+<li>Low-rank perturbation: $E \approx AB^\top$, where $A\in\mathbb{R}^{m\times r}, B\in\mathbb{R}^{n\times r},\ r\ll \min(m,n)$ (출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>)</li>
+<li>Auxiliary storage per layer: $mn \rightarrow r(m+n)$ (출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>)</li>
+<li>Forward cost: $O(mn) \rightarrow O(r(m+n))$ (출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>)</li>
+<li>Convergence rate claim: $O(1/r)$ (출처: <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">[1]</a>)</li>
+</ul>
+<h3>C) 소스 파일 위치(아카이브)</h3>
+<ul>
+<li>arXiv abs 추출본: <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[2]</a>  </li>
+<li>LinkedIn 추출본: <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[4]</a>  </li>
+<li>블로그 추출본: <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[6]</a></li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Write a LinkedIn-style practitioner review based on the provided sources.</p>
+<p>Focus:
+- Summarize the core claims from each source (LinkedIn post, arXiv paper, blog).
+- Extract 3-5 evidence-backed insights that matter to AI product and business strategy.
+- Highlight practical implications, adoption constraints, and ROI trade-offs.
+- Distinguish "supported by source" vs. "inferred" when needed.
+- Keep a conversational but professional tone; avoid hype.</p>
+<p>Style:
+- Short paragraphs and concise bullets.
+- Use clear labels (e.g., "Why it matters:", "Practical take:") sparingly.
+- Cite sources inline for key claims.</p>
+<p>Section emphasis:
+- Practitioner Review: prioritize execution realities and decision points.
+- Risks &amp; Caveats: call out missing data, weak evidence, or ambiguity.
+- Actionable Takeaways: 3-6 concrete actions with conditions.</p>
+<h2>References</h2>
+<ol>
+<li>arxiv.org/abs/2511.16652 — <a href="https://arxiv.org/abs/2511.16652" target="_blank" rel="noopener">link</a></li>
+<li>0002_https_arxiv.org_abs_2511.16652.txt — <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">file</a></li>
+<li>www.linkedin.com/feed/update/urn:li:activity:7399939023072358... — <a href="https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/" target="_blank" rel="noopener">link</a></li>
+<li>0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt — <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">file</a></li>
+<li>muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hypers... — <a href="https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale" target="_blank" rel="noopener">link</a></li>
+<li>0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt — <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">file</a></li>
+<li>20260113_linkedin-review.txt — <a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">file</a></li>
+<li>20260113_linkedin-review-index.md — <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-15 06:48:06</li>
+<li>Duration: 00:08:44 (524.83s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: default</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">./archive/20260113_linkedin-review-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">./instruction/20260113_linkedin-review.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

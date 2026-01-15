@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "feather"
-version = "0.2.0"
+name = "federlicht"
+version = "0.3.0"
 description = "Feather-light knowledge intake."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,11 +12,36 @@ dependencies = ["requests"]
 
 [project.optional-dependencies]
 arxiv = ["arxiv"]
-pdf = ["pymupdf"]
+pdf = ["pymupdf", "pypdfium2", "pillow", "pdfplumber"]
 youtube = ["youtube-transcript-api"]
 local = ["python-docx", "python-pptx", "beautifulsoup4"]
-agents = ["deepagents", "markdown"]
-all = ["arxiv", "pymupdf", "youtube-transcript-api", "python-docx", "python-pptx", "beautifulsoup4"]
+agents = ["deepagents", "markdown", "langchain-openai"]
+report = [
+  "deepagents",
+  "markdown",
+  "langchain-openai",
+  "pymupdf",
+  "pypdfium2",
+  "pillow",
+  "pdfplumber",
+  "beautifulsoup4",
+]
+opencv = ["opencv-python"]
+all = [
+  "arxiv",
+  "pymupdf",
+  "pypdfium2",
+  "pillow",
+  "pdfplumber",
+  "youtube-transcript-api",
+  "python-docx",
+  "python-pptx",
+  "beautifulsoup4",
+  "deepagents",
+  "markdown",
+  "langchain-openai",
+  "opencv-python",
+]
 
 [project.scripts]
 feather = "feather.cli:main"

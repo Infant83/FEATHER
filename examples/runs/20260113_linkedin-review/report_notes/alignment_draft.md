@@ -1,15 +1,16 @@
-Alignment score: 85  
-Aligned:  
-- The draft report adheres to the focus of writing a LinkedIn-style practitioner review based on the provided sources.  
-- Core claims from sources and key findings related to EGGROLL are summarized effectively.  
-- Practical implications and risks are discussed, aligning with the requested focus on execution realities and decision points.  
-- The tone is conversational yet professional, avoiding hype as instructed.  
+Alignment score: 82
+Aligned:
+- 런 컨텍스트(아카이브에 있는 3개 Tavily extract + index 파일)만을 근거로, LinkedIn 포스트의 주장과 arXiv 초록(ABS)에서 확인 가능한 내용을 **근거-주장 매핑** 형태로 비교·비판적으로 정리했다.
+- “PDF 본문 부재로 교차검증 불가”라는 **핵심 제약**을 반복적으로 명시하고, 정량 수치(예: 262,144 population, 200배 스케일링 등)를 **보수적으로 해석**해야 한다는 리스크를 제시했다.
+- 산출물이 한국어로 작성되어 있으며, 요청한 “Write in Korean”을 충족한다.
 
-Gaps/Risks:  
-- The actionable takeaways section is not explicitly detailed within the provided summary, which is a critical component of the prompt.  
-- The distinction between insights that are "supported by source" vs. "inferred" isn't clearly presented in the summary.  
+Gaps/Risks:
+- Report focus prompt가 “(none)”인데도, 결과물은 사실상 “EGGROLL/ES 논문·LinkedIn 주장 검증 리포트”로 고정되어 있음. 즉, **사용자가 원래 의도한 링크드인 리뷰 과업(예: 톤/문장 교정, 설득력 강화, 컴플라이언스 점검 등)**과의 정합성은 컨텍스트만으로 확정하기 어렵다.
+- Stage output이 문서 말미에서 “검증 불…”로 **중간에 끊겨** 있어, 초안(draft)로서도 완결성이 떨어진다(리스크/갭 섹션 및 결론/권고가 미완).
+- “아카이브 내부 산출물(final/v2~v5)”을 언급하며 비판하는 대목이 있는데, 사용자가 요청한 평가 범위가 명시되지 않은 상황에서 **불필요하게 내부 파일 품질평가로 확장**될 수 있다.
+- 일부 해석(LoRA 유사성, ‘패러다임 전환’ 등)은 출처에 기반하긴 하지만, 초록/포스트/블로그만으로는 **과잉 일반화로 보일 여지**가 있음(현재도 경고를 달았지만 더 엄격히 분리 가능).
 
-Next-step guidance:  
-- Revise the draft to include explicit actionable takeaways (3-6 concrete actions with conditions).  
-- Clarify distinctions between supported insights and inferred insights.  
-- Ensure that the structure includes a concrete section dedicated to actionable takeaways as well as any additional refinements based on the report's sections.  
+Next-step guidance:
+- 1) instruction/20260113_linkedin-review.txt를 열어 **원래 과업 정의(리뷰 대상, 평가 기준, 산출물 형식)**를 확인한 뒤, 현재 초안 구조가 그 요구에 맞는지 재정렬하라.
+- 2) ./archive/20260113_linkedin-review-index.md와 extract 3개 외에 PDF/추가 근거가 실제로 없는지 재확인하고, 없으면 “근거 한계” 섹션을 더 전면에 두고 **검증 가능한 주장/불가능한 주장 목록을 표로 분리**하라.
+- 3) 끊긴 문장을 포함해 드래프트를 끝까지 완결(리스크&갭 마무리, 권고/결론, 필요 시 체크리스트)하고, LinkedIn 수치·주장의 “확인 필요 항목”을 명시적인 TODO로 남겨라.

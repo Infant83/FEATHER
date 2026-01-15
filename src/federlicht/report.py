@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime as dt
 import io
 import html as html_lib
@@ -187,7 +188,15 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_MODEL,
         help=(
             f"Model name (default: {DEFAULT_MODEL} if supported). "
-            "If the name starts with 'qwen', Federlicht tries ChatOpenAI for OpenAI-compatible endpoints."
+            "If OPENAI_BASE_URL is set and the model name is not OpenAI (gpt-*/o*), "
+            "Federlicht uses ChatOpenAI for OpenAI-compatible endpoints."
+        ),
+    )
+    ap.add_argument(
+        "--model-vision",
+        help=(
+            "Optional vision model name for analyzing extracted figures. "
+            "Uses OPENAI_BASE_URL_VISION/OPENAI_API_KEY_VISION when available."
         ),
     )
     ap.add_argument(
@@ -606,6 +615,8 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
         f"Duration: {meta.get('duration_hms', '-')} ({meta.get('duration_seconds', '-')}s)",
         f"Model: {meta.get('model', '-')}",
     ]
+    if meta.get("model_vision"):
+        lines.append(f"Vision model: {meta.get('model_vision')}")
     if meta.get("quality_model"):
         lines.append(f"Quality model: {meta.get('quality_model')}")
     lines.append(f"Quality strategy: {meta.get('quality_strategy', '-')}")
@@ -1450,6 +1461,56 @@ def _pillow_image() -> Optional[object]:
     except Exception:
         return None
     return Image
+
+
+def encode_image_for_vision(image_path: Path, max_side: int = 1024) -> tuple[str, str]:
+    Image = _pillow_image()
+    if Image:
+        try:
+            with Image.open(image_path) as img:
+                if max(img.size) > max_side:
+                    scale = max_side / max(img.size)
+                    new_size = (max(1, int(img.width * scale)), max(1, int(img.height * scale)))
+                    img = img.resize(new_size)
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                data = buffer.getvalue()
+                return base64.b64encode(data).decode("utf-8"), "image/png"
+        except Exception:
+            pass
+    data = image_path.read_bytes()
+    mime = "image/png"
+    if image_path.suffix.lower() in {".jpg", ".jpeg"}:
+        mime = "image/jpeg"
+    return base64.b64encode(data).decode("utf-8"), mime
+
+
+def analyze_figure_with_vision(model, image_path: Path) -> Optional[dict]:
+    payload_b64, mime = encode_image_for_vision(image_path)
+    system_prompt = (
+        "You are an image analyst. Describe the figure strictly based on what is visible. "
+        "Return JSON only with keys: summary (1-2 sentences), type (chart/diagram/table/screenshot/photo/other), "
+        "relevance (0-100), recommended (yes/no). If unclear, use summary='unclear'."
+    )
+    user_content = [
+        {"type": "text", "text": "Analyze this figure for a technical report."},
+        {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{payload_b64}"}},
+    ]
+    try:
+        result = model.invoke(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ]
+        )
+    except Exception as exc:
+        return {"summary": "vision_error", "error": str(exc)}
+    content = getattr(result, "content", None)
+    text = content if isinstance(content, str) else str(content)
+    parsed = extract_json_object(text)
+    if isinstance(parsed, dict):
+        return parsed
+    return {"summary": text.strip()[:400]}
 
 
 def _image_is_probably_figure(image, min_area: int) -> bool:
@@ -3198,6 +3259,7 @@ def build_figure_plan(
     renderer: str,
     dpi: int,
     notes_dir: Path,
+    vision_model_name: Optional[str],
 ) -> list[dict]:
     meta_index = build_text_meta_index(run_dir, archive_dir, supporting_dir)
     spans = find_section_spans(report_text, output_format)
@@ -3277,6 +3339,24 @@ def build_figure_plan(
                 -(item.get("area") or 0),
             )
         )
+        if vision_model_name:
+            vision_model = build_vision_model(vision_model_name)
+            if vision_model is None:
+                print("Vision model unavailable; skipping figure analysis.", file=sys.stderr)
+            else:
+                for entry in entries:
+                    img_abs = (run_dir / entry["image_path"].lstrip("./")).resolve()
+                    if not img_abs.exists():
+                        continue
+                    analysis = analyze_figure_with_vision(vision_model, img_abs)
+                    if not analysis:
+                        continue
+                    entry["vision_summary"] = analysis.get("summary")
+                    entry["vision_type"] = analysis.get("type")
+                    entry["vision_relevance"] = analysis.get("relevance")
+                    entry["vision_recommended"] = analysis.get("recommended")
+                    if not entry.get("caption") and analysis.get("summary"):
+                        entry["caption"] = str(analysis.get("summary"))
         for idx, entry in enumerate(entries, start=1):
             entry["candidate_id"] = f"fig-{idx:03d}"
     return entries
@@ -3353,6 +3433,21 @@ def write_figure_candidates(
         img_href = os.path.relpath(img_abs, viewer_dir).replace("\\", "/")
         pdf_href = os.path.relpath(pdf_abs, viewer_dir).replace("\\", "/")
         caption = html_lib.escape(entry.get("caption") or "")
+        vision_summary_raw = entry.get("vision_summary") or ""
+        vision_summary = html_lib.escape(truncate_text(str(vision_summary_raw), 200)) if vision_summary_raw else ""
+        vision_type = html_lib.escape(str(entry.get("vision_type") or "")).strip()
+        vision_relevance = entry.get("vision_relevance")
+        vision_recommended = str(entry.get("vision_recommended") or "").strip().lower()
+        vision_line = ""
+        if vision_summary:
+            parts = [vision_summary]
+            if vision_type:
+                parts.append(f"type: {vision_type}")
+            if vision_relevance is not None:
+                parts.append(f"relevance: {vision_relevance}")
+            if vision_recommended:
+                parts.append(f"recommended: {vision_recommended}")
+            vision_line = html_lib.escape(" | ".join(parts))
         cards.append(
             "\n".join(
                 [
@@ -3360,6 +3455,7 @@ def write_figure_candidates(
                     f"<p><strong>{candidate_id}</strong> — {html_lib.escape(entry['pdf_path'])} (p.{entry.get('page')})</p>",
                     f"<img src=\"{html_lib.escape(img_href)}\" alt=\"{candidate_id}\" />",
                     f"<p>{caption}</p>" if caption else "",
+                    f"<p><em>Vision:</em> {vision_line}</p>" if vision_line else "",
                     f"<p>Source: <a href=\"{html_lib.escape(pdf_href)}\">{html_lib.escape(entry['pdf_path'])}</a></p>",
                     "</div>",
                 ]
@@ -3875,10 +3971,15 @@ def print_progress(label: str, content: str, enabled: bool, max_chars: int) -> N
 
 
 _OPENAI_COMPAT_RE = re.compile(r"^qwen", re.IGNORECASE)
+_OPENAI_MODEL_RE = re.compile(r"^(gpt-|o\\d)", re.IGNORECASE)
 
 
 def is_openai_compat_model_name(model_name: str) -> bool:
     return bool(_OPENAI_COMPAT_RE.match(model_name.strip()))
+
+
+def is_openai_model_name(model_name: str) -> bool:
+    return bool(_OPENAI_MODEL_RE.match(model_name.strip()))
 
 
 def build_openai_compat_model(model_name: str):
@@ -3895,11 +3996,56 @@ def build_openai_compat_model(model_name: str):
     return ChatOpenAI(model=model_name)
 
 
+def build_vision_model(model_name: str):
+    try:
+        from langchain_openai import ChatOpenAI  # type: ignore
+    except Exception:
+        print(
+            "Vision model requested but langchain-openai is unavailable. "
+            "Install with: python -m pip install langchain-openai",
+            file=sys.stderr,
+        )
+        return None
+    base_url = (
+        os.getenv("OPENAI_BASE_URL_VISION")
+        or os.getenv("OPENAI_API_BASE_VISION")
+        or os.getenv("OPENAI_BASE_URL")
+        or os.getenv("OPENAI_API_BASE")
+    )
+    api_key = os.getenv("OPENAI_API_KEY_VISION") or os.getenv("OPENAI_API_KEY")
+    kwargs = {"model": model_name}
+    if api_key:
+        kwargs["openai_api_key"] = api_key
+    if base_url:
+        try:
+            return ChatOpenAI(**kwargs, base_url=base_url)
+        except TypeError:
+            try:
+                return ChatOpenAI(**kwargs, openai_api_base=base_url)
+            except TypeError:
+                return ChatOpenAI(**kwargs)
+    try:
+        return ChatOpenAI(**kwargs)
+    except TypeError:
+        if "openai_api_key" in kwargs:
+            kwargs.pop("openai_api_key")
+            return ChatOpenAI(**kwargs)
+        raise
+
+
 def create_agent_with_fallback(create_deep_agent, model_name: str, tools, system_prompt: str, backend):
     kwargs = {"tools": tools, "system_prompt": system_prompt, "backend": backend}
     if model_name:
         model_value = model_name
-        if is_openai_compat_model_name(model_name):
+        base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
+        use_compat = False
+        if is_openai_model_name(model_name):
+            use_compat = False
+        elif base_url:
+            use_compat = True
+        elif is_openai_compat_model_name(model_name):
+            use_compat = True
+        if use_compat:
             compat_model = build_openai_compat_model(model_name)
             if compat_model is None:
                 print(
@@ -4645,6 +4791,7 @@ def main() -> int:
             args.figures_renderer,
             args.figures_dpi,
             notes_dir,
+            args.model_vision,
         )
         viewer_dir = run_dir / "report_views"
         preview_path = write_figure_candidates(candidates, notes_dir, run_dir, report_dir, viewer_dir)
@@ -4688,6 +4835,7 @@ def main() -> int:
         "duration_seconds": round(elapsed, 2),
         "duration_hms": format_duration(elapsed),
         "model": args.model,
+        "model_vision": args.model_vision,
         "quality_model": quality_model if args.quality_iterations > 0 else None,
         "quality_iterations": args.quality_iterations,
         "quality_strategy": args.quality_strategy if args.quality_iterations > 0 else "none",

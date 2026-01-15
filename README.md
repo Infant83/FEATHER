@@ -1,6 +1,13 @@
 # Feather Collector
 
+Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
+
+Version: 0.3.0
+
 Feather-light knowledge intake. This CLI ingests text instructions (`.txt` files), runs Tavily search/extract, fetches arXiv papers, and builds an offline-friendly archive of everything it collected. Input can be a single `.txt` file or a folder of `.txt` files.
+
+Feather and Federlicht are designed as a deliberate two-step flow. Feather is about gathering: knowledge floats in the air like feathers, and only the right collection can form a meaningful whole. It also plays on “feeder” — the collected knowledge is fed into language models, so the intake must be curated through well‑designed queries in the instruction file. Federlicht is about illumination and curation: “feder + licht” (feather + light) — a German word pairing. The separation is intentional: collection and synthesis need different knobs. The way you combine input arguments (sources, limits, language, templates, prompts) shapes not just coverage but the narrative voice and report style, so tuning both steps together is essential for high-quality output. That tuning is done by the user — typically domain experts — and even in the GenAI/agentic era, the decision maker and director remain essential for choosing what matters, what to trust, and how to frame the story. 
+“Knowledge is light; ignorance is darkness.”
 
 ## Features
 - Parse natural-language instructions from `.txt` files.
@@ -9,6 +16,7 @@ Feather-light knowledge intake. This CLI ingests text instructions (`.txt` files
 - Optional YouTube search and transcript capture.
 - Writes a reproducible archive per instruction file with logs and an `index.md` summary.
 - List and review existing run folders.
+- Federlicht report synthesis: multi-step agentic review with templates, citations, and HTML/TeX output.
 
 ## Requirements
 - Python 3.9+ recommended.
@@ -19,21 +27,28 @@ Feather-light knowledge intake. This CLI ingests text instructions (`.txt` files
   - `youtube-transcript-api` for YouTube transcript capture.
   - `python-docx` / `python-pptx` / `beautifulsoup4` for local file ingestion (docx/pptx/html).
 - Optional packages: `deepagents` for report scripts and `markdown` for HTML output (LLM API key required).
+- Optional packages: `langchain-openai` for OpenAI-compatible endpoints (e.g., local Qwen hosting).
 - Environment: `TAVILY_API_KEY` must be set for search/extract steps.
 - Environment: `YOUTUBE_API_KEY` must be set for YouTube search.
 - Optional env: `YOUTUBE_PROXY` or `YOUTUBE_PROXY_HTTP` / `YOUTUBE_PROXY_HTTPS` for transcript access when YouTube blocks direct requests.
 - Optional env: `OPENALEX_API_KEY` (used if set) and `OPENALEX_MAILTO` (polite contact string).
 - Optional env: `FEATHER_USER_AGENT` to set a polite `User-Agent` for PDF downloads and OpenAlex requests.
+- Optional env: `OPENAI_BASE_URL` / `OPENAI_API_BASE` for OpenAI-compatible endpoints (used when `--model` is not an OpenAI model like `gpt-*`/`o*`).
+- Optional env: `OPENAI_BASE_URL_VISION` / `OPENAI_API_KEY_VISION` for vision-only models (used with `--model-vision`).
 - `requirements.txt` is a convenience bundle for local runs/tests and includes optional deps + pytest.
 
 ## Installation
 ```bash
+# PyPI install (distribution name):
+python -m pip install federlicht
+
 # Recommended: install the package (editable during development)
 python -m pip install -e .
 # For a regular install, use: python -m pip install .
 
 # With optional features (arXiv + PDF text):
 python -m pip install -e ".[all]"
+python -m pip install "federlicht[all]"
 
 # Local file ingestion only:
 python -m pip install -e ".[local]"
@@ -43,6 +58,8 @@ python -m pip install -e ".[youtube]"
 
 # Deepagents report script:
 python -m pip install -e ".[agents]"
+python -m pip install -e ".[report]"
+python -m pip install "federlicht[report]"
 
 # Dependency-only install for run.py / local scripts:
 python -m pip install -r requirements.txt
@@ -86,6 +103,36 @@ federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104
 # .\feather.ps1 --input .\instructions --output .\archive --max-results 8
 # .\feather.cmd --input .\instructions --output .\archive --max-results 8
 ```
+
+## Workflow (Feather -> Federlicht)
+Use Feather to collect sources, then Federlicht to synthesize a report.
+
+1) Prepare an instruction file (and optionally a report prompt file).
+```bash
+# Example inputs
+./instructions/20260110_qc-oled.txt
+./instructions/20260110_prompt_qc-oled.txt
+```
+
+2) Run Feather to create a run folder under `--output`.
+```bash
+feather --input ./instructions/20260110_qc-oled.txt --output ./runs --download-pdf
+```
+
+3) Inspect the run (optional).
+```bash
+feather --review ./runs/20260110_qc-oled
+```
+
+4) Generate the report with Federlicht.
+```bash
+federlicht --run ./runs/20260110_qc-oled --output ./runs/20260110_qc-oled/report_full.html --lang ko --prompt-file ./instructions/20260110_prompt_qc-oled.txt
+```
+
+Notes:
+- Feather only collects data; Federlicht never re-fetches sources.
+- The run folder contains `instruction/`, `archive/`, and `*-index.md` used by Federlicht.
+- See `examples/README.md` and `scripts/README_federlicht_report.md` for advanced templates and report options.
 
 Arguments:
 - `--input` (required): Folder containing one or more `.txt` instruction files, or a single `.txt` file.

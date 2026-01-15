@@ -4,14 +4,21 @@ In-depth, multi-step report generator for a Feather run folder. It reads the arc
 
 ## Install
 ```bash
+# PyPI install (distribution name):
+python -m pip install federlicht[report]
+
 # Deepagents + markdown renderer
 python -m pip install -e ".[agents]"
 
 # Optional: PDF text extraction
 python -m pip install -e ".[all]"
+
+# Federlicht-focused bundle (report + PDF tooling)
+python -m pip install -e ".[report]"
 ```
 
 You also need the LLM provider credentials required by `deepagents` (for example, the API key for the model you use).
+For OpenAI-compatible local models (e.g., `qwen3-*`), set `OPENAI_BASE_URL` (or `OPENAI_API_BASE`) and `OPENAI_API_KEY`.
 
 ## Quick start
 ```bash
@@ -173,6 +180,7 @@ Options:
 - `--figures-dpi`: render quality for vector pages.
 - `--figures-mode`: `select` (default) or `auto`.
 - `--figures-select`: path to a selection file (defaults to `report_notes/figures_selected.txt`).
+- `--model-vision`: optional vision model for figure analysis (uses `OPENAI_BASE_URL_VISION` / `OPENAI_API_KEY_VISION` if set).
 
 Requires `pymupdf` (already included in `.[all]`). For vector-only PDFs, install:
 - `pypdfium2` + `pillow` (default, pure Python).
@@ -240,7 +248,8 @@ When output is `.html`, links inside the report open in a side panel:
 
 ## Key options (summary)
 - `--model`: LLM model name (default `gpt-5.2` if supported).
-- `--model` note: if the name starts with `qwen`, Federlicht tries `langchain_openai.ChatOpenAI` for OpenAI-compatible endpoints.
+- `--model` note: if `OPENAI_BASE_URL` is set and the model name is not OpenAI (`gpt-*`/`o*`), Federlicht uses `langchain_openai.ChatOpenAI` for OpenAI-compatible endpoints.
+- `--model-vision`: Optional vision model name for figure analysis; set `OPENAI_BASE_URL_VISION` and `OPENAI_API_KEY_VISION` for on-prem endpoints.
 - `--alignment-check` / `--no-alignment-check`: Validate alignment with the report prompt at each stage.
 - `--overwrite-output`: Overwrite output file instead of creating `_1`, `_2`, ... copies.
 - `--template`: Template name or path (default: `auto`).
