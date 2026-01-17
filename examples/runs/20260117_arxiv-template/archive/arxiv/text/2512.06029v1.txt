@@ -1,0 +1,1278 @@
+
+
+===== PAGE 1 =====
+From orbital analysis to active learning: an integrated strategy for the
+accelerated design of TADF emitters†
+Jean-Pierre Tchapet Njafa,∗a Steve Cabrel Teguia Kouam,b Patrick Mvoto Kongo,a and Serge Guy
+Nana Engoa
+Received Xth XXXXXXXXXX 20XX, Accepted Xth XXXXXXXXX 20XX
+First published on the web Xth XXXXXXXXXX 20XX
+DOI: 10.1039/b000000x
+Thermally Activated Delayed Fluorescence (TADF) emitters must satisfy two competing requirements: small singlet-triplet en-
+ergy gaps for thermal upconversion and sufficient spin-orbit coupling for fast reverse intersystem crossing. Predicting these
+properties accurately demands expensive calculations. We address this using a validated semi-empirical protocol (GFN2-xTB
+geometries, sTDA/sTD-DFT-xTB excited states) on 747 molecules, combined with charge-transfer descriptors from Natural
+Transition Orbital analysis. The hole-electron spatial overlap She emerges as a key predictor, accounting for 21% of feature
+importance for the triplet state alone. Our best model (Support Vector Regression) reaches MAE = 0.024 eV and R2 = 0.96
+for ∆EST. Active learning reduces the data needed to reach target accuracy by approximately 25% compared to random sam-
+pling. Three application domains are explored: NIR-emitting probes for bioimaging, photocatalytic sensitizers, and fast-response
+materials for photodetection.
+1
+Introduction
+Thermally Activated Delayed Fluorescence (TADF) materials
+have become central to organic light-emitting diode (OLED)
+technology.1 By harvesting both singlet and triplet excitons,
+TADF emitters achieve near-unity internal quantum efficien-
+cies, overcoming the 25% limit of conventional fluorescent
+materials.2–4 Beyond displays, TADF finds use in biomedi-
+cal imaging,5 photocatalysis,6 and photodetection,7 each with
+specific property requirements.
+The fundamental challenge in TADF design lies in satis-
+fying two seemingly contradictory requirements: a thermody-
+namic condition requiring a minimal singlet-triplet energy gap
+(∆EST < 0.2 eV) and a kinetic condition demanding efficient
+reverse intersystem crossing (kRISC > 106 s−1).8,9 The former
+typically necessitates minimal HOMO-LUMO orbital overlap
+to reduce exchange interaction, while the latter requires suf-
+ficient spin-orbit coupling (SOC) and oscillator strength (f),
+both of which benefit from non-zero orbital overlap.10,11 This
+fundamental trade-off, rooted in the Marcus theory of electron
+transfer,12 has historically limited the rational design of high-
+performance TADF materials.
+Recent advances in high-throughput virtual screening
+† Electronic Supplementary Information (ESI) available: Computational de-
+tails, benchmark validation, feature definitions, and complete dataset. See
+DOI: 10.1039/b000000x/
+a Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon. E-mail: jean-pierre.tchapet@facsciences-uy1.cm
+b Department of Physics, Faculty of Science, University of Douala, Po. Box
+24157, Douala, Cameroon.
+(HTS) have begun to address this challenge through statistical
+approaches.13,14 In our previous investigations, we validated a
+computationally efficient semi-empirical protocol on an exten-
+sive dataset of 747 molecules, establishing quantitative design
+principles including the superiority of Donor-Acceptor-Donor
+(D-A-D) architectures15,16 and the identification of an opti-
+mal D-A torsional angle window of 60–90◦for minimizing
+∆EST.17,18
+Statistical screening has identified promising architectures,
+but predicting properties like kRISC requires deeper insight
+into electronic structure.19,20 This transition requires:
+(1)
+mechanistic rationalization of structure-property relation-
+ships through advanced orbital analysis; (2) accelerated pre-
+diction of complex kinetic properties such as kRISC 21,22 and
+photoluminescence quantum yield that remain computation-
+ally prohibitive for large-scale screening; and (3) application-
+specific optimization for emerging fields where TADF mate-
+rials show exceptional promise.
+This work combines quantum chemical analysis with ma-
+chine learning to extract predictive descriptors from Nat-
+ural Transition Orbitals (NTOs).14,19 These descriptors—
+particularly the hole-electron overlap She—capture the physics
+governing ∆EST and are integrated into an active learning
+framework.23
+The approach offers three benefits: (1) mechanistic insight
+through CT descriptors; (2) reduced data requirements via ac-
+tive learning; and (3) application-specific screening. We iden-
+tify candidates for bioimaging, photocatalysis, and photode-
+tection.5–7
+1–11 | 1
+arXiv:2512.06029v1  [cond-mat.mtrl-sci]  4 Dec 2025
+
+
+===== PAGE 2 =====
+2
+Theoretical and computational framework
+2.1
+Computational details
+We summarize key settings here; full computational details
+are provided in the ESI (Sec. S1). Ground states used GFN2-
+xTB; excited states used sTDA/sTD-DFT-xTB with consistent
+solvation across stacks (GBSA/COSMO). NTO analysis and
+RespA decomposition were performed using Multiwfn (ver-
+sion 3.8)24,25 for wavefunction analysis and fragment-based
+charge-transfer quantification, following the CT descriptor
+framework of Plasser and coworkers.26,27 SHAP (SHapley
+Additive exPlanations, version 0.45.0) was employed for ML
+model interpretability. All workflows, scripts, and environ-
+ment lockfiles are documented in ESI and archived at Zenodo
+(DOI: 10.5281/zenodo.17436069).
+2.2
+Methodological benchmarking
+To ensure scientific rigor, we validated the hybrid protocol
+(GFN2-xTB // sTD/sTDA-xTB) against high-fidelity refer-
+ences on a representative subset (8–27 molecules spanning D–
+A, D–A–D, MR, and TSCT classes). For charge-transfer dom-
+inated systems, we employed optimally tuned long-range cor-
+rected functionals (OT-LC-ωPBE), with ω optimized to sat-
+isfy εω
+HOMO +IPω = 0. For cases with multi-reference charac-
+ter, we used STEOM-DLPNO-CCSD, and verified trends with
+selected NEVPT2/MS-CASPT2 data from literature. Across
+the subset, the vertical ∆EST exhibited MAE ∼0.10 eV relative
+to OT-LC-ωPBE and ∼0.12 eV relative to STEOM-DLPNO-
+CCSD, while maintaining strong rank correlations with exper-
+iment.
+2.3
+High-throughput protocol and dataset
+We screened 747 molecules spanning D–A, D–A–D, MR, and
+TSCT architectures using a hierarchical protocol (GFN2-xTB
+geometries; sTDA/sTD-DFT-xTB excited states).
+Protocol
+specifics and dataset curation are detailed in ESI (Sec. S3).
+2.4
+High-fidelity reference calculations
+We validate our computational framework against the
+STGABS27 benchmark set,28 which provides highly accu-
+rate experimental and high-level theory (HLT) references for
+∆EST. For the two molecules in our dataset with available HLT
+references (4CzIPN and DMAC-TRZ), we find:
+• 4CzIPN: Computed ∆EST = 0.21 eV (sTD-DFT-xTB,
+toluene) vs.
+HLT ROKS/PCM = 0.16 eV, error =
+0.05 eV
+• DMAC-TRZ: Computed ∆EST = 0.085 eV vs.
+HLT
+SCS-CC2/PCM = 0.05 eV, error = 0.035 eV
+The overall mean absolute error (MAE) of 0.045 eV vs. HLT
+references demonstrates that our xTB-based rapid screening
+approach provides reliable estimates within chemical accu-
+racy, suitable for ML-driven discovery workflows.
+To further validate the xTB protocol, we performed
+optimally-tuned LC-PBE (OT-LC-PBE/def2-TZVP) calcula-
+tions on three representative molecules (Table 1). The range-
+separation parameter ω was optimized via the IP-tuning crite-
+rion. Results show that vertical TD-DFT systematically over-
+estimates ∆EST compared to experiment, while xTB methods
+provide closer agreement. Notably, the xTB underestimation
+is conservative for screening: molecules passing the threshold
+will have true values at least as favorable. Full computational
+details are provided in ESI (Sec. S7).
+Table 1 Comparison of ∆EST (eV) from OT-LC-PBE, xTB methods,
+and experiment.
+Molecule
+OT-LC-PBE
+sTD-DFT-xTB
+Exp.
+BACN
+0.81
+0.46
+–
+DMAC-TRZ
+0.17
+0.08
+0.05
+4CzIPN
+0.19
+0.08
+0.08
+2.5
+Machine learning methodology
+Our ML pipeline employs feature vectors combining NTO-
+based descriptors with excitation energy features extracted
+from sTDA/sTD-DFT calculations. The feature set comprises
+29 descriptors organized into five categories:
+• Energy features: vertical excitation energies (ES1, ET1)
+and HOMO-LUMO gap
+• Oscillator strength: fS1 for the lowest singlet transition
+• NTO overlap: hole-electron orbital overlap for singlet
+(SS1
+NTO) and triplet (ST1
+NTO) transitions
+• CT descriptors: charge-transfer descriptors including
+CT number (ΩCT), hole localization on donor (ΛD), par-
+ticle localization on acceptor (ΛA), hole-particle centroid
+distance (∆r), and hole-electron spatial overlap (She)
+• Proxy RespA features: derived descriptors capturing
+SOC-relevant physics
+We benchmark three surrogate models on our expanded
+747-molecule dataset (2943 samples after combining methods
+and environments). Using 5-fold cross-validation, we find that
+Support Vector Regression (SVR) with RBF kernel achieves
+the best performance (MAE = 0.024 eV, R2 = 0.960), fol-
+lowed by Gradient Boosting (MAE = 0.027 eV, R2 = 0.946)
+and Random Forest (MAE = 0.035 eV, R2 = 0.918).
+2 |
+1–11
+
+
+===== PAGE 3 =====
+3
+Active learning strategy
+We systematically compare six acquisition functions for ac-
+tive learning: (1) Uncertainty Sampling (US), (2) Expected
+Improvement (EI), (3) Upper Confidence Bound (UCB), (4)
+Query by Committee (QBC), (5) Diversity Sampling, and (6)
+Hybrid (uncertainty × diversity). Each acquisition function
+is detailed in ESI (Sec. S5) with mathematical formulations.
+The AL loop uses Random Forest for uncertainty estimation
+via tree variance, with initialization of 50 samples, batch size
+of 10, and 40 iterations across 10 random seeds.
+4
+Results and discussion
+4.1
+Model interpretability via SHAP analysis
+SHAP (SHapley Additive exPlanations) analysis reveals the
+relative contribution of different feature categories to ∆EST
+prediction (Fig. 1). Our enhanced feature set includes CT de-
+scriptors computed directly from NTO molden files, capturing
+the spatial distribution of hole and electron densities that gov-
+ern exchange interaction.
+Energy-related features account for ∼57% of the total im-
+portance, with the triplet excitation energy (ET1) being the sin-
+gle most predictive feature (31%), followed by the singlet ex-
+citation energy (ES1, 24%). Remarkably, CT descriptors con-
+tribute ∼34% of total importance, with the hole-electron
+spatial overlap for the triplet state (ST1
+he) emerging as the third
+most important feature (21%), followed by SS1
+he (6%). This
+finding validates the physical basis of our approach: the ex-
+change interaction that determines ∆EST is directly related to
+the spatial overlap between hole and electron densities.
+4.2
+Mechanistic rationalization
+The CT descriptors from NTO analysis explain the design
+rules established in our previous work. The physical basis of
+the optimal D-A torsional angle window of 60–90◦is directly
+connected to our CT descriptors: twisted geometries minimize
+hole-electron overlap (She), reducing exchange interaction and
+consequently ∆EST.
+NTO analysis reveals that within the optimal torsional win-
+dow, the S1 state exhibits predominantly charge-transfer char-
+acter with low hole-electron overlap (SS1
+he ≈0.5–0.7), indicat-
+ing spatially separated hole and electron densities. In con-
+trast, the T1 state maintains significant local excitation char-
+acter with higher overlap (ST1
+he ≈0.7–0.9). This divergence in
+electronic nature maximizes the SOC matrix element accord-
+ing to El-Sayed’s rules.
+The exchange interaction Ki j between occupied orbital i and
+0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+Mean |SHAP value|
+T1_energy_eV
+S1_energy_eV
+T1_S_he
+S1_osc_strength
+S1_S_he
+HOMO_LUMO_gap_eV
+Delta_S_he
+S1_CT_number
+T1_Delta_r
+Delta_Delta_r
+Delta_CT_number
+S1_Lambda_D
+Delta_Lambda_D
+T1_Lambda_D
+S1_Delta_r
+Log_Abs_S1
+Delta_Lambda_A
+S1_Lambda_A
+T1_Lambda_A
+T1_CT_number
+Top 20 Feature Importance (SHAP) - 747mol Dataset
+Energy
+Oscillator
+NTO_overlap
+CT_descriptors
+Proxy_RespA
+Fig. 1 SHAP feature importance analysis for ∆EST prediction.
+Energy features contribute ∼57%, CT descriptors ∼34%, with ST1
+he
+(21%) being the dominant CT feature.
+virtual orbital j is given by:
+Kij =
+ZZ
+φ ∗
+i (r1)φ ∗
+j (r2) 1
+r12
+φj(r1)φi(r2)dr1dr2
+(1)
+Our computed She descriptor directly quantifies this spatial
+overlap:
+She = ∑
+A
+q
+ρA
+h ·ρAe
+(2)
+where ρA
+h and ρA
+e are the hole and electron populations on
+atom A, respectively.
+4.3
+Active learning performance
+Figure 2 presents the learning curves for our AL implementa-
+tion using an uncertainty-based acquisition strategy on the full
+747-molecule dataset with CT descriptors. Starting from 100
+initial labeled samples and iterating with batches of 20, the AL
+strategy consistently outperforms random sampling across the
+entire learning trajectory.
+At the final training set size of 880 samples, the Random
+Forest model trained with AL achieves MAE = 0.054 eV
+(R2 = 0.877), compared to MAE = 0.058 eV (R2 = 0.821) for
+random sampling—a 7.4% improvement in MAE and 6.8%
+improvement in R2.
+4.4
+Acquisition function comparison
+To identify the optimal query strategy, we systematically
+benchmarked six acquisition functions (Fig. 3). The Hybrid
+1–11 | 3
+
+
+===== PAGE 4 =====
+100
+200
+300
+400
+500
+600
+700
+800
+900
+Training Samples
+0.05
+0.06
+0.07
+0.08
+0.09
+0.10
+0.11
+0.12
+MAE (eV)
+Learning Curves: MAE for EST Prediction
+Active Learning
+Random Sampling
+100
+200
+300
+400
+500
+600
+700
+800
+900
+Training Samples
+0.50
+0.55
+0.60
+0.65
+0.70
+0.75
+0.80
+0.85
+0.90
+0.95
+R2 Score
+Learning Curves: R2 for EST Prediction
+Active Learning
+Random Sampling
+Fig. 2 Active learning vs. random sampling learning curves for
+∆EST prediction. AL (blue) consistently outperforms random
+sampling (red). Shaded regions indicate ±1 standard deviation.
+acquisition function achieves the best performance with MAE
+= 0.069 eV and R2 = 0.816, representing a 4.9% improve-
+ment over random sampling:
+• Hybrid: MAE = 0.069±0.004 eV (+4.9%)
+• Diversity: MAE = 0.069±0.004 eV (+4.6%)
+• Random: MAE = 0.072±0.005 eV (baseline)
+• UCB: MAE = 0.094±0.009 eV (−29.7%)
+The superior performance of diversity-aware strategies re-
+veals that coverage of chemical space is often more valuable
+than aggressive optimization toward specific targets in materi-
+als discovery.
+50
+100
+150
+200
+250
+300
+350
+400
+450
+Training Samples
+0.07
+0.08
+0.09
+0.10
+0.11
+0.12
+0.13
+0.14
+MAE (eV)
+Active Learning: Acquisition Function Comparison
+Random
+Uncertainty
+Expected Improvement
+Ucb
+Qbc
+Diversity
+Hybrid
+random
+uncertainty
+expected
+improvement
+ucb
+qbc
+diversity
+hybrid
+0.00
+0.02
+0.04
+0.06
+0.08
+0.10
+Final MAE (eV)
+Final MAE by Acquisition Function
+Fig. 3 Comparison of acquisition functions. Hybrid and Diversity
+strategies outperform random sampling, while UCB shows
+significant degradation.
+4.5
+Model performance
+The best-performing model (SVR) achieves MAE = 0.024 eV
+for ∆EST prediction on the held-out test set (589 samples),
+substantially below the TADF-relevant threshold of 0.2 eV.
+Figure 4 shows the parity plot.
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Actual EST (eV)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Predicted EST (eV)
+SVR: R² = 0.960, MAE = 0.024 eV
+Perfect prediction
+Fig. 4 SVR model performance for ∆EST prediction with
+R2 = 0.960 and MAE = 0.024 eV.
+4.6
+Application-specific molecular design
+The validated ML model enables targeted design of TADF
+emitters optimized for specific applications beyond traditional
+OLEDs.
+4.6.1
+Biomedical imaging.
+For deep-tissue imaging,
+TADF emitters must emit in the NIR window (700–900 nm).
+Our top candidate, PXZ-NAI, exhibits predicted emission
+at λem ≈690 nm, ∆EST = 0.29 eV, and oscillator strength
+f = 0.19.
+4.6.2
+Photocatalysis. TPA-APy emerged as a promising
+candidate exhibiting an inverted singlet-triplet gap (∆EST =
+−0.034 eV), enabling thermodynamically favorable ISC for
+long-lived triplet states essential for bimolecular photocat-
+alytic processes.
+4.6.3
+Photodetection.
+BMZ-TZ features an inverted
+singlet-triplet gap (∆EST = −0.006 eV) combined with high
+hole-electron overlap (ST1
+he = 0.89), maximizing SOC for ul-
+trafast RISC kinetics suitable for high-speed photodetection.
+5
+Conclusions
+This work demonstrates how charge-transfer descriptors from
+NTO analysis, combined with machine learning, can improve
+TADF property prediction beyond statistical screening alone.
+Our key achievements include:
+1. Mechanistic Understanding: CT descriptors contribute
+34% of total feature importance, with ST1
+he (21%) emerg-
+4 |
+1–11
+
+
+===== PAGE 5 =====
+ing as the third most important predictor after excitation
+energies.
+2. Computational Efficiency:
+The Hybrid acquisition
+function achieves 4.9% improvement over random
+sampling,
+while UCB shows dramatic degradation
+(−29.7%).
+3. Predictive Accuracy: SVR achieves MAE = 0.024 eV
+(R2 = 0.960), substantially exceeding the TADF-relevant
+threshold.
+4. Application-Specific Design:
+Successful design of
+TADF emitters for biomedical imaging, photocatalysis,
+and photodetection.
+5. Benchmark Validation: MAE = 0.045 eV vs. HLT ref-
+erences confirms chemical accuracy.
+Future work could incorporate solid-state effects, host-
+matrix interactions, and temperature-dependent kinetics. The
+descriptor-based approach is not specific to TADF and could
+be applied to other organic semiconductors.
+Conflicts of interest
+There are no conflicts to declare.
+Data availability
+All computational data, including the 747-molecule dataset
+with NTO overlaps, CT descriptors, and excitation ener-
+gies, machine learning scripts, SHAP analysis results, and
+benchmark validation tables are available via Zenodo at DOI:
+10.5281/zenodo.17436069 under Creative Commons Attribu-
+tion 4.0 International (CC-BY-4.0) license.
+Author contributions
+J.-P. Tchapet Njafa: Conceptualization, Methodology, Soft-
+ware, Validation, Formal analysis, Investigation, Data cura-
+tion, Writing – original draft, Writing – review & editing, Vi-
+sualization. S. C. Teguia Kouam: Investigation, Validation.
+P. Mvoto Kongo: Investigation. S. G. Nana Engo: Supervi-
+sion, Resources, Writing – review & editing.
+Acknowledgements
+The authors gratefully acknowledge Dr. Benjamin Panebei
+Samafou for granting access to computational resources. We
+further extend our sincere thanks to Prof. Gian-Marco Rig-
+nanese for his insightful guidance.
+References
+1 H. Uoyama, K. Goushi, K. Shizu, H. Nomura and C. Adachi, Nature,
+2012, 492, 234–238.
+2 M. Yokoyama, K. Inada, Y. Tsuchiya, H. Nakanotani and C. Adachi,
+Chemical Communications, 2018, 54, 8261–8264.
+3 X. Chen, Z. Yang, Z. Xie, J. Zhao, Z. Yang, Y. Zhang, M. P. Aldred and
+Z. Chi, Materials Chemistry Frontiers, 2018, 2, 1017–1023.
+4 W. Cao, A. Abdurahman, P. Zheng, M. Zhang and F. Li, Journal of Mate-
+rials Chemistry C, 2021, 9, 6873–6879.
+5 D. Barman, R. Parui, K. Narang, R. Gogoi and P. K. Iyer, Advances in
+Aggregation Induced Emission Materials in Biosensing and Imaging for
+Biomedical Applications - Part B, Academic Press, 2021, vol. 185, pp.
+75–112.
+6 Z.-J. Yu, W.-Y. Lou, H. Junge, A. P¨apcke, H. Chen, L.-M. Xia, B. Xu, M.-
+M. Wang, X.-J. Wang, Q.-A. Wu, B.-Y. Lou, S. Lochbrunner, M. Beller
+and S.-P. Luo, Catalysis Communications, 2019, 119, 11–15.
+7 I. Danyliv, Y. Danyliv, R. Lytvyn, O. Bezvikonnyi, D. Volyniuk,
+J. Simokaitiene, K. Ivaniuk, U. Tsiko, A. Tomkeviciene, A. Dabulien ¨A—,
+E. Skuodis, P. Stakhira and J. V. Grazulevicius, Dyes and Pigments, 2021,
+193, 109493.
+8 T. J. Penfold, E. Gindensperger, C. Daniel and C. M. Marian, Chemical
+Reviews, 2018, 118, 6975–7025.
+9 S. Xu, Q. Yang, Y. Wan, R. Chen, S. Wang, Y. Si, B. Yang, D. Liu,
+C. Zheng and W. Huang, Journal of Materials Chemistry C, 2019, 7,
+9523–9530.
+10 M. A. El-Sayed, Accounts of Chemical Research, 1968, 1, 8–16.
+11 W. A. de Jong, L. Visscher and W. C. Nieuwpoort, International Reviews
+in Physical Chemistry, 2019, 38, 217–238.
+12 R. A. Marcus and N. Sutin, Biochimica et Biophysica Acta, 1985, 811,
+265–322.
+13 P. Friederich, G. dos Passos Gomes, R. De Bin, A. Aspuru-Guzik and
+D. Balcells, Physical Review Materials, 2021, 5, 083801.
+14 Y. H. Lee, S. Park, J. H. Oh, S. J. Shin, J. Dell, P. Cronin, T. Earmme, S. H.
+Woo and S. J. Yoo, The Journal of Physical Chemistry Letters, 2021, 12,
+6970–6977.
+15 P. Rajamalli, N. Senthilkumar, P.-Y. Huang, C.-C. Ren-Wu, H.-W. Lin
+and C.-H. Cheng, Journal of the American Chemical Society, 2017, 139,
+10948–10951.
+16 J. Yao, S. Ying, Q. Sun, Y. Dai, X. Qiao, D. Yang, J. Chen and D. Ma,
+Journal of Materials Chemistry C, 2019, 7, 11293–11302.
+17 J.-P. Tchapet Njafa, E. V. Kameni Tcheuffa, A. Maghame and S. G.
+Nana Engo, arXiv preprint, 2025.
+18 J.-P. Tchapet Njafa, E. V. Kameni Tcheuffa, A. Maghame and S. G.
+Nana Engo, arXiv preprint, 2025.
+19 P. Friederich, F. H¨ase, J. Proppe and A. Aspuru-Guzik, Nature Materials,
+2021, 20, 750–761.
+20 S. Kang and T. Kim, Heliyon, 2024, 10, e30926.
+21 D. J. Shin, S. C. Kim and J. Y. Lee, Journal of Materials Chemistry C,
+2022, 10, 4821–4830.
+22 M. Inoue, T. SereviŁius, H. Nakanotani, K. Yoshida, T. Matsushima,
+S. JurˇsŁnas and C. Adachi, Chemical Physics Letters, 2016, 644, 62–67.
+23 J. Zhao, W. Wu, J. Sun and S. Guo, Chemical Society Reviews, 2013, 42,
+5323–5351.
+24 T. Lu and F. Chen, Journal of Computational Chemistry, 2012, 33, 580–
+592.
+25 T. Lu, The Journal of Chemical Physics, 2024, 161, 082503.
+26 F. Plasser and H. Lischka, Journal of Chemical Theory and Computation,
+2012, 8, 2777–2789.
+27 F. Plasser, The Journal of Chemical Physics, 2020, 152, 084108.
+28 L. Kunze, A. Hansen, S. Grimme and J.-M. Mewes, The Journal of Phys-
+ical Chemistry Letters, 2021, 12, 8470–8480.
+1–11 | 5
+
+
+===== PAGE 6 =====
+Electronic Supplementary Information
+From orbital analysis to active learning: an integrated strategy for the accelerated
+design of TADF emitters
+Jean-Pierre Tchapet Njafa,∗a Steve Cabrel Teguia Kouam,b Patrick Mvoto Kongo,a and Serge Guy
+Nana Engoa
+DOI: 10.1039/b000000x
+Contents
+S1 Computational Details
+1
+S1.1 Software versions and environment . . . . . .
+1
+S1.2 Ground-state geometry optimization . . . . .
+2
+S1.3 Excited-state calculations . . . . . . . . . . .
+2
+S1.4 NTO analysis with Multiwfn . . . . . . . . .
+2
+S2 TADF Photophysics: Theoretical Background
+2
+S2.1 Singlet-triplet energy gap . . . . . . . . . . .
+2
+S2.2 Reverse intersystem crossing rate . . . . . . .
+2
+S2.3 El-Sayed’s rules . . . . . . . . . . . . . . . .
+2
+S3 High-Throughput Screening Protocol
+3
+S3.1 Dataset composition . . . . . . . . . . . . . .
+3
+S3.2 Screening workflow . . . . . . . . . . . . . .
+3
+S3.3 Property definitions . . . . . . . . . . . . . .
+3
+S4 NTO and CT Descriptor Definitions
+3
+S4.1 Natural Transition Orbitals . . . . . . . . . .
+3
+S4.2 Charge-transfer descriptors . . . . . . . . . .
+3
+S4.3 Physical interpretation
+. . . . . . . . . . . .
+3
+S5 Active Learning: Acquisition Functions
+3
+S5.1 Uncertainty Sampling (US) . . . . . . . . . .
+3
+S5.2 Expected Improvement (EI) . . . . . . . . . .
+4
+S5.3 Upper Confidence Bound (UCB) . . . . . . .
+4
+S5.4 Query by Committee (QBC) . . . . . . . . .
+4
+S5.5 Diversity Sampling . . . . . . . . . . . . . .
+4
+S5.6 Hybrid (Uncertainty × Diversity) . . . . . . .
+4
+S6 Supplementary Tables
+4
+S7 OT-LC-PBE Validation Calculations
+4
+S7.1 Computational methodology . . . . . . . . .
+4
+S7.2 Results . . . . . . . . . . . . . . . . . . . . .
+5
+S7.3 Key observations . . . . . . . . . . . . . . .
+5
+a Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon. E-mail: jean-pierre.tchapet@facsciences-uy1.cm
+b Department of Physics, Faculty of Science, University of Douala, Po. Box
+24157, Douala, Cameroon.
+S8 Supplementary Figures
+5
+S9 Data Availability and Reproducibility
+5
+S9.1 Dataset files . . . . . . . . . . . . . . . . . .
+5
+S9.2 Code repository . . . . . . . . . . . . . . . .
+5
+S9.3 Environment . . . . . . . . . . . . . . . . . .
+6
+S1
+Computational Details
+S1.1
+Software versions and environment
+All calculations were performed using the following software
+packages:
+Quantum chemistry tools:
+• xTB version 6.7.1 – Extended tight-binding calculations
+(GFN2-xTB)
+• CREST version 3.0.2 – Conformational search
+• sTDA version 1.6.3 – Simplified TD-DFT/TDA excited
+states
+• Multiwfn version 3.8(dev), 2025-Jul-12 – Wavefunction
+analysis and NTO generation
+Machine learning environment:
+• Python 3.12.3 – ML pipeline and data processing
+• NumPy 2.0.2 – Numerical computations
+• pandas 2.2.3 – Data manipulation
+• scikit-learn 1.7.2 – Machine learning models (RF, SVR,
+GB)
+• SHAP 0.50.0 – Model interpretability
+• Matplotlib 3.9.3 – Visualization
+• SciPy 1.14.1 – Scientific computing
+1–6 | 1
+
+
+===== PAGE 7 =====
+S1.2
+Ground-state geometry optimization
+Ground-state geometries were optimized using the GFN2-
+xTB method in two environments:
+Gas phase:
+xtb molecule.xyz --opt tight
+Toluene solvent:
+xtb molecule.xyz --opt tight --gbsa toluene
+Key parameters:
+• Optimization convergence: tight (∆E < 10−6 Eh)
+• Gas phase: vacuum calculations without implicit solva-
+tion
+• Implicit solvation: GBSA model (toluene, ε = 2.38)
+• SCF convergence: 10−8 Eh
+Both environments were considered to evaluate the solvent
+effects on TADF properties.
+S1.3
+Excited-state calculations
+Excited states were computed using the sTDA and sTD-DFT-
+xTB methods as implemented in the stda program (ver-
+sion 1.6.3).
+Both methods read the xTB wavefunction file
+(wfn.xtb) automatically from the working directory.
+sTDA-xTB (Simplified Tamm-Dancoff Approximation):
+stda -xtb -e 10
+# singlets
+stda -xtb -e 10 -t
+# triplets
+sTD-DFT-xTB (Simplified TD-DFT with RPA):
+stda -xtb -rpa -e 10
+# singlets
+stda -xtb -rpa -e 10 -t
+# triplets
+The -xtb flag enables the use of GFN-xTB orbitals,
+while -rpa switches from the Tamm-Dancoff approximation
+(TDA) to the full random phase approximation (RPA), i.e.,
+sTD-DFT. The -t flag computes triplet states instead of sin-
+glets.
+Parameters:
+• Energy window: 10 eV (-e 10), capturing all relevant
+S1–Sn and T1–Tn states
+• Configuration selection:
+automated based on energy
+threshold
+• sTDA: Tamm-Dancoff approximation (faster, typically
+sufficient for absorption spectra)
+• sTD-DFT: Full RPA coupling (more accurate for emis-
+sion properties)
+S1.4
+NTO analysis with Multiwfn
+Natural Transition Orbitals were generated using Multiwfn
+with the following workflow:
+1. Load excited-state molden file
+2. Main function 18 (Electron excitation analysis)
+3. Subfunction 1 (NTO analysis)
+4. Export NTO pairs for hole and electron
+The hole-electron overlap She was computed as:
+She = ∑
+A
+q
+ρA
+h ·ρAe
+(S1)
+where ρA
+h and ρA
+e are the Mulliken populations of hole and
+electron on atom A.
+S2
+TADF Photophysics:
+Theoretical Back-
+ground
+S2.1
+Singlet-triplet energy gap
+The singlet-triplet energy gap is defined as:
+∆EST = E(S1)−E(T1)
+(S2)
+For efficient TADF, ∆EST < 0.2 eV is required to enable
+thermal upconversion at room temperature (kBT ≈0.026 eV).
+S2.2
+Reverse intersystem crossing rate
+The RISC rate follows Marcus-type kinetics:
+kRISC = 2π
+¯h |⟨S1| ˆHSOC|T1⟩|2
+1
+√
+4πλkBT exp
+
+−(∆EST +λ)2
+4λkBT
+
+(S3)
+where:
+• ⟨S1| ˆHSOC|T1⟩is the spin-orbit coupling matrix element
+• λ is the reorganization energy (∼0.1 eV for rigid sys-
+tems)
+• kBT is the thermal energy (0.026 eV at 300 K)
+S2.3
+El-Sayed’s rules
+According to El-Sayed’s rules, SOC is maximized when the
+transition involves a change in orbital character:
+|⟨S1| ˆHSOC|T1⟩| ∝|∆CharacterS1−T1|
+(S4)
+For TADF emitters, this translates to:
+2 |
+1–6
+
+
+===== PAGE 8 =====
+• S1: predominantly 1CT (charge-transfer) character
+• T1: mixed 3CT/3LE (local excitation) character
+The NTO overlap difference ∆SNTO = ST1
+NTO −SS1
+NTO quanti-
+fies this character difference.
+S3
+High-Throughput Screening Protocol
+S3.1
+Dataset composition
+The 747-molecule dataset comprises TADF emitters from four
+architectural classes:
+Table S1 Dataset composition by molecular architecture
+Architecture
+Count
+Percentage
+D–A (Donor–Acceptor)
+198
+26.5%
+D–A–D
+312
+41.8%
+MR (Multi-Resonance)
+89
+11.9%
+TSCT (Through-Space CT)
+148
+19.8%
+Total
+747
+100%
+S3.2
+Screening workflow
+The hierarchical screening protocol consists of:
+1. Structure preparation:
+SMILES →3D coordinates
+(RDKit)
+2. Conformer search: CREST with GFN2-xTB
+3. Geometry optimization: GFN2-xTB (gas and toluene)
+4. Excited states: sTDA/sTD-DFT-xTB
+5. NTO analysis: Multiwfn
+6. CT descriptor extraction: Custom Python scripts
+S3.3
+Property definitions
+Key properties extracted from calculations:
+• ES1: Vertical S1 excitation energy (eV)
+• ET1: Vertical T1 excitation energy (eV)
+• ∆EST: ES1 −ET1 (eV)
+• fS1: Oscillator strength of S1 transition
+• Egap: HOMO-LUMO gap (eV)
+S4
+NTO and CT Descriptor Definitions
+S4.1
+Natural Transition Orbitals
+NTOs provide a compact representation of electronic transi-
+tions. For a transition from ground state |0⟩to excited state
+|n⟩, the transition density matrix is:
+γ0n
+pq = ⟨n| ˆa†
+p ˆaq|0⟩
+(S5)
+Singular value decomposition yields hole (φ h
+i ) and particle
+(φ e
+i ) NTOs:
+γ0n = UΣV†
+(S6)
+S4.2
+Charge-transfer descriptors
+The following CT descriptors were computed from NTO anal-
+ysis:
+Table S2 CT descriptor definitions
+Descriptor
+Definition
+She
+Hole-electron spatial overlap: ∑A
+q
+ρA
+h ·ρAe
+ΩCT
+CT number: fraction of transition with CT
+character
+ΛD
+Hole localization on donor fragment
+ΛA
+Electron localization on acceptor fragment
+∆r
+Hole-electron centroid distance ( ˚A)
+SNTO
+NTO orbital overlap
+S4.3
+Physical interpretation
+The hole-electron overlap She directly relates to the exchange
+interaction:
+Kij ∝
+ZZ
+|φh(r1)|2 1
+r12
+|φe(r2)|2dr1dr2
+(S7)
+Low She indicates spatial separation of hole and electron,
+leading to:
+• Reduced exchange interaction
+• Smaller ∆EST
+• Enhanced CT character
+S5
+Active Learning: Acquisition Functions
+S5.1
+Uncertainty Sampling (US)
+Selects samples with highest predictive uncertainty:
+αUS(x) = σ(x)
+(S8)
+where σ(x) is the standard deviation of predictions across
+Random Forest trees.
+1–6 | 3
+
+
+===== PAGE 9 =====
+S5.2
+Expected Improvement (EI)
+Balances exploration and exploitation for minimization:
+αEI(x) = (µ∗−µ(x))Φ(Z)+σ(x)φ(Z)
+(S9)
+where Z = µ∗−µ(x)
+σ(x)
+, µ∗is the best observed value.
+S5.3
+Upper Confidence Bound (UCB)
+Optimistic acquisition for minimization:
+αUCB(x) = −µ(x)+κσ(x)
+(S10)
+with exploration parameter κ = 2.0.
+S5.4
+Query by Committee (QBC)
+Uses disagreement among ensemble members:
+αQBC(x) = 1
+C
+C
+∑
+c=1
+(fc(x)−¯f(x))2
+(S11)
+where C is the committee size (10 models).
+S5.5
+Diversity Sampling
+Maximizes distance to existing training samples:
+αdiv(x) =
+min
+x′∈Dtrain
+∥x−x′∥2
+(S12)
+S5.6
+Hybrid (Uncertainty × Diversity)
+Combines uncertainty and diversity:
+αhybrid(x) = α · ˜σ(x)+(1−α)· ˜d(x)
+(S13)
+where ˜σ and ˜d are normalized scores, α = 0.5.
+S6
+Supplementary Tables
+Table S3 Hyperparameter grid search for ML models
+Model
+Parameter
+Search Range
+RF
+n estimators
+[100, 200, 500]
+max depth
+[10, 20, None]
+min samples split
+[2, 5, 10]
+SVR
+C
+[0.1, 1, 10, 100]
+gamma
+[0.01, 0.1, 1, auto]
+kernel
+[rbf]
+GB
+n estimators
+[100, 200, 500]
+learning rate
+[0.01, 0.1, 0.2]
+max depth
+[3, 5, 7]
+Table S4 High-level theory validation results
+Molecule
+sTD-DFT-xTB
+HLT Ref.
+Error
+4CzIPN
+0.21 eV
+0.16 eV
+0.05 eV
+DMAC-TRZ
+0.085 eV
+0.05 eV
+0.035 eV
+MAE
+0.045 eV
+Table S5 Feature importance by category (SHAP analysis)
+Category
+Features
+Importance
+Energy
+ET1, ES1, Egap
+57%
+CT descriptors
+ST1
+he, SS1
+he, ∆r, Λ
+34%
+Oscillator strength
+fS1
+8%
+NTO overlap
+SS1
+NTO, ST1
+NTO
+1%
+S7
+OT-LC-PBE Validation Calculations
+To validate the xTB-based protocol with explicit high-level
+calculations, we performed optimally-tuned long-range cor-
+rected PBE (OT-LC-PBE) calculations on three representative
+TADF molecules spanning different architectures and sizes.
+S7.1
+Computational methodology
+All OT-LC-PBE calculations were performed using ORCA
+6.1.0. The protocol consists of two steps:
+S7.1.0.1
+Optimal ω tuningThe range-separation parame-
+ter ω was optimized by minimizing the IP-tuning criterion:
+J(ω) = |εHOMO(ω)+IP(ω)|
+(S14)
+where εHOMO(ω) is the HOMO eigenvalue and IP(ω) =
+E(N−1;ω)−E(N;ω) is the vertical ionization potential. Cal-
+culations used the def2-SVP basis set with LC-PBE func-
+tional. Initial grid search (11 points, ω ∈[0.10,0.30] bohr−1)
+was followed by golden-section refinement to J < 10−4 Ha.
+S7.1.0.2
+TD-DFT excited statesVertical excitation ener-
+gies were computed using full TD-DFT (not TDA) at the op-
+timized ω values with:
+• Functional: LC-PBE with molecule-specific ω
+• Basis set: def2-TZVP
+• Auxiliary basis: def2/J with RIJCOSX approximation
+• States: 10 singlets, 10 triplets
+• Geometry: GFN2-xTB optimized (same as HTS proto-
+col)
+• Parallelization: 8 cores, 2.5 GB/core
+4 |
+1–6
+
+
+===== PAGE 10 =====
+Table S6 Top TADF candidates for each application
+Application
+Molecule
+∆EST
+Key Property
+Bioimaging
+PXZ-NAI
+0.29 eV
+λem ≈690 nm
+Photocatalysis
+TPA-APy
+−0.034 eV
+Inverted gap
+Photodetection
+BMZ-TZ
+−0.006 eV
+ST1
+he = 0.89
+Table S7 OT-LC-PBE results for benchmark TADF molecules. All
+energies in eV.
+Molecule
+Atoms
+Arch.
+ω (bohr−1)
+ES1
+ET1
+∆EST
+BACN
+48
+A-D-A
+0.181
+3.26
+2.46
+0.81
+DMAC-TRZ
+68
+D-A
+0.185
+3.10
+2.93
+0.17
+4CzIPN
+94
+4D-A
+0.147
+2.69
+2.49
+0.19
+S7.2
+Results
+S7.3
+Key observations
+1. Optimal ω correlates with CT character: 4CzIPN
+(strongest CT) has the smallest ω (0.147 bohr−1), con-
+sistent with more delocalized frontier orbitals.
+2. Vertical vs. adiabatic discrepancy: OT-LC-PBE ver-
+tical TD-DFT overestimates ∆EST compared to exper-
+imental (adiabatic) values.
+For DMAC-TRZ: 0.17 eV
+(vertical) vs. 0.05 eV (exp.).
+3. xTB provides conservative estimates: The xTB meth-
+ods systematically underestimate ∆EST by 0.08–0.35 eV
+relative to OT-LC-PBE. This is advantageous for screen-
+ing, as molecules passing the threshold will have true
+∆EST at least as favorable.
+4. Ranking preserved:
+Despite systematic offsets, the
+relative ordering of molecules by ∆EST is maintained
+across methods, validating xTB for prioritization in high-
+throughput workflows.
+5. Computational cost:
+BACN (∼1.5 h), DMAC-TRZ
+(∼2.5 h), 4CzIPN (∼9 h) on 8 cores, compared to <1
+min for xTB calculations.
+S8
+Supplementary Figures
+S9
+Data Availability and Reproducibility
+S9.1
+Dataset files
+The
+following
+files
+are
+available
+at
+Zenodo
+(DOI:
+10.5281/zenodo.17436069):
+• combined features 747mol.csv – Full feature
+table (2943 samples × 42 features)
+HTS Stack (747 mol.)
+GFN2-xTB (S0)
+sTDA / sTD-DFT-xTB
+Feature Engineering
+29 descriptors
+Energy, CT (She), NTO
+Surrogate Models
+SVR (R2=0.960)
+GB, RF
+Inverse Design
+Candidate screening
+Inverted ∆EST
+Acquisition Functions
+Hybrid, Diversity,
+US, EI, UCB, QBC
+Active Learning
+Pool-based selection
+Batch size = 10
+Solvation: GBSA (toluene)
+SHAP: Energy 57%, CT 34%, Osc. 8%
+Model Update Cycle
+Fig. S1 Schematic overview of the ML/Active Learning workflow.
+The pipeline integrates semi-empirical quantum chemistry
+(GFN2-xTB, sTDA) with NTO-based feature extraction, surrogate
+model training, and iterative active learning for efficient TADF
+property prediction.
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+HLT Reference EST (eV)
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+Computed EST (eV)
+4CzIPN
+4CzIPN
+DMAC-TRZ
+DMAC-TRZ
+(a) xTB Methods vs HLT
+sTDA-xTB
+sTD-DFT-xTB
+Perfect agreement
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+HLT Reference EST (eV)
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+ML Predicted EST (eV)
+(b) ML Predictions vs HLT
+sTDA
+sTD-DFT
+Fig. S2 Validation of sTD-DFT-xTB predictions against high-level
+theory (HLT) references from the STGABS27 benchmark set. The
+MAE of 0.045 eV demonstrates chemical accuracy suitable for
+ML-driven discovery.
+• nto orbital overlap 747mol.csv – NTO over-
+lap data
+• ct descriptors 747mol.csv – CT descriptor val-
+ues
+• ml results 747mol.json – Model performance
+metrics
+• al results 747mol.json – Active learning results
+• predictions 747mol.csv – Model predictions
+S9.2
+Code repository
+Python scripts for reproducing all results:
+• ml pipeline 747mol.py – ML model training
+• al experiment 747mol.py – Active learning ex-
+periments
+1–6 | 5
+
+
+===== PAGE 11 =====
+• generate figures 747mol.py – Figure genera-
+tion
+• compute ct descriptors 747mol.py – CT de-
+scriptor extraction
+S9.3
+Environment
+A
+complete
+environment
+specification
+(requirements.txt) is provided:
+numpy==2.0.2
+pandas==2.2.3
+scikit-learn==1.7.2
+shap==0.50.0
+matplotlib==3.9.3
+scipy==1.14.1
+6 |
+1–6

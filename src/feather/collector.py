@@ -39,6 +39,18 @@ ARXIV_ID_RE = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
+ARXIV_URL_RE = re.compile(
+    r"""
+    https?://(?:www\.)?arxiv\.org/
+    (?:
+        abs|
+        pdf
+    )/
+    (?P<id>\d{4}\.\d{4,5})(?:v\d+)?(?:\.pdf)?
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
 URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 SITE_HINTS = {"linkedin", "arxiv", "news", "github", "youtube"}
@@ -50,6 +62,8 @@ SUMMARY_SENTENCES = 2
 SUMMARY_CHARS = 400
 SUMMARY_MAX_RESULTS = 5
 YOUTUBE_TITLE_MAX_LEN = 80
+ARXIV_TEX_MAX_CHARS = 200000
+ARXIV_FIGURE_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".eps", ".svg"}
 
 
 class JobLogger:
@@ -302,6 +316,8 @@ def build_job(
     days: int,
     max_results: int,
     download_pdf: bool,
+    arxiv_source: bool,
+    update_run: bool,
     citations_enabled: bool,
     file_date: Optional[dt.date] = None,
 ) -> Job:
@@ -348,6 +364,10 @@ def build_job(
                 local_paths.append(local_spec)
                 continue
             if URL_RE.match(line):
+                if download_pdf or arxiv_source:
+                    url_match = ARXIV_URL_RE.match(line)
+                    if url_match:
+                        arxiv_ids.append(url_match.group("id"))
                 urls.append(line)
                 continue
 
@@ -386,6 +406,8 @@ def build_job(
         days=days,
         max_results=max_results,
         download_pdf=download_pdf,
+        arxiv_source=arxiv_source,
+        update_run=update_run,
         citations_enabled=citations_enabled,
         queries=dedup(queries),
         query_specs=dedup_specs(query_specs),
@@ -411,6 +433,8 @@ def parse_job(
     days: int,
     max_results: int,
     download_pdf: bool,
+    arxiv_source: bool,
+    update_run: bool,
     citations_enabled: bool,
     file_date: Optional[dt.date] = None,
 ) -> Job:
@@ -431,6 +455,8 @@ def parse_job(
         days=days,
         max_results=max_results,
         download_pdf=download_pdf,
+        arxiv_source=arxiv_source,
+        update_run=update_run,
         citations_enabled=citations_enabled,
         file_date=file_date,
     )
@@ -471,9 +497,12 @@ def derive_query_id_base_from_sections(sections: List[List[str]]) -> str:
     return "query"
 
 
-def build_query_id(base: str, output_root: Path, used_ids: set[str]) -> str:
+def build_query_id(base: str, output_root: Path, used_ids: set[str], reuse_existing: bool = False) -> str:
     base = normalize_query_id_base(base)
     candidate = base
+    if reuse_existing and (output_root / candidate).exists():
+        used_ids.add(candidate)
+        return candidate
     if candidate not in used_ids and not (output_root / candidate).exists():
         used_ids.add(candidate)
         return candidate
@@ -504,6 +533,8 @@ def prepare_jobs(
     days: int,
     max_results: int,
     download_pdf: bool,
+    arxiv_source: bool,
+    update_run: bool,
     citations_enabled: bool,
 ) -> List[Job]:
     used_ids: set[str] = set()
@@ -513,7 +544,7 @@ def prepare_jobs(
             raise SystemExit("No instructions found in --query")
         date_val = dt.date.today()
         base = derive_query_id_base_from_sections(sections)
-        query_id = build_query_id(base, output_root, used_ids)
+        query_id = build_query_id(base, output_root, used_ids, reuse_existing=update_run)
         src_file = Path("instruction.txt")
         return [
             build_job(
@@ -531,6 +562,8 @@ def prepare_jobs(
                 days=days,
                 max_results=max_results,
                 download_pdf=download_pdf,
+                arxiv_source=arxiv_source,
+                update_run=update_run,
                 citations_enabled=citations_enabled,
                 file_date=date_val,
             )
@@ -547,7 +580,7 @@ def prepare_jobs(
     for txt in txt_files:
         date_val = infer_date(txt)
         base = txt.stem
-        query_id = build_query_id(base, output_root, used_ids)
+        query_id = build_query_id(base, output_root, used_ids, reuse_existing=update_run)
         jobs.append(
             parse_job(
                 txt,
@@ -563,6 +596,8 @@ def prepare_jobs(
                 days=days,
                 max_results=max_results,
                 download_pdf=download_pdf,
+                arxiv_source=arxiv_source,
+                update_run=update_run,
                 citations_enabled=citations_enabled,
                 file_date=date_val,
             )
@@ -604,6 +639,91 @@ def apply_site_hint(query: str, hints: List[str]) -> str:
     return q2
 
 
+def load_jsonl_entries(path: Path) -> List[dict]:
+    if not path.exists():
+        return []
+    entries: List[dict] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            entries.append(data)
+    return entries
+
+
+def normalize_arxiv_id(arxiv_id: str) -> str:
+    return re.sub(r"v\d+$", "", arxiv_id.strip())
+
+
+def load_existing_arxiv_ids(path: Path) -> set[str]:
+    ids: set[str] = set()
+    for entry in load_jsonl_entries(path):
+        if "arxiv_id" in entry:
+            arxiv_id = entry.get("arxiv_id")
+        elif "paper" in entry and isinstance(entry.get("paper"), dict):
+            arxiv_id = entry["paper"].get("arxiv_id")
+        else:
+            arxiv_id = None
+        if arxiv_id:
+            ids.add(normalize_arxiv_id(str(arxiv_id)))
+    return ids
+
+
+def openalex_work_key(work: dict) -> Optional[str]:
+    if not isinstance(work, dict):
+        return None
+    key = work.get("openalex_id_short")
+    if isinstance(key, str) and key:
+        return key
+    openalex_id = work.get("openalex_id") or work.get("id")
+    if isinstance(openalex_id, str):
+        key = openalex_ops.openalex_id_short(openalex_id)
+        if key:
+            return key
+    doi = work.get("doi")
+    if isinstance(doi, str):
+        doi_key = safe_filename(doi, max_len=40)
+        if doi_key:
+            return doi_key
+    title = work.get("title")
+    if isinstance(title, str):
+        title_key = safe_filename(title, max_len=60)
+        if title_key:
+            return title_key
+    return None
+
+
+def load_existing_openalex_ids(path: Path) -> set[str]:
+    ids: set[str] = set()
+    for entry in load_jsonl_entries(path):
+        work = entry.get("work") if isinstance(entry.get("work"), dict) else entry
+        if not isinstance(work, dict):
+            continue
+        key = openalex_work_key(work)
+        if key:
+            ids.add(key)
+    return ids
+
+
+def load_existing_youtube_ids(path: Path) -> set[str]:
+    ids: set[str] = set()
+    for entry in load_jsonl_entries(path):
+        videos: List[dict] = []
+        if isinstance(entry.get("videos"), list):
+            videos = [v for v in entry.get("videos") if isinstance(v, dict)]
+        elif isinstance(entry.get("video"), dict):
+            videos = [entry.get("video")]
+        for video in videos:
+            video_id = video.get("video_id")
+            if video_id:
+                ids.add(str(video_id))
+    return ids
+
+
 def is_explicit_youtube_query(query: str) -> bool:
     lower = query.lower()
     if "youtube.com" in lower or "youtu.be" in lower:
@@ -627,7 +747,18 @@ def run_tavily_extract(job: Job, tavily: TavilyClient, logger: JobLogger) -> Non
     if not job.urls:
         return
     extract_dir = job.out_dir / "tavily_extract"
+    existing_suffixes: set[str] = set()
+    if job.update_run and extract_dir.exists():
+        for path in extract_dir.glob("*.txt"):
+            name = path.name
+            suffix = name.split("_", 1)[-1] if "_" in name else name
+            if suffix:
+                existing_suffixes.add(suffix)
     for idx, url in enumerate(job.urls, start=1):
+        safe_name = f"{safe_filename(url)}.txt"
+        if job.update_run and safe_name in existing_suffixes:
+            logger.log(f"TAVILY EXTRACT SKIP (exists): {safe_name}")
+            continue
         if job.youtube_enabled and youtube_ops.extract_video_id(url):
             logger.log(f"TAVILY EXTRACT SKIP (youtube): {url}")
             continue
@@ -638,6 +769,9 @@ def run_tavily_extract(job: Job, tavily: TavilyClient, logger: JobLogger) -> Non
                 data = linkedin_ops.extract_public_post(url)
                 if data:
                     out_txt = extract_dir / f"{idx:04d}_{safe_filename(url)}.txt"
+                    if job.update_run and out_txt.exists():
+                        logger.log(f"LINKEDIN EMBED EXTRACT SKIP (exists): {out_txt.name}")
+                        continue
                     write_text(out_txt, json.dumps(data, ensure_ascii=False, indent=2))
                     time.sleep(REQUEST_SLEEP_SEC)
                     continue
@@ -648,6 +782,9 @@ def run_tavily_extract(job: Job, tavily: TavilyClient, logger: JobLogger) -> Non
             logger.log(f"TAVILY EXTRACT: {url}")
             data = tavily.extract(url=url, include_images=False, extract_depth="advanced")
             out_txt = extract_dir / f"{idx:04d}_{safe_filename(url)}.txt"
+            if job.update_run and out_txt.exists():
+                logger.log(f"TAVILY EXTRACT SKIP (exists): {out_txt.name}")
+                continue
             write_text(out_txt, json.dumps(data, ensure_ascii=False, indent=2))
             time.sleep(REQUEST_SLEEP_SEC)
         except Exception as e:
@@ -681,6 +818,11 @@ def run_local_ingest(job: Job, logger: JobLogger) -> None:
     text_dir = job.out_dir / "local" / "text"
     manifest_path = job.out_dir / "local" / "manifest.jsonl"
     seen: set[str] = set()
+    if job.update_run and manifest_path.exists():
+        for entry in load_jsonl_entries(manifest_path):
+            doc_id = entry.get("doc_id")
+            if doc_id:
+                seen.add(str(doc_id))
 
     def rel_path(path: Path) -> str:
         rel = os.path.relpath(path.resolve(), job.out_dir.resolve())
@@ -709,6 +851,8 @@ def run_local_ingest(job: Job, logger: JobLogger) -> None:
             try:
                 digest = local_ops.compute_sha1(path)
                 doc_id = local_ops.build_doc_id(digest)
+                if job.update_run and doc_id in seen:
+                    continue
                 slug = local_ops.slug_from_path(path)
                 ext = path.suffix.lower()
                 raw_name = f"{doc_id}--{slug}{ext}"
@@ -779,10 +923,22 @@ def run_tavily_search(job: Job, tavily: TavilyClient, logger: JobLogger) -> None
     if not job.query_specs:
         return
     search_path = job.out_dir / "tavily_search.jsonl"
+    existing_by_query: dict[str, dict] = {}
+    if job.update_run and search_path.exists():
+        for entry in load_jsonl_entries(search_path):
+            query = entry.get("query")
+            if isinstance(query, str) and query not in existing_by_query:
+                existing_by_query[query] = entry
+        if existing_by_query:
+            logger.log(f"TAVILY SEARCH UPDATE: {len(existing_by_query)} cached queries")
+    new_entries: list[dict] = []
     for spec in job.query_specs:
         try:
             q2 = apply_site_hint(spec.text, spec.hints)
             q2 = apply_language_hint(q2, job.lang_pref)
+            if job.update_run and q2 in existing_by_query:
+                logger.log(f"TAVILY SEARCH SKIP (exists): {q2}")
+                continue
             logger.log(f"TAVILY SEARCH: {q2}")
             res = tavily.search(
                 query=q2,
@@ -797,10 +953,31 @@ def run_tavily_search(job: Job, tavily: TavilyClient, logger: JobLogger) -> None
                 if job.lang_pref:
                     payload["lang_pref"] = job.lang_pref
                     payload["preferred_results"] = prefer_results(res["results"], job.lang_pref)
-            append_jsonl(search_path, payload)
+            if job.update_run:
+                new_entries.append(payload)
+            else:
+                append_jsonl(search_path, payload)
             time.sleep(REQUEST_SLEEP_SEC)
         except Exception as e:
             logger.log(f"ERROR search query={spec.text} err={repr(e)}")
+    if job.update_run and new_entries:
+        merged: list[dict] = []
+        seen: set[str] = set()
+        for entry in list(existing_by_query.values()):
+            query = entry.get("query")
+            if isinstance(query, str) and query not in seen:
+                merged.append(entry)
+                seen.add(query)
+        for entry in new_entries:
+            query = entry.get("query")
+            if isinstance(query, str):
+                seen.add(query)
+            merged.append(entry)
+        search_path.parent.mkdir(parents=True, exist_ok=True)
+        search_path.write_text(
+            "\n".join(json.dumps(item, ensure_ascii=False) for item in merged) + "\n",
+            encoding="utf-8",
+        )
 
 
 def run_youtube(job: Job, logger: JobLogger) -> None:
@@ -814,12 +991,17 @@ def run_youtube(job: Job, logger: JobLogger) -> None:
 
     videos_path = job.out_dir / "youtube" / "videos.jsonl"
     transcript_dir = job.out_dir / "youtube" / "transcripts"
+    existing_ids: set[str] = set()
+    if job.update_run and videos_path.exists():
+        existing_ids = load_existing_youtube_ids(videos_path)
+        if existing_ids:
+            logger.log(f"YOUTUBE UPDATE: {len(existing_ids)} cached videos")
 
     published_after = dt.datetime.combine(job.date - dt.timedelta(days=job.days), dt.time.min)
     published_before = dt.datetime.combine(job.date, dt.time.max)
     relevance_language = job.lang_pref
     details_cache: dict[str, dict] = {}
-    seen_ids: set[str] = set()
+    seen_ids: set[str] = set(existing_ids)
     quota_exceeded = False
 
     def add_summary(video: dict) -> None:
@@ -939,11 +1121,19 @@ def run_youtube(job: Job, logger: JobLogger) -> None:
                 relevance_language=relevance_language,
                 details_cache=details_cache,
             )
+            fresh: List[dict] = []
             for vid in videos:
                 add_summary(vid)
                 video_id = vid.get("video_id")
+                if job.update_run and video_id and video_id in seen_ids:
+                    continue
                 if video_id:
                     seen_ids.add(video_id)
+                fresh.append(vid)
+            videos = fresh
+            if job.update_run and not videos:
+                logger.log(f"YOUTUBE SEARCH SKIP (no new videos): {q}")
+                continue
 
             if job.youtube_transcript and videos:
                 if not youtube_ops.TRANSCRIPT_AVAILABLE:
@@ -996,6 +1186,9 @@ def run_youtube(job: Job, logger: JobLogger) -> None:
             logger.log(f"WARN youtube direct metadata failed: {repr(e)}")
 
     for url, vid in direct_urls:
+        if job.update_run and vid in existing_ids:
+            logger.log(f"YOUTUBE DIRECT SKIP (exists): {url}")
+            continue
         logger.log(f"YOUTUBE DIRECT: {url}")
         info = details_cache.get(vid)
         if info:
@@ -1064,6 +1257,11 @@ def run_openalex(job: Job, logger: JobLogger) -> None:
     api_key = os.getenv("OPENALEX_API_KEY")
     mailto = os.getenv("OPENALEX_MAILTO")
     downloaded_by_url: dict[str, Path] = {}
+    existing_ids: set[str] = set()
+    if job.update_run and works_path.exists():
+        existing_ids = load_existing_openalex_ids(works_path)
+        if existing_ids:
+            logger.log(f"OPENALEX UPDATE: {len(existing_ids)} cached works")
 
     for q in job.queries:
         try:
@@ -1077,6 +1275,11 @@ def run_openalex(job: Job, logger: JobLogger) -> None:
                 mailto=mailto,
             )
             for w in works:
+                work_key = openalex_work_key(w)
+                oa_id = work_key or "openalex"
+                skip_entry = bool(job.update_run and work_key and work_key in existing_ids)
+                if skip_entry:
+                    logger.log(f"OPENALEX SKIP (exists): {oa_id}")
                 download_url = None
                 if job.download_pdf:
                     pdf_urls = w.get("pdf_urls") or []
@@ -1098,11 +1301,6 @@ def run_openalex(job: Job, logger: JobLogger) -> None:
                                 else:
                                     logger.log("ERROR missing dependency: pymupdf (pip install pymupdf)")
                                 break
-                            oa_id = (
-                                w.get("openalex_id_short")
-                                or safe_filename(w.get("doi") or "", max_len=40)
-                                or "openalex"
-                            )
                             pdf_path = pdf_dir / f"{oa_id}.pdf"
                             if not pdf_path.exists():
                                 logger.log(f"OPENALEX PDF DOWNLOAD: {url} -> {pdf_path.name}")
@@ -1136,7 +1334,11 @@ def run_openalex(job: Job, logger: JobLogger) -> None:
                 if download_url:
                     w = dict(w)
                     w["downloaded_pdf_url"] = download_url
+                if skip_entry:
+                    continue
                 append_jsonl(works_path, {"query": q, "work": w})
+                if work_key:
+                    existing_ids.add(work_key)
 
             time.sleep(REQUEST_SLEEP_SEC)
         except Exception as e:
@@ -1153,6 +1355,11 @@ def run_arxiv_ids(job: Job, logger: JobLogger) -> None:
     arxiv_meta_path = job.out_dir / "arxiv" / "papers.jsonl"
     arxiv_pdf_dir = job.out_dir / "arxiv" / "pdf"
     arxiv_text_dir = job.out_dir / "arxiv" / "text"
+    existing_ids: set[str] = set()
+    if job.update_run and arxiv_meta_path.exists():
+        existing_ids = load_existing_arxiv_ids(arxiv_meta_path)
+        if existing_ids:
+            logger.log(f"ARXIV UPDATE: {len(existing_ids)} cached papers")
 
     api_key = os.getenv("OPENALEX_API_KEY")
     mailto = os.getenv("OPENALEX_MAILTO")
@@ -1187,6 +1394,11 @@ def run_arxiv_ids(job: Job, logger: JobLogger) -> None:
         return meta
 
     for aid in job.arxiv_ids:
+        base_id = normalize_arxiv_id(aid)
+        skip_meta = job.update_run and base_id in existing_ids
+        if skip_meta and not job.download_pdf:
+            logger.log(f"ARXIV ID SKIP (exists): {aid}")
+            continue
         try:
             logger.log(f"ARXIV ID FETCH: {aid}")
             got = arxiv_ops.search_by_id(aid)
@@ -1196,7 +1408,9 @@ def run_arxiv_ids(job: Job, logger: JobLogger) -> None:
 
             meta = arxiv_ops.result_to_metadata(got)
             meta = enrich_citations(meta)
-            append_jsonl(arxiv_meta_path, meta)
+            if not skip_meta:
+                append_jsonl(arxiv_meta_path, meta)
+                existing_ids.add(base_id)
 
             if job.download_pdf and got.pdf_url:
                 pdf_path = arxiv_pdf_dir / f"{got.get_short_id()}.pdf"
@@ -1240,6 +1454,11 @@ def run_arxiv_recent(job: Job, logger: JobLogger) -> None:
     arxiv_pdf_dir = job.out_dir / "arxiv" / "pdf"
     arxiv_text_dir = job.out_dir / "arxiv" / "text"
     best_q = sorted(job.queries, key=len, reverse=True)[0]
+    existing_ids: set[str] = set()
+    if job.update_run and arxiv_meta_path.exists():
+        existing_ids = load_existing_arxiv_ids(arxiv_meta_path)
+        if existing_ids:
+            logger.log(f"ARXIV UPDATE: {len(existing_ids)} cached papers")
 
     api_key = os.getenv("OPENALEX_API_KEY")
     mailto = os.getenv("OPENALEX_MAILTO")
@@ -1281,9 +1500,29 @@ def run_arxiv_recent(job: Job, logger: JobLogger) -> None:
             days=job.days,
             max_results=job.max_results,
         )
+        manifest_path = job.out_dir / "arxiv" / "src_manifest.jsonl"
+        existing_src: set[str] = set()
+        if job.arxiv_source and manifest_path.exists():
+            try:
+                for line in manifest_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    if not line.strip():
+                        continue
+                    payload = json.loads(line)
+                    arxiv_id = payload.get("arxiv_id")
+                    if arxiv_id:
+                        existing_src.add(arxiv_id)
+            except Exception:
+                pass
         for p in papers:
+            base_id = normalize_arxiv_id(str(p.get("arxiv_id") or ""))
+            skip_meta = job.update_run and base_id in existing_ids
             p = enrich_citations(p)
-            append_jsonl(arxiv_meta_path, {"source": "recent_search", "query": best_q, "paper": p})
+            if skip_meta:
+                logger.log(f"ARXIV RECENT SKIP (exists): {base_id}")
+            else:
+                append_jsonl(arxiv_meta_path, {"source": "recent_search", "query": best_q, "paper": p})
+                if base_id:
+                    existing_ids.add(base_id)
 
             if job.download_pdf and p.get("pdf_url") and p.get("arxiv_id"):
                 pdf_path = arxiv_pdf_dir / f"{p['arxiv_id']}.pdf"
@@ -1309,11 +1548,148 @@ def run_arxiv_recent(job: Job, logger: JobLogger) -> None:
                         logger.log(f"ERROR pdf_to_text arxiv_id={p['arxiv_id']} err={repr(e)}")
                 elif download_ok:
                     logger.log("ERROR missing dependency: pymupdf (pip install pymupdf)")
+            if job.arxiv_source and p.get("arxiv_id"):
+                download_arxiv_source_for_id(job, logger, p["arxiv_id"], manifest_path, existing_src)
 
         time.sleep(REQUEST_SLEEP_SEC)
     except Exception as e:
         logger.log(f"ERROR arxiv recent search err={repr(e)}")
 
+
+def find_main_tex(tex_files: List[Path]) -> Optional[Path]:
+    for path in tex_files:
+        try:
+            head = path.read_text(encoding="utf-8", errors="replace")[:8000]
+        except Exception:
+            continue
+        if "\\documentclass" in head or "\\begin{document}" in head:
+            return path
+    return tex_files[0] if tex_files else None
+
+
+def extract_includegraphics(tex_text: str) -> List[str]:
+    pattern = re.compile(r"\\includegraphics\\*?(?:\\[[^\\]]*\\])?\\{([^}]+)\\}")
+    return [m.group(1).strip() for m in pattern.finditer(tex_text)]
+
+
+def extract_tex_text(tex_files: List[Path], max_chars: int = ARXIV_TEX_MAX_CHARS) -> str:
+    parts: List[str] = []
+    total = 0
+    for path in tex_files:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        header = f"\n\n===== {path.name} =====\n"
+        chunk = header + text
+        parts.append(chunk)
+        total += len(chunk)
+        if total >= max_chars:
+            break
+    return "".join(parts)
+
+
+def collect_arxiv_source_info(src_dir: Path, run_dir: Path) -> dict:
+    tex_files = sorted(src_dir.rglob("*.tex"))
+    fig_files = sorted(
+        [p for p in src_dir.rglob("*") if p.is_file() and p.suffix.lower() in ARXIV_FIGURE_EXTS]
+    )
+    main_tex = find_main_tex(tex_files)
+    includegraphics: List[str] = []
+    for tex in tex_files:
+        try:
+            includegraphics.extend(extract_includegraphics(tex.read_text(encoding="utf-8", errors="replace")))
+        except Exception:
+            continue
+    fig_map: List[dict] = []
+    if includegraphics and fig_files:
+        by_name = {p.name: p for p in fig_files}
+        by_stem = {}
+        for p in fig_files:
+            by_stem.setdefault(p.stem, []).append(p)
+        for ref in includegraphics:
+            ref_name = Path(ref).name
+            match = None
+            if ref_name in by_name:
+                match = by_name[ref_name]
+            elif ref_name in by_stem:
+                match = by_stem[ref_name][0]
+            if match:
+                fig_map.append({"ref": ref, "file": f"./{match.relative_to(run_dir).as_posix()}"})
+    return {
+        "tex_files": [f"./{p.relative_to(run_dir).as_posix()}" for p in tex_files],
+        "main_tex": f"./{main_tex.relative_to(run_dir).as_posix()}" if main_tex else None,
+        "figure_files": [f"./{p.relative_to(run_dir).as_posix()}" for p in fig_files],
+        "includegraphics": includegraphics,
+        "figure_matches": fig_map,
+    }
+
+
+def download_arxiv_source_for_id(
+    job: Job,
+    logger: JobLogger,
+    arxiv_id: str,
+    manifest_path: Path,
+    existing: set[str],
+) -> None:
+    if arxiv_id in existing:
+        return
+    src_root = job.out_dir / "arxiv" / "src"
+    text_dir = job.out_dir / "arxiv" / "src_text"
+    tar_path = src_root / f"{arxiv_id}.tar.gz"
+    extract_dir = src_root / arxiv_id
+    try:
+        if not tar_path.exists():
+            logger.log(f"ARXIV SRC DOWNLOAD: {arxiv_id}")
+            arxiv_ops.arxiv_download_source(arxiv_id, tar_path)
+        if not extract_dir.exists():
+            logger.log(f"ARXIV SRC EXTRACT: {tar_path.name}")
+            arxiv_ops.extract_arxiv_source(tar_path, extract_dir)
+        info = collect_arxiv_source_info(extract_dir, job.out_dir)
+        tex_paths = []
+        for rel in info["tex_files"]:
+            rel_path = rel.lstrip("./") if isinstance(rel, str) else str(rel)
+            tex_paths.append(job.out_dir / rel_path)
+        text = extract_tex_text(tex_paths, max_chars=ARXIV_TEX_MAX_CHARS)
+        text_path = text_dir / f"{arxiv_id}.txt"
+        if text and not text_path.exists():
+            write_text(text_path, text)
+        payload = {
+            "arxiv_id": arxiv_id,
+            "source_archive": f"./{tar_path.relative_to(job.out_dir).as_posix()}",
+            "source_dir": f"./{extract_dir.relative_to(job.out_dir).as_posix()}",
+            "text_path": f"./{text_path.relative_to(job.out_dir).as_posix()}" if text_path.exists() else None,
+            "tex_files": info["tex_files"],
+            "main_tex": info["main_tex"],
+            "figure_files": info["figure_files"],
+            "includegraphics": info["includegraphics"],
+            "figure_matches": info["figure_matches"],
+            "query_id": job.query_id,
+        }
+        append_jsonl(manifest_path, payload)
+        existing.add(arxiv_id)
+    except Exception as e:
+        logger.log(f"ERROR arxiv src download id={arxiv_id} err={repr(e)}")
+
+
+def run_arxiv_sources(job: Job, logger: JobLogger) -> None:
+    if not job.arxiv_source or not job.arxiv_ids:
+        return
+    manifest_path = job.out_dir / "arxiv" / "src_manifest.jsonl"
+    existing: set[str] = set()
+    if manifest_path.exists():
+        try:
+            for line in manifest_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                if not line.strip():
+                    continue
+                payload = json.loads(line)
+                arxiv_id = payload.get("arxiv_id")
+                if arxiv_id:
+                    existing.add(arxiv_id)
+        except Exception:
+            pass
+    for aid in job.arxiv_ids:
+        download_arxiv_source_for_id(job, logger, aid, manifest_path, existing)
 
 def build_index_md(job: Job) -> str:
     base = job.out_dir
@@ -1351,6 +1727,8 @@ def build_index_md(job: Job) -> str:
         ]
         if j.download_pdf:
             args.append("--download-pdf")
+        if j.arxiv_source:
+            args.append("--arxiv-src")
         if j.lang_pref:
             args += ["--lang", j.lang_pref]
         if j.openalex_enabled:
@@ -1365,6 +1743,8 @@ def build_index_md(job: Job) -> str:
             args += ["--yt-max-results", str(j.youtube_max_results)]
         if j.youtube_order and j.youtube_order != "relevance":
             args += ["--yt-order", j.youtube_order]
+        if j.update_run:
+            args.append("--update-run")
         return " ".join(shell_escape(a) for a in args)
 
     def load_youtube_transcript_meta(path: Path) -> dict:
@@ -1648,6 +2028,27 @@ def build_index_md(job: Job) -> str:
             idx_md.append(f"- ... and {len(txts)-50} more\n")
         idx_md.append("\n")
 
+        src_manifest = job.out_dir / "arxiv" / "src_manifest.jsonl"
+        src_dir = job.out_dir / "arxiv" / "src"
+        src_text_dir = job.out_dir / "arxiv" / "src_text"
+        if src_manifest.exists() or src_dir.exists() or src_text_dir.exists():
+            idx_md.append("## arXiv Source\n")
+            if src_manifest.exists():
+                idx_md.append(f"- {fmt_path(src_manifest, base)}\n")
+            tarballs = sorted(src_dir.glob("*.tar.gz")) if src_dir.exists() else []
+            idx_md.append(f"- Source archives: {len(tarballs)}\n")
+            for f in tarballs[:50]:
+                idx_md.append(f"- Source tar: {fmt_path(f, base)}\n")
+            if len(tarballs) > 50:
+                idx_md.append(f"- ... and {len(tarballs)-50} more\n")
+            texts = sorted(src_text_dir.glob("*.txt")) if src_text_dir.exists() else []
+            idx_md.append(f"- Extracted TeX texts: {len(texts)}\n")
+            for f in texts[:50]:
+                idx_md.append(f"- TeX text: {fmt_path(f, base)}\n")
+            if len(texts) > 50:
+                idx_md.append(f"- ... and {len(texts)-50} more\n")
+            idx_md.append("\n")
+
     return "".join(idx_md)
 
 
@@ -1668,6 +2069,7 @@ def run_job(job: Job, tavily: TavilyClient, stdout: bool = True) -> None:
     run_openalex(job, logger)
     run_arxiv_ids(job, logger)
     run_arxiv_recent(job, logger)
+    run_arxiv_sources(job, logger)
 
     write_text(job.out_dir / f"{job.query_id}-index.md", build_index_md(job))
 

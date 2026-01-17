@@ -1,0 +1,878 @@
+
+
+===== PAGE 1 =====
+A General Approach to Compute 
+Phosphorescent OLED Efficiency 
+Xu Zhang,a Denis Jacquemin,b,c Qian Peng,d* Zhigang Shuai, a* Daniel Escuderob* 
+a MOE Key Laboratory of Organic OptoElectronics and Molecular Engineering, Department 
+of Chemistry, Tsinghua University, Beijing 100084, People’s Republic of China. E-mail: 
+zgshuai@tsinghua.edu.cn; 
+b CEISAM UMR CNRS 6230, Université de Nantes, 2 rue de la Houssinière, BP 92208, 
+44322 Nantes Cedex 3, France. E-mail : Daniel.Escudero@univ-nantes.fr; 
+c Institut Universitaire de France, 1, rue Descartes, 75005 Paris Cedex 5, France 
+d CAS Key Laboratory of Organic Solids, Institute of Chemistry of the Chinese Academy of 
+Sciences, Beijing 100190,  People’s Republic of China. E-mail: qpeng@iccas.ac.cn 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+===== PAGE 2 =====
+Abstract: Phosphorescent organic-light emitting diodes (PhOLEDs) are widely used in the 
+display industry. In PhOLEDs, cyclometalated Ir(III) complexes are the most widespread 
+triplet emitter dopants to attain red, e.g., Ir(piq)3 (piq = 1-phenylisoquinoline), and green, e.g., 
+Ir(ppy)3 (ppy = 2-phenylpyridine) emission, whilst obtaining operative deep-blue emitters is 
+still one of the major challenges. When designing new emitters two main characteristics, 
+besides colours, should be targeted: high photostability and large photoluminescence 
+efficiencies. To date, these are very often optimized experimentally in a trial-and-error 
+manner. Instead, accurate predictive tools would be highly desirable. In this contribution, we 
+present a general approach for computing the photoluminescence lifetimes and efficiencies of 
+Ir(III) complexes by considering all possible competing excited state deactivation processes, 
+and importantly explicitly including the strongly temperature-dependent ones. This approach 
+is based on state-of-the-art quantum chemical calculations with excited state decay rate 
+formalism and the kinetic modelling, which is shown to be both efficient and reliable for a 
+broad palette of Ir(III) complexes, i.e., from yellow/orange to deep-blue emitters.  
+ 
+ 
+
+
+===== PAGE 3 =====
+Introduction 
+Molecular materials modeling and virtual screening approaches are becoming fundamental 
+tools in the design of new molecules with tailored properties,1,2 including electroluminescent 
+molecules.3,4 To boost the interest of high-throughput virtual screening approaches, robust 
+computational approaches accurately predicting all key properties are first needed. PhOLEDs, 
+the so-called second generation of OLEDs,5 are still the most widespread OLEDs technology 
+in display industry. Therefore, enormous industrial and academic efforts are devoted to the 
+development of new electroluminescent molecular materials with optimal performances for 
+PhOLEDs, and in particular to the elaboration of highly-efficient and photostable deep-blue 
+phosphors. Recent reports showed that external quantum efficiencies (EQE) of up to 30% can 
+be obtained using horizontally oriented heteroleptic Ir(III) complexes.6,7,8 Due to the intricate 
+nature of the competing excited state deactivation processes in Ir(III) complexes,9,10 the 
+accurate computation of the photoluminescence efficiency, which is the main factor 
+determining the EQE values in PhOLEDs, has remained elusive up to now. In practice, the 
+efficient triplet harvesting requires an emissive triplet excited state presenting a substantial 
+metal-to-ligand charge transfer (3MLCT) character,11,12 in order to favor the radiative drainage 
+to the electronic ground state over the nonradiative one. In addition, the photoluminescence 
+lifetimes and efficiencies are temperature-dependent,10 due to the presence of thermally 
+activated nonradiative channels associated to the population of triplet metal-centered (3MC) 
+states. The competing deactivation channels for Ir(III) complexes are illustrated in Scheme 
+1a, whereas the corresponding kinetic model is presented in Scheme 1b. Having in mind this 
+kinetic model the photoluminescence efficiencies (1) and lifetimes (2) can be expressed as
+
+
+===== PAGE 4 =====
+ 
+4
+Φ" 𝑇=
+%&
+%&'%()*'%+& ,   ,  
+(1) 
+τ(𝑇) =
+1
+%&'%()*'%+&(,)  ,   
+(2) 
+where kr is the 3MLCT→S0 radiative decay rate, kISC is the 3MLCT→S0 nonradiative intersystem 
+crossing rate (ISC) which in principle is temperature dependent through vibration population but 
+here it is much less pronounced because the relevant vibrational modes are of high frequency, 
+and knr(T) is the strongly temperature-dependent nonradiative decay rate associated with the 
+population of the 3MC well. The recent progresses in theoretical methods and algorithms enabled 
+the computation of phosphorescence decay rates at the first-principles level.13,14,15 Despite these 
+progresses, the calculations of all the nonradiative counterparts present in Eq. (1) has remained 
+more cumbersome, especially the temperature-dependent decay rate, i.e., knr(T). Having in mind 
+that OLEDs should work at ambient temperatures, the accurate calculation of all decay rates is 
+mandatory for practical applications. In fact, the two groups involved in the present work have 
+provided preliminary kinetic models for estimating the photoluminescence efficiencies of red-to-
+green16,17 and green-to-blue18 Ir(III) complexes, respectively. A general approach valid for all 
+kind of complexes regardless of their emission color, is still missing in the literature. Here, we 
+fill this gap by reporting a general computational protocol to predict the photoluminescence 
+lifetimes and efficiencies of Ir(III) complexes at any given temperature. In contrast to previous 
+models, this protocol is in principle valid for all Ir(III) complexes, regardless of their emission 
+color, and it is potentially transferable to other phosphor materials with similar excited state 
+features, e.g., square planar Pt(II) complexes. Importantly, this protocol does not rely on 
+simplified kinetic models and does not require knowing beforehand any experimental 
+
+
+===== PAGE 5 =====
+ 
+5
+information about the complexes, so that it can be integrated in the automated in silico 
+prescreening of promising PhOLEDs materials. 
+ 
+Scheme 1. a) Schematic representation of the competing excited state deactivation processes of 
+Ir(III) complexes: emission from the 3MLCT state (kr) competes with the 3MLCT→S0 
+nonradiative decay (kISC) and with thermally activated nonradiative decay (knr(T)). The latter 
+channel is characterized by population of the 3MC well through a transition state (TS) and the 
+irreversible recovery of the ground state (S0) geometry through the S0/3MC minimum energy 
+crossing point (MECP). Along this channel, the main geometrical changes occur from the 
+3MLCT (pseudo-octahedral) to the 3MC (trigonal bipyramid) geometry, through breaking of one 
+Ir-N bond (see Scheme 1b, top). Small geometrical changes occur along the 3MC→MECP 
+transformation, the latter geometry exhibiting a further distorted trigonal bipyramid arrangement. 
+Thus, the barrier to populate the TS (Ea) is usually the rate limiting step of this channel. For more 
+details see Ref. 18. b) Kinetic model for the excited-state deactivation of Ir(III) complexes. Note 
+that singlet excited states are not included, as the intersystem crossing processes present a 100% 
+efficiency in these complexes.11 
+
+
+===== PAGE 6 =====
+ 
+6
+To test the validity of this protocol we have selected three Ir(III) complexes (see Scheme 2), 
+i.e., fac-Ir(F2ppy)(ppz)2 (1, where ppy = 2-phenylpyridine and ppz = phenylpyrazole), fac-
+Ir(ppy)3 (2) and fac-Ir(flpy)3 (3, where flpy = 2-(9,9-dimethyl-9H-fluoren-2-yl)pyridine), that 
+emit in the blue, green and yellow/orange regions, respectively; and for which extensive 
+experimental data is available.10,19,20 Herein, for 1-3, the kr decay rates are determined with the 
+Einstein relationship and the kISC decay rates are computed using the thermal vibration 
+correlation function (TVCF) rate theory in combination with time-dependent density functional 
+theory (TD-DFT) and DFT calculations. Regarding the calculation of kr, it is generally accepted 
+that perturbative approaches yield systematically slightly lower rates than non-perturbative 
+schemes21 or those that include spin-vibronic countributions.17 However, these two latter 
+sophisticated approaches are computationally more demanding, and would limit the general 
+applicability of our protocol. Moreover, it was previously found for Ir(III) complexes,22  that an 
+optimal computational protocol based on a perturbative scheme can still provide kr values in 
+good agreement with the experimental ones and is therefore selected herein (see details in the 
+Computational Methods). The computation of the kISC decay rates using the TVCF formalism has 
+previously shown to yield robust results.17,23 Finally, the knr(T) decay rate is computed with 
+canonical variational transition state theory (CVT),24 based on the computed DFT energy profiles 
+for the thermally activated nonradiative decay (see Scheme 1a). As recently reported for these 
+complexes,18 the most suited kinetic model for this decay channel involves equilibration between 
+the 3MLCT and 3MC states before irreversible return to the ground state. Thus, 
+ 
+(3). 
+ 
+3MLCT
+3MC
+ka
+kb
+kc
+S0
+
+
+===== PAGE 7 =====
+ 
+7
+Using the steady state approximation and assuming this complex kinetic scenario, the knr(T) 
+decay rate has the following form 
+𝑘34 (𝑇) = 𝑘5𝑘6/(𝑘5 + 𝑘9)  
+(4), 
+where ka, kb and kc (i.e., kn) can be expressed as 
+𝑘3  = 𝐴3exp(−𝐸3/𝑘@𝑇) 
+ 
+(5), 
+En being the activation energy, An its corresponding preexponential factor, and kB the 
+Boltzmann constant. Computing all rates in Eq. (4) becomes easily prohibitive for practical 
+purposes. As detailed in Ref. 18, the rate limiting step is usually the 3MLCT→3MC 
+transformation (i.e., ka), which involves the breaking of one Ir-N bond (see Scheme 1b). Under 
+these circumstances, Eq. (4) can straightforwardly be approximated as 
+𝑘34(𝑇) = 𝐴A𝐴exp(−𝐸6/𝑘B𝑇) 
+(6), 
+where A0 stands for a temperature-dependent Boltzmann prefactor in accordance to (4), i.e., 
+𝐴A =
+1
+1'CDE (
+FGHFI
+JKL )  
+ 
+(7), 
+and A is the preexponential factor for the MLCT→3MC transformation, which is computed 
+with the CVT dynamics. Eq. 6 is thus capable to cover both a pre-equilibrated scenario as well as 
+a non pre-equilibrated one. Complete details on the TVCF and CVT procedures can be found in 
+the Methods section. Below we first discuss the blue emitter (1) in details, before presenting the 
+results for the green (2) and yellow/orange (3) emitters.  
+
+
+===== PAGE 8 =====
+ 
+8
+ 
+Scheme 2. Chemical structure of complexes 1-3. 
+Results and discussion 
+Blue-emitter case [fac-Ir(F2ppy)(ppz)2 (1)]: The temperature-dependent photoluminescence 
+properties of complex 1 were exhaustively investigated by Thompson and coworkers.10 Relevant 
+experimental photoluminescence properties of 1 at cryogenic and room temperatures (RT) are 
+collected in Table 1. Experimentally, this blue emitter undergoes a significant drop of efficiency 
+and lifetime at 298 K. As corroborated both experimentally10 and theoretically,18 this is due to the 
+population of the thermally activated nonradiative decay process, which is readily accessible for 
+1 at RT as a result of its reduced 𝐸6 value. Figure 1a (1b) displays the recorded (computed) plot 
+of the global decay lifetime versus temperature and the computed decay components at different 
+temperatures are presented in Table 2. An overall qualitative and quantitative agreement of the 
+experimental decay lifetime is recovered by the calculations. Importantly, the sigmoid-like 
+dependence is recovered by the computed profile. In the following we will study in detail the 
+origins of the lifetime’s drop with increasing temperatures. In these plots, two distinct regimes 
+are observed, a slight lifetime decrease at low temperatures and a second more significant drop at 
+RT due to activation of the knr(T) decay channel. Hence, two important inflexion points are 
+observable, which are computed at ca. 220 K and 320 K, and experimentally observed at 250 K 
+and 340 K. A deeper analysis of the results (see Table 2) reveals that before the first inflexion 
+
+
+===== PAGE 9 =====
+ 
+9
+point, in the low-temperature regime (100-200 K), only the kr and kISC components contribute to 
+the global lifetime (see Table 2). Due to the large 3MLCT→S0 SOCs, kr are of the order of 105. 
+Regarding the kISC values, they are notably influenced by the 3MLCT-S0 energy gap and by the 
+total reorganization energies. The total reorganization energy, which is a measure of the extent of 
+vibronic coupling between these two electronic states, it is obtained as a sum over all normal 
+mode energies times their corresponding Huang-Rhys factor. Figure 2 collects the reorganization 
+energies of the most relevant normal modes. The normal modes in the 500-1600 cm-1 region 
+predominantly contribute to the kISC value of 1 (see the displacement vectors of its three most 
+relevant modes in Figure 2, which involve aromatic C=C stretchings and in-plane deformations 
+of mainly the (F2ppy) ligand). As the relevant vibrational modes are of high frequency, there is 
+only a slight increase of kISC with temperature (see Table 1). Finally, knr(T) originates from the 
+thermally-activated formation of the 3MC state through the rupture of one Ir-N coordinating bond 
+(see discussion above). In order to perform the CVT dynamics, the relevant stationary points of 
+the 
+rate 
+limiting 
+step, i.e., 
+3MLCTàTSà3MC, were optimized and subsequently intrinsic 
+reaction coordinate (IRC) calculations were carried out in both forward and backward directions 
+(B3LYP/6-31G(d,p)/LANL2DZ). In Figure 3 the corresponding IRC including selected 
+geometries along the path are plotted. The 3MLCTàTSà3MC path is characterized by two main 
+reaction coordinates: Ir-N bond stretching (from 2.18 to 3.43 Å) and an increase in the φ1,2,3,4 
+dihedral angle (from 3 to 60° see Figure 3). Herein, one critical aspect that needs to be mastered 
+for the CVT simulations is the accurate estimation of Ea; since, due to their exponential 
+relationship, small deviations in the energies imply huge changes in the decay rates (see Eq. (6)). 
+Towards this end, and based on previous studies on the activation energies of 5d transition metal 
+complexes,25 the double-hybrid functional including dispersion PWPB95-D3 is chosen herein. 
+
+
+===== PAGE 10 =====
+ 
+10
+The results of the CVT simulations are collected in Table 3. For 1, the computed activation 
+barrier of the limiting step (3MLCTà3MC) is 2836 cm-1. Experimentally, a Boltzmann analysis 
+of the temperature-dependent photoluminescent decay data was performed and the activation 
+barrier was determined to be 3300 cm-1. 10  To illustrate the problematic in the accuracy needed 
+for the rate calculations, the activation barrier was determined to be ca. 1097 cm-1 with the 
+B3LYP functional,18 clearly underestimating the PWPB95-D3 value and the experimental 
+evidences. The exponential prefactor A obtained with the CVT simulations is 1.47×1013 s-1. The 
+Eb-c values as well as the Boltzmann A0 prefactors at relevant temperatures are listed in Table S1. 
+The knr(T) values computed at different temperatures with Eq. (6) are collected in Table 2. 
+Coming back to the temperature-dependent photoluminescence decay of 1, the slight lifetime 
+decrease in the 100-200 K regime can be understood as resulting from i) the increasing thermal 
+population of the triplet substate with the largest kr value among the three substates of 3MLCT 
+(see the three spin sublevel contributions in Table S2) and ii) the slight increase of kISC with 
+increasing temperatures. In this temperature regime, the computed photoluminescence efficiency 
+achieves a maximum value at 196 K (i.e., 0.38, see Table 2). Importantly, the knr(T) decay 
+channel becomes only accessible at temperatures above ca. 230 K (see Table 2 and Figure 1). At 
+RT it becomes the main nonradiative channel and directly competes with radiative decay. 
+Finally, with increasing temperatures (up to 400 K) knr(T) evolves into the most prominent 
+deactivation channel (see Table 2) and it is thus responsible for the total quench of the 
+photoluminescence at high temperatures. The relevance of the knr(T) channel is further illustrated 
+in Figure 1b. Hence, by switching off the contribution of the knr(T) component to Eq. (2) (dashed 
+line in Figure 1b), the sigmoid-like temperature-dependence is lost. Regarding the efficiencies, 
+our calculations predict a photoluminescence efficiency of 0.38 and 0.05 at low temperatures and 
+
+
+===== PAGE 11 =====
+ 
+11
+RT temperatures; respectively, in agreement with the experimentally observed drop in 
+efficiencies. The theoretical ΦP value at RT of 1 is underestimated with respect to the 
+experimental one, likely due to the computational inaccuracies on the rate calculations (see 
+exemplarily the discussion above regarding the energetic inaccuracies and their exponential 
+relationship in the knr(T) calculations).  
+ 
+Figure 1. 
+Experimental (a) and computed (b) temperature dependence of the 
+photoluminescence decay using Eq. (2) (bold line) and switching off the knr(T) component 
+(dashed line) for 1. Figure 1a is adapted with permission from ref. 10. Copyright 2017 American 
+Chemical Society. 
+
+
+===== PAGE 12 =====
+ 
+12
+ 
+Figure 2.  Calculated reorganization energies of each normal mode for 1. The displacement 
+vectors of its three most relevant modes are depicted. 
+ 
+
+
+===== PAGE 13 =====
+ 
+13
+Figure 3. 
+ Computed IRC for the 
+3MLCTàTSà3MC pathway of 1 (B3LYP/6-
+31G(d,p)/LANL2DZ). C, N, H, F atoms in grey, dark blue, white and light blue, respectively. 
+Table 1. Experimental and theoretical photoluminescence properties of 1-3. 
+ 
+ 
+Room Temperature 
+ 
+Cryogenic Temperaturec 
+Comp
+lex 
+kr (exp, s-1) 
+knr (exp, s-1) 
+kr (theo, s-1)   
+knr (theo, s-1) d
+ 
+τ (exp,µs) 
+τ (theo,µs)  
+ΦP (exp)    
+ΦP (theo) 
+ 
+kr (theo, s-1)  
+knr (theo, s-1) d 
+τ (exp,µs) 
+τ (theo,µs) 
+ΦP (exp)    
+ΦP (theo)  
+1a 
+4.6×105 
+(3.8×105) 
+3.0×105 
+(6.3×106) 
+1.2 
+0.2 
+0.55  
+(0.05) 
+ 
+1.1×105 
+(2.4×105) 
+3.4 
+2.9 
+- e 
+ (0.38)c 
+2a 
+6.1×105 
+(1.9×104) 
+4.1×105 
+(1.6×105) 
+1.6 
+1.7 
+0.97  
+(0.72) 
+ 
+1.9×105 
+(5.5×104) 
+4.0 
+4.0 
+- e 
+ (0.80)c 
+3b 
+2.5×105 
+(6.0×105) 
+2.5×105 
+(2.8×106) 
+1.2 
+0.3 
+0.29 
+(0.08) 
+ 
+2.3×105 
+(4.6×105) 
+4.0 
+1.4 
+- e 
+(0.24) c 
+a Experimental values from ref. 10 in 2-MeTHF. b Experimental values from ref. 20 in toluene at RT and on 
+toluene/ethanol/methanol (5:4:1) solutions at cryogenic temperatures. c Theoretical values for lifetimes computed at 
+150K and for efficiencies computed at 196 K. d Obtained as the sum of all possible nonradiative decays. e Not 
+determined experimentally. 
+Table 
+2. 
+Computed 
+kr. kISC and knr(T) decay rates, global lifetimes and ΦP values at 
+different temperatures for 1. 
+Temperature (K) 
+kr (s-1) 
+kISC (s-1) 
+knr (T) (s-1) 
+Global 
+Lifetime (µs) 
+ΦP 
+ 
+77 
+1.5994×104 
+1.7781×105 
+4.433E-12 
+5.1598 
+0.083 
+100 
+3.9948×104 
+1.9308×105 
+1.922E-06 
+4.2914 
+0.171 
+130 
+8.2342×104 
+2.1636×105 
+4.307E-02 
+3.3478 
+0.276 
+150 
+1.1326×105 
+2.3581×105 
+3.667E+00 
+2.8648 
+0.324 
+175 
+1.5163×105 
+2.6581×105 
+2.255E+02 
+2.3942 
+0.363 
+196 
+1.8236×105 
+2.9713×105 
+4.933E+03 
+2.0405 
+0.384 
+
+
+===== PAGE 14 =====
+ 
+14
+225 
+2.2156×105 
+3.5286×105 
+5.366E+04 
+1.5921 
+0.353 
+250 
+2.5211×105 
+4.1557×105 
+3.616E+05 
+0.9716 
+0.245 
+275 
+2.7976×105 
+4.9626×105 
+1.716E+06 
+0.4013 
+0.112 
+298 
+3.0281×105 
+6.0007×105 
+5.691E+06 
+0.1516 
+0.046 
+320 
+3.2292×105 
+7.0711×105 
+1.522E+07 
+0.0615 
+0.020 
+340 
+3.3971×105 
+8.3831×105 
+3.329E+07 
+0.0290 
+0.010 
+360 
+3.5522×105 
+1.0011×106 
+6.667E+07 
+0.0147 
+0.005 
+380 
+3.6957×105 
+1.2036×106 
+1.240E+08 
+0.0080 
+0.003 
+400 
+3.8287×105 
+1.4561×106 
+2.166E+08 
+0.0046 
+0.002 
+ 
+Table 3. PWPB95-D3 activation barriers (cm-1) for the rate-limiting step of the 
+temperature-dependent non-radiative channels and A exponential prefactor (s-1) for 1-3.  
+Complex 
+Ea
+  
+(cm-1) 
+A 
+(s-1) 
+1 
+2836a 
+1.47×1013 
+2 
+3676 
+1.70×1013 
+3 
+5182 
+1.97×1013 
+a The rate limiting step for 1 corresponds to the TS connecting 3MC→3MC’. For 1 a more complex thermally 
+activated deactivation channel is found involving 3MLCT, 3MC, 3MC’ and MECP. 
+Green-emitter case [fac-Ir(ppy)3 (2)]: Complex 2 has been extensively studied from both 
+experimental10,19 and computational viewpoints.15,18 ,21,22,26 Therefore, it is the perfect scenario to 
+benchmark 
+our 
+computational 
+approach 
+and 
+to 
+assess 
+its 
+temperature-dependent 
+photoluminescent properties, which have rarely been the target of computational investigations.  
+In Table S3 are collected the computed kr, kISC and knr(T) decay rates at different temperatures for 
+2, whereas the computed plot of the global decay lifetime versus temperature can be found in 
+Figure 4. In this plot two inflexion points are observable, at ca. 280 K and 370 K. In the first 
+
+
+===== PAGE 15 =====
+ 
+15
+temperature regime (100-280 K) there is only direct competition between the kr and kISC 
+components, since the computed knr(T) values are negligible (see Table S3).  The kr values are of 
+the same order than those reported in previous works.15,22 The kISC decay is mainly promoted by 
+C=C stretching vibration modes and in-plane bending deformations, which are predominantly 
+localized on a single ppy ligand17 (see in Fig S1 the reorganization energies of the most relevant 
+normal modes for 2). The IRC of its rate-limiting step, i.e., 3MLCTàTSà3MC, is shown in 
+Figure S2. The main geometrical changes along this path are analogous to those of 1. The 
+computed Ea value is 3676 cm-1 (see Table 3) and the prefactor A determined by the CVT 
+dynamics is 1.7×1013 s-1. The Eb-c values and the Boltzmann A0 factors at relevant temperatures 
+are listed in Table S1. Note that the computed barrier for 2 is, in agreement with the experiments, 
+larger than that of 1. The knr(T) component starts to be non-negligible only beyond RT (compare 
+the dash and bold computed profiles in Figure 4), and therefore, experimentally, 2 is still highly 
+efficient at RT (ΦP=0.97). This is also corroborated by our calculations, which yield a value of 
+0.72 at RT. This value is quite close to the maximum ΦP value in the low-temperature regime 
+i.e., 0.80 at 196 K (see Table 1). Thus, the activation barrier to populate the 3MC channel is large 
+enough to prevent its population in the 100-280 K regime. Conversely, the A value is of the same 
+order for both complexes. Thus, the larger Ea value for 2 is the main feature that prevents the 
+population of the knr(T) decay channel up to ambient temperatures and hence ensures its large ΦP 
+value. Above 300 K, the radiative efficiency of complex 2 decreases significantly (see Table S3). 
+
+
+===== PAGE 16 =====
+ 
+16
+ 
+Figure 4.  Computed temperature dependence of the photoluminescence decay using Eq. (2) 
+(bold line) and switching off the knr(T) component (dashed line) for 2. 
+Yellow/Orange-emitter case [fac-Ir(flpy)3 (3)]: Due to their reduced T1-S0 energy gap; 
+yellow, orange and red Ir(III) complexes are, in this increasing order, more prone to T1→S0 
+nonradiative decay than green and blue ones. Conversely, this trend is reversed for the knr(T) 
+component, since a more energetically stabilized T1 state generally leads to a larger Ea value that 
+prevent the population of the 3MC state for the former complexes. The yellow/orange complex 3 
+was studied in detail from an experimental point of view by Tsuboyama and coworkers.20 
+Relevant experimental and computed photoluminescence data of 3 at cryogenic and room 
+temperatures (RT) are collected in Table 1. In Table S4 the computed kr, kISC and knr(T) decay 
+rates at different temperatures are listed, whilst the plot of the computed global decay lifetime 
+versus temperature is found in Figure 5. The IRC of its 3MLCTàTSà3MC pathway is shown in 
+Figure S4 and it shows identic geometrical distortions to those of 1-2. Finally, the computed Ea 
+and A values are collected in Table 3 whilst the Eb-c and A0 values are reported in Table S1. 
+
+
+===== PAGE 17 =====
+ 
+17
+Complex 3 possesses the largest Ea value among all the studied complexes (5182 cm-1), thus 
+confirming the initial hypothesis of diminished relevance of the knr(T) component for yellow-to-
+red complexes. Indeed, the computed knr(T) values are negligible in all temperature regimes (77-
+400 K), see Table S4; and thus the effect of switching off this component has a negligible effect 
+(see in Figure 5). Therefore, the photoluminescence lifetimes of 3 are only determined by a 
+direct competition between the kr and kISC components. The computed kr value (2.5×105) shows a 
+perfect agreement with its experimental counterpart (see Table 1). The kISC is promoted by 
+similar aromatic modes of those of 1-2, but conversely mainly localized on two ligands (see 
+reorganization energies and the most relevant modes in Figure S3). Note that this complex is 
+characterized by the smallest total reorganization energies amongst all the complexes. The 
+agreement between the experimental and computed ΦP value is remarkable (see Table 1). 
+Overall, and despite the negligible knr(T) contribution, smaller ΦP values are obtained for 3 with 
+respect to 1-2. This trend is observed both computationally and experimentally and it is due to 
+the confluence of two factors, a smaller kr value and an enhanced kISC value for 3. The smaller kr 
+value can be rationalized in terms of the more pronounced ligand-centered (3LC) character of T1, 
+that leads to smaller SOCs and ZFS values (compare the ΔE splitting between triplet sublevels 
+for all complexes in Table S2). The enhanced 3LC character for 3 is corroborated by the small 
+contribution of the iridium atom to the spin density distribution at the T1 (see Figure S7). 
+Additionally, and despite the small total reorganization energies for 3, its reduced T1-S0 energy 
+gap leads to an enhanced kISC decay rate as compared to 1-2. Therefore, these observations are in 
+accordance to the energy-gap law.  
+
+
+===== PAGE 18 =====
+ 
+18
+ 
+Figure 5.  Computed temperature dependence of the photoluminescence decay using Eq. (2) 
+(bold line) and switching off the knr(T) component (dashed line) for 3. Due to the negligible 
+contribution of the knr(T) component, note that both computed profiles are coincident. 
+Methods 
+All the molecular parameters needed in our model are calculated by density functional theory 
+(DFT). The geometries of the singlet ground state (S0), the 3MC and 3MLCT triplet excited states, 
+and the transition state (TS) were optimized for complexes 1-3 using the hybrid functional 
+B3LYP, in combination with the 6 31G(d,p) atomic basis set for all first and second-row atoms. 
+Relativistic effects were included for the Ir atom by using the LANL2DZ pseudopotential. The 
+nature of the stationary points was confirmed by computing the Hessian at the same level of 
+theory. In the case of complex 3, the two methyl positions of the 9H-fluoren-2-yl)pyridine unit 
+were replaced by hydrogen atoms for computational ease. The spin density distributions at the 
+3MLCT, 3MC and TS optimized geometries of 1-3 are depicted in Figures S3-5. The S0/3MC 
+MECP was optimized using Harvey's algorithm, as implemented in the ORCA software;27 
+
+
+===== PAGE 19 =====
+ 
+19
+employing the B3LYP functional in combination with the def2-SVP atomic basis set and the 
+ECP-60-mwb Stuttgart/Dresden pseudopotential for Ir. To get accurate energies of Ea, single 
+point calculations were performed with the dispersion-corrected double-hybrid PWPB95-D3 
+functional,28 in combination with the def2-SVP atomic  basis and the ECP-60-mwb 
+Stuttgart/Dresden pseudopotential for Ir, as implemented in ORCA. All calculations apart from 
+the MECP optimization and the double-hybrid calculations, were carried out with the 
+Gaussian09 program package.29 The effect of solvation on the geometries and on the computed 
+activation barriers was assessed using THF as a solvent and the polarizable continuum model 
+(PCM)30 as implemented in Gaussian. These results are presented in Table S5 for 1. In view of 
+the small differences observed, the gas phase results were used in all the calculations for all 
+complexes.  
+To model the knr(T) decay channel, CVT dynamics were performed. Towards this end, intrinsic 
+reaction coordinate (IRC) calculations of the rate limiting step, i.e., 3MLCTàTSà3MC, were 
+carried out at the B3LYP/6-31G(d,p)/LANL2DZ level. Each point along the IRC path was used 
+to build a reliable 3MLCTàTSà3MC potential energy surface (PES). The CVT dynamics were 
+done with the POLYRATE suite of programs.31  
+The spin-orbit coupling (SOC) was treated as a perturbation and the exact two-component (X2C) 
+Hamiltonian was applied to construct the SOC operator. For the kr and kISC calculations, the SOC 
+calculations were carried out at optimized S0 geometry with the BDF program package32 using 
+TD-B3LYP in combination with the 6-31G(d,p) basis set for light atoms and the ANO-RCC-
+VDZP basis set for iridium atom. 
+
+
+===== PAGE 20 =====
+ 
+20
+The radiative decay rates of spin sublevels (kr,i) are evaluated using Einstein spontaneous 
+emission formula 
+𝑘r,O =
+PQRvert,Q
+U
+1.WXX s∙cmU 
+(7), 
+where subscript i denotes the spin sublevel along with its oscillator strength (fi) and vertical 
+transition energy (Evert,i), which are computed at the level of theory stated above using the BDF 
+program package. Boltzmann statistics of these three spin sublevels are then applied to calculate 
+the overall radiative decay rate (kr) at different temperature 
+𝑘r =
+%r,I'%r,IIexp ^RII,I %B, '%r,IIIexp ^RIII,I %B,
+1'exp ^RII,I %B, 'exp ^RIII,I %B,
+ (8), 
+where 𝐸II,I = 𝐸vert,II −𝐸vert,I and 𝐸III,I = 𝐸vert,III −𝐸vert,I are the energy difference between spin 
+sublevels. This thermal rearrangement between the triplet sublevels of 3MLCT originates the 
+temperature-dependency of the kr values at cryogenic temperatures. 
+For Ir(III) complexes, which are characterized by large SOCs, first-order perturbation theory is a 
+good approximation to compute the nonradiave (kISC) rate. The kISC is evaluated using the TVCF 
+theory. Perturbation theory was also applied to compute the non-adiabatic electronic coupling 
+and the spin-orbit couplings. The TVCF formalism makes use of a multidimensional harmonic 
+oscillator model coupled with DFT and TD-DFT calculations, where distortions, displacements 
+and Duschinsky rotations are taken into account. Thus, the difference between two electronic 
+state potential energy surfaces was considered by using Qe = S Qg+De, where S is the 
+Duschinsky rotation matrix, Qe and Qg are the normal-mode coordinates vectors of the S0 and T1 
+states, respectively; and De is the displacement vector between the minima of the excited and 
+ground state geometries. Further details can be found in Ref. 17. The three key parameters 
+
+
+===== PAGE 21 =====
+ 
+21
+governing the kISC values are: i) the adiabatic energy gap, ii) the total reorganization energy and 
+iii) the size of SOCs. The kISC rate calculations were performed with the MOMAP suite of 
+programs was used.16,33,34,35,36,37 
+Conclusions 
+The calculation of the temperature-dependent photoluminescent properties of phosphors has 
+remained up to date elusive. In this manuscript, we report for the first time a general approach to 
+compute the temperature-dependent photoluminescence lifetimes and efficiencies of Ir(III) 
+complexes. Since all possible kinetic scenarios are included within our approach, its validity is 
+not restrained for a limited series of complexes (like previous schemes), but it remains valid for a 
+wide chemical space, i.e., from deep-blue to yellow-to-red phosphors. Importantly, the 
+photoluminescence lifetimes and efficiencies can be estimated at any given temperature and the 
+temperature-dependent photoluminescence decay profiles can be derived. Our future work 
+should be devoted to further improve the efficiencies’ estimations in a quantitative basis, which 
+it remains difficult due to the computational inaccuracies on the energetics and their exponential 
+relationships in the rate calculations.  
+Herein, we demonstrate that the strongly-temperature dependent knr(T) channel is non-
+negligible up to green complexes. Accordingly, this channel is increasingly less relevant for 
+yellow, orange and red complexes. In the case of blue complexes, controlling the knr(T) channel 
+is mandatory to attain large photoluminescence efficiencies at RT. This can be accomplished via 
+stronger Ir-heteroatom bonds that lead to larger Ea values, such as e.g., in N-Heterocyclic 
+Carbene (NHC)-based Ir(III) complexes. For future blue phosphor materials design, and in view 
+of the computed evidences, an Ea of ca. 4000 cm-1 might be enough to impede the population of 
+
+
+===== PAGE 22 =====
+ 
+22
+the knr(T) channel at RT. Additionally, this strategy is also beneficial to attain photostable blue  
+Ir(III) emitters.38 Due to the enormous industrial efforts in obtaining highly-efficient phosphors 
+and the increased use of high-throughput approaches on computational materials’ design, we 
+anticipate that this protocol will be of great importance for the automatic in silico prescreening of 
+promising PhOLEDs materials.  
+ACKNOWLEDGMENTS 
+DE thanks funding from the European Union’s Horizon 2020 research and innovation 
+programme under the Marie Sklodowska-Curie grant agreement No 700961. DJ acknowledges 
+the European Research Council (Marches grant n°278845) and the RFI Lumomat for financial 
+support. The GRDI-RCTF network is acknowledged for funding short mission travel grants. The 
+work in Beijing is supported by the Ministry of Science and Technology of China Through Grant 
+No. 2017YFA0204501 and the National Natural Science Foundation of China Grant No. 
+91622121. 
+ 
+SUPPORTING INFORMATION 
+Figures S1-S7, Tables S1-S22 including the xyz coordinates of all complexes are presented in 
+the Supporting Information. 
+ 
+REFERENCES 
+                                                
+1 Shoichet, B. K. Virtual screening of chemical libraries. Nature 2004, 432, 862-865. 
+2 Curtarolo, S.; Hart, G. L. W.; Nardelli, M. B.; Mingo, N.; Sanvito, S.; Levy, O. The high-
+throughput highway to computational materials design. Nature Mater. 2013, 12, 191-201. 
+
+
+===== PAGE 23 =====
+ 
+23
+                                                                                                                                                       
+3 Gómez-Bombarelli, R.; Aguilera-Iparraguirre, J.; Hirzel, T. D.; Duvenaud, D.; Maclaurin, D.; 
+Blood-Forsythe, M. A.; Chae, H. S.; Einzinger, M.; Ha, D.-G.; Wu, T., et al. Design of efficient 
+molecular organic light-emitting diodes by a high-throughput virtual screening and experimental 
+approach. Nature Mater. 2016, 15, 1120-1127. 
+4 Shu, Y.; Levine, B. G. Simulated evolution of fluorophores for light emitting diodes. J. Chem. 
+Phys. 2015, 142, 104104. 
+5 Adachi, C.; Baldo, M. A.; Thompson M. E.; Forrest, S. R. Nearly 100% internal 
+phosphorescence efficiency in an organic light-emitting device. J. Appl. Phys. 2001, 90, 5048-
+5051. 
+6 Jurow, M. J.; Mayr, C.; Schmidt, T. D.; Lampe, T.; Djurovich, P. I.; Brütting, W.; Thompson, 
+M. E. Understanding and predicting the orientation of heteroleptic phosphors in organic light-
+emitting materials. Nature Mater. 2016, 15, 85-91. 
+7 Kim, S.-Y.; Jeong, W.-I.; Mayr, C.; Park, Y.-S.; Kim, K.-H.; Lee, J.-H.; Moon, C.-K.; Brütting, 
+W.; Kim, J.-J. Organic Light-Emitting Diodes with 30% External Quantum Efficiency Based on 
+a Horizontally Oriented Emitter. Adv. Func. Mater. 2013, 23, 3896-3900. 
+8 Kim, K.-H.; Lee, S.; Moon, C.-K.; Kim, S.-Y.; Park, Y.-S.; Lee, J.-H.; Lee, J. W.; Huh, J.; You, 
+Y.; Kim, J.-J. Phosphorescent dye-based supramolecules for high-efficiency organic light-
+emitting diodes. Nature Commun. 2014, 5, 4679. 
+9 Escudero, D.; Jacquemin, D Computational insights into the photodeactivation dynamics of 
+phosphors for OLEDs: a perspective. Dalton Trans. 2015, 44, 8346-8355. 
+10 Sajoto, T.; Djurovich, P. I.; Tamayo, A. B.; Oxgaard, J.; Goddard III W. A.; Thompson, M. E. 
+Temperature Dependence of Blue Phosphorescent Cyclometalated Ir(III) Complexes. J. Am. 
+Chem. Soc. 2009, 131, 9813-9822. 
+11 Yersin, H.; Rausch, A. F.; Czerwieniec, R.; Hofbeck, T.; Fischer, T. The triplet state of 
+organo-transition metal compounds. Triplet harvesting and singlet harvesting for efficient 
+OLEDs. Coord. Chem. Rev. 2011, 255, 2622-2652. 
+12 Deaton, J. C.; Castellano, F. N. Archetypal Iridium(III) Compounds for Optoelectronic and 
+Photonic Applications. Iridium(III) in Optoelectronic and Photonics Applications; Zysman-
+Colman, Eds.; John Wiley & Sons Ltd: West Sussex, UK, 2017; pp 1–69. 
+
+
+===== PAGE 24 =====
+ 
+24
+                                                                                                                                                       
+13 Baryshnikov, G.; Minaev. B.; Ågren, H. Theory and Calculation of the Phosphorescence 
+Phenomenon. Chem. Rev. 2017, 117, 6500-6537. 
+14 Powell, B. J. Theories of phosphorescence in organo-transition metal complexes – From 
+relativistic effects to simple models and design principles for organic light-emitting diodes. 
+Coord. Chem. Rev. 2015, 295, 46-79. 
+15 Kleinschmidt, M.; van Wüllen, C.; Marian, M. Intersystem-crossing and phosphorescence rates 
+in fac-IrIII(ppy)3: A theoretical study involving multi-reference configuration interaction 
+wavefunctions. J. Chem. Phys. 2015, 142, 094301. 
+16 Shuai Z.; Peng Q. Excited states structure and processes: Understanding organic light-emitting 
+diodes at the molecular level. Phys. Rep. 2014, 537, 123-156. 
+17 Peng, Q.; Niu, Y.; Shi, Q.; Gao, X.; Shuai, Z. Correlation Function Formalism for Triplet 
+Excited State Decay: Combined Spin–Orbit and Nonadiabatic Couplings. J. Chem. Theory 
+Comput. 2013, 9, 1132-1143. 
+18 Escudero, D. Quantitative prediction of photoluminescence quantum yields of phosphors from 
+first principles. Chem. Sci. 2016, 7, 1262-1267. 
+19 Hofbeck, T.; Yersin, H. The Triplet State of fac-Ir(ppy)3. Inorg. Chem. 2010, 49, 9290-9299. 
+20 Tsuboyama, A.; Iwawaki, H.; Furugori, M.; Makaide, T.; Kamatani, J.; Igawa, S.; Moriyama, 
+T.; Miura, S.; Takiguchi, T.; Okada, S., et al. Homoleptic Cyclometalated Iridium Complexes 
+with Highly Efficient Red Phosphorescence and Application to Organic Light-Emitting Diode. J. 
+Am. Chem. Soc. 2003, 125, 12971-12979. 
+21 Mori, K.; Goumans, T. P. M.; van Lenthe, E.; Wang, F. Predicting phosphorescent lifetimes 
+and zero-field splitting of organometallic complexes with time-dependent density functional 
+theory including spin–orbit coupling. Phys. Chem. Chem. Phys. 2014, 16, 14523 
+22 Younker, J. M.; Dobbs, K. D. Correlating Experimental Photophysical Properties of 
+Iridium(III) Complexes to Spin–Orbit Coupled TDDFT Predictions. J. Phys. Chem. C  2013, 
+117, 25714-25723. 
+23 Peng, Q.; Shi, Q.; Niu, Y.; Yi, Y.; Sun, S.; Li, W.; Shuai, Z. Understanding the efficiency 
+drooping of the deep blue organometallic phosphors: a computational study of radiative and non-
+radiative decay rates for triplets. J. Mater. Chem. C 2016, 4, 6829-6838. 
+
+
+===== PAGE 25 =====
+ 
+25
+                                                                                                                                                       
+24 Fernández-Ramos, A.; Miller, J. A.; Klippenstein, S. J.; Truhlar, D. G. Modeling the Kinetics 
+of Bimolecular Reactions. Chem. Rev. 2006, 106, 4518-4584. 
+25 Steinmetz, M.; Grimme, S. Benchmark Study of the Performance of Density Functional 
+Theory for Bond Activations with (Ni,Pd)-Based Transition-Metal Catalysts. ChemistryOpen 
+2013, 2, 115-124. 
+26 Jansson, E.; Minaev, B.; Schrader, S.; Ågren, H. Time-dependent density functional 
+calculations of phosphorescence parameters for fac-tris(2-phenylpyridine) iridium. Chem. Phys. 
+2007, 333, 157-167.   
+27 Neese, F. Orca, an ab initio, DFT and semiempirical SCF-MO package 2.8.0 R2327, 
+University of Bonn: Bonn, Germany, 2011. 
+28 Goerigk, L.; Grimme, S. Efficient and Accurate Double-Hybrid-Meta-GGA Density 
+Functionals—Evaluation with the Extended GMTKN30 Database for General Main Group 
+Thermochemistry, Kinetics, and Noncovalent Interactions. J. Chem. Theory Comput. 2011, 7, 
+291-309. 
+29 Frisch, M. J.; Trucks, G. W.; Schlegel, H. B.; Scuseria, G. E.; Robb, M. A.; Cheeseman, J. R.; 
+Scalmani, G.; Barone, V.; Menucci, B.; Petersson, G. A., et al. Gaussian 09, Revision A.1, 
+Gaussian, Inc., Wallingford CT, 2009. 
+30 Tomasi, J.; Mennucci, B.; Cammi, R. Quantum Mechanical Continuum Solvation Models. 
+Chem. Rev. 2005, 105, 2999– 3094. 
+31 J. Zheng et al. POLYRATE, version 2010, University of Minnesota, Minneapolis, MN, 2010 
+32 Liu, W.; Wang, F.; Lemin, L. The Beijing Density Functional (BDF) Program Package: 
+Methodologies and Applications. J. Theor. Comput. Chem. 2003, 02, 257-272. 
+33 Shuai, Z.; Peng, Q.; Niu, Y. L; Geng, H. MOMAP, a free and open-source molecular materials 
+property prediction package, Revision 0.2.004, Shuai group, Beijing, CN, 2014, 
+http://www.shuaigroup.net/. 
+34 Peng, Q.; Yi, Y.; Shuai, Z.; Shao, J. Excited state radiationless decay process with Duschinsky 
+rotation effect: Formalism and implementation. J. Chem. Phys. 2007, 126, 114302. 
+35 Peng, Q.; Yi, Y.; Shuai, Z.; Shao, J. Toward quantitative prediction of molecular fluorescence 
+quantum efficiency: Role of Duschinsky rotation. J. Am. Chem. Soc. 2007, 129, 9333-9339. 
+
+
+===== PAGE 26 =====
+ 
+26
+                                                                                                                                                       
+36 Niu, Y.; Peng, Q.; Shuai, Z. Promoting-mode free formalism for excited state radiationless 
+decay process with Duschinsky rotation effect. Sci. China, Ser. B: Chem. 2008, 51, 1153-1158. 
+37 Niu, Y.; Peng, Q.; Deng, C.; Gao, X.; Shuai, Z. Theory of Excited State Decays and Optical 
+Spectra: Application to Polyatomic Molecules. J. Phys. Chem. A 2010, 114, 7817-7831. 
+38 Jacquemin, D.; Escudero, D. The short device lifetimes of blue PhOLEDs: insights into the 
+photostability of blue Ir(III) complexes. Chem. Sci. 2017, 8, 7844-7850. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+===== PAGE 27 =====
+ 
+27
+                                                                                                                                                       
+TOC Graphic 
+ 
+ 
+From first-principles computations of the photoluminescence lifetimes and efficiencies of Ir(III) complexes. 
+ 

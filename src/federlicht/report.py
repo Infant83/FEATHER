@@ -73,6 +73,8 @@ DEFAULT_LATEX_TEMPLATE = r"""\documentclass[11pt]{article}
 \end{document}
 """
 
+ARXIV_ID_RE = re.compile(r"^\d{4}\.\d{4,5}(?:v\d+)?$")
+
 
 def templates_dir() -> Path:
     env = os.getenv("FEDERLICHT_TEMPLATES_DIR") or os.getenv("FEATHER_TEMPLATES_DIR")
@@ -104,6 +106,7 @@ def parse_args() -> argparse.Namespace:
     epilog = (
         "Template selection:\n"
         "  --template/--templates auto|<name>|<path>\n"
+        "  --template-from-arxiv-src <path> (generate template bundle from arXiv source)\n"
         "  If --template is 'auto', a 'Template: <name>' line in the report prompt is used.\n"
         "  Otherwise the default template is applied.\n\n"
         "Output format:\n"
@@ -152,6 +155,26 @@ def parse_args() -> argparse.Namespace:
         dest="template",
         default="auto",
         help="Report template name or .md template path (default: auto).",
+    )
+    ap.add_argument(
+        "--agent-info",
+        nargs="?",
+        const="-",
+        help="Print agent registry JSON and exit (optional path to write).",
+    )
+    ap.add_argument(
+        "--agent-config",
+        help="Path to agent override JSON (prompts/models/config).",
+    )
+    ap.add_argument(
+        "--template-adjust",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Adjust template sections/guidance to match run intent (default: enabled).",
+    )
+    ap.add_argument(
+        "--template-from-arxiv-src",
+        help="Generate a template bundle from an arXiv source folder (00README.json) before running.",
     )
     ap.add_argument(
         "--preview-template",
@@ -333,6 +356,454 @@ def write_run_overview(
     return overview_path
 
 
+def arxiv_template_id(src_dir: Path) -> str:
+    name = src_dir.name
+    if ARXIV_ID_RE.match(name):
+        return name
+    if ARXIV_ID_RE.match(name.replace("_", ".")):
+        return name.replace("_", ".")
+    if src_dir.parent and ARXIV_ID_RE.match(src_dir.parent.name):
+        return src_dir.parent.name
+    return slugify_label(name, max_len=64)
+
+
+def read_arxiv_readme(src_dir: Path) -> Optional[dict]:
+    readme_path = src_dir / "00README.json"
+    if not readme_path.exists():
+        return None
+    try:
+        return json.loads(readme_path.read_text(encoding="utf-8", errors="replace"))
+    except json.JSONDecodeError:
+        return None
+
+
+def strip_tex_comments(line: str) -> str:
+    if "%" not in line:
+        return line
+    parts = line.split("%")
+    if not parts:
+        return line
+    return parts[0]
+
+
+def select_main_tex(src_dir: Path, readme: Optional[dict]) -> Optional[Path]:
+    if readme:
+        sources = readme.get("sources") or []
+        if isinstance(sources, list):
+            toplevel = None
+            for entry in sources:
+                if not isinstance(entry, dict):
+                    continue
+                if entry.get("usage") == "toplevel":
+                    toplevel = entry
+                    break
+            choice = toplevel or (sources[0] if sources else None)
+            if isinstance(choice, dict):
+                filename = choice.get("filename")
+                if filename:
+                    candidate = src_dir / filename
+                    if candidate.exists():
+                        return candidate
+    tex_files = sorted(src_dir.rglob("*.tex"))
+    for tex in tex_files:
+        try:
+            head = tex.read_text(encoding="utf-8", errors="replace")[:8000]
+        except Exception:
+            continue
+        if "\\documentclass" in head:
+            return tex
+    return tex_files[0] if tex_files else None
+
+
+def extract_tex_includes(tex_text: str) -> list[str]:
+    includes = []
+    for raw in tex_text.splitlines():
+        line = strip_tex_comments(raw).strip()
+        if not line:
+            continue
+        for match in re.finditer(r"\\(?:input|include|subfile)\{([^}]+)\}", line):
+            path = match.group(1).strip()
+            if path:
+                includes.append(path)
+    return includes
+
+
+def resolve_tex_path(base: Path, rel: str) -> Optional[Path]:
+    candidate = Path(rel)
+    if not candidate.suffix:
+        candidate = candidate.with_suffix(".tex")
+    if not candidate.is_absolute():
+        candidate = (base / candidate).resolve()
+    if candidate.exists():
+        return candidate
+    return None
+
+
+def collect_tex_tree(main_tex: Path) -> list[Path]:
+    ordered: list[Path] = []
+    seen: set[Path] = set()
+
+    def visit(path: Path) -> None:
+        if path in seen or not path.exists():
+            return
+        seen.add(path)
+        ordered.append(path)
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            return
+        for inc in extract_tex_includes(text):
+            resolved = resolve_tex_path(path.parent, inc)
+            if resolved:
+                visit(resolved)
+
+    visit(main_tex)
+    return ordered
+
+
+def extract_tex_sections(tex_files: list[Path]) -> list[dict]:
+    sections: list[dict] = []
+    pattern = re.compile(r"\\(section|subsection|subsubsection)\*?\{([^}]+)\}")
+    for path in tex_files:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for raw in text.splitlines():
+            line = strip_tex_comments(raw)
+            for match in pattern.finditer(line):
+                level = match.group(1)
+                title = match.group(2).strip()
+                if title:
+                    sections.append({"level": level, "title": title, "file": path})
+    return sections
+
+
+def section_list_from_tex(sections: list[dict], main_tex: Optional[Path]) -> list[str]:
+    found: list[str] = []
+    seen: set[str] = set()
+    if main_tex:
+        try:
+            main_text = main_tex.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            main_text = ""
+        if re.search(r"\\begin\{abstract\}", main_text):
+            found.append("Abstract")
+            seen.add("Abstract")
+    for sec in sections:
+        if sec.get("level") != "section":
+            continue
+        title = sec.get("title")
+        if not title or title in seen:
+            continue
+        seen.add(title)
+        found.append(title)
+    return found
+
+
+def merge_section_lists(primary: list[str], fallback: list[str]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for section in primary:
+        key = section.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(section)
+    for section in fallback:
+        key = section.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(section)
+    return merged
+
+
+def group_section_structure(section_meta: list[dict]) -> list[dict]:
+    groups: list[dict] = []
+    current: Optional[dict] = None
+    for entry in section_meta:
+        level = entry.get("level")
+        title = entry.get("title")
+        if not isinstance(title, str) or not title.strip():
+            continue
+        if level == "section":
+            current = {"title": title.strip(), "subsections": []}
+            groups.append(current)
+            continue
+        if current is None:
+            continue
+        if level in {"subsection", "subsubsection"}:
+            current["subsections"].append((level, title.strip()))
+    return groups
+
+
+def build_arxiv_template_guidance(
+    sections: list[str],
+    report_prompt: Optional[str],
+    language: str,
+    model_name: str,
+    create_deep_agent,
+    backend,
+    prompt_override: Optional[str] = None,
+) -> tuple[dict[str, str], list[str]]:
+    if not sections:
+        return {}, []
+    prompt = prompt_override or build_template_designer_prompt()
+    user_parts = [
+        "Sections:",
+        "\n".join(f"- {s}" for s in sections),
+        "",
+        "Report focus prompt:",
+        report_prompt or "(none)",
+        "",
+        f"Write in {language}.",
+    ]
+    agent = create_agent_with_fallback(create_deep_agent, model_name, [], prompt, backend)
+    result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
+    text = extract_agent_text(result)
+    parsed = extract_json_object(text) or {}
+    section_guidance = parsed.get("section_guidance") if isinstance(parsed, dict) else None
+    writer_guidance = parsed.get("writer_guidance") if isinstance(parsed, dict) else None
+    if not isinstance(section_guidance, dict):
+        section_guidance = {}
+    if not isinstance(writer_guidance, list):
+        writer_guidance = []
+    clean_guidance = {}
+    for key, value in section_guidance.items():
+        if not key or not isinstance(value, str):
+            continue
+        clean_guidance[str(key)] = " ".join(value.split())
+    clean_writer = [" ".join(str(item).split()) for item in writer_guidance if item]
+    return clean_guidance, clean_writer
+
+
+def fallback_template_guidance(sections: list[str]) -> tuple[dict[str, str], list[str]]:
+    guidance = {}
+    for section in sections:
+        guidance[section] = "Summarize key evidence and implications for this section."
+    return guidance, ["Maintain a critical, evidence-based review tone."]
+
+
+def generate_template_from_arxiv_src(
+    src_dir: Path,
+    run_dir: Path,
+    report_prompt: Optional[str],
+    language: str,
+    model_name: str,
+    create_deep_agent,
+    backend,
+    style_spec: TemplateSpec,
+    prompt_override: Optional[str] = None,
+) -> Optional[Path]:
+    if not src_dir.exists():
+        print(f"ERROR template source not found: {src_dir}", file=sys.stderr)
+        return None
+    readme = read_arxiv_readme(src_dir)
+    if not readme:
+        print(
+            "WARN 00README.json not found. Falling back to auto-detect main .tex file.",
+            file=sys.stderr,
+        )
+    main_tex = select_main_tex(src_dir, readme)
+    if not main_tex:
+        print(f"ERROR no .tex files found in: {src_dir}", file=sys.stderr)
+        return None
+    tex_files = collect_tex_tree(main_tex)
+    section_meta = extract_tex_sections(tex_files)
+    source_sections = section_list_from_tex(section_meta, main_tex)
+    base_sections = list(style_spec.sections) if style_spec.sections else list(DEFAULT_SECTIONS)
+    sections = merge_section_lists(source_sections, base_sections)
+    if not sections:
+        sections = list(DEFAULT_SECTIONS)
+
+    template_root = run_dir / "template_src" / arxiv_template_id(src_dir)
+    template_root.mkdir(parents=True, exist_ok=True)
+    sections_dir = template_root / "sections"
+    guidance_dir = template_root / "guidance"
+    sections_dir.mkdir(parents=True, exist_ok=True)
+    guidance_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        section_guidance, writer_guidance = build_arxiv_template_guidance(
+            sections,
+            report_prompt,
+            language,
+            model_name,
+            create_deep_agent,
+            backend,
+            prompt_override=prompt_override,
+        )
+    except Exception as exc:
+        print(f"WARN template guidance generation failed: {exc}", file=sys.stderr)
+        section_guidance, writer_guidance = fallback_template_guidance(sections)
+
+    template_md = template_root / "template.md"
+    template_tex = template_root / "template_skeleton.tex"
+    template_main = template_root / "template_main.tex"
+    manifest_path = template_root / "template_manifest.json"
+    style_css = style_spec.css or "default.css"
+    style_latex = style_spec.latex or "default.tex"
+    css_path = resolve_template_css_path(style_spec)
+    latex_path = resolve_template_latex_path(style_spec)
+    if css_path and css_path.exists():
+        target = template_root / css_path.name
+        if not target.exists():
+            shutil.copy2(css_path, target)
+        style_css = target.name
+    if latex_path and latex_path.exists():
+        target = template_root / latex_path.name
+        if not target.exists():
+            shutil.copy2(latex_path, target)
+        style_latex = target.name
+    header = [
+        "---",
+        f"name: arxiv_{arxiv_template_id(src_dir)}",
+        f"description: Generated from arXiv source structure ({arxiv_template_id(src_dir)}).",
+        f"tone: {style_spec.tone or 'Technical, evidence-based.'}",
+        f"audience: {style_spec.audience or 'Domain experts and technical leaders.'}",
+        f"css: {style_css}",
+        f"latex: {style_latex}",
+    ]
+    for section in sections:
+        header.append(f"section: {section}")
+        guidance = section_guidance.get(section)
+        if guidance:
+            header.append(f"guide {section}: {guidance}")
+    for note in writer_guidance:
+        header.append(f"writer_guidance: {note}")
+    header.append("---")
+    template_md.write_text("\n".join(header) + "\n", encoding="utf-8")
+
+    grouped = group_section_structure(section_meta)
+    grouped_map = {g["title"]: g for g in grouped if isinstance(g.get("title"), str)}
+    section_files: list[dict] = []
+    main_lines = ["% Auto-generated main file from arXiv source", ""]
+    skeleton_lines = list(main_lines)
+    for idx, section in enumerate(sections, start=1):
+        slug = slugify_label(section, max_len=64)
+        file_name = f"ch_{idx:02d}_{slug}.tex"
+        section_path = sections_dir / file_name
+        guidance_path = guidance_dir / f"{file_name}.md"
+        file_lines = []
+        if section.lower() == "abstract":
+            file_lines.append("\\section*{Abstract}")
+        else:
+            file_lines.append(f"\\section{{{latex_escape(section)}}}")
+        file_lines.append("% TODO: write content")
+        group = grouped_map.get(section)
+        if group:
+            for level, title in group.get("subsections", []):
+                if level == "subsubsection":
+                    file_lines.append(f"\\subsubsection{{{latex_escape(title)}}}")
+                else:
+                    file_lines.append(f"\\subsection{{{latex_escape(title)}}}")
+                file_lines.append("% TODO: write content")
+        section_path.write_text("\n".join(file_lines).strip() + "\n", encoding="utf-8")
+        guidance_text = section_guidance.get(section) or "Summarize key evidence and implications for this section."
+        guidance_path.write_text(f"# {section}\n\n{guidance_text}\n", encoding="utf-8")
+        section_files.append(
+            {
+                "title": section,
+                "path": str(section_path),
+                "guidance_path": str(guidance_path),
+            }
+        )
+        main_lines.append(f"\\input{{sections/{file_name}}}")
+        skeleton_lines.append(f"\\input{{sections/{file_name}}}")
+    template_main.write_text("\n".join(main_lines).strip() + "\n", encoding="utf-8")
+    template_tex.write_text("\n".join(skeleton_lines).strip() + "\n", encoding="utf-8")
+
+    manifest = {
+        "source_dir": str(src_dir),
+        "main_tex": str(main_tex),
+        "tex_files": [str(path) for path in tex_files],
+        "sections": sections,
+        "section_files": section_files,
+        "readme": readme,
+        "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "style_template": style_spec.name,
+        "template_md": str(template_md),
+        "template_skeleton": str(template_tex),
+        "template_main": str(template_main),
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    return template_md
+
+
+def rel_path_or_abs(path: Path, base_dir: Path) -> str:
+    try:
+        rel = path.relative_to(base_dir).as_posix()
+        return f"./{rel}"
+    except ValueError:
+        return str(path)
+
+
+def write_report_prompt_copy(
+    run_dir: Path,
+    report_prompt: Optional[str],
+    output_path: Optional[Path],
+) -> Optional[Path]:
+    instr_dir = run_dir / "instruction"
+    instr_dir.mkdir(parents=True, exist_ok=True)
+    stem = output_path.stem if output_path else "report"
+    prompt_path = instr_dir / f"report_prompt_{stem}.txt"
+    text = (report_prompt or "No report prompt provided.").strip()
+    prompt_path.write_text(f"{text}\n", encoding="utf-8")
+    return prompt_path
+
+
+def write_report_overview(
+    run_dir: Path,
+    output_path: Optional[Path],
+    report_prompt: Optional[str],
+    template_name: str,
+    template_adjustment_path: Optional[Path],
+    output_format: str,
+    language: str,
+    quality_iterations: int,
+    quality_strategy: str,
+    figures_enabled: bool,
+    figures_mode: str,
+    prompt_path: Optional[Path],
+) -> Optional[Path]:
+    if not output_path:
+        return None
+    report_dir = run_dir / "report"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    overview_path = report_dir / f"run_overview_{output_path.stem}.md"
+    lines: list[str] = [
+        "# Report Overview",
+        "",
+        "## Report Output",
+        f"Output: {rel_path_or_abs(output_path, run_dir)}",
+        f"Template: {template_name}",
+        f"Format: {output_format}",
+        f"Language: {language}",
+        f"Quality iterations: {quality_iterations}",
+        f"Quality strategy: {quality_strategy}",
+        f"Figures: {'enabled' if figures_enabled else 'disabled'} ({figures_mode})",
+        "",
+    ]
+    if prompt_path:
+        lines.extend(["## Report Prompt (Saved)", f"Source: {rel_path_or_abs(prompt_path, run_dir)}", ""])
+    if template_adjustment_path:
+        lines.extend(
+            [
+                "## Template Adjustment",
+                f"Source: {rel_path_or_abs(template_adjustment_path, run_dir)}",
+                "",
+            ]
+        )
+    if report_prompt:
+        lines.append("```")
+        lines.append(report_prompt.strip())
+        lines.append("```")
+        lines.append("")
+    overview_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+    return overview_path
+
+
 def find_baseline_report(run_dir: Path) -> Optional[Path]:
     candidate = run_dir / "report.md"
     return candidate if candidate.exists() else None
@@ -422,9 +893,14 @@ def choose_format(output: Optional[str]) -> str:
     return "md"
 
 
+def escape_latex_heading(text: str) -> str:
+    # Keep LaTeX math/commands intact; only escape characters that break headings.
+    return text.replace("&", "\\&").replace("%", "\\%").replace("#", "\\#")
+
+
 def build_report_skeleton(sections: list[str], output_format: str) -> str:
     if output_format == "tex":
-        return "\n".join(f"\\section{{{section}}}" for section in sections)
+        return "\n".join(f"\\section{{{escape_latex_heading(section)}}}" for section in sections)
     return "\n".join(f"## {section}" for section in sections)
 
 
@@ -541,7 +1017,7 @@ def sanitize_latex_headings(text: str) -> str:
     pattern = re.compile(r"(\\(?:sub)*section\\*?\\{)([^}]+)\\}")
 
     def repl(match: re.Match[str]) -> str:
-        title = match.group(2).replace("&", "\\&")
+        title = escape_latex_heading(match.group(2))
         return f"{match.group(1)}{title}}}"
 
     return pattern.sub(repl, text)
@@ -628,10 +1104,14 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
     if output_format != "html":
         if meta.get("run_overview_path"):
             lines.append(f"Run overview: {meta.get('run_overview_path')}")
+        if meta.get("report_overview_path"):
+            lines.append(f"Report overview: {meta.get('report_overview_path')}")
         if meta.get("archive_index_path"):
             lines.append(f"Archive index: {meta.get('archive_index_path')}")
         if meta.get("instruction_path"):
             lines.append(f"Instruction file: {meta.get('instruction_path')}")
+        if meta.get("report_prompt_path"):
+            lines.append(f"Report prompt: {meta.get('report_prompt_path')}")
         if meta.get("figures_preview_path"):
             lines.append(f"Figure candidates: {meta.get('figures_preview_path')}")
     if output_format == "tex":
@@ -648,8 +1128,10 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
             items_list.append(f"<li>{html_lib.escape(label)}: <a href=\"{safe}\">{safe}</a></li>")
 
         add_link("Run overview", meta.get("run_overview_path"))
+        add_link("Report overview", meta.get("report_overview_path"))
         add_link("Archive index", meta.get("archive_index_path"))
         add_link("Instruction file", meta.get("instruction_path"))
+        add_link("Report prompt", meta.get("report_prompt_path"))
         add_link("Figure candidates", meta.get("figures_preview_path"))
         items = "\n".join(items_list)
         return "\n".join(
@@ -703,18 +1185,7 @@ def evaluate_report(
     max_chars: int,
 ) -> dict:
     metrics = ", ".join(QUALITY_WEIGHTS.keys())
-    evaluator_prompt = (
-        "You are a rigorous report evaluator. Score the report across multiple dimensions, "
-        "including alignment with the report prompt, tone/voice fit, output-format compliance, "
-        "structure/readability, evidence grounding, hallucination risk (lower risk = higher score), "
-        "insight depth, and aesthetic/visual completeness. "
-        "Return JSON only with these keys:\n"
-        f"{metrics}, overall, strengths, weaknesses, fixes\n"
-        "Each score must be 0-100 (higher is better). "
-        "For hallucination risk, output a high score when risk is low (i.e., well-grounded). "
-        "Provide strengths/weaknesses/fixes as short bullet strings (array of strings). "
-        "Do not include any extra text outside JSON."
-    )
+    evaluator_prompt = build_evaluate_prompt(metrics)
     evaluator_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, evaluator_prompt, backend)
     format_note = "LaTeX" if output_format == "tex" else "Markdown/HTML"
     evaluator_input = "\n".join(
@@ -775,13 +1246,7 @@ def compare_reports_pairwise(
     backend,
     max_chars: int,
 ) -> dict:
-    judge_prompt = (
-        "You are a senior journal editor. Compare Report A vs Report B and choose the stronger report. "
-        "Consider alignment, evidence grounding, hallucination risk, format compliance, clarity, "
-        "and narrative strength. Return JSON only:\n"
-        "{\"winner\": \"A|B|Tie\", \"reason\": \"...\", \"focus_improvements\": [\"...\"]}\n"
-        "Do not include any extra text outside JSON."
-    )
+    judge_prompt = build_compare_prompt()
     judge_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, judge_prompt, backend)
     format_note = "LaTeX" if output_format == "tex" else "Markdown/HTML"
     judge_input = "\n".join(
@@ -845,29 +1310,8 @@ def synthesize_reports(
     backend,
     max_chars: int,
 ) -> str:
-    section_instruction = (
-        "Use the following exact H2 headings in this order (do not rename; do not add extra H2 headings):\n"
-        if output_format != "tex"
-        else "Use the following exact \\section headings in this order (do not rename; do not add extra \\section headings):\n"
-    )
-    format_instruction = ""
-    if output_format == "tex":
-        format_instruction = (
-            "Write LaTeX body only (no documentclass/preamble). "
-            "Use \\section{...} headings for each required section and \\subsection for subpoints. "
-            "Do not use Markdown formatting. "
-            "Avoid square brackets except for raw source citations. "
-        )
-    synthesis_prompt = (
-        "You are a chief editor. Merge the strongest parts of Report A and Report B, fix weaknesses, "
-        "and produce a final report with higher overall quality. "
-        "Preserve citations; do not invent sources. "
-        "Do not add a full References list; the script appends it automatically. "
-        f"{section_instruction}{build_report_skeleton(required_sections, output_format)}\n"
-        f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
-        f"{format_instruction}"
-        f"Write in {language}."
-    )
+    format_instructions = build_format_instructions(output_format, required_sections)
+    synthesis_prompt = build_synthesize_prompt(format_instructions, template_guidance_text, language)
     synthesis_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, synthesis_prompt, backend)
     notes = "\n".join(
         f"- {note.get('reason', '')} (winner={note.get('winner')})"
@@ -957,7 +1401,6 @@ def resolve_output_path(
                 counter += 1
                 continue
         return candidate
-        counter += 1
 
 
 def compile_latex_to_pdf(tex_path: Path) -> tuple[bool, str]:
@@ -1082,6 +1525,831 @@ class TemplateSpec:
     css: Optional[str] = None
     latex: Optional[str] = None
     source: Optional[str] = None
+
+
+def normalize_section_list(sections: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    normalized: list[str] = []
+    for section in sections:
+        text = " ".join(str(section).split()).strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(text)
+    return normalized
+
+
+def match_section_by_keywords(sections: list[str], keywords: list[str]) -> Optional[str]:
+    for section in sections:
+        lowered = section.lower()
+        if any(keyword in lowered for keyword in keywords):
+            return section
+    return None
+
+
+def infer_required_sections_from_prompt(report_prompt: Optional[str], template_sections: list[str]) -> list[str]:
+    if not report_prompt:
+        return []
+    text = report_prompt.lower()
+    canonical = {
+        "summary": "Executive Summary",
+        "scope": "Scope & Methodology",
+        "method": "Scope & Methodology",
+        "findings": "Key Findings",
+        "trend": "Trends & Implications",
+        "risk": "Risks & Gaps",
+        "critic": "Critics",
+        "appendix": "Appendix",
+        "conclusion": "Conclusion",
+    }
+    keyword_map = {
+        "summary": ["executive summary", "summary", "요약", "서문 요약"],
+        "scope": ["scope", "범위"],
+        "method": ["method", "methodology", "방법", "방법론"],
+        "findings": ["key findings", "findings", "핵심 발견", "핵심 내용"],
+        "trend": ["trend", "trends", "implication", "implications", "추세", "시사점"],
+        "risk": ["risk", "risks", "gap", "gaps", "limitation", "limitations", "위험", "리스크", "한계", "공백"],
+        "critic": ["critic", "critique", "비판", "비평", "사설"],
+        "appendix": ["appendix", "부록"],
+        "conclusion": ["conclusion", "결론", "종합"],
+    }
+    required: list[str] = []
+    for key, keywords in keyword_map.items():
+        if not any(keyword in text for keyword in keywords):
+            continue
+        match = match_section_by_keywords(template_sections, keywords)
+        required.append(match or canonical[key])
+    return normalize_section_list(required)
+
+
+def merge_required_sections(
+    adjusted_sections: list[str],
+    required_sections: list[str],
+    template_sections: list[str],
+) -> list[str]:
+    final = normalize_section_list(adjusted_sections) or normalize_section_list(template_sections)
+    for required in required_sections:
+        if required in final:
+            continue
+        inserted = False
+        if required in template_sections:
+            idx = template_sections.index(required)
+            insert_at = len(final)
+            for prev in reversed(template_sections[:idx]):
+                if prev in final:
+                    insert_at = final.index(prev) + 1
+                    break
+            final.insert(insert_at, required)
+            inserted = True
+        if not inserted:
+            final.append(required)
+    return final
+
+
+def adjust_template_spec(
+    template_spec: TemplateSpec,
+    report_prompt: Optional[str],
+    scout_notes: str,
+    align_scout: Optional[str],
+    clarification_answers: Optional[str],
+    language: str,
+    output_format: str,
+    model_name: str,
+    create_deep_agent,
+    backend,
+    prompt_override: Optional[str] = None,
+    model_override: Optional[str] = None,
+) -> tuple[TemplateSpec, Optional[dict]]:
+    if not report_prompt and not scout_notes:
+        return template_spec, None
+    base_sections = normalize_section_list(template_spec.sections) or list(DEFAULT_SECTIONS)
+    required_sections = infer_required_sections_from_prompt(report_prompt, base_sections)
+    template_guidance = "\n".join(f"- {key}: {value}" for key, value in template_spec.section_guidance.items())
+    writer_guidance = "\n".join(f"- {item}" for item in template_spec.writer_guidance)
+    prompt = prompt_override or build_template_adjuster_prompt(output_format)
+    user_parts = [
+        f"Output format: {output_format}",
+        f"Language: {language}",
+        "",
+        "Required sections (must include):",
+        "\n".join(f"- {section}" for section in required_sections) or "(none)",
+        "",
+        "Template sections:",
+        "\n".join(f"- {section}" for section in base_sections),
+        "",
+        "Template guidance:",
+        template_guidance or "(none)",
+        "",
+        "Template writer guidance:",
+        writer_guidance or "(none)",
+        "",
+        "Report focus prompt:",
+        report_prompt or "(none)",
+        "",
+        "Scout notes:",
+        truncate_text(scout_notes, 4000),
+    ]
+    if align_scout:
+        user_parts.extend(["", "Alignment notes (scout):", truncate_text(align_scout, 2000)])
+    if clarification_answers:
+        user_parts.extend(["", "User clarifications:", truncate_text(clarification_answers, 1200)])
+    agent_model = model_override or model_name
+    agent = create_agent_with_fallback(create_deep_agent, agent_model, [], prompt, backend)
+    result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
+    text = extract_agent_text(result)
+    parsed = extract_json_object(text)
+    if not isinstance(parsed, dict):
+        return template_spec, None
+    sections = parsed.get("sections") if isinstance(parsed.get("sections"), list) else base_sections
+    adjusted_sections = normalize_section_list(sections)
+    adjusted_sections = merge_required_sections(adjusted_sections, required_sections, base_sections)
+    section_guidance = parsed.get("section_guidance") if isinstance(parsed.get("section_guidance"), dict) else {}
+    writer_guidance = parsed.get("writer_guidance") if isinstance(parsed.get("writer_guidance"), list) else []
+    clean_guidance = {
+        str(key): " ".join(str(value).split())
+        for key, value in section_guidance.items()
+        if key and isinstance(value, str)
+    }
+    clean_writer_guidance = [" ".join(str(item).split()) for item in writer_guidance if item]
+    merged_guidance = dict(template_spec.section_guidance)
+    merged_guidance.update({k: v for k, v in clean_guidance.items() if k in adjusted_sections})
+    missing_guidance = [section for section in adjusted_sections if section not in merged_guidance]
+    if missing_guidance:
+        fallback_guidance, fallback_writer = fallback_template_guidance(missing_guidance)
+        merged_guidance.update(fallback_guidance)
+        clean_writer_guidance.extend(fallback_writer)
+    merged_writer = list(template_spec.writer_guidance)
+    for item in clean_writer_guidance:
+        if item and item not in merged_writer:
+            merged_writer.append(item)
+    adjusted_spec = TemplateSpec(
+        name=template_spec.name,
+        sections=adjusted_sections,
+        section_guidance=merged_guidance,
+        writer_guidance=merged_writer,
+        description=template_spec.description,
+        tone=template_spec.tone,
+        audience=template_spec.audience,
+        css=template_spec.css,
+        latex=template_spec.latex,
+        source=template_spec.source,
+    )
+    adjustment = {
+        "rationale": str(parsed.get("rationale", "")).strip(),
+        "sections": adjusted_sections,
+        "section_guidance": clean_guidance,
+        "writer_guidance": clean_writer_guidance,
+        "required_sections": required_sections,
+    }
+    return adjusted_spec, adjustment
+
+
+def write_template_adjustment_note(
+    notes_dir: Path,
+    template_spec: TemplateSpec,
+    adjusted_spec: TemplateSpec,
+    adjustment: dict,
+    output_format: str,
+    language: str,
+) -> Optional[Path]:
+    if not adjustment:
+        return None
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    original_sections = normalize_section_list(template_spec.sections)
+    adjusted_sections = normalize_section_list(adjusted_spec.sections)
+    added = [section for section in adjusted_sections if section not in original_sections]
+    removed = [section for section in original_sections if section not in adjusted_sections]
+    rationale = adjustment.get("rationale") or "(none)"
+    path = notes_dir / "template_adjustment.md"
+    lines = [
+        "# Template Adjustment",
+        "",
+        f"Template: {template_spec.name}",
+        f"Format: {output_format}",
+        f"Language: {language}",
+        "",
+        "## Rationale",
+        rationale or "(none)",
+        "",
+        "## Required Sections (prompt-derived)",
+        "\n".join(f"- {section}" for section in adjustment.get("required_sections", [])) or "(none)",
+        "",
+        "## Sections (original)",
+        "\n".join(f"- {section}" for section in original_sections) or "(none)",
+        "",
+        "## Sections (adjusted)",
+        "\n".join(f"- {section}" for section in adjusted_sections) or "(none)",
+        "",
+        "## Added Sections",
+        "\n".join(f"- {section}" for section in added) or "(none)",
+        "",
+        "## Removed Sections",
+        "\n".join(f"- {section}" for section in removed) or "(none)",
+        "",
+    ]
+    guidance = adjustment.get("section_guidance") if isinstance(adjustment.get("section_guidance"), dict) else {}
+    if guidance:
+        lines.extend(
+            [
+                "## Guidance Overrides",
+                "\n".join(f"- {section}: {text}" for section, text in guidance.items()),
+                "",
+            ]
+        )
+    writer_guidance = adjustment.get("writer_guidance") if isinstance(adjustment.get("writer_guidance"), list) else []
+    if writer_guidance:
+        lines.extend(["## Writer Guidance Additions", "\n".join(f"- {item}" for item in writer_guidance), ""])
+    path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+    return path
+
+
+def build_template_guidance_text(template_spec: TemplateSpec) -> str:
+    lines: list[str] = []
+    if template_spec.description:
+        lines.append(f"Template description: {template_spec.description}")
+    if template_spec.tone:
+        lines.append(f"Template tone: {template_spec.tone}")
+    if template_spec.audience:
+        lines.append(f"Template audience: {template_spec.audience}")
+    if template_spec.section_guidance:
+        section_lines = [f"- {key}: {value}" for key, value in template_spec.section_guidance.items()]
+        lines.append("Section guidance:\n" + "\n".join(section_lines))
+    if template_spec.writer_guidance:
+        lines.append("Template writing guidance:\n" + "\n".join(template_spec.writer_guidance))
+    return "\n\n".join(lines) if lines else ""
+
+
+@dataclass
+class FormatInstructions:
+    report_skeleton: str
+    section_heading_instruction: str
+    latex_safety_instruction: str
+    format_instruction: str
+    citation_instruction: str
+
+
+def build_format_instructions(output_format: str, required_sections: list[str]) -> FormatInstructions:
+    report_skeleton = build_report_skeleton(required_sections, output_format)
+    section_heading_instruction = (
+        "Use the following exact H2 headings in this order (do not rename; do not add extra H2 headings):\n"
+        if output_format != "tex"
+        else "Use the following exact \\section headings in this order (do not rename; do not add extra \\section headings):\n"
+    )
+    citation_instruction = (
+        "Avoid printing full URLs in the body; use short link labels like [source] or [paper] instead. "
+        "Prefer markdown links for file paths so they are clickable. "
+        if output_format != "tex"
+        else "When citing sources, include the raw URL or file path inside square brackets "
+        "(e.g., [https://example.com], [./archive/path.txt]). Do not use Markdown links. "
+        "Avoid printing full URLs elsewhere in the body. "
+    )
+    latex_safety_instruction = ""
+    format_instruction = ""
+    if output_format == "tex":
+        latex_safety_instruction = (
+            "LaTeX safety: escape special characters in text/headings (use \\& for &, \\% for %, \\# for #). "
+            "Only use & inside tabular/align environments. "
+            "Use underscores only inside math; otherwise escape as \\_. "
+        )
+        format_instruction = (
+            "Write LaTeX body only (no documentclass/preamble). "
+            "Use \\section{...} headings for each required section and \\subsection for subpoints. "
+            "Do not use Markdown formatting. "
+            "Avoid square brackets except for raw source citations. "
+            f"{latex_safety_instruction}"
+        )
+    return FormatInstructions(
+        report_skeleton=report_skeleton,
+        section_heading_instruction=section_heading_instruction,
+        latex_safety_instruction=latex_safety_instruction,
+        format_instruction=format_instruction,
+        citation_instruction=citation_instruction,
+    )
+
+
+def build_scout_prompt(language: str) -> str:
+    return (
+        "You are a source scout. Map the archive, identify key source files, and propose a reading plan. "
+        "Always open JSONL metadata files if present (archive/tavily_search.jsonl, archive/openalex/works.jsonl, "
+        "archive/arxiv/papers.jsonl, archive/youtube/videos.jsonl, archive/local/manifest.jsonl) to understand coverage. "
+        "Note: the filesystem root '/' is mapped to the run folder. "
+        "Treat JSONL files as indices of sources, not as the report output. "
+        "Follow any report focus prompt provided in the user input. "
+        "Prioritize sources relevant to the report focus and ignore off-topic items. "
+        f"Write notes in {language}. Keep proper nouns and source titles in their original language. "
+        "Use list_archive_files and read_document as needed. Output a structured inventory and a prioritized "
+        "list of files to read (max 12) with rationale."
+    )
+
+
+def build_clarifier_prompt(language: str) -> str:
+    return (
+        "You are a report planning assistant. Based on the run context, scout notes, and report focus prompt, "
+        "decide if you need clarifications from the user. If none are needed, respond with 'NO_QUESTIONS'. "
+        f"Otherwise, list up to 5 concise questions in {language}."
+    )
+
+
+def build_alignment_prompt() -> str:
+    return (
+        "You are an alignment auditor. Check whether the stage output aligns with the report focus prompt "
+        "and any user clarifications. If no prompt or clarifications exist, judge alignment to the run context "
+        "(query ID, instruction scope, and available sources). Return in this exact format:\n"
+        "Alignment score: <0-100>\n"
+        "Aligned:\n- ...\n"
+        "Gaps/Risks:\n- ...\n"
+        "Next-step guidance:\n- ...\n"
+        "Be concise and actionable."
+    )
+
+
+def build_plan_prompt(language: str) -> str:
+    return (
+        "You are a report planner. Create a concise, ordered plan (5-9 steps) to produce the final report. "
+        "Each step should be one line with a status checkbox. "
+        "Use this format:\n"
+        "- [ ] Step title — short description\n"
+        "Focus on reading the most relevant sources, extracting evidence, and synthesizing insights. "
+        "Align the plan with the report focus prompt and clarifications. "
+        f"Write in {language}."
+    )
+
+
+def build_plan_check_prompt(language: str) -> str:
+    return (
+        "You are a plan checker. Update the plan by marking completed steps with [x] and "
+        "adding any missing steps needed to finish the report. Keep it concise. "
+        f"Write in {language}."
+    )
+
+
+def build_web_prompt() -> str:
+    return (
+        "You are planning targeted web searches to enrich a research report. "
+        "Provide up to 6 concise search queries in English, one per line. "
+        "Focus on recent, credible sources and technical specifics. "
+        "Avoid broad keywords; include concrete phrases, paper titles, or domains when helpful."
+    )
+
+
+def build_evidence_prompt(language: str) -> str:
+    return (
+        "You are an evidence extractor. Use the scout notes to read key files and extract salient facts. "
+        "Start by reading any JSONL metadata files that exist (tavily_search.jsonl, openalex/works.jsonl, "
+        "arxiv/papers.jsonl, youtube/videos.jsonl, local/manifest.jsonl) to identify sources. "
+        "Do not cite JSONL index files in your evidence; cite the underlying source URLs and extracted text/PDF files. "
+        "If full text files are missing, you may use abstracts/summaries from metadata (e.g., arXiv summary or "
+        "OpenAlex abstract) but still cite the original source URL, not the JSONL. "
+        "If a supporting folder exists (./supporting/...), also read supporting/web_search.jsonl and "
+        "supporting/web_extract or supporting/web_text to incorporate updated web evidence. "
+        "Use JSONL to locate the actual content (extracts, PDFs, transcripts) and summarize those sources. "
+        "If a source is off-topic relative to the report focus, skip it. "
+        "Cite file paths in square brackets. Prefer existing extracted text files; use PDFs only when needed. "
+        "Capture original source URLs (not only archive paths) when available. "
+        f"Deliver concise bullet lists grouped by source type in {language}. "
+        "Keep proper nouns and source titles in their original language."
+    )
+
+
+def build_writer_prompt(
+    format_instructions: FormatInstructions,
+    template_guidance_text: str,
+    template_spec: TemplateSpec,
+    required_sections: list[str],
+    output_format: str,
+    language: str,
+) -> str:
+    critics_guidance = ""
+    if any(section.lower().startswith("critics") for section in required_sections):
+        critics_guidance = (
+            "For the Critics section, write in a concise editorial tone with a short headline, brief paragraphs, "
+            "and a few bullet points highlighting orthogonal or contrarian viewpoints, risks, or overlooked constraints. "
+            "If relevant, touch on AI ethics, regulation (e.g., EU AI Act), safety/security, and explainability. "
+        )
+    tone_instruction = (
+        "Use a formal/academic research-journal tone suitable for PRL/Nature/Annual Review-style manuscripts. "
+        if template_spec.name in FORMAL_TEMPLATES
+        else "Use an explanatory review style (설명형 리뷰) with a professional yet natural narrative tone. "
+    )
+    return (
+        "You are a senior research writer. Using the instruction, baseline report, and evidence notes, "
+        "produce a detailed report with citations. "
+        f"{tone_instruction}"
+        f"{format_instructions.section_heading_instruction}{format_instructions.report_skeleton}\n"
+        f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
+        f"{format_instructions.format_instruction}"
+        "Synthesize across sources (not a list of summaries), use clear transitions, and surface actionable insights. "
+        "Do not dump JSONL contents; focus on analyzing the referenced documents and articles. "
+        "Never cite JSONL index files (e.g., tavily_search.jsonl, openalex/works.jsonl). Cite actual source URLs "
+        "and extracted text/PDF/transcript files instead. "
+        "Do not include a full References list; the script appends a Source Index automatically. "
+        "Do not add Report Prompt or Clarifications sections; the script appends them automatically. "
+        "Do not add a separate section enumerating figures or page numbers; the script inserts figure callouts. "
+        "If you mention a figure, only do so when the source text explicitly explains it. "
+        "When citing file paths, use relative paths like ./archive/... or ./instruction/... (avoid absolute paths). "
+        f"{format_instructions.citation_instruction}"
+        "When formulas are important, render them in LaTeX using $...$ or $$...$$ so they can be rendered in HTML. "
+        f"{critics_guidance}"
+        "If supporting web research exists under ./supporting/..., integrate it as updated evidence and label it as "
+        "web-derived support (not primary experimental evidence). "
+        f"Write the report in {language}. Keep proper nouns and source titles in their original language. "
+        "Avoid speculation and clearly separate facts from interpretation."
+    )
+
+
+def build_repair_prompt(format_instructions: FormatInstructions, output_format: str, language: str) -> str:
+    return (
+        "You are a structural editor. The report is missing required sections. "
+        "Add the missing sections while preserving all existing content and citations. "
+        "Use the exact section headings in the required skeleton and keep their order. "
+        "Do not add extra section headings. "
+        f"{'Prefer markdown links for file paths. ' if output_format != 'tex' else 'Keep LaTeX section commands and avoid Markdown formatting. '}"
+        f"{format_instructions.latex_safety_instruction}"
+        f"Write in {language}."
+    )
+
+
+def build_critic_prompt(language: str, required_sections: list[str]) -> str:
+    required_sections_label = ", ".join(required_sections)
+    return (
+        "You are a rigorous journal editor. Critique the report for clarity, narrative flow, "
+        "depth of insight, evidence usage, and alignment with the report focus. "
+        "Flag any reliance on JSONL index data instead of source content, including citations that point "
+        "to JSONL index files rather than the underlying sources. "
+        f"Confirm all required sections are present ({required_sections_label}) and note any missing. "
+        "If the report already meets high-quality standards, respond with 'NO_CHANGES'. "
+        f"Write in {language}."
+    )
+
+
+def build_revise_prompt(format_instructions: FormatInstructions, output_format: str, language: str) -> str:
+    return (
+        "You are a senior editor. Revise the report to address the critique. "
+        "Preserve the required sections and citations. "
+        "Improve narrative flow, synthesis, and technical rigor. "
+        "Do not add a full References list; the script appends a Source Index automatically. "
+        f"{'Keep LaTeX formatting and section commands; do not convert to Markdown. ' if output_format == 'tex' else ''}"
+        f"{format_instructions.latex_safety_instruction}"
+        f"Write in {language}."
+    )
+
+
+def build_evaluate_prompt(metrics: str) -> str:
+    return (
+        "You are a rigorous report evaluator. Score the report across multiple dimensions, "
+        "including alignment with the report prompt, tone/voice fit, output-format compliance, "
+        "structure/readability, evidence grounding, hallucination risk (lower risk = higher score), "
+        "insight depth, and aesthetic/visual completeness. "
+        "Return JSON only with these keys:\n"
+        f"{metrics}, overall, strengths, weaknesses, fixes\n"
+        "Each score must be 0-100 (higher is better). "
+        "For hallucination risk, output a high score when risk is low (i.e., well-grounded). "
+        "Provide strengths/weaknesses/fixes as short bullet strings (array of strings). "
+        "Do not include any extra text outside JSON."
+    )
+
+
+def build_compare_prompt() -> str:
+    return (
+        "You are a senior journal editor. Compare Report A vs Report B and choose the stronger report. "
+        "Consider alignment, evidence grounding, hallucination risk, format compliance, clarity, "
+        "and narrative strength. Return JSON only:\n"
+        "{\"winner\": \"A|B|Tie\", \"reason\": \"...\", \"focus_improvements\": [\"...\"]}\n"
+        "Do not include any extra text outside JSON."
+    )
+
+
+def build_synthesize_prompt(
+    format_instructions: FormatInstructions,
+    template_guidance_text: str,
+    language: str,
+) -> str:
+    return (
+        "You are a chief editor. Merge the strongest parts of Report A and Report B, fix weaknesses, "
+        "and produce a final report with higher overall quality. "
+        "Preserve citations; do not invent sources. "
+        "Do not add a full References list; the script appends it automatically. "
+        f"{format_instructions.section_heading_instruction}{format_instructions.report_skeleton}\n"
+        f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
+        f"{format_instructions.format_instruction}"
+        f"Write in {language}."
+    )
+
+
+def build_template_adjuster_prompt(output_format: str) -> str:
+    heading_rule = (
+        'For LaTeX output, avoid &, %, # in headings. Use "and" or plain words instead.'
+        if output_format == "tex"
+        else "Keep headings concise and consistent."
+    )
+    return (
+        "You are a template adjuster. Adapt the section list and guidance to match the run intent. "
+        "Use the template as style reference, but adjust structure if needed. "
+        "Keep any required sections listed below. "
+        "Do not add a References section. "
+        f"{heading_rule} "
+        "Return JSON only with keys: sections (ordered list), section_guidance (object), "
+        "writer_guidance (list), rationale (string). If no changes are needed, return the original sections "
+        "and set rationale to 'no_change'."
+    )
+
+
+def build_template_designer_prompt() -> str:
+    return (
+        "You are a template designer. Generate guidance for each section of a research-style review.\n"
+        "Return JSON with keys:\n"
+        "- section_guidance: object mapping section title -> 1-2 sentence guidance\n"
+        "- writer_guidance: list of short bullets for overall tone/rigor\n"
+        "Keep guidance concise, evidence-focused, and aligned to the report focus prompt.\n"
+        "Write in the requested language."
+    )
+
+
+def build_image_prompt() -> str:
+    return (
+        "You are an image analyst. Describe the figure strictly based on what is visible. "
+        "Return JSON only with keys: summary (1-2 sentences), type (chart/diagram/table/screenshot/photo/other), "
+        "relevance (0-100), recommended (yes/no). If unclear, use summary='unclear'."
+    )
+
+
+def load_agent_config(path: Optional[str]) -> tuple[dict, dict]:
+    if not path:
+        return {}, {}
+    config_path = Path(path)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Agent config not found: {config_path}")
+    raw = json.loads(config_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("Agent config must be a JSON object.")
+    config = raw.get("config") if isinstance(raw.get("config"), dict) else {}
+    agents = raw.get("agents") if isinstance(raw.get("agents"), dict) else {}
+    return config, agents
+
+
+def normalize_config_overrides(raw: dict) -> dict:
+    if not isinstance(raw, dict):
+        return {}
+    overrides: dict[str, object] = {}
+    for key in (
+        "model",
+        "quality_model",
+        "model_vision",
+        "template_adjust",
+        "quality_iterations",
+        "quality_strategy",
+        "web_search",
+        "alignment_check",
+        "interactive",
+        "language",
+        "lang",
+    ):
+        if key in raw:
+            overrides[key] = raw[key]
+    return overrides
+
+
+def apply_config_overrides(args: argparse.Namespace, config: dict) -> None:
+    if not config:
+        return
+    if isinstance(config.get("model"), str) and config["model"].strip():
+        args.model = config["model"].strip()
+    if isinstance(config.get("quality_model"), str) and config["quality_model"].strip():
+        args.quality_model = config["quality_model"].strip()
+    if isinstance(config.get("model_vision"), str) and config["model_vision"].strip():
+        args.model_vision = config["model_vision"].strip()
+    if isinstance(config.get("template_adjust"), bool):
+        args.template_adjust = config["template_adjust"]
+    if isinstance(config.get("quality_iterations"), int) and config["quality_iterations"] >= 0:
+        args.quality_iterations = config["quality_iterations"]
+    if isinstance(config.get("quality_strategy"), str) and config["quality_strategy"] in {"pairwise", "best_of"}:
+        args.quality_strategy = config["quality_strategy"]
+    if isinstance(config.get("web_search"), bool):
+        args.web_search = config["web_search"]
+    if isinstance(config.get("alignment_check"), bool):
+        args.alignment_check = config["alignment_check"]
+    if isinstance(config.get("interactive"), bool):
+        args.interactive = config["interactive"]
+    if isinstance(config.get("language"), str) and config["language"].strip():
+        args.lang = config["language"].strip()
+    if isinstance(config.get("lang"), str) and config["lang"].strip():
+        args.lang = config["lang"].strip()
+
+
+def normalize_agent_overrides(raw: Optional[dict]) -> dict:
+    if not isinstance(raw, dict):
+        return {}
+    overrides: dict[str, dict] = {}
+    for name, entry in raw.items():
+        if not isinstance(entry, dict):
+            continue
+        payload: dict[str, object] = {}
+        if isinstance(entry.get("model"), str) and entry["model"].strip():
+            payload["model"] = entry["model"].strip()
+        if isinstance(entry.get("system_prompt"), str) and entry["system_prompt"].strip():
+            payload["system_prompt"] = entry["system_prompt"].strip()
+        if isinstance(entry.get("enabled"), bool):
+            payload["enabled"] = entry["enabled"]
+        if payload:
+            overrides[str(name)] = payload
+    return overrides
+
+
+def resolve_agent_enabled(name: str, default: bool, overrides: dict) -> bool:
+    entry = overrides.get(name)
+    if not isinstance(entry, dict):
+        return default
+    enabled = entry.get("enabled")
+    return enabled if isinstance(enabled, bool) else default
+
+
+def resolve_agent_prompt(name: str, default_prompt: str, overrides: dict) -> str:
+    entry = overrides.get(name)
+    if not isinstance(entry, dict):
+        return default_prompt
+    prompt = entry.get("system_prompt")
+    return prompt if isinstance(prompt, str) and prompt.strip() else default_prompt
+
+
+def resolve_agent_model(name: str, default_model: str, overrides: dict) -> str:
+    entry = overrides.get(name)
+    if not isinstance(entry, dict):
+        return default_model
+    model = entry.get("model")
+    return model if isinstance(model, str) and model.strip() else default_model
+
+
+def build_agent_info(
+    args: argparse.Namespace,
+    output_format: str,
+    language: str,
+    report_prompt: Optional[str],
+    template_spec: TemplateSpec,
+    template_guidance_text: str,
+    required_sections: list[str],
+    agent_overrides: Optional[dict] = None,
+) -> dict:
+    if not required_sections:
+        required_sections = list(DEFAULT_SECTIONS)
+    if not template_guidance_text:
+        template_guidance_text = build_template_guidance_text(template_spec)
+    overrides = normalize_agent_overrides(agent_overrides)
+    quality_model = args.quality_model or args.model
+    format_instructions = build_format_instructions(output_format, required_sections)
+    metrics = ", ".join(QUALITY_WEIGHTS.keys())
+    writer_prompt = resolve_agent_prompt(
+        "writer",
+        build_writer_prompt(
+            format_instructions,
+            template_guidance_text,
+            template_spec,
+            required_sections,
+            output_format,
+            language,
+        ),
+        overrides,
+    )
+    scout_prompt = resolve_agent_prompt("scout", build_scout_prompt(language), overrides)
+    clarifier_prompt = resolve_agent_prompt("clarifier", build_clarifier_prompt(language), overrides)
+    align_prompt = resolve_agent_prompt("alignment", build_alignment_prompt(), overrides)
+    plan_prompt = resolve_agent_prompt("planner", build_plan_prompt(language), overrides)
+    plan_check_prompt = resolve_agent_prompt("plan_check", build_plan_check_prompt(language), overrides)
+    web_prompt = resolve_agent_prompt("web_query", build_web_prompt(), overrides)
+    evidence_prompt = resolve_agent_prompt("evidence", build_evidence_prompt(language), overrides)
+    repair_prompt = resolve_agent_prompt(
+        "structural_editor",
+        build_repair_prompt(format_instructions, output_format, language),
+        overrides,
+    )
+    critic_prompt = resolve_agent_prompt("critic", build_critic_prompt(language, required_sections), overrides)
+    revise_prompt = resolve_agent_prompt(
+        "reviser",
+        build_revise_prompt(format_instructions, output_format, language),
+        overrides,
+    )
+    evaluate_prompt = resolve_agent_prompt("evaluator", build_evaluate_prompt(metrics), overrides)
+    compare_prompt = resolve_agent_prompt("pairwise_compare", build_compare_prompt(), overrides)
+    synthesize_prompt = resolve_agent_prompt(
+        "synthesizer",
+        build_synthesize_prompt(format_instructions, template_guidance_text, language),
+        overrides,
+    )
+    template_adjuster_prompt = resolve_agent_prompt(
+        "template_adjuster",
+        build_template_adjuster_prompt(output_format),
+        overrides,
+    )
+    template_designer_prompt = resolve_agent_prompt("template_designer", build_template_designer_prompt(), overrides)
+    image_prompt = resolve_agent_prompt("image_analyst", build_image_prompt(), overrides)
+    scout_model = resolve_agent_model("scout", args.model, overrides)
+    clarifier_model = resolve_agent_model("clarifier", args.model, overrides)
+    alignment_model = resolve_agent_model("alignment", args.model, overrides)
+    planner_model = resolve_agent_model("planner", args.model, overrides)
+    plan_check_model = resolve_agent_model("plan_check", args.model, overrides)
+    web_model = resolve_agent_model("web_query", args.model, overrides)
+    evidence_model = resolve_agent_model("evidence", args.model, overrides)
+    writer_model = resolve_agent_model("writer", args.model, overrides)
+    structural_model = resolve_agent_model("structural_editor", args.model, overrides)
+    critic_model = resolve_agent_model("critic", quality_model, overrides)
+    reviser_model = resolve_agent_model("reviser", quality_model, overrides)
+    evaluator_model = resolve_agent_model("evaluator", quality_model, overrides)
+    compare_model = resolve_agent_model("pairwise_compare", quality_model, overrides)
+    synth_model = resolve_agent_model("synthesizer", quality_model, overrides)
+    template_adjuster_model = resolve_agent_model("template_adjuster", args.model, overrides)
+    template_designer_model = resolve_agent_model("template_designer", args.model, overrides)
+    image_model = resolve_agent_model("image_analyst", args.model_vision or "(not set)", overrides)
+    clarifier_enabled = resolve_agent_enabled(
+        "clarifier",
+        bool(args.interactive or args.answers or args.answers_file),
+        overrides,
+    )
+    alignment_enabled = resolve_agent_enabled("alignment", bool(args.alignment_check), overrides)
+    web_enabled = resolve_agent_enabled("web_query", bool(args.web_search), overrides)
+    template_adjust_enabled = resolve_agent_enabled("template_adjuster", bool(args.template_adjust), overrides)
+    quality_enabled = bool(args.quality_iterations > 0)
+    critic_enabled = resolve_agent_enabled("critic", quality_enabled, overrides)
+    reviser_enabled = resolve_agent_enabled("reviser", quality_enabled, overrides)
+    evaluator_enabled = resolve_agent_enabled("evaluator", quality_enabled, overrides)
+    pairwise_enabled = resolve_agent_enabled(
+        "pairwise_compare",
+        bool(quality_enabled and args.quality_strategy == "pairwise"),
+        overrides,
+    )
+    synth_enabled = resolve_agent_enabled("synthesizer", quality_enabled, overrides)
+    agents = {
+        "scout": {"model": scout_model, "system_prompt": scout_prompt},
+        "clarifier": {
+            "model": clarifier_model,
+            "enabled": clarifier_enabled,
+            "system_prompt": clarifier_prompt,
+        },
+        "alignment": {"model": alignment_model, "enabled": alignment_enabled, "system_prompt": align_prompt},
+        "planner": {"model": planner_model, "system_prompt": plan_prompt},
+        "plan_check": {"model": plan_check_model, "system_prompt": plan_check_prompt},
+        "web_query": {"model": web_model, "enabled": web_enabled, "system_prompt": web_prompt},
+        "evidence": {"model": evidence_model, "system_prompt": evidence_prompt},
+        "writer": {"model": writer_model, "system_prompt": writer_prompt},
+        "structural_editor": {"model": structural_model, "system_prompt": repair_prompt},
+        "critic": {"model": critic_model, "enabled": critic_enabled, "system_prompt": critic_prompt},
+        "reviser": {"model": reviser_model, "enabled": reviser_enabled, "system_prompt": revise_prompt},
+        "evaluator": {"model": evaluator_model, "enabled": evaluator_enabled, "system_prompt": evaluate_prompt},
+        "pairwise_compare": {
+            "model": compare_model,
+            "enabled": pairwise_enabled,
+            "system_prompt": compare_prompt,
+        },
+        "synthesizer": {
+            "model": synth_model,
+            "enabled": synth_enabled,
+            "system_prompt": synthesize_prompt,
+        },
+        "template_adjuster": {
+            "model": template_adjuster_model,
+            "enabled": template_adjust_enabled,
+            "system_prompt": template_adjuster_prompt,
+        },
+        "template_designer": {
+            "model": template_designer_model,
+            "enabled": bool(args.template_from_arxiv_src),
+            "system_prompt": template_designer_prompt,
+        },
+        "image_analyst": {
+            "model": image_model,
+            "enabled": bool(args.model_vision and args.extract_figures),
+            "system_prompt": image_prompt,
+        },
+    }
+    return {
+        "config": {
+            "language": language,
+            "output_format": output_format,
+            "model": args.model,
+            "quality_model": quality_model,
+            "model_vision": args.model_vision,
+            "template": template_spec.name,
+            "template_adjust": args.template_adjust,
+            "template_from_arxiv_src": args.template_from_arxiv_src,
+            "quality_iterations": args.quality_iterations,
+            "quality_strategy": args.quality_strategy,
+            "web_search": args.web_search,
+            "alignment_check": args.alignment_check,
+            "interactive": args.interactive,
+        },
+        "agents": agents,
+    }
+
+
+def write_agent_info(payload: dict, target: Optional[str]) -> None:
+    text = json.dumps(payload, ensure_ascii=False, indent=2)
+    if target and target != "-":
+        path = Path(target)
+        path.write_text(text + "\n", encoding="utf-8")
+        print(f"Wrote agent info: {path}")
+    else:
+        print(text)
 
 
 def template_from_prompt(report_prompt: Optional[str]) -> Optional[str]:
@@ -4072,6 +5340,26 @@ def create_agent_with_fallback(create_deep_agent, model_name: str, tools, system
 
 def main() -> int:
     args = parse_args()
+    agent_overrides: dict = {}
+    if args.agent_config:
+        try:
+            config_overrides, raw_overrides = load_agent_config(args.agent_config)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"ERROR: failed to load agent config: {exc}", file=sys.stderr)
+            return 2
+        apply_config_overrides(args, normalize_config_overrides(config_overrides))
+        agent_overrides = normalize_agent_overrides(raw_overrides)
+        if args.quality_iterations > 0:
+            disabled_quality = any(
+                resolve_agent_enabled(name, True, agent_overrides) is False
+                for name in ("critic", "reviser", "evaluator")
+            )
+            if disabled_quality:
+                print(
+                    "WARN: agent-config disabled quality agents; skipping quality iterations.",
+                    file=sys.stderr,
+                )
+                args.quality_iterations = 0
     output_format = choose_format(args.output)
     start_stamp = dt.datetime.now()
     start_timer = time.monotonic()
@@ -4090,6 +5378,30 @@ def main() -> int:
         output_path = resolve_preview_output(spec, value, args.preview_output)
         write_template_preview(spec, output_path)
         print(f"Wrote preview: {output_path}")
+        return 0
+    if args.agent_info:
+        language = normalize_lang(args.lang)
+        report_prompt = load_report_prompt(args.prompt, args.prompt_file)
+        if args.template and str(args.template).strip().lower() != "auto":
+            style_choice = args.template
+        else:
+            style_choice = template_from_prompt(report_prompt) or DEFAULT_TEMPLATE_NAME
+        template_spec = load_template_spec(style_choice, report_prompt)
+        if not template_spec.sections:
+            template_spec.sections = list(DEFAULT_SECTIONS)
+        required_sections = list(template_spec.sections)
+        template_guidance_text = build_template_guidance_text(template_spec)
+        payload = build_agent_info(
+            args,
+            output_format,
+            language,
+            report_prompt,
+            template_spec,
+            template_guidance_text,
+            required_sections,
+            agent_overrides,
+        )
+        write_agent_info(payload, args.agent_info)
         return 0
     if not args.run:
         print("ERROR: --run is required unless --preview-template is used.", file=sys.stderr)
@@ -4220,21 +5532,23 @@ def main() -> int:
         return f"[from text] {path.relative_to(run_dir).as_posix()}\n\n{text}"
 
     tools = [list_archive_files, list_supporting_files, read_document]
+    alignment_enabled = resolve_agent_enabled("alignment", bool(args.alignment_check), agent_overrides)
+    web_search_enabled = resolve_agent_enabled("web_query", bool(args.web_search), agent_overrides)
+    template_adjust_enabled = resolve_agent_enabled("template_adjuster", bool(args.template_adjust), agent_overrides)
+    clarifier_enabled = resolve_agent_enabled("clarifier", True, agent_overrides)
+    args.alignment_check = alignment_enabled
+    args.web_search = web_search_enabled
+    args.template_adjust = template_adjust_enabled
+    vision_override = resolve_agent_model("image_analyst", args.model_vision or "", agent_overrides)
+    if vision_override:
+        args.model_vision = vision_override
+    alignment_prompt = resolve_agent_prompt("alignment", build_alignment_prompt(), agent_overrides)
+    alignment_model = resolve_agent_model("alignment", args.model, agent_overrides)
 
     def run_alignment_check(stage: str, content: str) -> Optional[str]:
-        if not args.alignment_check:
+        if not alignment_enabled:
             return None
-        align_prompt = (
-            "You are an alignment auditor. Check whether the stage output aligns with the report focus prompt "
-            "and any user clarifications. If no prompt or clarifications exist, judge alignment to the run context "
-            "(query ID, instruction scope, and available sources). Return in this exact format:\n"
-            "Alignment score: <0-100>\n"
-            "Aligned:\n- ...\n"
-            "Gaps/Risks:\n- ...\n"
-            "Next-step guidance:\n- ...\n"
-            "Be concise and actionable."
-        )
-        align_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, align_prompt, backend)
+        align_agent = create_agent_with_fallback(create_deep_agent, alignment_model, tools, alignment_prompt, backend)
         align_input = [
             f"Stage: {stage}",
             "",
@@ -4279,38 +5593,70 @@ def main() -> int:
 
     language = normalize_lang(args.lang)
     report_prompt = load_report_prompt(args.prompt, args.prompt_file)
-    template_spec = load_template_spec(args.template, report_prompt)
-    required_sections = list(template_spec.sections)
-    report_skeleton = build_report_skeleton(required_sections, output_format)
-    context_lines.append(f"Template: {template_spec.name}")
-    if template_spec.source:
-        context_lines.append(f"Template source: {template_spec.source}")
-    template_guidance_lines: list[str] = []
-    if template_spec.description:
-        template_guidance_lines.append(f"Template description: {template_spec.description}")
-    if template_spec.tone:
-        template_guidance_lines.append(f"Template tone: {template_spec.tone}")
-    if template_spec.audience:
-        template_guidance_lines.append(f"Template audience: {template_spec.audience}")
-    if template_spec.section_guidance:
-        section_lines = [f"- {key}: {value}" for key, value in template_spec.section_guidance.items()]
-        template_guidance_lines.append("Section guidance:\n" + "\n".join(section_lines))
-    if template_spec.writer_guidance:
-        template_guidance_lines.append("Template writing guidance:\n" + "\n".join(template_spec.writer_guidance))
-    template_guidance_text = "\n\n".join(template_guidance_lines) if template_guidance_lines else ""
-    scout_prompt = (
-        "You are a source scout. Map the archive, identify key source files, and propose a reading plan. "
-        "Always open JSONL metadata files if present (archive/tavily_search.jsonl, archive/openalex/works.jsonl, "
-        "archive/arxiv/papers.jsonl, archive/youtube/videos.jsonl, archive/local/manifest.jsonl) to understand coverage. "
-        "Note: the filesystem root '/' is mapped to the run folder. "
-        "Treat JSONL files as indices of sources, not as the report output. "
-        "Follow any report focus prompt provided in the user input. "
-        "Prioritize sources relevant to the report focus and ignore off-topic items. "
-        f"Write notes in {language}. Keep proper nouns and source titles in their original language. "
-        "Use list_archive_files and read_document as needed. Output a structured inventory and a prioritized "
-        "list of files to read (max 12) with rationale."
+    style_choice = None
+    if args.template and str(args.template).strip().lower() != "auto":
+        style_choice = args.template
+    else:
+        style_choice = template_from_prompt(report_prompt)
+    style_spec = load_template_spec(style_choice or DEFAULT_TEMPLATE_NAME, report_prompt)
+    template_path: Optional[str] = None
+    if args.template_from_arxiv_src:
+        template_path = None
+        try:
+            src_path = Path(args.template_from_arxiv_src)
+            if not src_path.is_absolute():
+                cwd_candidate = src_path.resolve()
+                if cwd_candidate.exists():
+                    src_path = cwd_candidate
+                else:
+                    src_path = (run_dir / src_path).resolve()
+            template_designer_prompt = resolve_agent_prompt(
+                "template_designer",
+                build_template_designer_prompt(),
+                agent_overrides,
+            )
+            template_designer_model = resolve_agent_model("template_designer", args.model, agent_overrides)
+            generated = generate_template_from_arxiv_src(
+                src_path,
+                run_dir,
+                report_prompt,
+                language,
+                template_designer_model,
+                create_deep_agent,
+                backend,
+                style_spec,
+                prompt_override=template_designer_prompt,
+            )
+            if generated:
+                template_path = str(generated)
+        except Exception as exc:
+            print(f"WARN template-from-arxiv-src failed: {exc}", file=sys.stderr)
+    template_spec = load_template_spec(template_path or args.template, report_prompt)
+    template_only = bool(
+        args.template_from_arxiv_src
+        and not args.output
+        and not args.prompt
+        and not args.prompt_file
+        and not args.interactive
+        and not args.web_search
+        and not args.answers
+        and not args.answers_file
+        and args.quality_iterations == 0
     )
-    scout_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, scout_prompt, backend)
+    if template_only:
+        if not template_path:
+            print("ERROR template-from-arxiv-src did not produce a template bundle.", file=sys.stderr)
+            return 2
+        template_root = Path(template_path).parent
+        preview_name = f"preview_{slugify_label(template_spec.name)}.html"
+        preview_path = template_root / preview_name
+        write_template_preview(template_spec, preview_path)
+        print(f"Wrote template bundle: {template_root}")
+        print(f"Wrote template preview: {preview_path}")
+        return 0
+    scout_prompt = resolve_agent_prompt("scout", build_scout_prompt(language), agent_overrides)
+    scout_model = resolve_agent_model("scout", args.model, agent_overrides)
+    scout_agent = create_agent_with_fallback(create_deep_agent, scout_model, tools, scout_prompt, backend)
     scout_input = list(context_lines)
     if report_prompt:
         scout_input.extend(["", "Report focus prompt:", report_prompt])
@@ -4320,13 +5666,10 @@ def main() -> int:
 
     clarification_questions: Optional[str] = None
     clarification_answers = load_user_answers(args.answers, args.answers_file)
-    if args.interactive or clarification_answers:
-        clarifier_prompt = (
-            "You are a report planning assistant. Based on the run context, scout notes, and report focus prompt, "
-            "decide if you need clarifications from the user. If none are needed, respond with 'NO_QUESTIONS'. "
-            f"Otherwise, list up to 5 concise questions in {language}."
-        )
-        clarifier_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, clarifier_prompt, backend)
+    if clarifier_enabled and (args.interactive or clarification_answers):
+        clarifier_prompt = resolve_agent_prompt("clarifier", build_clarifier_prompt(language), agent_overrides)
+        clarifier_model = resolve_agent_model("clarifier", args.model, agent_overrides)
+        clarifier_agent = create_agent_with_fallback(create_deep_agent, clarifier_model, tools, clarifier_prompt, backend)
         clarifier_input = list(context_lines)
         clarifier_input.extend(["", "Scout notes:", scout_notes])
         if report_prompt:
@@ -4342,16 +5685,52 @@ def main() -> int:
 
     align_scout = run_alignment_check("scout", scout_notes)
 
-    plan_prompt = (
-        "You are a report planner. Create a concise, ordered plan (5-9 steps) to produce the final report. "
-        "Each step should be one line with a status checkbox. "
-        "Use this format:\n"
-        "- [ ] Step title — short description\n"
-        "Focus on reading the most relevant sources, extracting evidence, and synthesizing insights. "
-        "Align the plan with the report focus prompt and clarifications. "
-        f"Write in {language}."
-    )
-    plan_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, plan_prompt, backend)
+    template_adjustment_path: Optional[Path] = None
+    if template_adjust_enabled:
+        template_adjuster_prompt = resolve_agent_prompt(
+            "template_adjuster",
+            build_template_adjuster_prompt(output_format),
+            agent_overrides,
+        )
+        template_adjuster_model = resolve_agent_model("template_adjuster", args.model, agent_overrides)
+        adjusted_spec, adjustment = adjust_template_spec(
+            template_spec,
+            report_prompt,
+            scout_notes,
+            align_scout,
+            clarification_answers,
+            language,
+            output_format,
+            args.model,
+            create_deep_agent,
+            backend,
+            prompt_override=template_adjuster_prompt,
+            model_override=template_adjuster_model,
+        )
+        if adjustment:
+            template_adjustment_path = write_template_adjustment_note(
+                notes_dir,
+                template_spec,
+                adjusted_spec,
+                adjustment,
+                output_format,
+                language,
+            )
+        template_spec = adjusted_spec
+
+    if not template_spec.sections:
+        template_spec.sections = list(DEFAULT_SECTIONS)
+    required_sections = list(template_spec.sections)
+    format_instructions = build_format_instructions(output_format, required_sections)
+    report_skeleton = format_instructions.report_skeleton
+    context_lines.append(f"Template: {template_spec.name}")
+    if template_spec.source:
+        context_lines.append(f"Template source: {template_spec.source}")
+    template_guidance_text = build_template_guidance_text(template_spec)
+
+    plan_prompt = resolve_agent_prompt("planner", build_plan_prompt(language), agent_overrides)
+    plan_model = resolve_agent_model("planner", args.model, agent_overrides)
+    plan_agent = create_agent_with_fallback(create_deep_agent, plan_model, tools, plan_prompt, backend)
     plan_input = list(context_lines)
     plan_input.extend(["", "Scout notes:", scout_notes])
     if align_scout:
@@ -4372,13 +5751,9 @@ def main() -> int:
         supporting_dir = resolve_supporting_dir(run_dir, args.supporting_dir)
     if args.web_search:
         supporting_dir = resolve_supporting_dir(run_dir, args.supporting_dir)
-        web_prompt = (
-            "You are planning targeted web searches to enrich a research report. "
-            "Provide up to 6 concise search queries in English, one per line. "
-            "Focus on recent, credible sources and technical specifics. "
-            "Avoid broad keywords; include concrete phrases, paper titles, or domains when helpful."
-        )
-        web_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, web_prompt, backend)
+        web_prompt = resolve_agent_prompt("web_query", build_web_prompt(), agent_overrides)
+        web_model = resolve_agent_model("web_query", args.model, agent_overrides)
+        web_agent = create_agent_with_fallback(create_deep_agent, web_model, tools, web_prompt, backend)
         web_input = list(context_lines)
         web_input.extend(["", "Scout notes:", scout_notes, "", "Plan:", plan_text])
         if report_prompt:
@@ -4416,23 +5791,9 @@ def main() -> int:
         context_lines.append(f"Supporting search: {support_rel}/web_search.jsonl")
         context_lines.append(f"Supporting fetch: {support_rel}/web_fetch.jsonl")
 
-    evidence_prompt = (
-        "You are an evidence extractor. Use the scout notes to read key files and extract salient facts. "
-        "Start by reading any JSONL metadata files that exist (tavily_search.jsonl, openalex/works.jsonl, "
-        "arxiv/papers.jsonl, youtube/videos.jsonl, local/manifest.jsonl) to identify sources. "
-        "Do not cite JSONL index files in your evidence; cite the underlying source URLs and extracted text/PDF files. "
-        "If full text files are missing, you may use abstracts/summaries from metadata (e.g., arXiv summary or "
-        "OpenAlex abstract) but still cite the original source URL, not the JSONL. "
-        "If a supporting folder exists (./supporting/...), also read supporting/web_search.jsonl and "
-        "supporting/web_extract or supporting/web_text to incorporate updated web evidence. "
-        "Use JSONL to locate the actual content (extracts, PDFs, transcripts) and summarize those sources. "
-        "If a source is off-topic relative to the report focus, skip it. "
-        "Cite file paths in square brackets. Prefer existing extracted text files; use PDFs only when needed. "
-        "Capture original source URLs (not only archive paths) when available. "
-        f"Deliver concise bullet lists grouped by source type in {language}. "
-        "Keep proper nouns and source titles in their original language."
-    )
-    evidence_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, evidence_prompt, backend)
+    evidence_prompt = resolve_agent_prompt("evidence", build_evidence_prompt(language), agent_overrides)
+    evidence_model = resolve_agent_model("evidence", args.model, agent_overrides)
+    evidence_agent = create_agent_with_fallback(create_deep_agent, evidence_model, tools, evidence_prompt, backend)
     evidence_parts = list(context_lines)
     evidence_parts.extend(["", "Scout notes:", scout_notes])
     evidence_parts.extend(["", "Plan:", plan_text])
@@ -4455,12 +5816,9 @@ def main() -> int:
     (notes_dir / "evidence_notes.md").write_text(evidence_notes, encoding="utf-8")
     align_evidence = run_alignment_check("evidence", evidence_notes)
 
-    plan_check_prompt = (
-        "You are a plan checker. Update the plan by marking completed steps with [x] and "
-        "adding any missing steps needed to finish the report. Keep it concise. "
-        f"Write in {language}."
-    )
-    plan_check_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, plan_check_prompt, backend)
+    plan_check_prompt = resolve_agent_prompt("plan_check", build_plan_check_prompt(language), agent_overrides)
+    plan_check_model = resolve_agent_model("plan_check", args.model, agent_overrides)
+    plan_check_agent = create_agent_with_fallback(create_deep_agent, plan_check_model, tools, plan_check_prompt, backend)
     plan_check_input = "\n".join(
         [
             "Plan:",
@@ -4478,64 +5836,20 @@ def main() -> int:
     print_progress("Plan Update", plan_text, args.progress, args.progress_chars)
     (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
 
-    critics_guidance = ""
-    if any(section.lower().startswith("critics") for section in required_sections):
-        critics_guidance = (
-            "For the Critics section, write in a concise editorial tone with a short headline, brief paragraphs, "
-            "and a few bullet points highlighting orthogonal or contrarian viewpoints, risks, or overlooked constraints. "
-            "If relevant, touch on AI ethics, regulation (e.g., EU AI Act), safety/security, and explainability. "
-        )
-    section_heading_instruction = (
-        "Use the following exact H2 headings in this order (do not rename; do not add extra H2 headings):\n"
-        if output_format != "tex"
-        else "Use the following exact \\section headings in this order (do not rename; do not add extra \\section headings):\n"
+    writer_prompt = resolve_agent_prompt(
+        "writer",
+        build_writer_prompt(
+            format_instructions,
+            template_guidance_text,
+            template_spec,
+            required_sections,
+            output_format,
+            language,
+        ),
+        agent_overrides,
     )
-    citation_instruction = (
-        "Avoid printing full URLs in the body; use short link labels like [source] or [paper] instead. "
-        "Prefer markdown links for file paths so they are clickable. "
-        if output_format != "tex"
-        else "When citing sources, include the raw URL or file path inside square brackets "
-        "(e.g., [https://example.com], [./archive/path.txt]). Do not use Markdown links. "
-        "Avoid printing full URLs elsewhere in the body. "
-    )
-    format_instruction = ""
-    if output_format == "tex":
-        format_instruction = (
-            "Write LaTeX body only (no documentclass/preamble). "
-            "Use \\section{...} headings for each required section and \\subsection for subpoints. "
-            "Do not use Markdown formatting. "
-            "Avoid square brackets except for raw source citations. "
-        )
-    tone_instruction = (
-        "Use a formal/academic research-journal tone suitable for PRL/Nature/Annual Review-style manuscripts. "
-        if template_spec.name in FORMAL_TEMPLATES
-        else "Use an explanatory review style (설명형 리뷰) with a professional yet natural narrative tone. "
-    )
-    writer_prompt = (
-        "You are a senior research writer. Using the instruction, baseline report, and evidence notes, "
-        "produce a detailed report with citations. "
-        f"{tone_instruction}"
-        f"{section_heading_instruction}{report_skeleton}\n"
-        f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
-        f"{format_instruction}"
-        "Synthesize across sources (not a list of summaries), use clear transitions, and surface actionable insights. "
-        "Do not dump JSONL contents; focus on analyzing the referenced documents and articles. "
-        "Never cite JSONL index files (e.g., tavily_search.jsonl, openalex/works.jsonl). Cite actual source URLs "
-        "and extracted text/PDF/transcript files instead. "
-        "Do not include a full References list; the script appends a Source Index automatically. "
-        "Do not add Report Prompt or Clarifications sections; the script appends them automatically. "
-        "Do not add a separate section enumerating figures or page numbers; the script inserts figure callouts. "
-        "If you mention a figure, only do so when the source text explicitly explains it. "
-        "When citing file paths, use relative paths like ./archive/... or ./instruction/... (avoid absolute paths). "
-        f"{citation_instruction}"
-        "When formulas are important, render them in LaTeX using $...$ or $$...$$ so they can be rendered in HTML. "
-        f"{critics_guidance}"
-        "If supporting web research exists under ./supporting/..., integrate it as updated evidence and label it as "
-        "web-derived support (not primary experimental evidence). "
-        f"Write the report in {language}. Keep proper nouns and source titles in their original language. "
-        "Avoid speculation and clearly separate facts from interpretation."
-    )
-    writer_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, writer_prompt, backend)
+    writer_model = resolve_agent_model("writer", args.model, agent_overrides)
+    writer_agent = create_agent_with_fallback(create_deep_agent, writer_model, tools, writer_prompt, backend)
     writer_parts = list(context_lines)
     writer_parts.extend(["", "Evidence notes:", evidence_notes])
     writer_parts.extend(["", "Updated plan:", plan_text])
@@ -4557,15 +5871,13 @@ def main() -> int:
     report = normalize_report_paths(report, run_dir)
     missing_sections = find_missing_sections(report, required_sections, output_format)
     if missing_sections:
-        repair_prompt = (
-            "You are a structural editor. The report is missing required sections. "
-            "Add the missing sections while preserving all existing content and citations. "
-            "Use the exact section headings in the required skeleton and keep their order. "
-            "Do not add extra section headings. "
-            f"{'Prefer markdown links for file paths. ' if output_format != 'tex' else 'Keep LaTeX section commands and avoid Markdown formatting. '}"
-            f"Write in {language}."
+        repair_prompt = resolve_agent_prompt(
+            "structural_editor",
+            build_repair_prompt(format_instructions, output_format, language),
+            agent_overrides,
         )
-        repair_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, repair_prompt, backend)
+        repair_model = resolve_agent_model("structural_editor", args.model, agent_overrides)
+        repair_agent = create_agent_with_fallback(create_deep_agent, repair_model, tools, repair_prompt, backend)
         repair_input = "\n".join(
             [
                 "Required skeleton:",
@@ -4588,21 +5900,17 @@ def main() -> int:
         report = extract_agent_text(repair_result)
         report = normalize_report_paths(report, run_dir)
     align_draft = run_alignment_check("draft", report)
-    required_sections_label = ", ".join(required_sections)
     candidates = [{"label": "draft", "text": report}]
     quality_model = args.quality_model or args.model
     if args.quality_iterations > 0:
         for idx in range(args.quality_iterations):
-            critic_prompt = (
-                "You are a rigorous journal editor. Critique the report for clarity, narrative flow, "
-                "depth of insight, evidence usage, and alignment with the report focus. "
-                "Flag any reliance on JSONL index data instead of source content, including citations that point "
-                "to JSONL index files rather than the underlying sources. "
-                f"Confirm all required sections are present ({required_sections_label}) and note any missing. "
-                "If the report already meets high-quality standards, respond with 'NO_CHANGES'. "
-                f"Write in {language}."
+            critic_prompt = resolve_agent_prompt(
+                "critic",
+                build_critic_prompt(language, required_sections),
+                agent_overrides,
             )
-            critic_agent = create_agent_with_fallback(create_deep_agent, quality_model, tools, critic_prompt, backend)
+            critic_model = resolve_agent_model("critic", quality_model, agent_overrides)
+            critic_agent = create_agent_with_fallback(create_deep_agent, critic_model, tools, critic_prompt, backend)
             critic_input = "\n".join(
                 [
                     "Report:",
@@ -4624,15 +5932,13 @@ def main() -> int:
             if "no_changes" in critique.lower():
                 break
 
-            revise_prompt = (
-                "You are a senior editor. Revise the report to address the critique. "
-                "Preserve the required sections and citations. "
-                "Improve narrative flow, synthesis, and technical rigor. "
-                "Do not add a full References list; the script appends a Source Index automatically. "
-                f"{'Keep LaTeX formatting and section commands; do not convert to Markdown. ' if output_format == 'tex' else ''}"
-                f"Write in {language}."
+            revise_prompt = resolve_agent_prompt(
+                "reviser",
+                build_revise_prompt(format_instructions, output_format, language),
+                agent_overrides,
             )
-            revise_agent = create_agent_with_fallback(create_deep_agent, quality_model, tools, revise_prompt, backend)
+            revise_model = resolve_agent_model("reviser", quality_model, agent_overrides)
+            revise_agent = create_agent_with_fallback(create_deep_agent, revise_model, tools, revise_prompt, backend)
             revise_input = "\n".join(
                 [
                     "Original report:",
@@ -4659,6 +5965,7 @@ def main() -> int:
         eval_path = notes_dir / "quality_evals.jsonl"
         pairwise_path = notes_dir / "quality_pairwise.jsonl"
         evaluations: list[dict] = []
+        evaluator_model = resolve_agent_model("evaluator", quality_model, agent_overrides)
         for idx, candidate in enumerate(candidates):
             evaluation = evaluate_report(
                 candidate["text"],
@@ -4668,7 +5975,7 @@ def main() -> int:
                 required_sections,
                 output_format,
                 language,
-                quality_model,
+                evaluator_model,
                 create_deep_agent,
                 tools,
                 backend,
@@ -4681,6 +5988,7 @@ def main() -> int:
         if args.quality_strategy == "pairwise":
             wins = {idx: 0.0 for idx in range(len(candidates))}
             pairwise_notes: list[dict] = []
+            compare_model = resolve_agent_model("pairwise_compare", quality_model, agent_overrides)
             for i in range(len(candidates)):
                 for j in range(i + 1, len(candidates)):
                     result = compare_reports_pairwise(
@@ -4693,7 +6001,7 @@ def main() -> int:
                         required_sections,
                         output_format,
                         language,
-                        quality_model,
+                        compare_model,
                         create_deep_agent,
                         tools,
                         backend,
@@ -4729,7 +6037,7 @@ def main() -> int:
                     required_sections,
                     output_format,
                     language,
-                    quality_model,
+                    resolve_agent_model("synthesizer", quality_model, agent_overrides),
                     create_deep_agent,
                     tools,
                     backend,
@@ -4743,15 +6051,13 @@ def main() -> int:
             report = candidates[best_idx]["text"]
     missing_sections = find_missing_sections(report, required_sections, output_format)
     if missing_sections:
-        repair_prompt = (
-            "You are a structural editor. The report is missing required sections. "
-            "Add the missing sections while preserving all existing content and citations. "
-            "Use the exact section headings in the required skeleton and keep their order. "
-            "Do not add extra section headings. "
-            f"{'Prefer markdown links for file paths. ' if output_format != 'tex' else 'Keep LaTeX section commands and avoid Markdown formatting. '}"
-            f"Write in {language}."
+        repair_prompt = resolve_agent_prompt(
+            "structural_editor",
+            build_repair_prompt(format_instructions, output_format, language),
+            agent_overrides,
         )
-        repair_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, repair_prompt, backend)
+        repair_model = resolve_agent_model("structural_editor", args.model, agent_overrides)
+        repair_agent = create_agent_with_fallback(create_deep_agent, repair_model, tools, repair_prompt, backend)
         repair_input = "\n".join(
             [
                 "Required skeleton:",
@@ -4827,6 +6133,27 @@ def main() -> int:
     refs = filter_references(refs, report_prompt, evidence_notes, args.max_refs)
     openalex_meta = load_openalex_meta(archive_dir)
     report = f"{report.rstrip()}{render_reference_section(citation_refs, refs, openalex_meta, output_format)}"
+    out_path = Path(args.output) if args.output else None
+    final_path: Optional[Path] = None
+    if out_path:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        companion_suffixes = [".pdf"] if output_format == "tex" else None
+        final_path = resolve_output_path(out_path, args.overwrite_output, companion_suffixes)
+    prompt_copy_path = write_report_prompt_copy(run_dir, report_prompt, final_path or out_path)
+    report_overview_path = write_report_overview(
+        run_dir,
+        final_path,
+        report_prompt,
+        template_spec.name,
+        template_adjustment_path,
+        output_format,
+        language,
+        args.quality_iterations,
+        args.quality_strategy,
+        args.extract_figures,
+        args.figures_mode,
+        prompt_copy_path,
+    )
     end_stamp = dt.datetime.now()
     elapsed = time.monotonic() - start_timer
     meta = {
@@ -4845,10 +6172,16 @@ def main() -> int:
     }
     if overview_path:
         meta["run_overview_path"] = f"./{overview_path.relative_to(run_dir).as_posix()}"
+    if report_overview_path:
+        meta["report_overview_path"] = f"./{report_overview_path.relative_to(run_dir).as_posix()}"
     if index_file:
         meta["archive_index_path"] = f"./{index_file.relative_to(run_dir).as_posix()}"
     if instruction_file:
         meta["instruction_path"] = f"./{instruction_file.relative_to(run_dir).as_posix()}"
+    if prompt_copy_path:
+        meta["report_prompt_path"] = f"./{prompt_copy_path.relative_to(run_dir).as_posix()}"
+    if template_adjustment_path:
+        meta["template_adjustment_path"] = f"./{template_adjustment_path.relative_to(run_dir).as_posix()}"
     if preview_path:
         meta["figures_preview_path"] = f"./{preview_path.relative_to(run_dir).as_posix()}"
     report = f"{report.rstrip()}{format_metadata_block(meta, output_format)}"
@@ -4862,6 +6195,8 @@ def main() -> int:
         "Sections:",
         *[f"- {section}" for section in required_sections],
     ]
+    if template_adjustment_path:
+        template_lines.extend(["", f"Adjustment: {rel_path_or_abs(template_adjustment_path, run_dir)}"])
     if template_guidance_text:
         template_lines.extend(["", "Guidance:", template_guidance_text])
     (notes_dir / "report_template.txt").write_text("\n".join(template_lines), encoding="utf-8")
@@ -4903,10 +6238,8 @@ def main() -> int:
         )
 
     if args.output:
-        out_path = Path(args.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        companion_suffixes = [".pdf"] if output_format == "tex" else None
-        final_path = resolve_output_path(out_path, args.overwrite_output, companion_suffixes)
+        if not final_path:
+            raise RuntimeError("Output path resolution failed.")
         final_path.write_text(rendered, encoding="utf-8")
         print(f"Wrote report: {final_path}")
         if output_format == "tex" and args.pdf:

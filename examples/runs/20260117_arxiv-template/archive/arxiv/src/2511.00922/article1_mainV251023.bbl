@@ -1,0 +1,3697 @@
+\begin{thebibliography}{319}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Uoyama et~al.(2012)Uoyama, Goushi, Shizu, Nomura, and
+  Adachi]{Uoyama2012}
+Hiroki Uoyama, Kenichi Goushi, Katsuyuki Shizu, Hiroko Nomura, and Chihaya
+  Adachi.
+\newblock Highly efficient organic light-emitting diodes from delayed
+  fluorescence.
+\newblock \emph{Nature}, 492\penalty0 (7428):\penalty0 234--238, December 2012.
+\newblock ISSN 1476-4687.
+\newblock \doi{10.1038/nature11687}.
+
+\bibitem[Adachi(2014)]{Adachi2014TADF}
+Chihaya Adachi.
+\newblock Third-generation organic electroluminescence materials.
+\newblock \emph{Japanese Journal of Applied Physics}, 53\penalty0 (6):\penalty0
+  060101, May 2014.
+\newblock ISSN 1347-4065.
+\newblock \doi{10.7567/jjap.53.060101}.
+
+\bibitem[Liu et~al.(2018)Liu, Li, Ren, Yan, and Bryce]{Liu2018}
+Yuchao Liu, Chensen Li, Zhongjie Ren, Shouke Yan, and Martin~R. Bryce.
+\newblock {All-organic thermally activated delayed fluorescence materials for
+  organic light-emitting diodes}.
+\newblock \emph{Nature Reviews Materials}, 3\penalty0 (4):\penalty0 18020, apr
+  2018.
+\newblock \doi{10.1038/natrevmats.2018.20}.
+
+\bibitem[Dias et~al.(2017)Dias, Penfold, and Monkman]{Dias2017}
+Fernando~B Dias, Thomas~J Penfold, and Andrew~P Monkman.
+\newblock Photophysics of thermally activated delayed fluorescence molecules.
+\newblock \emph{Methods and applications in fluorescence}, 5\penalty0
+  (1):\penalty0 012001, mar 2017.
+\newblock \doi{10.1088/2050-6120/aa537e}.
+
+\bibitem[Chen et~al.(2018{\natexlab{a}})Chen, Kim, and Br{\'{e}}das]{Chen2018}
+Xian-Kai Chen, Dongwook Kim, and Jean-Luc Br{\'{e}}das.
+\newblock Thermally activated delayed fluorescence (tadf) path toward efficient
+  electroluminescence in purely organic materials: Molecular level insight.
+\newblock \emph{Accounts of Chemical Research}, 51\penalty0 (9):\penalty0 2215,
+  aug 2018{\natexlab{a}}.
+\newblock \doi{10.1021/acs.accounts.8b00174}.
+
+\bibitem[Olivier et~al.(2018)Olivier, Sancho-Garcia, Muccioli, D’Avino, and
+  Beljonne]{Olivier2018}
+Y.~Olivier, J.-C. Sancho-Garcia, L.~Muccioli, G.~D’Avino, and D.~Beljonne.
+\newblock Computational design of thermally activated delayed fluorescence
+  materials: The challenges ahead.
+\newblock \emph{The Journal of Physical Chemistry Letters}, 9\penalty0
+  (20):\penalty0 6149--6163, sep 2018.
+\newblock \doi{10.1021/acs.jpclett.8b02327}.
+\newblock URL \url{https://doi.org/10.1021/acs.jpclett.8b02327}.
+
+\bibitem[G{\'{o}}mez-Bombarelli et~al.(2016)G{\'{o}}mez-Bombarelli,
+  Aguilera-Iparraguirre, Hirzel, Duvenaud, Maclaurin, Blood-Forsythe, Chae,
+  Einzinger, Ha, Wu, Markopoulos, Jeon, Kang, Miyazaki, Numata, Kim, Huang,
+  Hong, Baldo, Adams, and Aspuru-Guzik]{Gomez-Bombarelli2016}
+Rafael G{\'{o}}mez-Bombarelli, Jorge Aguilera-Iparraguirre, Timothy~D. Hirzel,
+  David Duvenaud, Dougal Maclaurin, Martin~A. Blood-Forsythe, Hyun~Sik Chae,
+  Markus Einzinger, Dong-Gwang Ha, Tony Wu, Georgios Markopoulos, Soonok Jeon,
+  Hosuk Kang, Hiroshi Miyazaki, Masaki Numata, Sunghan Kim, Wenliang Huang,
+  Seong~Ik Hong, Marc Baldo, Ryan~P. Adams, and Al{\'{a}}n Aspuru-Guzik.
+\newblock Design of efficient molecular organic light-emitting diodes by a
+  high-throughput virtual screening and experimental approach.
+\newblock \emph{Nature Materials}, 15\penalty0 (10):\penalty0 1120--1127, aug
+  2016.
+\newblock \doi{10.1038/nmat4717}.
+
+\bibitem[Kang and Kim(2024)]{Kang2024}
+Sunwoo Kang and Taekyung Kim.
+\newblock Comparative study of tddft and tddft-based steom-dlpno-ccsd
+  calculations for predicting the excited-state properties of mr-tadf.
+\newblock \emph{Heliyon}, 10\penalty0 (10):\penalty0 e30926, May 2024.
+\newblock ISSN 2405-8440.
+\newblock \doi{10.1016/j.heliyon.2024.e30926}.
+
+\bibitem[Wu et~al.(2025)Wu, Ni, Wang, Zhu, and Chou]{Wu2025}
+Xiugang Wu, Songqian Ni, Chih-Hsing Wang, Weiguo Zhu, and Pi‐Tai Chou.
+\newblock Comprehensive review on the structural diversity and versatility of
+  multi-resonance fluorescence emitters: Advance, challenges, and prospects
+  toward oleds.
+\newblock \emph{Chemical Reviews}, May 2025.
+\newblock ISSN 1520-6890.
+\newblock \doi{10.1021/acs.chemrev.5c00021}.
+
+\bibitem[Olivier et~al.(2017)Olivier, Yurash, Muccioli, D'Avino, Mikhnenko,
+  Sancho-Garc{\'{\i}}a, Adachi, Nguyen, and Beljonne]{Olivier2017a}
+Y.~Olivier, B.~Yurash, L.~Muccioli, G.~D'Avino, O.~Mikhnenko, J.~C.
+  Sancho-Garc{\'{\i}}a, C.~Adachi, T.-Q. Nguyen, and D.~Beljonne.
+\newblock Nature of the singlet and triplet excitations mediating thermally
+  activated delayed fluorescence.
+\newblock \emph{Physical Review Materials}, 1\penalty0 (7):\penalty0 075602,
+  dec 2017.
+\newblock \doi{10.1103/PhysRevMaterials.1.075602}.
+
+\bibitem[Dreuw and Head-Gordon(2004)]{Dreuw2004}
+Andreas Dreuw and Martin Head-Gordon.
+\newblock Failure of time-dependent density functional theory for long-range
+  charge-transfer excited states: The zincbacteriochlorin-bacteriochlorin and
+  bacteriochlorophyll-spheroidene complexes.
+\newblock \emph{Journal of the American Chemical Society}, 126\penalty0
+  (12):\penalty0 4007--4016, March 2004.
+\newblock ISSN 1520-5126.
+\newblock \doi{10.1021/ja039556n}.
+
+\bibitem[Mewes(2018)]{Mewes2018}
+Jan-Michael Mewes.
+\newblock Modeling tadf in organic emitters requires a careful consideration of
+  the environment and going beyond the franck–condon approximation.
+\newblock \emph{Physical Chemistry Chemical Physics}, 20\penalty0
+  (18):\penalty0 12454--12469, 2018.
+\newblock \doi{10.1039/c8cp01792a}.
+
+\bibitem[Jacquemin et~al.(2009)Jacquemin, Wathelet, Perp{\`{e}}te, and
+  Adamo]{Jacquemin2009}
+Denis Jacquemin, Val{\'{e}}rie Wathelet, Eric~A. Perp{\`{e}}te, and Carlo
+  Adamo.
+\newblock Extensive td-dft benchmark: Singlet-excited states of organic
+  molecules.
+\newblock \emph{Journal of Chemical Theory and Computation}, 5\penalty0
+  (9):\penalty0 2420--2435, aug 2009.
+\newblock \doi{10.1021/ct900298e}.
+
+\bibitem[Froitzheim et~al.(2022)Froitzheim, Grimme, and Mewes]{Froitzheim2022}
+Thomas Froitzheim, Stefan Grimme, and Jan-Michael Mewes.
+\newblock Either accurate singlet-triplet gaps or excited-state structures:
+  Testing and understanding the performance of td-dft for tadf emitters.
+\newblock \emph{Journal of Chemical Theory and Computation}, 18\penalty0
+  (12):\penalty0 7702--7713, November 2022.
+\newblock ISSN 1549-9626.
+\newblock \doi{10.1021/acs.jctc.2c00905}.
+\newblock URL \url{https://doi.org/10.1021/acs.jctc.2c00905}.
+
+\bibitem[Kunze et~al.(2021)Kunze, Hansen, Grimme, and Mewes]{Loos2020STGABS27}
+Lukas Kunze, Andreas Hansen, Stefan Grimme, and Jan-Michael Mewes.
+\newblock Pcm-roks for the description of charge-transfer states in solution:
+  Singlet–triplet gaps with chemical accuracy from open-shell kohn–sham
+  reaction-field calculations.
+\newblock \emph{The Journal of Physical Chemistry Letters}, 12\penalty0
+  (35):\penalty0 8470--8480, August 2021.
+\newblock ISSN 1948-7185.
+\newblock \doi{10.1021/acs.jpclett.1c02299}.
+
+\bibitem[Laurent and Jacquemin(2013)]{Laurent2013TDDFT}
+Adèle~D. Laurent and Denis Jacquemin.
+\newblock Td-dft benchmarks: A review.
+\newblock \emph{International Journal of Quantum Chemistry}, 113\penalty0
+  (17):\penalty0 2019--2039, April 2013.
+\newblock ISSN 0020-7608.
+\newblock \doi{10.1002/qua.24438}.
+
+\bibitem[Bannwarth et~al.(2021)Bannwarth, Caldeweyher, Ehlert, Hansen, Pracht,
+  Seibert, Spicher, and Grimme]{bannwarth2021extended}
+Christoph Bannwarth, Eike Caldeweyher, Sebastian Ehlert, Andreas Hansen,
+  Philipp Pracht, Jakob Seibert, Sebastian Spicher, and Stefan Grimme.
+\newblock Extended tight‐binding quantum chemistry methods.
+\newblock \emph{WIREs Computational Molecular Science}, 11\penalty0
+  (2):\penalty0 e1493, August 2021.
+\newblock ISSN 1759-0884.
+\newblock \doi{10.1002/wcms.1493}.
+
+\bibitem[Grimme and Bannwarth(2016)]{Grimme2016}
+Stefan Grimme and Christoph Bannwarth.
+\newblock Ultra-fast computation of electronic spectra for large systems by
+  tight-binding based simplified tamm-dancoff approximation (stda-xtb).
+\newblock \emph{The Journal of Chemical Physics}, 145\penalty0 (5):\penalty0
+  054103, August 2016.
+\newblock ISSN 0021-9606.
+\newblock \doi{10.1063/1.4959605}.
+
+\bibitem[{de Wergifosse} and {Grimme}(2021)]{Grimme2021}
+Marc {de Wergifosse} and Stefan {Grimme}.
+\newblock {Perspective on Simplified Quantum Chemistry Methods for Excited
+  States and Response Properties}.
+\newblock \emph{Journal of Physical Chemistry A}, 125\penalty0 (18):\penalty0
+  3841–3851, May 2021.
+\newblock \doi{10.1021/acs.jpca.1c02362}.
+
+\bibitem[de~Wergifosse and Grimme(2024)]{Wergifosse2024}
+Marc de~Wergifosse and Stefan Grimme.
+\newblock The exact integral simplified time-dependent density functional
+  theory (xstd-dft).
+\newblock \emph{The Journal of Chemical Physics}, 160\penalty0 (20), May 2024.
+\newblock ISSN 1089-7690.
+\newblock \doi{10.1063/5.0206380}.
+
+\bibitem[{Grimme}(2013)]{Grimme2013}
+Stefan {Grimme}.
+\newblock A simplified tamm-dancoff density functional approach for the
+  electronic excitation spectra of very large molecules.
+\newblock \emph{The Journal of Chemical Physics}, 138\penalty0 (24):\penalty0
+  244104–244104, June 2013.
+\newblock ISSN 0021-9606.
+\newblock \doi{10.1063/1.4811331}.
+
+\bibitem[Huang and Cole(2024)]{Huang_2024}
+Dingyun Huang and Jacqueline~M. Cole.
+\newblock A database of thermally activated delayed fluorescent molecules
+  auto-generated from scientific literature with chemdataextractor.
+\newblock \emph{Scientific Data}, 11\penalty0 (1), January 2024.
+\newblock ISSN 2052-4463.
+\newblock \doi{10.1038/s41597-023-02897-3}.
+
+\bibitem[Moral et~al.(2015)Moral, Muccioli, Son, Olivier, and
+  Sancho-Garc{\'{\i}}a]{Moral2015}
+M.~Moral, L.~Muccioli, W.-J. Son, Y.~Olivier, and J.~C. Sancho-Garc{\'{\i}}a.
+\newblock Theoretical rationalization of the singlet–triplet gap in oleds
+  materials: Impact of charge-transfer character.
+\newblock \emph{Journal of Chemical Theory and Computation}, 11\penalty0
+  (1):\penalty0 168--177, dec 2015.
+\newblock \doi{10.1021/ct500957s}.
+
+\bibitem[de~Silva et~al.(2019)de~Silva, Kim, Zhu, and
+  Van~Voorhis]{deSilva2019TADF}
+Piotr de~Silva, Changhae~Andrew Kim, Tianyu Zhu, and Troy Van~Voorhis.
+\newblock Extracting design principles for efficient thermally activated
+  delayed fluorescence (tadf) from a simple four-state model.
+\newblock \emph{Chemistry of Materials}, 31\penalty0 (17):\penalty0 6995--7006,
+  June 2019.
+\newblock ISSN 1520-5002.
+\newblock \doi{10.1021/acs.chemmater.9b01601}.
+
+\bibitem[Zhao et~al.(2021{\natexlab{a}})Zhao, Omar, Nematiaram, Padula, and
+  Troisi]{Zhao2021}
+Ke~Zhao, Ömer~H. Omar, Tahereh Nematiaram, Daniele Padula, and Alessandro
+  Troisi.
+\newblock Novel thermally activated delayed fluorescence materials by
+  high-throughput virtual screening: going beyond donor-acceptor design.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (9):\penalty0
+  3324--3333, 2021{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/D1TC00002K}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC00002K}.
+
+\bibitem[Bannwarth et~al.(2019)Bannwarth, Ehlert, and Grimme]{Bannwarth2019}
+Christoph Bannwarth, Sebastian Ehlert, and Stefan Grimme.
+\newblock Gfn2-xtb—an accurate and broadly parametrized self-consistent
+  tight-binding quantum chemical method with multipole electrostatics and
+  density-dependent dispersion contributions.
+\newblock \emph{Journal of chemical theory and computation}, 15\penalty0
+  (3):\penalty0 1652–1671, 2019.
+\newblock ISSN 1549-9618.
+\newblock \doi{10.1021/acs.jctc.8b01176}.
+
+\bibitem[Ehlert et~al.(2021)Ehlert, Stahn, Spicher, and Grimme]{Ehlert2021}
+Sebastian Ehlert, Marcel Stahn, Sebastian Spicher, and Stefan Grimme.
+\newblock Robust and efficient implicit solvation model for fast semiempirical
+  methods.
+\newblock \emph{Journal of Chemical Theory and Computation}, 17\penalty0
+  (7):\penalty0 4250–4261, 2021.
+\newblock ISSN 1549-9618.
+\newblock \doi{10.1021/acs.jctc.1c00471}.
+
+\bibitem[Pérez‐Jiménez et~al.(2025)Pérez‐Jiménez, Olivier, and
+  Sancho‐García]{Perez‐Jimenez2025}
+Ángel~José Pérez‐Jiménez, Yoann Olivier, and Juan~Carlos
+  Sancho‐García.
+\newblock The role of theoretical calculations for invest systems:
+  Complementarity between theory and experiments and rationalization of the
+  results.
+\newblock \emph{Advanced Optical Materials}, March 2025.
+\newblock ISSN 2195-1071.
+\newblock \doi{10.1002/adom.202403199}.
+
+\bibitem[Grimme et~al.(2017)Grimme, Bannwarth, and Shushkov]{Grimme2017}
+Stefan Grimme, Christoph Bannwarth, and Philip Shushkov.
+\newblock A robust non-self-consistent tight-binding quantum chemistry method
+  for large molecules.
+\newblock \emph{Journal of Chemical Theory and Computation}, 13\penalty0
+  (5):\penalty0 1989--2009, April 2017.
+\newblock ISSN 1549-9618.
+\newblock \doi{10.1021/acs.jctc.7b00118}.
+
+\bibitem[{Greg Landrum} et~al.(2006){Greg Landrum}, {Brian Kelley}, {David
+  Cosgrove}, {Riccardo Vianello}, NadineSchneider, {Eisuke Kawashima}, {Andrew
+  Dalke}, {Matt Swain}, {Aleksandr Savelev}, {Maciej Wójcikowski}, {Vincent F.
+  Scalfani}, {Kazuya Ujihara}, guillaume godin, {Juuso Lehtivarjo}, {Francois
+  Berenger}, et~al.]{rdkit}
+Paolo~Tosco {Greg Landrum}, Ricardo~Rodriguez {Brian Kelley}, sriniker {David
+  Cosgrove}, gedeck {Riccardo Vianello}, Gareth~Jones NadineSchneider,
+  Dan~Nealschneider {Eisuke Kawashima}, Brian~Cole {Andrew Dalke}, Samo~Turk
+  {Matt Swain}, Alain~Vaucher {Aleksandr Savelev}, Ichiru~Take {Maciej
+  Wójcikowski}, Rachel~Walker {Vincent F. Scalfani}, Daniel~Probst {Kazuya
+  Ujihara}, Axel~Pahl guillaume godin, {Juuso Lehtivarjo}, {Francois Berenger},
+  et~al.
+\newblock Rdkit: Open-source cheminformatics, 2006.
+\newblock URL \url{https://www.rdkit.org;
+  https://doi.org/10.5281/zenodo.591637}.
+
+\bibitem[Pracht et~al.(2020)Pracht, Bohle, and Grimme]{pracht2020automated}
+Philipp Pracht, Fabian Bohle, and Stefan Grimme.
+\newblock Automated exploration of the low-energy chemical space with fast
+  quantum chemical methods.
+\newblock \emph{Physical Chemistry Chemical Physics}, 22\penalty0
+  (14):\penalty0 7169–7192, 2020.
+\newblock ISSN 1463-9076.
+\newblock \doi{10.1039/c9cp06869d}.
+
+\bibitem[Pracht et~al.(2024)Pracht, Grimme, Bannwarth, Bohle, Ehlert, Feldmann,
+  Gorges, Müller, Neudecker, Plett, Spicher, Steinbach, Wesołowski, and
+  Zeller]{crest2}
+Philipp Pracht, Stefan Grimme, Christoph Bannwarth, Fabian Bohle, Sebastian
+  Ehlert, Gereon Feldmann, Johannes Gorges, Marcel Müller, Tim Neudecker,
+  Christoph Plett, Sebastian Spicher, Pit Steinbach, Patryk~A. Wesołowski, and
+  Felix Zeller.
+\newblock {CREST—A program for the exploration of low-energy molecular
+  chemical space}.
+\newblock \emph{The Journal of Chemical Physics}, 160\penalty0 (11):\penalty0
+  114110, 03 2024.
+\newblock ISSN 0021-9606.
+\newblock \doi{10.1063/5.0197592}.
+\newblock URL \url{https://doi.org/10.1063/5.0197592}.
+
+\bibitem[Grimme(2019)]{grimme2019exploration}
+Stefan Grimme.
+\newblock Exploration of chemical compound, conformer, and reaction space with
+  meta-dynamics simulations based on tight-binding quantum chemical
+  calculations.
+\newblock \emph{Journal of chemical theory and computation}, 15\penalty0
+  (5):\penalty0 2847–2862, 2019.
+\newblock \doi{10.1021/acs.jctc.9b00143}.
+
+\bibitem[Konidena et~al.(2021)Konidena, Lim, and Lee]{Konidena_2021}
+Rajendra~Kumar Konidena, Junseop Lim, and Jun~Yeob Lee.
+\newblock A novel molecular design featuring the conversion of inefficient tadf
+  emitters into efficient tadf emitters for deep-blue organic light emitting
+  diodes.
+\newblock \emph{Chemical Engineering Journal}, 416:\penalty0 129097, July 2021.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.129097}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.129097}.
+
+\bibitem[Ma et~al.(2019)Ma, Cheng, Zhang, Gu, Zheng, Hasrat, and Qi]{Ma_2019}
+Fulong Ma, Yu~Cheng, Xiuxuan Zhang, Xiaofei Gu, Yu~Zheng, Kamvan Hasrat, and
+  Zhengjian Qi.
+\newblock Enhancing performance for blue tadf emitters by introducing
+  intramolecular ch$\cdots$n hydrogen bonding between donor and acceptor.
+\newblock \emph{Dyes and Pigments}, 166:\penalty0 245--253, July 2019.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.03.016}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.03.016}.
+
+\bibitem[Wei et~al.(2022{\natexlab{a}})Wei, Zuo, Jiang, Qi, Yang, Meng, and
+  Lu]{Wei_2022}
+Zhuangzhuang Wei, Tao Zuo, Shanshan Jiang, Fangfang Qi, Mingxue Yang, Lingyi
+  Meng, and Can-Zhong Lu.
+\newblock Theoretically elucidating high photoluminescence performance of
+  dimethylacridan-based blue-color thermally activated delayed fluorescent
+  materials.
+\newblock \emph{New Journal of Chemistry}, 46\penalty0 (7):\penalty0
+  3464--3471, 2022{\natexlab{a}}.
+\newblock ISSN 1369-9261.
+\newblock \doi{10.1039/d1nj05251a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1NJ05251A}.
+
+\bibitem[Zeng et~al.(2019)Zeng, Pan, Lee, Gong, Ni, Xiao, Zeng, Xiang, Zhan,
+  Zhang, Wu, and Yang]{Zeng_2019}
+Xuan Zeng, Kuan-Chung Pan, Wei-Kai Lee, Shaolong Gong, Fan Ni, Xiao Xiao,
+  Weixuan Zeng, Yepeng Xiang, Lisi Zhan, Yu~Zhang, Chung-Chih Wu, and Chuluo
+  Yang.
+\newblock High-efficiency pure blue thermally activated delayed fluorescence
+  emitters with a preferentially horizontal emitting dipole orientation via a
+  spiro-linked double d-a molecular architecture.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (35):\penalty0
+  10851--10859, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc03582f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC03582F}.
+
+\bibitem[Wang et~al.(2021{\natexlab{a}})Wang, Zheng, Wang, Ma, and
+  Wang]{Wang_2021}
+Binyan Wang, Yuanyuan Zheng, Tao Wang, Dongge Ma, and Qiang Wang.
+\newblock 1,8-naphthalimide-based hybrids for efficient red thermally activated
+  delayed fluorescence organic light-emitting diodes.
+\newblock \emph{Organic Electronics}, 88:\penalty0 106012, January
+  2021{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.106012}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.106012}.
+
+\bibitem[Hait et~al.(2016)Hait, Zhu, McMahon, and Voorhis]{Hait2016}
+Diptarka Hait, Tianyu Zhu, David~P. McMahon, and Troy~Van Voorhis.
+\newblock Prediction of excited-state energies and singlet–triplet gaps of
+  charge-transfer states using a restricted open-shell kohn–sham approach.
+\newblock \emph{Journal of Chemical Theory and Computation}, 12\penalty0
+  (7):\penalty0 3353--3359, jun 2016.
+\newblock \doi{10.1021/acs.jctc.6b00426}.
+
+\bibitem[Northey et~al.(2017)Northey, Stacey, and Penfold]{Northey2017}
+T.~Northey, J.~Stacey, and T.~J. Penfold.
+\newblock The role of solid state solvation on the charge transfer state of a
+  thermally activated delayed fluorescence emitter.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (42):\penalty0
+  11001--11009, 2017.
+\newblock \doi{10.1039/c7tc04099g}.
+
+\bibitem[Lu(2024)]{lu2024multiwfn}
+Tian Lu.
+\newblock {A comprehensive electron wavefunction analysis toolbox for chemists,
+  Multiwfn}.
+\newblock \emph{The Journal of Chemical Physics}, 161\penalty0 (8):\penalty0
+  082503, 08 2024.
+\newblock ISSN 0021-9606.
+\newblock \doi{10.1063/5.0216272}.
+\newblock URL \url{https://doi.org/10.1063/5.0216272}.
+
+\bibitem[Etienne et~al.(2014)Etienne, Assfeld, and Monari]{Etienne2014}
+Thibaud Etienne, Xavier Assfeld, and Antonio Monari.
+\newblock Toward a quantitative assessment of electronic transitions’
+  charge-transfer character.
+\newblock \emph{Journal of Chemical Theory and Computation}, 10\penalty0
+  (9):\penalty0 3896--3905, aug 2014.
+\newblock \doi{10.1021/ct5003994}.
+
+\bibitem[Bahers et~al.(2011)Bahers, Adamo, and Ciofini]{LeBahers2011}
+Tangui~Le Bahers, Carlo Adamo, and Ilaria Ciofini.
+\newblock A qualitative index of spatial extent in charge-transfer excitations.
+\newblock \emph{Journal of Chemical Theory and Computation}, 7\penalty0
+  (8):\penalty0 2498--2506, jul 2011.
+\newblock \doi{10.1021/ct200308m}.
+
+\bibitem[Yan et~al.(2022)Yan, Cheng, Yang, Li, and Wang]{Yan_2022}
+Xianju Yan, Zong Cheng, Tong Yang, Chenglong Li, and Yue Wang.
+\newblock Carbazole-benzonitrile based organic semiconductors: Synthesis,
+  characterization and electroluminescent property.
+\newblock \emph{Organic Electronics}, 102:\penalty0 106445, March 2022.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106445}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106445}.
+
+\bibitem[Li et~al.(2022{\natexlab{a}})Li, Liu, Qiu, Zhai, Ye, Xu, and
+  Hu]{Li_2022_10_1016_j_dyepig_2021_110030}
+Jingwei Li, Xinyong Liu, Xu~Qiu, Wenxin Zhai, Xiyun Ye, Lei Xu, and Dehua Hu.
+\newblock Highly efficient deep-blue oleds with cie closely approaches rec.2020
+  standard based on an acridine‒naphthalene hybrid fluorophore.
+\newblock \emph{Dyes and Pigments}, 198:\penalty0 110030, February
+  2022{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.110030}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.110030}.
+
+\bibitem[Dong et~al.(2022)Dong, Liu, Li, Ma, Mei, Li, and Jiang]{Dong_2022}
+Ruizhi Dong, Di~Liu, Jiuyan Li, Mengyao Ma, Yongqiang Mei, Deli Li, and
+  Jingyang Jiang.
+\newblock Acceptor modulation for blue and yellow tadf materials and
+  fabrication of all-tadf white oled.
+\newblock \emph{Materials Chemistry Frontiers}, 6\penalty0 (1):\penalty0
+  40--51, 2022.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d1qm01303c}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1QM01303C}.
+
+\bibitem[Tan et~al.(2020)Tan, Chen, Ni, Qiu, Zhan, Yang, Xiong, Cao, Huo, and
+  Lee]{Tan_2020}
+Ji-Hua Tan, Wen-Cheng Chen, Shao-Fei Ni, Zhipeng Qiu, Yingying Zhan, Zhiwen
+  Yang, Jingwen Xiong, Chen Cao, Yanping Huo, and Chun-Sing Lee.
+\newblock Aggregation-state engineering and emission switching in d-a-d'
+  aiegens featuring dual emission, mcl and white electroluminescence.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (24):\penalty0
+  8061--8068, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01733g}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01733G}.
+
+\bibitem[Lee and Lee(2019)]{Lee_2019_10_1039_c9tc02746g}
+Kyung~Hyung Lee and Jun~Yeob Lee.
+\newblock Phosphor sensitized thermally activated delayed fluorescence organic
+  light-emitting diodes with ideal deep blue device performances.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (28):\penalty0
+  8562--8568, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc02746g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC02746G}.
+
+\bibitem[Zhu et~al.(2020{\natexlab{a}})Zhu, Chen, Yuan, Luo, Zhu, Chen, Chen,
+  Lee, and Tong]{Zhu_2020}
+Jie-Ji Zhu, Wen-Cheng Chen, Yi~Yuan, Dong Luo, Ze-Lin Zhu, Xiang Chen,
+  Jia-Xiong Chen, Chun-Sing Lee, and Qing-Xiao Tong.
+\newblock Rational molecular design of bipolar phenanthroimidazole derivatives
+  to realize highly efficient non-doped deep blue electroluminescence with ciey
+  Ë, 0.06 and eqe approaching 6\%.
+\newblock \emph{Dyes and Pigments}, 173:\penalty0 107982, February
+  2020{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.107982}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.107982}.
+
+\bibitem[Zhang et~al.(2022{\natexlab{a}})Zhang, Dai, Zheng, Wang, Shi, Fan,
+  Lin, Tao, and Zhang]{Zhang_2022_10_1016_j_cclet_2021_08_064}
+Ming Zhang, Gaole Dai, Caijun Zheng, Kai Wang, Yizhong Shi, Xiaochun Fan, Hui
+  Lin, Silu Tao, and Xiaohong Zhang.
+\newblock New electron-donating segment to develop thermally activated delayed
+  fluorescence emitters for efficient solution-processed non-doped organic
+  light-emitting diodes.
+\newblock \emph{Chinese Chemical Letters}, 33\penalty0 (2):\penalty0
+  1110--1115, February 2022{\natexlab{a}}.
+\newblock ISSN 1001-8417.
+\newblock \doi{10.1016/j.cclet.2021.08.064}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cclet.2021.08.064}.
+
+\bibitem[Yao et~al.(2019)Yao, Ying, Sun, Dai, Qiao, Yang, Chen, and
+  Ma]{Yao_2019}
+Jingwen Yao, Shian Ying, Qian Sun, Yanfeng Dai, Xianfeng Qiao, Dezhi Yang,
+  Jiangshan Chen, and Dongge Ma.
+\newblock High efficiency blue/green/yellow/red fluorescent organic
+  light-emitting diodes sensitized by phosphors: general design rules and
+  electroluminescence performance analysis.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (36):\penalty0
+  11293--11302, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc03666k}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC03666K}.
+
+\bibitem[Xiao et~al.(2022{\natexlab{a}})Xiao, Tian, Gao, Liu, Zhou, Zhang, and
+  Yang]{Xiao_2022_10_1016_j_dyepig_2022_110451}
+Shengbing Xiao, Xuzhou Tian, Ying Gao, Haichao Liu, Changjiang Zhou, Shi-Tong
+  Zhang, and Bing Yang.
+\newblock Enhanced blue-emissive electroluminescence performance with rational
+  donor substitution.
+\newblock \emph{Dyes and Pigments}, 204:\penalty0 110451, August
+  2022{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110451}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110451}.
+
+\bibitem[Zhang et~al.(2022{\natexlab{b}})Zhang, Zheng, Zhang, Yang, Wang, Shi,
+  Lin, Tao, and Zhang]{Zhang_2022_10_1039_d2tc02694e}
+Ming Zhang, Cai-Jun Zheng, Heng-Yuan Zhang, Hao-Yu Yang, Kai Wang, Yi-Zhong
+  Shi, Hui Lin, Si-Lu Tao, and Xiao-Hong Zhang.
+\newblock Thermally activated delayed fluorescence exciplexes with phosphor
+  components realizing deep-red to near-infrared electroluminescence.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (41):\penalty0
+  15593--15600, 2022{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc02694e}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC02694E}.
+
+\bibitem[Yu et~al.(2018{\natexlab{a}})Yu, Wu, Xie, Zeng, Ma, and Yang]{Yu_2018}
+Ling Yu, Zhongbin Wu, Guohua Xie, Weixuan Zeng, Dongge Ma, and Chuluo Yang.
+\newblock Molecular design to regulate the photophysical properties of
+  multifunctional tadf emitters towards high-performance tadf-based oleds with
+  eqes up to 22.4\% and small efficiency roll-offs.
+\newblock \emph{Chemical Science}, 9\penalty0 (5):\penalty0 1385--1391,
+  2018{\natexlab{a}}.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/c7sc04669c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7SC04669C}.
+
+\bibitem[Romain et~al.(2016)Romain, Quinton, Tondelier, Geffroy, Jeannin,
+  Rault-Berthelot, and Poriel]{Romain_2016}
+Maxime Romain, Cassandre Quinton, Denis Tondelier, Bernard Geffroy, Olivier
+  Jeannin, Joëlle Rault-Berthelot, and Cyril Poriel.
+\newblock Thioxanthene and dioxothioxanthene dihydroindeno[2,1-b]fluorenes:
+  synthesis, properties and applications in green and sky blue phosphorescent
+  oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 4\penalty0 (8):\penalty0
+  1692--1703, 2016.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c5tc04039f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5TC04039F}.
+
+\bibitem[Guo et~al.(2021)Guo, Liu, Ying, Xu, Wen, Wang, Hu, Qiao, Yang, Ma, and
+  Wang]{Guo_2021_10_1016_j_scib_2021_06_018}
+Runda Guo, Wei Liu, Shian Ying, Yuwei Xu, Yating Wen, Yaxiong Wang, Dehua Hu,
+  Xianfeng Qiao, Bing Yang, Dongge Ma, and Lei Wang.
+\newblock Exceptionally efficient deep blue anthracene-based luminogens:
+  design, synthesis, photophysical, and electroluminescent mechanisms.
+\newblock \emph{Science Bulletin}, 66\penalty0 (20):\penalty0 2090--2098,
+  October 2021.
+\newblock ISSN 2095-9273.
+\newblock \doi{10.1016/j.scib.2021.06.018}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.scib.2021.06.018}.
+
+\bibitem[Chen et~al.(2020{\natexlab{a}})Chen, Liao, Lin, Xu, Lan, Wei, Yuan,
+  Li, and Zhang]{Chen_2020_10_1039_d0tc03631e}
+Minyu Chen, Yingjie Liao, Yang Lin, Tao Xu, Weixia Lan, Bin Wei, Yongfang Yuan,
+  Dongliang Li, and Xiaowen Zhang.
+\newblock Progress on ultraviolet organic electroluminescence and lasing.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (42):\penalty0
+  14665--14694, 2020{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc03631e}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC03631E}.
+
+\bibitem[Tang et~al.(2020)Tang, Chen, Wang, Jiang, Hu, Cao, Zhang, and
+  Zhang]{Tang_2020}
+Chao Tang, Yuan Chen, Fangfang Wang, Tao Jiang, Jia Hu, Xudong Cao, Lili Zhang,
+  and Xinwen Zhang.
+\newblock Effect of methyl-substitution on carbazole/oxadiazole donor-acceptor
+  (d-a) type host materials for efficient solution-processed green organic
+  light-emitting diodes.
+\newblock \emph{Tetrahedron}, 76\penalty0 (13):\penalty0 131030, March 2020.
+\newblock ISSN 0040-4020.
+\newblock \doi{10.1016/j.tet.2020.131030}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.tet.2020.131030}.
+
+\bibitem[Pandidurai et~al.(2021)Pandidurai, Jayakumar, Chen, Hsieh, and
+  Cheng]{Pandidurai_2021}
+Jayabalan Pandidurai, Jayachandran Jayakumar, Yi-Kuan Chen, Chia-Min Hsieh, and
+  Chien-Hong Cheng.
+\newblock Constitutional isomers of carbazole-benzoyl-pyrimidine-based
+  thermally activated delayed fluorescence emitters for efficient oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (44):\penalty0
+  15900--15909, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc03998a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC03998A}.
+
+\bibitem[Rajamalli et~al.(2017)Rajamalli, Thangaraji, Senthilkumar, Ren-Wu,
+  Lin, and Cheng]{Rajamalli_2017}
+Pachaiyappan Rajamalli, Vasudevan Thangaraji, Natarajan Senthilkumar,
+  Chen-Cheng Ren-Wu, Hao-Wu Lin, and Chien-Hong Cheng.
+\newblock Thermally activated delayed fluorescence emitters with a
+  m,m-di-tert-butyl-carbazolyl benzoylpyridine core achieving extremely high
+  blue electroluminescence efficiencies.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (11):\penalty0
+  2919--2926, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc00457e}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC00457E}.
+
+\bibitem[Barros et~al.(2023)Barros, Esteves, and Brites]{Barros_2023}
+Hélio~Lopes Barros, Maria~Alexandra Esteves, and Maria~João Brites.
+\newblock Synthesis, photophysical and electrochemical properties of
+  $\pi$-conjugated pyrene based down-shifting molecules with fluorinated aryl
+  groups.
+\newblock \emph{Dyes and Pigments}, 213:\penalty0 111103, May 2023.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2023.111103}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2023.111103}.
+
+\bibitem[Zassowski et~al.(2017)Zassowski, Ledwon, Kurowska, Herman, Jarosz,
+  Lapkowski, Cherpak, Stakhira, Peciulyte, Volyniuk, and
+  Grazulevicius]{Zassowski_2017}
+Pawel Zassowski, Przemyslaw Ledwon, Aleksandra Kurowska, Artur~P. Herman,
+  Tomasz Jarosz, Mieczyslaw Lapkowski, Vladyslav Cherpak, Pavlo Stakhira, Laura
+  Peciulyte, Dmytro Volyniuk, and Juozas~Vidas Grazulevicius.
+\newblock Efficient synthesis and structural effects of ambipolar carbazole
+  derivatives.
+\newblock \emph{Synthetic Metals}, 223:\penalty0 1--11, January 2017.
+\newblock ISSN 0379-6779.
+\newblock \doi{10.1016/j.synthmet.2016.11.015}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.synthmet.2016.11.015}.
+
+\bibitem[Xie et~al.(2020)Xie, An, Xie, Li, Zhang, Zou, Chen, Chen, Cheng, and
+  Tang]{Xie_2020_10_1039_d0tc00718h}
+Feng-Ming Xie, Zhi-Dong An, Miao Xie, Yan-Qing Li, Guang-Hui Zhang, Shi-Jie
+  Zou, Li~Chen, Jing-De Chen, Tao Cheng, and Jian-Xin Tang.
+\newblock tert-butyl substituted hetero-donor tadf compounds for efficient
+  solution-processed non-doped blue oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (17):\penalty0
+  5769--5776, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc00718h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC00718H}.
+
+\bibitem[Li et~al.(2018)Li, Du, Zhou, Ye, Fu, Humphrey, Wu, Zhao, Du, Tao, Wu,
+  and Zhang]{Li_2018}
+Chuan Li, Xiaoyang Du, Yu~Zhou, Jun Ye, Lulu Fu, Mark~G. Humphrey, Chao Wu,
+  Juewen Zhao, Yanqing Du, Silu Tao, Jiacheng Wu, and Chi Zhang.
+\newblock A simple and broadly applicable synthesis of fluorene-coupled
+  d-$\sigma$-a type molecules: towards high-triplet-energy bipolar hosts for
+  efficient blue thermally-activated delayed fluorescence.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (26):\penalty0
+  6949--6957, 2018.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc01309h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC01309H}.
+
+\bibitem[Lin et~al.(2022{\natexlab{a}})Lin, Wu, Liu, Deng, Zhuang, Xuan, Xue,
+  Zhang, Wei, and Xie]{Lin_2022}
+Cunjian Lin, Zishuang Wu, Jianbin Liu, Wen-Ting Deng, Yixi Zhuang, Tongtong
+  Xuan, Jie Xue, Liao Zhang, Guodan Wei, and Rong-Jun Xie.
+\newblock Extremely low efficiency roll-off in vacuum- and solution-processed
+  deep-red/near-infrared oleds based on 1,8-naphthalimide tadf emitters.
+\newblock \emph{Journal of Luminescence}, 243:\penalty0 118683, March
+  2022{\natexlab{a}}.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2021.118683}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2021.118683}.
+
+\bibitem[Wang et~al.(2017{\natexlab{a}})Wang, Li, Feng, and
+  Song]{Wang_2017_10_1039_c7cp02615c}
+Lijuan Wang, Tao Li, Peicheng Feng, and Yan Song.
+\newblock Theoretical tuning of the singlet-triplet energy gap to achieve
+  efficient long-wavelength thermally activated delayed fluorescence emitters:
+  the impact of substituents.
+\newblock \emph{Physical Chemistry Chemical Physics}, 19\penalty0
+  (32):\penalty0 21639--21647, 2017{\natexlab{a}}.
+\newblock ISSN 1463-9084.
+\newblock \doi{10.1039/c7cp02615c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7CP02615C}.
+
+\bibitem[Hua et~al.(2022)Hua, Liu, Huang, Li, Zhou, Huang, Cao, Wu, and
+  Yang]{Hua_2022}
+Tao Hua, Yu-Chun Liu, Chih-Wei Huang, Nengquan Li, Changjiang Zhou, Zhongyan
+  Huang, Xiaosong Cao, Chung-Chih Wu, and Chuluo Yang.
+\newblock High-efficiency and low roll-off deep-blue oleds enabled by thermally
+  activated delayed fluorescence emitter with preferred horizontal dipole
+  orientation.
+\newblock \emph{Chemical Engineering Journal}, 433:\penalty0 133598, April
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.133598}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.133598}.
+
+\bibitem[Pramod et~al.(2019{\natexlab{a}})Pramod, Nadaf, and
+  Renuka]{Pramod_2019}
+A.G. Pramod, Y.F. Nadaf, and C.G. Renuka.
+\newblock A combined experimental theoretical approach for energy gap
+  determination, photophysical, photostable, optoelectronic, nlo, and organic
+  light emitting diode (oled) application: Synthesized coumarin derivative.
+\newblock \emph{Journal of Molecular Structure}, 1194:\penalty0 271--283,
+  October 2019{\natexlab{a}}.
+\newblock ISSN 0022-2860.
+\newblock \doi{10.1016/j.molstruc.2019.05.099}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.molstruc.2019.05.099}.
+
+\bibitem[Tian et~al.(2021)Tian, Zhang, Li, Xiao, Gao, Su, and Yang]{Tian_2021}
+Xuzhou Tian, Shi-Tong Zhang, Xianglong Li, Shengbing Xiao, Ying Gao, Shi-Jian
+  Su, and Bing Yang.
+\newblock Donor-Ï€-acceptor materials for robust electroluminescence
+  performance based on hybridized local and charge-transfer state.
+\newblock \emph{Dyes and Pigments}, 193:\penalty0 109495, September 2021.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109495}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109495}.
+
+\bibitem[Pramod et~al.(2019{\natexlab{b}})Pramod, Nadaf, and
+  Renuka]{Pramod_2019_10_1016_j_saa_2019_117288}
+A.G. Pramod, Y.F. Nadaf, and C.G. Renuka.
+\newblock Synthesis, photophysical, quantum chemical investigation, linear and
+  non-linear optical properties of coumarin derivative: Optoelectronic and
+  optical limiting application.
+\newblock \emph{Spectrochimica Acta Part A: Molecular and Biomolecular
+  Spectroscopy}, 223:\penalty0 117288, December 2019{\natexlab{b}}.
+\newblock ISSN 1386-1425.
+\newblock \doi{10.1016/j.saa.2019.117288}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.saa.2019.117288}.
+
+\bibitem[Zhou et~al.(2022{\natexlab{a}})Zhou, Liu, Sun, Liu, Xu, Hu, and
+  Hu]{Zhou_2022}
+Changjiang Zhou, Yafei Liu, Zhuangzhuang Sun, He~Liu, Lei Xu, Dehua Hu, and Jun
+  Hu.
+\newblock Efficient red hybridized local and charge-transfer oleds by rational
+  isomer engineering.
+\newblock \emph{Dyes and Pigments}, 205:\penalty0 110488, September
+  2022{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110488}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110488}.
+
+\bibitem[Zhang et~al.(2016{\natexlab{a}})Zhang, Cai, Bin, Zhang, Zhang, and
+  Duan]{Zhang_2016_10_1039_c5sc04755b}
+Dongdong Zhang, Minghan Cai, Zhengyang Bin, Yunge Zhang, Deqiang Zhang, and
+  Lian Duan.
+\newblock Highly efficient blue thermally activated delayed fluorescent oleds
+  with record-low driving voltages utilizing high triplet energy hosts with
+  small singlet-triplet splittings.
+\newblock \emph{Chemical Science}, 7\penalty0 (5):\penalty0 3355--3363,
+  2016{\natexlab{a}}.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/c5sc04755b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5SC04755B}.
+
+\bibitem[Yoo et~al.(2016)Yoo, Song, and Lee]{Yoo_2016}
+Seung~Gun Yoo, Wook Song, and Jun~Yeob Lee.
+\newblock Molecular engineering of donor moiety of donor-acceptor structure for
+  management of photophysical properties and device performances.
+\newblock \emph{Dyes and Pigments}, 128:\penalty0 201--208, May 2016.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2016.01.021}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2016.01.021}.
+
+\bibitem[Ma et~al.(2021{\natexlab{a}})Ma, Ji, Zhang, Xue, Zhang, Qi, and
+  Zhu]{Ma_2021}
+Fulong Ma, Hefang Ji, Dongdong Zhang, Ke~Xue, Pan Zhang, Zhengjian Qi, and
+  Huaiyuan Zhu.
+\newblock Adjusting the photophysical properties of aie-active tadf emitters
+  from through-bond to through-space charge transfer for high-performance
+  solution-processed oleds.
+\newblock \emph{Dyes and Pigments}, 188:\penalty0 109208, April
+  2021{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109208}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109208}.
+
+\bibitem[Sun et~al.(2020)Sun, Liu, Tian, Gu, Wang, Cai, Jiang, and
+  Sun]{Sun_2020}
+Kaiyong Sun, Dan Liu, Wenwen Tian, Feng Gu, Wangxia Wang, Zhaosheng Cai, Wei
+  Jiang, and Yueming Sun.
+\newblock Manipulation of the sterically hindering effect to realize aie and
+  tadf for high-performing nondoped solution-processed oleds with extremely low
+  efficiency roll-off.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (34):\penalty0
+  11850--11859, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc02577a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC02577A}.
+
+\bibitem[Cao et~al.(2021)Cao, Abdurahman, Zheng, Zhang, and Li]{Cao_2021}
+Wenjuan Cao, Alim Abdurahman, Ping Zheng, Ming Zhang, and Feng Li.
+\newblock High-performance non-doped blue oleds based on
+  1,2,4-triazole-phenanthroimidazole derivatives with negligible efficiency
+  roll-off.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (21):\penalty0
+  6873--6879, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc01079d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC01079D}.
+
+\bibitem[Zhao et~al.(2018{\natexlab{a}})Zhao, Schwartz, Stöger, White, Chen,
+  Ma, Fröhlich, and Kautny]{Zhao_2018_10_1039_c8tc03537g}
+Chenyang Zhao, Thomas Schwartz, Berthold Stöger, Fraser~J. White, Jiangshan
+  Chen, Dongge Ma, Johannes Fröhlich, and Paul Kautny.
+\newblock Controlling excimer formation in
+  indolo[3,2,1-jk]carbazole/9h-carbazole based host materials for rgb pholeds.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (37):\penalty0
+  9914--9924, 2018{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc03537g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC03537G}.
+
+\bibitem[Xiao et~al.(2022{\natexlab{b}})Xiao, Wang, Xie, Shen, Huang, Miao,
+  Liu, Yu, and Huang]{Xiao_2022}
+Yuxin Xiao, Hailan Wang, Zongliang Xie, Mingyao Shen, Rongjuan Huang, Yuchen
+  Miao, Guanyu Liu, Tao Yu, and Wei Huang.
+\newblock Nir tadf emitters and oleds: challenges, progress, and perspectives.
+\newblock \emph{Chemical Science}, 13\penalty0 (31):\penalty0 8906--8923,
+  2022{\natexlab{b}}.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/d2sc02201j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2SC02201J}.
+
+\bibitem[Choi et~al.(2019)Choi, Lee, Adachi, and Lee]{Choi_2019}
+Shin~Hyung Choi, Chan~Hee Lee, Chihaya Adachi, and Sae~Youn Lee.
+\newblock Molecular design of highly effective thermally activated delayed
+  fluorescence emitters based on ortho-substituted donor-acceptor-donor
+  pyridinecarbonitrile derivatives and their application for high-performance
+  oleds.
+\newblock \emph{Dyes and Pigments}, 171:\penalty0 107775, December 2019.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.107775}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.107775}.
+
+\bibitem[Qiu et~al.(2021)Qiu, Xu, Ying, Ye, Xu, Wang, Hu, Ma, and Ma]{Qiu_2021}
+Xu~Qiu, Lei Xu, Shian Ying, Xiyun Ye, Pei Xu, Bohan Wang, Dehua Hu, Dongge Ma,
+  and Yuguang Ma.
+\newblock Novel 12,12-dimethyl-7,12-dihydrobenzo[a]acridine as a deep-blue
+  emitting chromophore for oleds with narrow-band emission and suppressed
+  efficiency roll-off.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (39):\penalty0
+  13697--13703, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc03898b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC03898B}.
+
+\bibitem[Li et~al.(2022{\natexlab{b}})Li, Xu, Liu, Qiu, Pan, and
+  Hu]{Li_2022_10_1016_j_dyepig_2022_110456}
+Jingwei Li, Lei Xu, Xinyong Liu, Xu~Qiu, Yuyu Pan, and Dehua Hu.
+\newblock Novel fused 5,9-dihydrobenzo[a]quinolino[1,2,3-fg]acridine-based
+  emitters for efficient non-doped deep-blue electroluminescence with ciey
+  â‰¤ 0.08.
+\newblock \emph{Dyes and Pigments}, 204:\penalty0 110456, August
+  2022{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110456}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110456}.
+
+\bibitem[Kumar et~al.(2022)Kumar, Tourneur, Adsetts, Wong, Rajamalli, Chen,
+  Lazzaroni, Viville, Cordes, Slawin, Olivier, Cornil, Ding, and
+  Zysman-Colman]{Kumar_2022}
+Shiv Kumar, Pauline Tourneur, Jonathan~R. Adsetts, Michael~Y. Wong,
+  Pachaiyappan Rajamalli, Dongyang Chen, Roberto Lazzaroni, Pascal Viville,
+  David~B. Cordes, Alexandra M.~Z. Slawin, Yoann Olivier, Jérôme Cornil,
+  Zhifeng Ding, and Eli Zysman-Colman.
+\newblock Photoluminescence and electrochemiluminescence of thermally activated
+  delayed fluorescence (tadf) emitters containing diphenylphosphine
+  chalcogenide-substituted carbazole donors.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (12):\penalty0
+  4646--4667, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc05696d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC05696D}.
+
+\bibitem[Yu et~al.(2017)Yu, Wu, Zhong, Xie, Wu, Ma, and Yang]{Yu_2017}
+Ling Yu, Zhongbin Wu, Cheng Zhong, Guohua Xie, Kailong Wu, Dongge Ma, and
+  Chuluo Yang.
+\newblock Tuning the emission from local excited-state to charge-transfer state
+  transition in quinoxaline-based butterfly-shaped molecules: Efficient orange
+  oleds based on thermally activated delayed fluorescence emitter.
+\newblock \emph{Dyes and Pigments}, 141:\penalty0 325--332, June 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.02.035}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.02.035}.
+
+\bibitem[Zhou et~al.(2019{\natexlab{a}})Zhou, Zhang, Ye, Liu, Wang, Yuan, Du,
+  Zhang, Zheng, and Zhang]{Zhou_2019}
+Yu~Zhou, Ming Zhang, Jun Ye, Huan Liu, Kai Wang, Yi~Yuan, Yan-Qing Du, Chi
+  Zhang, Cai-Jun Zheng, and Xiao-Hong Zhang.
+\newblock Efficient solution-processed red organic light-emitting diode based
+  on an electron-donating building block of pyrrolo[3,2-b]pyrrole.
+\newblock \emph{Organic Electronics}, 65:\penalty0 110--115, February
+  2019{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2018.11.007}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2018.11.007}.
+
+\bibitem[Kumar et~al.(2020{\natexlab{a}})Kumar, Lee, Lee, Jung, Yoo, and
+  Lee]{Kumar_2020_10_1039_c9tc06204a}
+Ajay Kumar, Woochan Lee, Taehwan Lee, Jaehoon Jung, Seunghyup Yoo, and
+  Min~Hyung Lee.
+\newblock Triarylboron-based tadf emitters with perfluoro substituents:
+  high-efficiency oleds with a power efficiency over 100 lm w-1.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (12):\penalty0
+  4253--4263, 2020{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc06204a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC06204A}.
+
+\bibitem[Sharma et~al.(2020)Sharma, Saklani, Justin~Thomas, Shahnawaz,
+  Swayamprabha, and Jou]{Sharma_2020}
+Anuj Sharma, Diksha Saklani, K.R. Justin~Thomas, Shahnawaz, Sujith~Sudheendran
+  Swayamprabha, and Jwo-Huei Jou.
+\newblock Synthesis and characterization of multi-substituted carbazole
+  derivatives exhibiting aggregation-induced emission for oled applications.
+\newblock \emph{Organic Electronics}, 86:\penalty0 105864, November 2020.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.105864}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.105864}.
+
+\bibitem[Chen et~al.(2022{\natexlab{a}})Chen, Liu, Xiong, He, Zhao, and
+  Tang]{Chen_2022_10_1039_d1qm01625c}
+Hao Chen, Huijun Liu, Yi~Xiong, Junchu He, Zujin Zhao, and Ben~Zhong Tang.
+\newblock New aggregation-induced delayed fluorescent materials for efficient
+  oleds with high stabilities of emission color and efficiency.
+\newblock \emph{Materials Chemistry Frontiers}, 6\penalty0 (7):\penalty0
+  924--932, 2022{\natexlab{a}}.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d1qm01625c}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1QM01625C}.
+
+\bibitem[Huang et~al.(2019)Huang, Liu, Li, Jiang, and Jiang]{Huang_2019}
+Tingting Huang, Di~Liu, Deli Li, Wenfeng Jiang, and Jingyang Jiang.
+\newblock Novel yellow thermally activated delayed fluorescence emitters for
+  highly efficient full-tadf woleds with low driving voltages and remarkable
+  color stability.
+\newblock \emph{New Journal of Chemistry}, 43\penalty0 (34):\penalty0
+  13339--13348, 2019.
+\newblock ISSN 1369-9261.
+\newblock \doi{10.1039/c9nj03184g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9NJ03184G}.
+
+\bibitem[Wei et~al.(2014)Wei, Qiu, Liu, Wang, Wei, Wang, Liu, Bian, Lu, Zhao,
+  and Huang]{Wei_2014}
+Feng Wei, Jacky Qiu, Xiaochen Liu, Jianqiang Wang, Huibo Wei, Zhibin Wang,
+  Zhiwei Liu, Zuqiang Bian, Zhenghong Lu, Yongliang Zhao, and Chunhui Huang.
+\newblock Efficient orange-red phosphorescent organic light-emitting diodes
+  using an in situ synthesized copper(<scp>i</scp>) complex as the emitter.
+\newblock \emph{J. Mater. Chem. C}, 2\penalty0 (31):\penalty0 6333--6341, 2014.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c4tc00410h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C4TC00410H}.
+
+\bibitem[Zheng et~al.(2022)Zheng, Huo, Xiao, Shi, Ma, and Tang]{Zheng_2022}
+Yanan Zheng, Jinnan Huo, Shu Xiao, Heping Shi, Dongge Ma, and Ben~Zhong Tang.
+\newblock Synthesis, photoluminescence and electroluminescence properties of a
+  new blue emitter containing carbazole, acridine and diphenyl sulfone units.
+\newblock \emph{Organic Electronics}, 101:\penalty0 106411, February 2022.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2021.106411}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2021.106411}.
+
+\bibitem[Liu et~al.(2021{\natexlab{a}})Liu, Qiu, Yu, Ban, Pan, Gao, Zhu, Zhang,
+  Zhang, and Tong]{Liu_2021_10_1016_j_tet_2020_131869}
+Yan Liu, Suyu Qiu, Jianmin Yu, Xinxin Ban, Jie Pan, Kun Gao, Aiyun Zhu, Dongen
+  Zhang, Tianlin Zhang, and Zhiwei Tong.
+\newblock Strategy to improve the efficiency of solution-processed
+  phosphorescent organic light-emitting devices by modified tadf host with
+  tert-butyl carbazole.
+\newblock \emph{Tetrahedron}, 81:\penalty0 131869, February 2021{\natexlab{a}}.
+\newblock ISSN 0040-4020.
+\newblock \doi{10.1016/j.tet.2020.131869}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.tet.2020.131869}.
+
+\bibitem[Jia et~al.(2019)Jia, Wu, Zhang, Fan, Zhao, Liu, Dong, Wang, and
+  Li]{Jia_2019_10_1016_j_orgel_2019_03_044}
+Yi~Jia, Sen Wu, Yuteng Zhang, Shigen Fan, Xiaoming Zhao, Hongli Liu, Xiaofei
+  Dong, Shirong Wang, and Xianggao Li.
+\newblock Achieving non-doped deep-blue oleds by applying bipolar imidazole
+  derivatives.
+\newblock \emph{Organic Electronics}, 69:\penalty0 289--296, June 2019.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.03.044}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.03.044}.
+
+\bibitem[Xing et~al.(2017)Xing, Zhuang, Xu, Ji, Su, and Cui]{Xing_2017}
+Zhen-Hua Xing, Jin-Yong Zhuang, Xiao-Ping Xu, Shun-Jun Ji, Wen-Ming Su, and
+  Zheng Cui.
+\newblock Novel oxazole-based emitters for high efficiency fluorescent oleds:
+  Synthesis, characterization, and optoelectronic properties.
+\newblock \emph{Tetrahedron}, 73\penalty0 (15):\penalty0 2036--2042, April
+  2017.
+\newblock ISSN 0040-4020.
+\newblock \doi{10.1016/j.tet.2017.02.049}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.tet.2017.02.049}.
+
+\bibitem[Danyliv et~al.(2023)Danyliv, Ivaniuk, Danyliv, Bezvikonnyi, Volyniuk,
+  Galyna, Lazauskas, Skhirtladze, Ågren, Stakhira, Karaush-Karmazin, Ali,
+  Baryshnikov, and Grazulevicius]{Danyliv_2023}
+Yan Danyliv, Khrystyna Ivaniuk, Iryna Danyliv, Oleksandr Bezvikonnyi, Dmytro
+  Volyniuk, Sych Galyna, Algirdas Lazauskas, Levani Skhirtladze, Hans Ågren,
+  Pavlo Stakhira, Nataliya Karaush-Karmazin, Amjad Ali, Glib Baryshnikov, and
+  Juozas~V. Grazulevicius.
+\newblock Carbazole-$\sigma$-sulfobenzimide derivative exhibiting
+  mechanochromic thermally activated delayed fluorescence as emitter for
+  flexible oleds: Theoretical and experimental insights.
+\newblock \emph{Dyes and Pigments}, 208:\penalty0 110841, January 2023.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110841}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110841}.
+
+\bibitem[Zhang et~al.(2020{\natexlab{a}})Zhang, Li, Cai, Xue, and
+  Qiao]{Zhang_2020_10_1039_d0tc01614d}
+Yanxin Zhang, Qian Li, Minghan Cai, Jie Xue, and Juan Qiao.
+\newblock An 850 nm pure near-infrared emitting iridium complex for
+  solution-processed organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (25):\penalty0
+  8484--8492, 2020{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01614d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01614D}.
+
+\bibitem[Huang et~al.(2017{\natexlab{a}})Huang, Ji, Li, Zhou, Jiang, Feng, Lin,
+  and Sun]{Bin_Huang_2017}
+Bin Huang, Yigang Ji, Zijing Li, Na~Zhou, Wei Jiang, Yan Feng, Baoping Lin, and
+  Yueming Sun.
+\newblock Simple aggregation-induced delayed fluorescence materials based on
+  anthraquinone derivatives for highly efficient solution-processed red oleds.
+\newblock \emph{Journal of Luminescence}, 187:\penalty0 414--420, July
+  2017{\natexlab{a}}.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2017.03.038}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2017.03.038}.
+
+\bibitem[Barman et~al.(2022)Barman, Narang, Gogoi, Barman, and
+  Iyer]{Barman_2022}
+Debasish Barman, Kavita Narang, Rajdikhsit Gogoi, Debika Barman, and
+  Parameswar~Krishnan Iyer.
+\newblock Exceptional class of thermally activated delayed fluorescent emitters
+  that display pure blue, near-ir, circularly polarized luminescence and
+  multifunctional behaviour for highly efficient and stable oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (22):\penalty0
+  8536--8583, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc05906h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC05906H}.
+
+\bibitem[Zhang et~al.(2020{\natexlab{b}})Zhang, Miao, Ali, Shi, He, Fu, and
+  Meng]{Zhang_2020_10_1016_j_dyepig_2020_108477}
+Tian Zhang, Jingsheng Miao, Muhammad~Umair Ali, Ming Shi, Yaowu He, Tianchen
+  Fu, and Hong Meng.
+\newblock Phosphorescent oleds with extremely low efficiency roll-off enabled
+  via rationally designed benzimidazole-based bipolar hosts.
+\newblock \emph{Dyes and Pigments}, 180:\penalty0 108477, September
+  2020{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108477}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108477}.
+
+\bibitem[Kreiza et~al.(2021)Kreiza, Berenis, Banevičius, Juršėnas,
+  Javorskis, Orentas, and Kazlauskas]{Kreiza_2021}
+Gediminas Kreiza, Domantas Berenis, Dovydas Banevičius, Saulius Juršėnas,
+  Tomas Javorskis, Edvinas Orentas, and Karolis Kazlauskas.
+\newblock High efficiency and extremely low roll-off solution- and
+  vacuum-processed oleds based on isophthalonitrile blue tadf emitter.
+\newblock \emph{Chemical Engineering Journal}, 412:\penalty0 128574, May 2021.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.128574}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.128574}.
+
+\bibitem[Wang et~al.(2019)Wang, Yang, Zhang, Xie, Ran, Wang, Fu, Ren, Sun,
+  Zhao, Hu, and Wang]{Wang_2019}
+Binyan Wang, Hannan Yang, Yaxing Zhang, Guohua Xie, Huijuan Ran, Tao Wang,
+  Qiang Fu, Yitao Ren, Ning Sun, Guangtao Zhao, Jian-Yong Hu, and Qiang Wang.
+\newblock Highly efficient electroluminescence from evaporation- and
+  solution-processable orange-red thermally activated delayed fluorescence
+  emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (39):\penalty0
+  12321--12327, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc04418c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC04418C}.
+
+\bibitem[Nagar et~al.(2022)Nagar, Choudhury, Tavgeniene, Beresneviciute,
+  Blazevicius, Jankauskas, Kumar, Banik, Ghosh, Grigalevicius, and
+  Jou]{Nagar_2022}
+Mangey~Ram Nagar, Abhijeet Choudhury, Daiva Tavgeniene, Raminta Beresneviciute,
+  Dovydas Blazevicius, Vygintas Jankauskas, Krishan Kumar, Subrata Banik,
+  Subrata Ghosh, Saulius Grigalevicius, and Jwo-Huei Jou.
+\newblock Solution-processable phenothiazine and phenoxazine substituted
+  fluorene cored nanotextured hole transporting materials for achieving
+  high-efficiency oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (9):\penalty0
+  3593--3608, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc05237c}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC05237C}.
+
+\bibitem[Tongsuk et~al.(2021)Tongsuk, Malatong, Unjarern, Wongkaew,
+  Surawatanawong, Sudyoadsuk, Promarak, and Ruangsupapichat]{Tongsuk_2021}
+Sukanya Tongsuk, Ruttapol Malatong, Takdanai Unjarern, Chanikan Wongkaew,
+  Panida Surawatanawong, Taweesak Sudyoadsuk, Vinich Promarak, and Nopporn
+  Ruangsupapichat.
+\newblock Enhancement of performance of oleds using double indolo[3,2-b]indole
+  electron-donors based emitter.
+\newblock \emph{Journal of Luminescence}, 238:\penalty0 118287, October 2021.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2021.118287}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2021.118287}.
+
+\bibitem[Zhou et~al.(2020)Zhou, Chen, Liu, Cao, Li, Zhang, Lee, and
+  Yang]{Zhou_2020}
+Changjiang Zhou, Wen-Cheng Chen, He~Liu, Xiaosong Cao, Nengquan Li, Youming
+  Zhang, Chun-Sing Lee, and Chuluo Yang.
+\newblock Isomerization enhanced quantum yield of dibenzo[a,c]phenazine-based
+  thermally activated delayed fluorescence emitters for highly efficient orange
+  oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (28):\penalty0
+  9639--9645, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01995j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01995J}.
+
+\bibitem[Duan(2022)]{Duan_2022}
+Lian Duan.
+\newblock \emph{WOLEDs using TADF dopants}, pages 235--287.
+\newblock Elsevier, 2022.
+\newblock ISBN 9780128198100.
+\newblock \doi{10.1016/b978-0-12-819810-0.00004-1}.
+\newblock URL \url{http://dx.doi.org/10.1016/B978-0-12-819810-0.00004-1}.
+
+\bibitem[Zhang et~al.(2021{\natexlab{a}})Zhang, Dai, Zheng, Wang, Shi, Fan,
+  Lin, Tao, and Zhang]{Zhang_2021_10_1016_j_orgel_2021_106312}
+Ming Zhang, Gao-Le Dai, Cai-Jun Zheng, Kai Wang, Yi-Zhong Shi, Xiao-Chun Fan,
+  Hui Lin, Si-Lu Tao, and Xiao-Hong Zhang.
+\newblock Novel d-dâ€²-a structure thermally activated delayed fluorescence
+  emitters realizing over 20\% external quantum efficiencies in both
+  evaporation- and solution-processed organic light-emitting diodes.
+\newblock \emph{Organic Electronics}, 99:\penalty0 106312, December
+  2021{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2021.106312}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2021.106312}.
+
+\bibitem[Luo et~al.(2016)Luo, Gong, Gu, Chen, Li, Zhong, Xie, and
+  Yang]{Luo_2016}
+Jiajia Luo, Shaolong Gong, Yu~Gu, Tianheng Chen, Yifan Li, Cheng Zhong, Guohua
+  Xie, and Chuluo Yang.
+\newblock Multi-carbazole encapsulation as a simple strategy for the
+  construction of solution-processed, non-doped thermally activated delayed
+  fluorescence emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 4\penalty0 (13):\penalty0
+  2442--2446, 2016.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc00418k}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC00418K}.
+
+\bibitem[Dhali et~al.(2021)Dhali, Phan~Huu, Bertocchi, Sissa, Terenziani, and
+  Painelli]{Dhali_2021}
+Rama Dhali, D.~K.~Andrea Phan~Huu, Francesco Bertocchi, Cristina Sissa,
+  Francesca Terenziani, and Anna Painelli.
+\newblock Understanding tadf: a joint experimental and theoretical study of
+  dmac-trz.
+\newblock \emph{Physical Chemistry Chemical Physics}, 23\penalty0 (1):\penalty0
+  378--387, 2021.
+\newblock ISSN 1463-9084.
+\newblock \doi{10.1039/d0cp05982j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0CP05982J}.
+
+\bibitem[Guo et~al.(2020)Guo, Wang, Huang, Zhang, Xiang, Ye, Liu, and
+  Wang]{Guo_2020}
+Runda Guo, Yaxiong Wang, Zhi Huang, Qing Zhang, Songpo Xiang, Shaofeng Ye, Wei
+  Liu, and Lei Wang.
+\newblock Phenothiazine dioxide-containing derivatives as efficient hosts for
+  blue, green and yellow thermally activated delayed fluorescence oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (11):\penalty0
+  3705--3714, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc05917b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC05917B}.
+
+\bibitem[Huang et~al.(2017{\natexlab{b}})Huang, Wang, Zhang, Xiang, Lv, Ma,
+  Yang, Gao, and Wang]{Huang_2017}
+Zhi Huang, Bo~Wang, Qing Zhang, Songpo Xiang, Xialei Lv, Lixiang Ma, Bing Yang,
+  Yu~Gao, and Lei Wang.
+\newblock Highly twisted bipolar emitter for efficient nondoped deep-blue
+  electroluminescence.
+\newblock \emph{Dyes and Pigments}, 140:\penalty0 328--336, May
+  2017{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.01.028}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.01.028}.
+
+\bibitem[Lee et~al.(2021{\natexlab{a}})Lee, Lee, Lee, Lee, Jung, Yoo, and
+  Lee]{Lee_2021}
+Young~Hoon Lee, Donggyun Lee, Taehwan Lee, Junseung Lee, Jaehoon Jung,
+  Seunghyup Yoo, and Min~Hyung Lee.
+\newblock Impact of boryl acceptors in para-acridine-appended triarylboron
+  emitters on blue thermally activated delayed fluorescence oleds.
+\newblock \emph{Dyes and Pigments}, 188:\penalty0 109224, April
+  2021{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109224}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109224}.
+
+\bibitem[Di et~al.(2020)Di, Tingting, Zhengqin, Huixia, Hua, Junsheng, and
+  Bingshe]{Di_2020}
+Zhang Di, Yang Tingting, Wang Zhengqin, Xu~Huixia, Wang Hua, Yu~Junsheng, and
+  Xu~Bingshe.
+\newblock Photoelectric properties of host materials based on diphenyl sulfone
+  as acceptor and the performances in green phosphorescent oleds.
+\newblock \emph{Optical Materials}, 109:\penalty0 110313, November 2020.
+\newblock ISSN 0925-3467.
+\newblock \doi{10.1016/j.optmat.2020.110313}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.optmat.2020.110313}.
+
+\bibitem[Leng et~al.(2020)Leng, Sun, Guo, Zhang, Liu, Lv, Ye, and
+  Wang]{Leng_2020}
+Panpan Leng, Shuaiqiang Sun, Runda Guo, Qing Zhang, Wei Liu, Xialei Lv,
+  Shaofeng Ye, and Lei Wang.
+\newblock Modifying the aie-tadf chromophore with host-substituents to achieve
+  high efficiency and low roll-off non-doped oleds.
+\newblock \emph{Organic Electronics}, 78:\penalty0 105602, March 2020.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.105602}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.105602}.
+
+\bibitem[Liang et~al.(2020)Liang, Li, Cui, Li, Wang, and Wang]{Liang_2020}
+Jixiong Liang, Chenglong Li, Yuanyuan Cui, Zhiqiang Li, Jiaxuan Wang, and Yue
+  Wang.
+\newblock Rational design of efficient orange-red to red thermally activated
+  delayed fluorescence emitters for oleds with external quantum efficiency of
+  up to 26.0\% and reduced efficiency roll-off.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (5):\penalty0
+  1614--1622, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc05892c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC05892C}.
+
+\bibitem[Ou et~al.(2016)Ou, Lin, Mao, Chu, Zhao, Xie, Cao, Zhang, Wei, and
+  Huang]{Ou_2016}
+Chang-Jin Ou, Jin-Yi Lin, Jie Mao, Shuang-Quan Chu, Yu~Zhao, Ling-Hai Xie,
+  Hong-Tao Cao, Xin-Wen Zhang, Ying Wei, and Wei Huang.
+\newblock Friedel-crafts arylmethylation: A simple approach to synthesize
+  bipolar host materials for efficient electroluminescence.
+\newblock \emph{Organic Electronics}, 38:\penalty0 370--378, November 2016.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2016.08.018}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2016.08.018}.
+
+\bibitem[Xu et~al.(2023)Xu, Sun, Zhou, Lou, Xie, Li, Sun, Pan, Xue, and
+  Yang]{Xu_2023}
+Lei Xu, Mizhen Sun, Yannan Zhou, Jingli Lou, Mingliang Xie, Zipeng Li, Qikun
+  Sun, Yuyu Pan, Shanfeng Xue, and Wenjun Yang.
+\newblock A new multifunctional fluorescent molecule for highly efficient
+  non-doped deep-blue electro-fluorescence with high color-purity and efficient
+  phosphorescent oleds.
+\newblock \emph{Organic Chemistry Frontiers}, 10\penalty0 (2):\penalty0
+  490--498, 2023.
+\newblock ISSN 2052-4129.
+\newblock \doi{10.1039/d2qo01807a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2QO01807A}.
+
+\bibitem[Sun et~al.(2022{\natexlab{a}})Sun, Wu, Zhu, Liu, Zhou, Tian, Cai,
+  Jiang, and Sun]{Sun_2022_10_1016_j_dyepig_2021_109967}
+Kaiyong Sun, Jie Wu, Lingling Zhu, Hongxiang Liu, Yu~Zhou, Wenwen Tian,
+  Zhaosheng Cai, Wei Jiang, and Yueming Sun.
+\newblock Highly efficient blue all-solution-processed organic light-emitting
+  diodes based on the strategy of constructing a thermally cross-linkable tadf
+  dendrimer.
+\newblock \emph{Dyes and Pigments}, 198:\penalty0 109967, February
+  2022{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109967}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109967}.
+
+\bibitem[Sun et~al.(2022{\natexlab{b}})Sun, Tian, Gao, Bi, Yao, Wang, Cai, and
+  Jiang]{Sun_2022_10_1016_j_orgel_2022_106442}
+Kaiyong Sun, Wenwen Tian, Haiyang Gao, Chenjie Bi, Jiamin Yao, Zhiguo Wang,
+  Zhaosheng Cai, and Wei Jiang.
+\newblock Creation of a thermally cross-linkable encapsulated tadf molecule for
+  highly efficient solution-processed hybrid white oleds.
+\newblock \emph{Organic Electronics}, 102:\penalty0 106442, March
+  2022{\natexlab{b}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106442}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106442}.
+
+\bibitem[Cao et~al.(2020)Cao, Zhang, Wei, Zhang, Chen, Wang, Su, Wang, and
+  Ge]{Cao_2020}
+Liang Cao, Lei Zhang, Qiang Wei, Jiasen Zhang, Dongjun Chen, Sheng Wang,
+  Shi-jian Su, Tao Wang, and Ziyi Ge.
+\newblock Bipolar fluorophores based on intramolecular charge-transfer moieties
+  of sulfone for nondoped deep blue solution-processed organic light-emitting
+  diodes.
+\newblock \emph{Dyes and Pigments}, 176:\penalty0 108242, May 2020.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108242}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108242}.
+
+\bibitem[Chen et~al.(2022{\natexlab{b}})Chen, Li, Huang, Xie, and
+  Yang]{Chen_2022_10_1016_j_cej_2021_133078}
+Yanying Chen, Nengquan Li, Zhongyan Huang, Guohua Xie, and Chuluo Yang.
+\newblock Molecular engineering by Ïƒ-linkers enables delayed fluorescence
+  emitters for high-efficiency sky-blue solution-processed oleds.
+\newblock \emph{Chemical Engineering Journal}, 430:\penalty0 133078, February
+  2022{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.133078}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.133078}.
+
+\bibitem[Liu et~al.(2022)Liu, Du, Han, Wu, Tong, and
+  Wang]{Liu_2022_10_1016_j_cej_2022_137372}
+Yang Liu, Baoyun Du, Xianchao Han, Xiaofu Wu, Hui Tong, and Lixiang Wang.
+\newblock Intramolecular-locked triazatruxene-based thermally activated delayed
+  fluorescence emitter for efficient solution-processed deep-blue organic light
+  emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 446:\penalty0 137372, October
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.137372}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.137372}.
+
+\bibitem[Zhen et~al.(2022)Zhen, Zhang, Liu, Yan, Li, and Wang]{Zhen_2022}
+Yinzhao Zhen, Fei Zhang, Hongli Liu, Yifei Yan, Xianggao Li, and Shirong Wang.
+\newblock Impact of peripheral groups on pyrimidine acceptor-based hlct
+  materials for efficient deep blue oled devices.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (27):\penalty0
+  9953--9960, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc01766k}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC01766K}.
+
+\bibitem[Kim et~al.(2019{\natexlab{a}})Kim, Yoon, Choi, Jeong, Kim, Jeong, Kim,
+  Lee, Woo, Kwon, Cho, and Choi]{Kim_2019}
+Chae~Yeong Kim, Jiwon Yoon, Suna Choi, Cheol~Hun Jeong, Hyung~Jong Kim, Ji-Eun
+  Jeong, Seong~Keun Kim, Hyuna Lee, Han~Young Woo, Jang~Hyuk Kwon, Min~Ju Cho,
+  and Dong~Hoon Choi.
+\newblock Blue-emitting dendritic molecule with dual functionality as host and
+  dopant for solution-processed white oleds with red-emitting material.
+\newblock \emph{Synthetic Metals}, 258:\penalty0 116198, December
+  2019{\natexlab{a}}.
+\newblock ISSN 0379-6779.
+\newblock \doi{10.1016/j.synthmet.2019.116198}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.synthmet.2019.116198}.
+
+\bibitem[Girase et~al.(2022{\natexlab{a}})Girase, Kajjam, Dubey, Kesavan, Jou,
+  and Vaidyanathan]{Girase_2022_10_1039_d2nj01938h}
+Jaipal~Devesing Girase, Aravind~Babu Kajjam, Deepak~Kumar Dubey, Kiran~Kishore
+  Kesavan, Jwo-Huei Jou, and Sivakumar Vaidyanathan.
+\newblock Unipolar 1-phenylimidazo[1,5-a]pyridine: a new class of ultra-bright
+  sky-blue emitters for solution-processed organic light emitting diodes.
+\newblock \emph{New Journal of Chemistry}, 46\penalty0 (35):\penalty0
+  16717--16729, 2022{\natexlab{a}}.
+\newblock ISSN 1369-9261.
+\newblock \doi{10.1039/d2nj01938h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2NJ01938H}.
+
+\bibitem[Umasankar et~al.(2021)Umasankar, Ulla, Madhu, Reddy, Shanigaram,
+  Nanubolu, Kotamarthi, Karunakar, Satyanarayan, and Rao]{Umasankar_2021}
+Gorakala Umasankar, Hidayath Ulla, Chakali Madhu, Gontu~Ramanjaneya Reddy,
+  Balaiah Shanigaram, Jagadeesh~Babu Nanubolu, Bhanuprakash Kotamarthi,
+  Galla~V. Karunakar, M.N. Satyanarayan, and V.~Jayathirtha Rao.
+\newblock Imidazole-pyrene hybrid luminescent materials for organic
+  light-emitting diodes: Synthesis, characterization \&amp; electroluminescent
+  properties.
+\newblock \emph{Journal of Molecular Structure}, 1236:\penalty0 130306, July
+  2021.
+\newblock ISSN 0022-2860.
+\newblock \doi{10.1016/j.molstruc.2021.130306}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.molstruc.2021.130306}.
+
+\bibitem[Zhan et~al.(2021)Zhan, Ning, Gong, Xie, and Yang]{Zhan_2021}
+Lisi Zhan, Weimin Ning, Shaolong Gong, Guohua Xie, and Chuluo Yang.
+\newblock Difluoroboron locking tactic enhances photo- and electroluminescence
+  of tadf emitter.
+\newblock \emph{Dyes and Pigments}, 192:\penalty0 109392, August 2021.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109392}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109392}.
+
+\bibitem[Sharma and Pal(2022)]{Sharma_2022}
+Simran Sharma and Amlan~K. Pal.
+\newblock Recent advances of nir-tadf ($\lambda$maxpl/el \&gt; 700 nm) emitters
+  and their applications in oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (42):\penalty0
+  15681--15707, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc03316j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC03316J}.
+
+\bibitem[Li et~al.(2020{\natexlab{a}})Li, Chen, Liu, Chen, Chai, Lee, and
+  Yang]{Li_2020_10_1039_c9tc05340a}
+Jiafang Li, Wen-Cheng Chen, He~Liu, Zhanxiang Chen, Danyang Chai, Chun-Sing
+  Lee, and Chuluo Yang.
+\newblock Double-twist pyridine-carbonitrile derivatives yielding excellent
+  thermally activated delayed fluorescence emitters for high-performance oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (2):\penalty0
+  602--606, 2020{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc05340a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC05340A}.
+
+\bibitem[Zheng et~al.(2015)Zheng, Peng, Lin, Wang, Zhou, Jiao, Bai, Huang, Li,
+  Liu, Pu, and Lu]{Zheng_2015}
+Xujun Zheng, Qiming Peng, Jie Lin, Yi~Wang, Jie Zhou, Yan Jiao, Yuefeng Bai,
+  Yan Huang, Feng Li, Xingyuan Liu, Xuemei Pu, and Zhiyun Lu.
+\newblock Simultaneous harvesting of triplet excitons in oleds by both guest
+  and host materials with an intramolecular charge-transfer feature via
+  triplet-triplet annihilation.
+\newblock \emph{Journal of Materials Chemistry C}, 3\penalty0 (27):\penalty0
+  6970--6978, 2015.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c5tc00779h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5TC00779H}.
+
+\bibitem[Chen et~al.(2019{\natexlab{a}})Chen, Zeng, Wang, Wang, Wu, Lin, and
+  Peng]{Chen_2019}
+Shuo Chen, Pengju Zeng, Weigao Wang, Xuedong Wang, Yukun Wu, Pengju Lin, and
+  Zhengchun Peng.
+\newblock Naphthalimide-arylamine derivatives with aggregation induced delayed
+  fluorescence for realizing efficient green to red electroluminescence.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (10):\penalty0
+  2886--2897, 2019{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc06163g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC06163G}.
+
+\bibitem[Dumur et~al.(2016)Dumur, Bui, Péralta, Lepeltier, Wantz, Sini,
+  Goubard, and Gigmes]{Dumur_2016}
+Frédéric Dumur, Thanh-Tuân Bui, Sébastien Péralta, Marc Lepeltier,
+  Guillaume Wantz, Gjergji Sini, Fabrice Goubard, and Didier Gigmes.
+\newblock Bis(diphenylamino)naphthalene host materials: careful selection of
+  the substitution pattern for the design of fully solution-processed
+  triple-layered electroluminescent devices.
+\newblock \emph{RSC Advances}, 6\penalty0 (65):\penalty0 60565--60577, 2016.
+\newblock ISSN 2046-2069.
+\newblock \doi{10.1039/c6ra13824a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6RA13824A}.
+
+\bibitem[Fan et~al.(2019{\natexlab{a}})Fan, Pei, Zhao, Huang, Tang, Hu, Cao,
+  Tan, Tao, and Yang]{Fan_2019}
+Cong Fan, Jingfang Pei, Juewen Zhao, Manli Huang, Wu~Tang, Jiahui Hu, Bei Cao,
+  Haochen Tan, Silu Tao, and Chuluo Yang.
+\newblock A yellow organic emitter with novel d-a3 architecture and hidden
+  delayed fluorescence for highly efficient monochromatic oleds.
+\newblock \emph{Organic Electronics}, 73:\penalty0 102--108, October
+  2019{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.06.002}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.06.002}.
+
+\bibitem[Ban et~al.(2019)Ban, Chen, Liu, Pan, Zhu, Jiang, and Sun]{Ban_2019}
+Xinxin Ban, Feng Chen, Yan Liu, Jie Pan, Aiyun Zhu, Wei Jiang, and Yueming Sun.
+\newblock Design of efficient thermally activated delayed fluorescence blue
+  host for high performance solution-processed hybrid white organic light
+  emitting diodes.
+\newblock \emph{Chemical Science}, 10\penalty0 (10):\penalty0 3054--3064, 2019.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/c8sc05456h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8SC05456H}.
+
+\bibitem[Zhou et~al.(2022{\natexlab{b}})Zhou, Zhang, Cao, Xu, Ban, Zhu, Li,
+  Shi, Ge, and Jiang]{Zhou_2022_10_1039_d1tc05010a}
+Tao Zhou, Kaizhi Zhang, Qingpeng Cao, Hui Xu, Xinxin Ban, Peng Zhu, Qile Li,
+  Linxing Shi, Fengjie Ge, and Wei Jiang.
+\newblock Benzonitrile-based aie polymer host with a simple synthesis process
+  for high-efficiency solution-processable green and blue tadf organic light
+  emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (6):\penalty0
+  2109--2120, 2022{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc05010a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC05010A}.
+
+\bibitem[Yu et~al.(2021)Yu, Cang, Cui, Xu, Wang, Sun, Zhou, Yang, and
+  Xue]{Yu_2021}
+Yuan Yu, Miao Cang, Wei Cui, Lei Xu, Runze Wang, Mizhen Sun, Huayi Zhou, Wenjun
+  Yang, and Shanfeng Xue.
+\newblock Efficient red fluorescent oleds based on aggregation-induced emission
+  combined with hybridized local and charge transfer state.
+\newblock \emph{Dyes and Pigments}, 184:\penalty0 108770, January 2021.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108770}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108770}.
+
+\bibitem[Khammultri et~al.(2021)Khammultri, Chasing, Chitpakdee, Namuangruk,
+  Sudyoadsuk, and Promarak]{Khammultri_2021}
+Praetip Khammultri, Pongsakorn Chasing, Chirawat Chitpakdee, Supawadee
+  Namuangruk, Taweesak Sudyoadsuk, and Vinich Promarak.
+\newblock Red to orange thermally activated delayed fluorescence polymers based
+  on 2-(4-(diphenylamino)-phenyl)-9h-thioxanthen-9-one-10,10-dioxide for
+  efficient solution-processed oleds.
+\newblock \emph{RSC Advances}, 11\penalty0 (40):\penalty0 24794--24806, 2021.
+\newblock ISSN 2046-2069.
+\newblock \doi{10.1039/d1ra04599g}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1RA04599G}.
+
+\bibitem[Gong et~al.(2017)Gong, Luo, Wang, Li, Chen, Xie, and Yang]{Gong_2017}
+Shaolong Gong, Jiajia Luo, Zian Wang, Yifan Li, Tianheng Chen, Guohua Xie, and
+  Chuluo Yang.
+\newblock Tuning emissive characteristics and singlet-triplet energy splitting
+  of fluorescent emitters by encapsulation group modification: Yellow tadf
+  emitter for solution-processed oleds with high luminance and ultraslow
+  efficiency roll-off.
+\newblock \emph{Dyes and Pigments}, 139:\penalty0 593--600, April 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2016.12.058}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2016.12.058}.
+
+\bibitem[Liu et~al.(2021{\natexlab{b}})Liu, Cheng, Wan, Gao, Yan, Hu, Ying, Lu,
+  and Ma]{Liu_2021_10_1016_j_cej_2021_131351}
+Futong Liu, Zhuang Cheng, Liang Wan, Lei Gao, Zhenyu Yan, Dehua Hu, Lei Ying,
+  Ping Lu, and Yuguang Ma.
+\newblock Anthracene-based emitters for highly efficient deep blue organic
+  light-emitting diodes with narrow emission spectrum.
+\newblock \emph{Chemical Engineering Journal}, 426:\penalty0 131351, December
+  2021{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.131351}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.131351}.
+
+\bibitem[Kang et~al.(2020)Kang, Huh, Kim, and Park]{Kang_2020}
+Seokwoo Kang, Jin-Suk Huh, Jang-Joo Kim, and Jongwook Park.
+\newblock Highly efficient deep-blue fluorescence oleds with excellent charge
+  balance based on phenanthro[9,10-d]oxazole-anthracene derivatives.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (32):\penalty0
+  11168--11176, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01811b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01811B}.
+
+\bibitem[Jeon et~al.(2018)Jeon, Park, and Lee]{Jeon_2018}
+Sang~Kyu Jeon, Hee-Jun Park, and Jun~Yeob Lee.
+\newblock Blue-shifted emission color and high quantum efficiency in
+  solution-processed blue thermally activated delayed fluorescence organic
+  light-emitting diodes using an intermolecular interaction suppressing host
+  decorated with blocking groups.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (25):\penalty0
+  6778--6783, 2018.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc02050g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC02050G}.
+
+\bibitem[Ma et~al.(2021{\natexlab{b}})Ma, Li, Liu, Li, Dong, and
+  Mei]{Ma_2021_10_1016_j_dyepig_2021_109649}
+Mengyao Ma, Jiuyan Li, Di~Liu, Deli Li, Ruizhi Dong, and Yongqiang Mei.
+\newblock Low efficiency roll-off thermally activated delayed fluorescence
+  emitters for non-doped oleds: Substitution effect of thioether and sulfone
+  groups.
+\newblock \emph{Dyes and Pigments}, 194:\penalty0 109649, October
+  2021{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109649}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109649}.
+
+\bibitem[Xiang et~al.(2019)Xiang, Guo, Huang, Lv, Sun, Chen, Zhang, and
+  Wang]{Xiang_2019}
+Songpo Xiang, Runda Guo, Zhi Huang, Xialei Lv, Shuaiqiang Sun, Hongting Chen,
+  Qing Zhang, and Lei Wang.
+\newblock Highly efficient yellow nondoped thermally activated delayed
+  fluorescence oleds by utilizing energy transfer between dual conformations
+  based on phenothiazine derivatives.
+\newblock \emph{Dyes and Pigments}, 170:\penalty0 107636, November 2019.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.107636}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.107636}.
+
+\bibitem[Qu et~al.(2020)Qu, Xia, Xu, Zhu, Liang, Zhang, Wang, Zhang, and
+  Wang]{Qu_2020}
+Cheng Qu, Guoqi Xia, Yincai Xu, Yunlong Zhu, Jixiong Liang, Hao Zhang, Jiaxuan
+  Wang, Zuolun Zhang, and Yue Wang.
+\newblock Boron-containing d-a-a type tadf materials with tiny singlet-triplet
+  energy splittings and high photoluminescence quantum yields for highly
+  efficient oleds with low efficiency roll-offs.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (11):\penalty0
+  3846--3854, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc06497d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC06497D}.
+
+\bibitem[Xiang et~al.(2018{\natexlab{a}})Xiang, Huang, Sun, Lv, Fan, Ye, Chen,
+  Guo, and Wang]{Xiang_2018_10_1039_c8tc03648a}
+Songpo Xiang, Zhi Huang, Shuaiqiang Sun, Xialei Lv, Lianwei Fan, Shaofeng Ye,
+  Hongting Chen, Runda Guo, and Lei Wang.
+\newblock Highly efficient non-doped oleds using aggregation-induced delayed
+  fluorescence materials based on 10-phenyl-10h-phenothiazine 5,5-dioxide
+  derivatives.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (42):\penalty0
+  11436--11443, 2018{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc03648a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC03648A}.
+
+\bibitem[Shi et~al.(2022{\natexlab{a}})Shi, Wang, Fan, Wu, Ou, Yu, Jie, and
+  Zhang]{Shi_2022_10_1039_d1tc03803f}
+Yi-Zhong Shi, Kai Wang, Xiao-Chun Fan, Hao Wu, Xue-Mei Ou, Jia Yu, Jian-Sheng
+  Jie, and Xiao-Hong Zhang.
+\newblock Applying intermolecular hydrogen bonding to exploit tadf emitters for
+  high-performance orange-red non-doped oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (12):\penalty0
+  4717--4722, 2022{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc03803f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC03803F}.
+
+\bibitem[Zhang et~al.(2021{\natexlab{b}})Zhang, Zheng, Chen, Zhao, Zhang, Yang,
+  He, Du, and Tao]{Zhang_2021_10_1039_d0tc04315j}
+Ning Zhang, Caijun Zheng, Zhipeng Chen, Juewen Zhao, Ming Zhang, Haoyu Yang,
+  Zeyu He, Xiaoyang Du, and Silu Tao.
+\newblock Improving the efficiency of exciplex based oleds by controlling the
+  different configurations of the donor.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (2):\penalty0
+  600--608, 2021{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc04315j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC04315J}.
+
+\bibitem[Zeng et~al.(2021)Zeng, Huang, Gong, Li, Lee, Xiao, Zhang, Zhong, Wu,
+  and Yang]{Zeng_2021}
+Xuan Zeng, Yu-Hsin Huang, Shaolong Gong, Pan Li, Wei-Kai Lee, Xiao Xiao,
+  Yu~Zhang, Cheng Zhong, Chung-Chih Wu, and Chuluo Yang.
+\newblock An unsymmetrical thermally activated delayed fluorescence emitter
+  enables orange-red electroluminescence with 31.7\% external quantum
+  efficiency.
+\newblock \emph{Materials Horizons}, 8\penalty0 (8):\penalty0 2286--2292, 2021.
+\newblock ISSN 2051-6355.
+\newblock \doi{10.1039/d1mh00613d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1MH00613D}.
+
+\bibitem[Ban et~al.(2014)Ban, Xu, Yuan, Jiang, Huang, and Sun]{Ban_2014}
+Xinxin Ban, Huange Xu, Guolong Yuan, Wei Jiang, Bin Huang, and Yueming Sun.
+\newblock Spirobifluorene/sulfone hybrid: Highly efficient solution-processable
+  material for uv-violet electrofluorescence, blue and green phosphorescent
+  oleds.
+\newblock \emph{Organic Electronics}, 15\penalty0 (7):\penalty0 1678--1686,
+  July 2014.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2014.03.035}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2014.03.035}.
+
+\bibitem[Huang et~al.(2022{\natexlab{a}})Huang, Chen, Liu, Zhuang, Wang, Yu,
+  Yang, Ma, Zhao, and Zhong~Tang]{Huang_2022}
+Ruishan Huang, Hao Chen, Hao Liu, Zeyan Zhuang, Jianghui Wang, Maoxing Yu,
+  Dezhi Yang, Dongge Ma, Zujin Zhao, and Ben Zhong~Tang.
+\newblock Creating efficient delayed fluorescence luminogens with
+  acridine-based spiro donors to improve horizontal dipole orientation for
+  high-performance oleds.
+\newblock \emph{Chemical Engineering Journal}, 435:\penalty0 134934, May
+  2022{\natexlab{a}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.134934}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.134934}.
+
+\bibitem[Choi et~al.(2017)Choi, Godumala, Lee, Kim, Moon, Kim, Yoon, Yang, Kim,
+  Cho, Kwon, and Choi]{Choi_2017}
+Suna Choi, Mallesham Godumala, Ji~Hyung Lee, Gyeong~Heon Kim, Ji~Su Moon,
+  Jun~Yun Kim, Dae-Wi Yoon, Joong~Hwan Yang, Jinook Kim, Min~Ju Cho, Jang~Hyuk
+  Kwon, and Dong~Hoon Choi.
+\newblock Optimized structure of silane-core containing host materials for
+  highly efficient blue tadf oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (26):\penalty0
+  6570--6577, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc01357d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC01357D}.
+
+\bibitem[Chen et~al.(2018{\natexlab{b}})Chen, Wang, Wu, Xu, Li, Liu, Tong, and
+  Wang]{Chen_2018_10_1039_c8tc04721a}
+Yonghong Chen, Shumeng Wang, Xiaofu Wu, Yuxiang Xu, Hua Li, Yang Liu, Hui Tong,
+  and Lixiang Wang.
+\newblock Triazatruxene-based small molecules with thermally activated delayed
+  fluorescence, aggregation-induced emission and mechanochromic luminescence
+  properties for solution-processable nondoped oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (46):\penalty0
+  12503--12508, 2018{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc04721a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC04721A}.
+
+\bibitem[Meng et~al.(2022)Meng, Zhang, Wei, Zhang, Huang, Liu, Yin, Hong, Wang,
+  Zeng, Yang, Ma, Li, and Duan]{Meng_2022}
+Guoyun Meng, Dongdong Zhang, Jinbei Wei, Yuewei Zhang, Tianyu Huang, Ziyang
+  Liu, Chen Yin, Xiangchen Hong, Xiang Wang, Xuan Zeng, Dezhi Yang, Dongge Ma,
+  Guomeng Li, and Lian Duan.
+\newblock Highly efficient and stable deep-blue oleds based on narrowband
+  emitters featuring an orthogonal spiro-configured indolo[3,2,1-de]acridine
+  structure.
+\newblock \emph{Chemical Science}, 13\penalty0 (19):\penalty0 5622--5630, 2022.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/d2sc01543a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2SC01543A}.
+
+\bibitem[Wei et~al.(2019)Wei, Li, Xue, Ye, and Jiang]{Wei_2019}
+Lingjuan Wei, Jie Li, Kai Xue, Shanghui Ye, and Hongji Jiang.
+\newblock Synthesis and structure-property correlation of blue fluorescence
+  isomer emitters based on rigid pyrazine-bridged carbazole frameworks.
+\newblock \emph{New Journal of Chemistry}, 43\penalty0 (42):\penalty0
+  16629--16638, 2019.
+\newblock ISSN 1369-9261.
+\newblock \doi{10.1039/c9nj04043a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9NJ04043A}.
+
+\bibitem[Berrones-Reyes et~al.(2018)Berrones-Reyes, Vidyasagar, Muñoz~Flores,
+  and Jiménez-Pérez]{Berrones_Reyes_2018}
+Jessica~C. Berrones-Reyes, C.C. Vidyasagar, Blanca~M. Muñoz~Flores, and
+  Víctor~M. Jiménez-Pérez.
+\newblock Luminescent molecules of main group elements: Recent advances on
+  synthesis, properties and their application on fluorescent bioimaging (fbi).
+\newblock \emph{Journal of Luminescence}, 195:\penalty0 290--313, March 2018.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2017.11.042}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2017.11.042}.
+
+\bibitem[Wu et~al.(2019)Wu, Wang, Wang, Hu, Jiang, Ma, and Wang]{Wu_2019}
+Chao Wu, Binyan Wang, Yafei Wang, Jianyong Hu, Jiaxing Jiang, Dongge Ma, and
+  Qiang Wang.
+\newblock A universal host material with a simple structure for monochrome and
+  white phosphorescent/tadf oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (3):\penalty0
+  558--566, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc05259j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC05259J}.
+
+\bibitem[Gao et~al.(2022)Gao, Wu, Cao, Han, and Li]{Gao_2022}
+Wentong Gao, Wenlu Wu, Shihai Cao, Bing Han, and Nengquan Li.
+\newblock A simple bipolar host material based on triphenylamine and pyridine
+  featuring Ïƒ-linkage for efficient solution-processed phosphorescent
+  organic light-emitting diodes.
+\newblock \emph{Optical Materials}, 133:\penalty0 112871, November 2022.
+\newblock ISSN 0925-3467.
+\newblock \doi{10.1016/j.optmat.2022.112871}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.optmat.2022.112871}.
+
+\bibitem[Sun et~al.(2017{\natexlab{a}})Sun, Sun, Jiang, Huang, Tian, and
+  Sun]{Sun_2017_10_1016_j_dyepig_2016_12_037}
+Kaiyong Sun, Yibai Sun, Wei Jiang, Suli Huang, Wenwen Tian, and Yueming Sun.
+\newblock Highly efficient and color tunable thermally activated delayed
+  fluorescent emitters and their applications for the solution-processed oleds.
+\newblock \emph{Dyes and Pigments}, 139:\penalty0 326--333, April
+  2017{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2016.12.037}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2016.12.037}.
+
+\bibitem[Lin et~al.(2022{\natexlab{b}})Lin, Han, Qu, Xiao, Li, Xie, Qiao, Yang,
+  Dai, Sun, Qin, Tang, and Ma]{Lin_2022_10_1039_d2mh00627h}
+Chengwei Lin, Pengbo Han, Fenlan Qu, Shu Xiao, Yuanzhao Li, Dian Xie, Xianfeng
+  Qiao, Dezhi Yang, Yanfeng Dai, Qian Sun, Anjun Qin, Ben~Zhong Tang, and
+  Dongge Ma.
+\newblock Suppressing singlet-triplet annihilation processes to achieve highly
+  efficient deep-blue aie-based oleds.
+\newblock \emph{Materials Horizons}, 9\penalty0 (9):\penalty0 2376--2383,
+  2022{\natexlab{b}}.
+\newblock ISSN 2051-6355.
+\newblock \doi{10.1039/d2mh00627h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2MH00627H}.
+
+\bibitem[Zhang et~al.(2018)Zhang, Yuan, Feng, Wen, and Guo]{Zhang_2018}
+Jinglai Zhang, Huijuan Yuan, Songyan Feng, Keke Wen, and Xugeng Guo.
+\newblock Theoretical studies on electroluminescent mechanism of a series of
+  thermally activated delayed fluorescence emitters possessing
+  asymmetric-triazine-cored triads.
+\newblock \emph{Spectrochimica Acta Part A: Molecular and Biomolecular
+  Spectroscopy}, 202:\penalty0 102--106, September 2018.
+\newblock ISSN 1386-1425.
+\newblock \doi{10.1016/j.saa.2018.05.032}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.saa.2018.05.032}.
+
+\bibitem[Sun et~al.(2022{\natexlab{c}})Sun, Tian, Ge, Gu, Zhou, Wang, Cai,
+  Jiang, and Sun]{Sun_2022}
+Kaiyong Sun, Wenwen Tian, Chengyan Ge, Feng Gu, Yu~Zhou, Wangxia Wang,
+  Zhaosheng Cai, Wei Jiang, and Yueming Sun.
+\newblock Creation of efficient solution-processed oleds via a strategy of the
+  host-guest system constructing with two small cross-linkable tadf molecules.
+\newblock \emph{Organic Electronics}, 101:\penalty0 106417, February
+  2022{\natexlab{c}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2021.106417}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2021.106417}.
+
+\bibitem[Fu et~al.(2022)Fu, Ye, Xiao, Liao, Chen, Mu, Ji, Zhao, Zhang, and
+  Huo]{Fu_2022}
+Yu~Fu, Zecong Ye, Jingping Xiao, Liyun Liao, Lifen Chen, Yingxiao Mu, Shaomin
+  Ji, Zujin Zhao, Hao-Li Zhang, and Yanping Huo.
+\newblock Large effects of tiny structural changes on the aie-tadf type
+  xanthone derivatives in mechano-responsive luminescence and
+  electroluminescence.
+\newblock \emph{Dyes and Pigments}, 205:\penalty0 110550, September 2022.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110550}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110550}.
+
+\bibitem[Wang et~al.(2021{\natexlab{b}})Wang, Shi, Xu, Zhang, Wang, and
+  Chen]{Wang_2021_10_1039_d1tc00678a}
+Zhao-Yi Wang, Lin-Xi Shi, Liang-Jin Xu, Li-Yi Zhang, Jin-Yun Wang, and
+  Zhong-Ning Chen.
+\newblock Modulating the carrier transport of ptag2 heteronuclear complexes to
+  attain highly efficient oleds with narrow-band emission.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (16):\penalty0
+  5403--5410, 2021{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc00678a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC00678A}.
+
+\bibitem[Wang et~al.(2015)Wang, Hu, Cao, Yang, Tao, Mei, Zhang, and
+  Huang]{Wang_2015}
+Fangfang Wang, Jia Hu, Xudong Cao, Tao Yang, Youtian Tao, Ling Mei, Xinwen
+  Zhang, and Wei Huang.
+\newblock A low-cost phenylbenzoimidazole containing electron transport
+  material for efficient green phosphorescent and thermally activated delayed
+  fluorescent oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 3\penalty0 (21):\penalty0
+  5533--5540, 2015.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c5tc00350d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5TC00350D}.
+
+\bibitem[Girase et~al.(2022{\natexlab{b}})Girase, Shahnawaz, Jou, Patel, and
+  Vaidyanathan]{Girase_2022}
+Jaipal~Devesing Girase, Shahnawaz, Jwo-Huei Jou, Sabita Patel, and Sivakumar
+  Vaidyanathan.
+\newblock Solution-processed deep-blue fluorophores based on
+  phenanthroimidazole integrated with benzimidazole with hlct character for
+  efficient deep-blue organic light emitting devices.
+\newblock \emph{Dyes and Pigments}, 206:\penalty0 110623, October
+  2022{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110623}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110623}.
+
+\bibitem[Dong et~al.(2023)Dong, Li, Zheng, Huo, Cao, and Shi]{Dong_2023}
+Xiaorui Dong, Ronghua Li, Yanan Zheng, Jinnan Huo, Yinpeng Cao, and Heping Shi.
+\newblock Synthesis, photoluminescence and electroluminescence properties of a
+  new blue emitter with aggregation-induced emission and thermally activated
+  delayed fluorescence characteristics.
+\newblock \emph{Spectrochimica Acta Part A: Molecular and Biomolecular
+  Spectroscopy}, 291:\penalty0 122344, April 2023.
+\newblock ISSN 1386-1425.
+\newblock \doi{10.1016/j.saa.2023.122344}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.saa.2023.122344}.
+
+\bibitem[Hu et~al.(2017)Hu, Zhang, Zhang, Cao, Jiang, Zhang, and Tao]{Hu_2017}
+Jia Hu, Xianping Zhang, Di~Zhang, Xudong Cao, Tao Jiang, Xinwen Zhang, and
+  Youtian Tao.
+\newblock Linkage modes on phthaloyl/triphenylamine hybrid compounds:
+  Multi-functional aie luminogens, non-doped emitters and organic hosts for
+  highly efficient solution-processed delayed fluorescence oleds.
+\newblock \emph{Dyes and Pigments}, 137:\penalty0 480--489, February 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2016.10.029}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2016.10.029}.
+
+\bibitem[Kautny et~al.(2017)Kautny, Zhao, Schopf, Stöger, Horkel, Chen, Ma,
+  Fröhlich, and Lumpi]{Kautny_2017}
+Paul Kautny, Chenyang Zhao, Dominik Schopf, Berthold Stöger, Ernst Horkel,
+  Jiangshan Chen, Dongge Ma, Johannes Fröhlich, and Daniel Lumpi.
+\newblock Thieno[3,4-c]pyrrole-4,6-dione as novel building block for host
+  materials for red pholeds.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (8):\penalty0
+  1997--2004, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc05248g}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC05248G}.
+
+\bibitem[Wu et~al.(2023)Wu, Zeng, Peng, Liu, Tang, and Zhao]{Wu_2023}
+Xing Wu, Jiajie Zeng, Xiaoluo Peng, Huijun Liu, Ben~Zhong Tang, and Zujin Zhao.
+\newblock Robust sky-blue aggregation-induced delayed fluorescence materials
+  for high-performance top-emitting oleds and single emissive layer white
+  oleds.
+\newblock \emph{Chemical Engineering Journal}, 451:\penalty0 138919, January
+  2023.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.138919}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.138919}.
+
+\bibitem[Li et~al.(2020{\natexlab{b}})Li, Chai, Chen, Zhou, Ni, Huang, Cao,
+  Xie, Li, and Yang]{Li_2020_10_1016_j_cej_2020_125276}
+Nengquan Li, Danyang Chai, Zhanxiang Chen, Changjiang Zhou, Fan Ni, Zhongyan
+  Huang, Xiaosong Cao, Guohua Xie, Kai Li, and Chuluo Yang.
+\newblock Molecular engineering by Ïƒ-bond spacer enables
+  solution-processable host materials for tadf emitter towards high-performance
+  oleds.
+\newblock \emph{Chemical Engineering Journal}, 396:\penalty0 125276, September
+  2020{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.125276}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.125276}.
+
+\bibitem[Wu et~al.(2021{\natexlab{a}})Wu, Song, Zhu, Chen, Chi, Ma, Zhao, and
+  Tang]{Wu_2021_10_1039_d1qm00880c}
+Zilong Wu, Shaoxin Song, Xiangyu Zhu, Hao Chen, Jiajin Chi, Dongge Ma, Zujin
+  Zhao, and Ben~Zhong Tang.
+\newblock Highly efficient deep-blue fluorescent oleds based on anthracene
+  derivatives with a triplet-triplet annihilation mechanism.
+\newblock \emph{Materials Chemistry Frontiers}, 5\penalty0 (18):\penalty0
+  6978--6986, 2021{\natexlab{a}}.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d1qm00880c}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1QM00880C}.
+
+\bibitem[Peng et~al.(2022)Peng, Lv, Xiao, Huo, Liu, Ma, Ying, and
+  Yan]{Peng_2022}
+Ling Peng, Jichen Lv, Shu Xiao, Yumiao Huo, Yuchao Liu, Dongge Ma, Shian Ying,
+  and Shouke Yan.
+\newblock High-performance non-doped near ultraviolet oleds with the
+  eqe $\sim$ 6\% and ciey $\sim$ 0.03 from high-lying reverse intersystem
+  crossing.
+\newblock \emph{Chemical Engineering Journal}, 450:\penalty0 138339, December
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.138339}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.138339}.
+
+\bibitem[Ha et~al.(2022)Ha, Bin, and Lee]{Ha_2022}
+Tae~Hoon Ha, Jong-Kwan Bin, and Chil~Won Lee.
+\newblock Phenylpyridine and carbazole based host materials for highly
+  efficient blue tadf oleds.
+\newblock \emph{Organic Electronics}, 102:\penalty0 106450, March 2022.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106450}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106450}.
+
+\bibitem[Ye et~al.(2020)Ye, Wang, Guo, Zhang, Lv, Duan, Leng, Sun, and
+  Wang]{Ye_2020}
+Shaofeng Ye, Yaxiong Wang, Runda Guo, Qing Zhang, Xialei Lv, Yalei Duan, Panpan
+  Leng, Shuaiqiang Sun, and Lei Wang.
+\newblock Asymmetric anthracene derivatives as multifunctional electronic
+  materials for constructing simplified and efficient non-doped homogeneous
+  deep blue fluorescent oleds.
+\newblock \emph{Chemical Engineering Journal}, 393:\penalty0 124694, August
+  2020.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.124694}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.124694}.
+
+\bibitem[Zhang et~al.(2019{\natexlab{a}})Zhang, Ma, Liu, and
+  Duan]{Zhang_2019_10_1039_c9tc00465c}
+Chen Zhang, Dongxin Ma, Ruihuan Liu, and Lian Duan.
+\newblock High-efficiency blue-green electroluminescence from sublimable
+  cationic iridium(<scp>iii</scp>) complexes with a pyrazole-type ligand.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (12):\penalty0
+  3503--3511, 2019{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc00465c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC00465C}.
+
+\bibitem[Liu et~al.(2023{\natexlab{a}})Liu, Wu, Wang, Wang, Han, Wu, Tong, and
+  Wang]{Liu_2023_10_1016_j_orgel_2022_106720}
+Yang Liu, Yuliang Wu, Tong Wang, Qian Wang, Xianchao Han, Xiaofu Wu, Hui Tong,
+  and Lixiang Wang.
+\newblock Bridged triazatruxene-based host materials for solution-processed
+  thermally activated delayed fluorescence organic light emitting diodes with
+  high power efficiency.
+\newblock \emph{Organic Electronics}, 113:\penalty0 106720, February
+  2023{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106720}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106720}.
+
+\bibitem[Huang et~al.(2016)Huang, Ban, Sun, Ma, Mei, Jiang, Lin, and
+  Sun]{Huang_2016}
+Bin Huang, Xinxin Ban, Kaiyong Sun, Zhongming Ma, Yanan Mei, Wei Jiang, Baoping
+  Lin, and Yueming Sun.
+\newblock Thermally activated delayed fluorescence materials based on
+  benzophenone derivative as emitter for efficient solution-processed non-doped
+  green oled.
+\newblock \emph{Dyes and Pigments}, 133:\penalty0 380--386, October 2016.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2016.06.025}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2016.06.025}.
+
+\bibitem[Maeng et~al.(2021)Maeng, Braveenth, Jung, Hwang, Lee, Min, Kim, Han,
+  and Kwon]{Maeng_2021}
+Jee~Hyun Maeng, Ramanaskanda Braveenth, Young~Hun Jung, Soon~Jae Hwang, Hyuna
+  Lee, Hye~Li Min, Jun~Yun Kim, Chang~Wook Han, and Jang~Hyuk Kwon.
+\newblock Efficiency enhancement in orange red thermally activated delayed
+  fluorescence oleds by using a rigid di-indolocarbazole donor moiety.
+\newblock \emph{Dyes and Pigments}, 194:\penalty0 109580, October 2021.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109580}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109580}.
+
+\bibitem[Kothavale et~al.(2022)Kothavale, Lim, and Yeob~Lee]{Kothavale_2022}
+Shantaram Kothavale, Junseop Lim, and Jun Yeob~Lee.
+\newblock Rational design of cn substituted dibenzo[a,c]phenazine acceptor for
+  color tuning of thermally activated delayed fluorescent emitters.
+\newblock \emph{Chemical Engineering Journal}, 431:\penalty0 134216, March
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.134216}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.134216}.
+
+\bibitem[Zhang et~al.(2019{\natexlab{b}})Zhang, Sun, Chung, Yoon, Wang, Guo,
+  Ye, Lee, and Wang]{Zhang_2019_10_1039_c9tc04284a}
+Qing Zhang, Shuaiqiang Sun, Won~Jae Chung, Sung~Joon Yoon, Yaxiong Wang, Runda
+  Guo, Shaofeng Ye, Jun~Yeob Lee, and Lei Wang.
+\newblock Highly efficient tadf oleds with low efficiency roll-off based on
+  novel acridine-carbazole hybrid donor-substituted pyrimidine derivatives.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (39):\penalty0
+  12248--12255, 2019{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc04284a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC04284A}.
+
+\bibitem[Shin et~al.(2022)Shin, Hwang, Lim, Jeon, Lee, and
+  Kwon]{Shin_2022_10_1016_j_cej_2022_137181}
+Dong~Jin Shin, Soon~Jae Hwang, Junseop Lim, Chae~Yeon Jeon, Jun~Yeob Lee, and
+  Jang~Hyuk Kwon.
+\newblock Reverse intersystem crossing accelerating assistant dopant for high
+  efficiency and long lifetime in red hyperfluorescence organic light-emitting
+  diodes.
+\newblock \emph{Chemical Engineering Journal}, 446:\penalty0 137181, October
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.137181}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.137181}.
+
+\bibitem[Li et~al.(2017)Li, Chen, Huang, Gu, Gong, Xie, and
+  Yang]{Li_2017_10_1039_c7tc00119c}
+Yifan Li, Tianheng Chen, Manli Huang, Yu~Gu, Shaolong Gong, Guohua Xie, and
+  Chuluo Yang.
+\newblock Tuning the twist angle of thermally activated delayed fluorescence
+  molecules via a dendronization strategy: high-efficiency solution-processed
+  non-doped oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (14):\penalty0
+  3480--3487, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc00119c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC00119C}.
+
+\bibitem[Wang et~al.(2020{\natexlab{a}})Wang, Yao, Zhan, Gong, Ma, and
+  Yang]{Wang_2020_10_1016_j_dyepig_2020_108437}
+Zian Wang, Jingwen Yao, Lisi Zhan, Shaolong Gong, Dongge Ma, and Chuluo Yang.
+\newblock Purine-based thermally activated delayed fluorescence emitters for
+  efficient organic light-emitting diodes.
+\newblock \emph{Dyes and Pigments}, 180:\penalty0 108437, September
+  2020{\natexlab{a}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108437}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108437}.
+
+\bibitem[Pandidurai et~al.(2019)Pandidurai, Jayakumar, Senthilkumar, and
+  Cheng]{Pandidurai_2019}
+Jayabalan Pandidurai, Jayachandran Jayakumar, Natarajan Senthilkumar, and
+  Chien-Hong Cheng.
+\newblock Effects of intramolecular hydrogen bonding on the conformation and
+  luminescence properties of dibenzoylpyridine-based thermally activated
+  delayed fluorescence materials.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (42):\penalty0
+  13104--13110, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc04536h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC04536H}.
+
+\bibitem[Huang et~al.(2021{\natexlab{a}})Huang, Song, Cai, Zhang, and
+  Duan]{Huang_2021_10_1016_j_mtener_2021_100705}
+T.~Huang, X.~Song, M.~Cai, D.~Zhang, and L.~Duan.
+\newblock Improving reverse intersystem crossing in exciplex-forming hosts by
+  introducing heavy atom effect.
+\newblock \emph{Materials Today Energy}, 21:\penalty0 100705, September
+  2021{\natexlab{a}}.
+\newblock ISSN 2468-6069.
+\newblock \doi{10.1016/j.mtener.2021.100705}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.mtener.2021.100705}.
+
+\bibitem[Zhao et~al.(2018{\natexlab{b}})Zhao, Yang, Chen, Xie, Liu, Chi, Yang,
+  Zhang, Aldred, and Chi]{Zhao_2018}
+Juan Zhao, Zhan Yang, Xiaojie Chen, Zongliang Xie, Tiantian Liu, Zhihe Chi,
+  Zhiyong Yang, Yi~Zhang, Matthew~P. Aldred, and Zhenguo Chi.
+\newblock Efficient triplet harvesting in fluorescence-tadf hybrid warm-white
+  organic light-emitting diodes with a fully non-doped device configuration.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (15):\penalty0
+  4257--4264, 2018{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc01210e}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC01210E}.
+
+\bibitem[Hong et~al.(2022{\natexlab{a}})Hong, Si, Gupta, Bizzarri, Nieger,
+  Samuel, Zysman-Colman, and Bräse]{Hong_2022_10_1039_d1tc04918f}
+Gloria Hong, Changfeng Si, Abhishek~Kumar Gupta, Claudia Bizzarri, Martin
+  Nieger, Ifor D.~W. Samuel, Eli Zysman-Colman, and Stefan Bräse.
+\newblock Fluorinated dibenzo[a,c]-phenazine-based green to red thermally
+  activated delayed fluorescent oled emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (12):\penalty0
+  4757--4766, 2022{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc04918f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC04918F}.
+
+\bibitem[Li et~al.(2021)Li, Xiang, Gong, Lee, Huang, Wang, Yang, and
+  Wu]{Li_2021_10_1039_d1tc02633j}
+Pan Li, Yepeng Xiang, Shaolong Gong, Wei-Kai Lee, Yu-Hsin Huang, Chun-Yu Wang,
+  Chuluo Yang, and Chung-Chih Wu.
+\newblock Quinazoline-based thermally activated delayed fluorescence emitters
+  for high-performance organic light-emitting diodes with external quantum
+  efficiencies about 28\%.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (37):\penalty0
+  12633--12641, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc02633j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC02633J}.
+
+\bibitem[Matsui et~al.(2022)Matsui, Yokoyama, Ogaki, Ishiharaguchi, Niwa, Ohta,
+  Saigo, Miyata, Onda, Naito, and Ikeda]{Matsui_2022}
+Yasunori Matsui, Yudai Yokoyama, Takuya Ogaki, Kenta Ishiharaguchi, Akitsugu
+  Niwa, Eisuke Ohta, Masaki Saigo, Kiyoshi Miyata, Ken Onda, Hiroyoshi Naito,
+  and Hiroshi Ikeda.
+\newblock Aggregation-induced emission active thermally-activated delayed
+  fluorescence materials possessing n-heterocycle and sulfonyl groups.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (12):\penalty0
+  4607--4613, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc05196b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC05196B}.
+
+\bibitem[Hong et~al.(2022{\natexlab{b}})Hong, Zhang, Yin, Wang, Zhang, Huang,
+  Wei, Zeng, Meng, Wang, Li, Yang, Ma, and Duan]{Hong_2022}
+Xiangchen Hong, Dongdong Zhang, Chen Yin, Qi~Wang, Yuewei Zhang, Tianyu Huang,
+  Jinbei Wei, Xuan Zeng, Guoyun Meng, Xiang Wang, Guomeng Li, Dezhi Yang,
+  Dongge Ma, and Lian Duan.
+\newblock Tadf molecules with $\pi$-extended acceptors for simplified
+  high-efficiency blue and white organic light-emitting diodes.
+\newblock \emph{Chem}, 8\penalty0 (6):\penalty0 1705--1719, June
+  2022{\natexlab{b}}.
+\newblock ISSN 2451-9294.
+\newblock \doi{10.1016/j.chempr.2022.02.017}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.chempr.2022.02.017}.
+
+\bibitem[Skhirtladze et~al.(2023)Skhirtladze, Leitonas, Bucinskas, Woon,
+  Volyniuk, KeruckienÄ—, Mahmoudi, Lapkowski, Ariffin, and
+  Grazulevicius]{Skhirtladze_2023}
+Levani Skhirtladze, Karolis Leitonas, Audrius Bucinskas, Kai~Lin Woon, Dmytro
+  Volyniuk, Rasa KeruckienÄ—, Malek Mahmoudi, Mieczyslaw Lapkowski, Azhar
+  Ariffin, and Juozas~V. Grazulevicius.
+\newblock Turn on of room temperature phosphorescence of donor-acceptor-donor
+  type compounds via transformation of excited states by rigid hosts for oxygen
+  sensing.
+\newblock \emph{Sensors and Actuators B: Chemical}, 380:\penalty0 133295, April
+  2023.
+\newblock ISSN 0925-4005.
+\newblock \doi{10.1016/j.snb.2023.133295}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.snb.2023.133295}.
+
+\bibitem[Lee et~al.(2013)Lee, Shizu, Tanaka, Nomura, Yasuda, and
+  Adachi]{Lee_2013}
+Jiyoung Lee, Katsuyuki Shizu, Hiroyuki Tanaka, Hiroko Nomura, Takuma Yasuda,
+  and Chihaya Adachi.
+\newblock Oxadiazole- and triazole-based highly-efficient thermally activated
+  delayed fluorescence emitters for organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 1\penalty0 (30):\penalty0
+  4599, 2013.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c3tc30699b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C3TC30699B}.
+
+\bibitem[Song et~al.(2022)Song, Liu, Lu, Zou, Guo, Gao, Zhao, Tang, and
+  Zhang]{Song_2022}
+Xiangan Song, Zhangshan Liu, Mengyao Lu, Shengnan Zou, Fengyun Guo, Shiyong
+  Gao, Zujin Zhao, Ben~Zhong Tang, and Yong Zhang.
+\newblock Efficient thermally activated delayed fluorescent emitter based on a
+  spiro-type benzo[b]acridine donor and a benzophenone acceptor.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (46):\penalty0
+  17550--17556, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc03421b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC03421B}.
+
+\bibitem[Sohn et~al.(2017)Sohn, Hyun~Koh, Baek, Chan~Byun, Lee, Shin, Ahn, Lee,
+  Hwang, Jung, and Kim]{Sohn_2017}
+Sunyoung Sohn, Bong Hyun~Koh, Jae~Yeul Baek, Hyun Chan~Byun, Jae~Hyun Lee,
+  Dong-Seon Shin, Hyungju Ahn, Han-Koo Lee, Jaeyoung Hwang, Sungjune Jung, and
+  Yun-Hi Kim.
+\newblock Synthesis and characterization of diphenylamine derivative containing
+  malononitrile for thermally activated delayed fluorescent emitter.
+\newblock \emph{Dyes and Pigments}, 140:\penalty0 14--21, May 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.01.010}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.01.010}.
+
+\bibitem[Li et~al.(2022{\natexlab{c}})Li, Xu, Tan, Dai, Xue, and
+  Qiao]{Li_2022_10_1016_j_orgel_2022_106645}
+Qian Li, Jingyi Xu, Shuer Tan, Yu~Dai, Jie Xue, and Juan Qiao.
+\newblock Approaching 800Â nm near-infrared thermally activated delay
+  fluorescence materials via simple malononitrile condensation strategy.
+\newblock \emph{Organic Electronics}, 110:\penalty0 106645, November
+  2022{\natexlab{c}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106645}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106645}.
+
+\bibitem[Lv et~al.(2020)Lv, Sun, Zhang, Ye, Liu, Wang, Guo, and
+  Wang]{Lv_2020_10_1039_d0tc00039f}
+Xialei Lv, Shuaiqiang Sun, Qing Zhang, Shaofeng Ye, Wei Liu, Yaxiong Wang,
+  Runda Guo, and Lei Wang.
+\newblock A strategy to construct multifunctional tadf materials for deep blue
+  and high efficiency yellow fluorescent devices.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (14):\penalty0
+  4818--4826, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc00039f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC00039F}.
+
+\bibitem[Huang et~al.(2021{\natexlab{b}})Huang, Li, Xie, Zeng, Li, Hu, Tang,
+  and Zhao]{Huang_2021}
+Fei-Xiang Huang, Hao-Ze Li, Feng-Ming Xie, Xin-Yi Zeng, Yan-Qing Li, Ying-Yuan
+  Hu, Jian-Xin Tang, and Xin Zhao.
+\newblock Efficient orange-red thermally activated delayed fluorescence
+  material containing a cyano group.
+\newblock \emph{Dyes and Pigments}, 195:\penalty0 109731, November
+  2021{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109731}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109731}.
+
+\bibitem[Taneda et~al.(2015)Taneda, Shizu, Tanaka, and Adachi]{Taneda_2015}
+Masatsugu Taneda, Katsuyuki Shizu, Hiroyuki Tanaka, and Chihaya Adachi.
+\newblock High efficiency thermally activated delayed fluorescence based on
+  1,3,5-tris(4-(diphenylamino)phenyl)-2,4,6-tricyanobenzene.
+\newblock \emph{Chemical Communications}, 51\penalty0 (24):\penalty0
+  5028--5031, 2015.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c5cc00511f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5CC00511F}.
+
+\bibitem[Liu et~al.(2020{\natexlab{a}})Liu, Li, Chen, Chen, Liu, Zhan, Cao,
+  Lee, and Yang]{Liu_2020_10_1016_j_cej_2020_126107}
+He~Liu, Jiafang Li, Wen-Cheng Chen, Zhanxiang Chen, Zhiwen Liu, Qun Zhan,
+  Xiaosong Cao, Chun-Sing Lee, and Chuluo Yang.
+\newblock Modulating the acceptor structure of dicyanopyridine based tadf
+  emitters: Nearly 30\% external quantum efficiency and suppression on
+  efficiency roll-off in oled.
+\newblock \emph{Chemical Engineering Journal}, 401:\penalty0 126107, December
+  2020{\natexlab{a}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.126107}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.126107}.
+
+\bibitem[Puntscher et~al.(2015)Puntscher, Kautny, Stöger, Tissot, Hametner,
+  Hagemann, Fröhlich, Baumgartner, and Lumpi]{Puntscher_2015}
+Hannes Puntscher, Paul Kautny, Berthold Stöger, Antoine Tissot, Christian
+  Hametner, Hans~R. Hagemann, Johannes Fröhlich, Thomas Baumgartner, and
+  Daniel Lumpi.
+\newblock Structure-property studies of p-triarylamine-substituted
+  dithieno[3,2-b:2',3'-d]phospholes.
+\newblock \emph{RSC Advances}, 5\penalty0 (114):\penalty0 93797--93807, 2015.
+\newblock ISSN 2046-2069.
+\newblock \doi{10.1039/c5ra13651b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5RA13651B}.
+
+\bibitem[Keruckiene et~al.(2020)Keruckiene, Guzauskas, Narbutaitis, Tsiko,
+  Volyniuk, Lee, Chen, Chiu, Lin, Lee, and
+  Grazulevicius]{Keruckiene_2020_10_1016_j_orgel_2019_105576}
+R.~Keruckiene, M.~Guzauskas, E.~Narbutaitis, U.~Tsiko, D.~Volyniuk, Pei-Hsi
+  Lee, Chia-Hsun Chen, Tien-Lung Chiu, Chi-Feng Lin, Jiun-Haw Lee, and J.V.
+  Grazulevicius.
+\newblock Exciplex-forming derivatives of 2,7-di-tert-butyl-9,9-dimethylacridan
+  and benzotrifluoride for efficient oleds.
+\newblock \emph{Organic Electronics}, 78:\penalty0 105576, March 2020.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.105576}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.105576}.
+
+\bibitem[Zhu et~al.(2019)Zhu, Tian, Zheng, Wang, Yuan, Li, Jiang, and
+  Liao]{Zhu_2019_10_1016_j_jlumin_2018_10_017}
+Xiang-Dong Zhu, Qi-Sheng Tian, Qi~Zheng, Ya-Kun Wang, Yi~Yuan, Yun Li, Zuo-Quan
+  Jiang, and Liang-Sheng Liao.
+\newblock Deep-blue thermally activated delayed fluorescence materials with
+  high glass transition temperature.
+\newblock \emph{Journal of Luminescence}, 206:\penalty0 146--153, February
+  2019.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2018.10.017}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2018.10.017}.
+
+\bibitem[Zhang et~al.(2016{\natexlab{b}})Zhang, Xu, Yao, Peng, Jia, and
+  Li]{Zhang_2016_10_1039_c6tc00214e}
+Jianfeng Zhang, Xinjun Xu, Chuang Yao, Jinghong Peng, Manping Jia, and Lidong
+  Li.
+\newblock A novel ternary organic microwire radial heterojunction with high
+  photoconductivity.
+\newblock \emph{Journal of Materials Chemistry C}, 4\penalty0 (20):\penalty0
+  4505--4511, 2016{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc00214e}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC00214E}.
+
+\bibitem[Zhao et~al.(2022)Zhao, Zhou, Zhang, Chen, Ma, Tian, Jiang, and
+  Sun]{Zhao_2022_10_1039_d2tc00238h}
+Guimin Zhao, Renyin Zhou, Guanghao Zhang, Haowen Chen, Daiyu Ma, Wenwen Tian,
+  Wei Jiang, and Yueming Sun.
+\newblock A periphery hindered strategy with a dopant and sensitizer for
+  solution-processed red tsf-oleds with high color purity.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (13):\penalty0
+  5230--5239, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc00238h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC00238H}.
+
+\bibitem[Rayappa~Naveen et~al.(2022)Rayappa~Naveen, Lee, Braveenth, Joon~Yang,
+  Jae~Hwang, and Hyuk~Kwon]{Rayappa_Naveen_2022}
+Kenkera Rayappa~Naveen, Hyuna Lee, Ramanaskanda Braveenth, Ki~Joon~Yang, Soon
+  Jae~Hwang, and Jang Hyuk~Kwon.
+\newblock Deep blue diboron embedded multi-resonance thermally activated
+  delayed fluorescence emitters for narrowband organic light emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 432:\penalty0 134381, March
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.134381}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.134381}.
+
+\bibitem[Xiang et~al.(2018{\natexlab{b}})Xiang, Zhu, Xie, Gong, Wu, Xie, Lee,
+  and Yang]{Xiang_2018_10_1039_c8tc01656a}
+Yepeng Xiang, Ze-Lin Zhu, Dongjun Xie, Shaolong Gong, Kailong Wu, Guohua Xie,
+  Chun-Sing Lee, and Chuluo Yang.
+\newblock Revealing the new potential of an indandione unit for constructing
+  efficient yellow thermally activated delayed fluorescence emitters with short
+  emissive lifetimes.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (26):\penalty0
+  7111--7118, 2018{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc01656a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC01656A}.
+
+\bibitem[Xiao et~al.(2021)Xiao, Li, Yang, Huang, Cao, Huang, Chen, and
+  Yang]{Xiao_2021}
+Zhengqi Xiao, Nengquan Li, Wei Yang, Zhongyan Huang, Xiaosong Cao, Taian Huang,
+  Zhanxiang Chen, and Chuluo Yang.
+\newblock Saccharin-derived multifunctional emitters featuring concurrently
+  room temperature phosphorescence, thermally activated delayed fluorescence
+  and aggregation-induced enhanced emission.
+\newblock \emph{Chemical Engineering Journal}, 419:\penalty0 129628, September
+  2021.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.129628}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.129628}.
+
+\bibitem[Kothavale et~al.(2021)Kothavale, Chung, and Lee]{Kothavale_2021}
+Shantaram Kothavale, Won~Jae Chung, and Jun~Yeob Lee.
+\newblock High efficiency and long lifetime orange-red thermally activated
+  delayed fluorescent organic light emitting diodes by donor and acceptor
+  engineering.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (2):\penalty0
+  528--536, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc04465b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC04465B}.
+
+\bibitem[Yun and Lee(2017)]{Yun_2017}
+Ju~Hui Yun and Jun~Yeob Lee.
+\newblock Benzoisoquinoline-1,3-dione acceptor based red thermally activated
+  delayed fluorescent emitters.
+\newblock \emph{Dyes and Pigments}, 144:\penalty0 212--217, September 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.05.036}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.05.036}.
+
+\bibitem[Zhang et~al.(2020{\natexlab{c}})Zhang, Ding, Wei, Zhang, Han, and
+  Xu]{Zhang_2020}
+Zhen Zhang, Dongxue Ding, Ying Wei, Jing Zhang, Chunmiao Han, and Hui Xu.
+\newblock Excited-state engineering of universal ambipolar hosts for highly
+  efficient blue phosphorescence and thermally activated delayed fluorescence
+  organic light-emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 382:\penalty0 122485, February
+  2020{\natexlab{c}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2019.122485}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2019.122485}.
+
+\bibitem[Chen et~al.(2019{\natexlab{b}})Chen, Tao, Xiao, Tian, Chen, Wang, Yu,
+  Geng, Zhang, and Lee]{Chen_2019_10_1039_c8tc06081a}
+Jia-Xiong Chen, Wen-Wen Tao, Ya-Fang Xiao, Shuang Tian, Wen-Cheng Chen, Kai
+  Wang, Jia Yu, Feng-Xia Geng, Xiao-Hong Zhang, and Chun-Sing Lee.
+\newblock Isomeric thermally activated delayed fluorescence emitters based on
+  indolo[2,3-b]acridine electron-donor: a compromising optimization for
+  efficient orange-red organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (10):\penalty0
+  2898--2904, 2019{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc06081a}.
+\newblock URL \url{http://dx.doi.org/10.1039/c8tc06081a}.
+
+\bibitem[Zhu et~al.(2020{\natexlab{b}})Zhu, Peng, Kong, Yang, Li, Kumar, Wang,
+  Jiang, and Liao]{Zhu_2020_10_1039_d0tc00743a}
+Xiang-Dong Zhu, Chen-Chen Peng, Fan-Cheng Kong, Sheng-Yi Yang, Hong-Cheng Li,
+  Sarvendra Kumar, Tong-Tong Wang, Zuo-Quan Jiang, and Liang-Sheng Liao.
+\newblock Acceptor modulation for improving a spiro-type thermally activated
+  delayed fluorescence emitter.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (25):\penalty0
+  8579--8584, 2020{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc00743a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC00743A}.
+
+\bibitem[Nasu et~al.(2013)Nasu, Nakagawa, Nomura, Lin, Cheng, Tseng, Yasuda,
+  and Adachi]{Nasu_2013}
+Keiro Nasu, Tetsuya Nakagawa, Hiroko Nomura, Chi-Jen Lin, Chien-Hong Cheng,
+  Mei-Rurng Tseng, Takuma Yasuda, and Chihaya Adachi.
+\newblock A highly luminescent spiro-anthracenone-based organic light-emitting
+  diode exhibiting thermally activated delayed fluorescence.
+\newblock \emph{Chemical Communications}, 49\penalty0 (88):\penalty0
+  10385--10387, 2013.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c3cc44179b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C3CC44179B}.
+
+\bibitem[Liu et~al.(2021{\natexlab{c}})Liu, Wang, Li, Zhu, and
+  Chen]{Liu_2021_10_1016_j_orgel_2020_106017}
+Xun Liu, Yin-Feng Wang, Meng Li, Yongheng Zhu, and Chuan-Feng Chen.
+\newblock Aromatic-imide-based tadf material as emitter for efficient yellow
+  and white organic light-emitting diodes.
+\newblock \emph{Organic Electronics}, 88:\penalty0 106017, January
+  2021{\natexlab{c}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.106017}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.106017}.
+
+\bibitem[Gong et~al.(2021)Gong, Lu, Lee, Li, Huang, Chen, Zhan, Wu, Gong, and
+  Yang]{Gong_2021}
+Xu~Gong, Chen-Han Lu, Wei-Kai Lee, Pan Li, Yu-Hsin Huang, Zhanxiang Chen, Lisi
+  Zhan, Chung-Chih Wu, Shaolong Gong, and Chuluo Yang.
+\newblock High-efficiency red thermally activated delayed fluorescence emitters
+  based on benzothiophene-fused spiro-acridine donor.
+\newblock \emph{Chemical Engineering Journal}, 405:\penalty0 126663, February
+  2021.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.126663}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.126663}.
+
+\bibitem[Chen et~al.(2022{\natexlab{c}})Chen, Wang, Lu, and Su]{Chen_2022}
+Yin Chen, Yun-Xin Wang, Chin-Wei Lu, and Hai-Ching Su.
+\newblock Deep-red light-emitting electrochemical cells based on
+  phosphor-sensitized thermally activated delayed fluorescence.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (31):\penalty0
+  11211--11219, 2022{\natexlab{c}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc01727j}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC01727J}.
+
+\bibitem[Yang et~al.(2021)Yang, Ning, Gong, and
+  Yang]{Yang_2021_10_1016_j_dyepig_2021_109474}
+Wei Yang, Weiming Ning, Shaolong Gong, and Chuluo Yang.
+\newblock Deep-red thermally activated delayed fluorescence emitters based on a
+  phenanthroline-containing planar acceptor.
+\newblock \emph{Dyes and Pigments}, 192:\penalty0 109474, August 2021.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109474}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109474}.
+
+\bibitem[Kothavale et~al.(2020)Kothavale, Chung, and Lee]{Kothavale_2020}
+Shantaram Kothavale, Won~Jae Chung, and Jun~Yeob Lee.
+\newblock Color tuning of dibenzo[a,c]phenazine-2,7-dicarbonitrile-derived
+  thermally activated delayed fluorescence emitters from yellow to deep-red.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (21):\penalty0
+  7059--7066, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc00960a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC00960A}.
+
+\bibitem[Choi et~al.(2020)Choi, Lee, Adachi, and Lee]{Choi_2020}
+Shin~Hyung Choi, Chan~Hee Lee, Chihaya Adachi, and Sae~Youn Lee.
+\newblock Highly effective nicotinonitrile-derivatives-based thermally
+  activated delayed fluorescence emitter with asymmetric molecular architecture
+  for high-performance organic light-emitting diodes.
+\newblock \emph{Dyes and Pigments}, 172:\penalty0 107849, January 2020.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.107849}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.107849}.
+
+\bibitem[Park et~al.(2022)Park, Moon, Lim, Woo, Yoon, and Lee]{Park_2022}
+Jinho Park, Junyoung Moon, Junseop Lim, Jeongkyu Woo, Seung~Soo Yoon, and
+  Jun~Yeob Lee.
+\newblock Fine-tuned asymmetric blue multiple resonance thermally activated
+  delayed fluorescence emitters with high efficiency and narrow emission band.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (34):\penalty0
+  12300--12306, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc02283d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC02283D}.
+
+\bibitem[Huo et~al.(2023)Huo, Xiao, Wu, Li, Tong, Shi, Ma, and Tang]{Huo_2023}
+Jinnan Huo, Shu Xiao, Yuanyuan Wu, Mengxing Li, Hongbo Tong, Heping Shi, Dongge
+  Ma, and Ben~Zhong Tang.
+\newblock Molecular engineering of blue diphenylsulfone-based emitter with
+  aggregation-enhanced emission and thermally activated delayed fluorescence
+  characteristics: impairing intermolecular electron-exchange interactions
+  using steric hindrance.
+\newblock \emph{Chemical Engineering Journal}, 452:\penalty0 138957, January
+  2023.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.138957}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.138957}.
+
+\bibitem[Sun et~al.(2017{\natexlab{b}})Sun, Baek, Kim, Huh, Kwon, Kim, and
+  Kim]{Sun_2017_10_1039_c6tc04653c}
+Jin~Won Sun, Jang~Yeol Baek, Kwon-Hyeon Kim, Jin-Suk Huh, Soon-Ki Kwon, Yun-Hi
+  Kim, and Jang-Joo Kim.
+\newblock Azasiline-based thermally activated delayed fluorescence emitters for
+  blue organic light emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (5):\penalty0
+  1027--1032, 2017{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc04653c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC04653C}.
+
+\bibitem[Kim et~al.(2017{\natexlab{a}})Kim, Inada, Zhao, Komino, Matsumoto,
+  Ribierre, and Adachi]{Kim_2017_10_1039_c6tc04786f}
+D.~H. Kim, K.~Inada, L.~Zhao, T.~Komino, N.~Matsumoto, J.~C. Ribierre, and
+  C.~Adachi.
+\newblock Organic light emitting diodes with horizontally oriented thermally
+  activated delayed fluorescence emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (5):\penalty0
+  1216--1223, 2017{\natexlab{a}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc04786f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC04786F}.
+
+\bibitem[Cai et~al.(2021)Cai, Auffray, Zhang, Zhang, Nagata, Lin, Tang, Chan,
+  Lee, Huang, Song, Tsuchiya, Adachi, and Duan]{Cai_2021}
+Minghan Cai, Morgan Auffray, Dongdong Zhang, Yuewei Zhang, Ryo Nagata, Zesen
+  Lin, Xun Tang, Chin-Yiu Chan, Yi-Ting Lee, Tianyu Huang, Xiaozeng Song,
+  Youichi Tsuchiya, Chihaya Adachi, and Lian Duan.
+\newblock Enhancing spin-orbital coupling in deep-blue/blue tadf emitters by
+  minimizing the distance from the heteroatoms in donors to acceptors.
+\newblock \emph{Chemical Engineering Journal}, 420:\penalty0 127591, September
+  2021.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.127591}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.127591}.
+
+\bibitem[Zhang et~al.(2020{\natexlab{d}})Zhang, Ran, Wang, Tian, Kong, Fan, and
+  Liao]{Zhang_2020_10_1016_j_orgel_2020_105660}
+Yuan-Lan Zhang, Quan Ran, Qiang Wang, Qi-Sheng Tian, Fan-Cheng Kong, Jian Fan,
+  and Liang-Sheng Liao.
+\newblock High-performance sky-blue phosphorescent organic light-emitting
+  diodes employing wide-bandgap bipolar host materials with thermally activated
+  delayed fluorescence characteristics.
+\newblock \emph{Organic Electronics}, 81:\penalty0 105660, June
+  2020{\natexlab{d}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.105660}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.105660}.
+
+\bibitem[Kim et~al.(2019{\natexlab{b}})Kim, Kim, Godumala, Yoon, Kim, Jeong,
+  Woo, Kwon, Cho, and Choi]{Kim_2019_10_1039_c9cc05391c}
+Hyung~Jong Kim, Seong~Keun Kim, Mallesham Godumala, Jiwon Yoon, Chae~Yeong Kim,
+  Ji-Eun Jeong, Han~Young Woo, Jang~Hyuk Kwon, Min~Ju Cho, and Dong~Hoon Choi.
+\newblock Novel molecular triad exhibiting aggregation-induced emission and
+  thermally activated fluorescence for efficient non-doped organic
+  light-emitting diodes.
+\newblock \emph{Chemical Communications}, 55\penalty0 (64):\penalty0
+  9475--9478, 2019{\natexlab{b}}.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c9cc05391c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9CC05391C}.
+
+\bibitem[Chen et~al.(2023)Chen, Wang, Zhou, Wang, Yu, and Zhang]{Chen_2023}
+Jia-Xiong Chen, Hui Wang, Lu~Zhou, Kai Wang, Jia Yu, and Xiao-Hong Zhang.
+\newblock Structure-property investigation of two red tadf isomers with
+  different d-a conjugation for superior exciton utilization.
+\newblock \emph{Dyes and Pigments}, 208:\penalty0 110801, January 2023.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110801}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110801}.
+
+\bibitem[Ma et~al.(2023)Ma, Wang, Zhao, Shi, Miao, Cao, and Zhang]{Ma_2023}
+You-Ping Ma, Guoliang Wang, Min Zhao, Zi-Fa Shi, Yanqin Miao, Xiao-Ping Cao,
+  and Hao-Li Zhang.
+\newblock A red thermally activated delayed fluorescence emitter based on
+  benzo[c][1,2,5]thiadiazole.
+\newblock \emph{Dyes and Pigments}, 212:\penalty0 111084, April 2023.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2023.111084}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2023.111084}.
+
+\bibitem[Konidena et~al.(2019)Konidena, Lee, and
+  Lee]{Konidena_2019_10_1039_c9tc04679h}
+Rajendra~Kumar Konidena, Kyung~Hyung Lee, and Jun~Yeob Lee.
+\newblock 6h-benzo[4,5]thieno[2,3-b]indole as a novel donor for efficient
+  thermally activated delayed fluorescence emitters with eqes over 20\%.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (44):\penalty0
+  13912--13919, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc04679h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC04679H}.
+
+\bibitem[Lee et~al.(2021{\natexlab{b}})Lee, Chung, and
+  Lee]{Lee_2021_10_1016_j_cej_2020_127293}
+Ha~Lim Lee, Won~Jae Chung, and Jun~Yeob Lee.
+\newblock Selective efficiency boosting in thermally activated delayed
+  fluorescence emitters by a secondary donor.
+\newblock \emph{Chemical Engineering Journal}, 408:\penalty0 127293, March
+  2021{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.127293}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.127293}.
+
+\bibitem[Ma et~al.(2021{\natexlab{c}})Ma, Yang, Mu, Deng, Chen, Wang, Qiao, Hu,
+  Yang, Ma, Peng, and Ma]{Ma_2021_10_1039_d1sc04118e}
+Zetong Ma, Zhiqiang Yang, Lan Mu, Lisong Deng, Liangjian Chen, Bohan Wang,
+  Xianfeng Qiao, Dehua Hu, Bing Yang, Dongge Ma, Junbiao Peng, and Yuguang Ma.
+\newblock Converting molecular luminescence to ultralong room-temperature
+  phosphorescence via the excited state modulation of sulfone-containing
+  heteroaromatics.
+\newblock \emph{Chemical Science}, 12\penalty0 (44):\penalty0 14808--14814,
+  2021{\natexlab{c}}.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/d1sc04118e}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1SC04118E}.
+
+\bibitem[Ni et~al.(2017)Ni, Wu, Zhu, Chen, Wu, Zhong, An, Wei, Ma, and
+  Yang]{Ni_2017}
+Fan Ni, Zhongbin Wu, Zece Zhu, Tianheng Chen, Kailong Wu, Cheng Zhong, Kebin
+  An, Danqing Wei, Dongge Ma, and Chuluo Yang.
+\newblock Teaching an old acceptor new tricks: rationally employing
+  2,1,3-benzothiadiazole as input to design a highly efficient red thermally
+  activated delayed fluorescence emitter.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (6):\penalty0
+  1363--1368, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc00025a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC00025A}.
+
+\bibitem[Wang et~al.(2020{\natexlab{b}})Wang, Yu, Chen, Yu, Yan, Guan, Chen,
+  and Li]{Wang_2020}
+Peng Wang, Junsheng Yu, Shanyong Chen, Hong Yu, Xingwu Yan, Youwei Guan, Jinlei
+  Chen, and Lu~Li.
+\newblock 3-benzoyl-4h-chromen-4-one: A novel twisted acceptor for highly
+  efficient thermally activated delayed fluorescence emitters.
+\newblock \emph{Dyes and Pigments}, 183:\penalty0 108744, December
+  2020{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108744}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108744}.
+
+\bibitem[Shin et~al.(2023)Shin, Lee, Lee, Lee, Kim, Kim, Jung, Jung, and
+  Lee]{Shin_2023}
+Kihoon Shin, Euihoo Lee, Taehwan Lee, Young~Hoon Lee, Doo~Hong Kim, Chaerin
+  Kim, Jaehoon Jung, Byung~Jun Jung, and Min~Hyung Lee.
+\newblock Efficient tadf from carbon-carbon bonded donor-acceptor molecules
+  based on boron-carbonyl hybrid acceptor.
+\newblock \emph{Dyes and Pigments}, 209:\penalty0 110937, February 2023.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110937}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110937}.
+
+\bibitem[Raikwar et~al.(2022)Raikwar, Kim, and Lee]{Raikwar_2022}
+Manish~Mannulal Raikwar, Seung~Chan Kim, and Jun~Yeob Lee.
+\newblock Highly efficient thermally activated delayed fluorescence emitter
+  based on the 5h-benzo[d]benzo[4,5]imidazo[1,2-a]imidazole donor.
+\newblock \emph{Materials Chemistry Frontiers}, 6\penalty0 (22):\penalty0
+  3382--3390, 2022.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d2qm00806h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2QM00806H}.
+
+\bibitem[Zhao et~al.(2017)Zhao, Wang, Cai, Liu, He, Liu, Cao, and
+  Su]{Zhao_2017_10_1039_c7qm00195a}
+Haobin Zhao, Zhiheng Wang, Xinyi Cai, Kunkun Liu, Zuozheng He, Xin Liu, Yong
+  Cao, and Shi-Jian Su.
+\newblock Highly efficient thermally activated delayed fluorescence materials
+  with reduced efficiency roll-off and low on-set voltages.
+\newblock \emph{Materials Chemistry Frontiers}, 1\penalty0 (10):\penalty0
+  2039--2046, 2017.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/c7qm00195a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7QM00195A}.
+
+\bibitem[Wang et~al.(2022{\natexlab{a}})Wang, Zhao, Qu, Duan, Li, Ma, Chang,
+  Han, and Xu]{Wang_2022_10_1016_j_cej_2022_135080}
+Huiqin Wang, Bingjie Zhao, Chao Qu, Chunbo Duan, Zhe Li, Peng Ma, Peng Chang,
+  Chunmiao Han, and Hui Xu.
+\newblock 2,3-dicyanopyrazino phenanthroline enhanced charge transfer for
+  efficient near-infrared thermally activated delayed fluorescent diodes.
+\newblock \emph{Chemical Engineering Journal}, 436:\penalty0 135080, May
+  2022{\natexlab{a}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.135080}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.135080}.
+
+\bibitem[Ran et~al.(2019)Ran, Zhang, Hua, Fung, Liao, and Fan]{Ran_2019}
+Quan Ran, Yuan-Lan Zhang, Xiaochen Hua, Man-Keung Fung, Liang-Sheng Liao, and
+  Jian Fan.
+\newblock Modulation of p-type units in tripodal bipolar hosts towards highly
+  efficient red phosphorescent oleds.
+\newblock \emph{Dyes and Pigments}, 162:\penalty0 632--639, March 2019.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2018.10.076}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2018.10.076}.
+
+\bibitem[Kumar et~al.(2020{\natexlab{b}})Kumar, Ma, Khan, Yuan, Yang, Jiang,
+  Fung, and Liao]{Kumar_2020}
+Sarvendra Kumar, Yu-Yang Ma, Aziz Khan, Yi~Yuan, Sheng-Yi Yang, Zuo-Quan Jiang,
+  Man-Keung Fung, and Liang-Sheng Liao.
+\newblock Structurally controlled singlet-triplet splitting for blue
+  star-shaped thermally activated delayed fluorescence emitters incorporating
+  the tricarbazoles-triazine motifs.
+\newblock \emph{Organic Electronics}, 84:\penalty0 105783, September
+  2020{\natexlab{b}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.105783}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.105783}.
+
+\bibitem[Kim et~al.(2017{\natexlab{b}})Kim, Lampande, Im, Lee, Lee, and
+  Kwon]{Kim_2017}
+Gyeong~Heon Kim, Raju Lampande, Joon~Beom Im, Jung~Min Lee, Ju~Young Lee, and
+  Jang~Hyuk Kwon.
+\newblock Controlling the exciton lifetime of blue thermally activated delayed
+  fluorescence emitters using a heteroatom-containing pyridoindole donor
+  moiety.
+\newblock \emph{Materials Horizons}, 4\penalty0 (4):\penalty0 619--624,
+  2017{\natexlab{b}}.
+\newblock ISSN 2051-6355.
+\newblock \doi{10.1039/c6mh00579a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6MH00579A}.
+
+\bibitem[Leitonas et~al.(2022)Leitonas, Guzauskas, Tsiko, Simokaitiene,
+  Volyniuk, and Grazulevicius]{Leitonas_2022}
+Karolis Leitonas, Matas Guzauskas, Uliana Tsiko, Jurate Simokaitiene, Dmytro
+  Volyniuk, and Juozas~Vidas Grazulevicius.
+\newblock White vertical organic permeable-base light-emitting transistors
+  obtained by mixing of blue exciton and orange interface exciplex emissions.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (26):\penalty0
+  9786--9793, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc01326f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC01326F}.
+
+\bibitem[Chen et~al.(2022{\natexlab{d}})Chen, Jayakumar, Ko, Hung, Wu, and
+  Cheng]{Chen_2022_10_1039_d2tc01435a}
+Yi-Kuan Chen, Jayachandran Jayakumar, Chang-Lun Ko, Wen-Yi Hung, Tien-Lin Wu,
+  and Chien-Hong Cheng.
+\newblock Increase the molecular length and donor strength to boost horizontal
+  dipole orientation for high-efficiency oleds.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (24):\penalty0
+  9241--9248, 2022{\natexlab{d}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc01435a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC01435A}.
+
+\bibitem[Kumar et~al.(2019)Kumar, Oh, Kim, Jung, and Lee]{Kumar_2019}
+Ajay Kumar, Jihun Oh, Juhee Kim, Jaehoon Jung, and Min~Hyung Lee.
+\newblock Facile color tuning of thermally activated delayed fluorescence by
+  substituted ortho-carbazole-appended triarylboron emitters.
+\newblock \emph{Dyes and Pigments}, 168:\penalty0 273--280, September 2019.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2019.05.002}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2019.05.002}.
+
+\bibitem[Skuodis et~al.(2018)Skuodis, Bezvikonnyi, Tomkeviciene, Volyniuk,
+  Mimaite, Lazauskas, Bucinskas, Keruckiene, Sini, and
+  Grazulevicius]{Skuodis_2018}
+Eigirdas Skuodis, Oleksandr Bezvikonnyi, Ausra Tomkeviciene, Dmytro Volyniuk,
+  Viktorija Mimaite, Algirdas Lazauskas, Audrius Bucinskas, Rasa Keruckiene,
+  Gjergji Sini, and Juozas~Vidas Grazulevicius.
+\newblock Aggregation, thermal annealing, and hosting effects on performances
+  of an acridan-based tadf emitter.
+\newblock \emph{Organic Electronics}, 63:\penalty0 29--40, December 2018.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2018.09.002}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2018.09.002}.
+
+\bibitem[Chen et~al.(2022{\natexlab{e}})Chen, Wang, Zhang, Xiao, Wang, Zhou,
+  Shi, Yu, Lee, and Zhang]{Chen_2022_10_1016_j_cej_2022_134731}
+Jia-Xiong Chen, Hui Wang, Xiang Zhang, Ya-Fang Xiao, Kai Wang, Lu~Zhou,
+  Yi-Zhong Shi, Jia Yu, Chun-Sing Lee, and Xiao-Hong Zhang.
+\newblock Using fullerene fragments as acceptors to construct thermally
+  activated delayed fluorescence emitters for high-efficiency organic
+  light-emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 435:\penalty0 134731, May
+  2022{\natexlab{e}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.134731}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.134731}.
+
+\bibitem[Chen et~al.(2017)Chen, Cai, Li, He, Cai, Chen, and
+  Su]{Chen_2017_10_1039_c7tc01164d}
+Dongjun Chen, Xinyi Cai, Xiang-Long Li, Zuozheng He, Chengsong Cai, Dongcheng
+  Chen, and Shi-Jian Su.
+\newblock Efficient solution-processed red all-fluorescent organic
+  light-emitting diodes employing thermally activated delayed fluorescence
+  materials as assistant hosts: molecular design strategy and exciton dynamic
+  analysis.
+\newblock \emph{Journal of Materials Chemistry C}, 5\penalty0 (21):\penalty0
+  5223--5231, 2017.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc01164d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC01164D}.
+
+\bibitem[Zhao et~al.(2018{\natexlab{c}})Zhao, Wang, Gui, Fang, Zhang, Wang,
+  Chen, Shi, and Tang]{Zhao_2018_10_1039_c7tc04934j}
+Yaodong Zhao, Weigao Wang, Chen Gui, Li~Fang, Xinlei Zhang, Shujuan Wang,
+  Shuming Chen, Heping Shi, and Ben~Zhong Tang.
+\newblock Thermally activated delayed fluorescence material with
+  aggregation-induced emission properties for highly efficient organic
+  light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (11):\penalty0
+  2873--2881, 2018{\natexlab{c}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc04934j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC04934J}.
+
+\bibitem[Zhang et~al.(2022{\natexlab{c}})Zhang, Zhang, Shi, Sun, and
+  Wang]{Zhang_2022_10_1016_j_dyepig_2022_110634}
+Yaxing Zhang, Jinyan Zhang, Changsheng Shi, Ning Sun, and Qiang Wang.
+\newblock Dipyrido[3,2-a:2',3'-c]phenazine acceptor based thermally activated
+  delayed fluorescence emitters.
+\newblock \emph{Dyes and Pigments}, 206:\penalty0 110634, October
+  2022{\natexlab{c}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110634}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110634}.
+
+\bibitem[Ward et~al.(2020)Ward, Danos, Stachelek, Fox, Batsanov, Monkman, and
+  Bryce]{Ward_2020}
+Jonathan~S. Ward, Andrew Danos, Patrycja Stachelek, Mark~A. Fox, Andrei~S.
+  Batsanov, Andrew~P. Monkman, and Martin~R. Bryce.
+\newblock Exploiting trifluoromethyl substituents for tuning orbital character
+  of singlet and triplet states to increase the rate of thermally activated
+  delayed fluorescence.
+\newblock \emph{Materials Chemistry Frontiers}, 4\penalty0 (12):\penalty0
+  3602--3615, 2020.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d0qm00429d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0QM00429D}.
+
+\bibitem[Yu et~al.(2018{\natexlab{b}})Yu, Wu, Xie, Zhong, Zhu, Ma, and
+  Yang]{Yu_2018_10_1039_c7cc09925h}
+Ling Yu, Zhongbin Wu, Guohua Xie, Cheng Zhong, Zece Zhu, Dongge Ma, and Chuluo
+  Yang.
+\newblock An efficient exciton harvest route for high-performance oleds based
+  on aggregation-induced delayed fluorescence.
+\newblock \emph{Chemical Communications}, 54\penalty0 (11):\penalty0
+  1379--1382, 2018{\natexlab{b}}.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c7cc09925h}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7CC09925H}.
+
+\bibitem[Lee et~al.(2015)Lee, Shizu, Tanaka, Nakanotani, Yasuda, Kaji, and
+  Adachi]{Lee_2015}
+Jiyoung Lee, Katsuyuki Shizu, Hiroyuki Tanaka, Hajime Nakanotani, Takuma
+  Yasuda, Hironori Kaji, and Chihaya Adachi.
+\newblock Controlled emission colors and singlet-triplet energy gaps of
+  dihydrophenazine-based thermally activated delayed fluorescence emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 3\penalty0 (10):\penalty0
+  2175--2181, 2015.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c4tc02530j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C4TC02530J}.
+
+\bibitem[Huang et~al.(2022{\natexlab{b}})Huang, Jiang, Yang, Zhang, Li, Chen,
+  and Gu]{Huang_2022_10_1016_j_orgel_2022_106657}
+Bin Huang, Wei Jiang, Li~Yang, Xingyu Zhang, Yan Li, Wen-Cheng Chen, and Ning
+  Gu.
+\newblock The effect of electron donor and acceptor conformations on thermally
+  activated delayed fluorescence.
+\newblock \emph{Organic Electronics}, 111:\penalty0 106657, December
+  2022{\natexlab{b}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106657}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106657}.
+
+\bibitem[Shakeel and Singh(2018)]{Shakeel_2018}
+Usman Shakeel and Jai Singh.
+\newblock Study of processes of reverse intersystem crossing (risc) and
+  thermally activated delayed fluorescence (tadf) in organic light emitting
+  diodes (oleds).
+\newblock \emph{Organic Electronics}, 59:\penalty0 121--124, August 2018.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2018.04.035}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2018.04.035}.
+
+\bibitem[Yu et~al.(2019)Yu, Tang, Ge, Yuan, Jiang, and
+  Liao]{Yu_2019_10_1016_j_orgel_2019_06_008}
+You-Jun Yu, Xun Tang, Hui-Ting Ge, Yi~Yuan, Zuo-Quan Jiang, and Liang-Sheng
+  Liao.
+\newblock Fluorenone-based thermally activated delayed fluorescence materials
+  for orange-red emission.
+\newblock \emph{Organic Electronics}, 73:\penalty0 240--246, October 2019.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.06.008}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.06.008}.
+
+\bibitem[Braveenth et~al.(2023)Braveenth, Raagulan, Kim, and
+  Kim]{Braveenth_2023}
+Ramanaskanda Braveenth, Kanthasamy Raagulan, Yu-Jin Kim, and Bo-Mi Kim.
+\newblock Recent advances in green thermally activated delayed fluorescence
+  emitters towards high colour purity and good electroluminescence performance.
+\newblock \emph{Materials Advances}, 4\penalty0 (2):\penalty0 374--388, 2023.
+\newblock ISSN 2633-5409.
+\newblock \doi{10.1039/d2ma00967f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2MA00967F}.
+
+\bibitem[Wang et~al.(2018{\natexlab{a}})Wang, Lv, Meng, Wei, Wang, and
+  Wang]{Wang_2018_10_1016_j_cclet_2017_07_025}
+Hui Wang, Xiaopeng Lv, Lingqiang Meng, Xiaofang Wei, Ying Wang, and Pengfei
+  Wang.
+\newblock Novel thioxanthone host material with thermally activated delayed
+  fluorescence for reduced efficiency roll-off of phosphorescent oleds.
+\newblock \emph{Chinese Chemical Letters}, 29\penalty0 (3):\penalty0 471--474,
+  March 2018{\natexlab{a}}.
+\newblock ISSN 1001-8417.
+\newblock \doi{10.1016/j.cclet.2017.07.025}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cclet.2017.07.025}.
+
+\bibitem[Chen et~al.(2022{\natexlab{f}})Chen, Zhang, Li, Zhang, Sheng, Duan,
+  Zhao, and Chen]{Chen_2022_10_1016_j_orgel_2022_106536}
+Keming Chen, Fujun Zhang, Asu Li, Ru~Zhang, Ren Sheng, Yu~Duan, Yi~Zhao, and
+  Ping Chen.
+\newblock High efficiency, ultra-low roll-offs in orange phosphorescent organic
+  light-emitting devices using a novel exciplex system.
+\newblock \emph{Organic Electronics}, 106:\penalty0 106536, July
+  2022{\natexlab{f}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106536}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106536}.
+
+\bibitem[He et~al.(2018)He, Cai, Wang, Li, Xu, Liu, Chen, and
+  Su]{He_2018_10_1039_c7tc02763j}
+Zuozheng He, Xinyi Cai, Zhiheng Wang, Yunchuan Li, Zhida Xu, Kunkun Liu,
+  Dongcheng Chen, and Shi-Jian Su.
+\newblock Sky-blue thermally activated delayed fluorescence material employing
+  a diphenylethyne acceptor for organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (1):\penalty0
+  36--42, 2018.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc02763j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC02763J}.
+
+\bibitem[Wang et~al.(2022{\natexlab{b}})Wang, Zhou, Shi, Fan, Chen, Wang, Yu,
+  and Zhang]{Wang_2022_10_1016_j_cej_2021_134423}
+Hui Wang, Lu~Zhou, Yi-Zhong Shi, Xiao-Chun Fan, Jia-Xiong Chen, Kai Wang, Jia
+  Yu, and Xiao-Hong Zhang.
+\newblock A facile strategy for enhancing reverse intersystem crossing of red
+  thermally activated delayed fluorescence emitters.
+\newblock \emph{Chemical Engineering Journal}, 433:\penalty0 134423, April
+  2022{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.134423}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.134423}.
+
+\bibitem[Shi et~al.(2022{\natexlab{b}})Shi, Liu, Li, He, Song, Liu, Wu, and
+  Xu]{Shi_2022_10_1016_j_dyepig_2022_110430}
+Chunlong Shi, Di~Liu, Jiuyan Li, Zhaolong He, Kai Song, Botao Liu, Qi~Wu, and
+  Min Xu.
+\newblock tert-butyltriazine-diphenylaminocarbazole based tadf materials:
+  Ï€-bridge modification for enhanced krisc and efficiency stability.
+\newblock \emph{Dyes and Pigments}, 204:\penalty0 110430, August
+  2022{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2022.110430}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2022.110430}.
+
+\bibitem[Dong et~al.(2018)Dong, Wang, Gui, Shi, Cheng, and Tang]{Dong_2018}
+Xiuqing Dong, Shujuan Wang, Chen Gui, Heping Shi, Fangqin Cheng, and Ben~Zhong
+  Tang.
+\newblock Synthesis, aggregation-induced emission and thermally activated
+  delayed fluorescence properties of two new compounds based on phenylethene,
+  carbazole and 9,9',10,10'-tetraoxidethianthrene.
+\newblock \emph{Tetrahedron}, 74\penalty0 (4):\penalty0 497--505, January 2018.
+\newblock ISSN 0040-4020.
+\newblock \doi{10.1016/j.tet.2017.12.022}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.tet.2017.12.022}.
+
+\bibitem[Zhu et~al.(2022)Zhu, Chen, Ying, Gong, Wang, and
+  Yang]{Zhu_2022_10_1039_d2tc00344a}
+Yingyu Zhu, Zhanxiang Chen, Ao~Ying, Shaolong Gong, Tao Wang, and Chuluo Yang.
+\newblock Nematic liquid crystals induce and amplify the circularly polarized
+  luminescence of chiral tadf emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 10\penalty0 (13):\penalty0
+  5065--5069, 2022.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d2tc00344a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2TC00344A}.
+
+\bibitem[Liu and Xie(2022)]{Liu_2022}
+Tengxiao Liu and Guohua Xie.
+\newblock Exploiting new feasibility of a phenylquinoline unit for establishing
+  efficient green thermally activated delayed fluorescent emitter with short
+  delayed fluorescent lifetime.
+\newblock \emph{Organic Electronics}, 106:\penalty0 106518, July 2022.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2022.106518}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2022.106518}.
+
+\bibitem[Song et~al.(2021)Song, Zhang, Yang, Chen, Li, Sheng, Duan, and
+  Chen]{Song_2021}
+Jian Song, Fujun Zhang, Liping Yang, Keming Chen, Asu Li, Ren Sheng, Yu~Duan,
+  and Ping Chen.
+\newblock Highly efficient, ultralow turn-on voltage red and white organic
+  light-emitting devices based on a novel exciplex host.
+\newblock \emph{Materials Advances}, 2\penalty0 (11):\penalty0 3677--3684,
+  2021.
+\newblock ISSN 2633-5409.
+\newblock \doi{10.1039/d0ma01005g}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0MA01005G}.
+
+\bibitem[Zhang et~al.(2021{\natexlab{c}})Zhang, Wang, Li, Gao, and
+  Chen]{Zhang_2021_10_1016_j_cclet_2020_07_041}
+Liang Zhang, Yin-Feng Wang, Meng Li, Qing-Yu Gao, and Chuan-Feng Chen.
+\newblock Quinoline-based aggregation-induced delayed fluorescence materials
+  for highly efficient non-doped organic light-emitting diodes.
+\newblock \emph{Chinese Chemical Letters}, 32\penalty0 (2):\penalty0 740--744,
+  February 2021{\natexlab{c}}.
+\newblock ISSN 1001-8417.
+\newblock \doi{10.1016/j.cclet.2020.07.041}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cclet.2020.07.041}.
+
+\bibitem[Lee et~al.(2022)Lee, Lee, Han, and
+  Lee]{Lee_2022_10_1016_j_cej_2021_130988}
+Ho~Jung Lee, Ha~Lim Lee, Si~Hyun Han, and Jun~Yeob Lee.
+\newblock Novel secondary acceptor based molecular design for superb lifetime
+  in thermally activated delayed fluorescent organic light-emitting diodes
+  through high bond energy and fast up-conversion.
+\newblock \emph{Chemical Engineering Journal}, 427:\penalty0 130988, January
+  2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.130988}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.130988}.
+
+\bibitem[Chen et~al.(2018{\natexlab{c}})Chen, Tao, Wang, Zheng, Liu, Li, Ou,
+  and Zhang]{Chen_2018_10_1016_j_orgel_2018_03_024}
+Jia-Xiong Chen, Wen-Wen Tao, Kai Wang, Cai-Jun Zheng, Wei Liu, Xing Li, Xue-Mei
+  Ou, and Xiao-Hong Zhang.
+\newblock Highly efficient thermally activated delayed fluorescence emitters
+  based on novel indolo[2,3-b]acridine electron-donor.
+\newblock \emph{Organic Electronics}, 57:\penalty0 327--334, June
+  2018{\natexlab{c}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2018.03.024}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2018.03.024}.
+
+\bibitem[Patil et~al.(2020{\natexlab{a}})Patil, Lee, and
+  Lee]{Patil_2020_10_1016_j_cej_2020_125125}
+Vilas~Venunath Patil, Kyung~Hyung Lee, and Jun~Yeob Lee.
+\newblock 11,11-dimethyl-11h-indeno[1,2-b]indolo[1,2,3-jk]carbazole: A rigid
+  chromophore with novel amalgamation strategy for long lifetime blue
+  fluorescent organic light-emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 395:\penalty0 125125, September
+  2020{\natexlab{a}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2020.125125}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2020.125125}.
+
+\bibitem[Zhang et~al.(2022{\natexlab{d}})Zhang, Wang, Lei, Liu, Cai, Wu, Shen,
+  Huang, and Dong]{Zhang_2022_10_1039_d1cc06380d}
+Xinyu Zhang, Dan Wang, Yunxiang Lei, Miaochang Liu, Zhengxu Cai, Huayue Wu,
+  Guoming Shen, Xiaobo Huang, and Yuping Dong.
+\newblock Selenium atoms induce organic doped systems to produce pure
+  phosphorescence emission.
+\newblock \emph{Chemical Communications}, 58\penalty0 (8):\penalty0 1179--1182,
+  2022{\natexlab{d}}.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/d1cc06380d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1CC06380D}.
+
+\bibitem[Chen et~al.(2018{\natexlab{d}})Chen, Yang, Ye, Wang, Tang, Chen,
+  Zheng, Shi, Wei, and Wong]{Chen_2018_10_1039_c8tc02739k}
+Minyu Chen, Jiali Yang, Zhonghua Ye, Shuanglong Wang, Zhenyu Tang, Guo Chen,
+  Yanqiong Zheng, Ying Shi, Bin Wei, and Wai-Yeung Wong.
+\newblock Extremely low-efficiency roll-off of phosphorescent organic
+  light-emitting diodes at high brightness based on acridine heterocyclic
+  derivatives.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (36):\penalty0
+  9713--9722, 2018{\natexlab{d}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc02739k}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC02739K}.
+
+\bibitem[Liu et~al.(2020{\natexlab{b}})Liu, Li, Li, Zhang, Zhan, Liu, Zhou, Li,
+  Wang, and Yang]{Liu_2020}
+He~Liu, Jiafang Li, Ganggang Li, Bing Zhang, Qun Zhan, Zhiwen Liu, Changjiang
+  Zhou, Kai Li, Zhiming Wang, and Chuluo Yang.
+\newblock A simple strategy to achieve efficient thermally activated delayed
+  fluorescent emitters via enhancing electron donating ability of donors.
+\newblock \emph{Dyes and Pigments}, 180:\penalty0 108521, September
+  2020{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108521}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108521}.
+
+\bibitem[Tsiko et~al.(2021)Tsiko, Bezvikonnyi, Sych, Keruckiene, Volyniuk,
+  Simokaitiene, Danyliv, Danyliv, Bucinskas, Tan, and
+  Grazulevicius]{Tsiko_2021}
+Uliana Tsiko, Oleksandr Bezvikonnyi, Galyna Sych, Rasa Keruckiene, Dmytro
+  Volyniuk, Jurate Simokaitiene, Iryna Danyliv, Yan Danyliv, Audrius Bucinskas,
+  Xiaofeng Tan, and Juozas~Vidas Grazulevicius.
+\newblock Multifunctional derivatives of pyrimidine-5-carbonitrile and
+  differently substituted carbazoles for doping-free sky-blue oleds and
+  luminescent sensors of oxygen.
+\newblock \emph{Journal of Advanced Research}, 33:\penalty0 41--51, November
+  2021.
+\newblock ISSN 2090-1232.
+\newblock \doi{10.1016/j.jare.2021.01.014}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jare.2021.01.014}.
+
+\bibitem[Patil et~al.(2020{\natexlab{b}})Patil, Lee, and Lee]{Patil_2020}
+Vilas~Venunath Patil, Kyung~Hyung Lee, and Jun~Yeob Lee.
+\newblock Isomeric fused benzocarbazole as a chromophore for blue fluorescent
+  organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (24):\penalty0
+  8320--8327, 2020{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01268h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01268H}.
+
+\bibitem[Huang et~al.(2022{\natexlab{c}})Huang, Huang, Tang, Xiao, Li, Hua,
+  Cao, Zhou, Wu, and Yang]{Huang_2022_10_1016_j_dyepig_2021_109860}
+Zhongyan Huang, Chih-Wei Huang, Yu-Kun Tang, Zhengqi Xiao, Nengquan Li, Tao
+  Hua, Xiaosong Cao, Changjiang Zhou, Chung-Chih Wu, and Chuluo Yang.
+\newblock Chiral thermally activated delayed fluorescence emitters for
+  circularly polarized luminescence and efficient deep blue oleds.
+\newblock \emph{Dyes and Pigments}, 197:\penalty0 109860, January
+  2022{\natexlab{c}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2021.109860}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2021.109860}.
+
+\bibitem[Lee et~al.(2020{\natexlab{a}})Lee, Woo, Kim, and Hong]{Lee_2020}
+Youngnam Lee, Seung-Je Woo, Jang-Joo Kim, and Jong-In Hong.
+\newblock Linear-shaped thermally activated delayed fluorescence emitter using
+  1,5-naphthyridine as an electron acceptor for efficient light extraction.
+\newblock \emph{Organic Electronics}, 78:\penalty0 105600, March
+  2020{\natexlab{a}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2019.105600}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2019.105600}.
+
+\bibitem[Lee and Hong(2020)]{Lee_2020_10_1039_d0tc01644f}
+Youngnam Lee and Jong-In Hong.
+\newblock High-efficiency thermally activated delayed fluorescence emitters via
+  a high horizontal dipole ratio and controlled dual emission.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (24):\penalty0
+  8012--8017, 2020.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc01644f}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC01644F}.
+
+\bibitem[Hladka et~al.(2018)Hladka, Volyniuk, Bezvikonnyi, Kinzhybalo,
+  Bednarchuk, Danyliv, Lytvyn, Lazauskas, and Grazulevicius]{Hladka_2018}
+Iryna Hladka, Dmytro Volyniuk, Oleksandr Bezvikonnyi, Vasyl Kinzhybalo,
+  Tamara~J. Bednarchuk, Yan Danyliv, Roman Lytvyn, Algirdas Lazauskas, and
+  Juozas~V. Grazulevicius.
+\newblock Polymorphism of derivatives of tert-butyl substituted acridan and
+  perfluorobiphenyl as sky-blue oled emitters exhibiting aggregation induced
+  thermally activated delayed fluorescence.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (48):\penalty0
+  13179--13189, 2018.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc04867c}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC04867C}.
+
+\bibitem[Liang et~al.(2023)Liang, Pan, Zhang, Yang, Tai, Wang, Fung, Ma, and
+  Fan]{Liang_2023}
+Jing-Xing Liang, Ze-Hui Pan, Kai Zhang, Dezhi Yang, Jing-Wen Tai, Chuan-Kui
+  Wang, Man-Keung Fung, Dongge Ma, and Jian Fan.
+\newblock A facile method to achieve red thermally activated delayed
+  fluorescence emitters with eqe over 30\% via molecular aspect ratio
+  engineering.
+\newblock \emph{Chemical Engineering Journal}, 457:\penalty0 141074, February
+  2023.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.141074}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.141074}.
+
+\bibitem[Wei et~al.(2022{\natexlab{b}})Wei, Hu, Li, Liu, Hu, Gao, Liu, Wang,
+  Yi, and Wang]{WeiXiaofang_2022}
+Xiaofang Wei, Taiping Hu, Zhiyi Li, Yanwei Liu, Xiaoxiao Hu, Honglei Gao,
+  Guanhao Liu, Pengfei Wang, Yuanping Yi, and Ying Wang.
+\newblock Rational strategy of exciplex-type thermally activated delayed
+  fluorescent (tadf) emitters: Stacking of donor and acceptor units of the
+  intramolecular tadf molecule.
+\newblock \emph{Chemical Engineering Journal}, 433:\penalty0 133546, April
+  2022{\natexlab{b}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2021.133546}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2021.133546}.
+
+\bibitem[Huang et~al.(2018)Huang, Xiang, Zhang, Lv, Ye, Guo, and
+  Wang]{Huang_2018_10_1039_c7tc05576e}
+Zhi Huang, Songpo Xiang, Qing Zhang, Xialei Lv, Shaofeng Ye, Runda Guo, and Lei
+  Wang.
+\newblock Highly efficient green organic light emitting diodes with
+  phenanthroimidazole-based thermally activated delayed fluorescence emitters.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (9):\penalty0
+  2379--2386, 2018.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c7tc05576e}.
+\newblock URL \url{http://dx.doi.org/10.1039/C7TC05576E}.
+
+\bibitem[Wu et~al.(2021{\natexlab{b}})Wu, Xie, Wei, Li, Dai, Wang, Tang, and
+  Zhao]{Wu_2021}
+Ping Wu, Feng-ming Xie, Huai-xin Wei, Yan-Qing Li, Guo-liang Dai, Yan Wang,
+  Jian-Xin Tang, and Xin Zhao.
+\newblock Thermally activated delayed fluorescent emitters based on
+  3-(phenylsulfonyl)pyridine.
+\newblock \emph{Chemical Physics Letters}, 771:\penalty0 138474, May
+  2021{\natexlab{b}}.
+\newblock ISSN 0009-2614.
+\newblock \doi{10.1016/j.cplett.2021.138474}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cplett.2021.138474}.
+
+\bibitem[Ying et~al.(2022)Ying, Lv, Li, Huo, Liu, Ma, Peng, and Yan]{Ying_2022}
+Shian Ying, Jichen Lv, Yuanzhao Li, Yumiao Huo, Yuchao Liu, Dongge Ma, Ling
+  Peng, and Shouke Yan.
+\newblock A large-scale deep-blue tetraphenylbenzene-bridged hybridized local
+  and charge transfer fluorophore exhibiting small efficiency roll-off and low
+  amplified spontaneous emission threshold.
+\newblock \emph{Materials Chemistry Frontiers}, 6\penalty0 (15):\penalty0
+  2085--2094, 2022.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d2qm00506a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2QM00506A}.
+
+\bibitem[Wang et~al.(2018{\natexlab{b}})Wang, Qiao, Yang, Wang, Liu, Ma, and
+  Wang]{Wang_2018}
+Binyan Wang, Xianfeng Qiao, Zhou Yang, Yafei Wang, Shengzhong Liu, Dongge Ma,
+  and Qiang Wang.
+\newblock Realizing efficient red thermally activated delayed fluorescence
+  organic light-emitting diodes using phenoxazine/phenothiazine-phenanthrene
+  hybrids.
+\newblock \emph{Organic Electronics}, 59:\penalty0 32--38, August
+  2018{\natexlab{b}}.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2018.04.045}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2018.04.045}.
+
+\bibitem[Chen et~al.(2020{\natexlab{b}})Chen, Xiao, Wang, Fan, Cao, Chen,
+  Zhang, Shi, Yu, Geng, Zhang, and Lee]{Chen_2020_10_1039_d0tc03747h}
+Jia-Xiong Chen, Ya-Fang Xiao, Kai Wang, Xiao-Chun Fan, Chen Cao, Wen-Cheng
+  Chen, Xiang Zhang, Yi-Zhong Shi, Jia Yu, Feng-Xia Geng, Xiao-Hong Zhang, and
+  Chun-Sing Lee.
+\newblock Origin of thermally activated delayed fluorescence in a
+  donor-acceptor type emitter with an optimized nearly planar geometry.
+\newblock \emph{Journal of Materials Chemistry C}, 8\penalty0 (38):\penalty0
+  13263--13269, 2020{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d0tc03747h}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0TC03747H}.
+
+\bibitem[Shen et~al.(2021)Shen, Li, Zhao, Wang, Lu, and Chen]{Shen_2021}
+Yi-Fan Shen, Meng Li, Wen-Long Zhao, Yin-Feng Wang, Hai-Yan Lu, and Chuan-Feng
+  Chen.
+\newblock Quinoline-based tadf emitters exhibiting aggregation-induced emission
+  for efficient non-doped organic light-emitting diodes.
+\newblock \emph{Materials Chemistry Frontiers}, 5\penalty0 (2):\penalty0
+  834--842, 2021.
+\newblock ISSN 2052-1537.
+\newblock \doi{10.1039/d0qm00628a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0QM00628A}.
+
+\bibitem[Liu et~al.(2016)Liu, Liang, Yuan, Cui, Jiang, and
+  Liao]{Liu_2016_10_1039_c6cc02856j}
+Xiang-Yang Liu, Feng Liang, Yi~Yuan, Lin-Song Cui, Zuo-Quan Jiang, and
+  Liang-Sheng Liao.
+\newblock An effective host material with thermally activated delayed
+  fluorescence formed by confined conjugation for red phosphorescent organic
+  light-emitting diodes.
+\newblock \emph{Chemical Communications}, 52\penalty0 (52):\penalty0
+  8149--8151, 2016.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c6cc02856j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6CC02856J}.
+
+\bibitem[Lee et~al.(2020{\natexlab{b}})Lee, Choi, Oh, Lee, Shim, Adachi, and
+  Lee]{Lee_2020_10_1039_d0ra07865d}
+Chan~Hee Lee, Shin~Hyung Choi, Sung~Joon Oh, Jun~Hyeon Lee, Jae~Won Shim,
+  Chihaya Adachi, and Sae~Youn Lee.
+\newblock Highly effective organic light-emitting diodes containing thermally
+  activated delayed fluorescence emitters with horizontal molecular
+  orientation.
+\newblock \emph{RSC Advances}, 10\penalty0 (70):\penalty0 42897--42902,
+  2020{\natexlab{b}}.
+\newblock ISSN 2046-2069.
+\newblock \doi{10.1039/d0ra07865d}.
+\newblock URL \url{http://dx.doi.org/10.1039/D0RA07865D}.
+
+\bibitem[Tai et~al.(2023)Tai, Tang, Zhang, Yang, Pan, Lin, Shih, Chen, Chiu,
+  Lee, Wang, Wu, and Fan]{Tai_2023}
+Jing-Wen Tai, Yukun Tang, Kai Zhang, Chen-Zong Yang, Ze-Hui Pan, Yu-Ching Lin,
+  Yu-Wei Shih, Chia-Hsun Chen, Tien-Lung Chiu, Jiun-Haw Lee, Chuan-Kui Wang,
+  Chung-Chih Wu, and Jian Fan.
+\newblock 13.2\% eqe near-infrared tadf oled with emission peak at 761Â nm.
+\newblock \emph{Chemical Engineering Journal}, 452:\penalty0 139534, January
+  2023.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.139534}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.139534}.
+
+\bibitem[Zhang et~al.(2022{\natexlab{e}})Zhang, Yang, Zhang, Lin, Tao, Zheng,
+  and Zhang]{Zhang_2022_10_1039_d2mh00639a}
+Heng-Yuan Zhang, Hao-Yu Yang, Ming Zhang, Hui Lin, Si-Lu Tao, Cai-Jun Zheng,
+  and Xiao-Hong Zhang.
+\newblock A novel orange-red thermally activated delayed fluorescence emitter
+  with high molecular rigidity and planarity realizing 32.5\% external quantum
+  efficiency in organic light-emitting diodes.
+\newblock \emph{Materials Horizons}, 9\penalty0 (9):\penalty0 2425--2432,
+  2022{\natexlab{e}}.
+\newblock ISSN 2051-6355.
+\newblock \doi{10.1039/d2mh00639a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2MH00639A}.
+
+\bibitem[Jesuraj et~al.(2020)Jesuraj, Somasundaram, Kamaraj, Hafeez, Lee, Kim,
+  Won, Shin, Song, Kim, Park, and Ryu]{Jesuraj_2020}
+P.~Justin Jesuraj, Sivaraman Somasundaram, Eswaran Kamaraj, Hassan Hafeez,
+  Changmin Lee, Donghyun Kim, Sang~Hee Won, Sung~Tae Shin, Myungkwan Song,
+  Chang-Su Kim, Sanghyuk Park, and Seung~Yoon Ryu.
+\newblock Intramolecular charge transfer-based spirobifluorene-coupled
+  heteroaromatic moieties as efficient hole transport layer and host in
+  phosphorescent organic light-emitting diodes.
+\newblock \emph{Organic Electronics}, 85:\penalty0 105825, October 2020.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.105825}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.105825}.
+
+\bibitem[Cha et~al.(2015)Cha, Han, Song, Park, Jeon, and Suh]{Cha_2015}
+Seung~Ji Cha, Noh~Soo Han, Jae~Kyu Song, So-Ra Park, Young~Min Jeon, and
+  Min~Chul Suh.
+\newblock Efficient deep blue fluorescent emitter showing high external quantum
+  efficiency.
+\newblock \emph{Dyes and Pigments}, 120:\penalty0 200--207, September 2015.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2015.04.020}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2015.04.020}.
+
+\bibitem[Pei et~al.(2022)Pei, Lou, Li, Liu, Yin, Zhou, Wang, and
+  Yang]{Pei_2022}
+Ranran Pei, Jingli Lou, Ganggang Li, He~Liu, Xiaojun Yin, Changjiang Zhou,
+  Zhiming Wang, and Chuluo Yang.
+\newblock Modulating lumo extension of spiro-junction tadf emitters for
+  efficient oleds with relieved efficiency roll-off.
+\newblock \emph{Chemical Engineering Journal}, 437:\penalty0 135222, June 2022.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.135222}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.135222}.
+
+\bibitem[Fan et~al.(2019{\natexlab{b}})Fan, Wang, Zheng, Dai, Shi, Li, Yu, Ou,
+  and Zhang]{Fan_2019_10_1039_c9tc02032b}
+Xiao-Chun Fan, Kai Wang, Cai-Jun Zheng, Gao-Le Dai, Yi-Zhong Shi, Yan-Qing Li,
+  Jia Yu, Xue-Mei Ou, and Xiao-Hong Zhang.
+\newblock Thermally activated delayed fluorescence emitters with low
+  concentration sensitivity for highly efficient organic light emitting
+  devices.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (29):\penalty0
+  8923--8928, 2019{\natexlab{b}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc02032b}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC02032B}.
+
+\bibitem[Yun et~al.(2021)Yun, Kim, Chung, Lim, Lee, Lee, and
+  Choo]{Yun_2021_10_1039_d1tc03225a}
+Ju~Hui Yun, Jae-Min Kim, Won~Jae Chung, Junseop Lim, Jun~Yeob Lee, Yoonkyoo
+  Lee, and Changwoong Choo.
+\newblock A novel electroplex host with dual triplet exciton up-converting
+  channels suppressing triplet exciton induced degradation mechanisms in blue
+  organic light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (42):\penalty0
+  15242--15250, 2021.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc03225a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC03225A}.
+
+\bibitem[Nakagawa et~al.(2012)Nakagawa, Ku, Wong, and Adachi]{Nakagawa_2012}
+Tetsuya Nakagawa, Sung-Yu Ku, Ken-Tsung Wong, and Chihaya Adachi.
+\newblock Electroluminescence based on thermally activated delayed fluorescence
+  generated by a spirobifluorene donor–acceptor structure.
+\newblock \emph{Chemical Communications}, 48\penalty0 (77):\penalty0 9580,
+  2012.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c2cc31468a}.
+\newblock URL \url{http://dx.doi.org/10.1039/C2CC31468A}.
+
+\bibitem[Duan et~al.(2022)Duan, Xin, Wang, Zhang, Han, and
+  Xu]{Duan_2022_10_1039_d1sc05753g}
+Chunbo Duan, Ying Xin, Zicheng Wang, Jing Zhang, Chunmiao Han, and Hui Xu.
+\newblock High-efficiency hyperfluorescent white light-emitting diodes based on
+  high-concentration-doped tadf sensitizer matrices via spatial and energy gap
+  effects.
+\newblock \emph{Chemical Science}, 13\penalty0 (1):\penalty0 159--169, 2022.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/d1sc05753g}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1SC05753G}.
+
+\bibitem[Zhang et~al.(2013)Zhang, Duan, Zhang, Qiao, Dong, Wang, and
+  Qiu]{Zhang_2013}
+Dongdong Zhang, Lian Duan, Deqiang Zhang, Juan Qiao, Guifang Dong, Liduo Wang,
+  and Yong Qiu.
+\newblock Extremely low driving voltage electrophosphorescent green organic
+  light-emitting diodes based on a host material with small singlet-triplet
+  exchange energy without p- or n-doping layer.
+\newblock \emph{Organic Electronics}, 14\penalty0 (1):\penalty0 260--266,
+  January 2013.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2012.11.003}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2012.11.003}.
+
+\bibitem[Bezvikonnyi et~al.(2019)Bezvikonnyi, Gudeika, Volyniuk, Mimaite,
+  Sebastine, and Grazulevicius]{Bezvikonnyi_2019}
+Oleksandr Bezvikonnyi, Dalius Gudeika, Dmytro Volyniuk, Viktorija Mimaite,
+  Bernard~Ronit Sebastine, and Juozas~V. Grazulevicius.
+\newblock Effect of donor substituents on thermally activated delayed
+  fluorescence of diphenylsulfone derivatives.
+\newblock \emph{Journal of Luminescence}, 206:\penalty0 250--259, February
+  2019.
+\newblock ISSN 0022-2313.
+\newblock \doi{10.1016/j.jlumin.2018.10.018}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.jlumin.2018.10.018}.
+
+\bibitem[Chai et~al.(2020)Chai, Zeng, Su, Zhou, Zou, Zhong, Gong, and
+  Yang]{Chai_2020}
+Danyang Chai, Xuan Zeng, Xiaoxuan Su, Changjiang Zhou, Yang Zou, Cheng Zhong,
+  Shaolong Gong, and Chuluo Yang.
+\newblock A simple and effective strategy to lock the quasi-equatorial
+  conformation of acridine by h-h repulsion for highly efficient thermally
+  activated delayed fluorescence emitters.
+\newblock \emph{Chemical Communications}, 56\penalty0 (15):\penalty0
+  2308--2311, 2020.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c9cc09769d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9CC09769D}.
+
+\bibitem[Liu et~al.(2023{\natexlab{b}})Liu, Yang, Mao, Wang, Zhao, Su, and
+  Chi]{Liu_2023_10_1039_d2sc06335b}
+Yanyan Liu, Jiaji Yang, Zhu Mao, Yuyuan Wang, Juan Zhao, Shi-Jian Su, and
+  Zhenguo Chi.
+\newblock Isomeric thermally activated delayed fluorescence emitters for highly
+  efficient organic light-emitting diodes.
+\newblock \emph{Chemical Science}, 14\penalty0 (6):\penalty0 1551--1556,
+  2023{\natexlab{b}}.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/d2sc06335b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2SC06335B}.
+
+\bibitem[Zhao et~al.(2021{\natexlab{b}})Zhao, Fu, Fu, Liu, Lu, and
+  Pu]{Zhao_2021_10_1016_j_mtchem_2021_100625}
+Y.~Zhao, C.~Fu, L.~Fu, Y.~Liu, Z.~Lu, and X.~Pu.
+\newblock Data-driven machine learning models for quick prediction of thermal
+  stability properties of oled materials.
+\newblock \emph{Materials Today Chemistry}, 22:\penalty0 100625, December
+  2021{\natexlab{b}}.
+\newblock ISSN 2468-5194.
+\newblock \doi{10.1016/j.mtchem.2021.100625}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.mtchem.2021.100625}.
+
+\bibitem[Tsiko et~al.(2022)Tsiko, Volyniuk, Andruleviciene, Leitonas, Sych,
+  Bezvikonnyi, Jasinskas, Gulbinas, Stakhira, and Grazulevicius]{Tsiko_2022}
+U.~Tsiko, D.~Volyniuk, V.~Andruleviciene, K.~Leitonas, G.~Sych, O.~Bezvikonnyi,
+  V.~Jasinskas, V.~Gulbinas, P.~Stakhira, and J.V. Grazulevicius.
+\newblock Triphenylamino or 9-phenyl carbazolyl-substituted
+  pyrimidine-5-carbonitriles as bipolar emitters and hosts with triplet
+  harvesting abilities.
+\newblock \emph{Materials Today Chemistry}, 25:\penalty0 100955, September
+  2022.
+\newblock ISSN 2468-5194.
+\newblock \doi{10.1016/j.mtchem.2022.100955}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.mtchem.2022.100955}.
+
+\bibitem[Naveen et~al.(2023)Naveen, Lee, Seung, Jung, Keshavananda~Prabhu,
+  Muruganantham, and Kwon]{Naveen_2023}
+Kenkera~Rayappa Naveen, Hyuna Lee, Lee~Hyun Seung, Young~Hun Jung, C.P.
+  Keshavananda~Prabhu, Subramanian Muruganantham, and Jang~Hyuk Kwon.
+\newblock Modular design for constructing narrowband deep-blue multiresonant
+  thermally activated delayed fluorescent emitters for efficient organic light
+  emitting diodes.
+\newblock \emph{Chemical Engineering Journal}, 451:\penalty0 138498, January
+  2023.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.138498}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.138498}.
+
+\bibitem[Méhes et~al.(2014)Méhes, Goushi, Potscavage, and Adachi]{M_hes_2014}
+Gábor Méhes, Kenichi Goushi, William~J. Potscavage, and Chihaya Adachi.
+\newblock Influence of host matrix on thermally-activated delayed fluorescence:
+  Effects on emission lifetime, photoluminescence quantum yield, and device
+  performance.
+\newblock \emph{Organic Electronics}, 15\penalty0 (9):\penalty0 2027--2037,
+  September 2014.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2014.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2014.05.027}.
+
+\bibitem[Xiang et~al.(2016)Xiang, Gong, Zhao, Yin, Luo, Wu, Lu, and
+  Yang]{Xiang_2016}
+Yepeng Xiang, Shaolong Gong, Yongbiao Zhao, Xiaojun Yin, Jiajia Luo, Kailong
+  Wu, Zheng-Hong Lu, and Chuluo Yang.
+\newblock Asymmetric-triazine-cored triads as thermally activated delayed
+  fluorescence emitters for high-efficiency yellow oleds with slow efficiency
+  roll-off.
+\newblock \emph{Journal of Materials Chemistry C}, 4\penalty0 (42):\penalty0
+  9998--10004, 2016.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c6tc02702d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6TC02702D}.
+
+\bibitem[Maeng et~al.(2020)Maeng, Ahn, Lee, Jung, Karthik, Lee, and
+  Kwon]{Maeng_2020}
+Jee~Hyun Maeng, Dae~Hyun Ahn, Hyuna Lee, Young~Hun Jung, Durai Karthik,
+  Ju~Young Lee, and Jang~Hyuk Kwon.
+\newblock Rigid indolocarbazole donor moiety for highly efficient thermally
+  activated delayed fluorescent device.
+\newblock \emph{Dyes and Pigments}, 180:\penalty0 108485, September 2020.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2020.108485}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2020.108485}.
+
+\bibitem[Wang et~al.(2021{\natexlab{c}})Wang, Shu, Han, Wu, Tong, and
+  Wang]{WangShuai_2021}
+Shuai Wang, Haiyang Shu, Xianchao Han, Xiaofu Wu, Hui Tong, and Lixiang Wang.
+\newblock A highly efficient purely organic room-temperature phosphorescence
+  film based on a selenium-containing emitter for sensitive oxygen detection.
+\newblock \emph{Journal of Materials Chemistry C}, 9\penalty0 (31):\penalty0
+  9907--9913, 2021{\natexlab{c}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/d1tc02324a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1TC02324A}.
+
+\bibitem[Chen et~al.(2018{\natexlab{e}})Chen, Wu, Ni, Zhong, Zeng, Wei, An, Ma,
+  and Yang]{Chen_2018_10_1039_c8tc01698d}
+Zhanxiang Chen, Zhongbin Wu, Fan Ni, Cheng Zhong, Weixuan Zeng, Danqing Wei,
+  Kebin An, Dongge Ma, and Chuluo Yang.
+\newblock Emitters with a pyridine-3,5-dicarbonitrile core and short delayed
+  fluorescence lifetimes of about 1.5 $\mu$s: orange-red tadf-based oleds with
+  very slow efficiency roll-offs at high luminance.
+\newblock \emph{Journal of Materials Chemistry C}, 6\penalty0 (24):\penalty0
+  6543--6548, 2018{\natexlab{e}}.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c8tc01698d}.
+\newblock URL \url{http://dx.doi.org/10.1039/C8TC01698D}.
+
+\bibitem[Cha et~al.(2017)Cha, Lee, and Gong]{Cha_2017}
+Jae-Ryung Cha, Chil~Won Lee, and Myoung-Seon Gong.
+\newblock Effect of increasing electron donor units for high-efficiency blue
+  thermally activated delayed fluorescence.
+\newblock \emph{Dyes and Pigments}, 140:\penalty0 399--406, May 2017.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.01.053}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.01.053}.
+
+\bibitem[Su et~al.(2022)Su, Zhao, Liu, Li, Ma, Zhang, Han, and Yu]{Su_2022}
+Ruige Su, Yuling Zhao, Shiqiang Liu, Peiying Li, Jiaying Ma, Di~Zhang, Minghu
+  Han, and Tianzhi Yu.
+\newblock Synthesis and luminescence properties of functionalized v-shaped
+  bis-coumarin derivatives.
+\newblock \emph{New Journal of Chemistry}, 46\penalty0 (14):\penalty0
+  6793--6803, 2022.
+\newblock ISSN 1369-9261.
+\newblock \doi{10.1039/d1nj05960b}.
+\newblock URL \url{http://dx.doi.org/10.1039/D1NJ05960B}.
+
+\bibitem[Ban et~al.(2022)Ban, Qiu, Cao, Zhang, Zhou, Xu, Pei, Ge, Tong, and
+  Jiang]{Ban_2022}
+Xinxin Ban, Suyu Qiu, Qingpeng Cao, Kaizhi Zhang, Tao Zhou, Hui Xu, Ming Pei,
+  Fengjie Ge, Zhiwei Tong, and Wei Jiang.
+\newblock Exciplex polymer with strong aie for constructing
+  fully-solution-processed organic light-emitting diodes with 100-fold
+  efficiency improvement compared to physically blended exciplex.
+\newblock \emph{Polymer Chemistry}, 13\penalty0 (47):\penalty0 6500--6511,
+  2022.
+\newblock ISSN 1759-9962.
+\newblock \doi{10.1039/d2py01306a}.
+\newblock URL \url{http://dx.doi.org/10.1039/D2PY01306A}.
+
+\bibitem[Chen et~al.(2015)Chen, Lin, Wu, Yu, Teng, Zhang, Zhang, Yang, and
+  Lu]{Chen_2015}
+Xu-Lin Chen, Chen-Sheng Lin, Xiao-Yuan Wu, Rongming Yu, Teng Teng, Qi-Kai
+  Zhang, Qing Zhang, Wen-Bing Yang, and Can-Zhong Lu.
+\newblock Highly efficient cuprous complexes with thermally activated delayed
+  fluorescence and simplified solution process oleds using the ligand as host.
+\newblock \emph{Journal of Materials Chemistry C}, 3\penalty0 (6):\penalty0
+  1187--1195, 2015.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c4tc02255f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C4TC02255F}.
+
+\bibitem[Albrecht et~al.(2017)Albrecht, Matsuoka, Yokoyama, Sakai, Nakayama,
+  Fujita, and Yamamoto]{Albrecht_2017}
+Ken Albrecht, Kenichi Matsuoka, Daisuke Yokoyama, Yoshiya Sakai, Akira
+  Nakayama, Katsuhiko Fujita, and Kimihisa Yamamoto.
+\newblock Thermally activated delayed fluorescence oleds with fully solution
+  processed organic layers exhibiting nearly 10\% external quantum efficiency.
+\newblock \emph{Chemical Communications}, 53\penalty0 (16):\penalty0
+  2439--2442, 2017.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c6cc09275f}.
+\newblock URL \url{http://dx.doi.org/10.1039/C6CC09275F}.
+
+\bibitem[Lee et~al.(2018)Lee, Han, Lee, and Lee]{Lee_2018}
+Dong~Ryun Lee, Si~Hyun Han, Chil~Won Lee, and Jun~Yeob Lee.
+\newblock Bis(diphenyltriazine) as a new acceptor of efficient thermally
+  activated delayed fluorescent emitters.
+\newblock \emph{Dyes and Pigments}, 151:\penalty0 75--80, April 2018.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.12.048}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.12.048}.
+
+\bibitem[Wang et~al.(2017{\natexlab{b}})Wang, Zhang, Wang, Zheng, Shi, Chen,
+  Lin, Tao, and Zhang]{Wang_2017_10_1016_j_dyepig_2017_04_024}
+De-Qi Wang, Ming Zhang, Kai Wang, Cai-Jun Zheng, Yi-Zhong Shi, Jia-Xiong Chen,
+  Hui Lin, Si-Lu Tao, and Xiao-Hong Zhang.
+\newblock Fine-tuning the emissions of highly efficient thermally activated
+  delayed fluorescence emitters with different linking positions of
+  electron-deficient substituent groups.
+\newblock \emph{Dyes and Pigments}, 143:\penalty0 62--70, August
+  2017{\natexlab{b}}.
+\newblock ISSN 0143-7208.
+\newblock \doi{10.1016/j.dyepig.2017.04.024}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.dyepig.2017.04.024}.
+
+\bibitem[Liu et~al.(2015)Liu, Bai, Yao, Zhang, Xu, Zhang, Li, Gao, Li, Lu,
+  Wang, Yang, and Ma]{Liu_2015}
+Haichao Liu, Qing Bai, Liang Yao, Haiyan Zhang, Hai Xu, Shitong Zhang, Weijun
+  Li, Yu~Gao, Jinyu Li, Ping Lu, Hongyan Wang, Bing Yang, and Yuguang Ma.
+\newblock Highly efficient near ultraviolet organic light-emitting diode based
+  on a meta-linked donor-acceptor molecule.
+\newblock \emph{Chemical Science}, 6\penalty0 (7):\penalty0 3797--3804, 2015.
+\newblock ISSN 2041-6539.
+\newblock \doi{10.1039/c5sc01131k}.
+\newblock URL \url{http://dx.doi.org/10.1039/C5SC01131K}.
+
+\bibitem[Zhou et~al.(2022{\natexlab{c}})Zhou, Wang, Shi, Fan, Chen, Wang, Yu,
+  and Zhang]{Zhou_2022_10_1016_j_cej_2022_135775}
+Lu~Zhou, Hui Wang, Yi-Zhong Shi, Xiao-Chun Fan, Jia-Xiong Chen, Kai Wang, Jia
+  Yu, and Xiao-Hong Zhang.
+\newblock Controlling the conjugation extension inside acceptors for enhancing
+  reverse intersystem crossing of red thermally activated delayed fluorescence
+  emitters.
+\newblock \emph{Chemical Engineering Journal}, 440:\penalty0 135775, July
+  2022{\natexlab{c}}.
+\newblock ISSN 1385-8947.
+\newblock \doi{10.1016/j.cej.2022.135775}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.cej.2022.135775}.
+
+\bibitem[Rajamalli et~al.(2019)Rajamalli, Chen, Li, Samuel, Cordes, Slawin, and
+  Zysman-Colman]{Rajamalli_2019}
+Pachaiyappan Rajamalli, Dongyang Chen, Wenbo Li, Ifor D.~W. Samuel, David~B.
+  Cordes, Alexandra M.~Z. Slawin, and Eli Zysman-Colman.
+\newblock Enhanced thermally activated delayed fluorescence through bridge
+  modification in sulfone-based emitters employed in deep blue organic
+  light-emitting diodes.
+\newblock \emph{Journal of Materials Chemistry C}, 7\penalty0 (22):\penalty0
+  6664--6671, 2019.
+\newblock ISSN 2050-7534.
+\newblock \doi{10.1039/c9tc01498e}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9TC01498E}.
+
+\bibitem[Zhou et~al.(2019{\natexlab{b}})Zhou, Xiang, Gong, Chen, Ni, Xie, and
+  Yang]{Zhou_2019_10_1039_c9cc06804j}
+Xue Zhou, Yepeng Xiang, Shaolong Gong, Zhanxiang Chen, Fan Ni, Guohua Xie, and
+  Chuluo Yang.
+\newblock Simple construction of deep-red hexaazatrinaphthylene-based thermally
+  activated delayed fluorescence emitters for efficient solution-processed
+  oleds with a peak at 692 nm.
+\newblock \emph{Chemical Communications}, 55\penalty0 (94):\penalty0
+  14190--14193, 2019{\natexlab{b}}.
+\newblock ISSN 1364-548X.
+\newblock \doi{10.1039/c9cc06804j}.
+\newblock URL \url{http://dx.doi.org/10.1039/C9CC06804J}.
+
+\bibitem[Kim et~al.(2021)Kim, Chung, Kim, and Lee]{Kim_2021}
+J.H. Kim, W.J. Chung, J.~Kim, and J.Y. Lee.
+\newblock Concentration quenching-resistant multiresonance thermally activated
+  delayed fluorescence emitters.
+\newblock \emph{Materials Today Energy}, 21:\penalty0 100792, September 2021.
+\newblock ISSN 2468-6069.
+\newblock \doi{10.1016/j.mtener.2021.100792}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.mtener.2021.100792}.
+
+\bibitem[Serevičius et~al.(2020)Serevičius, Skaisgiris, Fiodorova, Steckis,
+  Dodonova, Banevičius, Kazlauskas, Juršėnas, and
+  Tumkevičius]{Serevi_ius_2020_10_1016_j_orgel_2020_105723}
+Tomas Serevičius, Rokas Skaisgiris, Irina Fiodorova, Vytautas Steckis, Jelena
+  Dodonova, Dovydas Banevičius, Karolis Kazlauskas, Saulius Juršėnas, and
+  Sigitas Tumkevičius.
+\newblock Achieving efficient deep-blue tadf in carbazole-pyrimidine compounds.
+\newblock \emph{Organic Electronics}, 82:\penalty0 105723, July 2020.
+\newblock ISSN 1566-1199.
+\newblock \doi{10.1016/j.orgel.2020.105723}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.orgel.2020.105723}.
+
+\end{thebibliography}

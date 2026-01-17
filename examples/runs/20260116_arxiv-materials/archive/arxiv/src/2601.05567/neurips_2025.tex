@@ -1,0 +1,147 @@
+\documentclass{article}
+
+
+
+
+% ready for submission
+\usepackage[preprint]{neurips_2025}
+
+
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2025}
+% \usepackage[numbers]{natbib}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{soul}
+\newcommand{\tx}[1]{\textcolor{blue}{[Tengxiao: #1]}}
+
+% personal packages
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{comment}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+
+\usepackage{lipsum,adjustbox}
+\usepackage{todonotes}
+\usepackage{pifont}
+\usepackage{filecontents}
+\usepackage[table]{xcolor}
+% \usepackage{makecell, cellspace, caption}
+\usepackage{pgfplots}
+\usepackage{subcaption}
+\usepackage{pgf-pie} 
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor} 
+\usepackage{wrapfig}
+
+\title{WildSci: Advancing Scientific Reasoning from In-the-Wild Literature}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  Tengxiao Liu
+  \quad \textbf{Deepak Nathani}
+  \quad \textbf{Zekun Li}
+  \quad \textbf{Kevin Yang}
+  \quad \textbf{William Yang Wang} \\
+  University of California, Santa Barbara \\
+  \texttt{tengxiao@ucsb.edu} \\
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+}
+
+\makeatletter
+\renewcommand{\@noticestring}{}
+\makeatother
+
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+Recent progress in large language model (LLM) reasoning has focused on domains like mathematics and coding, where abundant high-quality data and objective evaluation metrics are readily available. In contrast, progress in LLM reasoning models remains limited in scientific domains such as medicine and materials science due to limited dataset coverage and the inherent complexity of open-ended scientific questions. To address these challenges, we introduce WildSci, a new dataset of domain-specific science questions automatically synthesized from peer-reviewed literature, covering 9 scientific disciplines and 26 subdomains. By framing complex scientific reasoning tasks in a multiple-choice format, we enable scalable training with well-defined reward signals. We further apply reinforcement learning to finetune models on these data and analyze the resulting training dynamics, including domain-specific performance changes, response behaviors, and generalization trends. Experiments on a suite of scientific benchmarks demonstrate the effectiveness of our dataset and approach. We release WildSci to enable scalable and sustainable research in scientific reasoning.
+\footnote{\url{https://huggingface.co/datasets/JustinTX/WildSci}}
+\end{abstract}
+
+
+
+
+\input{ch_intro}
+
+% \input{ch_related}
+
+\input{ch_method}
+
+\input{ch_experiments}
+
+\input{ch_results}
+
+\input{ch_conclusion}
+
+
+
+\begin{ack}
+We gratefully acknowledge support via the UC Santa Barbara NSF Quantum Foundry funded via the Q-AMASE-i program under award DMR-1906325.
+\end{ack}
+
+\bibliographystyle{abbrvnat}
+\bibliography{custom}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+\input{ch_appendix}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+
+
+\end{document}

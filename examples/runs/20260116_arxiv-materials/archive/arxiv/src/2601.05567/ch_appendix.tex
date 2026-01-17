@@ -1,0 +1,328 @@
+\newpage
+\section{Experiment Settings}\label{sec:exp}
+
+We train our model using the GRPO algorithm implemented in the verl~\citep{sheng2024hybridflow} framework. We set a maximum response length of up to 8192 tokens and applying left-side truncation. During rollout, we sample 8 responses per prompt with a temperature of 1.0. The model is trained with a learning rate of $5 \times 10^{-7}$ and is updated with AdamW optimizer~\citep{Loshchilov2017DecoupledWD}. We mostly adopt the training settings from \citet{DBLP:journals/corr/abs-2503-18892} and do not perform additional hyperparameter tuning. 
+All experiments are conducted on a server equipped with 8 NVIDIA A100 GPUs, each with 40GB of memory. Training the 1.5B model for 700 steps takes one day using 4 GPUs, while the 3B model requires two days on all 8 GPUs for 700 steps. We select checkpoints for evaluation based on the in-domain validation set WildSci-Val and the final training checkpoint at step 700.
+During the evaluation phase, we set the temperature to 0.0 using the vLLM library to eliminate randomness in model predictions~\citep{kwon2023efficient}.
+To show potential variance in inference, we report the mean and standard deviation over three independent runs.
+
+\section{Related Work}
+
+\subsection{Science Reasoning Data}
+
+Domain-specific datasets have significantly advanced model reasoning, especially in mathematics~\citep{DBLP:conf/iclr/YuJSYLZKLWL24, DBLP:conf/iclr/YueQZFH00C24, DBLP:conf/iclr/ToshniwalDMKAG25, DBLP:journals/corr/abs-2502-17387, Zhou2025MegaMathPT}. Recent work has extended coverage to core natural sciences like physics, chemistry, and biology~\citep{DBLP:conf/nips/LiHIKG23, DBLP:journals/corr/abs-2501-15587}. SciInstruct~\citep{DBLP:conf/nips/ZhangHZDYWYD024} collects questions from textbooks, exams, and problem sets, while \citet{DBLP:conf/nips/YueZZC24, DBLP:journals/corr/abs-2502-13124, generalreasoner} synthesize questions from web text and pretraining corpora. In contrast, WildSci constructs questions from peer-reviewed research papers, targeting in-the-wild scientific problems and enabling generalization to long-tail domains through an automatic data synthesis pipeline.
+
+\subsection{Reinforcement Learning in Reasoning}
+
+Reinforcement learning has advanced reasoning in areas like mathematics and coding, where simple rule-based rewards have proven effective~\citep{ DBLP:journals/corr/abs-2501-12599, DBLP:journals/corr/abs-2503-24290, DBLP:journals/corr/abs-2503-14476, DBLP:journals/corr/abs-2503-20783, DBLP:journals/corr/abs-2503-18892, DBLP:journals/corr/abs-2402-03300, DBLP:conf/emnlp/LiuGHZQZ22}. In science domains, open-ended questions can make rule-based verification challenging. For efficiency and simplicity, we reformat open science research questions as MCQs. While concurrent work validates the use of MCQs for RL training~\citep{Akter2025NemotronCrossThinkSS}, WildSci specifically focuses on grounding its questions within real-world scientific literature. This approach not only ensures domain specificity but also provides a convenient training signal and facilitates generalization across diverse domains. 
+
+
+
+\subsection{Science Reasoning Evaluation}
+
+Recent studies have developed benchmarks to address the limited evaluation of LLMs in the science domain~\citep{DBLP:journals/corr/abs-2502-14739,DBLP:conf/emnlp/Fei0ZZHHZ0YSG024, DBLP:conf/chil/PalUS22,jin2020disease,DBLP:journals/corr/abs-2412-15194,DBLP:journals/corr/abs-2411-07240,DBLP:conf/iclr/Gao0YCMDLMCXTWZ25,putnam_axiom2025}. SciBench~\citep{DBLP:conf/icml/WangHL0ZSLZS024} provides open-ended, free-response collegiate-level problems that require multi-step reasoning abilities, including advanced mathematical derivation and understanding of scientific concepts, in chemistry, physics, and math. Other benchmarks such as SciKnowEval~\citep{DBLP:journals/corr/abs-2406-09098} and SciAccess~\citep{DBLP:journals/corr/abs-2403-01976} evaluate LLMs in memorization, comprehension and reasoning across various science domains. Domain-specialized datasets like MaScQA~\citep{DBLP:journals/corr/abs-2308-09115} and UGPhysics~\citep{DBLP:journals/corr/abs-2502-00334} further evaluate models within a specific subject. ResearchBench~\citep{DBLP:journals/corr/abs-2503-21248} provides a benchmark to test LLMs on generating innovative scientific hypotheses, introducing a framework to assess inspiration retrieval, hypothesis composition, and hypothesis ranking. Although these are effective metrics to evaluate scientific proficiency, only a few domains are actively involved, mainly chemistry, biology, materials science, and physics. WildSci encompasses a wide range of scientific disciplines to support a comprehensive dataset. Through a multidisciplinary and multiple-choice approach, we envision WildSci to be an impactful and scalable resource for scientific research and model development.
+
+\section{Data Quality Analysis}
+
+\subsection{Validation of Synthetic Annotations}
+
+To evaluate the reliability of the synthetic labels in WildSci, we conduct a validation study using two strong commercial models, Gemini-2.5-Pro and Gemini-2.5-Flash~\citep{DBLP:journals/corr/abs-2507-06261}. We randomly sample 500 questions from both the All-Aligned and Majority-Aligned subsets and independently prompt each model to generate answers. We then compare their responses against our synthetic labels to measure answer agreement.
+
+On the All-Aligned subset, Flash and Pro agree with our synthetic labels in 95.0\% and 96.0\% of cases, respectively. The two Gemini models agree with each other in 94.0\% of cases, and among these agreements, 98.9\% match our synthetic labels. 
+On the Majority-Aligned subset, Flash and Pro achieve 78.6\% and 80.2\% agreement with our labels, while their mutual agreement rate is 80.6\%, with 88.8\  of those matches aligning with our labels.
+
+These results demonstrate that \textbf{WildSci's filtering and model-voting procedure produces annotations that are highly consistent with those from substantially stronger models}. Combined with the observed performance gains when training open source models, this analysis supports that the synthetic data quality in WildSci is sufficiently high for effective model training.
+
+
+\subsection{Question Redundancy}
+
+We assessed question similarity using SentenceTransformer~\citep{reimers-2019-sentence-bert} and computed cosine similarity between question pairs within the same domain. We only consider question pairs with similarity $\geq$ 0.9, and we found that highly similar pairs account for 2.7\% in “All-aligned” and 2.3\% in “Majority-aligned”, indicating low redundancy. While these pairs often share surface-level phrasing (e.g., from the same paper), manual inspection shows they frequently assess distinct concepts. For example, the following pair has a similarity score of 0.902 but asks fundamentally different things.
+
+
+To assess potential redundancy in the WildSci dataset, we measured pairwise question similarity within each domain using the SentenceTransformer model and computed cosine similarity between question embeddings. We considered question pairs with similarity scores $\geq 0.9$ as highly similar.
+Such pairs constitute only 2.7\% of the All-Aligned subset and 2.3\% of the Majority-Aligned subset, indicating low redundancy across questions. Manual inspection further reveals that these high-similarity pairs often share surface-level phrasing (e.g., derived from the same paper section) yet still assess distinct scientific concepts or reasoning steps.
+
+
+To illustrate this, Table~\ref{tab:example_similarity} presents a representative example of two highly similar questions (cosine similarity = 0.902). Despite their surface resemblance, the two queries probe distinct reasoning objectives—quantitative estimation versus selectivity comparison—highlighting that lexical overlap does not necessarily imply conceptual redundancy.
+
+\begin{table*}[h]
+\centering
+\caption{Example of a high-similarity question pair (cosine similarity = 0.902) that differs in reasoning objective.}
+\label{tab:example_similarity}
+\begin{tabular}{lp{0.85\linewidth}}
+\toprule
+\textbf{Q1} & A hybrid absorption–adsorption system is being evaluated for CO\textsubscript{2} capture using a slurry composed of ZIF-8 suspended in a 2-methylimidazole-based glycol solution. \textit{What is the total amount of CO\textsubscript{2} (in moles) that can be captured by 1 liter of the slurry under ideal behavior assumptions?} \\
+\addlinespace[3pt]
+\textbf{Q2} & A hybrid absorption–adsorption system for CO\textsubscript{2} capture employs a slurry of ZIF-8 in a 2-methylimidazole-based glycol solution. \textit{What is the ratio of the amount of CO\textsubscript{2} captured to the amount of N\textsubscript{2} captured? Assume that the selectivity is defined as the ratio of the partition coefficients of the two gases.} \\
+\bottomrule
+\end{tabular}
+
+\end{table*}
+
+Overall, this analysis confirms that WildSci maintains \textbf{high question diversity} despite its large scale, with minimal duplication and strong coverage of distinct reasoning patterns even among lexically similar items.
+
+
+\subsection{Validity and Difficulty}
+
+To further evaluate data quality control, we conducted an additional analysis using Gemini-2.5-Pro~\citep{DBLP:journals/corr/abs-2507-06261} to assess the validity and difficulty of questions across the four WildSci subsets. For each subset, we randomly sampled 500 examples and prompted the model to independently rate question clarity and difficulty.
+
+\paragraph{Validity Evaluation}
+For validity, the model was instructed to classify each question as either \emph{good and clear} or \emph{unanswerable}. As summarized in Table~\ref{tab:validity}, 96.6\% of questions in the All-Aligned (A.A.) subset and 89.4\% in the Majority-Aligned (M.A.) subset were rated as good and clear, compared to 87.4\% and 71.2\% for the Majority-Divergent (M.D.) and All-Divergent (A.D.) subsets, respectively.
+
+These results indicate that the vast majority of WildSci questions are coherent and answerable, particularly in the more reliable subsets. This finding aligns with the design intuition behind our model-voting phase and helps explain why the All-Aligned and Majority-Aligned subsets lead to stronger downstream training performance.
+
+\begin{table*}[h]
+\centering
+\caption{Validity ratings across the four WildSci subsets. A large majority of questions, especially in the aligned subsets, were rated as clear and answerable.}
+\label{tab:validity}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Subset} & \textbf{All-Aligned} & \textbf{Majority-Aligned} & \textbf{Majority-Divergent} & \textbf{All-Divergent} \\
+\midrule
+Good \& Clear (\%) & 96.6 & 89.4 & 87.4 & 71.2 \\
+Unanswerable (\%)  & 3.4  & 10.6 & 12.6 & 28.8 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{Difficulty Evaluation}
+We further asked Gemini-2.5-Pro to rate each question’s difficulty on a five-level scale, from \textbf{Level 1 (Trivial)} to \textbf{Level 5 (Expert)}. As shown in Table~\ref{tab:difficulty}, a substantial portion of questions in the All-Aligned (40.8\%) and Majority-Aligned (59.0\%) subsets were classified as Level 4--5, requiring undergraduate- or graduate-level domain expertise.
+
+
+Overall, this analysis demonstrates that the question filtering and model-voting stages effectively select for both clarity and appropriate difficulty. The All-Aligned and Majority-Aligned subsets, in particular, comprise questions that are not only valid and well-posed but also intellectually challenging, supporting effective model training in various science reasoning domains.
+
+\begin{table}[h]
+\centering
+\caption{Distribution of difficulty levels across subsets. Levels 4–5 indicate field-specific undergraduate or graduate-level reasoning.}
+\label{tab:difficulty}
+% \resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Subset} & \textbf{L1} & \textbf{L2} & \textbf{L3} & \textbf{L4} & \textbf{L5} \\
+\midrule
+A.A.        & 0.8 & 28.6 & 29.8 & 38.4 & 2.4 \\
+M.A.   & 0.0 & 12.8 & 28.2 & 52.4 & 6.6 \\
+M.D. & 0.2 & 11.8 & 27.6 & 55.6 & 4.8 \\
+A.D.      & 0.0 & 6.6  & 22.8 & 59.8 & 10.8 \\
+\bottomrule
+\end{tabular}
+% }
+\end{table}
+
+
+
+\begin{table*}[h]
+\centering
+% \setlength{\tabcolsep}{10pt}
+\caption{Difficulty rubric used in the difficulty evaluation.}
+\label{tab:rubric}
+\begin{tabular}{cl}
+\toprule
+\textbf{Level} & \textbf{Description} \\
+\midrule
+5 & Very Challenging: Expert-level (graduate/PhD) reasoning required. \\
+4 & Difficult: Field-specific undergraduate-level understanding. \\
+3 & Moderate: General background or non-specialist undergraduate-level knowledge. \\
+2 & Easy: General science or high-school-level knowledge. \\
+1 & Simple: Common-sense or minimal prior knowledge suffices. \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+
+
+\section{Statistics of Subdomains}\label{app:stat_detail}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1.0\linewidth]{figs/subdomain_dist.pdf}
+  \caption{Question distribution across subdomains in WildSci.}
+  \label{fig:subdomain_dist}
+\end{figure}
+
+
+We present the distribution of questions across 26 subdomains in Figure~\ref{fig:subdomain_dist}, following the categorization used by Nature Communications. Interdisciplinary areas such as Materials Science and Biochemistry are more prevalent in the journal, leading to a higher number of papers, and consequently more questions from these domains. In contrast, Social Sciences represent a smaller proportion of the journal's content, so we include all available papers from this area in WildSci. The dataset is constructed from papers published prior to April 2024. As new publications become available, our data pipeline can be extended to incorporate the latest research, enabling continuous expansion of both dataset size and knowledge coverage in WildSci.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\linewidth]{figs/valid_test_allaligned.pdf}
+  \caption{Performance trend on validation and OOD evaluation sets.}
+  \label{fig:valid_test}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\linewidth]{figs/umap.pdf}
+  \caption{UMAP illustration.}
+  \label{fig:umap}
+\end{figure}
+
+\section{Different Data Splits}\label{app:data_splits}
+
+% In Table~\ref{tab:data_splits}, we report the performance comparison of different combination of data subsets in WildSci.
+
+
+Table~\ref{tab:data_splits} compares model performance when trained on different combinations of WildSci subsets. We observe no substantial performance differences across the splits. We hypothesize that this is due to the exploratory and generalization-driven nature of reinforcement learning, which emphasizes domain alignment over data amount. We leave the exploration of how data difficulty and diversity affect RL-based reasoning as a promising direction for future work.
+
+\begin{table}[ht]
+\centering
+\caption{Performance comparison across different benchmarks. The average is computed across the three public benchmarks GPQA-Aug, SuperGPQA and MMLU-Pro. A.A. means All Aligned, M.A. means Majority Aligned, M.D. means Majority Divergent.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{WildSci-Val} & \textbf{GPQA-Aug} & \textbf{SuperGPQA} & \textbf{MMLU-Pro} & \textbf{Average} \\
+\midrule
+Qwen2.5-1.5B-Instruct & 46.70\textsubscript{1.98} & 23.98\textsubscript{0.83} & 18.10\textsubscript{0.63} & 31.47\textsubscript{0.84} & 24.52\textsubscript{0.76} \\
+WildSci A.A. & \textbf{80.48}\textsubscript{0.26} & \textbf{28.95}\textsubscript{0.08} & 23.85\textsubscript{0.25} & \textbf{42.54}\textsubscript{0.28} & \textbf{31.78}\textsubscript{0.20} \\
+WildSci M.A. & 80.33\textsubscript{0.11} & 25.76\textsubscript{0.44} & \textbf{24.41}\textsubscript{0.06} & 41.95\textsubscript{0.03} & 30.71\textsubscript{0.17} \\
+
+WildSci A.A.+M.A.+M.D. & 80.00\textsubscript{0.59} & 27.48\textsubscript{0.19} & 23.94\textsubscript{0.01} & 41.55\textsubscript{0.17} & 30.99\textsubscript{0.12} \\
+
+\bottomrule
+\end{tabular}
+}
+\label{tab:data_splits}
+\end{table}
+
+
+\section{Domain-Specific Performance}\label{app:per_domain}
+
+We provide a breakdown of subdomain performance in the Table~\ref{tab:subdomain_supergpqa} and Table~\ref{tab:subdomain_mmlupro}. In the model names, `A.A.’ refers to the All Aligned subset, and `M.A.’ refers to the Majority Aligned subset.
+
+\begin{table}[h!]
+\centering
+\caption{Subdomain performance on SuperGPQA.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllllllllllllll}
+\toprule
+Model&Overall & Agro & Eco & Edu & Eng & Hist & Law & Lite & Mar & Medi & Mili & Phil & Sci & Socio \\
+\midrule
+1.5B-A.A.&24.12 & 25.98 & 28.98 & 30.37 & 23.47 & 20.62 & 29.42 & 23.21 & 28.94 & 26.39 & 29.76 & 29.40 & 22.66 & 25.87 \\
+1.5B-M.A.&24.46 & 24.95 & 28.29 & 32.43 & 23.21 & 21.95 & 30.95 & 23.27 & 29.34 & 25.88 & 32.68 & 29.11 & 23.61 & 27.97 \\
+3B-A.A. & 26.39 & 24.33 & 30.59 & 33.26 & 25.82 & 21.81 & 30.94 & 23.21 & 33.33 & 30.02 & 37.56 & 33.43 & 24.88 & 30.07 \\
+3B-M.A. & 26.25 & 27.01 & 28.52 & 32.65 & 25.82 & 18.99 & 32.47 & 23.23 & 33.33 & 29.33 & 36.10 & 30.55 & 25.00 & 29.37 \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:subdomain_supergpqa}
+\end{table}
+
+
+\begin{table}[h!]
+\centering
+\caption{Subdomain performance on MMLU-Pro.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllllllllllllll}
+\toprule
+Model& Overall & Bio & Busi & CS & Econ & Health & Math & Other & Psyc & phys & Engin & Hist & law & Philo \\
+\midrule
+1.5B-A.A. & 42.92 & 64.85 & 50.82 & 46.59 & 54.03 & 38.02 & 57.44 & 35.93 & 53.26 & 40.49 & 29.10 & 34.38 & 22.89 & 36.87 \\
+1.5B-M.A. & 41.98 & 64.99 & 48.29 & 40.73 & 53.44 & 36.80 & 55.07 & 35.07 & 53.26 & 39.49 & 30.44 & 32.55 & 24.80 & 35.27 \\
+3B-A.A. & 49.48 & 70.71 & 58.56 & 50.73 & 60.43 & 48.04 & 63.43 & 46.54 & 58.77 & 49.04 & 36.02 & 37.01 & 27.16 & 39.08 \\
+3B-M.A. & 48.73 & 70.57 & 56.78 & 47.32 & 58.06 & 48.17 & 62.47 & 43.83 & 57.90 & 49.73 & 37.26 & 36.75 & 27.79 & 37.88 \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:subdomain_mmlupro}
+\end{table}
+
+
+
+
+
+\section{Post-saturation Generalization}
+
+Beyond the 3B model, we observe similar trends with the 1.5B model.
+Figure~\ref{fig:valid_test} illustrates performance during training on the Majority Aligned subset. While validation accuracy fluctuates after step 400, accuracy on GPQA-Aug and MMLU-Pro continues to improve, indicating post-saturation generalization. We leave investigation of the underlying causes to future work.
+
+
+
+
+\section{Distribution Illustration}
+
+
+
+To compare the coverage of WildSci with existing science benchmarks, we embed the question texts (excluding answer options) using a pretrained sentence embedding model and apply UMAP~\citep{DBLP:journals/corr/abs-1802-03426} for dimensionality reduction. Figure~\ref{fig:umap} presents a 2D visualization of questions from different datasets. We randomly sample 5,000 questions from SuperGPQA, MMLU-Pro respectively and 20,000 questions from WildSci.
+In the figure, SuperGPQA and MMLU-Pro share similar distributions, WildSci occupies regions underrepresented by these benchmarks. The partial mismatch in distribution suggests that existing benchmarks serve as effective out-of-distribution (OOD) evaluations for WildSci.
+
+\section{Prompts}\label{app:prompts}
+
+In this section, we show the prompts we use in our data creation pipeline. During QA generation, we randomly sample two QAs from the GPQA-Extended set, excluding those in the Diamond subset, to serve as JSON examples.
+
+\newpage
+
+\definecolor{mydynamiccolor}{HTML}{117733}
+
+\begin{tcolorbox}[colback=mydynamiccolor!20, colframe=mydynamiccolor, title=\textbf{QA Generation}]
+You are an expert research scientist in [[DOMAIN]]. Your task is to extract or create three challenging and difficult, self-contained question–answer pairs from the provided academic paper. The QAs will be used as exam questions for PhD students and must be clear, extremely challenging, and context-independent, i.e., understandable on its own without referring back to the original paper.\\
+
+Each QA pair must include:\\
+
+1. Question:\\
+- A clear, difficult, and standalone question.\\
+- The question must include sufficient background information or context so that one can fully understand and attempt it without referring to the original paper.\\
+- Define any abbreviations, notation, or domain-specific terminology used.\\
+- DO NOT use phrases like “according to the paper” or “the proposed method.”\\
+- The question should be complex enough to require deep understanding of the subject.\\
+- It should engage **advanced reasoning**, such as: Conceptual analysis, Theoretical or mathematical derivations, Methodological design, Causal reasoning or hypothesis testing, etc.\\
+
+2. Options:\\
+- Provide four answer choices.\\
+- Only one option should be correct.\\
+- The three incorrect options should be plausible but clearly wrong upon careful reasoning, ideally derived by subtly altering the logic or assumptions behind the correct answer.\\
+
+3. Answer:\\
+The correct option letter.\\
+
+4. Rationale:\\
+- A detailed explanation of why the correct answer is correct and why each incorrect option is wrong.\\
+- DO NOT reference the original paper in any part of the rationale.\\
+- If calculations are required, include the full step-by-step process.\\
+
+Important:\\
+- Questions must be self-contained, including any necessary context or definitions.\\
+- Do not reference the original paper in any part of the question, options, or rationale.\\
+- Aim for PhD-level difficulty, testing understanding of key technical ideas.\\
+- Ensure that only one option is unambiguously correct.\\
+
+Format your QA pairs in the following JSON format, here are examples:
+[[JSON example]]
+\end{tcolorbox}
+
+
+
+\begin{tcolorbox}[colback=mydynamiccolor!20, colframe=mydynamiccolor, title=\textbf{Refinement}]
+
+You are an expert research scientist in [[DOMAIN]].\\
+Your task is to refine each provided multiple-choice question to increase its difficulty and test deeper reasoning appropriate for PhD-level understanding. Each item includes a question, answer options, and a solution. Use the provided answers and solution for reference, they may be incorrect.\\
+
+Refinement Goals:\\
+1. Expand Options with Subtle Variations\\
+Rewrite the answer options to include 10 choices labeled A–J.\\
+All options should seem plausible to someone with partial knowledge, but only one should be fully correct. Introduce subtle numerical or conceptual variations among options.\\
+2. Remove Surface-Level Hints\\
+Eliminate obvious formulas, definitions, or axioms from the question.\\
+Assume the solver must recall or derive them independently. You may include these concepts in the solution rationale, but not in the question.\\
+3. Increase Reasoning Depth\\
+Replace direct or few-step problems with multi-step (>3) or causal reasoning.\\
+Use reasoning chains (e.g., X leads to Y, which leads to Z, which explains W) or require intermediate inferences without giving all variables.\\
+4. Rephrase to Introduce Diversity\\
+Use varied question formats: causal, hypothetical, comparative, inferential, conditional, etc.\\
+Maintain clarity and scientific rigor while diversifying expression.\\
+
+Important:\\
+- Each refined question should challenge deep understanding of core technical concepts, appropriate for advanced graduate-level assessment.\\
+- The refined question must remain solvable using information provided or generally assumed background knowledge in the domain. Avoid ambiguity or underspecified problems.\\
+- Ensure that only one option is unambiguously correct.\\
+- If the original question is poorly written, ambiguous, or lacks depth, you may create a new question based on the same underlying concept or topic reflected in the provided QA.\\
+
+Please only output the refined QA in the following JSON format:
+[[JSON example]]
+
+\end{tcolorbox}
+
+
+\newpage

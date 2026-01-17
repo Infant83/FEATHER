@@ -1,0 +1,1722 @@
+
+
+===== article1_mainV251023.tex =====
+% Article 1: Methodology and Validation
+% Journal: Journal of Chemical Theory and Computation
+\makeatletter\def\input@path{
+{Figures/}
+}\makeatother%
+
+%\documentclass[journal=jctcce,manuscript=article]{achemso}
+\documentclass[aps,pra,onecolumn,nofootinbib,superscriptaddress,
+amsmath,amssymb,showkeys]{revtex4-2}
+
+\usepackage{chemformula,chemfig}
+\setchemfig{atom style={scale=0.4}, double bond sep = 4pt}
+\usepackage[version=4,arrows=pgf-filled,textfontname=sffamily,
+mathfontname=mathsf]{mhchem}
+% Typesetting and Layout Utilities
+\usepackage{microtype}  % Improves typography (spacing, kerning)
+\usepackage[detect-all=true,group-minimum-digits=4]{siunitx}
+\sisetup{mode = math, propagate-math-font = true, reset-math-version = false}
+% siunitx setup
+%\usepackage{lscape}     % For landscape pages, if needed
+%\usepackage[labelformat=simple]{subcaption}
+\usepackage{tabularx, longtable}%
+\usepackage{booktabs, multirow,xcolor,cleveref,url}
+
+\newcommand{\deltaest}{$\Delta E_{\text{ST}}$}
+\newcommand{\risc}{rISC}
+\newcommand{\tict}{TICT}
+\DeclareSIUnit\calorie{cal}
+\DeclareSIUnit\kcal{\kilo\calorie}
+\DeclareSIUnit\kcal{Kcal}
+\DeclareSIUnit\atomicunit{a.u.}
+
+% Journal-specific settings
+%\SectionNumbersOn
+
+%Modification de le largeur du caption du longtable
+\setlength{\LTcapwidth}{\textwidth}
+
+\begin{document}
+\author{Jean-Pierre Tchapet Njafa}
+\email{jean-pierre.tchapet@facsciences-uy1.cm}
+\affiliation{Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon}
+
+\author{Elvira Vanelle Kameni Tcheuffa}
+\affiliation{Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon}
+
+\author{Aissatou Maghame}
+\affiliation{Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon}
+
+\author{S. G. Nana Engo}
+\email{serge.nana-engo@facsciences-uy1.cm}
+\affiliation{Department of Physics, Faculty of Science, University of Yaounde I, P.O.Box
+812, Yaounde, Cameroon}
+
+\title{Validation of Semi-Empirical xTB Methods for High-Throughput Screening of TADF Emitters: A \num{747}-Molecule Benchmark Study}
+
+% \abbreviations{TADF, Thermally Activated Delayed Fluorescence; OLED, Organic Light-Emitting Diode; xTB, Extended Tight-Binding; sTDA, Simplified Tamm-Dancoff Approximation; sTD-DFT, Simplified Time-Dependent Density Functional Theory; CREST, Conformer-Rotamer Ensemble Sampling Tool; ALPB, Analytical Linearized Poisson-Boltzmann}
+
+\keywords{TADF, semi-empirical methods, sTD-DFT, sTDA, high-throughput screening, excited states, OLEDs, computational chemistry}
+
+\begin{abstract}
+Thermally activated delayed fluorescence (TADF) emitters are essential for next-generation, high-efficiency organic light-emitting diodes (OLEDs), yet their rational design is hampered by the high computational cost of accurate excited-state predictions. Here, we present a comprehensive benchmark study validating semi-empirical extended tight-binding (xTB) methods—specifically sTDA-xTB and sTD-DFT-xTB—for the high-throughput screening of TADF materials. Using an unprecedentedly large dataset of \num{747} experimentally characterized emitters, our framework demonstrates a computational cost reduction of over \qty{99}{\percent} compared to conventional TD-DFT, while maintaining strong internal consistency between methods (Pearson $r \approx \num{0.82}$ for \deltaest), validating their utility for relative molecular ranking. Validation against \num{312} experimental \deltaest values reveals a mean absolute error of approximately \qty{0.17}{\electronvolt}, a discrepancy attributed to the vertical approximation inherent to the HTS protocol, underscoring the methods' role in screening rather than quantitative prediction. Through large-scale data analysis, we statistically validate key design principles, confirming the superior performance of Donor-Acceptor-Donor (D-A-D) architectures and identifying an optimal D-A torsional angle range of \qtyrange{50}{90}{\degree} for efficient TADF. Principal Component Analysis reveals that the complex property space is fundamentally low-dimensional, with three components capturing nearly \qty{90}{\percent} of the variance. This work establishes these semi-empirical methods as powerful, cost-effective tools for accelerating TADF discovery and provides a robust set of data-driven design rules and methodological guidelines for the computational materials science community.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+Organic Light-Emitting Diodes (OLEDs) utilizing Thermally Activated Delayed Fluorescence
+(TADF) emitters have emerged as a third generation of optoelectronic devices, promising
+near 100\% internal quantum efficiency by effectively harvesting both singlet and triplet
+excitons via Reverse Intersystem Crossing (RISC) \cite{Uoyama2012, Adachi2014TADF,
+Liu2018}. The key photophysical prerequisite for efficient TADF is a small singlet-triplet
+energy gap ($\Delta E_{\text{ST}} \le \qty{0.3}{\electronvolt}$), typically achieved
+through molecular designs that promote a spatial separation of the highest occupied
+molecular orbital (HOMO) and the lowest unoccupied molecular orbital (LUMO), leading to
+excited states with substantial Charge-Transfer (CT) character \cite{Dias2017, Chen2018}.
+
+The rational computational design and discovery of novel TADF emitters, however, face significant theoretical challenges \cite{Olivier2018, Gomez-Bombarelli2016}. Conventional \textit{ab initio} methods, such as high-level state function theory (e.g., SCS-CC2 or STEOM-DLPNO-CCSD), often required for quantitative accuracy, especially for complex Multi-Resonance (MR-TADF) systems) \cite{Kang2024, Wu2025}, are computationally prohibitive for the high-throughput screening (HTS) of the vast chemical space relevant to OLED materials \cite{Olivier2017a}. Time-Dependent Density Functional Theory (TD-DFT), while more efficient, suffers from well-documented limitations, particularly its tendency to underestimate the energy of highly delocalized CT states and its known failures in contexts requiring multireference character or the consideration of environmental polarization effects \cite{Dreuw2004, Mewes2018, Jacquemin2009, Froitzheim2022}. Furthermore, calculating the precise \deltaest in solution, a critical metric for TADF performance, ideally requires computationally expensive approaches like the State-Specific Polarizable Continuum Model (SS-PCM) or Restricted Open-shell Kohn-Sham (ROKS) methods, which account for the differential stabilization of $S_1$ and $T_1$ states in polar environments \cite{Loos2020STGABS27, Laurent2013TDDFT}.
+
+To address this fundamental dilemma—the need for robust predictions across thousands of molecules constrained by the cost and accuracy shortcomings of current methods—Simplified Quantum Chemistry (sQC) approaches have gained traction \cite{bannwarth2021extended}. In this context, the combination of eXtended Tight-Binding (xTB) methods with simplified response theory offers a compelling pathway forward \cite{Grimme2016, Grimme2021, Wergifosse2024}. Specifically, the simplified Tamm-Dancoff approximation (sTDA) and simplified TD-DFT (sTD-DFT) methods, when coupled with the efficient xTB Hamiltonian (sTDA-xTB and sTD-DFT-xTB), provide a highly scalable framework capable of treating systems with hundreds to thousands of atoms \cite{Grimme2016, Grimme2013}. This capability is achieved by approximating two-electron integrals and truncating the configuration interaction (CI) space, leading to computational cost reductions often exceeding 99\% compared to conventional TD-DFT calculations.
+
+This work presents a rigorous, large-scale validation of the semi-empirical sTDA-xTB and
+sTD-DFT-xTB methods as tools for the high-throughput virtual screening (HTVS) of TADF
+emitters. We leverage a uniquely extensive dataset comprising \num{747} experimentally
+characterized TADF molecules \cite{Huang_2024}, moving significantly beyond the
+limitations of small datasets previously assessed
+\cite{Moral2015, deSilva2019TADF}. In doing so, we compare the performance of
+these methods against each other and experimental data, assess their ability to capture
+solvent effects relevant to device environments, and evaluate the computational
+cost-benefit ratio relative to conventional approaches.
+
+We systematically evaluate the fidelity of sTDA-xTB and sTD-DFT-xTB by comparison against
+experimental data, including \num{312} experimental \deltaest values and \num{213}
+emission wavelengths ($\lambda_{\text{PL}}$) \cite{Huang_2024}. This massive validation
+effort establishes the strengths and limitations of sQC methods for predicting key TADF
+properties. We confirm the strong internal consistency of the sTDA-xTB and sTD-DFT-xTB
+variants ($\text{Pearson } r \approx 0.82$ for \deltaest), demonstrating their equivalence
+for the critical task of relative molecular ranking essential for HTS, despite
+acknowledging known quantitative inaccuracies for absolute values ($\text{MAE } \sim
+\qty{0.17}{\electronvolt}$ against experiment for \deltaest) \cite{Zhao2021}. We
+explicitly investigate the impact of the approximations inherent to the sQC approach,
+including the hybrid use of GFN2-xTB geometries (optimized for ground-state properties)
+and the implicit solvent model ALPB (a linearized Poisson-Boltzmann model) for calculating
+excited-state properties in toluene \cite{Bannwarth2019, Ehlert2021}. We quantify the
+statistically significant, albeit modest, influence of solvent effects on photophysical
+properties. Our analysis confirms that the computational efficiency achieved enables the
+processing of hundreds of molecules rapidly, providing essential benchmarking data and
+methodological guidelines for accelerating TADF emitter discovery pipelines
+\cite{Perez‐Jimenez2025}. We show that the vast majority of property variance can be
+captured by a few components, suggesting a low-dimensional and targetable design space.
+
+The manuscript is organized as follows: Section \ref{sec:Comp_Meth} details the
+computational methodology, including the protocols for geometry optimization (GFN2-xTB)
+\cite{Grimme2017}, excited-state calculation (sTDA/sTD-DFT-xTB), and the definition of
+molecular and photophysical metrics. Section \ref{sec:Res_Disc} presents the results of
+the comprehensive benchmarking study, discussing the method consistency, predictive
+accuracy against experimental data, and the influence of solvent effects. Finally,
+Section \ref{sec:Concl} summarizes the findings and proposes future research directions,
+particularly the integration of these validated sQC methods with Machine Learning
+techniques for predictive modeling of TADF dynamics.
+
+\section{Computational methods}\label{sec:Comp_Meth}
+
+The aim of this work is to establish a robust and computationally efficient methodology for the high-throughput virtual screening of Thermally Activated Delayed Fluorescence (TADF) emitters. This protocol integrates accelerated semi-empirical methods from the extended tight-binding (xTB) family for geometry optimization and subsequent excited-state property calculations, enabling the analysis of a large and diverse chemical space.   A schematic representation of the workflow is presented in \Cref{fig:workflow}.
+
+\begin{figure}[!htbp]
+\centering
+ \includegraphics{workflow.pdf}
+\caption{Overview of the simulation workflow. Starting with a SMILES string, the code performs conformer search and geometry optimisation via xTB for the singlet ground state $S_0$ and the triplet state $T_1$. It allows the extraction of the relaxed triplet excitation energy. Simplified time-dependent DFT calculation with sTDA/sTD-DFT extracts the vertical singlet-triplet gap, the relaxed triplet-triplet gap, the oscillator strength, the vertical excitation energy and the fluorescence absorption and emission spectra, while incorporating solvent effects to enhance the realism of our simulations. The Stokes shift is evaluated and then allows the relaxed singlet-triplet gap to be estimated.}
+\label{fig:workflow}
+\end{figure}
+
+\subsection{Dataset and conformational sampling}\label{sec:geom_opt}
+
+Our benchmark dataset comprises \num{747} TADF emitters extracted from the literature using automated text mining \cite{Huang_2024}. The set spans diverse molecular architectures, including donor-acceptor (D-A), multiple donor-acceptor, and multi-resonance (MR) systems. Initial 3D structures were generated from SMILES strings using RDKit \cite{rdkit}. The complete molecular list is provided in Supporting Information Table S1.
+
+A systematic conformational search for each molecule was performed using the Conformer-Rotamer Ensemble Sampling Tool (CREST version 3.0) \cite{pracht2020automated, crest2} coupled with the GFN2-xTB semi-empirical Hamiltonian using the xTB program (version 6.7.0) \cite{Bannwarth2019, grimme2019exploration}. GFN2-xTB is a second-generation tight-binding quantum chemical method specifically parameterized for accurate molecular structures, conformational energies, and noncovalent interactions, making it highly suitable for describing the complex geometries of TADF emitters \cite{bannwarth2021extended}. The lowest-energy conformer identified by CREST was then subjected to a final, tight geometry optimization at the GFN2-xTB level to obtain the equilibrium structure on the singlet electronic ground state ($S_0$).
+
+\subsection{Excited-state calculations and hybrid protocol}\label{sec:excited_state}
+
+Excited-state properties were calculated using the geometries optimized at the $S_0$ GFN2-xTB level through two highly efficient quantum chemistry methods based on the extended tight-binding (xTB) framework: the simplified Tamm-Dancoff approximation (sTDA-xTB) \cite{Grimme2016} and simplified time-dependent density functional theory (sTD-DFT-xTB) \cite{Grimme2021, Wergifosse2024}. Notably, these excited-state calculations employ a non-self-consistent extended tight-binding Hamiltonian, distinct from the GFN2-xTB Hamiltonian used for ground-state geometry optimization \cite{Grimme2017}. The sTDA-xTB and sTD-DFT-xTB methods utilize a specialized Hamiltonian and an extended atomic orbital (AO) basis set parameterized for robust and rapid prediction of absorption and emission spectra \cite{bannwarth2021extended}.
+
+This hybrid protocol, which adopts GFN2-xTB optimized geometries for a single-point
+sTDA/sTD-DFT-xTB calculation, represents a pragmatic approximation enabling the high
+computational efficiency necessary for high-throughput screening (HTS). While
+excited-state optimized geometries would be preferable for accurately modeling adiabatic
+properties \cite{Froitzheim2022, Mewes2018}, this approach preserves the relative rankings
+and qualitative trends critical for virtual screening, achieving computational speed-ups
+exceeding \qty{99}{\percent} compared to conventional TD-DFT \cite{Konidena_2021}.
+
+We explicitly acknowledge that the GFN2-xTB and the xTB Hamiltonian used for sTDA/sTD-DFT
+(denoted as \texttt{xTB4sTDA}) stem from distinct parametrizations and basis sets
+\cite{Ma_2019, Wei_2022, Zeng_2019}. The workflow’s key assumption is that the GFN2-xTB
+optimized ground-state geometry provides a sufficiently accurate vertical approximation
+($S_0$ geometry) to support rapid and reliable single-point excited-state computations.
+This separation is justified as the main goal is qualitative trend screening and relative
+molecular ranking across hundreds of compounds, delivering a remarkable computational cost
+reduction of roughly \qty{99}{\percent} relative to conventional TD-DFT
+\cite{Konidena_2021, Gomez-Bombarelli2016}. For precise absolute energies or adiabatic
+excited-state geometries, higher-level, more computationally demanding methods would be
+necessary \cite{Wang_2021}.
+
+\subsection{Solvent effects modeling}\label{sec:solvation}
+
+To model the influence of the molecular environment, all calculations were performed in
+both the gas phase and in solution. We employed the analytical linearized
+Poisson-Boltzmann (ALPB) implicit solvation model \cite{Ehlert2021}, with toluene
+($\varepsilon = \num{2.38}$) selected as a representative low-polarity solvent commonly
+used in experimental studies of TADF emitters. We acknowledge that this model relies on
+the ground-state electronic density and does not fully capture dynamic solvent
+reorganization effects pertinent to charge-transfer states. For quantitative accuracy,
+state-specific (SS-PCM) or restricted open-shell Kohn-Sham (ROKS) methods would be
+necessary \cite{Hait2016, Northey2017}. However, the ALPB model provides a computationally
+tractable and consistent approach for assessing solvent-induced trends across our large
+dataset.
+
+\subsection{Electronic structure and property analysis}\label{sec:analysis}
+
+From the excited-state calculations, we directly obtained the vertical excitation energies
+of the lowest singlet ($E_{S_1}$) and triplet ($E_{T_1}$) states, from which the
+singlet-triplet energy gap was calculated:
+\begin{equation}
+    \Delta E_{\text{ST}} = E_{S_1} - E_{T_1}.
+\end{equation}
+The dimensionless oscillator strength ($f_{S_1}$) for the $S_0 \to S_1$ transition was
+also computed as a proxy for the radiative decay rate.
+
+Given that direct geometry optimization of the $S_1$ state is not implemented in the
+employed semi-empirical framework, an approximation was necessary to estimate emission
+properties. We first calculated the relaxed triplet excitation energy by optimizing the
+$T_1$ state geometry at the GFN2-xTB level. The geometric relaxation energy for the
+triplet state, $\Delta E_{\text{relax}}(T_1)$, was then assumed to be equal to the Stokes
+shift of the $S_1$ state. This physically-grounded approximation allowed for the
+estimation of the relaxed $S_1$ energy, and consequently, the emission wavelength
+($\lambda_{\text{PL}}$). The detailed equations for this estimation are provided in the
+Supporting Information.
+
+To gain physical insight into the electronic structure, particularly the degree of
+charge-transfer (CT) character, we analyzed the frontier molecular orbitals. Using the
+Multiwfn package \cite{lu2024multiwfn}, we quantified the spatial separation between the
+highest occupied (HOMO) and lowest unoccupied (LUMO) molecular orbitals via two key
+descriptors: the overlap integral ($S'_{\text{HL}}$) and the centroid distance between
+their respective electron densities ($D_{\text{HL}}$) \cite{Etienne2014, LeBahers2011}.
+These metrics provide a quantitative measure of the electronic decoupling central to the
+TADF mechanism.
+
+\subsection{Validation, statistical analysis, and computational
+cost}\label{sec:validation_and_cost}
+
+To validate our computational protocol, we benchmarked the performance of the sTDA-xTB and
+sTD-DFT-xTB methods against a large set of experimental data extracted from the
+literature. The validation set consisted of \num{312} experimental \deltaest values and
+\num{213} experimental emission wavelengths ($\lambda_{\text{PL}}$), standardized to eV
+and nm units, respectively. The performance of the semi-empirical methods was rigorously
+assessed by comparing their predictions to these experimental values, as well as by
+comparing the two xTB variants against each other.
+
+The statistical analysis employed a suite of standard metrics to quantify accuracy and
+correlation, including Pearson ($r$) and Spearman ($\rho$) correlation coefficients to
+assess linear and monotonic trends, respectively. Predictive accuracy was evaluated using
+mean absolute error (MAE) and root mean square error (RMSE). Systematic differences
+between methods or against experimental data were examined with paired Student's $t$-tests
+and non-parametric Wilcoxon signed-rank tests. Distribution normality was assessed using
+Shapiro-Wilk tests, while solvent effects were analyzed through paired comparisons with
+Cohen's $d$ effect sizes. Additionally, principal component analysis (PCA) was performed
+on standardized property vectors to identify dominant variance components. All statistical
+analyses were conducted using Python with the SciPy and scikit-learn libraries.
+
+All calculations were performed on a workstation equipped with an Intel Xeon Gold 6136 CPU
+and \qty{128}{\giga\byte} of RAM. The semi-empirical protocol demonstrated exceptional
+efficiency, with the total computational time for all \num{747} molecules amounting to
+approximately \num{614} CPU hours. A representative breakdown per molecule includes
+conformational search (approximately 20–27 minutes), GFN2-xTB geometry optimization
+(approximately \qty{1}{\minute}), and excited-state calculations (\qty{11}{\second} for
+sTDA-xTB; 33 seconds for sTD-DFT-xTB). For comparison, a conventional TD-DFT calculation
+(e.g., CAM-B3LYP/def2-TZVP) for a single molecule is estimated to require approximately 50
+CPU hours. Our hybrid approach thus represents a computational cost reduction of over
+\qty{99}{\percent}, a critical enabling factor for high-throughput screening.
+
+To ensure full reproducibility and facilitate future research, the complete computational dataset, including all molecular structures (SMILES), optimized geometries, calculated properties, and the analysis scripts used in this study, are made publicly available at [Repository URL, to be added upon publication].
+
+
+\section{Results and discussion}\label{sec:Res_Disc}
+
+The large-scale application of the hybrid GFN2-xTB/sTDA(sTD-DFT)-xTB protocol to \num{747} experimentally characterized Thermally Activated Delayed Fluorescence (TADF) emitters constitutes the core validation of this work. This dataset size, unprecedented for semi-empirical methods in TADF studies, allows for rigorous statistical analysis of method reliability, scalability, and the extraction of robust design principles.
+
+\subsection{Overview of the computational dataset}
+
+The architectural diversity of the \num{747}-molecule set yields substantial variability
+in the computed photophysical properties, as summarized in \Cref{tab:descriptive_stats}.
+The singlet-triplet energy gap (\deltaest) calculated with sTDA-xTB in the gas phase shows
+a mean of \qty{0.328}{\electronvolt} with a large standard deviation of
+\qty{0.204}{\electronvolt}, indicating the presence of both highly efficient TADF
+candidates and molecules with large gaps. The dataset spans a wide spectral range, with
+predicted photoluminescence wavelengths ($\lambda_{\text{PL}}$) from the deep-blue to the
+near-infrared region (\qtyrange{343}{2565}{\nano\meter}). Oscillator strengths ($f_{12}$)
+are broadly dispersed, with a median of \num{0.27}, which is consistent with the
+significant charge-transfer character typical of many TADF systems. Overall, the dataset
+captures a comprehensive spectrum of TADF molecular architectures and photophysical
+behaviors, making it highly suitable for robustly benchmarking the computational methods.
+
+\begin{table}[!ht]
+\centering
+\caption{Descriptive statistics of key TADF properties for the \num{747}-molecule dataset, calculated using sTDA-xTB and sTD-DFT-xTB methods in both gas phase and in toluene solution.}
+\label{tab:descriptive_stats}
+\begin{tabular}{l l *{4}{S[table-format=4.3]}}
+	\toprule
+	{Property}                         & {Phase} & {Mean} & {Std Dev} & {Min}  & {Max}
+\\ \midrule
+	\deltaest (sTDA) [\unit{\eV}]              & Gas     & 0.328  & 0.204     & -0.013 &
+2.638   \\
+	\deltaest (sTD-DFT) [\unit{\eV}]           & Gas     & 0.316  & 0.190     & -0.301 &
+1.658   \\
+	$\lambda_{\text{PL}}$ (sTDA) [\unit{\nm}]    & Gas     & 566.61 & 201.55    & 342.96 &
+2565.30 \\
+	$\lambda_{\text{PL}}$ (sTD-DFT) [\unit{\nm}] & Gas     & 573.09 & 255.60    & 342.00 &
+4987.21 \\
+	$f_{12}$ (sTDA)                    & Gas     & 0.457  & 0.563     & 0.000  & 5.169
+\\
+	$f_{12}$ (sTD-DFT)                 & Gas     & 0.393  & 0.491     & 0.000  & 4.724
+\\ \midrule
+	\deltaest (sTDA) [\unit{\eV}]              & Toluene & 0.352  & 0.280     & -0.024 &
+5.649   \\
+	\deltaest (sTD-DFT) [\unit{\eV}]           & Toluene & 0.334  & 0.203     & -0.348 &
+1.502   \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Internal consistency and screening reliability}
+
+A primary requirement for a high-throughput screening method is internal consistency. We
+compared the predictions from sTDA-xTB and sTD-DFT-xTB across the entire dataset to ensure
+their interchangeability for relative molecular ranking. The results, summarized in
+\Cref{tab:method_comparison,tab:method_comparisonTol} and visualized in
+\Cref{fig:method_comparison}, confirm a strong correlation between the two methods.
+
+For the key metric \deltaest, the methods show a Pearson correlation of $r = \num{0.82}$
+in the gas phase with a mean absolute error (MAE) of only \qty{0.023}{\electronvolt}. This
+small deviation is well within typical experimental or higher-level theoretical
+uncertainties, confirming that either method provides equivalent relative predictions
+suitable for a virtual screening campaign. The singlet oscillator strengths ($f_{12}$)
+show exceptional agreement ($r > \num{0.98}$), indicating that both methods consistently
+capture the magnitude of transition dipole moments. This high internal consistency
+validates the use of these computationally inexpensive methods for the primary goal of
+this work: identifying trends and ranking candidate molecules.
+
+\begin{table}[!ht]
+\centering
+\caption{Statistical comparison between sTDA-xTB and sTD-DFT-xTB predictions for key
+photophysical properties in the gas phase (N = \num{747} molecules).}
+\label{tab:method_comparison}
+\begin{tabular}{l S[table-format=2.4] S[table-format=3.4]
+S[table-format=1.4]}
+	\toprule
+	{Property}               & {MAE}   & {RMSE}   & {Pearson $r$} \\ \midrule
+	\deltaest [\unit{\eV}]           & 0.0229  & 0.1197   & 0.8192        \\
+	$\lambda_{\text{PL}}$ [\unit{\nm}] & 11.1690 & 169.9449 & 0.7481        \\
+	$f_{12}$                 & 0.0743  & 0.1183   & 0.9915        \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\caption{Statistical comparison between sTDA-xTB and sTD-DFT-xTB predictions for key
+photophysical properties in toluene solvent (N = \num{747} molecules).}
+\label{tab:method_comparisonTol}
+\begin{tabular}{l S[table-format=2.4] S[table-format=3.4]
+S[table-format=1.4]}
+	\toprule
+	{Property}               & {MAE}   & {RMSE}   & {Pearson $r$} \\ \midrule
+	\deltaest [\unit{\eV}]           & 0.0280  & 0.2237   & 0.6131        \\
+	$\lambda_{\text{PL}}$ [\unit{\nm}] & 11.0028 & 180.4780 & 0.6953        \\
+	$f_{12}$                 & 0.0761  & 0.1260   & 0.9870        \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[!ht]
+\centering
+\leavevmode
+\begin{minipage}{0.9\textwidth}
+\includegraphics[width=\textwidth]{method_comparison_gas.pdf}
+\caption*{(a) In gas phase}
+\end{minipage}
+\\
+\begin{minipage}{0.9\textwidth}
+\includegraphics[width=\textwidth]{method_comparison_toluene.pdf}
+\caption*{(b) In toluene solvent}
+\end{minipage}
+\caption{Comparison of sTDA-xTB versus sTD-DFT-xTB predictions for (left panel) \deltaest
+and (right panel) $\lambda_{\text{PL}}$ across \num{747} TADF emitters. Scatter plots show
+strong correlation with the 1:1 identity line (dashed) and a linear regression fit
+(solid), confirming the internal consistency of the semi-empirical methods for relative
+ranking.}
+\label{fig:method_comparison}
+\end{figure*}
+
+\subsection{Validation against experimental data}\label{sec:validation}
+
+To assess the predictive capability of our semi-empirical framework for real-world
+applications, we performed an extensive validation study comparing the sTDA-xTB and
+sTD-DFT-xTB predictions against a large, curated dataset of experimental literature
+values. This external validation is the most critical test of the methodology's utility
+for high-throughput virtual screening (HTVS). Our validation dataset comprises \num{213}
+molecules with reported emission wavelengths ($\lambda_{\text{PL}}$) and \num{296}
+molecules with reported singlet-triplet energy gaps (\deltaest). A few representative
+examples are shown in \Cref{tab:validation-examples} to illustrate the typical performance
+across the dataset.
+
+\begin{table}[!ht]
+\centering
+\caption{Representative examples from the emission wavelength validation dataset, selected
+to illustrate the range of predictive accuracy. All energies are given in
+\si{\nano\meter}. The full dataset is provided in the Supporting Information.}
+\label{tab:validation-examples}
+\small
+\begin{tabular}{l *{5}{S[table-format=4.1]} c}
+	\toprule
+	{Molecule}   & {sTDA (Gas)} & {sTD-DFT (Gas)} & {sTDA (Tol)} & {sTD-DFT (Tol)} &
+{Ref.} & {Citation}                                    \\ \midrule
+	DCzBNPh-1    & 472.4        & 475.7           & 442.1        & 445.7           & 472.5
+ & \cite{Yan_2022}                               \\
+	BACH         & 433.6        & 439.5           & 409.9        & 415.7           & 427.7
+ & \cite{Li_2022_10_1016_j_dyepig_2021_110030}   \\
+	PyDCN–DMAC   & 508.7        & 504.4           & 496.9        & 493.2           & 494.2
+ & \cite{Dong_2022}                              \\
+	tCTM         & 483.8        & 487.0           & 483.3        & 483.5           & 459.0
+ & \cite{Tan_2020}                               \\
+	t-DABNA      & 431.1        & 438.5           & 418.4        & 425.5           & 464.0
+ & \cite{Lee_2019_10_1039_c9tc02746g}            \\
+	TPBPPI-PBI   & 472.9        & 473.4           & 461.4        & 462.6           & 429.0
+ & \cite{Zhu_2020}                               \\
+	2Cz-DMAC-BTB & 474.2        & 471.3           & 535.1        & 531.4           & 529.0
+ & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+	TBPe         & 542.6        & 553.7           & 500.3        & 510.7           & 471.0
+ & \cite{Yao_2019}                               \\
+	DPCN         & 511.7        & 511.6           & 508.0        & 508.3           & 424.0
+ & \cite{Xiao_2022_10_1016_j_dyepig_2022_110451} \\
+	TRZ-3SO2     & 577.4        & 572.9           & 540.6        & 539.9           & 706.0
+ & \cite{Zhang_2022_10_1039_d2tc02694e}          \\
+	SBDBQ-PXZ    & 843.2        & 845.7           & 751.8        & 753.8           & 594.0
+ & \cite{Yu_2018}                                \\
+	{[2,1-b]IF}  & 1031.9       & 586.3           & 770.2        & 571.9           & 347.0
+ & \cite{Romain_2016}                            \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Emission wavelength predictions}
+
+The statistical performance for $\lambda_{\text{PL}}$ predictions is summarized in
+\Cref{tab:emission-wavelength-metrics}. The methods demonstrate a moderate-to-strong
+correlation with experimental values, with Pearson coefficients ranging from $r =
+\num{0.56}$ to $r = \num{0.69}$. The best overall performance is achieved by sTD-DFT in
+toluene, with an MAE of \qty{78.8}{\nano\meter} and a Pearson $r$ of \num{0.692}. The
+negative $R^2$ values indicate that a simple linear model does not perfectly capture the
+absolute values, which is expected for a high-throughput method using several
+approximations. However, the strong and statistically significant ($p < \num{e-18}$)
+Pearson correlations confirm that both methods reliably capture the relative trends in
+emission wavelengths across the diverse molecular set.
+
+The correlation plots in \Cref{fig:pl-corr} visualize this trend, showing that while there
+is scatter, the data generally follows the identity line. The linear regression slopes,
+consistently greater than 1, suggest a systematic overestimation of emission energies
+(underestimation of wavelengths), particularly for long-wavelength emitters, a known
+challenge for simplified methods describing CT states. The error distributions shown in
+\Cref{fig:pl-err} are approximately Gaussian and centered near zero, confirming the
+absence of a strong directional bias.
+
+\begin{table}[!ht]
+\centering
+\caption{Statistical performance metrics for emission wavelength ($\lambda_{\text{PL}}$)
+predictions comparing sTDA and sTD-DFT methods in gas and toluene phases against
+experimental/computational literature values (N=\num{213} molecules).}
+\label{tab:emission-wavelength-metrics}
+\begin{tabular}{l *{5}{S[table-format=2.2]}}
+	\toprule
+	{Method}          & {MAE (nm)} & {RMSE (nm)} & {$R^2$} & {Pearson $r$} & {$p$-value}
+ \\ \midrule
+	sTDA (Gas)        & 89.2       & 149.0       & -2.54   & 0.561         &
+\num{4.50e-19} \\
+	sTD-DFT (Gas)     & 85.3       & 135.4       & -1.93   & 0.630         &
+\num{5.94e-25} \\
+	sTDA (Toluene)    & 80.7       & 124.0       & -1.45   & 0.663         &
+\num{2.48e-28} \\
+	sTD-DFT (Toluene) & 78.8       & 118.8       & -1.25   & 0.692         &
+\num{1.02e-31} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{photoluminescence_correlation.pdf}
+\caption{Correlation between predicted and reference emission wavelengths
+($\lambda_{\text{PL}}$) for \num{213} TADF molecules. Predictions from sTDA and sTD-DFT
+methods in gas and toluene phases are compared against experimental literature values.
+Black dashed lines represent perfect agreement (identity line); red solid lines show
+linear regression fits. The strong, positive correlations ($r > 0.56$) demonstrate the
+methods' capability to reliably predict relative emission wavelength trends, which is
+pivotal for virtual screening.}
+\label{fig:pl-corr}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{photoluminescence_error_dist.pdf}
+\caption{Error distributions for emission wavelength predictions
+($\lambda_{\text{predicted}} - \lambda_{\text{reference}}$). The histograms show
+approximately Gaussian error patterns centered near zero for all four method/phase
+combinations. This indicates an absence of strong systematic bias, with the standard
+deviations of \qtyrange{118}{149}{\nano\meter} reflecting the typical prediction
+uncertainties of the high-throughput protocol.}
+\label{fig:pl-err}
+\end{figure}
+
+\subsubsection{Singlet--triplet gap predictions}
+
+Predicting the singlet-triplet gap, the most critical parameter for TADF, is inherently
+more challenging due to the small energy scales involved. As detailed in
+\Cref{tab:st-gap-metrics}, the quantitative accuracy is modest, with an MAE of
+approximately \qty{0.17}{\electronvolt}. The Pearson correlation with experimental data is
+weak but statistically significant ($r \approx \num{0.18}$, $p < 0.002$ for gas-phase
+methods).
+
+This weaker quantitative performance is an expected consequence of the vertical
+approximation and the semi-empirical nature of the methods, which struggle to capture the
+subtle balance of exchange and correlation effects that define the \deltaest. The
+correlation plot in \Cref{fig:st-corr} reveals considerable scatter, particularly for
+molecules with very small experimental gaps ($< \qty{0.1}{\electronvolt}$), a regime where
+both computational and experimental uncertainties are high. The error distributions in
+\Cref{fig:st-err} are centered near zero but are broad, highlighting the challenge of
+quantitative prediction. However, the statistically significant positive correlation
+confirms that the methods still provide a better-than-random capability to identify trends
+and rank molecules by their relative \deltaest, which is the primary goal of the screening
+protocol.
+
+\begin{table}[!ht]
+\centering
+\caption{Statistical metrics for singlet-triplet energy gap (\deltaest) predictions
+comparing sTDA and sTD-DFT methods in gas and toluene phases against experimental
+literature values (N=\num{296} molecules).}
+\label{tab:st-gap-metrics}
+\begin{tabular}{l *{2}{S[table-format=1.3]} S[table-format=-1.2] S[table-format=1.3]
+S[table-format=1.2e-1]}
+	\toprule
+	{Method}          & {MAE (eV)} & {RMSE (eV)} & {$R^2$} & {Pearson $r$} & {$p$-value}
+ \\ \midrule
+	sTDA (Gas)        & 0.174      & 0.367       & -0.07   & 0.181         &
+\num{1.80e-03} \\
+	sTD-DFT (Gas)     & 0.168      & 0.364       & -0.05   & 0.183         &
+\num{1.60e-03} \\
+	sTDA (Toluene)    & 0.188      & 0.376       & -0.12   & 0.161         &
+\num{5.39e-03} \\
+	sTD-DFT (Toluene) & 0.183      & 0.377       & -0.13   & 0.147         &
+\num{1.11e-02} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{singlet_triplet_correlation.pdf}
+\caption{Correlation between predicted and reference singlet--triplet energy gaps
+(\deltaest) for \num{296} TADF molecules. Despite considerable scatter, the statistically
+significant positive correlations ($p < 0.02$) confirm that the semi-empirical methods can
+correctly capture qualitative trends in \deltaest across the dataset. The regression
+slopes are significantly less than 1, indicating a systematic underestimation of larger
+gaps.}
+\label{fig:st-corr}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{singlet_triplet_error_dist.pdf}
+\caption{Error distributions for singlet--triplet gap predictions. The residuals are
+approximately centered at zero, but their large standard deviations
+(\qtyrange{0.36}{0.38}{\electronvolt}) reflect the inherent difficulty in quantitatively
+predicting small energy differences between nearly degenerate electronic states with a
+high-throughput method.}
+\label{fig:st-err}
+\end{figure}
+
+\subsubsection{Comparative analysis and implications for high-throughput screening}
+
+A direct comparison of the methods is summarized in \Cref{tab:comparative-summary} and
+\Cref{fig:method-comparison}. For $\lambda_{\text{PL}}$, sTD-DFT in toluene offers the
+best correlation with experiment, while for \deltaest, sTD-DFT in the gas phase performs
+marginally better. The phase-dependent behavior suggests that the two methods respond
+differently to the implicit solvation model. However, given their strong internal
+consistency and comparable performance against experimental trends, both sTDA-xTB and
+sTD-DFT-xTB are validated as suitable tools for large-scale TADF screening. sTDA's lower
+computational cost makes it particularly attractive for exploring vast chemical spaces,
+while sTD-DFT may be preferred when slightly higher fidelity for \deltaest is desired.
+
+Crucially, this large-scale validation demonstrates that the semi-empirical protocol,
+despite its quantitative limitations, successfully achieves its primary objective: it
+provides a computationally affordable means to reliably rank large numbers of candidate
+molecules and identify promising structural motifs. This capability is essential for
+guiding experimental synthesis and accelerating the discovery cycle of new,
+high-performance TADF materials.
+
+\begin{table}[!ht]
+\centering
+\caption{Summary of the best-performing computational method for each property and
+statistical metric, based on validation against experimental data.}
+\label{tab:comparative-summary}
+\begin{tabular}{l *{4}{c}}
+	\toprule
+	{Property}                 & {Best MAE}    &  {Best RMSE}  & {Best $R^2$}  & {Best
+Pearson $r$} \\ \midrule
+	$\lambda_{\text{PL}}$ [\unit{\nm}] & sTD-DFT (Tol) & sTD-DFT (Tol) & sTD-DFT (Tol) &
+sTD-DFT (Tol)    \\
+	                           & (78.8)        &    (118.8)    &    (-1.25)    &
+(0.692)       \\ \midrule
+	\deltaest [\unit{\eV}]             & sTD-DFT (Gas) & sTD-DFT (Gas) & sTD-DFT (Gas) &
+sTD-DFT (Gas)    \\
+	                           & (0.168)       &    (0.364)    &    (-0.05)    &
+(0.183)       \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.95\textwidth]{method_comparison.pdf}
+\caption{Comparative performance analysis of the sTDA and sTD-DFT methods. The bar charts
+display mean absolute errors (MAE) and coefficients of determination ($R^2$) for both
+emission wavelength and singlet--triplet gap predictions relative to experimental data.
+The figure visually confirms that while sTD-DFT in toluene is superior for predicting
+$\lambda_{\text{PL}}$, the performance differences between the methods for \deltaest are
+marginal.}
+\label{fig:method-comparison}
+\end{figure}
+
+\subsection{Computational efficiency and scalability for HTS}
+
+A central justification for employing the semi-empirical protocol is its computational
+efficiency, which is a prerequisite for any HTS campaign. Our analysis demonstrates a
+dramatic reduction in computational cost of over \qty{99}{\percent} compared to
+conventional TD-DFT approaches (e.g., CAM-B3LYP/def2-TZVP).
+
+The total computational cost for the entire \num{747}-molecule dataset, including
+conformational searches and excited-state calculations in both gas phase and solvent, was
+approximately \qty{614}{CPU~hours} on modest hardware. In contrast, performing equivalent
+calculations with TD-DFT would be conservatively estimated at over \qty{37000}{CPU~hours}.
+This immense gain in efficiency enables the screening of hundreds to thousands of
+candidate molecules, a scale that is simply intractable with first-principles methods.
+This scalability is not just an incremental improvement but a transformative capability,
+opening the door to data-driven discovery and the exploration of vast, untapped regions of
+the chemical space for TADF emitters.
+
+\subsection{Impact of implicit solvation on excited states}
+
+The inclusion of an implicit solvent model (ALPB for toluene) allows for a first-order
+approximation of environmental effects. The shift from gas phase to toluene is
+statistically significant for all properties, including \deltaest ($p < \num{e-6}$), as
+shown in \Cref{tab:solvent_effects}. However, the magnitude of these shifts is modest
+(Cohen's $d$ effect sizes of \numrange{0.2}{0.3}), suggesting that the linear-response,
+ground-state solvation model is insufficient to capture the full stabilization of the
+highly polarized $S_1$ charge-transfer state. This is a recognized methodological
+compromise, accepted to maintain the high efficiency required for a large-scale screening.
+Analysis of the solvent-induced electron density redistribution
+(\Cref{fig:solvent_density_stats}) confirms this picture: while the net charge transfer is
+minimal, the internal electronic reorganization and the change in dipole moment are
+substantial, underscoring that solvation is a key factor, even if its effect is only
+qualitatively captured here.
+
+\begin{table}[!ht]
+\centering
+\caption{Analysis of solvent effects (Gas $\to$ Toluene) on calculated TADF properties (N
+= \num{747}). Mean difference ($\Delta$), standard deviation, $p$-value, and Cohen's $d$
+effect size are reported.}
+\label{tab:solvent_effects}
+\begin{tabular}{l S[table-format=-2.4] S[table-format=2.4]
+S[table-format=1.2e-2] S[table-format=-1.3]}
+	\toprule
+	{Property}                         & {Mean $\Delta$} & {Std Dev} & {$p$-value} &
+{Cohen's $d$} \\ \midrule
+	\deltaest (sTDA) [\unit{\eV}]              & 0.0235          & 0.1225    & 2.19e-07
+& 0.192         \\
+	\deltaest (sTD-DFT) [\unit{\eV}]           & 0.0184          & 0.0588    & 7.03e-17
+& 0.313         \\
+	$\lambda_{\text{PL}}$ (sTDA) [\unit{\nm}]    & -19.1867        & 92.2778   & 1.94e-08
+  & -0.208        \\
+	$\lambda_{\text{PL}}$ (sTD-DFT) [\unit{\nm}] & -18.1175        & 91.4998   & 8.58e-08
+  & -0.198        \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{densityGlobalSummaryArticle.pdf}
+\caption{Statistical analysis of solvation-induced changes for \num{747} TADF emitters
+when moving from vacuum to a toluene solvent model (ALPB/GFN2-xTB). (Top row) Histograms
+showing the distribution of net electron variation, total internal electron density
+redistribution, and change in dipole moment. (Bottom row) Scatter plot and Pearson
+correlation matrix illustrating the strong correlation between internal charge
+redistribution and the change in dipole moment, a key indicator of CT state stabilization
+by the solvent.}
+\label{fig:solvent_density_stats}
+\end{figure}
+
+\subsection{Global property correlations and dimensionality reduction}
+
+To uncover the fundamental variables governing TADF properties, Principal Component
+Analysis (PCA) was employed to distill the high-dimensional property space of the
+\num{747} TADF emitters into its most significant underlying variables. The analysis
+reveals a remarkably low-dimensional design space, as detailed in
+\Cref{tab:pca,tab:pcaTol}. In both gas and toluene phases, the first three principal
+components (PCs) collectively capture approximately \qty{88}{\percent} of the total
+variance. The dominance of these few components is significant: the first two alone
+account for over \qty{68}{\percent} of the variance (\Cref{fig:pca_analysis}), confirming
+that the vast majority of photophysical behavior is governed by a limited set of
+orthogonal factors.
+
+This low-dimensional structure is a consequence of strong underlying correlations between
+the calculated properties, which are visualized directly in the correlation heatmaps shown
+in \Cref{fig:corr_gas,fig:corr_toluene}. These maps provide a detailed visualization of
+the pairwise relationships that underpin the principal components. Several key chemical
+and physical trends are immediately apparent. For instance, a strong negative correlation
+is observed between the D-A torsional angle and HOMO-LUMO overlap, quantitatively
+confirming that twisting the molecular backbone is an effective strategy for spatially
+separating the frontier orbitals. The expected inverse relationship between \deltaest and
+$\lambda_{\text{PL}}$ is also clearly visible. Notably, a comparison between the gas phase
+and toluene simulations shows a general attenuation of correlation strengths in the
+solvent phase, indicating that the polarizable environment modulates these intrinsic
+electronic relationships. Together, the PCA and heatmap analyses confirm that the complex,
+multi-parameter challenge of TADF emitter design can be rationalized by focusing on a few
+key properties related to energy gaps, charge separation, and radiative coupling
+efficiency.
+
+\begin{table}[!ht]
+\centering
+\caption{Principal Component Analysis (PCA) of the calculated properties for \num{747}
+TADF emitters in the \textbf{gas phase}. The first three components capture
+\qty{88.8}{\percent} of the total variance.}
+\label{tab:pca}
+\begin{tabular}{l*{2}{S[table-format=1.4]}S[table-format=2.1]}
+	\toprule
+	{PC} & {Explained Variance} & {Cumulative Variance} & {\unit{\percent} Total} \\
+\midrule
+	PC1  & 0.4382               & 0.4382                & 43.8       \\
+	PC2  & 0.2813               & 0.7194                & 71.9       \\
+	PC3  & 0.1689               & 0.8883                & 88.8       \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\caption{Principal Component Analysis (PCA) of the calculated properties for \num{747}
+TADF emitters in \textbf{toluene solvent}. The first three components capture
+\qty{86.8}{\percent} of the total variance.}
+\label{tab:pcaTol}
+\begin{tabular}{l*{2}{S[table-format=1.4]}S[table-format=2.1]}
+	\toprule
+	{PC} & {Explained Variance} & {Cumulative Variance} & {\unit{\percent} Total} \\
+\midrule
+	PC1  & 0.3981               & 0.3981                & 39.8       \\
+	PC2  & 0.2861               & 0.6842                & 68.4       \\
+	PC3  & 0.1846               & 0.8688                & 86.8       \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\leavevmode
+\begin{minipage}{0.9\textwidth}
+\includegraphics[width=\textwidth]{pca_analysis_gas.pdf}
+
+(a) In gas phase
+\end{minipage}
+\\
+\begin{minipage}{0.9\textwidth}
+\includegraphics[width=\textwidth]{pca_analysis_toluene.pdf}
+
+(b) In toluene solvent
+\end{minipage}
+\caption{Principal Component Analysis (PCA) score plots for the \num{747} TADF emitters.
+\textbf{Panel (a)} shows the distribution of molecules in the gas phase along the first
+two principal components (PC1 and PC2), which capture \qty{43.8}{\percent} and
+\qty{28.1}{\percent} of the variance, respectively. \textbf{Panel (b)} shows the
+corresponding distribution in toluene, with PC1 and PC2 accounting for
+\qty{39.8}{\percent} and \qty{28.6}{\percent} of the variance. In both cases, the data
+points form a single, dense cluster, illustrating the low intrinsic dimensionality of the
+TADF property space. The slightly broader distribution in the toluene phase (b) reflects
+the solvent-induced modulation of molecular properties, but the overall structure of the
+design space is preserved.}
+\label{fig:pca_analysis}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.9\textwidth]{correlation_heatmap_gas.pdf}
+\caption{Correlation heatmap of key TADF properties for \num{747} molecules in the gas
+phase. The color scale denotes the Pearson correlation coefficient. The map highlights
+several key relationships: (i) the strong positive correlation ($r \approx 0.82$) between
+\deltaest values predicted by sTDA and sTD-DFT, confirming their internal consistency;
+(ii) the strong negative correlation between torsional angle and HOMO-LUMO overlap,
+validating the geometric basis for electronic decoupling; and (iii) the moderate negative
+correlation between \deltaest and $\lambda_{\text{PL}}$, reflecting the fundamental energy
+gap law.}
+\label{fig:corr_gas}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.9\textwidth]{correlation_heatmap_toluene.pdf}
+\caption{Correlation heatmap of key TADF properties for \num{747} molecules in toluene
+solvent. When compared with the gas phase results (\Cref{fig:corr_gas}), this map reveals
+a general attenuation of correlation strengths (e.g., the sTDA vs sTD-DFT \deltaest
+correlation drops to $r \approx \num{0.61}$). This indicates that the polarizable solvent
+environment introduces additional complexity and modulates the intrinsic electronic and
+photophysical property relationships observed in vacuum.}
+\label{fig:corr_toluene}
+\end{figure}
+
+\subsection{Structure-property relationships: architecture and torsional angles}
+
+Having established the reliability and efficiency of our protocol for relative ranking, we
+leveraged the \num{747}-molecule dataset to extract statistically robust
+structure-property relationships. Our analysis focused on two key structural levers: the
+overall molecular architecture and the donor-acceptor (D-A) torsional geometry.
+
+First, a clear hierarchy of performance emerges when molecules are categorized by their
+architecture (\Cref{tab:architecture_performance} and \Cref{fig:architecture_analysis}).
+Donor–Acceptor–Donor (D-A-D) systems demonstrate statistically superior potential,
+exhibiting a mean $\Delta E_{\text{ST}}$ of \qty{0.304}{\electronvolt}, which is
+significantly lower than that of simple D-A (\qty{0.369}{\electronvolt}) or pure donor
+systems (\qty{>0.4}{\electronvolt}). This confirms that architectural designs promoting
+charge delocalization across multiple donor sites are highly effective at minimizing the
+exchange integral, a cornerstone of TADF theory \cite{Moral2015, Olivier2018}.
+
+\begin{table}[h!]
+\centering
+\caption{TADF performance stratified by molecular architecture. The mean \deltaest and
+standard deviation highlight the superior and more consistent performance of D-A-D
+systems.}
+\label{tab:architecture_performance}
+\begin{tabular}{l S[table-format=3] S[table-format=1.3] S[table-format=1.3]}
+	\toprule
+	{Architecture}     & {Count} & {Mean \deltaest [\unit{\eV}]} & {Std Dev} \\ \midrule
+	D-A-D              & 38      & 0.304                 & 0.129     \\
+	D-A                & 20      & 0.369                 & 0.128     \\
+	Multi-D/A          & 181     & 0.376                 & 0.141     \\
+	Pure Donor Systems & 272     & 0.425                 & 0.167     \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.9\textwidth]{tadf_architecture_performance.pdf}
+\caption{TADF performance stratified by molecular architecture. D-A-D and simple D-A architectures demonstrate superior characteristics (lower mean \deltaest) compared to systems lacking a distinct acceptor, confirming the efficacy of the donor-acceptor design principle.}
+\label{fig:architecture_analysis}
+\end{figure}
+
+Second, our large-scale analysis provides statistical validation for the widely held 'design rule' that an optimal D-A torsional angle exists. As shown in \Cref{fig:tadf_design_rules}, molecules with torsional angles between \qty{50}{\degree} and \qty{90}{\degree} have a 4.2 percentage point higher probability of being efficient TADF emitters (defined as $\Delta E_{\text{ST}} < \qty{0.3}{\electronvolt}$) compared to those outside this range—a statistically significant improvement ($p < \num{0.001}$). This optimal range represents a critical compromise: the twist is large enough to enforce HOMO-LUMO separation and minimize the exchange energy, but not so extreme as to completely decouple the donor and acceptor, which would diminish the oscillator strength.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.7\textwidth]{optimal_range_validation.pdf}
+\caption{Validation of the optimal torsional angle design rule. The bar chart shows the percentage of molecules that are efficient TADF emitters ($\Delta E_{\text{ST}} < \qty{0.3}{\electronvolt}$) within the optimal (\qtyrange{50}{90}{\degree}) versus suboptimal torsional angle ranges. Molecules in the optimal range exhibit a statistically significant increase in TADF efficiency.}
+\label{fig:tadf_design_rules}
+\end{figure}
+
+However, the correlation between torsional angle alone and \deltaest is weak across the entire dataset (\Cref{fig:torsion_delta_est_correlations}). This indicates that while torsional geometry is a critical tuning parameter, the overall molecular architecture is the primary determinant of TADF potential. For instance, the superior D-A-D architecture performs well across a broad range of torsional angles, underscoring its robustness. This highlights that the most effective design strategy involves first selecting a high-performance architecture (e.g., D-A-D) and then fine-tuning its properties through geometric modifications that enforce an optimal torsional angle.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.9\textwidth]{torsion_delta_est_correlations.pdf}
+\caption{Correlation between D-A torsional angles and the calculated \deltaest for all \num{747} molecules. The lack of a strong linear trend (Pearson $r \approx \num{-0.007}$) illustrates that while an optimal range for the torsional angle exists, it is not the sole determinant of the singlet-triplet gap. Molecular architecture and electronic factors play a dominant, confounding role.}
+\label{fig:torsion_delta_est_correlations}
+\end{figure}
+
+
+
+
+\section{Conclusions}\label{sec:Concl}
+
+In this work, we have performed the largest-scale computational benchmark of semi-empirical xTB methods to date for TADF emitter screening, establishing a validated, high-throughput framework for the rational design of next-generation optoelectronic materials. By applying a hybrid computational protocol to \num{747} experimentally known molecules, we have moved beyond case-by-case analysis to extract statistically robust, quantitative design principles.
+
+Our key findings can be summarized as follows:
+\begin{itemize}
+    \item \textbf{Methodological validation.} The sTDA-xTB and sTD-DFT-xTB methods are validated as reliable and computationally efficient tools for the relative ranking of TADF candidates. They exhibit strong internal consistency (MAE for \deltaest $< \qty{0.03}{\electronvolt}$ between methods) and achieve a transformative cost reduction of over \qty{99}{\percent} compared to conventional TD-DFT, making large-scale screening feasible on modest computational resources.
+
+    \item \textbf{Predictive accuracy and limitations.} While the methods successfully capture qualitative trends, their quantitative accuracy for absolute prediction is limited by the inherent approximations of the HTS protocol, particularly the vertical approximation. The mean absolute error against experimental \deltaest values is approximately \qty{0.17}{\electronvolt}, reinforcing that the primary strength of this framework lies in screening and trend analysis, not in yielding quantitatively precise spectroscopic data.
+
+    \item \textbf{Data-driven design rules.} Our large-scale analysis provides statistical validation for key design principles. We confirm that D-A-D architectures are statistically superior to simple D-A and other motifs. Furthermore, we identify an optimal D-A torsional angle window of \qtyrange{50}{90}{\degree} that effectively balances the competing requirements of small \deltaest and high oscillator strength.
+
+    \item \textbf{Low-dimensional design space.} Principal Component Analysis demonstrates that the vast chemical diversity of TADF emitters can be described by a low-dimensional property space, where nearly \qty{90}{\percent} of the variance is captured by just three principal components. This suggests that the design challenge is highly constrained and can be effectively navigated by optimizing a few key orthogonal properties.
+\end{itemize}
+
+The broader impact of this study is the provision of a scalable and validated protocol that bridges the gap between slow, high-accuracy methods and the practical need to explore vast chemical spaces. This work not only provides essential benchmarking data and methodological guidelines for the community but also identifies a curated list of high-priority molecular candidates for future experimental synthesis.
+
+Future work should build upon this foundation. The immediate next step is the experimental validation of the most promising candidates identified herein. From a theoretical perspective, future refinements should focus on developing more accurate yet efficient models for solvation (e.g., state-specific approaches) and incorporating explicit calculations of spin-orbit coupling on representative subsets to refine the mechanistic understanding of the RISC process. Finally, the extensive and well-characterized dataset generated in this study provides an ideal training ground for developing machine learning models capable of further accelerating the discovery of novel, high-performance TADF materials.
+
+Ultimately, this study provides a validated toolkit, a comprehensive set of data-driven design rules, and a curated list of promising candidates, significantly advancing the goal of rational, accelerated discovery of next-generation optoelectronic materials.
+
+\input{article1_SI}
+
+%FIXME se trouve dans le SI, à remettre quand il sera à part
+\bibliographystyle{unsrtnat}
+\bibliography{TADF_Article_References} % Combined bibliography
+
+\end{document}
+
+
+===== article1_SI.tex =====
+\section{Associated Content}
+
+\subsection{Supporting Information}
+
+The Supporting Information is available free of charge at \url{https://pubs.acs.org/doi/...}
+
+Complete molecular dataset (SMILES, identifiers); detailed statistical tables; additional
+correlation plots; PCA loadings; computational timing benchmarks; failed calculations
+analysis.
+
+\input{tables/supplementary_table_S1_emission.tex}
+
+\input{tables/supplementary_table_S2_st_gap.tex}
+
+\subsection{Data Availability}
+
+All computational data, analysis scripts, and molecular structures are available at
+\href{https://github.com/TchapetNjafa/Result_article1_TADF_xTB/tree/main}{
+https://github.com/TchapetNjafa}.
+
+\section{Acknowledgments}
+
+We gratefully acknowledge \textbf{Dr. Benjamin Panebei Samafou} for his generous support
+and provision of computational resources, which were instrumental in enabling the
+numerical simulations and data analyses presented in this work.
+
+%\begin{thebibliography}{99}
+
+% % Key TADF references
+% \bibitem{Adachi2014TADF} Uoyama, H.; Goushi, K.; Shizu, K.; Nomura, H.; Adachi, C. Highly
+% efficient organic light-emitting diodes from delayed fluorescence. \textit{Nature}
+% \textbf{2012}, \textit{492}, 234--238. 10.7567/JJAP.53.060101
+%
+% \bibitem{Uoyama2012TADF} Adachi, C. Third-generation organic electroluminescence materials. \textit{Jpn. J. Appl. Phys.} \textbf{2014}, \textit{53}, 060101.
+%
+% % More references to be added from consolidated bibliography
+
+%\end{thebibliography}
+
+% \bibliographystyle{unsrtnat}
+% \bibliography{TADF_Article_References} % Combined bibliography
+
+%\input{Article1.bbl}
+
+
+===== supplementary_table_S1_emission.tex =====
+{
+\begin{longtable}{l*{7}{c@{\extracolsep{\fill}}}}
+\caption{Complete validation dataset for emission wavelength predictions. Predictions from
+sTDA and sTD-DFT methods in gas and toluene phases are compared against
+experimental/computational literature values. References are provided in the last column.}
+\label{tab:supp-emission-complete}
+\\\toprule
+\textbf{Molecule} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{Ref.} & \textbf{Type} & \textbf{Citation} \\
+ & \textbf{(Gas)} & \textbf{(Gas)} & \textbf{(Tol)} & \textbf{(Tol)} & \textbf{(nm)} &  & \\
+\hline
+\endfirsthead
+\multicolumn{8}{c}{{\tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{Molecule} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{Ref.} & \textbf{Type} & \textbf{Citation} \\
+ & \textbf{(Gas)} & \textbf{(Gas)} & \textbf{(Tol)} & \textbf{(Tol)} & \textbf{(nm)} &  & \\
+\hline
+\endhead
+\hline
+\multicolumn{8}{r}{{Continued on next page}} \\
+\endfoot
+\hline
+\endlastfoot
+-ph-pCzAnBzt & 501.4 & 512.6 & 467.6 & 477.7 & 450.0 & experimental & \cite{Guo_2021_10_1016_j_scib_2021_06_018} \\
+1SBFN & 420.2 & 421.1 & 399.3 & 400.0 & 385.0 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+2,7-MeCzOXD & 524.7 & 524.2 & 507.0 & 506.3 & 520.0 & experimental & \cite{Tang_2020} \\
+25CzBPym & 631.6 & 632.7 & 645.1 & 646.8 & 487.3 & experimental & \cite{Pandidurai_2021} \\
+25tCzBPym & 643.1 & 644.4 & 682.5 & 684.2 & 506.0 & experimental & \cite{Pandidurai_2021} \\
+2BPy-mDTC & 691.4 & 691.6 & 686.1 & 686.0 & 491.0 & experimental & \cite{Rajamalli_2017} \\
+2C & 560.0 & 556.6 & 595.2 & 591.0 & 534.0 & experimental & \cite{Barros_2023} \\
+2CM & 384.9 & 391.7 & 366.5 & 372.7 & 374.0 & experimental & \cite{Zassowski_2017} \\
+2Cz-DMAC-BTB & 474.2 & 471.3 & 535.1 & 531.4 & 529.0 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz-DMAC-TTR & 469.5 & 472.9 & 517.6 & 522.9 & 601.0 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz-DMAC-TXO & 528.6 & 528.0 & 561.8 & 559.3 & 566.0 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz2tCzBn & 483.6 & 486.9 & 484.3 & 488.3 & 488.0 & experimental & \cite{Xie_2020_10_1039_d0tc00718h} \\
+2CzPN & 474.8 & 475.8 & 490.5 & 492.1 & 480.4 & experimental & \cite{Li_2018} \\
+2DN & 775.6 & 773.4 & 736.4 & 751.2 & 659.4 & experimental & \cite{Lin_2022} \\
+2F & 776.6 & 788.7 & 700.4 & 711.6 & 493.3 & computational & \cite{Wang_2017_10_1039_c7cp02615c} \\
+2PN & 823.0 & 825.1 & 1059.4 & 1062.0 & 673.3 & experimental & \cite{Lin_2022} \\
+2SBFN & 412.2 & 409.1 & 394.4 & 391.7 & 382.0 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+2TDBA-SBA & 447.6 & 454.2 & 448.2 & 454.8 & 448.0 & experimental & \cite{Hua_2022} \\
+2tCz2CzBn & 477.6 & 481.1 & 482.4 & 486.6 & 472.0 & experimental & \cite{Xie_2020_10_1039_d0tc00718h} \\
+3,3-NHC & 369.4 & 370.2 & 426.0 & 428.7 & 412.7 & experimental & \cite{Pramod_2019} \\
+3,6-MeCzOXD & 513.1 & 512.5 & 500.5 & 499.9 & 520.0 & experimental & \cite{Tang_2020} \\
+3,6-TC & 531.4 & 532.0 & 551.0 & 552.0 & 488.0 & experimental & \cite{Tian_2021} \\
+3-BHH & 358.9 & 362.0 & 339.8 & 342.9 & 478.5 & experimental & \cite{Pramod_2019_10_1016_j_saa_2019_117288} \\
+3-DTPA-BBI & 631.2 & 632.6 & 675.2 & 676.6 & 604.0 & experimental & \cite{Zhou_2022} \\
+35CzBPym & 610.7 & 614.0 & 615.1 & 618.5 & 478.0 & experimental & \cite{Pandidurai_2021} \\
+35tCzBPym & 622.7 & 625.9 & 647.0 & 650.6 & 496.0 & experimental & \cite{Pandidurai_2021} \\
+3BPy-mDTC & 581.2 & 584.0 & 580.3 & 583.2 & 478.0 & experimental & \cite{Rajamalli_2017} \\
+3CzBN & 438.3 & 437.9 & 437.5 & 437.4 & 431.0 & experimental & \cite{Zhang_2016_10_1039_c5sc04755b} \\
+3CzFTFP & 402.8 & 407.6 & 430.0 & 435.6 & 484.0 & experimental & \cite{Li_2018} \\
+3DPTIA & 496.4 & 503.0 & 474.3 & 480.7 & 452.3 & experimental & \cite{Yoo_2016} \\
+3TCPM & 496.5 & 496.7 & 524.8 & 521.8 & 482.5 & experimental & \cite{Ma_2021} \\
+4CzIPN & 528.4 & 531.6 & 537.7 & 540.9 & 502.7 & experimental & \cite{Sun_2020} \\
+4NTAZ-PPI & 486.9 & 484.6 & 468.1 & 465.7 & 456.7 & experimental & \cite{Cao_2021} \\
+5CzICz & 418.8 & 423.4 & 409.3 & 413.9 & 410.0 & experimental & \cite{Zhao_2018_10_1039_c8tc03537g} \\
+ACRXTN & 456.8 & 459.1 & 448.7 & 451.4 & 454.7 & experimental & \cite{Wei_2022} \\
+APDC-DTPA & 793.9 & 798.5 & 831.4 & 825.1 & 767.5 & experimental & \cite{Xiao_2022} \\
+AcCN & 562.0 & 557.5 & 571.8 & 567.2 & 512.0 & experimental & \cite{Choi_2019} \\
+BACF & 442.0 & 448.7 & 422.0 & 428.7 & 427.0 & experimental & \cite{Li_2022_10_1016_j_dyepig_2021_110030} \\
+BACH & 433.6 & 439.5 & 409.9 & 415.7 & 427.7 & experimental & \cite{Li_2022_10_1016_j_dyepig_2021_110030} \\
+BACN & 459.7 & 465.4 & 448.1 & 454.2 & 443.2 & experimental & \cite{Qiu_2021} \\
+BAPCN & 475.5 & 480.5 & 478.1 & 483.4 & 436.5 & experimental & \cite{Qiu_2021} \\
+BCN & 474.9 & 478.7 & 467.0 & 471.1 & 444.0 & experimental & \cite{Li_2022_10_1016_j_dyepig_2022_110456} \\
+BDPCC & 437.3 & 440.3 & 425.7 & 428.4 & 483.5 & experimental & \cite{Kumar_2022} \\
+BDQ-tBuCz & 838.1 & 839.6 & 745.9 & 747.6 & 557.0 & experimental & \cite{Yu_2017} \\
+BDQDMAC & 962.9 & 962.8 & 868.4 & 868.3 & 601.7 & experimental & \cite{Yu_2017} \\
+BDQPCz & 820.6 & 814.9 & 721.4 & 715.1 & 502.0 & experimental & \cite{Yu_2017} \\
+BP-mDTC & 522.0 & 524.3 & 527.8 & 529.1 & 461.5 & experimental & \cite{Rajamalli_2017} \\
+BSBFB & 398.7 & 398.1 & 376.9 & 376.6 & 388.0 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+BTZPP & 664.8 & 660.4 & 712.3 & 707.8 & 594.0 & experimental & \cite{Zhou_2019} \\
+BuCzCF3oB & 550.1 & 550.8 & 544.8 & 545.6 & 519.0 & experimental & \cite{Kumar_2020_10_1039_c9tc06204a} \\
+C-H & 540.9 & 538.1 & 589.8 & 585.5 & 526.0 & experimental & \cite{Barros_2023} \\
+C3F7 & 498.1 & 498.2 & 472.2 & 471.2 & 558.0 & experimental & \cite{Kumar_2020_10_1039_c9tc06204a} \\
+CBM & 505.0 & 504.9 & 501.4 & 501.4 & 458.0 & experimental & \cite{Sharma_2020} \\
+CDBP-BP-DMAC & 511.7 & 508.8 & 501.7 & 498.6 & 500.7 & experimental & \cite{Chen_2022_10_1039_d1qm01625c} \\
+CDBP-BP-PXZ & 501.8 & 502.0 & 503.8 & 504.1 & 525.8 & experimental & \cite{Chen_2022_10_1039_d1qm01625c} \\
+CN-QP & 859.4 & 854.1 & 945.1 & 936.2 & 602.0 & experimental & \cite{Huang_2019} \\
+CPzPC & 581.1 & 584.6 & 524.4 & 527.7 & 468.0 & experimental & \cite{Wei_2014} \\
+CPzPyC & 607.3 & 609.0 & 589.9 & 592.2 & 457.5 & experimental & \cite{Wei_2014} \\
+CPzPzC & 754.3 & 757.6 & 690.7 & 693.9 & 477.0 & experimental & \cite{Wei_2014} \\
+CTM & 473.7 & 477.1 & 485.6 & 483.0 & 502.7 & experimental & \cite{Tan_2020} \\
+CZ-DPS-DMAC & 415.3 & 418.7 & 437.2 & 436.7 & 458.7 & experimental & \cite{Zheng_2022} \\
+Cz-SO & 368.3 & 372.9 & 367.3 & 371.7 & 424.0 & experimental & \cite{Liu_2021_10_1016_j_tet_2020_131869} \\
+Cz2ICz & 446.3 & 450.8 & 436.7 & 441.1 & 420.0 & experimental & \cite{Zhao_2018_10_1039_c8tc03537g} \\
+CzB-FMPIM & 492.0 & 496.3 & 479.7 & 484.5 & 420.0 & experimental & \cite{Jia_2019_10_1016_j_orgel_2019_03_044} \\
+CzB-FMPPI & 502.9 & 504.4 & 491.9 & 492.9 & 432.0 & experimental & \cite{Jia_2019_10_1016_j_orgel_2019_03_044} \\
+CzPh-PPO & 458.3 & 459.8 & 450.2 & 451.5 & 390.0 & experimental & \cite{Xing_2017} \\
+CzPrSBI & 473.5 & 479.4 & 444.5 & 450.9 & 477.3 & experimental & \cite{Danyliv_2023} \\
+CzTPA-m-Trz & 552.3 & 555.5 & 549.2 & 553.2 & 849.7 & experimental & \cite{Zhang_2020_10_1039_d0tc01614d} \\
+CzoB & 497.9 & 498.0 & 472.3 & 471.4 & 517.0 & experimental & \cite{Kumar_2020_10_1039_c9tc06204a} \\
+Cz–AQ & 727.9 & 732.7 & 710.7 & 715.7 & 586.5 & experimental & \cite{Bin_Huang_2017} \\
+DBQ-3PXZ & 851.7 & 854.2 & 868.0 & 870.1 & 618.0 & experimental & \cite{Yu_2018} \\
+DBT-BZ-DMAC & 636.7 & 634.8 & 665.7 & 664.3 & 535.5 & experimental & \cite{Barman_2022} \\
+DCbz-Ph-Bz & 456.3 & 460.3 & 437.7 & 441.7 & 404.0 & experimental & \cite{Zhang_2020_10_1016_j_dyepig_2020_108477} \\
+DCzBNPh-1 & 472.4 & 475.7 & 442.1 & 445.7 & 472.5 & experimental & \cite{Yan_2022} \\
+DCzIPN & 454.2 & 457.1 & 457.6 & 460.4 & 453.0 & experimental & \cite{Kreiza_2021} \\
+DDPA-Ph-Bz & 469.1 & 468.3 & 465.0 & 464.7 & 435.0 & experimental & \cite{Zhang_2020_10_1016_j_dyepig_2020_108477} \\
+DDPhCz-DCPP & 755.3 & 757.7 & 739.8 & 742.3 & 571.3 & experimental & \cite{Wang_2019} \\
+DFPFPhe & 503.0 & 506.8 & 475.0 & 478.4 & 537.0 & experimental & \cite{Nagar_2022} \\
+DHID-DBS & 461.5 & 467.0 & 488.2 & 492.2 & 478.0 & experimental & \cite{Tongsuk_2021} \\
+DHID-DPS & 433.3 & 437.4 & 477.1 & 481.1 & 514.0 & experimental & \cite{Tongsuk_2021} \\
+DMAC-11-DPPZ & 1031.3 & 1030.1 & 891.9 & 891.3 & 577.5 & experimental & \cite{Zhou_2020} \\
+DMAC-BPP & 641.0 & 636.9 & 599.3 & 594.8 & 505.0 & experimental & \cite{Duan_2022} \\
+DMAC-Cz-TTR & 500.1 & 503.8 & 581.4 & 584.4 & 449.0 & experimental & \cite{Zhang_2021_10_1016_j_orgel_2021_106312} \\
+DMAC-DPS & 729.4 & 729.1 & 628.2 & 628.1 & 470.0 & experimental & \cite{Luo_2016} \\
+DMAC-TRZ & 619.5 & 616.8 & 602.9 & 602.4 & 500.6 & theoretical study & \cite{Dhali_2021} \\
+DMACMNPTO & 348.6 & 350.2 & 346.3 & 347.9 & 382.0 & experimental & \cite{Guo_2020} \\
+DMeCzIPN & 479.2 & 481.5 & 486.4 & 488.8 & 474.0 & experimental & \cite{Kreiza_2021} \\
+DNFPh & 540.6 & 544.7 & 468.9 & 470.1 & 521.5 & experimental & \cite{Nagar_2022} \\
+DPACPhTPI & 495.3 & 496.3 & 483.9 & 485.0 & 436.0 & experimental & \cite{Huang_2017} \\
+DPACpBr & 367.6 & 367.9 & 365.0 & 365.9 & 448.7 & experimental & \cite{Lee_2021} \\
+DPCN & 511.7 & 511.6 & 508.0 & 508.3 & 424.0 & experimental & \cite{Xiao_2022_10_1016_j_dyepig_2022_110451} \\
+DPFPhe & 494.3 & 494.7 & 461.9 & 464.2 & 532.5 & experimental & \cite{Nagar_2022} \\
+DPPP & 532.0 & 535.3 & 486.6 & 489.5 & 390.7 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+DPPSPF & 405.3 & 406.4 & 393.8 & 395.0 & 385.0 & experimental & \cite{Di_2020} \\
+DPS-PXZ & 485.1 & 485.2 & 464.8 & 465.0 & 537.0 & experimental & \cite{Leng_2020} \\
+DPXZ-DPPM & 1090.2 & 1093.3 & 1048.7 & 1051.3 & 636.0 & experimental & \cite{Liang_2020} \\
+DPhBCz & 395.1 & 399.7 & 381.8 & 386.2 & 365.0 & experimental & \cite{Ou_2016} \\
+DQP & 1207.5 & 1183.6 & 1057.9 & 1036.8 & 562.0 & experimental & \cite{Barman_2022} \\
+DTPCZTZ & 468.9 & 473.7 & 455.8 & 460.7 & 474.6 & experimental & \cite{Xu_2023} \\
+DV-3CzCN & 470.6 & 472.0 & 442.0 & 442.6 & 473.6 & experimental & \cite{Sun_2022_10_1016_j_dyepig_2021_109967} \\
+DVCz-2CzCN & 434.5 & 438.3 & 453.4 & 454.9 & 461.5 & experimental & \cite{Sun_2022_10_1016_j_orgel_2022_106442} \\
+Diphenylsulfane & 541.6 & 535.9 & 511.4 & 507.5 & 454.0 & experimental & \cite{Cao_2020} \\
+F2AcBO & 491.3 & 489.9 & 515.6 & 516.6 & 476.7 & experimental & \cite{Chen_2022_10_1016_j_cej_2021_133078} \\
+F2PA & 435.9 & 435.7 & 426.3 & 426.2 & 403.3 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+FTAT-FBO & 399.3 & 398.4 & 375.0 & 374.2 & 459.0 & experimental & \cite{Liu_2022_10_1016_j_cej_2022_137372} \\
+FlCz & 553.3 & 548.0 & 525.0 & 520.0 & 412.0 & experimental & \cite{Zhen_2022} \\
+IABTCN & 659.1 & 658.8 & 694.6 & 696.9 & 650.0 & experimental & \cite{Kim_2019} \\
+ImPy-1 & 463.0 & 469.9 & 437.0 & 443.5 & 479.0 & experimental & \cite{Girase_2022_10_1039_d2nj01938h} \\
+ImPy-2 & 465.7 & 472.2 & 441.1 & 447.4 & 471.0 & experimental & \cite{Girase_2022_10_1039_d2nj01938h} \\
+ImPy-3 & 557.2 & 556.0 & 533.0 & 531.4 & 480.0 & experimental & \cite{Girase_2022_10_1039_d2nj01938h} \\
+InDM & 416.2 & 422.6 & 399.3 & 405.0 & 490.0 & experimental & \cite{Umasankar_2021} \\
+MBF & 605.6 & 604.9 & 662.7 & 665.5 & 614.0 & experimental & \cite{Zhan_2021} \\
+MPA & 553.7 & 554.2 & 560.5 & 561.2 & 574.7 & experimental & \cite{Zhan_2021} \\
+MPPA & 805.6 & 809.3 & 941.6 & 947.7 & 679.1 & experimental & \cite{Sharma_2022} \\
+Me-DMAC & 527.8 & 524.1 & 543.5 & 539.4 & 517.0 & experimental & \cite{Li_2020_10_1039_c9tc05340a} \\
+Me2ACBO & 498.1 & 499.9 & 509.1 & 508.8 & 474.0 & experimental & \cite{Chen_2022_10_1016_j_cej_2021_133078} \\
+NA-TNA & 648.4 & 645.2 & 683.6 & 680.0 & 619.2 & experimental & \cite{Zheng_2015} \\
+NAI–BiFA & 558.5 & 562.8 & 573.2 & 578.7 & 596.1 & experimental & \cite{Chen_2019} \\
+NAI–PhBiFA & 569.8 & 566.6 & 647.7 & 645.0 & 556.8 & experimental & \cite{Chen_2019} \\
+NAP-1,5-DPA & 501.4 & 502.3 & 477.3 & 478.1 & 507.2 & experimental & \cite{Dumur_2016} \\
+NAQ3 & 688.2 & 692.4 & 685.2 & 689.2 & 530.0 & experimental & \cite{Fan_2019} \\
+OCzBN & 449.2 & 453.1 & 434.7 & 436.7 & 393.0 & experimental & \cite{Ban_2019} \\
+P4CzCN–BCz & 387.1 & 383.9 & 334.2 & 331.4 & 426.5 & experimental & \cite{Zhou_2022_10_1039_d1tc05010a} \\
+PBTPA & 736.2 & 732.1 & 753.7 & 750.2 & 642.5 & experimental & \cite{Yu_2021} \\
+PCTXO & 561.6 & 557.6 & 568.3 & 564.3 & 616.4 & experimental & \cite{Khammultri_2021} \\
+PDA-DP & 477.9 & 477.5 & 472.4 & 472.2 & 480.0 & experimental & \cite{Gong_2017} \\
+PIAnTPh & 498.9 & 506.6 & 462.9 & 470.2 & 440.0 & experimental & \cite{Liu_2021_10_1016_j_cej_2021_131351} \\
+PO-ABN & 509.7 & 519.7 & 472.9 & 482.2 & 434.0 & experimental & \cite{Kang_2020} \\
+POBBPE & 362.1 & 364.1 & 341.9 & 344.0 & 320.0 & experimental & \cite{Jeon_2018} \\
+PS-BZ-DMAC & 474.2 & 478.9 & 477.1 & 482.3 & 574.0 & experimental & \cite{Ma_2021_10_1016_j_dyepig_2021_109649} \\
+PSPSF & 406.3 & 407.2 & 394.8 & 395.6 & 386.0 & experimental & \cite{Di_2020} \\
+PT-BZ-DMAC & 573.1 & 568.5 & 583.9 & 580.7 & 531.8 & experimental & \cite{Ma_2021_10_1016_j_dyepig_2021_109649} \\
+PTZ-2PTO & 459.1 & 460.2 & 434.2 & 434.2 & 452.2 & experimental & \cite{Xiang_2019} \\
+PTZ-DBTO2 & 473.4 & 479.6 & 471.4 & 477.9 & 520.0 & experimental & \cite{Duan_2022} \\
+PX-TRZ & 541.9 & 543.5 & 554.0 & 554.6 & 531.0 & experimental & \cite{Qu_2020} \\
+PXZ-10-DPPZ & 1099.7 & 1102.8 & 958.6 & 960.6 & 614.0 & experimental & \cite{Zhou_2020} \\
+PXZ-11-DPPZ & 987.5 & 991.7 & 863.8 & 867.0 & 628.5 & experimental & \cite{Zhou_2020} \\
+PXZ2PTO & 430.0 & 430.4 & 420.1 & 420.5 & 496.7 & experimental & \cite{Xiang_2018_10_1039_c8tc03648a} \\
+PmPmP & 653.0 & 653.8 & 643.5 & 644.3 & 563.0 & experimental & \cite{Shi_2022_10_1039_d1tc03803f} \\
+PnB & 518.0 & 514.4 & 488.4 & 484.9 & 465.0 & experimental & \cite{Umasankar_2021} \\
+Pra-2DMAC & 370.2 & 371.9 & 359.0 & 360.5 & 513.0 & experimental & \cite{Zhang_2021_10_1039_d0tc04315j} \\
+PtB & 527.9 & 525.4 & 487.3 & 483.6 & 446.3 & experimental & \cite{Umasankar_2021} \\
+PxCN & 558.1 & 558.2 & 576.1 & 576.2 & 527.5 & experimental & \cite{Choi_2019} \\
+PyDCN & 423.8 & 422.9 & 403.4 & 402.5 & 472.0 & experimental & \cite{Dong_2022} \\
+PyDCN–DMAC & 508.7 & 504.4 & 496.9 & 493.2 & 494.2 & experimental & \cite{Dong_2022} \\
+PyIAnTPh & 509.5 & 519.5 & 470.9 & 480.2 & 572.5 & experimental & \cite{Liu_2021_10_1016_j_cej_2021_131351} \\
+SBA & 351.0 & 352.5 & 342.3 & 343.8 & 350.0 & experimental & \cite{Zeng_2021} \\
+SBDBQ-PXZ & 843.2 & 845.7 & 751.8 & 753.8 & 594.0 & experimental & \cite{Yu_2018} \\
+SF-DPSO & 431.1 & 431.1 & 384.5 & 384.4 & 399.5 & experimental & \cite{Ban_2014} \\
+SFAC-BP-SFAC & 592.9 & 592.6 & 597.8 & 597.2 & 506.0 & experimental & \cite{Huang_2022} \\
+SFCz & 556.1 & 553.2 & 529.4 & 526.6 & 413.0 & experimental & \cite{Zhen_2022} \\
+STAC-BP-STAC & 582.5 & 582.1 & 575.3 & 575.0 & 506.5 & experimental & \cite{Huang_2022} \\
+SXAC-BP-SXAC & 585.8 & 585.4 & 584.9 & 584.4 & 500.0 & experimental & \cite{Huang_2022} \\
+SiCz1Py3 & 405.9 & 410.7 & 387.3 & 392.0 & 479.0 & experimental & \cite{Choi_2017} \\
+SiCz2Py2 & 399.8 & 404.0 & 389.3 & 393.7 & 478.0 & experimental & \cite{Choi_2017} \\
+SiCz3Py1 & 409.9 & 414.1 & 386.3 & 390.5 & 476.0 & experimental & \cite{Choi_2017} \\
+SpiroAC-TRZ & 610.1 & 610.1 & 591.5 & 591.0 & 484.5 & experimental & \cite{Barman_2022} \\
+TATP-BP & 558.1 & 557.8 & 568.1 & 566.4 & 527.7 & experimental & \cite{Chen_2018_10_1039_c8tc04721a} \\
+TAZ-PPI & 499.8 & 500.6 & 487.4 & 488.5 & 456.7 & experimental & \cite{Cao_2021} \\
+TBN-TPA & 436.7 & 443.9 & 423.1 & 430.0 & 453.0 & experimental & \cite{Meng_2022} \\
+TBPe & 542.6 & 553.7 & 500.3 & 510.7 & 471.0 & experimental & \cite{Yao_2019} \\
+TBRb & 677.3 & 696.5 & 610.9 & 628.2 & 538.0 & experimental & \cite{Yao_2019} \\
+TCz-3PA-TCz & 580.2 & 578.6 & 534.0 & 532.6 & 452.0 & experimental & \cite{Wei_2019} \\
+TDBA-SBA & 422.5 & 428.8 & 422.4 & 428.7 & 464.0 & experimental & \cite{Hua_2022} \\
+TFM-QP & 857.2 & 857.2 & 929.3 & 923.2 & 566.5 & experimental & \cite{Huang_2019} \\
+TMAB & 434.0 & 432.4 & 407.6 & 413.6 & 452.0 & experimental & \cite{Berrones_Reyes_2018} \\
+TPA-DCPP & 765.0 & 762.7 & 781.4 & 779.2 & 669.3 & experimental & \cite{Barman_2022} \\
+TPA-L-BN & 451.4 & 452.9 & 391.4 & 392.8 & 394.0 & experimental & \cite{Wu_2019} \\
+TPA-PPO & 493.0 & 490.9 & 500.0 & 497.8 & 472.0 & experimental & \cite{Xing_2017} \\
+TPA-PyF2 & 390.2 & 390.8 & 379.4 & 381.1 & 376.0 & experimental & \cite{Gao_2022} \\
+TPADSO2 & 450.5 & 452.0 & 480.0 & 482.0 & 533.3 & experimental & \cite{Sun_2017_10_1016_j_dyepig_2016_12_037} \\
+TPB-AC & 469.2 & 469.4 & 475.9 & 476.0 & 370.0 & experimental & \cite{Lin_2022_10_1039_d2mh00627h} \\
+TPBPPI-PBI & 472.9 & 473.4 & 461.4 & 462.6 & 429.0 & experimental & \cite{Zhu_2020} \\
+TPBPPI-PY & 472.2 & 472.0 & 459.4 & 459.9 & 420.0 & experimental & \cite{Zhu_2020} \\
+TPXZ-as-TAZ & 888.7 & 887.8 & 889.5 & 891.5 & 529.0 & computational & \cite{Zhang_2018} \\
+TRZ-3SO2 & 577.4 & 572.9 & 540.6 & 539.9 & 706.0 & experimental & \cite{Zhang_2022_10_1039_d2tc02694e} \\
+TSBFB & 404.5 & 403.6 & 385.1 & 384.4 & 395.0 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+TXO-TPA & 570.6 & 566.0 & 598.6 & 595.7 & 603.0 & experimental & \cite{Khammultri_2021} \\
+VBN0 & 432.7 & 433.5 & 419.5 & 421.1 & 482.3 & experimental & \cite{Sun_2022} \\
+XT-T & 360.0 & 360.0 & 349.2 & 350.5 & 478.0 & experimental & \cite{Fu_2022} \\
+{[2,1-b]IF} & 1031.9 & 586.3 & 770.2 & 571.9 & 347.0 & experimental & \cite{Romain_2016}
+\\
+dTolmp & 435.6 & 434.6 & 397.2 & 396.9 & 548.0 & experimental & \cite{Wang_2021_10_1039_d1tc00678a} \\
+iTPBI-CN & 441.4 & 440.7 & 432.7 & 432.1 & 443.5 & experimental & \cite{Wang_2015} \\
+m-CF3PIBI & 492.2 & 492.6 & 485.5 & 486.1 & 435.3 & experimental & \cite{Girase_2022} \\
+m-CZ-DPS-DMAC & 425.1 & 428.5 & 423.9 & 427.9 & 490.8 & experimental & \cite{Dong_2023} \\
+m-DTPACO & 484.6 & 485.3 & 501.6 & 502.8 & 375.0 & experimental & \cite{Hu_2017} \\
+m-PCzTPD & 522.4 & 522.9 & 522.1 & 519.4 & 506.0 & experimental & \cite{Kautny_2017} \\
+m-PO-ABN & 509.5 & 519.6 & 472.0 & 481.3 & 450.0 & experimental & \cite{Kang_2020} \\
+mCP-BP-DMAC & 503.7 & 504.0 & 504.6 & 505.0 & 505.5 & experimental & \cite{Wu_2023} \\
+mCP-BmPy & 395.9 & 399.3 & 384.9 & 389.0 & 410.0 & experimental & \cite{Li_2020_10_1016_j_cej_2020_125276} \\
+mCP-Ph & 390.6 & 394.3 & 371.4 & 375.4 & 350.0 & experimental & \cite{Li_2020_10_1016_j_cej_2020_125276} \\
+mCP-Py & 385.2 & 388.5 & 372.2 & 376.2 & 350.0 & experimental & \cite{Li_2020_10_1016_j_cej_2020_125276} \\
+mCz-TAn-CN & 519.1 & 529.1 & 483.8 & 492.6 & 438.0 & experimental & \cite{Wu_2021_10_1039_d1qm00880c} \\
+mP2MPC & 450.6 & 452.1 & 430.5 & 432.5 & 399.0 & experimental & \cite{Peng_2022} \\
+mTPA-PPI & 457.5 & 457.9 & 443.8 & 445.0 & 404.0 & experimental & \cite{Chen_2020_10_1039_d0tc03631e} \\
+o-CzOXD & 500.3 & 500.5 & 477.5 & 477.5 & 492.7 & experimental & \cite{Tang_2020} \\
+o-PCzTPD & 558.4 & 555.3 & 518.5 & 519.1 & 485.0 & experimental & \cite{Kautny_2017} \\
+oCBP & 388.3 & 392.6 & 377.0 & 381.2 & 389.0 & experimental & \cite{Ha_2022} \\
+p-DTPACO & 508.7 & 510.4 & 531.9 & 533.9 & 540.0 & experimental & \cite{Hu_2017} \\
+p-PCzTPD & 555.3 & 553.3 & 563.4 & 561.2 & 476.0 & experimental & \cite{Kautny_2017} \\
+p-PO-ABN & 514.8 & 521.5 & 488.0 & 494.6 & 456.0 & experimental & \cite{Kang_2020} \\
+p-PO15NCzDPA & 508.1 & 518.1 & 467.2 & 477.0 & 427.0 & experimental & \cite{Ye_2020} \\
+pSFIAc2 & 470.9 & 479.8 & 461.4 & 469.7 & 451.5 & experimental & \cite{Meng_2022} \\
+pzpy & 510.1 & 519.9 & 466.8 & 476.8 & 458.0 & experimental & \cite{Zhang_2019_10_1039_c9tc00465c} \\
+t-DABNA & 431.1 & 438.5 & 418.4 & 425.5 & 464.0 & experimental & \cite{Lee_2019_10_1039_c9tc02746g} \\
+t3Cz-SO & 434.5 & 440.1 & 442.9 & 448.2 & 446.0 & experimental & \cite{Liu_2021_10_1016_j_tet_2020_131869} \\
+tBuCzDBA & 757.8 & 751.2 & 684.8 & 678.9 & 558.5 & experimental & \cite{Liu_2023_10_1016_j_orgel_2022_106720} \\
+tCTM & 483.8 & 487.0 & 483.3 & 483.5 & 459.0 & experimental & \cite{Tan_2020} \\
+thio-ether & 1032.4 & 586.4 & 770.0 & 572.2 & 366.0 & experimental & \cite{Romain_2016} \\
+t–BuCz2BP & 488.8 & 490.6 & 490.8 & 490.3 & 440.0 & experimental & \cite{Huang_2016} \\
+$\alpha$-2DMAC-DBP & 1177.9 & 1176.8 & 1039.5 & 1038.2 & 637.5 & experimental &
+\cite{Maeng_2021} \\
+$\alpha$-DMAC-DBP & 1092.4 & 1092.0 & 952.2 & 951.8 & 622.0 & experimental &
+\cite{Maeng_2021} \\
+$\beta$-DI-DBP & 961.4 & 952.3 & 832.6 & 825.2 & 582.5 & experimental & \cite{Maeng_2021}
+\\
+\end{longtable}
+}
+
+
+===== supplementary_table_S2_st_gap.tex =====
+{
+\begin{longtable}{l*{7}{c@{\extracolsep{\fill}}}}
+\caption{Complete validation dataset for singlet-triplet gap predictions. Predictions from
+sTDA and sTD-DFT methods in gas and toluene phases are compared against
+experimental/computational literature values. References are provided in the last column.}
+\label{tab:supp-st-complete}
+\\\toprule
+\textbf{Molecule} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{Ref.} & \textbf{Type} & \textbf{Citation} \\
+ & \textbf{(Gas)} & \textbf{(Gas)} & \textbf{(Tol)} & \textbf{(Tol)} & \textbf{(eV)} &  & \\
+\hline
+\endfirsthead
+\multicolumn{8}{c}{{\tablename\ \thetable{} -- continued from previous page}} \\
+\hline
+\textbf{Molecule} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{sTDA} & \textbf{sTD-DFT} & \textbf{Ref.} & \textbf{Type} & \textbf{Citation} \\
+ & \textbf{(Gas)} & \textbf{(Gas)} & \textbf{(Tol)} & \textbf{(Tol)} & \textbf{(eV)} &  & \\
+\hline
+\endhead
+\hline
+\multicolumn{8}{r}{{Continued on next page}} \\
+\endfoot
+\hline
+\endlastfoot
+11-AcBPdCN & 0.3009 & 0.2809 & 0.3667 & 0.3437 & 0.0650 & experimental & \cite{Kothavale_2022} \\
+12AcCz-PM & 0.2661 & 0.2631 & 0.3416 & 0.3407 & 0.3900 & experimental & \cite{Zhang_2019_10_1039_c9tc04284a} \\
+12BTCzTPN & 0.1955 & 0.1766 & 0.1720 & 0.1610 & 0.0829 & experimental & \cite{Shin_2022_10_1016_j_cej_2022_137181} \\
+1CM & 0.5074 & 0.4471 & 0.4934 & 0.4316 & 0.2900 & experimental & \cite{Zassowski_2017} \\
+1CzSO & 0.3195 & 0.2961 & 0.2972 & 0.2779 & 0.2150 & experimental & \cite{Li_2017_10_1039_c7tc00119c} \\
+1PXZP & 0.1653 & 0.1764 & 0.1692 & 0.1646 & 0.2600 & computational & \cite{Wang_2020_10_1016_j_dyepig_2020_108437} \\
+23AcCz-PM & 0.2003 & 0.2120 & 0.2544 & 0.2647 & 0.0600 & experimental & \cite{Zhang_2019_10_1039_c9tc04284a} \\
+25CzBPym & 0.0833 & 0.0797 & 0.0929 & 0.0879 & 0.0604 & experimental & \cite{Pandidurai_2021} \\
+25DAcBPy & 0.0576 & 0.0575 & 0.3301 & 0.3383 & 0.0235 & computational & \cite{Pandidurai_2019} \\
+25tCzBPym & 0.0848 & 0.0811 & 0.0917 & 0.0872 & 0.0700 & experimental & \cite{Pandidurai_2021} \\
+26DAcBPy & 0.1948 & 0.1907 & 0.1799 & 0.1764 & 0.0070 & computational & \cite{Pandidurai_2019} \\
+26DPXZBPy & 0.2012 & 0.1987 & 0.1685 & 0.1661 & 0.0520 & computational & \cite{Pandidurai_2019} \\
+2BPy-mDTC & 0.0798 & 0.0793 & 0.0847 & 0.0849 & 0.0650 & experimental & \cite{Rajamalli_2017} \\
+2BrCPT & 0.2696 & 0.2431 & 0.3015 & 0.2718 & 0.0400 & experimental & \cite{Huang_2021_10_1016_j_mtener_2021_100705} \\
+2CM & 0.4735 & 0.4172 & 0.4762 & 0.4198 & 0.3100 & experimental & \cite{Zassowski_2017} \\
+2Cz-DMAC-BTB & 0.2665 & 0.2823 & 0.1276 & 0.1438 & 0.0200 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz-DMAC-TTR & 0.2933 & 0.2743 & 0.3442 & 0.3199 & 0.0470 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz-DMAC-TXO & 0.3679 & 0.3706 & 0.3220 & 0.3319 & 0.0360 & experimental & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+2Cz2tCzBn & 0.1908 & 0.1730 & 0.2168 & 0.1959 & 0.1300 & experimental & \cite{Xie_2020_10_1039_d0tc00718h} \\
+2CzPN & 0.2427 & 0.2373 & 0.2677 & 0.2593 & 0.2525 & experimental & \cite{Kumar_2022} \\
+2CzTPEPCz & 0.3096 & 0.3171 & 0.3311 & 0.3352 & 0.1300 & experimental & \cite{Zhao_2018} \\
+2DMAC-BP-F & 0.2632 & 0.2475 & 0.3177 & 0.2988 & 0.1367 & experimental & \cite{Hong_2022_10_1039_d1tc04918f} \\
+2DN & 0.0920 & 0.0965 & 0.4000 & 0.3669 & 0.0700 & experimental & \cite{Lin_2022} \\
+2F & 0.2152 & 0.1908 & 0.2374 & 0.2097 & 0.2300 & computational & \cite{Wang_2017_10_1039_c7cp02615c} \\
+2H-Qz & 0.2138 & 0.2118 & 0.2326 & 0.2307 & 0.1100 & experimental & \cite{Li_2021_10_1039_d1tc02633j} \\
+2Mi2SB & 0.3464 & 0.3356 & 0.3865 & 0.3721 & 0.0300 & computational & \cite{Matsui_2022} \\
+2PCzBN & 0.3041 & 0.3010 & 0.3170 & 0.3108 & 0.2800 & experimental & \cite{Hong_2022} \\
+2PCzBN-tPh & 0.2207 & 0.2191 & 0.2414 & 0.2386 & 0.2600 & experimental & \cite{Hong_2022} \\
+2PN & 0.1324 & 0.1285 & 0.1074 & 0.1046 & 0.0100 & experimental & \cite{Lin_2022} \\
+2PS-2FPh & 0.2729 & 0.2650 & 0.3064 & 0.2983 & 0.2050 & computational & \cite{Skhirtladze_2023} \\
+2PXZ-OXD & 0.2031 & 0.2024 & 0.1787 & 0.1783 & 0.2300 & experimental & \cite{Lee_2013} \\
+2PXZP & 0.2176 & 0.2301 & 0.2422 & 0.2410 & 0.1340 & computational & \cite{Wang_2020_10_1016_j_dyepig_2020_108437} \\
+2SPBAC-BP & 0.4008 & 0.4004 & 0.4024 & 0.3933 & 0.2200 & experimental & \cite{Song_2022} \\
+2tCz2CzBn & 0.1995 & 0.1807 & 0.2266 & 0.2046 & 0.1300 & experimental & \cite{Xie_2020_10_1039_d0tc00718h} \\
+3-ACBPmCN & 0.0470 & 0.0582 & 0.0519 & 0.0651 & 0.1800 & computational & \cite{Kothavale_2022} \\
+3-AcBPdCN & 0.2112 & 0.2004 & 0.2667 & 0.2540 & 0.1800 & experimental & \cite{Kothavale_2022} \\
+3-AcBPtCN & 0.0637 & 0.0643 & 0.2413 & 0.2319 & 0.1300 & experimental & \cite{Kothavale_2022} \\
+3-DPM & 0.1689 & 0.1581 & 0.1558 & 0.1492 & 0.0987 & experimental & \cite{Sohn_2017} \\
+35CzBPym & 0.1491 & 0.1382 & 0.1503 & 0.1393 & 0.1100 & experimental & \cite{Pandidurai_2021} \\
+35tCzBPym & 0.1484 & 0.1383 & 0.1537 & 0.1431 & 0.1100 & experimental & \cite{Pandidurai_2021} \\
+36DTPAFM & 0.2073 & 0.2235 & 0.2241 & 0.2391 & 0.1200 & experimental & \cite{Li_2022_10_1016_j_orgel_2022_106645} \\
+3BPy-mDTC & 0.1555 & 0.1449 & 0.1562 & 0.1456 & 0.1200 & experimental & \cite{Rajamalli_2017} \\
+3CzBN & 0.3294 & 0.3321 & 0.3069 & 0.3081 & 0.3100 & experimental & \cite{Zhang_2016_10_1039_c5sc04755b} \\
+3CzPhpPM & 0.2409 & 0.2185 & 0.2659 & 0.2406 & 0.3300 & experimental & \cite{Lv_2020_10_1039_d0tc00039f} \\
+3DMAC-BP-Br & 0.0203 & 0.0210 & 0.2215 & 0.2151 & 0.0400 & experimental & \cite{Huang_2021} \\
+3DMAC-BP-CN & 0.1852 & 0.1962 & 0.2209 & 0.2142 & 0.0200 & experimental & \cite{Huang_2021} \\
+3DPA3CN & 0.2230 & 0.2266 & 0.2186 & 0.2212 & 0.1030 & experimental & \cite{Taneda_2015} \\
+3Py-DMAC & 0.0653 & 0.0776 & 0.3069 & 0.2963 & 0.0400 & experimental & \cite{Liu_2020_10_1016_j_cej_2020_126107} \\
+3TCPM & 0.2621 & 0.2614 & 0.1934 & 0.2072 & 0.2600 & experimental & \cite{Ma_2021} \\
+3ai & 0.8060 & 0.7332 & 0.8521 & 0.7687 & 0.1800 & experimental & \cite{Puntscher_2015} \\
+4-Ac & 0.5593 & 0.5465 & 0.6006 & 0.5815 & 0.0800 & experimental & \cite{Keruckiene_2020_10_1016_j_orgel_2019_105576} \\
+4-DPM & 0.4478 & 0.4605 & 0.4672 & 0.4791 & 0.1427 & experimental & \cite{Sohn_2017} \\
+4-SCZ & 0.4456 & 0.4094 & 0.4687 & 0.4303 & 0.2400 & experimental & \cite{Zhu_2019_10_1016_j_jlumin_2018_10_017} \\
+4BPy-mDTC & 0.1541 & 0.1431 & 0.1477 & 0.1375 & 0.1300 & experimental & \cite{Rajamalli_2017} \\
+4CzIPN & 0.1507 & 0.1367 & 0.1624 & 0.1487 & 0.1103 & experimental & \cite{Zhang_2016_10_1039_c6tc00214e} \\
+4CzTPN & 0.2100 & 0.1874 & 0.2339 & 0.2079 & 0.0800 & experimental & \cite{Zhao_2022_10_1039_d2tc00238h} \\
+4F-m-$\nu$-DABNA & 0.2638 & 0.2488 & 0.2657 & 0.2515 & 0.0700 & experimental &
+\cite{Rayappa_Naveen_2022} \\
+4F-$\nu$-DABNA & 0.2709 & 0.2560 & 0.2770 & 0.2625 & 0.0500 & experimental &
+\cite{Rayappa_Naveen_2022} \\
+5,6PXZ-PIDO & 0.2119 & 0.2186 & 0.1857 & 0.1851 & 0.4500 & computational &
+\cite{Xiang_2018_10_1039_c8tc01656a} \\
+5-Cz-Sac & 0.3410 & 0.3079 & 0.3315 & 0.3064 & 0.2800 & experimental & \cite{Xiao_2021} \\
+6,7-DCNQx-DICz & 0.0088 & 0.0143 & 0.0207 & 0.0279 & 0.0276 & computational &
+\cite{Kothavale_2021} \\
+6AcBIQ & 0.0859 & 0.0897 & 0.1004 & 0.1012 & 0.1000 & experimental & \cite{Yun_2017} \\
+9CzFDBFSPO & 0.3962 & 0.3615 & 0.3951 & 0.3550 & 0.1200 & experimental & \cite{Zhang_2020}
+\\
+ACID–BPPZ & 0.2041 & 0.2014 & 0.1581 & 0.1669 & 0.0150 & computational &
+\cite{Chen_2019_10_1039_c8tc06081a} \\
+ACRFLCN & 0.0002 & 0.0047 & 0.0001 & 0.0002 & 0.1000 & computational &
+\cite{Zhu_2020_10_1039_d0tc00743a} \\
+ACRSA & 0.0025 & 0.0217 & -0.0001 & 0.0000 & 0.0350 & experimental & \cite{Nasu_2013} \\
+ACRXTN & 0.4781 & 0.4642 & 0.5345 & 0.5175 & 0.1730 & experimental & \cite{Wei_2022} \\
+AI-4Cz & 0.2055 & 0.1909 & 0.2287 & 0.2140 & 0.0200 & experimental &
+\cite{Liu_2021_10_1016_j_orgel_2020_106017} \\
+ANQDC & 0.2365 & 0.2634 & 0.2815 & 0.3132 & 0.0200 & computational & \cite{Gong_2021} \\
+ANQDC-PSTA & 0.0965 & 0.0948 & 0.1344 & 0.1296 & 0.0800 & experimental & \cite{Gong_2021}
+\\
+APDC-DTPA & 0.2802 & 0.2713 & 0.2891 & 0.3004 & 0.1400 & experimental & \cite{Chen_2022}
+\\
+APPT & 0.1857 & 0.1995 & 0.2290 & 0.2449 & 0.0700 & experimental &
+\cite{Yang_2021_10_1016_j_dyepig_2021_109474} \\
+APPT-PXZ & 0.1829 & 0.1755 & 0.2201 & 0.2100 & 0.0100 & computational &
+\cite{Yang_2021_10_1016_j_dyepig_2021_109474} \\
+Ac-BPCN & 0.3133 & 0.2940 & 0.3797 & 0.3575 & 0.1300 & experimental &
+\cite{Kothavale_2020} \\
+AcCN & 0.1610 & 0.1785 & 0.1956 & 0.2129 & 0.0700 & experimental & \cite{Choi_2019} \\
+AcCYP & 0.0725 & 0.0850 & 0.0824 & 0.0981 & 0.2000 & experimental & \cite{Choi_2020} \\
+B-dpa-Cz & 0.4397 & 0.3954 & 0.4512 & 0.4060 & 0.1500 & experimental & \cite{Park_2022} \\
+B-dpa-SpiroAC & 0.4062 & 0.3635 & 0.4135 & 0.3709 & 0.1400 & experimental &
+\cite{Park_2022} \\
+BCZ-DPS-AD & 0.3282 & 0.2926 & 0.3383 & 0.3004 & 0.0967 & experimental & \cite{Huo_2023}
+\\
+BDAPM & 0.3393 & 0.3383 & 0.3593 & 0.3599 & 0.0600 & experimental &
+\cite{Sun_2017_10_1039_c6tc04653c} \\
+BDPCC & 0.3333 & 0.3139 & 0.3425 & 0.3241 & 0.1100 & experimental & \cite{Kumar_2022} \\
+BDQ-tBuCz & 0.1592 & 0.1565 & 0.1872 & 0.1835 & 0.1800 & experimental & \cite{Yu_2017} \\
+BDQC-2 & 0.1647 & 0.1628 & 0.1856 & 0.1829 & 0.1200 & experimental &
+\cite{Kim_2017_10_1039_c6tc04786f} \\
+BDQDMAC & 0.0645 & 0.0647 & 0.0735 & 0.0738 & 0.0750 & experimental & \cite{Yu_2017} \\
+BDQPCz & 0.1517 & 0.1623 & 0.1728 & 0.1880 & 0.4950 & experimental & \cite{Yu_2017} \\
+BFCZPZ1 & 0.2679 & 0.2584 & 0.2793 & 0.2685 & 0.3267 & experimental & \cite{Cai_2021} \\
+BFCZPZ2 & 0.2685 & 0.2615 & 0.2917 & 0.2840 & 0.3100 & experimental & \cite{Cai_2021} \\
+BMIM & 0.2801 & 0.2712 & 0.2898 & 0.3011 & 0.1400 & experimental & \cite{Chen_2022} \\
+BP-mDTC & 0.1928 & 0.1825 & 0.1832 & 0.1774 & 0.0700 & experimental &
+\cite{Rajamalli_2017} \\
+BPCN-2Cz & 0.3558 & 0.3243 & 0.3590 & 0.3265 & 0.2200 & experimental &
+\cite{Zhang_2020_10_1016_j_orgel_2020_105660} \\
+BPCN-Cz2Ph & 0.3042 & 0.2773 & 0.3250 & 0.2965 & 0.3100 & experimental &
+\cite{Zhang_2020_10_1016_j_orgel_2020_105660} \\
+BPCP-2CPC & 0.1738 & 0.1724 & 0.2227 & 0.2182 & 0.1660 & experimental &
+\cite{Kim_2019_10_1039_c9cc05391c} \\
+BPZPP & 0.1329 & 0.1344 & 0.1529 & 0.1531 & 0.2000 & experimental & \cite{Chen_2023} \\
+BTCZPZ1 & 0.2457 & 0.2342 & 0.2592 & 0.2483 & 0.2400 & experimental & \cite{Cai_2021} \\
+BTD-PXZ & 0.1863 & 0.1829 & 0.1718 & 0.1684 & 0.1300 & experimental & \cite{Ma_2023} \\
+BTITrz & 0.2219 & 0.2224 & 0.2289 & 0.2290 & 0.1025 & computational &
+\cite{Konidena_2019_10_1039_c9tc04679h} \\
+BTPBFCz & 0.2662 & 0.2440 & 0.2687 & 0.2490 & 0.0900 & experimental &
+\cite{Lee_2021_10_1016_j_cej_2020_127293} \\
+BTPBFCz-D3 & 0.2264 & 0.2157 & 0.2175 & 0.2055 & 0.1200 & experimental &
+\cite{Lee_2021_10_1016_j_cej_2020_127293} \\
+BTPO & 0.4356 & 0.4211 & 0.4061 & 0.3864 & 0.4300 & experimental &
+\cite{Ma_2021_10_1039_d1sc04118e} \\
+BTZPP & 0.3066 & 0.3191 & 0.2829 & 0.2942 & 0.3000 & experimental & \cite{Zhou_2019} \\
+BTZ–DMAC & 0.1274 & 0.1340 & 0.1126 & 0.1194 & 0.0200 & computational & \cite{Ni_2017} \\
+BZC-PXZ & 0.2407 & 0.2284 & 0.2292 & 0.2175 & 0.0200 & experimental & \cite{Wang_2020} \\
+BuPCzBCO & 0.3702 & 0.3307 & 0.3938 & 0.3517 & 0.1850 & computational & \cite{Shin_2023}
+\\
+BzITz & 0.2513 & 0.2477 & 0.2575 & 0.2534 & 0.1850 & computational & \cite{Raikwar_2022}
+\\
+CCDC & 0.3066 & 0.2759 & 0.1276 & 0.1415 & 0.2220 & computational &
+\cite{Zhao_2017_10_1039_c7qm00195a} \\
+CDBP-BP-DMAC & 0.1829 & 0.1967 & 0.2389 & 0.2546 & 0.0393 & experimental &
+\cite{Chen_2022_10_1039_d1qm01625c} \\
+CDBP-BP-PXZ & 0.2877 & 0.2868 & 0.2877 & 0.2862 & 0.0605 & experimental &
+\cite{Chen_2022_10_1039_d1qm01625c} \\
+CN-QP & 0.1557 & 0.1648 & 0.1216 & 0.1341 & 0.0300 & experimental & \cite{Huang_2019} \\
+CNPP-TPA & 0.2225 & 0.2259 & 0.2549 & 0.2570 & 0.1450 & experimental &
+\cite{Wang_2022_10_1016_j_cej_2022_135080} \\
+CNTPA-CZ & 0.5282 & 0.5166 & 0.5729 & 0.5571 & 0.3500 & experimental & \cite{Ran_2019} \\
+CNTPA-PXZ & 0.3266 & 0.3257 & 0.3370 & 0.3364 & 0.1300 & experimental & \cite{Ran_2019} \\
+CZ-DPS-DMAC & 0.3076 & 0.2840 & 0.2851 & 0.2885 & 0.0700 & experimental &
+\cite{Zheng_2022} \\
+CZ-TRZ & 0.2454 & 0.2302 & 0.2816 & 0.2641 & 0.1500 & experimental & \cite{Kumar_2020} \\
+CZ9CZPZ & 0.2859 & 0.2751 & 0.3162 & 0.3040 & 0.3150 & experimental & \cite{Cai_2021} \\
+Cz-SO & 0.3954 & 0.3540 & 0.3935 & 0.3540 & 0.4100 & experimental &
+\cite{Liu_2021_10_1016_j_tet_2020_131869} \\
+CzDCbTrz & 0.1759 & 0.1760 & 0.2349 & 0.2348 & 0.1200 & experimental & \cite{Kim_2017} \\
+CzPm & 0.2873 & 0.2766 & 0.3039 & 0.2960 & 0.1800 & experimental & \cite{Leitonas_2022} \\
+CzmPPC & 0.1031 & 0.1273 & 0.0742 & 0.0936 & 0.2800 & experimental &
+\cite{Chen_2022_10_1039_d2tc01435a} \\
+CzoB & 0.0786 & 0.0780 & 0.0975 & 0.1027 & 0.0900 & computational & \cite{Kumar_2019} \\
+DAcIPN & 0.3427 & 0.3327 & 0.3332 & 0.3215 & 0.0350 & experimental & \cite{Skuodis_2018}
+\\
+DBCP & 0.0634 & 0.0645 & 0.0814 & 0.1017 & 0.0813 & experimental &
+\cite{Chen_2022_10_1016_j_cej_2022_134731} \\
+DBQ-3PXZ & 0.1057 & 0.1015 & 0.0955 & 0.0920 & 0.0300 & experimental & \cite{Yu_2018} \\
+DBT-BZ-DMAC & 0.3142 & 0.3200 & 0.3062 & 0.3102 & 0.0800 & experimental &
+\cite{Barman_2022} \\
+DC-ACR & 0.0033 & 0.0030 & 0.0366 & 0.0414 & 0.0100 & experimental &
+\cite{Chen_2017_10_1039_c7tc01164d} \\
+DC-TC & 0.0052 & 0.0048 & 0.0056 & 0.0054 & 0.1400 & experimental &
+\cite{Chen_2017_10_1039_c7tc01164d} \\
+DCPDAPM & 0.0701 & 0.0701 & 0.5171 & 0.4998 & 0.1300 & computational &
+\cite{Zhao_2018_10_1039_c7tc04934j} \\
+DCz-DPPZ & 0.1560 & 0.1490 & 0.2024 & 0.1931 & 0.1900 & experimental &
+\cite{Zhang_2022_10_1016_j_dyepig_2022_110634} \\
+DCzBNPh-1 & 0.2563 & 0.2378 & 0.3209 & 0.2983 & 0.5000 & experimental & \cite{Yan_2022} \\
+DCzIPN & 0.3588 & 0.3410 & 0.3593 & 0.3429 & 0.1433 & experimental & \cite{Kreiza_2021} \\
+DDMA-TXO2 & 0.5414 & 0.5304 & 0.4180 & 0.3968 & 0.2200 & experimental & \cite{Ward_2020}
+\\
+DDPhCz-DPPZ & 0.1229 & 0.1229 & 0.1514 & 0.1470 & 0.1600 & experimental &
+\cite{Zhang_2022_10_1016_j_dyepig_2022_110634} \\
+DFDBQPXZ & 0.1692 & 0.1691 & 0.1596 & 0.1589 & 0.0000 & experimental &
+\cite{Yu_2018_10_1039_c7cc09925h} \\
+DHID-DBS & 0.4448 & 0.4129 & 0.4697 & 0.4490 & 0.3300 & experimental & \cite{Tongsuk_2021}
+\\
+DHID-DPS & 0.5477 & 0.5208 & 0.4687 & 0.4470 & 0.1800 & experimental & \cite{Tongsuk_2021}
+\\
+DHPZ-2BI & 0.2115 & 0.2147 & 0.2053 & 0.2075 & 0.1900 & experimental & \cite{Lee_2015} \\
+DMAC-11-DPPZ & 0.0560 & 0.0574 & 0.0714 & 0.0723 & 0.0803 & experimental &
+\cite{Zhou_2020} \\
+DMAC-AQ & 0.4361 & 0.4090 & 0.4923 & 0.4663 & 0.0633 & experimental &
+\cite{Huang_2022_10_1016_j_orgel_2022_106657} \\
+DMAC-BP & 0.0644 & 0.0658 & 0.5157 & 0.4999 & 0.0700 & experimental & \cite{Shakeel_2018}
+\\
+DMAC-Cz & 0.4201 & 0.3912 & 0.4611 & 0.4309 & 0.0007 & experimental &
+\cite{Zhang_2021_10_1016_j_orgel_2021_106312} \\
+DMAC-Cz-TTR & 0.2709 & 0.2527 & 0.2312 & 0.2200 & 0.0660 & experimental &
+\cite{Zhang_2021_10_1016_j_orgel_2021_106312} \\
+DMAC-DPS & 0.2222 & 0.2229 & 0.2340 & 0.2343 & 0.0100 & experimental & \cite{Luo_2016} \\
+DMAC-FO & 0.1247 & 0.1195 & 0.3839 & 0.3734 & 0.1400 & experimental &
+\cite{Yu_2019_10_1016_j_orgel_2019_06_008} \\
+DMAC-PCN & 0.1341 & 0.1504 & 0.1133 & 0.1292 & 0.1300 & experimental &
+\cite{Li_2020_10_1016_j_cej_2020_125276} \\
+DMAC-TRZ & 0.0485 & 0.0571 & 0.0494 & 0.0510 & 0.0500 & experimental &
+\cite{Braveenth_2023} \\
+DMACMNPTO & 0.5377 & 0.5222 & 0.5471 & 0.5302 & 0.2050 & experimental & \cite{Guo_2020} \\
+DMBFTX & 0.5437 & 0.4736 & 0.5723 & 0.5002 & 0.2800 & experimental &
+\cite{Wang_2018_10_1016_j_cclet_2017_07_025} \\
+DMIC-TRZ & 0.5193 & 0.6832 & 0.7550 & 1.3766 & 0.0560 & experimental &
+\cite{Chen_2022_10_1016_j_orgel_2022_106536} \\
+DMeCzIPN & 0.2790 & 0.2669 & 0.2781 & 0.2657 & 0.0910 & experimental & \cite{Kreiza_2021}
+\\
+DPACPhTPI & 0.2551 & 0.2503 & 0.2498 & 0.2437 & 0.7200 & experimental & \cite{Huang_2017}
+\\
+DPACpBr & 0.3348 & 0.3322 & 0.4044 & 0.3961 & 0.0020 & experimental & \cite{Lee_2021} \\
+DPE & 0.2845 & 0.2840 & 0.2987 & 0.2980 & 0.1800 & computational &
+\cite{He_2018_10_1039_c7tc02763j} \\
+DPE-DDMAc & 0.1751 & 0.1961 & 0.2781 & 0.3000 & 0.1800 & computational &
+\cite{He_2018_10_1039_c7tc02763j} \\
+DPE-DPXZ & 0.2852 & 0.2849 & 0.2996 & 0.2988 & 0.2000 & experimental &
+\cite{He_2018_10_1039_c7tc02763j} \\
+DPIBPZ-DPXZ & 0.1101 & 0.1057 & 0.1073 & 0.1034 & 0.0500 & experimental &
+\cite{Wang_2022_10_1016_j_cej_2021_134423} \\
+DPS-PXZ & 0.2879 & 0.2873 & 0.3129 & 0.3120 & 0.0500 & experimental & \cite{Leng_2020} \\
+DPXZ-DPPM & 0.1047 & 0.1014 & 0.1043 & 0.1013 & 0.0470 & experimental & \cite{Liang_2020}
+\\
+DQP & 0.0189 & 0.0396 & 0.0164 & 0.0402 & 0.0555 & experimental & \cite{Barman_2022} \\
+DTPTCzDP-CN & 0.2642 & 0.2402 & 0.2493 & 0.2321 & 0.0300 & experimental &
+\cite{Shi_2022_10_1016_j_dyepig_2022_110430} \\
+DV-3CzCN & 0.2477 & 0.2398 & 0.3404 & 0.3364 & 0.2300 & experimental &
+\cite{Sun_2022_10_1016_j_dyepig_2021_109967} \\
+DVCz-2CzCN & 0.2868 & 0.2623 & 0.2421 & 0.2332 & 0.1600 & experimental &
+\cite{Sun_2022_10_1016_j_orgel_2022_106442} \\
+DiCz-Sac & 0.2404 & 0.2322 & 0.2562 & 0.2469 & 0.2000 & experimental & \cite{Xiao_2021} \\
+ECDPTT & 0.3447 & 0.3433 & 0.3385 & 0.3331 & 0.0800 & experimental & \cite{Dong_2018} \\
+F2AcBO & 0.2847 & 0.2918 & 0.2588 & 0.2545 & 0.0750 & experimental &
+\cite{Chen_2022_10_1016_j_cej_2021_133078} \\
+FAC & 0.5171 & 0.4920 & 0.5458 & 0.5144 & 0.0900 & computational &
+\cite{Zhu_2022_10_1039_d2tc00344a} \\
+FDQPXZ & 0.1276 & 0.1217 & 0.1281 & 0.1225 & 0.0450 & experimental & \cite{Liu_2022} \\
+FSF4A & 0.2862 & 0.2912 & 0.2898 & 0.2923 & 0.0220 & experimental & \cite{Song_2021} \\
+Fene & 0.1297 & 0.1378 & 0.1967 & 0.2089 & 0.0250 & computational &
+\cite{Zhang_2021_10_1016_j_cclet_2020_07_041} \\
+Fens & 0.2404 & 0.2561 & 0.3481 & 0.3589 & 0.0200 & computational &
+\cite{Zhang_2021_10_1016_j_cclet_2020_07_041} \\
+FlCz & 0.1952 & 0.2170 & 0.2129 & 0.2360 & 0.5100 & experimental & \cite{Zhen_2022} \\
+IABTCN & 0.3551 & 0.3561 & 0.3843 & 0.3786 & 0.3998 & experimental & \cite{Kim_2019} \\
+ICBNTrz4 & 0.2041 & 0.1993 & 0.2097 & 0.2048 & 0.1000 & experimental &
+\cite{Lee_2022_10_1016_j_cej_2021_130988} \\
+IDAC-MCO & 0.4472 & 0.3996 & 0.4200 & 0.3755 & 0.0900 & experimental &
+\cite{Chen_2018_10_1016_j_orgel_2018_03_024} \\
+IDFL-2DPA & 0.2454 & 0.2221 & 0.2493 & 0.2259 & 0.4500 & experimental &
+\cite{Patil_2020_10_1016_j_cej_2020_125125} \\
+IQ-Se & 0.3316 & 0.3254 & 0.4327 & 0.4125 & 1.1800 & computational &
+\cite{Zhang_2022_10_1039_d1cc06380d} \\
+IpCm-PhBzAc & 0.5082 & 0.4902 & 0.5207 & 0.5015 & 0.3500 & experimental &
+\cite{Chen_2018_10_1039_c8tc02739k} \\
+MBF & 0.2198 & 0.2225 & 0.2260 & 0.2181 & 0.0100 & experimental & \cite{Zhan_2021} \\
+MCZ-P2-DTM & 0.2697 & 0.2587 & 0.2716 & 0.2621 & 0.2300 & experimental & \cite{Ma_2019} \\
+MPA & 0.2598 & 0.2577 & 0.2572 & 0.2543 & 0.1400 & experimental & \cite{Zhan_2021} \\
+MPPA & 0.1960 & 0.1890 & 0.1952 & 0.1867 & 0.1743 & experimental & \cite{Sharma_2022} \\
+Me-DMAC & 0.1117 & 0.1283 & 0.1387 & 0.1562 & 0.0100 & experimental &
+\cite{Li_2020_10_1039_c9tc05340a} \\
+Me-DOC & 0.4294 & 0.3786 & 0.4302 & 0.3763 & 0.2400 & computational & \cite{Liu_2020} \\
+Me-MOC & 0.3803 & 0.3386 & 0.3800 & 0.3370 & 0.2500 & computational & \cite{Liu_2020} \\
+Me2ACBO & 0.3142 & 0.3054 & 0.2883 & 0.2898 & 0.0500 & experimental &
+\cite{Chen_2022_10_1016_j_cej_2021_133078} \\
+MeOCzPCN & 0.4683 & 0.4467 & 0.4954 & 0.4673 & 0.0100 & experimental & \cite{Tsiko_2021}
+\\
+NA-TNA & 0.4044 & 0.4138 & 0.4040 & 0.4137 & 0.2400 & experimental & \cite{Zheng_2015} \\
+NAI–PhBiFA & 0.3697 & 0.3820 & 0.2973 & 0.3055 & 0.1200 & experimental & \cite{Chen_2019}
+\\
+NIDPA-1 & 0.3876 & 0.3588 & 0.4076 & 0.3773 & 0.6000 & experimental & \cite{Patil_2020} \\
+NPE-AcDPS & 0.4903 & 0.4850 & 0.3559 & 0.3563 & 0.0300 & experimental &
+\cite{Huang_2022_10_1016_j_dyepig_2021_109860} \\
+NyDPAc & 0.1657 & 0.1819 & 0.1808 & 0.1987 & 0.1520 & experimental & \cite{Lee_2020} \\
+NyDPO & 0.1494 & 0.1611 & 0.1945 & 0.2037 & 0.0333 & computational &
+\cite{Lee_2020_10_1039_d0tc01644f} \\
+OCzBN & 0.3704 & 0.3466 & 0.4579 & 0.4450 & 0.1400 & experimental & \cite{Ban_2019} \\
+OPDPO & 0.1450 & 0.1626 & 0.0857 & 0.0813 & 0.1300 & experimental & \cite{Zhao_2018} \\
+P4CzCN–BCz & 0.6006 & 0.6278 & 0.6999 & 0.7319 & 0.1700 & experimental &
+\cite{Zhou_2022_10_1039_d1tc05010a} \\
+PBICT & 0.2132 & 0.1980 & 0.3424 & 0.3194 & 0.0280 & experimental & \cite{Kothavale_2021}
+\\
+PFBP-2b & 0.1515 & 0.1519 & 0.1663 & 0.1583 & 0.0600 & experimental & \cite{Hladka_2018}
+\\
+PIAnTPh & 0.7770 & 0.7391 & 0.8291 & 0.7873 & 1.1400 & experimental &
+\cite{Liu_2021_10_1016_j_cej_2021_131351} \\
+PO-TPA & 0.1934 & 0.1883 & 0.3355 & 0.3190 & 0.2500 & experimental & \cite{Liang_2023} \\
+PPO21 & 0.3775 & 0.3353 & 0.3825 & 0.3406 & 0.0253 & computational &
+\cite{WeiXiaofang_2022} \\
+PPZPPI & 0.2203 & 0.2236 & 0.2151 & 0.2175 & 0.1100 & experimental &
+\cite{Huang_2018_10_1039_c7tc05576e} \\
+PPZTPI & 0.2232 & 0.2276 & 0.2160 & 0.2192 & 0.1100 & experimental &
+\cite{Huang_2018_10_1039_c7tc05576e} \\
+PS-BZ-DMAC & 0.5560 & 0.5307 & 0.5994 & 0.5716 & 0.0045 & experimental &
+\cite{Ma_2021_10_1016_j_dyepig_2021_109649} \\
+PSPBP & 0.2941 & 0.2927 & 0.2819 & 0.2814 & 0.1100 & experimental & \cite{Wu_2021} \\
+PSPP & 0.3194 & 0.3148 & 0.3162 & 0.3119 & 0.1100 & experimental & \cite{Wu_2021} \\
+PT-BZ-DMAC & 0.0678 & 0.0852 & 0.0520 & 0.0640 & 0.0084 & experimental &
+\cite{Ma_2021_10_1016_j_dyepig_2021_109649} \\
+PTPC & 0.2440 & 0.2387 & 0.2293 & 0.2245 & 0.6355 & experimental & \cite{Ying_2022} \\
+PTZ-2PTO & 0.2932 & 0.2868 & 0.2926 & 0.2929 & 0.2700 & experimental & \cite{Xiang_2019}
+\\
+PTZ-DCPP & 0.2776 & 0.2665 & 0.3429 & 0.3333 & 0.1867 & experimental & \cite{Wang_2018} \\
+PTZ-NAI & 0.0003 & 0.0003 & 0.1172 & 0.1133 & 0.0867 & experimental & \cite{Wang_2021} \\
+PX-TRZ & 0.2424 & 0.2355 & 0.2529 & 0.2507 & 0.0130 & experimental & \cite{Qu_2020} \\
+PXZ-10-DPPZ & 0.0924 & 0.0891 & 0.0913 & 0.0886 & 0.0365 & experimental & \cite{Zhou_2020}
+\\
+PXZ-11-DPPZ & 0.1207 & 0.1154 & 0.1309 & 0.1255 & 0.0507 & experimental & \cite{Zhou_2020}
+\\
+PXZ-BOO & 0.2410 & 0.2297 & 0.2536 & 0.2410 & 0.0600 & experimental &
+\cite{Chen_2020_10_1039_d0tc03747h} \\
+PXZ-NAI & 0.2654 & 0.2530 & 0.3109 & 0.2946 & 0.0600 & experimental & \cite{Wang_2021} \\
+PXZ-PPO & 0.5104 & 0.4859 & 0.5382 & 0.5229 & 0.6000 & experimental &
+\cite{Chen_2020_10_1039_d0tc03747h} \\
+PXZ-QL & 0.3702 & 0.3444 & 0.3846 & 0.3576 & 0.1000 & computational & \cite{Shen_2021} \\
+PXZ2PTO & 0.3385 & 0.3358 & 0.3417 & 0.3392 & 0.0233 & experimental &
+\cite{Xiang_2018_10_1039_c8tc03648a} \\
+PhQLPXZ & 0.1369 & 0.1437 & 0.1971 & 0.2118 & 0.0900 & experimental & \cite{Liu_2022} \\
+PrDPhAc & 0.4722 & 0.4514 & 0.5308 & 0.5046 & 0.0750 & computational &
+\cite{Liu_2016_10_1039_c6cc02856j} \\
+Pra-2DMAC & 0.5074 & 0.4925 & 0.5244 & 0.5098 & 0.4400 & experimental &
+\cite{Zhang_2021_10_1039_d0tc04315j} \\
+PxCN & 0.2607 & 0.2601 & 0.2562 & 0.2557 & 0.0367 & experimental & \cite{Choi_2019} \\
+PxCYP & 0.2325 & 0.2438 & 0.2431 & 0.2422 & 0.2000 & experimental & \cite{Choi_2020} \\
+PxPYM & 0.1691 & 0.1801 & 0.2358 & 0.2454 & 0.0100 & computational &
+\cite{Lee_2020_10_1039_d0ra07865d} \\
+Py-TPA & 0.1253 & 0.1357 & 0.1337 & 0.1335 & 0.1400 & computational & \cite{Tai_2023} \\
+PyDCN–DMAC & 0.2456 & 0.2665 & 0.3176 & 0.3359 & 0.0100 & experimental & \cite{Dong_2022}
+\\
+PyIAnTPh & 0.7218 & 0.6752 & 0.7861 & 0.7350 & 1.1400 & experimental &
+\cite{Liu_2021_10_1016_j_cej_2021_131351} \\
+SAF-2NP & 0.0816 & 0.0812 & 0.0892 & 0.0874 & 0.0400 & computational &
+\cite{Zhang_2022_10_1039_d2mh00639a} \\
+SBA-2DPS & 0.4557 & 0.4531 & 0.3631 & 0.3818 & 0.0900 & experimental & \cite{Zeng_2019} \\
+SBDBQ-PXZ & 0.1089 & 0.1046 & 0.1198 & 0.1154 & 0.0700 & experimental & \cite{Yu_2018} \\
+SBF-PXZ & 0.3045 & 0.3048 & 0.3249 & 0.3241 & 0.2600 & experimental & \cite{Jesuraj_2020}
+\\
+SBTF & 0.5022 & 0.4954 & 0.5297 & 0.5222 & 0.2000 & experimental & \cite{Cha_2015} \\
+SFAC-BP-SFAC & 0.0774 & 0.0786 & 0.0898 & 0.0919 & 0.0360 & experimental &
+\cite{Huang_2022} \\
+SFCz & 0.2013 & 0.2131 & 0.2129 & 0.2257 & 0.4800 & experimental & \cite{Zhen_2022} \\
+SFI23pPM & 0.2328 & 0.2146 & 0.2600 & 0.2406 & 0.3300 & experimental &
+\cite{Lv_2020_10_1039_d0tc00039f} \\
+SIR-A & 0.0001 & 0.0002 & 0.0000 & 0.0001 & 0.0160 & experimental & \cite{Pei_2022} \\
+SIR-B & 0.0070 & 0.0083 & 0.0015 & 0.0017 & 0.0140 & experimental & \cite{Pei_2022} \\
+SIR-C & 0.0082 & 0.0089 & -0.0005 & -0.0002 & 0.0150 & experimental & \cite{Pei_2022} \\
+SPAC-FO & 0.1398 & 0.1339 & 0.1384 & 0.1326 & 0.1300 & experimental &
+\cite{Yu_2019_10_1016_j_orgel_2019_06_008} \\
+SPFS-PXZ & 0.3291 & 0.3293 & 0.3238 & 0.3229 & 0.0153 & experimental &
+\cite{Fan_2019_10_1039_c9tc02032b} \\
+STAC-BP-STAC & 0.0858 & 0.0874 & 0.1261 & 0.1271 & 0.0520 & experimental &
+\cite{Huang_2022} \\
+SXAC-BP-SXAC & 0.0835 & 0.0851 & 0.0929 & 0.0948 & 0.0610 & experimental &
+\cite{Huang_2022} \\
+SiTCNCz & 0.2497 & 0.2300 & 0.2626 & 0.2416 & 0.1300 & experimental &
+\cite{Yun_2021_10_1039_d1tc03225a} \\
+Spiro-CN & 0.2889 & 0.2968 & 0.2696 & 0.2768 & 5.5000 & experimental &
+\cite{Nakagawa_2012} \\
+SpiroAC-TRZ & 0.0677 & 0.0679 & 0.0597 & 0.0616 & 0.0720 & experimental &
+\cite{Barman_2022} \\
+TATP-BP & 0.1452 & 0.1464 & 0.1292 & 0.1354 & 0.1290 & experimental &
+\cite{Chen_2018_10_1039_c8tc04721a} \\
+TBPe & 0.7123 & 0.6662 & 0.7738 & 0.7233 & 0.1200 & computational &
+\cite{Duan_2022_10_1039_d1sc05753g} \\
+TCPZ & 0.5340 & 0.5069 & 0.5735 & 0.5469 & 0.1400 & experimental & \cite{Zhang_2013} \\
+TCZ1 & 0.4017 & 0.3602 & 0.4205 & 0.3767 & 0.0160 & experimental & \cite{Skuodis_2018} \\
+TCz1 & 0.4013 & 0.3599 & 0.4206 & 0.3771 & 0.1000 & experimental & \cite{Bezvikonnyi_2019}
+\\
+TCzTrz & 0.1798 & 0.1783 & 0.2079 & 0.2050 & 0.1400 & experimental & \cite{Kim_2017} \\
+TMDBP & 0.5203 & 0.5192 & 0.5528 & 0.5493 & 0.1000 & experimental & \cite{Chai_2020} \\
+TNPZ & 0.0818 & 0.0930 & 0.0960 & 0.1087 & 0.1700 & computational &
+\cite{Liu_2023_10_1039_d2sc06335b} \\
+TPA-2 & 0.0416 & 0.0478 & 0.1131 & 0.1203 & 0.1450 & experimental &
+\cite{Zhao_2021_10_1016_j_mtchem_2021_100625} \\
+TPA-DCPP & 0.1746 & 0.1796 & 0.1812 & 0.1855 & 0.1480 & experimental & \cite{Barman_2022}
+\\
+TPADSO2 & 0.4055 & 0.3964 & 0.3925 & 0.3818 & 0.3800 & experimental &
+\cite{Sun_2017_10_1016_j_dyepig_2016_12_037} \\
+TPAPm & 0.4500 & 0.4557 & 0.4763 & 0.4820 & 0.3200 & experimental & \cite{Tsiko_2022} \\
+TPD4PA & 0.3244 & 0.2950 & 0.3337 & 0.3056 & 0.0500 & experimental & \cite{Naveen_2023} \\
+TPSi-F & 0.6295 & 0.6174 & 0.6494 & 0.6375 & 0.1000 & experimental & \cite{M_hes_2014} \\
+TPXZ-as-TAZ & 0.0953 & 0.0968 & 0.1079 & 0.1048 & 0.2200 & experimental &
+\cite{Zhang_2018} \\
+TPXZ–as-TAZ & 0.0983 & 0.0984 & 0.0271 & 0.0357 & 0.0300 & experimental &
+\cite{Xiang_2016} \\
+TRZ-pIC & 0.4296 & 0.3745 & 0.4447 & 0.3877 & 0.2900 & experimental & \cite{Maeng_2020} \\
+TX-CzPh & 0.5513 & 0.4893 & 0.5517 & 0.4916 & 0.6700 & computational &
+\cite{WangShuai_2021} \\
+TXO-P-Si & -0.0053 & -0.0056 & -0.0027 & -0.0027 & 0.5222 & experimental &
+\cite{WeiXiaofang_2022} \\
+Tri-PXZ-PCN & 0.1726 & 0.1682 & 0.1583 & 0.1532 & 0.0500 & experimental &
+\cite{Chen_2018_10_1039_c8tc01698d} \\
+TrisCz-Trz & 0.1356 & 0.1368 & 0.2203 & 0.2251 & 0.0700 & experimental & \cite{Cha_2017}
+\\
+UGH3 & -0.0012 & 0.0083 & 0.0170 & 0.0280 & 0.2200 & experimental & \cite{Ward_2020} \\
+VBC-PTZ & 0.4336 & 0.4376 & 0.4823 & 0.4872 & 0.5300 & experimental & \cite{Su_2022} \\
+VBN0 & 0.3552 & 0.3499 & 0.4127 & 0.4015 & 0.1100 & experimental & \cite{Sun_2022} \\
+V–TPA & 0.2797 & 0.2756 & 0.2992 & 0.2941 & 0.6210 & experimental & \cite{Ban_2022} \\
+Yad & 0.3868 & 0.3562 & 0.4022 & 0.3704 & 0.0200 & computational &
+\cite{Zhang_2021_10_1016_j_cclet_2020_07_041} \\
+czpzpy & 0.4202 & 0.3853 & 0.4351 & 0.3990 & 0.1300 & experimental & \cite{Chen_2015} \\
+dbG2TAZ & 0.4466 & 0.4517 & 0.4754 & 0.4820 & 0.5300 & experimental & \cite{Albrecht_2017}
+\\
+m-CZ-DPS-DMAC & 0.3204 & 0.2975 & 0.3722 & 0.3450 & 0.2100 & experimental &
+\cite{Dong_2023} \\
+m-DTPACO & 0.3172 & 0.3132 & 0.3495 & 0.3436 & 0.2100 & experimental & \cite{Hu_2017} \\
+m-$\nu$-DABNA & 0.2892 & 0.2722 & 0.2900 & 0.2738 & 0.0700 & experimental &
+\cite{Rayappa_Naveen_2022} \\
+m2Cz2Trz & 0.1515 & 0.1484 & 0.1759 & 0.1742 & 0.0900 & experimental & \cite{Lee_2018} \\
+mCP-BP-DMAC & 0.2872 & 0.2856 & 0.2875 & 0.2859 & 0.0160 & experimental & \cite{Wu_2023} \\
+mDPBPZ-DPXZ & 0.1066 & 0.1030 & 0.1053 & 0.1025 & 0.0200 & computational & \cite{Wang_2022_10_1016_j_cej_2021_134423} \\
+mP2MPC & 0.2837 & 0.2741 & 0.2978 & 0.2844 & 0.6500 & experimental & \cite{Peng_2022} \\
+mPTBC & 0.2343 & 0.2243 & 0.2175 & 0.2081 & 0.0060 & experimental & \cite{Wang_2017_10_1016_j_dyepig_2017_04_024} \\
+mTPA–PPI & 0.2582 & 0.2558 & 0.2701 & 0.2628 & 0.7600 & experimental & \cite{Liu_2015} \\
+oPTBC & 0.1336 & 0.1284 & 0.1281 & 0.1232 & 0.0070 & experimental & \cite{Wang_2017_10_1016_j_dyepig_2017_04_024} \\
+p-DTPACO & 0.4180 & 0.4096 & 0.4450 & 0.4365 & 0.0500 & experimental & \cite{Hu_2017} \\
+pDPAPQ-PXZ & 0.1777 & 0.1708 & 0.1956 & 0.1877 & 0.0600 & experimental & \cite{Zhou_2022_10_1016_j_cej_2022_135775} \\
+pDPBPZ-PXZ & 0.0906 & 0.0982 & 0.0988 & 0.1070 & 0.0600 & experimental & \cite{Zhou_2022_10_1016_j_cej_2022_135775} \\
+pDTCz-2DPyS & 0.2269 & 0.2264 & 0.2872 & 0.2793 & 0.2100 & experimental & \cite{Rajamalli_2019} \\
+pSFIAc2 & 0.3667 & 0.3178 & 0.3779 & 0.3305 & 0.3100 & experimental & \cite{Meng_2022} \\
+t-BuPCz & 0.3330 & 0.2985 & 0.3504 & 0.3140 & 0.0800 & experimental & \cite{Zhou_2019_10_1039_c9cc06804j} \\
+t-DABNA & 0.4476 & 0.3993 & 0.4608 & 0.4111 & 0.1600 & experimental & \cite{Kim_2021} \\
+t3Cz-SO & 0.3555 & 0.3196 & 0.3436 & 0.3105 & 0.2600 & experimental & \cite{Liu_2021_10_1016_j_tet_2020_131869} \\
+tCbz-mPYRs & 0.2990 & 0.2843 & 0.3273 & 0.3107 & 0.4150 & computational & \cite{Serevi_ius_2020_10_1016_j_orgel_2020_105723} \\
+t–BuCz2BP & 0.3370 & 0.3279 & 0.3345 & 0.3371 & 0.2150 & experimental & \cite{Huang_2016} \\
+$\alpha$-2CbPN & 0.2931 & 0.2856 & 0.3139 & 0.3036 & 0.2600 & experimental &
+\cite{Kim_2017} \\
+$\alpha$-2DMAC-DBP & 0.0552 & 0.0562 & 0.0580 & 0.0595 & 0.0250 & experimental &
+\cite{Maeng_2021} \\
+$\alpha$-DMAC-DBP & 0.0521 & 0.0525 & 0.0511 & 0.0517 & 0.0925 & experimental &
+\cite{Maeng_2021} \\
+$\beta$-DI-DBP & 0.1070 & 0.1192 & 0.1275 & 0.1408 & 0.1600 & experimental &
+\cite{Maeng_2021} \\
+$\delta$-2CbPN & 0.2610 & 0.2545 & 0.2760 & 0.2673 & 0.1300 & experimental &
+\cite{Kim_2017} \\
+\end{longtable}
+}
+
+
+===== table_comparative_summary.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Comparative performance summary of computational methods. The table shows the best performing method for each property and metric.}
+\label{tab:comparative-summary}
+\begin{tabular}{lcccc}
+	\hline
+	\textbf{Property} & \textbf{Best MAE} & \textbf{Best RMSE} & \textbf{Best R$^2$} & \textbf{Best Pearson r} \\ \hline
+	$\lambda_{PL}$    &   sTD-DFT (Tol)   &   sTD-DFT (Tol)    &    sTD-DFT (Tol)    &      sTD-DFT (Tol)      \\
+	(nm)              &       78.76       &       118.76       &       -1.2498       &         0.6922          \\ \hline
+	$\Delta E_{ST}$   &   sTD-DFT (Gas)   &   sTD-DFT (Gas)    &    sTD-DFT (Gas)    &      sTD-DFT (Gas)      \\
+	(eV)              &      0.1680       &       0.3635       &       -0.0493       &         0.1827          \\ \hline
+\end{tabular}
+\end{table}
+
+===== table_emission_wavelength_metrics.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Statistical metrics for emission wavelength predictions (\(\lambda_{\mathrm{PL}}\)) comparing sTDA and sTD-DFT methods in gas and toluene phases against experimental/computational literature values (N=213 molecules).}
+\label{tab:emission-wavelength-metrics}
+\begin{tabular}{lccccc}
+	\hline
+	\textbf{Method}   & \textbf{MAE (nm)} & \textbf{RMSE (nm)} & \(\mathbf{R^2}\) & \textbf{Pearson \(r\)} & \textbf{\(p\)-value} \\ \hline
+	sTDA (Gas)        &       89.2        &       149.0        &      -2.54       &         0.561          &       4.50e-19       \\
+	sTD-DFT (Gas)     &       85.3        &       135.4        &      -1.93       &         0.630          &       5.94e-25       \\
+	sTDA (Toluene)    &       80.7        &       124.0        &      -1.45       &         0.663          &       2.48e-28       \\
+	sTD-DFT (Toluene) &       78.8        &       118.8        &      -1.25       &         0.692          &       1.02e-31       \\ \hline
+\end{tabular}
+\end{table}
+
+===== table_pl_metrics.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Statistical metrics for Photoluminescence Wavelength predictions. Comparison of sTDA and sTD-DFT methods in gas phase and toluene phase against reference data from literature.}
+\label{tab:table-pl-metrics}
+\begin{tabular}{lccccccc}
+	\hline
+	\textbf{Method} & \textbf{N} & \textbf{MAE} & \textbf{RMSE} & \textbf{R$^2$} & \textbf{Pearson r} & \textbf{MAPE} & \textbf{Max Error} \\
+	                &            &     (nm)     &     (nm)      &                &                    &     (\%)      &        (nm)        \\ \hline
+	sTDA Gas        &    213     &    89.24     &    149.01     &    -2.5419     &       0.5612       &     17.7      &       684.89       \\
+	sTD-DFT Gas     &    213     &    85.28     &    135.43     &    -1.9257     &       0.6299       &     16.6      &       621.59       \\
+	sTDA Tol        &    213     &    80.68     &    124.03     &    -1.4538     &       0.6629       &     15.7      &       495.89       \\
+	sTD-DFT Tol     &    213     &    78.76     &    118.76     &    -1.2498     &       0.6922       &     15.2      &       474.81       \\ \hline
+\end{tabular}
+\end{table}
+
+===== table_st_gap_metrics.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Statistical metrics for singlet-triplet energy gap predictions (\(\Delta E_{\mathrm{ST}}\)) comparing sTDA and sTD-DFT methods in gas and toluene phases against experimental/computational literature values (N=296 molecules).}
+\label{tab:st-gap-metrics}
+\begin{tabular}{lccccc}
+	\hline
+	\textbf{Method}   & \textbf{MAE (eV)} & \textbf{RMSE (eV)} & \(\mathbf{R^2}\) & \textbf{Pearson \(r\)} & \textbf{\(p\)-value} \\ \hline
+	sTDA (Gas)        &       0.174       &       0.367        &      -0.07       &         0.181          &       1.80e-03       \\
+	sTD-DFT (Gas)     &       0.168       &       0.364        &      -0.05       &         0.183          &       1.60e-03       \\
+	sTDA (Toluene)    &       0.188       &       0.376        &      -0.12       &         0.161          &       5.39e-03       \\
+	sTD-DFT (Toluene) &       0.183       &       0.377        &      -0.13       &         0.147          &       1.11e-02       \\ \hline
+\end{tabular}
+\end{table}
+
+===== table_st_metrics.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Statistical metrics for Singlet-Triplet Energy Gap predictions. Comparison of sTDA and sTD-DFT methods in gas phase and toluene phase against reference data from literature.}
+\label{tab:table-st-metrics}
+\begin{tabular}{lccccccc}
+	\hline
+	\textbf{Method} & \textbf{N} & \textbf{MAE} & \textbf{RMSE} & \textbf{R$^2$} & \textbf{Pearson r} & \textbf{MAPE} & \textbf{Max Error} \\
+	                &            &     (eV)     &     (eV)      &                &                    &     (\%)      &        (eV)        \\ \hline
+	sTDA Gas        &    296     &     0.17     &     0.37      &    -0.0695     &       0.1807       &      inf      &        5.21        \\
+	sTD-DFT Gas     &    296     &     0.17     &     0.36      &    -0.0493     &       0.1827       &      inf      &        5.20        \\
+	sTDA Tol        &    296     &     0.19     &     0.38      &    -0.1232     &       0.1614       &      inf      &        5.23        \\
+	sTD-DFT Tol     &    296     &     0.18     &     0.38      &    -0.1285     &       0.1475       &      inf      &        5.22        \\ \hline
+\end{tabular}
+\end{table}
+
+===== table_validation_examples.tex =====
+\begin{table}[htbp]
+\centering
+\caption{Representative examples from the emission wavelength validation dataset.
+Molecules are selected to span the full range of prediction errors. Complete validation
+dataset is provided in Supplementary \Cref{tab:supp-emission-complete,tab:supp-st-complete}.}
+% S1 and S2
+\label{tab:validation-examples}
+\small
+\begin{tabular}{lcccccc}
+	\hline
+	\textbf{Molecule} & \textbf{sTDA}  & \textbf{sTD-DFT} & \textbf{sTDA}  & \textbf{sTD-DFT} & \textbf{Ref.} &                 \textbf{Ref.}                 \\
+	                  & \textbf{(Gas)} &  \textbf{(Gas)}  & \textbf{(Tol)} &  \textbf{(Tol)}  & \textbf{(nm)} &                                               \\ \hline
+	DCzBNPh-1         &     472.4      &      475.7       &     442.1      &      445.7       &     472.5     &                \cite{Yan_2022}                \\
+	BACH              &     433.6      &      439.5       &     409.9      &      415.7       &     427.7     &  \cite{Li_2022_10_1016_j_dyepig_2021_110030}  \\
+	PyDCN–DMAC        &     508.7      &      504.4       &     496.9      &      493.2       &     494.2     &               \cite{Dong_2022}                \\
+	tCTM              &     483.8      &      487.0       &     483.3      &      483.5       &     459.0     &                \cite{Tan_2020}                \\
+	t-DABNA           &     431.1      &      438.5       &     418.4      &      425.5       &     464.0     &      \cite{Lee_2019_10_1039_c9tc02746g}       \\
+	TPBPPI-PBI        &     472.9      &      473.4       &     461.4      &      462.6       &     429.0     &                \cite{Zhu_2020}                \\
+	2Cz-DMAC-BTB      &     474.2      &      471.3       &     535.1      &      531.4       &     529.0     & \cite{Zhang_2022_10_1016_j_cclet_2021_08_064} \\
+	TBPe              &     542.6      &      553.7       &     500.3      &      510.7       &     471.0     &                \cite{Yao_2019}                \\
+	DPCN              &     511.7      &      511.6       &     508.0      &      508.3       &     424.0     & \cite{Xiao_2022_10_1016_j_dyepig_2022_110451} \\
+	TRZ-3SO2          &     577.4      &      572.9       &     540.6      &      539.9       &     706.0     &     \cite{Zhang_2022_10_1039_d2tc02694e}      \\
+	SBDBQ-PXZ         &     843.2      &      845.7       &     751.8      &      753.8       &     594.0     &                \cite{Yu_2018}                 \\
+	{[2,1-b]IF}       &     1031.9     &      586.3       &     770.2      &      571.9       &     347.0     &              \cite{Romain_2016}               \\ \hline
+	\multicolumn{7}{l}{\footnotesize Complete dataset: 213 molecules (emission), 296 molecules (ST gap)}
+\end{tabular}
+\end{table}

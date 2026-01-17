@@ -1,0 +1,7 @@
+\section{Limitations}\label{sec:limitation}
+
+While involving domain-specific knowledge in the questions, some numerical questions in our dataset are relatively simple. Although complex mathematical reasoning is not the primary focus of this work, combining scientific knowledge with deeper quantitative reasoning is a promising future direction.
+Another limitation lies in the use of a multiple-choice question (MCQ) format. Despite our efforts to carefully design questions and diversify answer choices to reduce superficial patterns, the format inherently introduces the risk of models exploiting spurious heuristics. Evaluating and verifying open-ended research questions such as causal reasoning and analysis remains an open challenge in advancing scientific reasoning abilities of LLMs.
+
+\section{Conclusion}
+We present WildSci, a dataset of verifiable scientific reasoning questions automatically generated from peer-reviewed papers. Our pipeline synthesizes questions across 9 disciplines and 26 subdomains, using model voting for quality control and pairing each question with 10 answer options. RLVR training on WildSci leads to improved performance on multiple science reasoning benchmarks. Training dynamics further confirm the effectiveness and generalizability of our data. As scientific literature continues to grow, WildSci offers a sustainable approach to converting real world research articles into valuable data for advancing scientific reasoning in language models.

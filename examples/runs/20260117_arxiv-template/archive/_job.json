@@ -1,0 +1,39 @@
+{
+  "date": "2026-01-17",
+  "src_file": "examples\\instructions\\20260117_arxiv-template.txt",
+  "root_dir": "examples\\runs\\20260117_arxiv-template",
+  "out_dir": "examples\\runs\\20260117_arxiv-template\\archive",
+  "query_id": "20260117_arxiv-template",
+  "lang_pref": null,
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": true,
+  "update_run": false,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://arxiv.org/abs/2511.00922",
+    "https://arxiv.org/abs/2512.06029",
+    "https://arxiv.org/abs/1901.01201"
+  ],
+  "arxiv_ids": [
+    "2511.00922",
+    "2512.06029",
+    "1901.01201"
+  ],
+  "site_hints": [],
+  "raw_lines": [
+    "https://arxiv.org/abs/2511.00922",
+    "https://arxiv.org/abs/2512.06029",
+    "https://arxiv.org/abs/1901.01201"
+  ]
+}

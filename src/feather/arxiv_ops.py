@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+import tarfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -105,6 +106,31 @@ def arxiv_download_pdf(pdf_url: str, out_pdf: Path, timeout: int = 120) -> None:
             for chunk in r.iter_content(chunk_size=1024 * 512):
                 if chunk:
                     f.write(chunk)
+
+
+def arxiv_download_source(arxiv_id: str, out_tar: Path, timeout: int = 120) -> None:
+    out_tar.parent.mkdir(parents=True, exist_ok=True)
+    url = f"https://arxiv.org/e-print/{arxiv_id}"
+    with requests.get(url, stream=True, timeout=timeout, headers=request_headers()) as r:
+        r.raise_for_status()
+        with out_tar.open("wb") as f:
+            for chunk in r.iter_content(chunk_size=1024 * 512):
+                if chunk:
+                    f.write(chunk)
+
+
+def extract_arxiv_source(archive_path: Path, out_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive_path, "r:*") as tar:
+        members = []
+        for member in tar.getmembers():
+            if not member.name or member.name.startswith("/") or ".." in member.name:
+                continue
+            target = (out_dir / member.name).resolve()
+            if out_dir.resolve() not in target.parents and target != out_dir.resolve():
+                continue
+            members.append(member)
+        tar.extractall(out_dir, members=members)
 
 
 def pdf_to_text(pdf_path: Path) -> str:

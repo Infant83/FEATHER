@@ -1,0 +1,127 @@
+\documentclass[11pt]{article}
+\usepackage{kotex}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{times}
+\title{ Federlicht Report - 20260116\_arxiv-materials }
+\author{ Hyun-Jung Kim / AI Governance Team }
+\date{ 2026-01-16 }
+\begin{document}
+\maketitle
+
+\noindent\textit{Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-16 23:30}
+
+\section{Abstract}
+본 보고서는 arXiv 논문 “WildSci: Advancing Scientific Reasoning from In-the-Wild Literature”를 중심으로, 재료과학자 및 R\&D 리더 관점에서 “문헌 기반(연구 논문) 데이터 합성 + 검증가능 보상 기반 강화학습(RLVR)”이 재료 연구·발견 워크플로에 주는 의미를 평가한다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}. 저자들은 교재·문제집 중심 데이터가 포착하기 어려운 연구-수준 과학 질문을 peer-reviewed 오픈액세스 논문에서 완전 자동 파이프라인으로 생성해 WildSci(56K, 9 disciplines/26 subdomains)를 구축했다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}, \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 핵심 설계는 오픈엔드 문제를 10개 선택지의 MCQ로 구조화하고 “unanswerable” 옵션과 모델 보팅을 결합해, 정답 매칭 기반의 단순하고 확장 가능한 보상 신호를 만든다는 점이다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 실험에서 GRPO로 학습한 소형 모델(Qwen2.5-1.5B/3B)은 WildSci-Val 및 GPQA-Aug, SuperGPQA, MMLU-Pro 등 외부 벤치마크에서 정확도를 일관되게 향상시키며(예: 1.5B OOD 평균 24.52$\rightarrow$31.78), 과학 영역 RLVR의 실증적 발판을 제시한다 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}. 그러나 데이터 생성이 텍스트-only로 제한되고(그림/표 제외) 정밀 수치 의존을 금지하기 때문에, 재료과학의 핵심 근거인 도표 판독, 표 기반 정량 비교, 특성화 이미지/스펙트럼 등 멀티모달 증거 통합과는 구조적 간극이 남는다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 본 보고서는 이 간극을 병목으로 규정하고, 재료 발견의 의사결정 루프에 문헌-근거형 추론을 통합하기 위한 실행 가능한 다음 단계 질문을 제시한다.
+
+\section{Introduction}
+재료 연구에서 “새로운 조성/구조/공정”을 설계하는 속도는, 실험 장비 성능뿐 아니라 문헌에서 근거를 추출하고 상충 결과를 조정하며 설계 규칙을 재구성하는 능력에 의해 제한된다. 이런 작업은 텍스트 요약을 넘어, 연구-수준 문맥에서의 원인-결과 설명, 방법론 선택의 정당화, 대안 가설의 배제 같은 추론을 요구한다.
+
+WildSci가 겨냥하는 AI-for-science 병목은 과학 영역에서 RLVR이 상대적으로 덜 탐구되어 왔다는 점이다. 저자들은 과학 질문이 복잡하고 다면적이며, 기존 데이터셋이 물리/화학/생물에 편중되어 materials science 같은 학제 분야가 과소대표될 수 있음을 명시한다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}. 또한 교재/문제집 혹은 일반 코퍼스 기반 데이터는 연구 논문 특유의 “연구-맥락(reasoning in context)”을 충분히 담지 못한다고 본다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}.
+
+이 논문은 해결 전략으로 peer-reviewed scientific literature를 직접 데이터 소스로 삼고, 오픈엔드 성격의 과학 질문을 MCQ로 구조화해 “명확한 supervision/reward”를 만들겠다고 제안한다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}. 재료과학 관점에서 핵심 질문은 다음으로 압축된다. (i) 문헌 텍스트에 내재한 과학적 정당화를 “검증 가능한 추론 단위”로 표준화할 수 있는가, (ii) 그 표준화가 실제 재료 발견의 결정적 증거(도표·정량·멀티모달)를 얼마나 포괄하는가 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.
+
+\section{Main Findings}
+\subsection{1. 연구 논문 기반의 완전 자동 합성 파이프라인이 대규모 과학추론 MCQ(56K)를 생산한다}
+저자들은 Nature Communications 오픈액세스 논문을 입력으로 질문 생성$\rightarrow$필터링$\rightarrow$정제(refinement)$\rightarrow$모델 보팅으로 이어지는 “fully automated” 파이프라인을 통해 WildSci(56K, 9 disciplines/26 subdomains)를 구축했다고 보고한다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}, \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 파이프라인 개요 도식은 filtering이 heuristic rules에 기반하고, refinement가 선택지 공간 확장 및 재진술로 다양성과 난이도를 높인다고 명시한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. (그림: \texttt{./archive/arxiv/src/2601.05567/figs/pipeline.pdf})
+
+\subsection{2. MCQ(10-option)와 “unanswerable” 및 보팅이 RLVR을 위한 검증가능 보상 구조를 만든다}
+오픈엔드 과학 질문의 보상 설계 난점을 완화하기 위해, 저자들은 과제를 MCQ로 구조화하고 명확한 정답 선택을 요구한다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}. Methods에서는 “unanswerable/None of the above” 선택지를 도입해 모델들이 불명확 문항을 표시하게 하고, 다수 모델이 unanswerable을 고르면 해당 문항을 폐기하는 품질 제어를 설명한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 그 결과, 보상은 예측 선택지 $\hat y$와 synthetic label $y_{\texttt{syn}}$의 일치 여부에 따른 0/1 매칭으로 정의되며, epoch마다 choice shuffle로 위치 암기를 억제한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 이 설계는 “대규모 자동 채점이 가능한 학습 신호”를 제공한다는 점에서, 조직 단위 R\&D에서 재현성과 운영 가능성을 높인다.
+
+\subsection{3. 텍스트-only 및 context-independent 제약은 확장성과 검증가능성을 얻는 대신, 재료과학의 핵심 증거 양식을 배제한다}
+저자들은 논문이 텍스트와 시각 자료를 포함하더라도 title/abstract/main body만 사용하고 figures/tables는 제외한다고 명시한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 또한 질문은 figures/tables/precise numerical details에 의존하지 않는 “context-independent” 형태로 제한된다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 재료과학에서는 성능 비교표, 조성-물성 그래프, 전기화학 곡선, XRD/SEM/스펙트럼 해석 등 도표·정량·멀티모달 증거가 의사결정의 중심이기 때문에, 본 데이터 설계는 발견 전주기(end-to-end) 적용에 구조적 공백을 남긴다(사실: 배제는 논문에 근거) \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.
+
+\subsection{4. GRPO 기반 RLVR이 소형 모델의 과학추론 정확도를 외부 벤치마크에서 개선한다}
+Results의 메인 테이블에서 Qwen2.5-1.5B-Instruct는 WildSci All Aligned로 학습 후 WildSci-Val 46.70\%$\rightarrow$80.48\%로 상승하며, GPQA-Aug/SuperGPQA/MMLU-Pro 평균이 24.52$\rightarrow$31.78로 증가한다 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}. 3B에서도 평균 31.80$\rightarrow$36.25로 개선된다 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}. 또한 검증 성능이 하락한 이후에도 외부 테스트 성능이 계속 상승하는 “post-saturation generalization”을 그림과 함께 보고하며, 과학 RL 추론 연구의 테스트베드 가능성을 주장한다 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}. (그림: \texttt{./archive/arxiv/src/2601.05567/figs/valid\_test\_allaligned\_3b.pdf})
+
+\subsection{5. 오염 최소화와 품질 프록시(합의 수준 분할)가 운영 관점의 데이터 거버넌스를 제공한다}
+Methods에서 GPQA, SuperGPQA, MMLU-Pro에 대해 13-gram dedup을 수행했고 overlap rate 0.0\%를 보고해 contamination 리스크 완화를 주장한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 또한 모델 보팅 합의 수준에 따라 All Aligned / Majority Aligned / Majority Divergent / All Divergent로 분할해 난이도·명확성의 프록시로 사용한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 부록에서는 All-Aligned 500문항에서 Gemini-2.5-Flash/Pro가 synthetic label과 각각 95.0\%/96.0\% 일치함을 제시해 주석 일관성을 추가로 뒷받침한다 \href{./archive/arxiv/src/2601.05567/ch\_appendix.tex}{[4]}.
+
+\section{Methods}
+WildSci의 방법론은 “문헌$\rightarrow$MCQ$\rightarrow$검증가능 보상$\rightarrow$RLVR”의 닫힌 고리를, 텍스트-only 제약 아래에서 자동화하는 데 초점을 둔다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 데이터 소스는 Nature Communications 오픈액세스 논문이며, 저널의 분류 체계를 SuperGPQA taxonomy에 맞춰 9개 discipline으로 재구성하고 카테고리 균형 샘플링 후 paper당 3문항을 생성한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. QA 생성은 LLM이 논문 텍스트를 읽고 MCQ/정답/근거를 만들되, figures/tables/정밀 수치에 의존하지 않는 context-independent 질문을 만들도록 제한한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 이후 heuristic+keyword 기반 filtering과 13-gram dedup으로 노이즈 및 중복을 줄이고, refinement로 paraphrase 및 선택지 확장(4$\rightarrow$10) 등을 수행한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 마지막으로 모델 보팅과 unanswerable 처리로 모호 문항을 제거하고, GRPO로 RLVR 학습을 수행한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.
+
+\section{Discussion}
+\subsection{재료과학 관점의 핵심 가치: ‘문헌 정당화’를 학습 가능한 검증 단위로 변환한다}
+재료 연구에서 설계 규칙과 메커니즘 해석은 문헌 텍스트로 축적되는 경우가 많다. WildSci는 교재형 지식보다 연구 논문이 제공하는 “깊이·문맥·논증 구조”를 데이터화하려는 시도로, 문헌 기반 추론을 대규모로 표준화할 수 있음을 보여준다 \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{[1]}. 특히 MCQ로의 구조화는 RLVR에 필요한 명확한 보상 정의를 가능하게 하며, 이는 “문헌을 읽고 결론을 고르는” 반복 작업을 시스템적으로 학습 신호로 바꾸는 장점이 있다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.
+
+\subsection{병목 1: 텍스트-only 설계가 재료 발견의 결정적 증거(도표·정량·멀티모달)를 비워 둔다}
+WildSci는 시각 자료를 제외하고 정밀 수치 의존을 금지한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 이 선택은 자동화와 검증가능 보상에 유리하지만, 재료과학 R\&D의 대표적 판단 근거(예: 조성-물성 상관의 그래프 형태, 성능 표의 미세한 수치 차이, 특성화 신호의 패턴 해석)가 학습·평가에서 직접 다뤄지지 않는다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 따라서 WildSci가 강화할 가능성이 큰 능력은 텍스트로 서술된 인과·방법론·개념 추론이며, “정량 최적화”나 “멀티모달 근거 통합”은 본 논문이 의도적으로 범위 밖에 둔 영역이다(배제 자체는 근거 있음) \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.
+
+\subsection{병목 2: MCQ 기반 RLVR의 강점과 취약점(휴리스틱, 오픈엔드 검증 문제)}
+저자들은 결론에서 MCQ 포맷이 spurious heuristics 위험을 가질 수 있고, open-ended research questions(예: causal reasoning/analysis)의 평가·검증은 여전히 열린 문제라고 명시한다 \href{./archive/arxiv/src/2601.05567/ch\_conclusion.tex}{[5]}. 또한 일부 numerical questions가 단순하다는 한계를 언급하며, 과학 지식과 더 깊은 정량 추론의 결합을 미래 방향으로 제시한다 \href{./archive/arxiv/src/2601.05567/ch\_conclusion.tex}{[5]}. 재료과학에서 이는 “정답이 단일 선택지로 환원되기 어려운” 설계·해석 과제(상충 데이터, 불확실성, 모델 선택)가 여전히 미해결임을 뜻한다.
+
+\subsection{인접 벤치마크/접근과의 관계(논문이 제공하는 근거 범위 내)}
+본 논문은 GPQA-Aug, SuperGPQA, MMLU-Pro를 외부 평가로 사용해 일반화 개선을 보고하며 \href{./archive/arxiv/src/2601.05567/ch\_experiments.tex}{[6]}, \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}, 해당 벤치마크들과의 13-gram dedup overlap 0.0\%를 제시해 데이터 오염 최소화를 주장한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 또한 부록에서는 UMAP 시각화를 통해 WildSci가 기존 벤치마크가 덜 커버하는 영역을 점유한다고 보고한다 \href{./archive/arxiv/src/2601.05567/ch\_appendix.tex}{[4]}. (그림: \texttt{./archive/arxiv/src/2601.05567/figs/umap.pdf}) 다만 이러한 비교는 “질문 분포/평가 정확도” 차원이며, 재료과학의 물리량 예측·실험 설계 최적화 같은 과제와의 직접 비교는 본 논문에서 다루지 않는다.
+
+\section{Outlook}
+\subsection{재료과학 R\&D를 위한 실행 가능한 다음 단계(3--5개)}
+(1) \textbf{문헌-근거형 추론의 적용 범위를 ‘텍스트로 충분한 의사결정’ 작업으로 먼저 고정하라.} WildSci는 텍스트-only 추론을 강화하도록 설계되었다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.  
+\textbf{Next-step question:} 내부 워크플로에서 “도표 없이도” 문헌 기반 결정이 가능한 업무(메커니즘 가설 정련, 방법론 선택 근거 점검, 반례 탐색)는 무엇이며, 이를 리드타임/재현성 같은 KPI로 어떻게 측정할 것인가?
+
+(2) \textbf{그림/표를 포함하면서도 ‘검증가능 보상’을 유지하는 문제 규격을 별도 트랙으로 설계하라.} WildSci는 figures/tables를 제외한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.  
+\textbf{Next-step question:} 재료 분야 핵심 도표(조성-물성 그래프, 전기화학 곡선, XRD 등)에 대해, “정확한 실수” 대신 “순위/형태/범주/단위 일관성”처럼 검증 가능한 정답 정의를 만들 수 있는가?
+
+(3) \textbf{정량 추론 난이도를 재료 도메인 특유의 형태로 끌어올려라.} 저자들은 수치형 문항의 단순성을 한계로 든다 \href{./archive/arxiv/src/2601.05567/ch\_conclusion.tex}{[5]}.  
+\textbf{Next-step question:} 단위 변환, 스케일링, 오차 전파, 상관관계 해석 같은 재료 R\&D의 정량 추론을, MCQ 또는 검증 가능한 다른 형식으로 어떻게 캡슐화할 것인가?
+
+(4) \textbf{모델 선택과 조기중단을 OOD 관점에서 재설계하라.} “post-saturation generalization”은 검증 성능과 외부 일반화가 분리될 수 있음을 보여준다 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}.  
+\textbf{Next-step question:} 우리 조직의 내부 문헌/제품군에 더 가까운 OOD 평가셋을 어떻게 구성하고, 어떤 체크포인트가 실제 업무 성능을 최대화하는가?
+
+(5) \textbf{데이터 거버넌스를 ‘합의 수준(Aligned)’ 기반으로 운영 지표화하라.} WildSci는 보팅 합의 수준으로 품질/명확성 프록시를 제공한다 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}.  
+\textbf{Next-step question:} 재료 분야 전용 합성 데이터에서도 All Aligned/ Majority Aligned 비율을 품질 KPI로 삼을 수 있는가, 그리고 어떤 하위 분야에서 합의 붕괴가 자주 발생하는가?
+
+\section{Appendix}
+\subsection{그림 리소스와 본문 연결(원문 근거 기반)}
+(1) 파이프라인 개요: filtering/refinement의 역할과 완전 자동 합성 흐름을 요약 \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{[2]}. 파일: \texttt{./archive/arxiv/src/2601.05567/figs/pipeline.pdf}.  
+
+(2) post-saturation generalization: 검증 성능 하락 이후에도 외부 테스트 성능이 상승하는 동역학을 시각화 \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{[3]}. 파일: \texttt{./archive/arxiv/src/2601.05567/figs/valid\_test\_allaligned\_3b.pdf}.  
+
+(3) UMAP 분포: WildSci가 기존 벤치마크 대비 덜 대표된 영역을 점유한다는 부록의 분포 논증을 보조 \href{./archive/arxiv/src/2601.05567/ch\_appendix.tex}{[4]}. 파일: \texttt{./archive/arxiv/src/2601.05567/figs/umap.pdf}.
+
+\section*{Report Prompt}
+\begin{verbatim}
+Write a Nature-style review centered on the arXiv paper in this run. Use a materials scientist's
+perspective to evaluate new strategies for materials research and discovery.
+
+Requirements:
+- Audience: materials scientists and R&D leaders.
+- Explain the core technical idea, workflow, and why it matters for materials discovery.
+- Identify bottlenecks, limitations, and what is still missing.
+- Compare with adjacent approaches or baselines (only if supported by sources).
+- Use numbered citations; avoid speculation not grounded in the archive.
+- If figures are available, integrate them where they clarify the discussion.
+- Conclude with 3-5 actionable research directions and next-step questions.
+\end{verbatim}
+\section*{References}
+\renewcommand{\labelenumi}{[\arabic{enumi}]}
+\begin{enumerate}
+\item ch\_intro.tex --- \href{./archive/arxiv/src/2601.05567/ch\_intro.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_intro.tex}}
+\item ch\_method.tex --- \href{./archive/arxiv/src/2601.05567/ch\_method.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_method.tex}}
+\item ch\_results.tex --- \href{./archive/arxiv/src/2601.05567/ch\_results.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_results.tex}}
+\item ch\_appendix.tex --- \href{./archive/arxiv/src/2601.05567/ch\_appendix.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_appendix.tex}}
+\item ch\_conclusion.tex --- \href{./archive/arxiv/src/2601.05567/ch\_conclusion.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_conclusion.tex}}
+\item ch\_experiments.tex --- \href{./archive/arxiv/src/2601.05567/ch\_experiments.tex}{\texttt{./archive/arxiv/src/2601.05567/ch\_experiments.tex}}
+\end{enumerate}
+\section*{Miscellaneous}
+\small
+\begin{itemize}
+\item Generated at: 2026-01-16 23:31:16
+\item Duration: 00:14:29 (869.16s)
+\item Model: gpt-5.2
+\item Quality model: gpt-5.2
+\item Quality strategy: pairwise
+\item Quality iterations: 2
+\item Template: nature\_journal
+\item Output format: tex
+\item PDF compile: enabled
+\item Run overview: ./report/run\_overview.md
+\item Archive index: ./archive/20260116\_arxiv-materials-index.md
+\item Instruction file: ./instruction/20260116\_arxiv-materials.txt
+\item Figure candidates: ./report\_views/figures\_preview.html
+\end{itemize}
+\normalsize
+\end{document}

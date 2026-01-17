@@ -1,0 +1,29 @@
+Template: nature_journal
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\nature_journal.md
+Latex: nature_journal.tex
+Sections:
+- Abstract
+- Introduction
+- Main Findings
+- Methods
+- Discussion
+- Outlook
+- Appendix
+
+Guidance:
+Template description: Nature-style research article narrative.
+
+Template tone: Polished, concise, cross-disciplinary.
+
+Template audience: General science and technology leaders.
+
+Section guidance:
+- Abstract: 5-7 sentences; significance and main result.
+- Main Findings: 3-5 core findings with evidence.
+- Methods: short, high-level methodological summary.
+- Discussion: implications and relation to prior work.
+- Outlook: near-term questions and decision points.
+
+Template writing guidance:
+Keep paragraphs short; avoid jargon where possible.
+Emphasize significance and evidence strength.

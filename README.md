@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 0.3.0
+Version: 0.4.0
 
 Feather-light knowledge intake. This CLI ingests text instructions (`.txt` files), runs Tavily search/extract, fetches arXiv papers, and builds an offline-friendly archive of everything it collected. Input can be a single `.txt` file or a folder of `.txt` files.
 
@@ -13,6 +13,7 @@ Feather and Federlicht are designed as a deliberate two-step flow. Feather is ab
 - Parse natural-language instructions from `.txt` files.
 - Tavily search and content extraction (requires `TAVILY_API_KEY`).
 - Optional arXiv metadata fetch; optional PDF download and text extraction.
+- Optional arXiv source download (TeX + figure manifests).
 - Optional YouTube search and transcript capture.
 - Writes a reproducible archive per instruction file with logs and an `index.md` summary.
 - List and review existing run folders.
@@ -144,9 +145,11 @@ Arguments:
 - `--review-full`: Show full outputs when reviewing a run or JSONL file.
 - `--format`: Output format for `--review` (`text` or `json`).
 - `--output` (required): Archive root; each run creates `output/<queryID>/`.
+- `--update-run`: Reuse an existing run folder and update outputs in place (skip existing files/entries).
 - `--days` (default 30): Lookback window for the "recent" arXiv search heuristic.
 - `--max-results` (default 8): Max Tavily/arXiv results per query.
 - `--download-pdf`: If set, arXiv PDFs are downloaded and converted to text.
+- `--arxiv-src`: Download arXiv source tarballs (TeX + figures) and create source manifests.
 - `--no-citations`: Disable citation enrichment for papers (OpenAlex is used by default when available).
 - `--lang`: Preferred language for search results (`en`/`eng` or `ko`/`kor`). This is a soft preference only.
 - `--no-stdout-log`: Disable console logging (write to `_log.txt` only).
@@ -162,6 +165,7 @@ Arguments:
 QueryID rules:
 - Default: `safe_filename(file_stem)` (or `safe_filename(first_query_line)` for `--query`).
 - If the output folder already exists: suffix `_01`, `_02`, ...
+- With `--update-run`: reuse the existing folder (no suffix) and merge new outputs in place.
 - To control run folder names, rename the instruction file (e.g., `ai_trends.txt`).
 
 ## Instruction File Format
@@ -170,6 +174,7 @@ QueryID rules:
 - Site hints apply only to queries in the same section; repeat hints across sections if needed.
 - Multiple hint lines in a section are combined.
 - Lines detected as URLs are treated as direct extract targets.
+- arXiv abstract URLs (`https://arxiv.org/abs/...`) are also treated as arXiv IDs when `--download-pdf` or `--arxiv-src` is enabled.
 - Local file directives are supported:
   - `file: <path>` for a single file
   - `dir: <path>` for a directory (recursive)
@@ -224,6 +229,9 @@ Created under `--output/<queryID>/`:
   - `arxiv/papers.jsonl`: arXiv metadata (includes `cited_by_count` when available); includes heuristic recent search entries when applicable.
   - `arxiv/pdf/`: Downloaded arXiv PDFs (when `--download-pdf`).
   - `arxiv/text/`: Extracted text from PDFs (when `--download-pdf` and `pymupdf` available).
+  - `arxiv/src/`: arXiv source tarballs (`*.tar.gz`) and extracted source folders (when `--arxiv-src`).
+  - `arxiv/src_text/`: Extracted TeX text (when `--arxiv-src`).
+  - `arxiv/src_manifest.jsonl`: TeX/figure manifests per paper (when `--arxiv-src`).
   - `<queryID>-index.md`: Human-friendly summary with relative file paths for downstream ingestion.
 
 ## Project Layout

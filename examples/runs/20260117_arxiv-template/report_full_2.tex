@@ -1,0 +1,344 @@
+\documentclass[11pt]{article}
+\usepackage{kotex}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\title{ Federlicht Report - 20260117\_arxiv-template }
+\author{ Hyun-Jung Kim / AI Governance Team }
+\date{ 2026-01-17 }
+\begin{document}
+\maketitle
+
+\noindent\textit{Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-17 12:06}
+
+\section{Abstract}
+본 보고서는 TADF(thermally activated delayed fluorescence) 유기 발광체의 고속 스크리닝과 설계 가속을 목표로 한 2025년 arXiv 연구 2편과, PhOLED(Ir(III)) 효율/수명 예측을 위한 2019년 동역학(kinetic) 프레임 연구 1편을 하나의 “가속 설계 스레드”로 종합한다. 첫 논문은 747개 실험 기반 TADF 발광체 코퍼스에서 sTDA-xTB 및 sTD-DFT-xTB를 대규모로 검증해, TD-DFT 대비 99\% 이상의 계산비용 절감과 방법 간 강한 내부 일관성(예: $\Delta E_{ST}$ Pearson $r\approx 0.82$)을 보고하며, HTVS에서의 상대 랭킹 용도를 정당화한다[1]. 반면 실험 $\Delta E_{ST}$ 312개에 대한 MAE $\approx 0.17$ eV는 수직 근사(vertical approximation)의 구조적 한계로 제시되어 정량 예측보다는 스크리닝 역할이 강조된다[1]. 두 번째 논문은 동일 747분자 기반 파이프라인에 NTO 기반 전하이동(CT) 디스크립터(특히 hole–electron overlap $S_{he}$)를 도입하고, SVR로 $\Delta E_{ST}$ 예측에서 MAE $=0.024$ eV, $R^2=0.960$을 보고하며, 액티브 러닝으로 무작위 샘플링 대비 약 25\%의 데이터 절감을 주장한다[2]. 세 번째 논문은 효율 $\Phi$ 및 수명 $\tau$를 경쟁 소거 rate의 합성으로 정의하고, 온도 의존 비복사 소거 $k_{nr}(T)$를 명시적으로 포함해 상온 성능 저하를 설명한다[3]. 종합적으로 본 스레드는 “속도(저비용 전자구조)–정확도(디스크립터+ML)–목표함수(효율/수명·온도)”의 단계적 확장을 보여주나, 수직 근사 오차, [2]의 라벨/분할 정합성, 소자 환경/온도 동역학 통합 부재가 핵심 갭으로 남는다[1–3].
+
+\section{Introduction}
+TADF 및 PhOLED 발광체 설계는 “광물성(효율, 색, 수명)”과 “실험 비용/시간” 간의 구조적 긴장을 갖는다. TADF에서는 작은 singlet–triplet 간격 $\Delta E_{ST}$가 RISC의 열역학적 전제 조건이지만, 동시에 효율적 RISC(예: $k_{RISC}>10^6\,s^{-1}$)를 위해서는 SOC, 발광 특성 등 ‘겹침’이 요구되어 상충 조건이 발생한다고 명시된다[2]. 고정밀 excited-state 계산은 비용이 높아 대규모 화학공간 탐색의 병목이 되며, 저비용 근사는 체계적 오차를 낳는다[1]. 한편 Ir(III) PhOLED에서는 경쟁 소거 채널이 복잡하여 효율 계산이 “elusive”했으며, 특히 온도 의존 비복사 채널을 포함해야 상온 효율/수명 저하를 설명할 수 있다는 문제의식이 제기된다[3].
+
+본 리뷰의 기여는 세 논문을 (1) HTVS 파이프라인 검증[1], (2) 물리 디스크립터+ML/AL로의 탐색 효율화[2], (3) 경쟁 rate 및 온도 의존 소거를 포함하는 성능 목표함수 확장[3]이라는 연속 단계로 연결해, “무엇을 빠르게 계산할 것인가(전자구조) $\to$ 무엇을 학습할 것인가(디스크립터/라벨) $\to$ 무엇을 최적화할 것인가(효율/수명/온도)”라는 설계 아젠다를 명확히 하는 데 있다.
+
+연구 질문(Research Questions, RQ)은 다음과 같다.  
+\subsection*{RQ1} xTB 기반 sTDA/sTD-DFT 파이프라인은 대규모 TADF 데이터에서 어느 수준의 정확도와 랭킹 신뢰도를 제공하며, 한계는 무엇인가[1]?  
+\subsection*{RQ2} NTO 기반 CT 디스크립터(특히 $S_{he}$)는 $\Delta E_{ST}$ 예측에서 어떤 설명가능성과 성능 향상을 제공하는가[2]?  
+\subsection*{RQ3} 액티브 러닝은 라벨을 얼마나 절감하며, 어떤 쿼리 전략 비교가 제시되는가[2]?  
+\subsection*{RQ4} 경쟁 소거 채널과 온도 의존 $k_{nr}(T)$를 포함하는 동역학 프레임은 최종 성능 지표를 어떻게 재정의하며, TADF 스레드와의 접점/갭은 무엇인가[3]?
+
+\section{WildSci}
+\subsection*{정의}
+\texttt{WildSci}는 템플릿이 요구하는 메타 섹션이며, 본 원고에서는 [1][2]가 공통으로 활용하는 747개 실험 기반 TADF 발광체 코퍼스를 지칭하는 약칭으로만 사용한다[1][2].
+
+\subsection{구성요소}
+\subsubsection*{도메인}
+유기 TADF 발광체(분자)이며, D-A, D-A-D, MR 등 다양한 구조 아키텍처를 포함한다[1]. [2]는 동일 분자군을 바이오이미징(NIR), 광촉매, 포토디텍션 등 응용 시나리오로 분기해 설계 맥락을 제시한다[2].
+
+\subsubsection*{태스크 및 라벨}
+[1]의 태스크는 저비용 전자구조 파이프라인으로 $\Delta E_{ST}$, $\lambda_{PL}$ 등을 산출하고, 실험 레퍼런스(312 $\Delta E_{ST}$, 213 $\lambda_{PL}$)와 비교해 오차/상관을 평가하는 것이다[1].  
+[2]의 태스크는 (i) NTO 기반 CT 디스크립터를 포함한 29개 특징으로 $\Delta E_{ST}$ 회귀 예측, (ii) SHAP 기반 기여도 분석, (iii) 액티브 러닝 기반 샘플 효율 비교이다[2].  
+[3]은 Ir(III) PhOLED에서 $\Phi$와 $\tau$를 경쟁 rate로 표현하며 $k_{nr}(T)$를 포함하는 목표함수(성능 지표) 정의가 핵심이다[3].
+
+\subsection{차별점(동일 스레드 내 역할)}
+[1]은 “대규모 검증된 저비용 계산 파이프라인”을, [2]는 “물리 디스크립터 기반의 학습/탐색 효율화”를, [3]은 “최종 성능 목표함수의 동역학적 재정의(특히 온도 의존 채널 포함)”를 제공한다[1–3]. 즉, 동일 스레드에서 입력(전자구조)–중간표현(디스크립터/모델)–목표(효율/수명) 계층을 확장한다.
+
+\section{Experiments}
+본 섹션은 세 논문이 보고한 실험(계산/모델링)의 목적, 비교군, 변수, 지표, 절차를 논문 근거 범위에서 정리한다.
+
+\subsection{실험 목적 및 가설}
+\subsubsection*{[1] xTB 기반 HTVS 프로토콜 검증}
+목적: sTDA-xTB 및 sTD-DFT-xTB가 747개 실험 기반 TADF 분자에서 HTVS 도구로서 충분한 신뢰도를 제공하는지 대규모로 검증[1].  
+가설(서술형): (i) 두 방법은 강한 내부 상관으로 상대 랭킹에 유효하며, (ii) 실험과의 절대 오차는 수직 근사 등으로 제한되나 스크리닝 목적에 수용 가능[1].
+
+\subsubsection*{[2] NTO 디스크립터+ML+AL로 설계 가속}
+목적: (i) NTO 기반 CT 디스크립터가 $\Delta E_{ST}$ 예측 성능/설명가능성을 높이는지, (ii) 액티브 러닝이 라벨 요구량을 절감하는지 평가[2].  
+가설: $S_{he}$ 등 CT 디스크립터가 핵심 예측자이며, 불확실성/다양성 기반 쿼리가 무작위 샘플링보다 효율적[2].
+
+\subsubsection*{[3] 경쟁 rate 통합 및 온도 의존 소거 포함 효율/수명 예측}
+목적: Ir(III)에서 모든 경쟁 소거 프로세스(특히 온도 의존 채널)를 포함해 $\Phi$와 $\tau(T)$를 계산하는 일반 접근을 제시[3].  
+가설: $k_{nr}(T)$가 상온 효율/수명 저하를 지배하며, 이를 명시적으로 포함해야 온도 의존 곡선을 재현 가능[3].
+
+\subsection{비교군(모델/방법) 및 통제 조건}
+[1] 비교군: sTDA-xTB vs sTD-DFT-xTB 상호 비교, 그리고 실험값(312 $\Delta E_{ST}$, 213 $\lambda_{PL}$) 대비 검증; 환경은 gas vs ALPB(toluene) 비교[1].  
+[2] 비교군: SVR/Gradient Boosting/Random Forest 등 모델 비교(5-fold CV), 6종 acquisition function 비교, 무작위 샘플링 대비 AL 학습곡선 비교[2].  
+[3] 비교군: $k_{nr}(T)$ 포함/미포함 시 온도 의존 $\tau$ 및 효율 설명력 비교(논문 서술 수준)[3].
+
+\subsection{독립/종속변수 및 지표}
+[1] 종속변수: $\Delta E_{ST}$, $\lambda_{PL}$, 상관계수($r$ 등), MAE; 독립변수: 방법(sTDA/sTD-DFT), 환경(gas/ALPB), 수직 근사 적용[1].  
+[2] 종속변수: $\Delta E_{ST}$ 예측 MAE, $R^2$, SHAP 기여도 비중, AL 데이터 절감률; 독립변수: 특징(CT 포함 여부 포함 29개), 모델 유형(SVR 등), acquisition function, 초기/배치/반복 설정[2].  
+[3] 종속변수: $\Phi$, $\tau(T)$, rate 성분($k_r$, $k_{ISC}$, $k_{nr}(T)$); 독립변수: 온도, 활성화 장벽(Arrhenius 근사에서 $E_a$), 계산 프로토콜 선택[3].
+
+\subsection{절차(재현 가능한 수준 요약)}
+[1] RDKit로 SMILES$\to$3D 생성 후 CREST+GFN2-xTB로 컨포머 탐색, 최저에너지 구조에서 sTDA/sTD-DFT-xTB excited-state 계산(용매는 ALPB toluene 옵션 포함), 실험과 통계 비교[1].  
+[2] [1]의 프로토콜을 전제로 NTO 분석으로 CT 디스크립터(예: $S_{he}$)를 계산해 29개 특징 벡터를 구성하고, SVR 등으로 회귀 학습/평가(5-fold CV 및 held-out test 언급), SHAP으로 기여도 분석. AL은 초기 50개, 배치 10, 40 반복, 10 seeds로 수행[2].  
+[3] $\Phi$와 $\tau$를 경쟁 rate로 정의(식 (1)(2)), $k_{nr}(T)$는 3MLCT$\to$3MC 전이에서 장벽이 rate-limiting임을 바탕으로 Arrhenius 형태로 근사 가능함(식 (6) 서술) [3].
+
+\section{Results and Analysis}
+\subsection{핵심 결과 요약(표 중심)}
+\begin{table}[t]
+\centering
+\caption{세 논문의 정량 핵심 결과(논문 보고 수치만 발췌).}
+\begin{tabular}{p{1.2cm}p{11.5cm}}
+\hline
+논문 & 핵심 결과(정량) \\
+\hline
+[1] & 747 분자 벤치마크. sTDA-xTB vs sTD-DFT-xTB: $\Delta E_{ST}$ Pearson $r\approx0.82$ (내부 일관성). 실험 $\Delta E_{ST}$ 312개 대비 MAE $\approx0.17$ eV. TD-DFT 대비 계산비용 99\%+ 절감 주장. \\
+[2] & 747 분자(방법/환경 조합으로 2943 샘플)에서 29개 디스크립터. SVR: MAE $=0.024$ eV, $R^2=0.960$ (5-fold CV/held-out test 언급). SHAP: 에너지 특징 $\sim57\%$ (ET1 31\%, ES1 24\%), CT 기여 $\sim34\%$, triplet overlap $\sim21\%$. AL: 무작위 대비 데이터 요구량 $\sim25\%$ 절감(초기 50, 배치 10, 40 iter, 10 seeds). \\
+[3] & $\Phi$와 $\tau$를 경쟁 rate($k_r,k_{ISC},k_{nr}(T)$)로 표현. $k_{nr}(T)$는 강한 온도 의존 채널이며 3MLCT$\to$3MC 장벽이 rate-limiting인 경우 Arrhenius 근사 가능. 상온(298K)에서 효율/수명 저하는 $k_{nr}(T)$ 활성화로 설명된다고 보고. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{논문별 분석}
+\subsubsection*{[1] 속도와 내부 일관성은 강점, 실험 절대 정확도는 수직 근사로 제한}
+[1]은 747 분자에서 sTDA-xTB와 sTD-DFT-xTB의 $\Delta E_{ST}$가 Pearson $r\approx0.82$로 상관함을 근거로 “상대 랭킹” 목적의 HTVS 유용성을 주장한다[1]. 동시에 실험 $\Delta E_{ST}$ 312개 대비 MAE $\approx0.17$ eV를 보고하고, 그 차이를 HTVS 프로토콜의 수직 근사(vertical approximation) 한계로 귀속한다[1]. 따라서 [1]이 제공하는 신뢰도는 “실험 타깃 정량 예측”이 아니라 “저비용 파이프라인 내에서의 일관된 선별”이라는 프레이밍이 핵심이다[1].
+
+\subsubsection*{[2] 디스크립터 기반 고성능 보고는 설득력 있으나, 라벨/분할 정합성이 성능 해석의 전제}
+[2]는 NTO 기반 CT 디스크립터(특히 $S_{he}$)를 도입하고 SVR에서 MAE $=0.024$ eV, $R^2=0.960$을 보고한다[2]. 또한 SHAP으로 에너지 특징(ET1, ES1)과 CT 특징의 기여도를 정량화하여 설명가능성을 보강한다[2]. 그러나 이 성능은 “무엇을 예측하는가(실험 $\Delta E_{ST}$ vs [1]의 계산 라벨)”와 “어떻게 분할했는가(분자 기준 group split vs 샘플 기준 split)”에 강하게 의존한다. [2]는 747 분자에서 방법/환경 조합으로 2943 샘플을 구성했다고 명시하므로[2], 샘플 기준 분할이면 동일 분자 변형이 train/test에 동시 등장하는 누수(leakage) 위험이 생긴다. 제공된 근거 범위에서는 fold 구성 단위를 확정하기 어려우므로, 본 리뷰는 해당 성능을 분할 단위가 명확히 보고될 때에만 강한 비교 지표로 취급한다[2].
+
+\subsubsection*{[3] 목표함수(효율/수명)의 본질이 “경쟁 채널 합성”임을 명확화}
+[3]은 효율과 수명을 단일 전자구조 지표가 아니라 경쟁 rate의 합성으로 정의하고, 온도 의존 $k_{nr}(T)$를 명시적으로 포함한다[3]. 특히 3MLCT$\to$3MC 변환이 rate-limiting인 경우 $k_{nr}(T)$를 Arrhenius 형태로 근사할 수 있음을 제시하며[3], 상온에서 효율/수명 저하를 $k_{nr}(T)$ 활성화로 설명한다[3]. 본 스레드에서 [3]의 의미는 TADF와의 직접 메커니즘 동일시가 아니라, HTVS/ML이 최적화할 “최종 목표함수”를 동역학/온도 축으로 재정의하도록 요구한다는 점이다[3].
+
+\subsection{통합 분석: 속도–정확도–목표함수의 3단 전환}
+[1]은 대규모 저비용 전자구조 산출의 실증(속도)을 제공하지만, 실험 대비 오차는 구조적으로 남는다[1]. [2]는 저비용 전자구조 출력에서 물리적 디스크립터를 추출해 ML/AL로 탐색 효율을 끌어올리지만, 그 성능이 실험 타당성으로 연결되기 위해서는 라벨 정의와 분할 설계가 결정적이다[2]. [3]은 최종 성능 지표가 경쟁 rate 및 온도 의존 항을 포함하는 동역학 문제임을 정식화하며, 단일 지표 중심 스크리닝(예: $\Delta E_{ST}$ 단독)과 실제 성능 간 간극을 구조적으로 드러낸다[3]. 이 3단 전환이 바로 본 스레드의 일관된 내러티브다[1–3].
+
+\section{Limitations}
+\subsection{내적 타당도(실험 설계/비교의 공정성)}
+\subsubsection*{수직 근사 및 하이브리드 파이프라인 편향}
+[1]은 수직 근사에 따른 실험 $\Delta E_{ST}$ MAE $\approx0.17$ eV를 직접 보고한다[1]. 이는 랭킹 목적에서는 일부 완화될 수 있으나, $\Delta E_{ST}<0.2$ eV 같은 임계값 기반 선별(조건 자체는 [2]가 제시)에서는 경계 샘플 오분류 리스크가 커질 수 있다[1][2].
+
+\subsubsection*{[2]의 확장 샘플(2943)과 분할 단위 누수 가능성}
+[2]의 2943 샘플은 분자 다양성 증가라기보다 동일 분자에 대한 조건(방법/환경) 변화 샘플링일 수 있으며[2], 분할 단위가 샘플이면 누수 위험이 존재한다. 제공된 근거 범위에서 분자 기준 group split 여부를 확정하기 어려우므로, [2]의 MAE/R$^2$는 “분할 정의가 고정될 때에만” 강한 성능 주장으로 간주되어야 한다[2].
+
+\subsection{외적 타당도(도메인 이동/실험 조건)}
+[1][2]는 gas vs ALPB(toluene) 비교를 포함하지만[1], 실제 OLED 소자 조건(호스트, 도핑, 형태학, 농도/응집, 계면 등)로의 전이는 본 스레드에서 직접 검증되지 않는다[1][2]. [3]은 자동 prescreening 통합 가능성을 주장하나[3], Ir(III) 체계의 $k_{nr}(T)$ 메커니즘/프로토콜을 유기 TADF로 일반화할 수 있는지에 대한 근거는 본 3편의 범위에서 확정할 수 없다[3].
+
+\subsection{구성 타당도(지표 적합성)}
+[2]는 설계 문제를 “작은 $\Delta E_{ST}$”와 “큰 $k_{RISC}$”의 동시 만족이라는 경쟁 요구로 정의하지만[2], 실험은 주로 $\Delta E_{ST}$ 예측에 집중한다. [3]이 제시한 바와 같이 최종 성능(효율/수명)은 경쟁 rate와 온도 의존 채널의 함수이므로[3], $\Delta E_{ST}$ 중심 스크리닝이 최종 목표와 불일치할 수 있다는 구성 타당도 갭이 남는다[2][3].
+
+\section{Conclusion}
+세 논문은 (i) 747 분자 규모에서 xTB 기반 excited-state 파이프라인을 대규모로 검증해 HTVS의 속도/일관성을 확보하고[1], (ii) NTO 기반 CT 디스크립터와 ML/액티브 러닝으로 $\Delta E_{ST}$ 예측 및 탐색 효율을 크게 향상시키며[2], (iii) 효율/수명 목표가 경쟁 rate 합성과 온도 의존 비복사 채널을 포함하는 동역학 문제임을 정식화한다[3]. 그러나 [1]의 수직 근사로 인한 실험 절대 오차, [2]의 라벨/분할 정합성 불확실성(특히 2943 확장 샘플의 누수 가능성), 그리고 $\Delta E_{ST}$ 중심 목표와 $\Phi/\tau(T)$ 중심 목표 간 구조적 간극이 핵심 리스크로 남는다[1–3].
+
+후속 연구는 (A) “평가 설계의 엄격화(분자 기준 split/라벨 정의 명시)”와 (B) “목표함수의 동역학적 확장(온도 의존 채널 포함)”을 우선순위로 하여, 스크리닝 파이프라인이 최종 소자 성능과 정합되도록 연결고리를 구축해야 한다[1–3].
+
+\subsection{Actionable research directions (3--5) \& next-step questions}
+\subsubsection*{D1. 분자 기준(group) 분할을 표준으로 하는 재평가 리포팅}
+질문: [2]의 2943 확장 샘플에서 분자 ID 기준 group CV/held-out을 적용하면 MAE $=0.024$ eV, $R^2=0.960$이 어느 정도 유지되는가[2]?
+
+\subsubsection*{D2. 실험 레퍼런스(312) 중심 2단계 보정: 랭킹$\to$정량 재평가}
+질문: [1]이 보고한 수직 근사 오차(MAE $\approx0.17$ eV)를 고려할 때, HTVS 1단 랭킹 후 경계 구간만 고정밀 재평가하는 2단 파이프라인이 false positive/negative를 얼마나 줄이는가[1]?
+
+\subsubsection*{D3. 라벨 정합성 명시: ‘계산 라벨 surrogate’와 ‘실험 예측’ 목표 분리}
+질문: [2]의 학습 목표를 (i) xTB 산출 $\Delta E_{ST}$, (ii) 실험 $\Delta E_{ST}$로 분리해 학습/평가하면, 어떤 디스크립터(예: $S_{he}$)가 어떤 목표에서 일관되게 유효한가[1][2]?
+
+\subsubsection*{D4. 목표함수 확장 실험: $\Delta E_{ST}$ 기반 선별을 경쟁 rate 계층으로 연결}
+질문: [3]의 경쟁 rate 프레임(특히 온도 의존 $k_{nr}(T)$)을 참조하여, TADF 스크리닝에서도 “상온 열화에 민감한 비복사 경로”를 목표함수에 포함시키려면 어떤 최소 proxy(또는 중간 rate 모델)가 필요하며, 그 proxy를 [1][2]의 저비용 전자구조 출력에서 추출할 수 있는가[1][3]?
+
+\subsubsection*{D5. 액티브 러닝 불확실성 추정의 검증: 효율성 주장 조건부화}
+질문: [2]에서 사용한 RF 트리 분산 기반 불확실성이 실제 일반화 오차(특히 분자 기준 split)와 얼마나 정렬되는가, 그리고 acquisition function 간 우열이 분할 설정 변화에도 유지되는가[2]?
+
+\section{Experiment Settings}
+논문 근거로 확인 가능한 설정만 표로 정리하며, 미보고 항목은 “미보고”로 명시한다.
+
+\begin{table}[t]
+\centering
+\caption{재현성 관점의 실험 설정(논문에 명시된 범위).}
+\begin{tabular}{p{1.2cm}p{11.5cm}}
+\hline
+논문 & 설정 요약 \\
+\hline
+[1] & RDKit(SMILES$\to$3D), CREST+GFN2-xTB(컨포머 탐색), sTDA-xTB 및 sTD-DFT-xTB(excited states), ALPB(toluene) 비교. 747 분자 전체 계산 비용: 614 CPU hours 보고. 기타 하드웨어/버전/시드: 미보고. \\
+[2] & [1]의 프로토콜 전제. 특징 29개(5 범주), SVR(RBF) 등 모델 비교, SHAP 사용(SHAP 0.45.0 언급). AL: 초기 50, 배치 10, 40 iterations, 10 random seeds, acquisition function 6종 비교. 코드/워크플로 Zenodo DOI: 10.5281/zenodo.17436069. 기타 하드웨어/버전: 일부 미보고. \\
+[3] & $\Phi,\tau$ 경쟁 rate 모델(식 (1)(2)), $k_{nr}(T)$ 온도 의존 채널 포함, 3MLCT$\to$3MC 전이 장벽이 rate-limiting이면 Arrhenius 근사 가능(식 (6) 서술). 구체 소프트웨어/하드웨어/시드: 미보고. \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Related Work}
+본 섹션은 외부 문헌을 확장 인용하지 않고(근거 제약), 세 논문이 스스로 설정한 문제의식과 포지셔닝의 차이를 비교한다. [1]은 semi-empirical xTB 계열을 HTVS에 적용하면서 “screening rather than quantitative prediction”을 명시한다[1]. [2]는 동일 파이프라인 출력에서 NTO 기반 디스크립터와 액티브 러닝을 결합한 “통합 설계 가속 전략”을 제시한다[2]. [3]은 효율 계산이 경쟁 채널 때문에 “elusive”했던 이유를 진단하고, 온도 의존 비복사 채널을 포함하는 일반적 동역학 프레임이 자동 prescreening에 통합 가능하다고 주장한다[3]. 즉, [1][2]가 “빠른 전자구조 및 그 대리모델”을 중심으로 한 반면, [3]은 “최종 성능 지표의 물리적 정의(경쟁 rate/온도)”를 중심으로 한다[1–3].
+
+\section{Data Quality Analysis}
+\subsection{코퍼스 구성과 레퍼런스 범위}
+[1]은 747개 “experimentally characterized emitters”를 사용하되, 실험 비교 가능한 레퍼런스는 $\Delta E_{ST}$ 312개 및 $\lambda_{PL}$ 213개로 부분 관측이다[1]. 이는 검증 표본이 전체 코퍼스의 임의 부분집합이며, 어떤 하위 도메인이 더 많이 관측되었는지에 따라 평가가 편향될 가능성이 있음을 의미한다.
+
+[2]는 동일 747 분자를 전제로 하면서 방법/환경 조합으로 2943 샘플로 확장한다고 서술한다[2]. 이 확장은 샘플 수를 늘리지만 분자 다양성 증가가 아닐 수 있어, 분할 설계(특히 group split)와 라벨 정의가 품질/누수 위험을 좌우한다[2].
+
+\subsection{라벨 정의의 영향}
+[1]은 실험 대비 오차(MAE $\approx0.17$ eV)를 명시함으로써 HTVS 라벨(계산)과 실험 라벨 간 간극을 투명하게 드러낸다[1]. 반면 [2]는 [1]의 검증된 semi-empirical 프로토콜을 전제로 특징을 구축하므로[2], $ \Delta E_{ST}$ 예측이 “실험을 직접 예측”하는지 “계산 라벨을 고정밀로 근사”하는지의 목적 정의가 성능 해석에 결정적이다[1][2]. 특히 [2]가 2943 샘플로 확장했음을 고려하면, 동일 분자의 조건 변화 샘플이 다수 포함될 가능성이 있으며, 이 경우 라벨 분산(조건 효과)과 데이터 분할 방식이 모델의 일반화 성격을 규정한다[2].
+
+\subsection{특징량의 물리적 정합성과 누수 가능 지점}
+[2]의 특징은 29개 디스크립터로 구성되며, 에너지 계열(ET1, ES1 등)과 NTO 기반 CT/overlap 계열($S_{he}$ 등)이 큰 비중을 갖는다고 보고된다[2]. 이는 “전자구조 산출물로부터 유도된 특징”이므로, (i) 동일 분자에서 계산 조건만 다른 샘플이 훈련/평가에 동시에 존재할 때, (ii) 분자 정체성을 간접적으로 암시하는 특징 조합이 존재할 때, 성능이 과대평가될 수 있는 누수 경로가 된다(가능성 자체는 [2]의 샘플 확장 서술로부터 도출되는 평가 리스크이며, 실제 발생 여부는 [2]의 split 단위 명시가 필요하다)[2].
+
+\subsection{데이터 주도 설계 규칙의 통계적 근거 범위}
+[1]은 747 분자에 대한 대규모 분석으로 D-A-D 아키텍처의 우수성과 D-A 비틀림 각 50$^\circ$--90$^\circ$의 최적 구간을 “통계적으로 확인”했다고 보고한다[1]. [2]는 비틀림 각의 최적 창을 60$^\circ$--90$^\circ$로 제시하면서 CT 디스크립터(겹침 감소, $\Delta E_{ST}$ 감소)와 연결한다[2]. 다만 이 설계 규칙은 “해당 코퍼스(747) 및 해당 계산/라벨 체계”에서 도출된 관찰로서, 소자 조건/환경 이동에서의 안정성은 본 스레드에서 직접 검증되지 않는다[1][2].
+
+\section{Statistics of Subdomains}
+본 섹션은 코퍼스의 “하위 도메인(subdomain)”을 논문이 명시적으로 구분한 축으로 한정하여 요약한다. 외부 재집계나 임의 분류는 추가 근거가 없으므로 배제한다.
+
+\subsection{아키텍처(구조 유형) 축}
+[1]은 Donor-Acceptor-Donor(D-A-D) 아키텍처가 우수하다고 “통계적으로 확인”했다고 보고한다[1]. 즉, 코퍼스 내부에서 아키텍처 유형을 하위 도메인으로 보고 성능/지표를 비교하는 분석이 포함됨을 시사한다[1]. (정확한 아키텍처별 표본 수/비율은 본 제공 근거 텍스트 요약에는 수치로 포함되어 있지 않아 미보고로 둔다.)
+
+\subsection{용매/환경 축(gas vs toluene)}
+[1]은 gas vs ALPB(toluene) 조건을 비교 대상으로 포함한다[1]. 이는 동일 분자 집합에 대해 “환경”이 하위 도메인 축으로 작동함을 의미한다[1]. [2] 역시 [1]의 프로토콜을 전제로 하며, 747 분자를 방법/환경 조합으로 2943 샘플로 확장했다고 서술한다[2]. 따라서 [2]에서의 확장 샘플은 하위 도메인(환경/방법) 축의 조합에 기반함을 의미한다[2].
+
+\subsection{관측 레퍼런스 유무(부분 관측) 축}
+[1]에서 실험 레퍼런스는 $\Delta E_{ST}$ 312개, $\lambda_{PL}$ 213개로 “부분 관측” 하위집합이다[1]. 이는 “실험 라벨 존재 여부” 자체가 하위 도메인(관측 가능 집합)으로 작동하며, 평가가 해당 부분집합의 분포에 의해 좌우될 수 있다[1].
+
+\section{Different Data Splits}
+본 섹션은 [1]--[3]이 직접 보고한 평가/검증 방식과, 그 방식에서 필연적으로 발생 가능한 분할 설계 이슈를 정리한다(분할 방법을 논문이 명시하지 않은 부분은 ‘미보고’로 처리).
+
+\subsection{[1] 전체 코퍼스 계산 + 레퍼런스 부분집합 검증}
+[1]은 747 분자 전체를 계산 대상으로 삼고, 실험 레퍼런스가 존재하는 부분집합(312 $\Delta E_{ST}$, 213 $\lambda_{PL}$)에 대해 검증 지표(MAE 등)를 보고한다[1]. 이는 전형적인 train/test 분할이라기보다 “계산 전수 + 실험 라벨 보유 집합에서의 외부 검증” 형태에 가깝다[1].
+
+\subsection{[2] 교차검증(5-fold CV) 및 held-out test 언급}
+[2]는 5-fold CV에서 SVR 성능(MAE $=0.024$ eV, $R^2=0.960$)을 보고하며 held-out test를 언급한다[2]. 다만 (i) fold 단위가 “샘플 기준”인지 “분자 기준(group)”인지, (ii) 2943 확장 샘플에서 동일 분자 파생 샘플이 서로 다른 fold로 분산되는지 여부는 본 근거 요약 범위에서 확정할 수 없으므로 미보고로 둔다[2].
+
+\subsection{확장 샘플(2943)에서의 누수 가능 split 시나리오}
+[2]는 747 분자를 방법/환경 조합으로 2943 샘플로 확장했다고 명시한다[2]. 이때 샘플 기준 무작위 분할을 사용할 경우, 동일 분자의 서로 다른 조건 샘플이 train/test에 동시에 등장할 수 있어(분자 정체성 공유) 누수 위험이 있다[2]. 본 리뷰는 이를 “가능한 분할 리스크”로 명시하며, 성능 해석의 전제로 분자 기준 group split 명시가 요구된다고 결론 내린다[2].
+
+\section{Domain-Specific Performance}
+본 섹션은 “도메인별(문제별) 성능”을 논문이 직접 제공한 정량/정성 근거로만 요약한다.
+
+\subsection{TADF(유기) 도메인: $\Delta E_{ST}$, $\lambda_{PL}$ 중심}
+[1]에서 TADF 도메인은 sTDA-xTB/sTD-DFT-xTB가 HTVS에 적합한지 검증하는 대상이며, 내부 일관성(Pearson $r\approx0.82$ for $\Delta E_{ST}$)과 실험 대비 오차(MAE $\approx0.17$ eV)를 함께 보고한다[1]. [2]에서 TADF 도메인 성능은 $\Delta E_{ST}$ 예측 성능(SVR MAE $=0.024$ eV, $R^2=0.960$)과 SHAP 기여도(에너지 특징 $\sim57\%$, CT $\sim34\%$)로 표현된다[2].
+
+\subsection{PhOLED(Ir(III)) 도메인: 효율/수명 및 온도 의존 소거 채널}
+[3]에서 도메인별 핵심은 Ir(III) PhOLED의 효율 $\Phi$ 및 수명 $\tau$를 경쟁 소거 rate로 합성하는 방식이며, 특히 온도 의존 $k_{nr}(T)$를 명시적으로 포함해야 상온에서의 효율/수명 저하를 설명할 수 있다는 점이다[3]. 또한 $k_{nr}(T)$는 3MLCT$\to$3MC 변환 장벽이 rate-limiting이면 Arrhenius 형태로 근사 가능하다고 제시된다[3].
+
+\subsection{도메인 간 접점과 성능 해석의 주의점}
+[1][2]는 주로 TADF의 $\Delta E_{ST}$를 핵심 지표로 다루는 반면[1][2], [3]은 최종 성능을 경쟁 rate 및 온도 함수로 다룬다[3]. 따라서 ‘성능’이 의미하는 대상(지표)이 도메인에 따라 다르며, $\Delta E_{ST}$ 예측의 개선이 곧바로 $\Phi/\tau(T)$ 최적화로 이어진다는 근거는 본 3편 범위에서 제공되지 않는다[1–3].
+
+\section{Post-saturation Generalization}
+본 섹션은 “데이터/성능 포화 이후의 일반화(post-saturation generalization)”에 대해 논문이 직접 언급하거나, 제공된 실험 설정에서 검증 가능한 형태로 드러난 사항만 정리한다.
+
+\subsection{[2] 액티브 러닝의 샘플 효율(학습곡선 기반) 주장}
+[2]는 액티브 러닝이 무작위 샘플링 대비 약 25\%의 데이터 요구량을 절감한다고 보고한다[2]. 이는 동일 목표/모델 계열에서 더 적은 라벨로 일정 성능에 도달한다는 의미이며, “추가 데이터가 성능 향상에 기여하는 방식(학습곡선)”을 간접적으로 다룬다[2]. 다만 해당 결론은 AL 설정(초기 50, 배치 10, 40 iter, 10 seeds)과 acquisition function 비교에 종속된다[2].
+
+\subsection{‘포화 이후’의 정의 및 검증 범위의 제한}
+[2]에서 “포화 이후 일반화”를 엄밀히 논하려면, (i) 성능이 데이터 증가에 따라 평탄화되는 구간의 존재, (ii) 그 이후의 도메인 이동(새 분자 계열, 새 아키텍처, 새 실험 조건)에서의 성능 유지가 필요하다. 그러나 본 제공 근거 요약에는 그러한 외삽/도메인 이동 평가가 직접 보고되어 있지 않으므로 미보고로 둔다[2]. [1] 역시 747 코퍼스 내부 분석이 중심이며, 코퍼스 밖 일반화(새 분자군)에 대한 정량 평가는 본 스레드에서 직접 제시되지 않는다[1].
+
+\section{Distribution Illustration}
+본 섹션은 분포(분자/특성/라벨)의 “정량적 시각화 결과”를 텍스트로 재현하는 것이 아니라, 논문이 분포/저차원 구조에 대해 명시적으로 주장한 바를 근거로 요약한다.
+
+\subsection{저차원 구조(PCA) 주장}
+[1]은 Principal Component Analysis에서 “three components capturing nearly 90\% of the variance”라고 보고한다[1]. 이는 코퍼스의 복잡한 속성 공간이 저차원 구조를 갖는다는 주장으로, (i) HTVS에서의 랭킹/클러스터링 가능성, (ii) 설계 규칙(아키텍처/비틀림 각)의 통계적 도출 가능성과 연결된다[1].
+
+\subsection{설계 변수 분포: 비틀림 각 창}
+[1]은 효율적 TADF를 위한 D-A 비틀림 각 최적 범위를 50$^\circ$--90$^\circ$로 제시한다[1]. [2]는 최적 창을 60$^\circ$--90$^\circ$로 제시하며, 비틀림에 따른 overlap 감소($S_{he}$ 등 CT 디스크립터 변화)와 $\Delta E_{ST}$ 감소를 연결한다[2]. 두 논문 모두 ‘각도’라는 구조 변수가 분포 분석의 중심 축임을 시사한다[1][2].
+
+\section{Prompts}
+본 섹션은 본 리뷰를 생성하기 위해 주어진 작성 지침(프롬프트)을 “기록용으로” 포함한다(추가 해석을 덧붙이지 않으며, 원 요구사항을 충실히 재현).
+
+Write a technical review that synthesizes the three arXiv papers in this run.
+Treat them as a coherent research thread: explain each paper's core contribution,
+then connect the ideas into a unified narrative with implications and gaps.
+
+Requirements:
+- Audience: domain experts and technical leads.
+- Emphasize evidence from the papers only; avoid unsupported speculation.
+- Include critical risks, limitations, and open problems.
+- Conclude with 3-5 actionable research directions and next-step questions.
+- Use numbered citations and keep tone professional and analytic.
+
+\section{Executive Summary}
+\subsection*{요약}
+세 논문은 (1) 저비용 xTB 기반 excited-state 프로토콜을 747개 “실험 기반” TADF 분자에서 대규모 검증하여 HTVS에서의 상대 랭킹 효용을 정당화하고[1], (2) 그 출력물 위에 NTO 기반 CT 디스크립터를 구축해 $\Delta E_{ST}$ 예측을 고성능(예: SVR MAE $=0.024$ eV)으로 끌어올리며 액티브 러닝으로 데이터 요구량을 약 25\% 절감한다고 보고하고[2], (3) Ir(III) PhOLED에서 효율/수명을 경쟁 rate 및 온도 의존 비복사 채널 $k_{nr}(T)$로 재정의해 “최종 성능 목표”의 물리적 형태를 분명히 한다[3]. 통합 관점에서 이 스레드는 속도(HTVS)→정확도(디스크립터+ML)→목표함수(효율/수명·온도)로 확장되지만, 수직 근사 오차[1], 분할/라벨 정합성의 불확실성[2], 소자 환경 및 온도 동역학을 TADF 설계 루프에 통합하지 못한 공백[1–3]이 핵심 리스크로 남는다.
+
+\section{Scope & Methodology}
+\subsection*{범위(Scope)}
+본 리뷰는 제공된 세 편의 arXiv 텍스트 근거만을 사용하여, TADF HTVS/ML 스레드([1][2])와 Ir(III) PhOLED 효율 계산 프레임([3])을 하나의 “가속 설계” 관점에서 연결한다. 외부 문헌 확장 인용은 수행하지 않는다.
+
+\subsection*{방법론(Methodology)}
+(1) 각 논문이 명시적으로 보고한 목적/데이터 규모/지표/수치를 우선 추출한다[1–3].  
+(2) 세 논문을 입력(전자구조 계산)–중간표현(디스크립터/ML/AL)–목표함수(효율/수명·온도)라는 파이프라인 계층으로 매핑하여 공통 스레드를 구성한다[1–3].  
+(3) 논문이 직접 보고하지 않은 사항(예: [2]의 분할 단위)은 ‘미보고’로 처리하고, 그로 인해 발생 가능한 리스크를 “조건부”로 명시한다[2].
+
+\section{Key Findings}
+\subsection*{F1. HTVS 관점에서 xTB 기반 excited-state 계산은 “상대 랭킹”에 유효}
+sTDA-xTB와 sTD-DFT-xTB는 747 분자 코퍼스에서 $\Delta E_{ST}$ Pearson $r\approx0.82$의 내부 일관성을 보이며, TD-DFT 대비 99\%+ 비용 절감을 주장한다[1]. 이는 대규모 선별에서의 실용적 유효성을 뒷받침한다[1].
+
+\subsection*{F2. 절대 오차의 구조적 원인(수직 근사)이 정량 예측을 제한}
+실험 $\Delta E_{ST}$ 312개 대비 MAE $\approx0.17$ eV가 보고되며, 이는 HTS 프로토콜의 수직 근사에 기인한다고 명시된다[1]. 따라서 임계값 기반 선별(예: $\Delta E_{ST}<0.2$ eV)에는 경계 오분류 위험이 상존한다[1][2].
+
+\subsection*{F3. NTO 기반 CT 디스크립터는 성능 및 설명가능성 축을 강화}
+[2]는 29개 디스크립터(에너지+NTO/CT 포함)로 SVR에서 MAE $=0.024$ eV, $R^2=0.960$을 보고하며, SHAP 기여도에서 에너지 특징 $\sim57\%$, CT 특징 $\sim34\%$ 등 정량적 설명을 제공한다[2].
+
+\subsection*{F4. 액티브 러닝은 설정된 루프에서 데이터 요구량을 약 25\% 절감}
+초기 50, 배치 10, 40 반복, 10 seeds의 AL 설정에서 무작위 대비 데이터 필요량을 약 25\% 줄인다고 보고된다[2]. 이는 대규모 설계 루프에서 라벨 비용 절감 가능성을 시사한다[2].
+
+\subsection*{F5. 최종 성능은 경쟁 rate와 온도 의존 소거 채널의 함수}
+[3]은 효율 $\Phi$와 수명 $\tau$를 경쟁 rate로 표현하고, $k_{nr}(T)$를 온도 의존 비복사 소거로 명시적으로 포함한다[3]. 특히 3MLCT$\to$3MC 변환 장벽이 rate-limiting일 때 Arrhenius 근사가 가능하다고 제시한다[3].
+
+\section{Trends & Implications}
+\subsection*{속도 중심에서 “목표함수 정합” 중심으로의 이동}
+[1]은 속도/비용의 정당화를, [2]는 그 위에 ML/AL로 정확도와 탐색 효율을, [3]은 실제 성능을 정의하는 물리적 목표함수(경쟁 rate, 온도)를 제공한다[1–3]. 따라서 향후 스레드의 핵심 트렌드는 $\Delta E_{ST}$ 단일 지표 최적화에서 $\Phi/\tau(T)$에 정합되는 다중 목표(또는 rate 기반 proxy)로의 이동이다[2][3].
+
+\subsection*{설계 규칙의 데이터-주도화 및 디스크립터화}
+[1]이 제시한 아키텍처 우수성 및 비틀림 각 최적 창(50$^\circ$--90$^\circ$)[1]과, [2]가 이를 CT 디스크립터(겹침) 변화로 연결한 서술[2]은, “설계 규칙→디스크립터→학습/탐색”의 폐루프 구축 가능성을 시사한다[1][2]. 다만 이 연결이 실험 성능/소자 조건으로 확장되는지는 본 3편에서 직접 검증되지 않는다[1–3].
+
+\section{Risks & Gaps}
+\subsection*{R1. 수직 근사로 인한 임계값 기반 의사결정 리스크}
+[1]의 MAE $\approx0.17$ eV는 $\Delta E_{ST}$ 임계값(예: $<0.2$ eV) 기반 선별에서 오분류 가능성을 높인다[1][2]. 이는 HTVS 결과를 ‘정량 판정’으로 사용하는 경우의 핵심 위험이다[1].
+
+\subsection*{R2. [2] 성능 보고의 전제: 분할 단위 및 라벨 정의의 명시 부족(근거 범위 내)}
+[2]는 747 분자를 2943 샘플로 확장했다고 명시하여, 샘플 기준 split에서 누수 위험이 발생할 수 있다[2]. 또한 예측 대상 라벨이 실험인지 계산 surrogate인지가 성능 해석을 좌우한다[1][2]. 본 리뷰는 이를 “미보고로 인한 조건부 리스크”로 분류한다[2].
+
+\subsection*{R3. TADF 설계 지표와 실제 소자 성능(효율/수명·온도) 간의 구성 갭}
+[2]는 설계의 경쟁 요구($\Delta E_{ST}$, $k_{RISC}$)를 서술하지만 주된 실험은 $\Delta E_{ST}$ 예측에 집중한다[2]. [3]은 효율/수명이 경쟁 rate 및 $k_{nr}(T)$의 함수임을 강조한다[3]. 즉, 현재 스레드의 최적화 대상이 최종 성능 목표와 정합되지 않을 수 있다는 구조적 갭이 남는다[2][3].
+
+\section{Critics}
+\subsection*{비판적 관점 1: “스크리닝 적합성”과 “정량 예측”의 혼재}
+[1]은 스스로 screening rather than quantitative prediction을 명시하지만[1], 후속 단계에서 $\Delta E_{ST}$ 임계값 기반 규칙이나 고성능 회귀 지표가 결합될 때[2], 사용자는 이를 정량 예측으로 오해할 위험이 있다. 따라서 파이프라인의 사용 목적(랭킹 vs 절대값)과 허용 오차(특히 경계 샘플)를 운영 규정으로 분리할 필요가 있다[1][2].
+
+\subsection*{비판적 관점 2: 고성능 ML 지표의 재현성은 분할/라벨 명세에 달려 있음}
+[2]의 성능 수치는 인상적이나[2], 2943 확장 샘플 구성과 함께 분할 단위가 명확히 고정되지 않으면 누수 가능성에 대한 의심을 제거하기 어렵다[2]. 이는 결과 자체를 부정한다기보다, 기술 리더 관점에서 “운영 가능한 신뢰도”를 확보하기 위해 필요한 최소 보고 요건을 강조하는 비판이다[2].
+
+\subsection*{비판적 관점 3: 목표함수 확장([3])이 TADF 스레드에 아직 직접 접속되지 않음}
+[3]은 자동 prescreening 통합 가능성을 주장하지만[3], 본 스레드([1][2])의 핵심 지표/라벨 설계는 아직 $\Delta E_{ST}$ 중심이다[1][2]. 경쟁 rate 및 온도 의존 소거를 TADF 설계 루프에 연결하는 구체적 proxy/모델링 계층이 본 3편에서 완결적으로 제시되지는 않는다[1–3].
+
+\section{Appendix}
+\subsection*{A. 인용 논문(arXiv) 목록}
+[1] Validation of Semi-Empirical xTB Methods for High-Throughput Screening of TADF Emitters: A 747-Molecule Benchmark Study (arXiv:2511.00922v1, 2025).  
+[2] From orbital analysis to active learning: an integrated strategy for the accelerated design of TADF emitters (arXiv:2512.06029v1, 2025).  
+[3] General Approach To Compute Phosphorescent OLED Efficiency (arXiv:1901.01201v1, 2019; DOI: 10.1021/acs.jpcc.8b00831).
+
+\subsection*{B. 본 문서 작성 시 사용한 핵심 수치(논문 보고값)}
+- 747 분자 코퍼스, 실험 $\Delta E_{ST}$ 312개, 실험 $\lambda_{PL}$ 213개, 비용 99\%+ 절감, 내부 상관 $r\approx0.82$, 실험 대비 MAE $\approx0.17$ eV[1].  
+- SVR MAE $=0.024$ eV, $R^2=0.960$, SHAP 기여도(에너지 $\sim57\%$, CT $\sim34\%$), AL 데이터 요구량 $\sim25\%$ 절감, AL 루프(초기 50, 배치 10, 40 iter, 10 seeds), Zenodo DOI: 10.5281/zenodo.17436069[2].  
+- 경쟁 rate 기반 $\Phi,\tau$ 정의, 온도 의존 $k_{nr}(T)$ 포함, Arrhenius 근사 가능 조건(3MLCT$\to$3MC 장벽 rate-limiting) 및 298K에서의 성능 저하 설명[3].
+
+\section*{Report Prompt}
+\begin{verbatim}
+Write a technical review that synthesizes the three arXiv papers in this run.
+Treat them as a coherent research thread: explain each paper's core contribution,
+then connect the ideas into a unified narrative with implications and gaps.
+
+Requirements:
+- Audience: domain experts and technical leads.
+- Emphasize evidence from the papers only; avoid unsupported speculation.
+- Include critical risks, limitations, and open problems.
+- Conclude with 3-5 actionable research directions and next-step questions.
+- Use numbered citations and keep tone professional and analytic.
+\end{verbatim}
+\section*{Miscellaneous}
+\small
+\begin{itemize}
+\item Generated at: 2026-01-17 12:06:13
+\item Duration: 00:45:49 (2749.16s)
+\item Model: gpt-5.2
+\item Quality model: gpt-5.2
+\item Quality strategy: pairwise
+\item Quality iterations: 2
+\item Template: arxiv\_2601.05567
+\item Output format: tex
+\item PDF compile: enabled
+\item Run overview: ./report/run\_overview.md
+\item Report overview: ./report/run\_overview\_report\_full\_2.md
+\item Archive index: ./archive/20260117\_arxiv-template-index.md
+\item Instruction file: ./instruction/20260117\_arxiv-template.txt
+\item Report prompt: ./instruction/report\_prompt\_report\_full\_2.txt
+\end{itemize}
+\normalsize
+\end{document}

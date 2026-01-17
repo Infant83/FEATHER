@@ -1,0 +1,26 @@
+\section{Experiments}
+
+
+\subsection{Evaluation Benchmarks}
+
+To assess the scientific reasoning capabilities of language models, we evaluate them on a suite of benchmarks targeting scientific question answering. We report accuracy for each dataset by checking whether the final selected option in the model's response is correct.
+
+\paragraph{WildSci-Val} We construct an in-domain validation set using All Aligned questions from WildSci. Specifically, we randomly sample 100 questions from each of the 9 disciplines, resulting in a total of 900 questions. Each question includes 10 available options, with exactly one correct answer.
+
+
+
+\paragraph{GPQA} 
+
+To mitigate potential bias introduced by answer choice order, we introduce \textbf{GPQA-Aug}, an augmented variant of the original GPQA-Diamond dataset~\citep{DBLP:journals/corr/abs-2311-12022}. For each of the 198 questions, we generate four versions by permuting the answer options so that the correct answer appears once in each of the four positions, resulting in a total of 792 examples.
+
+\paragraph{SuperGPQA} SuperGPQA~\citep{DBLP:journals/corr/abs-2502-14739} is a large-scale benchmark designed to evaluate knowledge and reasoning across 285 graduate-level disciplines, with 26,529 questions in total. 
+
+
+
+\paragraph{MMLU-Pro} MMLU-Pro~\citep{DBLP:conf/nips/WangMZNCGRAHJLK24} is a dataset of 12,032 questions that builds upon the original MMLU~\citep{DBLP:conf/iclr/HendrycksBBZMSS21} by shifting its focus to reasoning-based questions. 
+
+
+
+\subsection{Data Creation}
+We adopt \texttt{Qwen2.5-32B-Instruct}~\citep{DBLP:journals/corr/abs-2412-15115} and \texttt{Qwen3-32B}~\citep{DBLP:journals/corr/abs-2402-03300} as the default model in our data generation pipeline, balancing quality and cost-effectiveness, as supported by findings in \citet{Moshkov2025AIMO2WS}. For the model voting stage, we additionally employ \texttt{Mistral-Small-24B-Instruct-2501}, selected for their similar performance in scientific reasoning tasks. We generate 4 responses per model using temperature of 0.8, resulting in a total of 8 responses used in the voting process.
+

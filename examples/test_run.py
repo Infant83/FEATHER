@@ -38,6 +38,11 @@ EXAMPLES = [
         "args": ["--download-pdf"],
     },
     {
+        "name": "arxiv-materials",
+        "file": "20260116_arxiv-materials.txt",
+        "args": ["--download-pdf", "--arxiv-src"],
+    },
+    {
         "name": "mixed",
         "file": "20260106_mixed.txt",
         "args": ["--max-results", "5"],

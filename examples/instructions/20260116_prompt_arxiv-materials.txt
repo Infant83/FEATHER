@@ -1,0 +1,11 @@
+Write a Nature-style review centered on the arXiv paper in this run. Use a materials scientist's
+perspective to evaluate new strategies for materials research and discovery.
+
+Requirements:
+- Audience: materials scientists and R&D leaders.
+- Explain the core technical idea, workflow, and why it matters for materials discovery.
+- Identify bottlenecks, limitations, and what is still missing.
+- Compare with adjacent approaches or baselines (only if supported by sources).
+- Use numbered citations; avoid speculation not grounded in the archive.
+- If figures are available, integrate them where they clarify the discussion.
+- Conclude with 3-5 actionable research directions and next-step questions.

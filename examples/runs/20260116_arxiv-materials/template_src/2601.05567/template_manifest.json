@@ -1,0 +1,173 @@
+{
+  "source_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567",
+  "main_tex": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\neurips_2025.tex",
+  "tex_files": [
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\neurips_2025.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_intro.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_method.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_experiments.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_results.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_conclusion.tex",
+    "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\archive\\arxiv\\src\\2601.05567\\ch_appendix.tex"
+  ],
+  "sections": [
+    "Abstract",
+    "Introduction",
+    "WildSci",
+    "Experiments",
+    "Results and Analysis",
+    "Limitations",
+    "Conclusion",
+    "Experiment Settings",
+    "Related Work",
+    "Data Quality Analysis",
+    "Statistics of Subdomains",
+    "Different Data Splits",
+    "Domain-Specific Performance",
+    "Post-saturation Generalization",
+    "Distribution Illustration",
+    "Prompts",
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Trends & Implications",
+    "Risks & Gaps",
+    "Critics",
+    "Appendix"
+  ],
+  "section_files": [
+    {
+      "title": "Abstract",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_01_abstract.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_01_abstract.tex.md"
+    },
+    {
+      "title": "Introduction",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_02_introduction.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_02_introduction.tex.md"
+    },
+    {
+      "title": "WildSci",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_03_wildsci.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_03_wildsci.tex.md"
+    },
+    {
+      "title": "Experiments",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_04_experiments.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_04_experiments.tex.md"
+    },
+    {
+      "title": "Results and Analysis",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_05_results_and_analysis.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_05_results_and_analysis.tex.md"
+    },
+    {
+      "title": "Limitations",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_06_limitations.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_06_limitations.tex.md"
+    },
+    {
+      "title": "Conclusion",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_07_conclusion.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_07_conclusion.tex.md"
+    },
+    {
+      "title": "Experiment Settings",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_08_experiment_settings.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_08_experiment_settings.tex.md"
+    },
+    {
+      "title": "Related Work",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_09_related_work.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_09_related_work.tex.md"
+    },
+    {
+      "title": "Data Quality Analysis",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_10_data_quality_analysis.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_10_data_quality_analysis.tex.md"
+    },
+    {
+      "title": "Statistics of Subdomains",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_11_statistics_of_subdomains.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_11_statistics_of_subdomains.tex.md"
+    },
+    {
+      "title": "Different Data Splits",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_12_different_data_splits.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_12_different_data_splits.tex.md"
+    },
+    {
+      "title": "Domain-Specific Performance",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_13_domain-specific_performance.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_13_domain-specific_performance.tex.md"
+    },
+    {
+      "title": "Post-saturation Generalization",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_14_post-saturation_generalization.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_14_post-saturation_generalization.tex.md"
+    },
+    {
+      "title": "Distribution Illustration",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_15_distribution_illustration.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_15_distribution_illustration.tex.md"
+    },
+    {
+      "title": "Prompts",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_16_prompts.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_16_prompts.tex.md"
+    },
+    {
+      "title": "Executive Summary",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_17_executive_summary.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_17_executive_summary.tex.md"
+    },
+    {
+      "title": "Scope & Methodology",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_18_scope_methodology.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_18_scope_methodology.tex.md"
+    },
+    {
+      "title": "Key Findings",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_19_key_findings.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_19_key_findings.tex.md"
+    },
+    {
+      "title": "Trends & Implications",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_20_trends_implications.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_20_trends_implications.tex.md"
+    },
+    {
+      "title": "Risks & Gaps",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_21_risks_gaps.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_21_risks_gaps.tex.md"
+    },
+    {
+      "title": "Critics",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_22_critics.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_22_critics.tex.md"
+    },
+    {
+      "title": "Appendix",
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\sections\\ch_23_appendix.tex",
+      "guidance_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\guidance\\ch_23_appendix.tex.md"
+    }
+  ],
+  "readme": {
+    "sources": [
+      {
+        "usage": "toplevel",
+        "filename": "neurips_2025.tex"
+      }
+    ],
+    "spec_version": 1,
+    "texlive_version": "2025",
+    "process": {
+      "compiler": "pdflatex"
+    }
+  },
+  "generated_at": "2026-01-17 10:45:01",
+  "style_template": "default",
+  "template_md": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\template.md",
+  "template_skeleton": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\template_skeleton.tex",
+  "template_main": "C:\\Users\\angpa\\myProjects\\FEATHER\\examples\\runs\\20260116_arxiv-materials\\template_src\\2601.05567\\template_main.tex"
+}

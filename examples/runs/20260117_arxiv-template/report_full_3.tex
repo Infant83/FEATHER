@@ -1,0 +1,387 @@
+\documentclass[11pt]{article}
+\usepackage{kotex}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\title{ Federlicht Report - 20260117\_arxiv-template }
+\author{ Hyun-Jung Kim / AI Governance Team }
+\date{ 2026-01-17 }
+\begin{document}
+\maketitle
+
+\noindent\textit{Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-17 20:28}
+
+\section{Abstract}
+TADF(thermally activated delayed fluorescence) 및 PhOLED(phosphorescent OLED) 발광체 설계는 여기상태 에너지, 역계간전이(RISC) 및 경쟁 소멸 경로 등 다변수 물리량을 동시에 만족해야 하며, 고정밀 계산은 고비용이어서 대규모 탐색(HTS)에 병목이 된다. 본 보고서는 (i) 747개 실험-특성화 TADF 분자에서 xTB 기반 sTDA/sTD-DFT 프로토콜을 대규모 검증한 연구[1], (ii) 동일 747 분자에서 NTO 기반 CT 디스크립터와 ML/active learning으로 \(\Delta E_{ST}\) 예측을 고정밀화한 연구[2], (iii) Ir(III) 기반 PhOLED에서 온도의존 비방사 채널까지 포함한 “general approach”로 수명/효율을 계산하는 동역학 프레임워크[3]를 하나의 연구 스레드(저비용 스크리닝 \(\rightarrow\) 표상학습/샘플 효율 \(\rightarrow\) 물리적 완결성의 동역학 모델)로 통합·비판적으로 비교한다. [1]은 sTDA-xTB와 sTD-DFT-xTB 간 \(\Delta E_{ST}\) 내부 상관 \(r\approx 0.82\)를 보여 상대 랭킹에는 유효하나, 실험 \(\Delta E_{ST}\) 대비 MAE \(\approx 0.17\) eV로 절대 예측엔 한계가 있음을 명시한다[1]. 반면 [2]는 NTO 기반 \(S_{he}\) 등을 포함한 29개 특징과 SVR을 사용해 \(\Delta E_{ST}\) 예측 MAE \(=0.024\) eV, \(R^2=0.96\) (홀드아웃 589 샘플)을 보고하고, active learning이 목표 정확도 도달에 필요한 데이터 요구량을 약 25\% 절감한다고 보고한다[2]. [3]은 경쟁 소멸(방사/비방사/온도의존 \(k_{nr}(T)\))을 모두 포함하는 kinetic modeling으로 \(\Phi_P\)와 \(\tau\)를 계산하며, 특히 \(k_{nr}(T)\)의 지수 민감도가 실온 성능을 좌우함을 사례로 보여준다[3]. 세 연구를 종합하면, “저비용 \(\Delta E_{ST}\) 스크리닝”은 충분조건이 아니며, 향후 연구의 중심 과제는 (a) 저비용 전자구조 예측과 (b) 온도·환경·동역학을 결합한 효율/수명 예측을 하나의 샘플-효율적 파이프라인으로 연결하는 것이다.
+
+\section{Introduction}
+TADF와 PhOLED는 OLED 효율의 핵심 기술 축이지만, 설계 목표는 단일 물성 최적화가 아니라 상충 조건의 동시 만족이다. TADF의 경우 작은 \(\Delta E_{ST}\)는 열적 업컨버전(Triplet \(\rightarrow\) Singlet)을 가능하게 하지만, 빠른 RISC를 위해서는 SOC 및 발광 전이 강도(oscillator strength)가 요구되어 단순히 HOMO–LUMO 분리만 강화하는 접근이 곧바로 최적 해로 이어지지 않는다[2]. 또한 고정밀 여기상태 계산(예: 고수준 파동함수 방법, 환경의 상태특이적 안정화 포함)은 HTS에 부적합할 만큼 비용이 크고, TD-DFT도 CT 상태, 다중참조성, 환경 분극에서의 실패 사례가 누적되어 “속도–정확도 딜레마”가 구조적으로 존재한다[1].  
+이 보고서는 세 편의 논문을 ‘가속 설계’ 관점에서 통합 리뷰한다. [1]은 저비용 sQC(xTB 기반) 프로토콜을 747 분자에서 대규모로 검증하여, 무엇이 가능한지(비용/랭킹)와 무엇이 어려운지(절대값 정확도)를 경계 조건으로 제시한다[1]. [2]는 [1]의 저비용 계산을 “특징 생성 엔진”으로 사용하여 NTO 기반 CT 디스크립터와 ML/active learning을 결합, 표상(physics-informed descriptor)과 샘플 효율(data efficiency)을 개선한다[2]. [3]은 TADF가 아닌 Ir(III) PhOLED이지만, “효율/수명”을 결정하는 경쟁 소멸 경로를 온도의존까지 포함해 모델링함으로써, \(\Delta E_{ST}\) 중심 HTS가 놓치기 쉬운 동역학적 완결성(temperature-dependent nonradiative channel)을 명확히 보여주는 기준점으로 기능한다[3].  
+본 리뷰의 연구 질문(Research Questions, RQ)은 다음과 같다.  
+\subsection*{RQ1}
+xTB 기반 sTDA/sTD-DFT 프로토콜은 TADF 설계에서 어느 수준까지 신뢰 가능한가(랭킹 vs 절대 예측), 그리고 오차의 주요 원인은 무엇인가? [1]  
+\subsection*{RQ2}
+NTO/CT 디스크립터와 ML은 \(\Delta E_{ST}\) 예측을 얼마나 개선하며, 개선이 ‘물리적 특징’에 의해 설명 가능한가? [2]  
+\subsection*{RQ3}
+Active learning은 재료 탐색에서 데이터(계산) 예산을 얼마나 절감하며, 어떤 획득함수/전략이 유리한가? [2]  
+\subsection*{RQ4}
+효율/수명 관점에서 온도의존 비방사 소멸 등 동역학 항을 포함하는 모델은 HTS 파이프라인에 어떤 요구(추가 입력·정확도·비용)를 제기하는가? [3]  
+
+평가 기준은 논문들이 보고한 지표를 그대로 사용한다. 즉 (i) \(\Delta E_{ST}\) 예측의 MAE/RMSE, 상관계수(\(r\), \(R^2\)), (ii) 학습곡선에서의 MAE 및 분산(표준편차), (iii) 계산 비용(예: CPU 시간) 및 상대적 절감률, (iv) 동역학 모델에서의 \(\Phi\), \(\tau\), \(k\) 값의 온도 의존성과 지수 민감도 등이다[1][2][3].
+
+\section{WildSci}
+본 템플릿의 \textit{WildSci} 섹션은 통상 “야생 환경 데이터/벤치마크”를 기술하도록 설계되어 있다. 본 런의 세 논문에는 ‘WildSci’라는 명명 자체는 등장하지 않으므로, 본 보고서에서는 WildSci를 “문헌-실험 기반 대규모 TADF 분자 벤치마크(747)와 이를 활용한 HTS/ML 프레임워크”로 재정의하여 설명한다. 즉, 본 스레드에서 WildSci는 단일 데이터셋이라기보다 (a) 벤치마크 데이터(747 TADF) + (b) 저비용 계산 프로토콜 + (c) 디스크립터/학습/선택(active learning)로 구성된 통합 자원에 해당한다[1][2].
+
+\subsection{정의 및 구성요소}
+\subsubsection{데이터(벤치마크) 축}
+[1]은 문헌 자동 텍스트 마이닝으로 수집된 747개 TADF 분자와 그 실험 물성(예: \(\Delta E_{ST}\), \(\lambda_{PL}\))을 기반으로 한다. 검증에 사용된 실험 레퍼런스 규모는 \(\Delta E_{ST}\) 312개, \(\lambda_{PL}\) 213개로 명시된다[1]. 이 데이터 축은 HTS 검증을 가능하게 하는 “대규모·다양 아키텍처(D–A, D–A–D, MR 등)”라는 강점을 가진다[1][2].  
+
+\subsubsection{태스크(예측 목표) 축}
+스레드의 1차 태스크는 \(\Delta E_{ST}\) 및 발광 파장 등 여기상태 기반 지표 예측이다[1]. [2]는 같은 목표(\(\Delta E_{ST}\))를 더 낮은 오차로 예측하는 ML 회귀 문제로 재구성하고, 응용 도메인(바이오이미징 NIR, 광촉매, 포토디텍션)별 후보 선정을 시연한다[2]. [3]은 예측 목표를 “효율/수명(photoluminescence efficiency, lifetime)”으로 확장하며, 이를 위해 경쟁 소멸 경로의 rate formalism과 kinetic modeling을 결합한다[3].  
+
+\subsubsection{라벨/출력 체계}
+[1][2]의 핵심 라벨은 연속값(회귀)인 \(\Delta E_{ST}\)(eV)와 \(\lambda\)(nm)이며, [3]은 \(\Phi_P\), \(\tau\) 및 \(k_r\), \(k_{ISC}\), \(k_{nr}(T)\) 등의 rate 파라미터를 산출한다[1][2][3].
+
+\subsection{설계 의도 및 사용 시나리오}
+[1]은 “정량 예측”보다 “대규모 후보 랭킹”을 위한 비용-효율적 계산 프로토콜을 제공하려는 의도가 명확하다. 수직 근사 등으로 인해 MAE가 남는다는 점을 스스로 한계로 기술하며, HTS의 역할을 ‘스크리닝’으로 규정한다[1]. [2]는 [1]의 계산값을 그대로 쓰는 것이 아니라, NTO 기반 CT 디스크립터로 구조-물성 관계를 명시화하고 ML로 예측 정확도를 끌어올리며, active learning으로 데이터 효율을 높여 “탐색 루프”를 가속한다[2]. [3]은 반대로 스크리닝 단순화를 경계하고, 효율/수명이라는 시스템 레벨 성능을 얻기 위해 온도의존 비방사 채널까지 명시적으로 포함하는 일반적 프로토콜을 제안한다[3].  
+
+\subsection{차별점(근거 기반)}
+이 스레드의 차별성은 “대규모 검증(747)”과 “저비용 전자구조 \(\rightarrow\) 물리 기반 디스크립터 \(\rightarrow\) 샘플-효율적 학습(AL)”의 연결성에 있다[1][2]. 또한 [3]이 보여주는 것처럼, 최종 디바이스 성능에 가까운 지표(효율/수명)를 다루려면 온도의존 \(k_{nr}(T)\) 같은 동역학 항이 결정적이며, 이는 \(\Delta E_{ST}\) 단독 최적화로는 포착되지 않는다는 대비축을 제공한다[3].
+
+\section{Experiments}
+세 논문은 서로 다른 “실험”을 수행한다: [1]은 계산 프로토콜 검증(benchmarking), [2]는 디스크립터/ML/AL 실험, [3]은 kinetic modeling 기반의 효율·수명 계산 프로토콜 제안 및 사례 검증이다[1][2][3]. 본 섹션에서는 각 논문의 실험 목적, 가설, 비교군, 변수, 평가 지표, 절차를 재현 가능한 수준으로 정리하고, 공정 비교의 통제 조건을 점검한다.
+
+\subsection{Paper [1]: xTB 기반 HTS 프로토콜의 대규모 검증}
+\subsubsection{목적 및 가설}
+목적은 sTDA-xTB 및 sTD-DFT-xTB가 TADF HTS에서 유용한 정확도–비용 균형을 제공하는지 검증하는 것이다. 가설은 (i) 두 방법이 내부적으로 높은 일관성을 보여 상대 랭킹에 유용하며, (ii) 절대값 오차는 수직 근사 등 프로토콜 근사에서 주로 기인한다는 것이다[1].  
+
+\subsubsection{비교군(방법)}
+비교군은 (a) sTDA-xTB vs sTD-DFT-xTB(내부 일관성), (b) 계산값 vs 실험값(외부 타당화)이다. 또한 gas phase vs toluene(ALPB) 등 환경 설정 비교가 포함된다[1].  
+
+\subsubsection{독립/종속 변수}
+독립 변수: 방법(sTDA, sTD-DFT), 환경(gas, toluene), 프로토콜 구성(예: GFN2-xTB 최적화 기하 + 단일점 excited state).  
+종속 변수: \(\Delta E_{ST}\), \(\lambda_{PL}\), oscillator strength 등과 통계 지표(MAE, RMSE, \(r\), \(\rho\)) 및 계산 시간(초/분/CPU hour)이다[1].  
+
+\subsubsection{평가 지표}
+MAE/RMSE, Pearson \(r\), Spearman \(\rho\), 통계 검정(t-test, Wilcoxon), 정규성(Shapiro–Wilk), 효과크기(Cohen’s \(d\)), PCA 분산 설명률 등이 사용된다[1].  
+
+\subsubsection{절차 및 통제}
+SMILES로부터 RDKit 초기 구조 생성, CREST+GFN2-xTB로 컨포머 탐색 및 최저 에너지 구조 도출, GFN2-xTB로 S\(_0\) 최적화, sTDA/sTD-DFT-xTB로 여기상태 계산(수직), 용매는 ALPB로 toluene을 모사한다[1]. 공정 비교의 핵심 통제는 동일한 747 분자와 동일한 전처리(컨포머 탐색/최적화) 파이프라인을 sTDA와 sTD-DFT에 동일 적용한 점이다[1].
+
+\subsection{Paper [2]: NTO-CT 디스크립터 기반 ML 및 Active Learning}
+\subsubsection{목적 및 가설}
+목적은 (i) NTO 기반 CT 디스크립터(특히 hole–electron overlap \(S_{he}\))가 \(\Delta E_{ST}\) 예측에서 물리적으로 유의미한 특징임을 보이고, (ii) ML(SVR 등)이 저비용 계산 기반 목표 예측을 크게 개선하며, (iii) active learning이 목표 정확도 달성에 필요한 데이터 양을 줄인다는 점을 입증하는 것이다[2].  
+
+\subsubsection{비교군(모델/전략)}
+모델 비교: SVR(RBF), Gradient Boosting, Random Forest를 동일 데이터에서 비교한다[2].  
+AL 비교: random sampling 대비 uncertainty 기반 AL, 그리고 acquisition function(US, EI, UCB, QBC, Diversity, Hybrid)을 비교한다[2].  
+
+\subsubsection{독립/종속 변수}
+독립 변수: 특징 집합(29개; 에너지, oscillator strength, NTO overlap, CT descriptors, proxy RespA), 모델 종류(SVR/GB/RF), 학습 전략(random vs AL), 획득함수 종류, 학습 샘플 수(learning curve)이다[2].  
+종속 변수: \(\Delta E_{ST}\) 예측 MAE 및 \(R^2\), SHAP 기반 중요도 분해(설명가능성), learning curve에서의 평균 및 표준편차이다[2].  
+
+\subsubsection{평가 지표 및 분할}
+SVR 등 회귀 성능은 MAE, \(R^2\)로 평가된다. 모델 비교는 5-fold cross-validation을 사용하며, 홀드아웃 테스트 셋 589 샘플에 대한 성능도 제시된다[2]. AL 실험은 10 seeds로 반복하고, 결과에 표준편차(그림에서 \(\pm 1\) SD)를 함께 표시한다[2].  
+
+\subsubsection{절차 요약}
+GFN2-xTB//sTDA/sTD-DFT-xTB로 747 분자 계산값을 확보한 뒤, Multiwfn으로 NTO 분석을 수행해 CT 디스크립터를 생성한다[2]. SHAP으로 특징 중요도를 분석한다[2]. AL 루프는 RF의 트리 분산으로 불확실성을 추정하고(초기 50 샘플, 배치 10, 40 iterations, 10 seeds), 획득함수별 성능을 비교한다[2].
+
+\subsection{Paper [3]: PhOLED 효율/수명 kinetic modeling}
+\subsubsection{목적 및 가설}
+목적은 Ir(III) 복합체 PhOLED에서 효율과 수명을 결정하는 경쟁 소멸 과정을 모두 포함하고, 특히 강한 온도의존 비방사 채널을 명시적으로 포함하는 일반적 계산 접근을 제안하는 것이다[3]. 가설은 (i) \(k_{nr}(T)\)를 포함해야 실온에서의 효율/수명 저하를 재현할 수 있으며, (ii) 특정 색(blue/green/yellow-orange) 범주를 넘어 다양한 Ir(III) 복합체에 적용 가능하다는 것이다[3].  
+
+\subsubsection{비교군 및 변수}
+비교는 계산 vs 실험(온도에 따른 lifetime/efficiency 곡선 등)이며, 변수는 온도 \(T\), 방사 \(k_r\), 비방사 \(k_{ISC}\), 온도의존 비방사 \(k_{nr}(T)\)이다[3].  
+
+\subsubsection{평가 지표/산출물}
+주요 산출물은 \(\Phi_P\) 및 \(\tau\)이며, 이는 \(k_r, k_{ISC}, k_{nr}(T)\)로부터 계산된다[3]. 또한 \(k_{nr}(T)\)를 구성하는 활성화 장벽 \(E_a\)와 지수 관계가 강조된다[3].  
+
+\subsubsection{절차 요약}
+방사율은 Einstein 관계, \(k_{ISC}\)는 TVCF 이론+TD-DFT/DFT로 계산, \(k_{nr}(T)\)는 CVT(transition state theory)로 온도의존 채널(3MLCT\(\rightarrow\)TS\(\rightarrow\)3MC)을 모델링한다[3]. 핵심은 “온도의존 채널을 끄면” 실험적 sigmoid 형태의 lifetime(T) 의존성이 사라진다는 점을 비교로 보여주는 것이다[3].
+
+\section{Results and Analysis}
+\subsection{1) 속도–정확도 경계 조건: [1]의 대규모 벤치마크가 제시한 ‘가능/불가능’}
+[1]의 가장 중요한 결과는 xTB 기반 sTDA/sTD-DFT 프로토콜이 HTS 규모에서 현실적인 계산 시간을 제공한다는 점과, 그 대가로 절대 예측 오차가 남는다는 점을 동시에 정량화한 것이다. 747 분자 전체 계산이 약 614 CPU hours로 보고되며, 분자당 대표 시간으로 컨포머 탐색 20–27분, GFN2-xTB 최적화 약 1분, sTDA 여기상태 11초, sTD-DFT 여기상태 33초가 제시된다. 비교 기준으로 conventional TD-DFT(CAM-B3LYP/def2-TZVP) 단일 분자 계산이 약 50 CPU hours로 추정되어, 총체적으로 99\% 이상 비용 절감이라는 결론이 나온다[1].  
+정확도 측면에서 sTDA와 sTD-DFT 간 \(\Delta E_{ST}\) 내부 일관성이 Pearson \(r \approx 0.82\)로 높아 “상대 랭킹”에는 유용하다고 해석된다[1]. 그러나 실험 \(\Delta E_{ST}\) (312개) 대비 MAE가 약 0.17 eV로 남아, 이 프로토콜이 ‘정량 예측기’라기보다 ‘스크리너’임을 저자들이 명시한다. 그 원인으로는 수직 근사(ground-state 기하에서 단일점 여기상태), 그리고 S\(_1\) 최적화 부재를 보완하기 위한 Stokes shift 추정 등 프로토콜의 구조적 근사가 지목된다[1].  
+이 결과는 [2]의 접근(ML로 오차를 보정/재구성)이 왜 필요한지에 대한 전제조건을 제공한다. 즉 [1]은 “대규모 탐색에 필요한 속도”를 확보했지만, 절대 예측 불확실성 때문에 “학습 기반 보정” 또는 “후속 정밀 계산/실험”으로 이어지는 파이프라인 설계가 필요해진다[1][2].
+
+\subsection{2) 물리 기반 디스크립터의 역할: [2]가 보여준 설명가능한 정확도 향상}
+[2]는 [1]에서 사용된 747 분자 저비용 계산 프로토콜을 ‘데이터 생성기’로 삼고, NTO 분석에서 얻은 CT 디스크립터로 ML 성능을 크게 향상시킨다. 특히 hole–electron overlap \(S_{he}\)가 핵심 특징으로 부상한다는 점을, 단순 상관이 아니라 SHAP 중요도 분해로 제시한다. 결과적으로 에너지 특징이 총 중요도의 약 57\%(ET1 31\%, ES1 24\%)를 차지하고, CT 디스크립터가 약 34\%를 기여하며, 그 중 \(S_{he}^{T_1}\)가 단일 CT 특징으로 21\%를 차지한다[2]. 이는 \(\Delta E_{ST}\)가 교환 상호작용(공간적 중첩)에 의해 좌우된다는 물리적 직관과 연결되며, [2]는 교환 적분 \(K_{ij}\)와 \(S_{he}\) 정의식을 함께 제시해 ‘설명가능성’을 강화한다[2].  
+정량 성능으로는 5-fold CV에서 SVR(RBF)이 MAE \(=0.024\) eV, \(R^2=0.960\)로 최고이며, GB(MAE 0.027, \(R^2=0.946\)), RF(MAE 0.035, \(R^2=0.918\))가 뒤를 잇는다. 또한 홀드아웃 테스트 589 샘플에서 SVR 성능(MAE 0.024 eV, \(R^2=0.960\))을 parity plot로 제시한다[2].  
+해석상 중요한 점은 이 MAE가 [1]의 실험 대비 MAE(약 0.17 eV)와 직접 비교 가능한지 여부다. [2]의 ML은 (본문 기술상) “계산 기반 특징으로 \(\Delta E_{ST}\)”를 예측하는 설정이며, 목표값의 정의(실험 \(\Delta E_{ST}\)인지, xTB 계산 \(\Delta E_{ST}\)인지)가 리뷰에서는 엄격히 분리되어야 한다. 다만 [2]는 고정밀 기준(HLT)과의 비교로 4CzIPN, DMAC-TRZ에서 오차 0.05/0.035 eV를 제시하고, HLT 대비 전체 MAE 0.045 eV라는 요약을 제공하여, 저비용 스크리닝이 ‘화학적 정확도 근방’까지 접근할 가능성을 주장한다[2]. 이 지점은 “검증 분자 수(2개) 및 외적 타당도” 한계와 함께 Limitations에서 다시 다룬다.
+
+\subsection{3) 샘플-효율적 탐색: Active learning의 효과와 조건}
+[2]는 AL이 random sampling 대비 데이터 요구량을 약 25\% 절감한다고 요약하고, 학습곡선에서 AL이 일관되게 우수함을 \(\pm 1\) SD와 함께 제시한다[2]. 예컨대 학습 샘플 880에서 RF 기준으로 AL이 MAE 0.054 eV(\(R^2=0.877\))이고, random은 MAE 0.058 eV(\(R^2=0.821\))로 보고되어 MAE 7.4\%, \(R^2\) 6.8\% 개선이 제시된다[2].  
+획득함수 비교에서는 Hybrid와 Diversity가 random 대비 소폭 개선(MAE \(0.069\pm 0.004\) vs \(0.072\pm 0.005\))을 보이는 반면, UCB는 성능이 크게 악화(MAE \(0.094\pm 0.009\))된다고 보고된다[2]. 이 관찰은 “목표 최적화(탐욕)”보다 “화학공간 커버리지(다양성)”가 재료 탐색에서 더 중요할 수 있다는 논문 내 해석으로 연결된다[2]. 리뷰 관점에서는, AL의 상대 개선폭이 절대적으로는 크지 않을 수 있으나(예: 0.003 eV 수준), 동일 예산에서 불확실성 감소와 OOD 커버리지 향상 가능성을 내포하므로, 실무 HTS 파이프라인에서 가치가 있다는 식의 조건부 함의로 정리하는 것이 타당하다.
+
+\subsection{4) \(\Delta E_{ST}\)를 넘어: [3]이 제기하는 동역학적 ‘필수 항’}
+[3]은 효율과 수명을 \(k_r\), \(k_{ISC}\), \(k_{nr}(T)\)의 경쟁으로 표현하고, 특히 \(k_{nr}(T)\)가 강하게 온도의존적이며 실온에서 효율/수명 저하를 지배할 수 있음을 강조한다[3]. 논문은 \(\Phi_P\)와 \(\tau\)를 decay rate 조합으로 표현하는 식(1)(2)을 제시하고, \(k_{nr}(T)\)는 3MLCT\(\rightarrow\)3MC 경로의 활성화 장벽을 갖는 열활성 채널로 모델링한다[3]. 또한 활성화 에너지 \(E_a\)가 지수적으로 rate에 반영되므로 작은 에너지 오차가 큰 rate 오차로 증폭된다는 점을 수치 사례(예: 동일 복합체에서 B3LYP가 장벽을 크게 과소평가)로 설명한다[3].  
+이 결과는 TADF 스레드에 직접 “같은 방식”으로 이식되지는 않는다(발광 메커니즘/상태가 다름). 하지만 리뷰 차원에서의 정당한 연결은 다음과 같다. (i) [1][2]가 주로 다루는 \(\Delta E_{ST}\) 및 전자구조 디스크립터는 ‘구조-여기상태’의 1차 필터를 제공하지만, (ii) 최종 효율/수명은 경쟁 소멸 경로(특히 온도의존 비방사)라는 동역학 항에 의해 좌우될 수 있으며, (iii) 이 항은 에너지 장벽의 지수 민감도를 갖기 때문에 “저비용 근사 + 오차”가 시스템 레벨 예측에서 더 치명적일 수 있다[1][3]. 따라서 통합 파이프라인은 “저비용 \(\rightarrow\) ML 보정”만으로 끝나기보다, 동역학 항을 포함한 2단계/다단계 평가(예: 후보 축소 후 동역학 정밀화)가 요구된다.
+
+\section{Limitations}
+본 섹션은 세 논문을 통합 적용할 때의 한계를 내적 타당도, 외적 타당도, 구성 타당도로 구분해 정리하고, 완화 방안을 제안한다.
+
+\subsection{내적 타당도(실험 설계 및 비교의 공정성)}
+\subsubsection{[1] 수직 근사와 하이브리드 해밀토니안}
+[1]의 핵심 근사는 GFN2-xTB로 얻은 S\(_0\) 기하에서 sTDA/sTD-DFT-xTB 단일점 여기상태를 계산하는 수직 근사이며, S\(_1\) 최적화가 구현되지 않아 Stokes shift를 T\(_1\) 이완 에너지로 대체하는 추가 가정이 들어간다[1]. 이는 절대 \(\Delta E_{ST}\) MAE(약 0.17 eV)의 원인으로 논문이 직접 지목한다[1]. 완화 방안은 (i) 대표 서브셋에서 S\(_1\) 최적화 가능한 상위 방법(예: TD-DFT/고정밀 기준)으로 보정항을 학습하거나, (ii) 수직 근사 오차가 작은 분자 클래스(예: 구조 강직, 작은 기하완화)로 적용 범위를 명시적으로 제한하는 것이다[1].
+
+\subsubsection{[2] 목표값 정의의 구성 타당도(실험치 vs 계산치)}
+[2]는 SVR이 \(\Delta E_{ST}\)에서 MAE 0.024 eV, \(R^2=0.96\)를 보고하지만[2], 이 수치가 ‘실험 \(\Delta E_{ST}\)’에 대한 오차인지, 또는 특정 계산 기준(예: xTB 기반 프로토콜 산출값 혹은 그에 준하는 라벨)에 대한 오차인지가 해석에서 매우 중요하다. [1]이 실험 대비 MAE \(\approx 0.17\) eV를 보고한 점과의 관계를 정합적으로 이해하려면, (a) 라벨의 정의(실험/계산), (b) 평가 분할에서 실험 레퍼런스의 포함 방식, (c) 테스트 셋이 분자 구조적으로 독립적인지 여부를 분리해 기술해야 한다[1][2]. 실무 파이프라인에서는 “계산치 회귀”가 “실험치 예측”으로 곧장 전이된다고 가정하기 어렵기 때문에, 별도의 외부 실험 레퍼런스 셋에서의 재검증이 필요하다[1][2].
+
+\subsubsection{[3] 에너지 장벽 오차의 지수 증폭}
+[3]은 \(k_{nr}(T)\)가 활성화 장벽 \(E_a\)에 지수적으로 민감하다는 점을 강조하며, 동일 시스템에서 B3LYP가 장벽을 과소평가할 수 있음을 사례로 제시한다[3]. 이는 kinetic modeling이 “모델 형태”만이 아니라 “입력 에너지의 정확도”에 의해 지배됨을 의미한다. 따라서 HTS에 통합 시, 저비용 방법의 에너지 오차가 수명/효율 예측 오차로 크게 증폭될 수 있으며, 이는 [1]의 근사(수직 근사, 저비용 해밀토니안)가 갖는 오차 구조가 동역학 단계에서 더 치명적으로 나타날 수 있음을 시사한다[1][3].
+
+\subsection{외적 타당도(일반화 가능성)}
+\subsubsection{TADF \(\rightarrow\) PhOLED 전이의 범위}
+[3]의 동역학 프레임워크는 Ir(III) PhOLED에 초점이 맞춰져 있으며[3], TADF의 RISC/발광 경로와는 상태 구성과 SOC 규모가 다르다[2][3]. 따라서 본 리뷰의 “스레드 통합”은 메커니즘 동일성을 주장하는 것이 아니라, (i) 최종 성능은 전자구조 지표만으로 결정되지 않고, (ii) 온도/경쟁 소멸 경로를 포함하는 동역학 항이 필요하며, (iii) 그 항은 에너지 정확도에 민감하다는 일반 원리를 공유한다는 수준에서만 정당화된다[1][3]. 이 범위를 넘어선 직접적 성능 추정(예: TADF 수명/효율을 [3]로 그대로 예측)은 논문 근거 없이 수행될 수 없다[3].
+
+\subsubsection{데이터셋 편향과 화학공간 커버리지}
+[1][2]의 747 TADF 데이터는 문헌 기반 수집으로 다양한 구조를 포함하지만[1][2], 문헌 보고 편향(성공 사례 집중), 측정 조건 이질성(용매/필름/온도/호스트), 그리고 구조 클래스별 표본 불균형은 잔존할 수 있다. [2]가 “다양성 기반 acquisition”이 유리할 수 있음을 관찰한 점은[2], 곧바로 데이터 커버리지 문제가 존재함을 반증적으로 시사한다. 외삽(새로운 donor/acceptor 모티프, 금속 착물, MR-TADF 변형 등)에 대한 성능은 별도 검증이 필요하다[1][2].
+
+\subsection{완화 전략(논문 근거 기반으로 가능한 범위)}
+세 논문이 제공하는 완화 전략을 통합하면, (i) [1]의 저비용 HTS는 상대 랭킹에 초점을 맞추고(내부 상관 \(r\approx 0.82\))[1], (ii) [2]처럼 물리 기반 디스크립터와 설명가능 ML로 “계산값의 정보”를 최대화하되[2], (iii) [3]이 보여준 온도의존 채널 및 지수 민감도를 고려하여, 최종 후보군에 대해서는 보다 신뢰도 높은 에너지/장벽 평가를 수행하는 다단계 전략이 필요하다[3].  
+
+\section{Conclusion}
+세 편의 논문은 “가속 설계”를 서로 다른 층위에서 다루며, 결합될 때 하나의 일관된 파이프라인 설계 원칙을 제공한다. [1]은 747 TADF 벤치마크에서 xTB 기반 sTDA/sTD-DFT가 HTS 규모의 계산 가능성을 열어 주는 대신, 실험 대비 \(\Delta E_{ST}\) MAE \(\approx 0.17\) eV라는 한계를 명시하여 ‘스크리닝’과 ‘정량 예측’의 경계를 설정한다[1]. [2]는 같은 747 분자에서 NTO 기반 CT 디스크립터(특히 \(S_{he}\))가 \(\Delta E_{ST}\) 예측에 물리적으로 중요함을 SHAP 등으로 설명가능하게 제시하고, SVR로 MAE 0.024 eV, \(R^2=0.96\)를 보고하며, active learning으로 데이터 요구량을 약 25\% 절감할 수 있음을 보인다[2]. [3]은 PhOLED에서 효율/수명 예측을 위해 경쟁 소멸 경로, 특히 온도의존 \(k_{nr}(T)\)를 포함하는 kinetic modeling이 필수임을 제시하고, 에너지 장벽 오차가 지수적으로 증폭된다는 ‘시스템 레벨 리스크’를 강조한다[3].  
+통합적으로 보면, 이 스레드는 (i) 저비용 전자구조 계산을 대규모로 수행하고[1], (ii) 그 결과를 물리 기반 표상으로 압축하여 ML의 정확도와 설명가능성을 높이고[2], (iii) 최종 성능 지표(효율/수명)에 도달하려면 온도·경쟁 소멸을 포함한 동역학 모델링이 필요하다는 사실[3]을 단계적으로 제시한다. 실무적 결론은 “\(\Delta E_{ST}\) 단독 최적화”를 넘어, 다단계 평가(랭킹 \(\rightarrow\) ML 보정/AL \(\rightarrow\) 동역학 정밀화)와 목표 정의의 일관성(실험치 vs 계산치)을 명시하는 것이 파이프라인의 핵심 요구사항이라는 점이다[1][2][3].
+
+\section{Experiment Settings}
+본 섹션은 세 논문이 사용한 계산/학습 설정을 ‘재현을 위한 체크리스트’ 형태로 정리한다(논문에 명시된 범위 내)[1][2][3].
+
+\subsection{[1] xTB 기반 HTS 계산 설정(요약)}
+\begin{itemize}
+\item 입력: 문헌에서 수집한 747 TADF 분자(SMILES 기반) 및 실험 레퍼런스(\(\Delta E_{ST}\) 312, \(\lambda_{PL}\) 213)[1].
+\item 구조 생성/탐색: RDKit 초기 구조, CREST+GFN2-xTB 컨포머 탐색 및 최저 에너지 구조 선택[1].
+\item 기하 최적화: GFN2-xTB로 S\(_0\) 최적화[1].
+\item 여기상태 계산: sTDA-xTB, sTD-DFT-xTB(수직 여기) 비교[1].
+\item 용매: gas phase 및 ALPB(toluene) 조건 비교[1].
+\item 평가: MAE/RMSE, Pearson \(r\), Spearman \(\rho\), 통계 검정 및 PCA 등[1].
+\item 비용: 747 분자 총 약 614 CPU hours, 분자당 컨포머 탐색 20–27분, sTDA 11초, sTD-DFT 33초 등 보고[1].
+\end{itemize}
+
+\subsection{[2] 디스크립터/ML/AL 설정(요약)}
+\begin{itemize}
+\item 데이터: [1]의 747 분자 계산 파이프라인을 기반으로 특징 생성[2].
+\item 특징: 29개 특징(에너지, oscillator strength, NTO overlap/CT descriptor 등), 핵심 특징으로 \(S_{he}\) 제시[2].
+\item NTO/특징 추출: Multiwfn 사용, 해석에 SHAP 사용[2].
+\item 모델: SVR(RBF), Gradient Boosting, Random Forest 비교; 성능 지표 MAE, \(R^2\)[2].
+\item 분할/평가: 5-fold CV 및 홀드아웃 테스트(589 샘플) 성능 제시[2].
+\item AL: 초기 50 샘플, 배치 10, 40 iterations, 10 seeds; RF 트리 분산 기반 불확실성; 획득함수(US, EI, UCB, QBC, Diversity, Hybrid) 비교[2].
+\end{itemize}
+
+\subsection{[3] kinetic modeling 설정(요약)}
+\begin{itemize}
+\item 대상: Ir(III) PhOLED 복합체에서 효율/수명 계산[3].
+\item 출력: \(\Phi_P\), \(\tau\) 및 rate 성분(\(k_r\), \(k_{ISC}\), \(k_{nr}(T)\)) 조합[3].
+\item \(k_r\): Einstein 관계 기반[3].
+\item \(k_{ISC}\): TVCF 이론과 TD-DFT/DFT 계산을 결합[3].
+\item \(k_{nr}(T)\): CVT/전이상태 이론 기반 온도의존 경로(예: 3MLCT\(\rightarrow\)3MC) 모델링[3].
+\item 핵심 관찰: \(k_{nr}(T)\)의 포함 여부가 lifetime(T) 재현에 결정적이며, 장벽 \(E_a\) 오차가 지수적으로 증폭됨[3].
+\end{itemize}
+
+\section{Related Work}
+본 리뷰는 런에 포함된 세 논문만을 근거로 하며, 외부 문헌을 추가 인용하지 않는다. 따라서 Related Work는 “세 논문 내부에서의 계승 관계”를 중심으로 정리한다[1][2][3].  
+
+\subsection{저비용 여기상태 예측과 HTS: [1]의 위치}
+[1]은 semi-empirical xTB 기반 sTDA/sTD-DFT 접근을 TADF 후보 탐색에 적용하고, 747개 실험-특성화 분자라는 대규모 벤치마크로 유효성을 검증했다는 점에서 “방법론 검증(benchmarking)” 축을 대표한다[1]. 여기서 도출된 속도–정확도 경계 조건(상대 랭킹 유용성 vs 절대 오차)은 후속 방법 개발의 기준선을 제공한다[1].
+
+\subsection{물리 기반 디스크립터와 가속 설계: [2]의 위치}
+[2]는 [1]의 저비용 계산을 단순 대체재가 아니라 “특징 생성 엔진”으로 재해석하고, NTO 기반 CT 디스크립터(특히 \(S_{he}\))를 통해 구조-물성 관계를 설명가능하게 만들며, ML 및 active learning으로 탐색 루프를 가속한다[2]. 즉 [1]이 계산 화학의 비용 문제를 해결하려는 접근이라면, [2]는 동일 계산을 기반으로 데이터 효율(표상/샘플링)을 개선하는 접근이다[1][2].
+
+\subsection{시스템 레벨(효율/수명) 모델링: [3]의 위치}
+[3]은 발광체 설계가 단일 전자구조 지표로 환원되지 않으며, 온도의존 비방사 경로 등 경쟁 소멸을 포함한 kinetic modeling이 필요함을 보여준다[3]. 이는 [1][2]의 \(\Delta E_{ST}\) 중심 스크리닝/학습 흐름에 대해, 최종 성능 지표로 확장할 때 필요한 모델링 요소(동역학 항, 온도, 지수 민감도)를 제시하는 대비점이다[1][3].
+
+\section{Data Quality Analysis}
+[1][2]의 핵심 자원은 747개 TADF 분자 벤치마크이며, 라벨은 문헌-실험 기반 특성값(예: \(\Delta E_{ST}\), \(\lambda_{PL}\))로부터 온다[1][2]. 본 섹션에서는 논문이 제공한 근거에 한해 데이터 품질 이슈를 정리한다.
+
+\subsection{라벨의 이질성 및 측정 조건}
+[1]은 문헌 자동 텍스트 마이닝으로 실험값을 수집했고, \(\Delta E_{ST}\) 및 \(\lambda_{PL}\)의 레퍼런스 표본 수가 각각 312, 213으로 명시된다[1]. 문헌 기반 라벨은 (i) 실험 조건(용매/필름/호스트/온도)의 차이, (ii) 보고 방식(피크 vs 온셋, 보정 여부) 차이로 인한 이질성이 내재할 수 있으며, 이는 계산-실험 비교에서 “환경/프로토콜 불일치”로 나타날 수 있다. [1]이 gas vs toluene(ALPB) 비교를 포함한 것은 이러한 환경 효과를 제한적으로나마 반영하려는 시도로 읽힌다[1].
+
+\subsection{결측과 표본 크기 불균형}
+747 전체 분자 대비 실험 레퍼런스는 부분 집합(예: \(\Delta E_{ST}\) 312)이다[1]. 즉, ‘계산 가능한 데이터’와 ‘실험 검증 가능한 데이터’의 범위가 다르며, 이로 인해 모델/프로토콜 검증이 특정 부분공간에 집중될 수 있다. [2]가 학습/평가를 수행할 때의 라벨 정의와 샘플 구성(홀드아웃 589 등)은 성능 해석에서 중요한 전제이며[2], [1]의 실험 비교 지표와 동일선상에서 해석하려면 라벨의 출처 정합성이 명시되어야 한다[1][2].
+
+\subsection{프로토콜 유도 편향}
+[1]의 계산 라벨(전자구조/여기상태)은 수직 근사, S\(_1\) 최적화 부재, Stokes shift 대체 추정 등 프로토콜 가정에 의해 구조화된 오차를 가진다[1]. [2]가 이러한 계산 산출물로부터 특징을 만들고 ML을 학습할 경우[2], ML은 (i) 물리 신호와 함께 (ii) 프로토콜 고유의 편향을 함께 학습할 수 있다. 따라서 “계산 기반 예측 성능”과 “실험 기반 예측 성능”을 구분하는 것이 데이터 품질/목표 타당도 측면에서 필수다[1][2].
+
+\section{Statistics of Subdomains}
+세 논문은 ‘서브도메인’을 명시적으로 동일한 방식으로 분해하지는 않으나, 논문 내에서 언급되는 하위 범주를 근거로 통계적 관점을 정리할 수 있다[1][2][3].
+
+\subsection{TADF 분자 구조 서브도메인(개념적)}
+[1]은 747 벤치마크가 다양한 아키텍처(D–A, D–A–D, MR 등)를 포함함을 전제로 대규모 통계로 설계 규칙(예: D-A-D 구조의 상대적 우수, D–A 비틀림각 범위 등)을 논의한다[1]. 이는 데이터가 단일 모티프에 국한되지 않음을 시사하지만, 각 모티프별 표본 수(정량 분포)는 본 보고서에 제공된 발췌 근거만으로는 재구성할 수 없다[1].
+
+\subsection{응용 지향 서브도메인}
+[2]는 응용 도메인(예: 바이오이미징 NIR, 광촉매, 포토디텍션)별 후보 선정을 시연한다[2]. 이는 “최적화 목표/제약”이 응용에 따라 달라짐을 보여주며, 단일 지표(\(\Delta E_{ST}\)) 예측 정확도 외에도 다목표 필터링이 필요함을 시사한다[2].
+
+\subsection{발광 메커니즘 서브도메인(TADF vs PhOLED)}
+[3]은 Ir(III) PhOLED의 경쟁 소멸 경로와 온도의존 \(k_{nr}(T)\)를 중심으로 하며[3], 이는 TADF의 설계 변수(\(\Delta E_{ST}\), RISC 등)와는 다른 메커니즘 축을 이룬다[2][3]. 본 리뷰의 관점에서 이는 “전자구조 스크리닝 서브도메인”과 “동역학/온도 서브도메인”의 분리를 의미한다[1][3].
+
+\section{Different Data Splits}
+[2]는 데이터 분할과 반복 실험 설정을 비교적 명시적으로 제공한다[2]. 반면 [1]은 벤치마크/실험 비교를 중심으로 하며, [3]은 개별 시스템에 대한 물리 모델 검증 성격이 강하다[1][3].
+
+\subsection{[2]의 분할 및 반복}
+[2]는 5-fold cross-validation으로 모델을 비교하고, 홀드아웃 테스트 셋(589 샘플) 성능을 별도로 제시한다[2]. 또한 active learning 실험은 10 seeds로 반복하고, 학습곡선에서 \(\pm 1\) SD를 함께 제시해 분할/초기화에 따른 변동성을 정량적으로 보고한다[2].
+
+\subsection{[1]의 비교 설정(실험 레퍼런스 부분집합)}
+[1]의 실험 비교는 \(\Delta E_{ST}\) 312개, \(\lambda_{PL}\) 213개 부분집합에서 수행되며[1], 이는 ‘분할’이라기보다 ‘가용 라벨에 따른 평가 집합’으로 이해하는 것이 정확하다. gas vs toluene(ALPB) 비교는 환경 조건에 따른 “설정 분할”로 볼 수 있다[1].
+
+\subsection{[3]의 검증 설정}
+[3]은 온도 변화에 따른 효율/수명 곡선 등 물리량의 재현을 통해 접근법의 타당성을 보이며[3], 데이터 분할 기반의 통계학습 프레임과는 성격이 다르다. 따라서 [3]을 [2]와 동일한 “train/test split” 용어로 해석하는 것은 적절하지 않다[2][3].
+
+\section{Domain-Specific Performance}
+본 섹션은 ‘도메인 특화 성능’을 (i) 스크리닝(저비용 전자구조), (ii) ML 보정/예측, (iii) 효율/수명 동역학의 세 층으로 나누어 정리한다[1][2][3].
+
+\subsection{저비용 전자구조 스크리닝 성능([1])}
+[1]에서 도메인 특화 목표는 “TADF 후보의 상대 랭킹”이다. sTDA-xTB와 sTD-DFT-xTB의 \(\Delta E_{ST}\) 내부 상관 \(r\approx 0.82\)는 상대 비교/랭킹에 유용함을 의미한다[1]. 반면 실험 대비 MAE \(\approx 0.17\) eV는 절대 임계값 기반 판정(예: \(\Delta E_{ST}<0.2\) eV)을 직접 수행하기에는 위험할 수 있음을 시사한다[1][2].
+
+\subsection{\(\Delta E_{ST}\) 예측 성능([2])}
+[2]는 SVR로 MAE 0.024 eV, \(R^2=0.96\)를 보고하고[2], \(S_{he}\)의 높은 중요도(예: \(S_{he}^{T_1}\) 21\%)를 통해 도메인 지식과의 정합성을 확보한다[2]. 다만 이 성능이 어떤 라벨 정의에 대한 것인지(실험치 vs 계산치 vs 고정밀 기준치)에 따라 “도메인 적용 가능성”의 범위가 달라지므로, 실무 적용 시 목표 정의를 명시해야 한다[1][2].
+
+\subsection{효율/수명 예측 성능([3])}
+[3]에서 도메인 특화 목표는 PhOLED의 효율/수명이다. 온도의존 \(k_{nr}(T)\)를 포함하는지 여부가 lifetime(T) 재현에 결정적이며, 작은 장벽 오차가 큰 rate 오차로 이어질 수 있다는 점이 도메인 성능의 핵심 리스크다[3]. 이는 “최종 성능”을 목표로 할 때 전자구조 예측 정확도 요구가 강화됨을 의미한다[3].
+
+\section{Post-saturation Generalization}
+본 런의 세 논문은 ‘포화 이후 일반화’(데이터를 많이 쌓은 뒤에도 OOD에서 성능이 유지되는가)를 직접적으로 같은 지표로 보고하지는 않지만, active learning과 다양성 논의가 간접 근거를 제공한다[2].
+
+\subsection{AL에서의 다양성/커버리지 시사점([2])}
+[2]는 획득함수 비교에서 Diversity/Hybrid가 random 대비 더 안정적 성능을 보인 반면 UCB가 악화될 수 있음을 보고한다[2]. 이는 단순히 불확실성(또는 탐욕적 최적화) 기반 선택이 데이터 커버리지를 해칠 수 있고, 결과적으로 포화 이후에도 “새 영역(새 모티프)”에서 일반화가 제한될 수 있음을 시사한다[2].
+
+\subsection{벤치마크 포화의 의미([1])}
+[1]의 747 벤치마크는 크지만, 실험 레퍼런스는 부분집합이며[1], 또한 수직 근사 등 프로토콜 오차가 존재한다[1]. 따라서 “더 많은 xTB 계산 데이터”가 쌓여도 실험 정합성의 포화(정확도 상한)가 근사 오차에 의해 제한될 수 있다. 이 경우, 포화 이후 일반화의 병목은 (i) 데이터 양이 아니라 (ii) 라벨의 물리 타당도(환경/기하/동역학)일 가능성이 있다[1][3].
+
+\subsection{동역학 단계의 일반화([3])}
+[3]은 특정 금속 복합체 계열에서의 일반 접근을 제시하지만[3], 장벽 오차 지수 증폭 특성상, OOD(새 리간드/새 전하이동 특성)에서의 일반화는 “모델 형태”보다 “에너지 입력의 신뢰도”에 의해 제한될 가능성이 크다[3].
+
+\section{Distribution Illustration}
+본 보고서는 런에 포함된 발췌 근거만을 사용하므로, 747 분자에 대한 정량 분포(히스토그램/커널 밀도 등)를 새로 계산해 제시할 수는 없다. 대신 논문이 제공하는 ‘분포적’ 관찰을 요약한다[1][2].
+
+\subsection{대규모 통계로 확인된 설계 규칙([1])}
+[1]은 747 분자 규모의 통계 분석을 통해 D-A-D 구조의 우수성, D–A 비틀림각의 유리한 범위(예: 50°–90°) 등을 논의한다[1]. 이는 “단일 사례”가 아니라 데이터 분포 전반에서 관찰된 경향이라는 의미를 갖는다[1].
+
+\subsection{학습곡선의 분포/분산([2])}
+[2]는 active learning 학습곡선에서 10 seeds 반복 결과를 \(\pm 1\) SD로 제시한다[2]. 이는 동일 샘플 수에서도 선택 전략/초기화에 따른 성능 분산이 존재함을 시각적으로(그리고 통계적으로) 나타낸다[2].
+
+\section{Prompts}
+본 보고서는 사용자로부터 제공된 “Report focus prompt”에 따라 세 논문을 하나의 연구 스레드로 통합 리뷰하는 것을 목표로 한다. 본 섹션에는 실제 생성에 사용된 핵심 지시사항을 재현을 위해 기록한다(추가 프롬프트를 새로 발명하지 않음).
+
+\subsection{리뷰 작성 지시사항(사용자 제공)}
+\begin{itemize}
+\item “Write a technical review that synthesizes the three arXiv papers in this run.”
+\item “Treat them as a coherent research thread: explain each paper's core contribution, then connect the ideas into a unified narrative with implications and gaps.”
+\item “Audience: domain experts and technical leads.”
+\item “Emphasize evidence from the papers only; avoid unsupported speculation.”
+\item “Include critical risks, limitations, and open problems.”
+\item “Conclude with 3-5 actionable research directions and next-step questions.”
+\item “Use numbered citations and keep tone professional and analytic.”
+\end{itemize}
+
+\section{Executive Summary}
+본 보고서는 세 논문을 “저비용 HTS \(\rightarrow\) 물리 기반 표상+ML/AL \(\rightarrow\) 동역학 기반 효율/수명”의 연속 스레드로 통합한다[1][2][3]. [1]은 747 TADF 벤치마크에서 xTB 기반 sTDA/sTD-DFT가 HTS 비용을 99\%+ 절감할 수 있음을 보여주면서도, 실험 \(\Delta E_{ST}\) 대비 MAE \(\approx 0.17\) eV로 절대 예측의 한계를 명시해 “스크리닝의 역할”을 규정한다[1]. [2]는 동일 벤치마크에서 NTO 기반 CT 디스크립터(특히 \(S_{he}\))를 도입해 \(\Delta E_{ST}\) 예측을 SVR 기준 MAE 0.024 eV, \(R^2=0.96\)까지 향상시키고, active learning으로 데이터 요구량을 약 25\% 절감할 수 있음을 보고한다[2]. [3]은 PhOLED에서 온도의존 비방사 경로 \(k_{nr}(T)\)를 포함한 kinetic modeling이 효율/수명을 좌우하며, 장벽 오차가 지수적으로 증폭되는 위험을 강조한다[3].  
+핵심 메시지는 “빠른 \(\Delta E_{ST}\) 랭킹”은 필요조건이지만 충분조건이 아니며, 최종 성능(효율/수명)을 향한 파이프라인에는 온도·환경·경쟁 소멸(동역학) 항이 필수라는 점이다[1][3]. 이에 따라 본 보고서는 다단계 파이프라인 설계(저비용 대규모 \(\rightarrow\) 설명가능 ML/AL \(\rightarrow\) 동역학 정밀화)와 라벨/목표 정의의 명확화(실험치 vs 계산치)를 주요 권고로 도출한다[1][2][3].
+
+\section{Scope \& Methodology}
+\subsection{범위(Scope)}
+\begin{itemize}
+\item 입력 문헌: 본 런에 포함된 arXiv 논문 3편([1]–[3])만을 근거로 한다.
+\item 대상 태스크: (i) TADF의 \(\Delta E_{ST}\), \(\lambda_{PL}\) 등 여기상태 기반 스크리닝[1], (ii) NTO/CT 디스크립터 기반 \(\Delta E_{ST}\) ML 예측 및 active learning[2], (iii) PhOLED의 효율/수명 kinetic modeling[3].
+\item 제외: 외부 문헌/데이터를 통한 성능 비교, 논문에 근거가 없는 확장적 주장, 추가 수치 추정.
+\end{itemize}
+
+\subsection{방법론(Methodology)}
+\begin{itemize}
+\item 서술 전략: 각 논문의 (a) 목적/가설, (b) 실험 설계, (c) 정량 결과, (d) 한계를 정리한 뒤, 세 논문 간 “연결 고리”를 논문이 제공한 근거 범위에서만 구성했다[1][2][3].
+\item 통합 축: (1) 계산 비용/정확도 경계([1]), (2) 물리 기반 특징으로의 정보 압축 및 설명가능 ML([2]), (3) 최종 성능 지표로의 확장과 동역학 필수 항([3]).
+\item 비판 기준: (i) 목표 정의(라벨)와 성능 지표의 정합성, (ii) 근사/오차의 전파(특히 지수 민감도), (iii) 일반화/외적 타당도에 대한 근거의 충분성[1][2][3].
+\end{itemize}
+
+\section{Key Findings}
+\begin{enumerate}
+\item HTS 관점에서 xTB 기반 sTDA/sTD-DFT는 계산 비용을 크게 줄이며(총 614 CPU hours 등), 내부 상관 \(r\approx 0.82\)로 상대 랭킹에 유용하지만, 실험 \(\Delta E_{ST}\) 대비 MAE \(\approx 0.17\) eV로 절대 예측에는 제한이 있다[1].
+\item NTO 기반 CT 디스크립터(특히 \(S_{he}\))는 \(\Delta E_{ST}\) 예측에서 높은 중요도를 가지며, 에너지 특징(예: ET1/ES1)과 함께 \(\Delta E_{ST}\)를 설명하는 물리적 근거를 제공한다[2].
+\item SVR(RBF)은 \(\Delta E_{ST}\) 회귀에서 MAE 0.024 eV, \(R^2=0.96\)를 보고하며, 디스크립터+ML 조합이 고정밀 예측으로 이어질 수 있음을 보여준다[2].
+\item Active learning은 random sampling 대비 목표 정확도 도달에 필요한 데이터 양을 약 25\% 절감할 수 있으며, 획득함수 선택에서 Diversity/Hybrid가 상대적으로 유리하고 UCB는 악화될 수 있다[2].
+\item 효율/수명 예측을 위해서는 경쟁 소멸 경로와 온도의존 \(k_{nr}(T)\)를 포함한 kinetic modeling이 필요하며, 에너지 장벽 오차가 지수적으로 증폭되는 위험이 존재한다[3].
+\end{enumerate}
+
+\section{Trends \& Implications}
+\subsection{Trend 1: ‘저비용 대규모’는 표준이 되고, 정확도는 후단에서 회수}
+[1]은 저비용 전자구조 계산이 HTS의 현실적 기반이 될 수 있음을 정량적으로 제시한다[1]. 이는 실무적으로 “빠른 계산으로 후보를 줄이고, 정밀도는 후단에서 회수”하는 다단계 파이프라인이 합리적이라는 함의를 갖는다[1].
+
+\subsection{Trend 2: 물리 기반 표상이 ML의 신뢰성과 설명가능성을 좌우}
+[2]는 \(S_{he}\) 등 NTO/CT 디스크립터가 단순 성능 향상뿐 아니라, \(\Delta E_{ST}\)의 물리적 원인(중첩/교환)과 모델 예측을 연결하는 역할을 수행함을 보여준다[2]. 이는 재료 설계 의사결정에서 “예측값”과 “설계 조작변수”를 연결하려는 기술 리드의 요구(설명가능성)에 직접적으로 대응한다[2].
+
+\subsection{Trend 3: 최종 성능 지표(효율/수명)로 갈수록 동역학과 온도가 지배}
+[3]은 효율/수명이 온도의존 비방사 경로 등 동역학 항에 의해 지배될 수 있음을 명확히 보여준다[3]. 따라서 \(\Delta E_{ST}\) 중심 스크리닝/학습이 성숙해질수록, 병목은 “동역학 입력(장벽, SOC, 채널)”과 그 정확도로 이동할 가능성이 높다[1][3].
+
+\section{Risks \& Gaps}
+\subsection{Risk 1: 라벨/목표 정의 불일치로 인한 성능 과대해석}
+[2]의 낮은 MAE(0.024 eV)는 강력하지만[2], [1]의 실험 비교 MAE(\(\approx 0.17\) eV)[1]와 같은 의미로 비교하려면 라벨의 정의(실험치 vs 계산치 vs 고정밀 기준치)가 일관되게 정리되어야 한다. 이 정합성이 불명확하면, 실험 예측력에 대한 과대해석 위험이 있다[1][2].
+
+\subsection{Risk 2: 근사 오차의 후단 증폭(특히 rate/수명)}
+[3]이 강조하듯 \(k_{nr}(T)\)는 장벽 \(E_a\)에 지수적으로 민감하므로[3], [1]의 저비용 근사 오차가 동역학 단계에서 큰 성능 오차로 증폭될 수 있다[1][3]. 이는 “저비용+ML 보정”만으로는 최종 성능 예측을 보장하기 어렵다는 갭으로 이어진다[3].
+
+\subsection{Gap 1: 스크리닝 지표(\(\Delta E_{ST}\))와 시스템 지표(효율/수명) 사이의 연결}
+[1][2]는 주로 \(\Delta E_{ST}\) 및 여기상태 예측/학습에 집중하고[1][2], [3]은 효율/수명 동역학을 제시한다[3]. 그러나 두 층을 실제로 연결하는 통합 데이터/모델(예: 후보별 경쟁 소멸 채널, 온도/환경 파라미터 포함)의 제시는 본 런의 근거만으로는 제한적이다[1][2][3].
+
+\subsection{Gap 2: 외부 검증과 OOD 일반화의 정량 근거 부족}
+[2]는 학습곡선과 획득함수 비교를 제시하지만[2], 완전히 새로운 화학공간(새 모티프/새 계열)에 대한 OOD 성능을 정량적으로 제시하는지는 별도 확인이 필요하다(본 보고서 근거 범위 내에서는 제한적으로만 언급 가능)[2]. [1] 또한 실험 레퍼런스가 부분집합이며[1], 외부 독립 코호트에서의 재검증은 개방 과제로 남는다[1][2].
+
+\section{Critics}
+\subsection{비판 1: ‘정확도’의 의미를 목적(스크리닝 vs 정량 예측)과 분리해 서술해야 함}
+[1]은 스스로 HTS에서의 역할을 “스크리닝”으로 규정하고, 절대 오차의 원인을 수직 근사 등으로 지목한다[1]. 따라서 [2]의 성능 수치를 인용할 때도, 그것이 스크리닝 단계의 랭킹 개선인지, 실험치 정량 예측인지, 혹은 특정 계산 기준치에 대한 회귀인지가 명확히 분리되지 않으면, 독자가 파이프라인 적용 범위를 오해할 수 있다[1][2].
+
+\subsection{비판 2: AL의 개선폭과 운영 복잡도의 균형}
+[2]는 AL이 데이터 요구량을 약 25\% 절감할 수 있다고 보고하지만[2], 획득함수에 따라 성능이 악화될 수도(UCB) 있음을 함께 보여준다[2]. 이는 실무 적용에서 (i) 불확실성 추정의 안정성, (ii) 다양성 유지, (iii) 운영 복잡도(루프, 모델 업데이트, 데이터 관리)와의 균형 평가가 필요함을 의미한다[2].
+
+\subsection{비판 3: 동역학 모델의 입력 정확도 요구가 HTS와 충돌할 수 있음}
+[3]의 접근은 물리적으로 더 완결적이지만, 장벽/에너지의 정확도 요구가 높고 작은 오차가 큰 rate 오차로 이어질 수 있음을 명시한다[3]. 이는 HTS(저비용/대규모)와 충돌할 수 있으며[1], 실제 통합을 위해서는 “어떤 단계에서 어떤 정확도로 어떤 입력을 계산할 것인가”에 대한 계층화 전략이 필요하다[1][3].
+
+\section{Appendix}
+\subsection{Actionable research directions and next-step questions (3--5개)}
+\begin{enumerate}
+\item (목표 정합) [2]의 \(\Delta E_{ST}\) 예측 MAE(0.024 eV)가 가리키는 라벨 정의를 명확히 하고, [1]의 실험 레퍼런스 부분집합(예: 312개)에서 동일한 목표로 외부 검증을 수행할 수 있는가? (실험치 vs 계산치 성능의 분리 보고)[1][2]
+\item (다단계 파이프라인) [1]의 저비용 랭킹을 1차 필터로 쓰고, [2]의 디스크립터+ML을 2차 필터로 결합한 뒤, 최종 후보에 대해 [3]와 같은 동역학 항(온도의존 비방사 채널 포함)을 평가하는 계층형 워크플로를 설계할 수 있는가?[1][2][3]
+\item (오차 전파 분석) [3]이 강조한 지수 민감도 관점에서, [1]의 전자구조 근사 오차(예: 수직 근사로 인한 에너지 오차)가 수명/효율 예측 오차로 어떻게 전파되는지(최소한의 민감도 분석)를 수행할 수 있는가?[1][3]
+\item (AL 운영 전략) [2]에서 UCB가 악화된 원인을 분석하고, Diversity/Hybrid가 유리했던 조건(커버리지, 초기 샘플 구성)을 정량화하여, 실제 HTS 운영에서 안전한 획득함수 선택 가이드를 만들 수 있는가?[2]
+\item (표상 확장) [2]의 NTO/CT 디스크립터가 \(\Delta E_{ST}\) 외의 지표(예: \(\lambda_{PL}\) 등[1]) 또는 동역학 관련 중간 변수로 확장될 수 있는지, 논문이 제시한 도구 체인(Multiwfn, SHAP)을 활용해 특징 후보를 체계적으로 평가할 수 있는가?[1][2]
+\end{enumerate}
+
+\subsection{Citations}
+[1] Validation of Semi-Empirical xTB Methods for High-Throughput Screening of TADF Emitters: A 747-Molecule Benchmark Study (arXiv:2511.00922v1).  
+[2] From orbital analysis to active learning: an integrated strategy for the accelerated design of TADF emitters (arXiv:2512.06029v1).  
+[3] General Approach To Compute Phosphorescent OLED Efficiency (arXiv:1901.01201v1).
+
+\section*{Report Prompt}
+\begin{verbatim}
+Write a technical review that synthesizes the three arXiv papers in this run.
+Treat them as a coherent research thread: explain each paper's core contribution,
+then connect the ideas into a unified narrative with implications and gaps.
+
+Requirements:
+- Audience: domain experts and technical leads.
+- Emphasize evidence from the papers only; avoid unsupported speculation.
+- Include critical risks, limitations, and open problems.
+- Conclude with 3-5 actionable research directions and next-step questions.
+- Use numbered citations and keep tone professional and analytic.
+\end{verbatim}
+\section*{Miscellaneous}
+\small
+\begin{itemize}
+\item Generated at: 2026-01-17 20:28:56
+\item Duration: 00:10:26 (626.64s)
+\item Model: gpt-5.2
+\item Quality strategy: none
+\item Quality iterations: 0
+\item Template: arxiv\_2601.05567
+\item Output format: tex
+\item PDF compile: enabled
+\item Run overview: ./report/run\_overview.md
+\item Report overview: ./report/run\_overview\_report\_full\_3.md
+\item Archive index: ./archive/20260117\_arxiv-template-index.md
+\item Instruction file: ./instruction/20260117\_arxiv-template.txt
+\item Report prompt: ./instruction/report\_prompt\_report\_full\_3.txt
+\end{itemize}
+\normalsize
+\end{document}

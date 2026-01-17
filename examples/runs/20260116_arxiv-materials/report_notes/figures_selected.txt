@@ -1,0 +1,2 @@
+# Add one candidate_id per line (e.g., fig-001)
+# Lines starting with '#' are ignored.

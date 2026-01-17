@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Template Preview - arxiv_2601.05567</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-arxiv_2601.05567">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Template Preview - arxiv_2601.05567</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>Template Preview: arxiv_2601.05567</h1>
+<p><strong>Description:</strong> Generated from arXiv source structure (2601.05567).
+<strong>Tone:</strong> Academic, evidence-based, critical.
+<strong>Audience:</strong> Technical leaders and researchers.
+<strong>Source:</strong> C:\Users\angpa\myProjects\FEATHER\examples\runs\20260116_arxiv-materials\template_src\2601.05567\template.md</p>
+<h2>Abstract</h2>
+<p><em>Guidance:</em> 연구의 배경-문제-방법-핵심 결과-의의를 150~250단어(또는 5~8문장)로 압축해 제시하세요. 정량 지표(예: 정확도, F1, 오류율)와 비교 기준(베이스라인/기존 연구)을 최소 1개 이상 포함하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Introduction</h2>
+<p><em>Guidance:</em> 다루는 문제의 중요성과 기존 접근의 한계를 근거(인용/관찰/데이터)로 설명하고, 본 리뷰/보고서의 기여와 범위를 명확히 정의하세요. 평가 질문(Research Questions) 2~4개를 명시해 이후 섹션의 구조를 안내하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>WildSci</h2>
+<p><em>Guidance:</em> ‘WildSci’의 정의(데이터/벤치마크/프레임워크/시스템 중 무엇인지)와 구성요소(도메인, 태스크, 라벨 체계)를 명확히 기술하세요. 설계 의도와 사용 시나리오를 서술하고, 다른 유사 자원과의 차별점을 근거 중심으로 정리하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Experiments</h2>
+<p><em>Guidance:</em> 실험 목적, 가설, 비교군(모델/방법), 독립·종속변수, 평가 지표를 사전에 선언하세요. 재현 가능한 수준으로 절차(데이터 전처리, 학습/추론 파이프라인, 하이퍼파라미터 탐색 방식)를 요약하고, 공정 비교를 위한 통제(동일 데이터/스텝/예산)를 명시하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Results and Analysis</h2>
+<p><em>Guidance:</em> 표/그림 중심으로 주요 결과를 먼저 제시한 뒤, 관찰된 차이를 설명하는 메커니즘 가설을 근거와 함께 검토하세요. 평균 성능뿐 아니라 분산/신뢰구간/통계적 유의성 또는 효과크기를 함께 보고하고, 실패 사례/오류 유형 분석을 포함하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Limitations</h2>
+<p><em>Guidance:</em> 내적 타당도(실험 설계), 외적 타당도(일반화), 구성 타당도(지표 적합성) 관점에서 한계를 구분해 서술하세요. 각 한계에 대해 영향 범위와 완화 방안(추가 실험/데이터/분석)을 구체적으로 제안하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Conclusion</h2>
+<p><em>Guidance:</em> 핵심 기여와 결론을 3~5개의 근거 기반 문장으로 요약하고, 결과가 의미하는 바(실무/연구)에 대한 검증 가능한 주장만 제시하세요. 후속 과제는 우선순위와 필요한 자원/데이터를 함께 제안하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Experiment Settings</h2>
+<p><em>Guidance:</em> 모델 버전, 파라미터 수, 학습 스텝/에폭, 배치 크기, 학습률, 시드, 하드웨어, 라이브러리 버전 등 재현성에 필요한 설정을 표로 정리하세요. 비용/시간 예산과 조기 종료/체크포인트 정책도 함께 명시하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Related Work</h2>
+<p><em>Guidance:</em> 핵심 선행연구를 범주화(데이터셋/모델/평가/도메인)해 비교하고, 본 작업이 채우는 공백을 명확히 하세요. 단순 나열 대신 동일 지표/조건에서의 차이 또는 방법론적 차이를 중심으로 비판적으로 서술하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Data Quality Analysis</h2>
+<p><em>Guidance:</em> 라벨 정확도, 중복, 누락, 편향, 누수(leakage) 가능성을 점검하는 절차와 지표를 제시하세요. 표본 감사(샘플링 기준/규모)와 오류 유형(오라클 불일치, 모호 라벨 등)을 정량·정성으로 함께 보고하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Statistics of Subdomains</h2>
+<p><em>Guidance:</em> 서브도메인별 샘플 수, 클래스 분포, 평균 길이/난이도 지표를 요약해 데이터의 불균형과 대표성을 평가하세요. 분포 차이가 성능에 미칠 영향(가중치, 리샘플링 필요성)을 근거와 함께 논의하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Different Data Splits</h2>
+<p><em>Guidance:</em> 랜덤/시간순/도메인 분리/저자(출처) 분리 등 분할 전략을 정의하고, 각 분할의 목적(누수 방지, 현실성)과 트레이드오프를 설명하세요. 분할별 결과를 동일 지표로 비교하고, 분할 민감도를 분석하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Domain-Specific Performance</h2>
+<p><em>Guidance:</em> 도메인별/태스크별 성능을 매크로·마이크로 평균으로 함께 제시하고, 상위/하위 도메인을 원인 분석(데이터 규모, 용어, 추론 유형)과 연결하세요. 도메인 적응(파인튜닝/프롬프트/리트리벌) 전략의 효과를 분리해 평가하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Post-saturation Generalization</h2>
+<p><em>Guidance:</em> 훈련 데이터/성능이 포화된 이후에도 일반화가 개선되는지(스케일링, 추가 데이터, 정제, 지시조정)를 실험 설계로 분리해 검증하세요. 학습 곡선과 OOD(분포 밖) 성능을 함께 보고해 ‘진짜 일반화’ 근거를 제시하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Distribution Illustration</h2>
+<p><em>Guidance:</em> 핵심 변수(도메인, 길이, 난이도, 라벨, 출처)의 분포를 히스토그램/커널밀도/상자그림으로 시각화하세요. 훈련-검증-테스트 간 분포 차이를 함께 보여 누수/편향 위험을 점검하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Prompts</h2>
+<p><em>Guidance:</em> 사용한 프롬프트(시스템/유저/예시), 템플릿, 파라미터(temperature, top-p), 출력 제약을 그대로 기록하세요. 프롬프트 변형 실험이 있다면 변경점과 성능/안정성 영향을 분리해 보고하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Executive Summary</h2>
+<p><em>Guidance:</em> 비전문 독자도 이해할 수 있도록 목적, 결론, 영향, 권고사항을 5~8개의 불릿으로 요약하세요. 숫자(효과크기/비용/리스크)를 포함하되, 추정치와 확정치를 명확히 구분하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Scope &amp; Methodology</h2>
+<p><em>Guidance:</em> 리뷰의 범위(포함/제외 기준), 자료 수집 방법(데이터베이스, 검색식, 기간), 선택·배제 과정(PRISMA 유사 흐름)을 명시하세요. 분석 프레임(평가 지표, 비교 기준, 편향 통제)을 사전에 선언해 해석의 일관성을 확보하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Key Findings</h2>
+<p><em>Guidance:</em> 가장 중요한 발견 3~7개를 ‘주장-근거-의미’ 구조로 제시하세요. 각 발견마다 최소 1개의 표/수치/인용을 연결해 재검증 가능하도록 하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Trends &amp; Implications</h2>
+<p><em>Guidance:</em> 관찰된 추세(성능, 비용, 데이터 규모, 안전성)를 시간/스케일/도메인 축으로 정리하고, 인과 주장보다는 상관과 조건부 해석을 우선하세요. 실무 적용 시 기대 효과와 전제 조건(데이터 가용성, 규제)을 함께 기술하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Risks &amp; Gaps</h2>
+<p><em>Guidance:</em> 기술적 리스크(환각, 편향, 누수), 운영 리스크(비용, 유지보수), 법·윤리 리스크(저작권, 개인정보)를 구분해 평가하세요. 남은 연구 공백을 ‘왜 중요한가/어떻게 검증할 것인가’까지 포함해 목록화하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Critics</h2>
+<p><em>Guidance:</em> 주요 비판 지점을 공정하게 정리하고, 반론이 가능할 경우에도 근거 중심으로 한계와 설득력을 평가하세요. 재현성, 데이터 누수, 비교의 공정성, 통계적 타당성을 우선적으로 점검하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Appendix</h2>
+<p><em>Guidance:</em> 본문에 넣기 어려운 세부 실험 로그, 추가 표/그림, 프롬프트 전체, 데이터 스키마, 라벨 가이드라인을 수록하세요. 본문 참조 가능한 식별자(표 A1, 그림 A1)로 연결해 추적성을 확보하세요.
+This is placeholder content to visualize section flow and expected narrative density.
+- Placeholder point A
+- Placeholder point B</p>
+<h2>Template Notes</h2>
+<ul>
+<li>보고서 초반에 연구 질문(RQ)과 평가 기준(지표, 베이스라인, 데이터 분할)을 명시하고 끝까지 동일 기준으로 비교한다.</li>
+<li>모든 핵심 주장에는 정량 근거(표/수치/신뢰구간) 또는 검증 가능한 출처 인용을 연결한다.</li>
+<li>상관과 인과를 구분하고, 추정/가정/관찰을 문장 수준에서 명확히 표시한다.</li>
+<li>재현 가능성을 최우선으로: 설정(시드·버전·하드웨어·예산)과 절차를 누락하지 않는다.</li>
+<li>공정 비교를 위해 통제 조건(동일 데이터, 동일 예산, 동일 평가 스크립트)을 명시한다.</li>
+<li>평균 성능만 보고하지 말고 분산, 도메인별 편차, 실패 사례를 함께 제시한다.</li>
+<li>데이터 품질(라벨 오류, 중복, 누수, 편향) 점검 결과를 독립 섹션에서 투명하게 보고한다.</li>
+<li>한계와 리스크를 ‘영향 범위 + 완화 방안’ 형태로 구체화해 실행 가능한 결론으로 연결한다.</li>
+<li>용어와 약어는 최초 등장 시 정의하고, 동일 용어를 일관되게 사용한다.</li>
+<li>그림/표는 메시지 1개만 전달하도록 설계하고, 캡션에 실험 조건과 표본 수를 포함한다.</li>
+</ul>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

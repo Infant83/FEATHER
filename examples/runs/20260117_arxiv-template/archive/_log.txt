@@ -1,0 +1,23 @@
+[2026-01-17 10:53:40] JOB START: 20260117_arxiv-template.txt date=2026-01-17 days=30 max_results=8
+[2026-01-17 10:53:40] TAVILY EXTRACT: https://arxiv.org/abs/2511.00922
+[2026-01-17 10:53:43] TAVILY EXTRACT: https://arxiv.org/abs/2512.06029
+[2026-01-17 10:53:47] TAVILY EXTRACT: https://arxiv.org/abs/1901.01201
+[2026-01-17 10:53:50] ARXIV ID FETCH: 2511.00922
+[2026-01-17 10:53:52] WARN citations lookup failed arxiv_id=2511.00922v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2511.00922')
+[2026-01-17 10:53:52] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/2511.00922v1 -> 2511.00922v1.pdf
+[2026-01-17 10:53:53] PDF->TEXT: 2511.00922v1.pdf
+[2026-01-17 10:53:54] ARXIV ID FETCH: 2512.06029
+[2026-01-17 10:53:55] WARN citations lookup failed arxiv_id=2512.06029v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2512.06029')
+[2026-01-17 10:53:55] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/2512.06029v1 -> 2512.06029v1.pdf
+[2026-01-17 10:53:56] PDF->TEXT: 2512.06029v1.pdf
+[2026-01-17 10:53:56] ARXIV ID FETCH: 1901.01201
+[2026-01-17 10:53:58] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/1901.01201v1 -> 1901.01201v1.pdf
+[2026-01-17 10:54:00] PDF->TEXT: 1901.01201v1.pdf
+[2026-01-17 10:54:01] ARXIV SRC DOWNLOAD: 2511.00922
+[2026-01-17 10:54:10] ARXIV SRC EXTRACT: 2511.00922.tar.gz
+[2026-01-17 10:54:10] ARXIV SRC DOWNLOAD: 2512.06029
+[2026-01-17 10:54:11] ARXIV SRC EXTRACT: 2512.06029.tar.gz
+[2026-01-17 10:54:11] ARXIV SRC DOWNLOAD: 1901.01201
+[2026-01-17 10:54:14] ARXIV SRC EXTRACT: 1901.01201.tar.gz
+[2026-01-17 10:54:14] ERROR arxiv src download id=1901.01201 err=ReadError("file could not be opened successfully:\n- method gz: ReadError('not a gzip file')\n- method bz2: ReadError('not a bzip2 file')\n- method xz: ReadError('not an lzma file')\n- method tar: ReadError('invalid header')")
+[2026-01-17 10:54:14] JOB END

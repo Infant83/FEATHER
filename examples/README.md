@@ -76,6 +76,37 @@ Outputs of interest for LLM inputs:
 - `examples/runs/<queryID>/archive/arxiv/text/*.txt` (PDF text, when `--download-pdf`)
 - `examples/runs/<queryID>/archive/<queryID>-index.md` (relative paths to all outputs)
 
+### 2b) Single arXiv paper + source (materials review)
+Uses `examples/instructions/20260116_arxiv-materials.txt` and a report prompt at
+`examples/instructions/20260116_prompt_arxiv-materials.txt`.
+
+```bash
+python -m pip install -e ".[all]"
+feather --input ./examples/instructions/20260116_arxiv-materials.txt --output ./examples/runs --download-pdf --arxiv-src
+federlicht --run ./examples/runs/20260116_arxiv-materials --output ./examples/runs/20260116_arxiv-materials/report_full.tex --template nature_journal --lang en --prompt-file ./examples/instructions/20260116_prompt_arxiv-materials.txt --quality-iterations 2 --quality-strategy pairwise --figures --figures-mode select
+```
+
+Notes:
+- The first Federlicht run creates `report_views/figures_preview.html` and `report_notes/figures_selected.txt`.
+- Add candidate IDs to `figures_selected.txt`, then rerun Federlicht to embed figures.
+- If `latexmk` or `pdflatex` is installed, the PDF is compiled automatically.
+
+### 2c) Multi-arXiv review using a source-derived template
+Uses `examples/instructions/20260117_arxiv-template.txt` and the template bundle generated from
+`20260116_arxiv-materials` (copied into the new run folder). The prompt is
+`examples/instructions/20260117_prompt_arxiv-template.txt`.
+
+```bash
+python -m pip install -e ".[all]"
+feather --input ./examples/instructions/20260117_arxiv-template.txt --output ./examples/runs --download-pdf --arxiv-src
+robocopy .\\examples\\runs\\20260116_arxiv-materials\\template_src .\\examples\\runs\\20260117_arxiv-template\\template_src /E
+federlicht --run ./examples/runs/20260117_arxiv-template --output ./examples/runs/20260117_arxiv-template/report_full.tex --template ./examples/runs/20260117_arxiv-template/template_src/2601.05567/template.md --lang ko --prompt-file ./examples/instructions/20260117_prompt_arxiv-template.txt --quality-iterations 2 --quality-strategy pairwise
+```
+
+Notes:
+- The `--template` path points to the copied template bundle. The original NeurIPS paper is not included in this run.
+- If `latexmk` or `pdflatex` is installed, the PDF is compiled automatically.
+
 ### 3) Mixed queries + URLs + arXiv IDs
 Uses `examples/instructions/20260106_mixed.txt`.
 
@@ -183,6 +214,14 @@ Use the actual run folder (e.g., `20260104_oled`, `20260104_oled_01`, ...). Add 
 - `20260105_arxiv-gnn` (arXiv GNN): `technical_deep_dive`
   ```bash
   federlicht --run ./examples/runs/20260105_arxiv-gnn --output ./examples/runs/20260105_arxiv-gnn/report_full.html --template technical_deep_dive --lang en --prompt "Analyze main ideas, methods, and implications. Highlight trends and open problems."
+  ```
+- `20260117_arxiv-template` (multi-arXiv review): `template_src/2601.05567`
+  ```bash
+  federlicht --run ./examples/runs/20260117_arxiv-template --output ./examples/runs/20260117_arxiv-template/report_full.tex --template ./examples/runs/20260117_arxiv-template/template_src/2601.05567/template.md --lang ko --prompt-file ./examples/instructions/20260117_prompt_arxiv-template.txt
+  ```
+- `20260116_arxiv-materials` (single arXiv paper): `nature_journal`
+  ```bash
+  federlicht --run ./examples/runs/20260116_arxiv-materials --output ./examples/runs/20260116_arxiv-materials/report_full.tex --template nature_journal --lang en --prompt-file ./examples/instructions/20260116_prompt_arxiv-materials.txt --quality-iterations 2
   ```
 - `20260106_mixed` (mixed sources): `trend_scan`
   ```bash

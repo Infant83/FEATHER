@@ -1,0 +1,17 @@
+[2026-01-16 23:11:44] JOB START: 20260116_arxiv-materials.txt date=2026-01-16 days=30 max_results=8
+[2026-01-16 23:11:44] TAVILY EXTRACT: https://arxiv.org/abs/2601.05567
+[2026-01-16 23:11:45] ARXIV ID FETCH: 2601.05567
+[2026-01-16 23:11:48] WARN citations lookup failed arxiv_id=2601.05567v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2601.05567')
+[2026-01-16 23:11:48] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/2601.05567v1 -> 2601.05567v1.pdf
+[2026-01-16 23:11:48] PDF->TEXT: 2601.05567v1.pdf
+[2026-01-16 23:11:50] ARXIV SRC DOWNLOAD: 2601.05567
+[2026-01-16 23:11:51] ARXIV SRC EXTRACT: 2601.05567.tar.gz
+[2026-01-16 23:11:51] ERROR arxiv src download id=2601.05567 err=OSError(22, 'Invalid argument')
+[2026-01-16 23:12:34] JOB START: 20260116_arxiv-materials.txt date=2026-01-16 days=30 max_results=8
+[2026-01-16 23:12:34] TAVILY EXTRACT SKIP (exists): https_arxiv.org_abs_2601.05567.txt
+[2026-01-16 23:12:34] ARXIV UPDATE: 1 cached papers
+[2026-01-16 23:12:34] ARXIV ID FETCH: 2601.05567
+[2026-01-16 23:12:35] WARN citations lookup failed arxiv_id=2601.05567v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2601.05567')
+[2026-01-16 23:12:35] ARXIV PDF EXISTS: 2601.05567v1.pdf
+[2026-01-16 23:12:35] ARXIV SRC EXTRACT: 2601.05567.tar.gz
+[2026-01-16 23:12:36] JOB END

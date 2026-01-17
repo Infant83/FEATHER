@@ -1,0 +1,66 @@
+\section{Introduction}
+
+
+
+Advancing AI for science requires models that combine domain-specific expertise with strong reasoning capabilities to support real-world scientific discovery~\citep{DBLP:conf/emnlp/0044CJWJW024, DBLP:journals/corr/abs-2502-14499, DBLP:journals/corr/abs-2502-18864,DBLP:journals/corr/abs-2503-17604}. 
+Recent advances in large language model (LLM) reasoning have achieved impressive progress in mathematical and coding domains~\citep{DBLP:journals/corr/abs-2409-12122,DBLP:journals/corr/abs-2402-03300}, especially driven by the rapid development of reinforcement learning techniques for reasoning tasks~\citep{DBLP:journals/corr/abs-2402-03300, DBLP:journals/corr/abs-2501-12599, DBLP:journals/corr/abs-2503-24290, DBLP:journals/corr/abs-2503-14476, DBLP:journals/corr/abs-2503-20783, DBLP:journals/corr/abs-2503-18892}.
+These areas offer natural advantages: they involve objective, verifiable answers and have abundant high-quality datasets available in the community. This enables the development of reasoning models with access to scalable, well-structured training and evaluation.
+
+
+In contrast, scientific domains remain relatively underexplored in the context of reinforcement learning with verifiable rewards (RLVR)~\citep{DBLP:journals/corr/abs-2411-15124, DBLP:journals/corr/abs-2503-23829}. Scientific questions are often more complex and multifaceted, requiring not only logical and mathematical skills but also deep domain-specific knowledge to contextualize and analyze information accurately.
+Existing datasets are mostly skewed toward traditional natural sciences such as physics, chemistry, and biology, and tend to be limited in both scope and disciplinary diversity~\citep{DBLP:journals/corr/abs-2311-12022, DBLP:conf/nips/LiHIKG23,DBLP:conf/nips/ZhangHZDYWYD024, DBLP:journals/corr/abs-2501-15587}. As a result, many scientific areas, particularly interdisciplinary fields like materials science and medicine, remain underrepresented~\citep{DBLP:journals/corr/abs-2406-07835}. Furthermore, most existing data sources are drawn from textbooks or general pretraining corpora~\citep{DBLP:conf/nips/YueZZC24,DBLP:journals/corr/abs-2502-13124}, which lack the specificity of research-level content.
+
+
+
+To address this gap, we propose leveraging peer-reviewed scientific literature as a rich yet underutilized source for constructing domain-specific science questions in a fully automated pipeline. 
+Unlike textbooks or problem sets, scientific papers reflect the depth, rigor, and complexity of real-world research, making them well-suited for advancing models toward research-level reasoning skills. 
+This approach offers several key advantages: (1) it grounds questions in real-world applications and expert-validated context; and (2) it enables the creation of new questions that are unlikely to appear in pretraining corpora, helping mitigate issues of data contamination.
+
+
+
+Another key challenge arises from the nature of science itself: many science questions are inherently open-ended and do not have a single verifiable answer. 
+For example, explaining the observed decline in species richness in Figure~\ref{fig:pipeline} requires scientific judgment including interpreting evidence, reasoning about underlying mechanisms, and constructing plausible explanations. 
+% These tasks lack straightforward, rule-based verification, making it challenging to generalize RLVR to science domains.
+To address this, we adopt a more structured formulation by framing scientific reasoning tasks as multiple-choice questions (MCQs). MCQs are widely used in existing science benchmarks and offer a practical format for evaluation~\citep{DBLP:conf/iclr/HendrycksBBZMSS21, DBLP:journals/corr/abs-2311-12022, DBLP:conf/nips/WangMZNCGRAHJLK24, DBLP:journals/corr/abs-2502-14739}. This structure provides clear supervision signals, making it easier to define rewards systematically while preserving the richness of scientific reasoning. This simple setting offers a natural testbed for extending RL advances from mathematical domains to scientific reasoning tasks.
+
+
+
+In this work, we develop a generalizable approach for creating training data grounded in real-world scientific research, and to extend RLVR reasoning to scientific domains. Our contributions are summarized as follows.
+
+(1) We introduce a \textbf{fully automated data synthesis pipeline} that generates domain-specific questions from peer-reviewed scientific papers, followed by refinement and model voting  to ensure data quality.
+
+(2) We construct WildSci, a dataset of 56K questions \textbf{spanning 9 scientific disciplines and 26 subdomains}, providing broad and diverse coverage for scientific reasoning.
+
+(3) We provide comprehensive analysis on how WildSci enables \textbf{effective transfer of RLVR method to scientific domains}. Models trained on WildSci show consistent improvements on multiple science benchmarks, including GPQA, SuperGPQA, and MMLU-Pro. 
+
+
+
+With new papers continuously emerging in the community, WildSci provides a sustainable data synthesis approach to support ongoing exploration of scientific reasoning.  We have open-sourced the code and data for WildSci to enable scalable
+and sustainable research in scientific reasoning.
+
+
+
+
+
+
+
+\begin{table}[t]
+\centering
+\caption{Comparison of datasets by source type, domain coverage, size, question length, and originality. ‘New?’ indicates whether questions are newly generated or parsed from existing corpora.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllrcc}
+\toprule
+\textbf{Dataset} & \textbf{Source} & \textbf{Domains} & \textbf{\# Q} & \textbf{Avg. Len.} & \textbf{New?} \\
+\midrule
+Camel-AI Science & GPT-4 (self-generated) & Phys, Bio, Chem & 60K & 30 $\pm$ 15 & Yes \\
+Sci-Instruct     & Textbooks, problem sets, websites & Phys, Chem, Math, Formal Proofs & 254K & 41 $\pm$ 33 & No \\
+SCP-116K         & Educational materials & Phys, Chem, Bio & 116K & 62 $\pm$ 74 & No \\
+Natural Reasoning & Pretraining corpora & Multiple & 2.8M & 55 $\pm$ 21 & Yes \\
+% Nemotron-CrossThink & Pretraining corpora, CommonCrawl & Multiple & -- & -- & No \\
+WildSci          & Peer-reviewed papers & Multiple (research focused) & 56K & 82 $\pm$ 19 & Yes \\
+\bottomrule
+\end{tabular}%
+}
+
+\label{tab:scienceqa_comparison}
+\end{table}

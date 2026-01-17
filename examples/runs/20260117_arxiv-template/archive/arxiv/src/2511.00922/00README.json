@@ -1,0 +1,293 @@
+{
+   "sources" : [
+      {
+         "usage" : "toplevel",
+         "filename" : "article1_mainV251023.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/01_torsion_angle_histograms.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/02_gas_vs_toluene_by_tict.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/03_gas_vs_toluene_by_architecture.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/04_boxplots_by_tict.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/05_violinplots_by_da_type.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/06_violinplots_by_architecture.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/07_correlation_heatmap.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/08_torsion_vs_molecular_weight.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/09_planarity_analysis.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/10_ml_roc_curves.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/11_ml_confusion_matrices.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/12_ml_feature_importance.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/13_ml_decision_boundary.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/14_interesting_molecules_map.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/4CzIPN-Sem.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/advanced_statistical_analysis.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/angle_by_architecture_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/calibration__test_.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/clustering_gas.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/clustering_toluene.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/comprehensive_correlation_matrix.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/confidence_analysis_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/confusion_matrix__test_.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/correlation_heatmap_gas.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/correlation_heatmap_toluene.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/correlation_scatter_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/da_combination_analysis_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/densityGlobalSummaryArticle.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/density_global_summary_figure.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/density_plots_2d_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/distribution_analysis_gas.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/distribution_analysis_toluene.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/donor_acceptor_frequency_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/dual_histograms_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/fluor-energy-levels.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/method_comparison.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/method_comparison_gas.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/method_comparison_toluene.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/optimal_range_validation.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/outlier_analysis_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/pca_analysis_gas.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/pca_analysis_toluene.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/photoluminescence_correlation.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/photoluminescence_error_dist.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/pr_curve__test_.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/roc_curve__test_.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/singlet_triplet_correlation.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/singlet_triplet_error_dist.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/solvent_effect_analysis_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/solvent_effects_analysis.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/statistical_summary_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_architecture_distribution.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_architecture_performance.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_correlation_matrix.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_design_analysis_enhanced.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_efficiency_by_angle_range.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_literature_validation.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_performance_analysis.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tadf_summary_dashboard.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/tict_vs_tadf_analysis.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/torsion_delta_est_correlations.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "Figures/workflow.pdf"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "TADF_Article_References.bib"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_comparative_summary.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_emission_wavelength_metrics.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_pl_metrics.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_st_gap_metrics.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_st_metrics.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/table_validation_examples.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "tables/validation_references_list.txt"
+      }
+   ],
+   "spec_version" : 1,
+   "texlive_version" : "2025",
+   "process" : {
+      "compiler" : "pdflatex"
+   }
+}

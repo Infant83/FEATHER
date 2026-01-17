@@ -48,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
         "import os; jobs=prepare_jobs(input_path=Path('./instructions'), query=None, output_root=Path('./archive'), "
         "lang_pref=None, openalex_enabled=False, openalex_max_results=None, youtube_enabled=False, "
         "youtube_max_results=None, youtube_transcript=False, youtube_order='relevance', days=30, max_results=8, "
-        "download_pdf=False); "
+        "download_pdf=False, arxiv_source=False); "
         "t=TavilyClient(os.getenv('TAVILY_API_KEY')); [run_job(j, t) for j in jobs]\"\n"
     )
     ap = argparse.ArgumentParser(
@@ -90,6 +90,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--days", type=int, default=30, help="Lookback window (days)")
     ap.add_argument("--max-results", type=int, default=8, help="Max results per Tavily/arXiv search step")
     ap.add_argument("--download-pdf", action="store_true", help="Download arXiv PDFs and extract PDF text")
+    ap.add_argument(
+        "--arxiv-src",
+        action="store_true",
+        help="Download arXiv source tarballs (e-print) and extract TeX/figure manifests",
+    )
+    ap.add_argument(
+        "--update-run",
+        action="store_true",
+        help="Reuse an existing run folder (skip numbered suffix) and update outputs in place.",
+    )
     ap.add_argument("--lang", help="Preferred language for search results (en/eng or ko/kor). Soft preference only.")
     ap.add_argument("--no-stdout-log", action="store_true", help="Write logs only to _log.txt (no console output).")
     ap.add_argument("--no-citations", action="store_true", help="Disable citation enrichment for papers.")
@@ -202,6 +212,8 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         days=args.days,
         max_results=args.max_results,
         download_pdf=args.download_pdf,
+        arxiv_source=args.arxiv_src,
+        update_run=args.update_run,
         citations_enabled=not args.no_citations,
     )
     for job in jobs:

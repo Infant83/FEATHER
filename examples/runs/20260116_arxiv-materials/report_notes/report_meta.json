@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-01-16 23:31:16",
+  "started_at": "2026-01-16 23:16:46",
+  "duration_seconds": 869.16,
+  "duration_hms": "00:14:29",
+  "model": "gpt-5.2",
+  "model_vision": null,
+  "quality_model": "gpt-5.2",
+  "quality_iterations": 2,
+  "quality_strategy": "pairwise",
+  "template": "nature_journal",
+  "output_format": "tex",
+  "pdf_status": "success",
+  "run_overview_path": "./report/run_overview.md",
+  "archive_index_path": "./archive/20260116_arxiv-materials-index.md",
+  "instruction_path": "./instruction/20260116_arxiv-materials.txt",
+  "figures_preview_path": "./report_views/figures_preview.html"
+}

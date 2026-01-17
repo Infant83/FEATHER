@@ -63,6 +63,8 @@ def test_parse_job_extracts_parts(tmp_path) -> None:
         days=30,
         max_results=5,
         download_pdf=False,
+        arxiv_source=False,
+        update_run=False,
         citations_enabled=True,
     )
 
@@ -97,6 +99,8 @@ def test_prepare_jobs_with_query(tmp_path) -> None:
         days=7,
         max_results=3,
         download_pdf=False,
+        arxiv_source=False,
+        update_run=False,
         citations_enabled=True,
     )
     assert len(jobs) == 1
@@ -127,6 +131,8 @@ def test_select_youtube_queries() -> None:
         days=30,
         max_results=5,
         download_pdf=False,
+        arxiv_source=False,
+        update_run=False,
         citations_enabled=True,
         queries=["site:youtube.com quantum ai", "plain query"],
         query_specs=[

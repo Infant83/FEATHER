@@ -1,0 +1,21 @@
+{
+   "sources" : [
+      {
+         "usage" : "toplevel",
+         "filename" : "pccp_manuscript.tex"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "TADF_references.bib"
+      },
+      {
+         "usage" : "ignore",
+         "filename" : "rsc.bst"
+      }
+   ],
+   "spec_version" : 1,
+   "texlive_version" : "2025",
+   "process" : {
+      "compiler" : "pdflatex"
+   }
+}

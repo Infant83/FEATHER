@@ -36,6 +36,8 @@ class Job:
     days: int
     max_results: int
     download_pdf: bool
+    arxiv_source: bool
+    update_run: bool
     citations_enabled: bool
     queries: List[str]
     query_specs: List[QuerySpec]

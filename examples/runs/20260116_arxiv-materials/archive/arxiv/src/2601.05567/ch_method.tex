@@ -1,0 +1,108 @@
+\section{WildSci}
+
+\subsection{Data Creation}
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{figs/pipeline.pdf}
+  \caption{Overview of the data creation pipeline. Filtering is based on heuristic rules, while refinement expands the option space and rephrases questions to increase  diversity.}
+  \label{fig:pipeline}
+\end{figure}
+
+An overview of our data creation pipeline is illustrated in Figure~\ref{fig:pipeline}. The entire process is fully automated using large language models, with multiple stages of filtering and refinement to ensure high-quality outputs. This automation enables our pipeline to generalize seamlessly to other scientific domains with accessible research literature.
+
+\paragraph{Peer-reviewed Papers} 
+We use publicly available, open-access articles from Nature Communications\footnote{\url{https://www.nature.com/ncomms/}} as the data source~\citep{DBLP:journals/corr/abs-2407-04903}.
+The journal categorizes its content into five major areas and 72 subdomains. We reorganize these into nine broader disciplines following the taxonomy of SuperGPQA~\citep{DBLP:journals/corr/abs-2502-14739}. To ensure balanced coverage, we randomly sample a subset of papers from each category and generate three questions per paper based on its content. While the articles include both text and visuals, we focus exclusively on textual reasoning by using only the title, abstract, and main body, excluding all figures and tables.
+
+
+\paragraph{QA Generation}
+
+To enable a fully automated data synthesis pipeline, we employ a large language model to generate multiple-choice questions, corresponding answers and rationales directly from the paper content. The model is prompted to go through the full paper and create questions that reflect in-depth reasoning and understanding. Specifically, we instruct the model to produce context-independent questions. These are questions that can be answered without relying on figures, tables, or precise numerical details from the paper. This constraint ensures that the resulting questions emphasize knowledge-based and reasoning-intensive skills within a standalone context. The full prompt used for QA generation is provided in Appendix~\ref{app:prompts}.
+
+
+\paragraph{Filtering}
+
+To eliminate questions that require fine-grained recall or external references, we apply a set of heuristic and keyword-based filters. These filters remove items involving specific sections, detailed experimental results, or figure and table references (Figure~\ref{fig:pipeline}). 
+Following previous work~\citep{DBLP:journals/corr/abs-2502-13124, eval-harness}, we also apply 13-gram deduplication against GPQA, SuperGPQA, and MMLU-Pro to eliminate semantically similar questions. 
+% This step mitigates the risk of data contamination and overfitting in downstream training.
+The deduplication overlap rate is 0.0\%, suggesting that our dataset is both new and free of substantial overlap with existing resources.
+
+
+\paragraph{Refinement}
+The refinement stage focuses on enhancing question quality by increasing both their difficulty and diversity. Each question, along with its answer choices and rationale, is passed to LLM, which is prompted to paraphrase the question, eliminate surface-level cues, and expand the number of options (e.g., from 4 to 10 choices). This augmentation not only makes the questions more challenging but also reduces the chance of correct guesses during training. To better assess domain expert level reasoning, we explicitly instruct the model to remove well-known axioms or clues that are too obvious within a specific scientific field.
+
+
+
+\paragraph{Model Voting}
+
+Dataset quality can be negatively impacted by questions that are poorly constructed, lack necessary information, or are inherently unanswerable~\citep{DBLP:journals/corr/abs-2502-03461}. A practical way to assess answerability is to have models attempt to solve the questions. 
+% Model ensembling with self-consistency has proven effective in self-supervised settings. 
+To validate the clarity of generated data, we apply model-based voting using an ensemble of open-source LLMs. Each model receives the question and answer choices, along with an additional fallback option: “None of the above / The question is unanswerable.” This allows models to flag ambiguous or ill-formed questions while trying to approach the solutions. Based on the model voting results, we discard questions where the majority of models select the unanswerable option.
+
+
+\paragraph{Data Selection}
+We further categorize the questions by the level of agreement among ensemble models, using this as a proxy for clarity and difficulty:
+This grouping supports more controlled training setups, enabling models to learn from data with varying complexity:\\
+\textbf{All Aligned} All model responses match the synthetic answer, indicating the question is clear and easily answerable.\\
+\textbf{Majority Aligned} The majority vote of the model responses matches the original labels. These questions are valid but more challenging, as models do not consistently arrive at the correct answer.\\
+\textbf{Majority Divergent} 
+The majority of responses differ from the original labels. This indicates either that the questions are  challenging or that the synthetic labels may be incorrect, with the majority answers potentially representing more reasonable solutions.\\
+\textbf{All Divergent} No single answer is selected by more than half of the ensemble responses. Such questions are likely highly difficult or ambiguous, resulting in diverse interpretations. 
+
+
+\subsection{Statistics}
+
+% In this section, we present the statistics of WildSci
+% We show the statistics of our created dataset in the following perspectives.
+
+
+\begin{minipage}[t]{0.58\textwidth}
+  \hspace*{-0.4cm} \includegraphics[width=\linewidth]{figs/paper_question.pdf}
+  \captionof{figure}{Comparison of the number of papers and gen- \\ erated questions across different disciplines.}
+  \label{fig:paper_q}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.42\textwidth}
+    \includegraphics[width=\linewidth]{figs/domain_dist.pdf}  % replace with your image
+    \captionof{figure}{Distribution of questions after filtering and refinement in WildSci.}
+    \label{fig:q_dist}
+\end{minipage}
+
+
+
+\paragraph{Domains}
+
+The distribution of selected papers and the resulting question dataset after filtering and refinement are illustrated in Figure~\ref{fig:paper_q} and Figure~\ref{fig:q_dist}. Note that many subdomains are interdisciplinary, for example, Biochemistry can fall under both Biology and Chemistry. This classification serves primarily to provide a high-level overview of the dataset composition. A comprehensive taxonomy and detailed subdomain statistics are included in Appendix~\ref{app:stat_detail}.
+
+
+
+\paragraph{Length}
+
+We measure question length by counting the number of words in each question, excluding the  options. While word count does not directly indicate difficulty, it serves as a proxy for the complexity and richness of the question descriptions. 
+Grounded in real-world research, questions in WildSci often include background information to provide context. Compared to other datasets in Table~\ref{tab:scienceqa_comparison}, WildSci has the longest questions, with a mean length of 81.74 words. Among different disciplines, Mathematics has the highest average word count (93.9), followed by Physics (89.8) and Engineering (88.6). In contrast, questions in Biology are the shortest on average, with 69.9 words. A detailed distribution of question lengths is provided in Appendix~\ref{app:stat_detail}.
+
+
+
+
+\subsection{Training}
+
+\paragraph{Reward Design}
+In order to enable RLVR in science domains, WildSci allows obtaining verifiable rewards during training through simple option answer matching. 
+We denote the original labels produced by our data creation pipeline as synthetic labels, denoted $y_\texttt{syn}$. For each question, there is exactly one such label generated automatically from the pipeline. 
+% Since these labels may contain noise, we treat them as a weak supervision signal. 
+In this setting, we define the reward function based solely on matching the prediction $\hat y$ and the synthetic label $y_{\texttt{syn}}$:
+
+\begin{equation}
+\mathcal{R}_{\texttt{syn}}(\hat y) = 
+\begin{cases}
+1.0, & \text{if } \hat y = y_{\texttt{syn}}, \\
+0.0, & \text{otherwise}.
+\end{cases}
+\end{equation}\label{eq:reward}
+
+To prevent models from memorizing option positions, we randomly shuffle the choices in each training epoch, ensuring a balanced distribution and reducing overfitting to option labels. 
+
+
+\paragraph{Training Algorithm}
+
+Following previous work that advances mathematical reasoning of LLMs, we adopt Group Relative Policy Optimization (GRPO) as the training algorithm~\citep{DBLP:journals/corr/abs-2402-03300}. 
+

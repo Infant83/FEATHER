@@ -1,0 +1,177 @@
+\section{Results and Analysis}
+
+
+\subsection{Improving Science Reasoning Abilities}
+
+
+\begin{table}[ht]
+\centering
+\caption{Performance comparison across different benchmarks. The Average column is computed across the three public benchmarks GPQA-Aug, SuperGPQA and MMLU-Pro. 
+Maj. Aligned stands for the Majority Aligned subset of WildSci.
+}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Model} & \textbf{WildSci-Val} & \textbf{GPQA-Aug} & \textbf{SuperGPQA} & \textbf{MMLU-Pro} & \textbf{Average} \\
+\midrule
+Qwen2.5-1.5B-Instruct & 46.70\textsubscript{1.98} & 23.98\textsubscript{0.83} & 18.10\textsubscript{0.63} & 31.47\textsubscript{0.84} & 24.52\textsubscript{0.76} \\
++ WildSci All Aligned & \textbf{80.48}\textsubscript{0.26} & \textbf{28.95}\textsubscript{0.08} & 23.85\textsubscript{0.25} & \textbf{42.54}\textsubscript{0.28} & \textbf{31.78}\textsubscript{0.20} \\
++ WildSci Maj. Aligned & 80.33\textsubscript{0.11} & 25.76\textsubscript{0.44} & \textbf{24.41}\textsubscript{0.06} & 41.95\textsubscript{0.03} & 30.71\textsubscript{0.17} \\
+\midrule
+Qwen2.5-3B-Instruct & 72.45\textsubscript{0.40} & 28.03\textsubscript{1.97} & 23.21\textsubscript{0.08} & 44.18\textsubscript{0.15} & 31.80\textsubscript{0.73} \\
++ WildSci All Aligned & \textbf{85.00}\textsubscript{0.40} & \textbf{33.04}\textsubscript{0.86} & \textbf{26.39}\textsubscript{0.38} & \textbf{49.33}\textsubscript{0.27} & \textbf{36.25}\textsubscript{0.50} \\
++ WildSci Maj. Aligned & 84.71\textsubscript{0.06} & 30.98\textsubscript{0.89} & 26.01\textsubscript{0.24} & 48.66\textsubscript{0.10} & 35.22\textsubscript{0.41} \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:main}
+\end{table}
+
+
+In this section, we apply GRPO to train models on different subsets of WildSci.
+Table~\ref{tab:main} reports the main results across multiple evaluation sets. WildSci-Val shows in-domain performance, while the Average column reflects mean accuracy across three out-of-domain science benchmarks: GPQA-Aug, SuperGPQA, and MMLU-Pro.
+Training \texttt{Qwen2.5-1.5B-Instruct} on the All Aligned subset significantly boosts in-domain accuracy from 46.7\% to 80.48\%. It also improves generalization to public benchmarks, with gains of 4.97\%, 5.75\%, and 11.07\% on GPQA-Aug, SuperGPQA, and MMLU-Pro respectively, resulting in an average increase of 7.26\%.
+Consistent gains are also observed with 3B models, where WildSci yields an average improvement of 4.45\% across science benchmarks. While training on the Majority Aligned subset also brings similar improvements, its performance is slightly lower than the All Aligned subset. Overall, we do not observe substantial performance differences across subsets, aligning with findings from \citet{Wang2025ReinforcementLF}. A detailed distribution and comparison of subsets is provided in Figure~\ref{fig:q_type} and Appendix~\ref{app:data_splits}.
+
+
+
+\begin{wrapfigure}{r}{0.45\textwidth}  % 'r' for right, 'l' for left
+  \centering
+  \includegraphics[width=0.42\textwidth]{figs/valid_test_allaligned_3b.pdf}
+  \caption{Performance trends on validation and test sets during training of the 3B model on WildSci All Aligned. The model exhibits continued generalization on test sets even after overfitting on the validation set.}
+  \label{fig:ood3b}
+  \vspace{-20pt}
+\end{wrapfigure}
+
+
+
+Furthermore, we observe that \textbf{models continue to generalize even after overfitting on the validation set}.
+As illustrated in Figure~\ref{fig:ood3b}, while the model's performance on in-domain validation set begins to decline sharply after step 400, its accuracy on OOD test datasets continues to improve. This pattern mirrors the post-saturation generalization phenomenon identified by \citet{Wang2025ReinforcementLF} in math domain. The presence of this generalization behavior indicates WildSci's potential as an ideal testbed for investigating RL reasoning in scientific contexts.
+
+
+
+
+
+
+
+
+
+ 
+\subsection{Domain-Specific Performance Dynamics}
+
+
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figs/domain_combined_mean_std.pdf}
+  \caption{Domain-specific accuracy trends on MMLU-Pro during training. We report mean accuracy across three runs for each domain. Shaded regions indicate standard deviation. (a) shows steady improvements in domains with higher WildSci coverage (chemistry, physics, engineering), while (b) illustrates more variable performance in domains with lower coverage (law, history, philosophy).}
+  \label{fig:per_domain}
+\end{figure}
+
+Figure~\ref{fig:per_domain} illustrates the performance trends across subdomains of MMLU-Pro during training on a 1.5B model with WildSci Majority Aligned data. We observe a sharp increase in accuracy within the first 100 steps, likely due to the model's rapid adaptation to the multiple-choice answer format. After this initial phase, performance stabilizes but exhibits domain-specific dynamics.
+Interestingly, we find that in domains such as chemistry, physics, and engineering, where WildSci provides more coverage, accuracy continues to improve steadily throughout training (Figure~\ref{fig:per_domain}(a)). In contrast, domains with sparser data coverage, such as law, history, and philosophy, show more fluctuation and slower gains (Figure~\ref{fig:per_domain}(b)).
+The observed performance differences highlight the need for more balanced data coverage across domains to ensure uniform model improvements. A detailed breakdown of domain-level performance on SuperGPQA and MMLU-Pro can be found in Appendix~\ref{app:per_domain}.
+
+
+
+
+\subsection{Analyzing Format Alignment and Reasoning Improvement}
+
+As our training data consists of multiple-choice questions, the model naturally adapts to the expected answer format and becomes familiar with the task structure. This raises the question: \textit{are the observed improvements on science reasoning benchmarks only a result of format alignment, or do they reflect gains in reasoning ability?}
+
+To disentangle the effect of format adaptation from actual reasoning improvement, we track the model's adherence to the expected answer format over training steps. Figure~\ref{fig:res_format} presents both the proportion of responses from which a valid final answer can be reliably extracted and the corresponding accuracy trends.
+
+Our analysis shows that even by step 5, the model achieves a high extraction success rate of 88.86\%, which quickly converges to around 95\% within just 20 steps. This rapid convergence suggests that \textbf{the model learns the structural template of multiple-choice answers very early during training}.
+Furthermore, we continue to observe steady improvements in accuracy beyond this point, indicating that the later-stage performance gains cannot be attributed solely to improved format adaptation. Instead, these results indicate \textbf{a gradual enhancement in the model’s reasoning capabilities} as it attempts and learns from more diverse responses during training.
+
+% is exposed to more diverse and challenging training examples.
+
+\begin{minipage}[t]{0.4\textwidth}
+    \includegraphics[width=\linewidth]{figs/data_type_split.pdf}  % replace with your image
+    \captionof{figure}{Proportion of different \\data splits within WildSci.}
+    \label{fig:q_type}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.6\textwidth}
+  \includegraphics[width=\linewidth]{figs/format_align.pdf}
+  \captionof{figure}{Answer accuracy and extractability measured across training steps on MMLU-Pro.}
+  \label{fig:res_format}
+\end{minipage}
+
+\subsection{Ablation Analysis}
+
+In this section, we conduct an ablation analysis to examine the impact of question refinement on final model performance. During the refinement phase, we enhance both the semantic diversity of questions and the breadth of the answer option space. The results are presented in Table~\ref{tab:no_refine}. In both settings, we train the \texttt{Qwen2.5-1.5B-Instruct} model using All Aligned questions from WildSci.
+
+
+Even without refinement, the model achieves an improved average performance of 28.83\%, representing a 4.31\% gain over the baseline average accuracy of 24.52\%. However, with only four options per question in the training set, the model only achieves 66.63\% on the valid set which contains 10 options per question. Notably, the expanded answer space introduced during refinement not only balances the distribution among the answer space, but also reduces the likelihood of the model arriving at the correct answer through random guessing, thereby encouraging more robust learning and leading to further performance improvements on OOD science benchmarks.
+
+
+
+\begin{table}[ht]
+\centering
+\caption{Performance comparison before and after refinement stage. The average is computed across the three public benchmarks GPQA-Aug, SuperGPQA and MMLU-Pro. We use All Aligned data as the training data in both settings.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Setting} & \textbf{WildSci-Val} & \textbf{GPQA-Aug} & \textbf{SuperGPQA} & \textbf{MMLU-Pro} & \textbf{Average} \\
+\midrule
+WildSci & \textbf{80.48}\textsubscript{0.26} & \textbf{28.95}\textsubscript{0.08} & \textbf{23.85}\textsubscript{0.25} & \textbf{42.54}\textsubscript{0.28} & \textbf{31.78}\textsubscript{0.20} \\
+WildSci w/o refinement & 66.63\textsubscript{0.06} & 27.94\textsubscript{0.32} & 20.44\textsubscript{0.04} & 38.11\textsubscript{0.37} & 28.83\textsubscript{0.24} \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:no_refine}
+\end{table}
+
+
+
+\subsection{Mixed Training with MATH}
+
+To assess the transferability between mathematical and scientific reasoning, we conduct experiments using the MATH dataset~\citep{DBLP:conf/nips/HendrycksBKABTS21} for both training and evaluation of math reasoning abilities. As shown in Table~\ref{tab:mix_math}, model trained solely on MATH achieves improved performance on math-specific tasks but fails to generalize to science reasoning benchmarks. In contrast, training solely on WildSci also leads to improvements in math reasoning, indicating its broader effectiveness.
+We then perform mixed training using both MATH and WildSci, denoted as ``MATH+WildSci”. The resulting model demonstrates improved performance on science benchmarks while preserving its math reasoning ability. Moreover, it also improves accuracy on GPQA-Aug, highlighting the effect of combining science and math reasoning data. \textbf{These results suggest that WildSci complements existing reasoning datasets and helps enhance model generalization across diverse reasoning domains}.
+
+
+
+
+
+
+\begin{table}[ht]
+\centering
+\caption{Performance comparison when training 1.5B model with MATH. The average is computed across the three public benchmarks GPQA-Aug, SuperGPQA and MMLU-Pro. We use Maj. Aligned subset as the training data for WildSci.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Setting} & \textbf{WildSci-Val} & \textbf{GPQA-Aug} & \textbf{SuperGPQA} & \textbf{MMLU-Pro} & \textbf{Sci. Avg.} & \textbf{MATH} \\
+\midrule
+Qwen2.5-1.5B-Instruct & 46.70\textsubscript{1.98} & 23.98\textsubscript{0.83} & 18.10\textsubscript{0.63} & 31.47\textsubscript{0.84} & 24.52\textsubscript{0.76} & 55.47\textsubscript{0.83} \\
+WildSci & 80.33\textsubscript{0.11} & 25.76\textsubscript{0.44} & 24.41\textsubscript{0.06} & 41.95\textsubscript{0.03} & 30.71\textsubscript{0.17} & 57.00\textsubscript{0.60}\\
+MATH & 36.96\textsubscript{1.18} & 20.54\textsubscript{0.44} & 17.47\textsubscript{0.05} & 28.86\textsubscript{0.05} & 22.29\textsubscript{0.18} & 58.92\textsubscript{0.87} \\
+\rowcolor{gray!30} MATH + WildSci & 78.41\textsubscript{0.34} & 29.76\textsubscript{0.45} & 24.25\textsubscript{0.12} & 42.36\textsubscript{0.09} & 32.12\textsubscript{0.22} &  58.73\textsubscript{0.99}\\
+\bottomrule
+\end{tabular}
+}
+\label{tab:mix_math}
+\end{table}
+
+
+
+
+\subsection{Scientific Reasoning Type Analysis}
+
+To characterize the types of reasoning required in WildSci, two authors manually reviewed 200 randomly sampled questions and developed a classification scheme. Each question was categorized into one of the following three scientific reasoning types:
+(1) Mathematical calculations and derivations: Questions that require performing numerical computations or symbolic derivations.
+(2) Model design, method analysis, or conceptual understanding: Questions that involve understanding scientific models, evaluating methodologies, or grasping abstract concepts.
+(3) Causal reasoning and mechanism inference: Questions that ask about the underlying causes, mechanisms, or consequences of a phenomenon.
+
+
+To extend this categorization to the full dataset, we use \texttt{Qwen2.5-32B-Instruct} to automatically classify all questions in WildSci. The resulting distribution is as follows: 40.00\% of the questions involve numerical calculation, 37.59\% require causal inference, and 22.41\% focus on model analysis or conceptual understanding.
+While mathematical reasoning is common in other datasets, WildSci emphasizes higher-order scientific reasoning skills such as causal inference and model-based analysis. These types of abilities are essential in research-oriented problem solving, reflecting the complexity and diversity of scientific reasoning in our dataset.
+
+
+
+
+
+
+
+
+
+
