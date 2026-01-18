@@ -32,6 +32,8 @@ import urllib.parse
 from pathlib import Path
 from typing import Iterable, Optional
 
+from . import tools as feder_tools
+
 
 DEFAULT_MODEL = "gpt-5.2"
 DEFAULT_AUTHOR = "Hyun-Jung Kim / AI Governance Team"
@@ -4152,6 +4154,24 @@ def main() -> int:
     if template_spec.writer_guidance:
         template_guidance_lines.append("Template writing guidance:\n" + "\n".join(template_spec.writer_guidance))
     template_guidance_text = "\n\n".join(template_guidance_lines) if template_guidance_lines else ""
+
+    source_index = feder_tools.build_source_index(archive_dir, run_dir, supporting_dir)
+    source_index_path = notes_dir / "source_index.jsonl"
+    feder_tools.write_jsonl(source_index_path, source_index)
+    source_triage = feder_tools.rank_sources(source_index, report_prompt or query_id, top_k=12)
+    source_triage_text = feder_tools.format_source_triage(source_triage)
+    source_triage_path = notes_dir / "source_triage.md"
+    source_triage_path.write_text(source_triage_text, encoding="utf-8")
+    try:
+        rel_index = source_index_path.relative_to(run_dir).as_posix()
+        context_lines.append(f"Source index: ./{rel_index}")
+    except Exception:
+        context_lines.append(f"Source index: {source_index_path.as_posix()}")
+    try:
+        rel_triage = source_triage_path.relative_to(run_dir).as_posix()
+        context_lines.append(f"Source triage: ./{rel_triage}")
+    except Exception:
+        context_lines.append(f"Source triage: {source_triage_path.as_posix()}")
     scout_prompt = (
         "You are a source scout. Map the archive, identify key source files, and propose a reading plan. "
         "Always open JSONL metadata files if present (archive/tavily_search.jsonl, archive/openalex/works.jsonl, "
@@ -4168,6 +4188,8 @@ def main() -> int:
     scout_input = list(context_lines)
     if report_prompt:
         scout_input.extend(["", "Report focus prompt:", report_prompt])
+    if source_triage_text:
+        scout_input.extend(["", "Source triage (lightweight):", source_triage_text])
     scout_result = scout_agent.invoke({"messages": [{"role": "user", "content": "\n".join(scout_input)}]})
     scout_notes = extract_agent_text(scout_result)
     print_progress("Scout Notes", scout_notes, args.progress, args.progress_chars)
@@ -4208,6 +4230,8 @@ def main() -> int:
     plan_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, plan_prompt, backend)
     plan_input = list(context_lines)
     plan_input.extend(["", "Scout notes:", scout_notes])
+    if source_triage_text:
+        plan_input.extend(["", "Source triage (lightweight):", source_triage_text])
     if align_scout:
         plan_input.extend(["", "Alignment notes (scout):", align_scout])
     if template_guidance_text:
@@ -4270,6 +4294,12 @@ def main() -> int:
         context_lines.append(f"Supporting search: {support_rel}/web_search.jsonl")
         context_lines.append(f"Supporting fetch: {support_rel}/web_fetch.jsonl")
 
+        source_index = feder_tools.build_source_index(archive_dir, run_dir, supporting_dir)
+        feder_tools.write_jsonl(source_index_path, source_index)
+        source_triage = feder_tools.rank_sources(source_index, report_prompt or query_id, top_k=12)
+        source_triage_text = feder_tools.format_source_triage(source_triage)
+        source_triage_path.write_text(source_triage_text, encoding="utf-8")
+
     evidence_prompt = (
         "You are an evidence extractor. Use the scout notes to read key files and extract salient facts. "
         "Start by reading any JSONL metadata files that exist (tavily_search.jsonl, openalex/works.jsonl, "
@@ -4290,6 +4320,8 @@ def main() -> int:
     evidence_parts = list(context_lines)
     evidence_parts.extend(["", "Scout notes:", scout_notes])
     evidence_parts.extend(["", "Plan:", plan_text])
+    if source_triage_text:
+        evidence_parts.extend(["", "Source triage (lightweight):", source_triage_text])
     if align_plan:
         evidence_parts.extend(["", "Alignment notes (plan):", align_plan])
     if template_guidance_text:
@@ -4332,6 +4364,14 @@ def main() -> int:
     print_progress("Plan Update", plan_text, args.progress, args.progress_chars)
     (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
 
+    claim_map = feder_tools.build_claim_map(evidence_notes, max_claims=80)
+    claim_map_text = feder_tools.format_claim_map(claim_map)
+    (notes_dir / "claim_map.md").write_text(claim_map_text, encoding="utf-8")
+    plan_text = feder_tools.attach_evidence_to_plan(plan_text, claim_map, max_evidence=2)
+    (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
+    gap_text = feder_tools.build_gap_report(plan_text, claim_map)
+    (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
+
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
         critics_guidance = (
@@ -4372,6 +4412,9 @@ def main() -> int:
         f"{section_heading_instruction}{report_skeleton}\n"
         f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
         f"{format_instruction}"
+        "Math formatting rule: Any formula or symbolic expression must be valid LaTeX and wrapped in $...$ "
+        "(inline) or $$...$$ (block). Do not use bare brackets [ ... ] for equations. "
+        "Always wrap subscripts/superscripts (e.g., $\\Delta E_{ST}$, $E(S_1)$, $S_1/T_1$). "
         "Synthesize across sources (not a list of summaries), use clear transitions, and surface actionable insights. "
         "Do not dump JSONL contents; focus on analyzing the referenced documents and articles. "
         "Never cite JSONL index files (e.g., tavily_search.jsonl, openalex/works.jsonl). Cite actual source URLs "
@@ -4393,6 +4436,12 @@ def main() -> int:
     writer_parts = list(context_lines)
     writer_parts.extend(["", "Evidence notes:", evidence_notes])
     writer_parts.extend(["", "Updated plan:", plan_text])
+    if source_triage_text:
+        writer_parts.extend(["", "Source triage (lightweight):", source_triage_text])
+    if claim_map_text:
+        writer_parts.extend(["", "Claim map (lightweight):", claim_map_text])
+    if gap_text:
+        writer_parts.extend(["", "Gap summary (lightweight):", gap_text])
     if align_evidence:
         writer_parts.extend(["", "Alignment notes (evidence):", align_evidence])
     if template_guidance_text:
@@ -4633,6 +4682,7 @@ def main() -> int:
     report = f"{format_byline(byline, output_format)}\n\n{report.strip()}"
     report_dir = run_dir if not args.output else Path(args.output).resolve().parent
     figure_entries: list[dict] = []
+    preview_path: Optional[Path] = None
     if args.extract_figures:
         candidates = build_figure_plan(
             report,
@@ -4668,6 +4718,7 @@ def main() -> int:
             with figures_path.open("w", encoding="utf-8") as handle:
                 for entry in figure_entries:
                     handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    report = feder_tools.normalize_math_expressions(report)
     report_body, citation_refs = rewrite_citations(report.rstrip(), output_format)
     if figure_entries:
         report_body = insert_figures_by_section(report_body, figure_entries, output_format, report_dir, run_dir)
