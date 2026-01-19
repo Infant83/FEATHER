@@ -80,32 +80,6 @@ federlicht --preview-template quanta_magazine
 federlicht --preview-template all --preview-output ./scripts/templates
 ```
 
-Generate a template bundle from an arXiv source tree (uses 00README.json + section structure):
-```bash
-federlicht \
-  --run ./examples/runs/20260116_arxiv-materials \
-  --template-from-arxiv-src ./examples/runs/20260116_arxiv-materials/archive/arxiv/src/2601.05567 \
-  --output ./examples/runs/20260116_arxiv-materials/report_full.tex \
-  --template nature_journal
-```
-
-Outputs are written under `run_dir/template_src/<arxiv_id>/`:
-- `template.md` (section guidance)
-- `template_skeleton.tex` (section skeleton, reference only)
-- `template_manifest.json` (source files and section map)
-- `template_main.tex` (includes per-section files)
-- `sections/` (one `.tex` file per top-level section)
-- `guidance/` (one `.md` file per section guidance)
-
-Template-only mode (no report generated):
-```bash
-federlicht \
-  --run ./examples/runs/20260116_arxiv-materials \
-  --template-from-arxiv-src ./examples/runs/20260116_arxiv-materials/archive/arxiv/src/2601.05567
-```
-
-If you provide only `--run` and `--template-from-arxiv-src`, Federlicht generates the bundle and a preview HTML, then exits.
-
 ## Template File Format
 Templates are Markdown with a simple header block:
 ```

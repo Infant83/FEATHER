@@ -108,7 +108,6 @@ def parse_args() -> argparse.Namespace:
     epilog = (
         "Template selection:\n"
         "  --template/--templates auto|<name>|<path>\n"
-        "  --template-from-arxiv-src <path> (generate template bundle from arXiv source)\n"
         "  If --template is 'auto', a 'Template: <name>' line in the report prompt is used.\n"
         "  Otherwise the default template is applied.\n\n"
         "Output format:\n"
@@ -173,10 +172,6 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Adjust template sections/guidance to match run intent (default: enabled).",
-    )
-    ap.add_argument(
-        "--template-from-arxiv-src",
-        help="Generate a template bundle from an arXiv source folder (00README.json) before running.",
     )
     ap.add_argument(
         "--preview-template",
@@ -1943,6 +1938,9 @@ def build_writer_prompt(
         f"{format_instructions.section_heading_instruction}{format_instructions.report_skeleton}\n"
         f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
         f"{format_instructions.format_instruction}"
+        "Math formatting rule: Any formula or symbolic expression must be valid LaTeX and wrapped in $...$ "
+        "(inline) or $$...$$ (block). Do not use bare brackets [ ... ] for equations. "
+        "Always wrap subscripts/superscripts (e.g., $\\Delta E_{ST}$, $E(S_1)$, $S_1/T_1$). "
         "Synthesize across sources (not a list of summaries), use clear transitions, and surface actionable insights. "
         "Do not dump JSONL contents; focus on analyzing the referenced documents and articles. "
         "Never cite JSONL index files (e.g., tavily_search.jsonl, openalex/works.jsonl). Cite actual source URLs "
@@ -2244,7 +2242,6 @@ def build_agent_info(
         build_template_adjuster_prompt(output_format),
         overrides,
     )
-    template_designer_prompt = resolve_agent_prompt("template_designer", build_template_designer_prompt(), overrides)
     image_prompt = resolve_agent_prompt("image_analyst", build_image_prompt(), overrides)
     scout_model = resolve_agent_model("scout", args.model, overrides)
     clarifier_model = resolve_agent_model("clarifier", args.model, overrides)
@@ -2261,7 +2258,6 @@ def build_agent_info(
     compare_model = resolve_agent_model("pairwise_compare", quality_model, overrides)
     synth_model = resolve_agent_model("synthesizer", quality_model, overrides)
     template_adjuster_model = resolve_agent_model("template_adjuster", args.model, overrides)
-    template_designer_model = resolve_agent_model("template_designer", args.model, overrides)
     image_model = resolve_agent_model("image_analyst", args.model_vision or "(not set)", overrides)
     clarifier_enabled = resolve_agent_enabled(
         "clarifier",
@@ -2313,11 +2309,6 @@ def build_agent_info(
             "enabled": template_adjust_enabled,
             "system_prompt": template_adjuster_prompt,
         },
-        "template_designer": {
-            "model": template_designer_model,
-            "enabled": bool(args.template_from_arxiv_src),
-            "system_prompt": template_designer_prompt,
-        },
         "image_analyst": {
             "model": image_model,
             "enabled": bool(args.model_vision and args.extract_figures),
@@ -2333,7 +2324,6 @@ def build_agent_info(
             "model_vision": args.model_vision,
             "template": template_spec.name,
             "template_adjust": args.template_adjust,
-            "template_from_arxiv_src": args.template_from_arxiv_src,
             "quality_iterations": args.quality_iterations,
             "quality_strategy": args.quality_strategy,
             "web_search": args.web_search,
@@ -5595,76 +5585,7 @@ def main() -> int:
 
     language = normalize_lang(args.lang)
     report_prompt = load_report_prompt(args.prompt, args.prompt_file)
-<<<<<<< HEAD
-    style_choice = None
-    if args.template and str(args.template).strip().lower() != "auto":
-        style_choice = args.template
-    else:
-        style_choice = template_from_prompt(report_prompt)
-    style_spec = load_template_spec(style_choice or DEFAULT_TEMPLATE_NAME, report_prompt)
-    template_path: Optional[str] = None
-    if args.template_from_arxiv_src:
-        template_path = None
-        try:
-            src_path = Path(args.template_from_arxiv_src)
-            if not src_path.is_absolute():
-                cwd_candidate = src_path.resolve()
-                if cwd_candidate.exists():
-                    src_path = cwd_candidate
-                else:
-                    src_path = (run_dir / src_path).resolve()
-            template_designer_prompt = resolve_agent_prompt(
-                "template_designer",
-                build_template_designer_prompt(),
-                agent_overrides,
-            )
-            template_designer_model = resolve_agent_model("template_designer", args.model, agent_overrides)
-            generated = generate_template_from_arxiv_src(
-                src_path,
-                run_dir,
-                report_prompt,
-                language,
-                template_designer_model,
-                create_deep_agent,
-                backend,
-                style_spec,
-                prompt_override=template_designer_prompt,
-            )
-            if generated:
-                template_path = str(generated)
-        except Exception as exc:
-            print(f"WARN template-from-arxiv-src failed: {exc}", file=sys.stderr)
-    template_spec = load_template_spec(template_path or args.template, report_prompt)
-    template_only = bool(
-        args.template_from_arxiv_src
-        and not args.output
-        and not args.prompt
-        and not args.prompt_file
-        and not args.interactive
-        and not args.web_search
-        and not args.answers
-        and not args.answers_file
-        and args.quality_iterations == 0
-=======
     template_spec = load_template_spec(args.template, report_prompt)
-    required_sections = list(template_spec.sections)
-    report_skeleton = build_report_skeleton(required_sections, output_format)
-    context_lines.append(f"Template: {template_spec.name}")
-    if template_spec.source:
-        context_lines.append(f"Template source: {template_spec.source}")
-    template_guidance_lines: list[str] = []
-    if template_spec.description:
-        template_guidance_lines.append(f"Template description: {template_spec.description}")
-    if template_spec.tone:
-        template_guidance_lines.append(f"Template tone: {template_spec.tone}")
-    if template_spec.audience:
-        template_guidance_lines.append(f"Template audience: {template_spec.audience}")
-    if template_spec.section_guidance:
-        section_lines = [f"- {key}: {value}" for key, value in template_spec.section_guidance.items()]
-        template_guidance_lines.append("Section guidance:\n" + "\n".join(section_lines))
-    if template_spec.writer_guidance:
-        template_guidance_lines.append("Template writing guidance:\n" + "\n".join(template_spec.writer_guidance))
-    template_guidance_text = "\n\n".join(template_guidance_lines) if template_guidance_lines else ""
 
     source_index = feder_tools.build_source_index(archive_dir, run_dir, supporting_dir)
     source_index_path = notes_dir / "source_index.jsonl"
@@ -5683,30 +5604,6 @@ def main() -> int:
         context_lines.append(f"Source triage: ./{rel_triage}")
     except Exception:
         context_lines.append(f"Source triage: {source_triage_path.as_posix()}")
-    scout_prompt = (
-        "You are a source scout. Map the archive, identify key source files, and propose a reading plan. "
-        "Always open JSONL metadata files if present (archive/tavily_search.jsonl, archive/openalex/works.jsonl, "
-        "archive/arxiv/papers.jsonl, archive/youtube/videos.jsonl, archive/local/manifest.jsonl) to understand coverage. "
-        "Note: the filesystem root '/' is mapped to the run folder. "
-        "Treat JSONL files as indices of sources, not as the report output. "
-        "Follow any report focus prompt provided in the user input. "
-        "Prioritize sources relevant to the report focus and ignore off-topic items. "
-        f"Write notes in {language}. Keep proper nouns and source titles in their original language. "
-        "Use list_archive_files and read_document as needed. Output a structured inventory and a prioritized "
-        "list of files to read (max 12) with rationale."
->>>>>>> rollback-federlicht
-    )
-    if template_only:
-        if not template_path:
-            print("ERROR template-from-arxiv-src did not produce a template bundle.", file=sys.stderr)
-            return 2
-        template_root = Path(template_path).parent
-        preview_name = f"preview_{slugify_label(template_spec.name)}.html"
-        preview_path = template_root / preview_name
-        write_template_preview(template_spec, preview_path)
-        print(f"Wrote template bundle: {template_root}")
-        print(f"Wrote template preview: {preview_path}")
-        return 0
     scout_prompt = resolve_agent_prompt("scout", build_scout_prompt(language), agent_overrides)
     scout_model = resolve_agent_model("scout", args.model, agent_overrides)
     scout_agent = create_agent_with_fallback(create_deep_agent, scout_model, tools, scout_prompt, backend)
@@ -5847,36 +5744,15 @@ def main() -> int:
         context_lines.append(f"Supporting folder: {support_rel}")
         context_lines.append(f"Supporting search: {support_rel}/web_search.jsonl")
         context_lines.append(f"Supporting fetch: {support_rel}/web_fetch.jsonl")
-
-<<<<<<< HEAD
-    evidence_prompt = resolve_agent_prompt("evidence", build_evidence_prompt(language), agent_overrides)
-    evidence_model = resolve_agent_model("evidence", args.model, agent_overrides)
-    evidence_agent = create_agent_with_fallback(create_deep_agent, evidence_model, tools, evidence_prompt, backend)
-=======
         source_index = feder_tools.build_source_index(archive_dir, run_dir, supporting_dir)
         feder_tools.write_jsonl(source_index_path, source_index)
         source_triage = feder_tools.rank_sources(source_index, report_prompt or query_id, top_k=12)
         source_triage_text = feder_tools.format_source_triage(source_triage)
         source_triage_path.write_text(source_triage_text, encoding="utf-8")
 
-    evidence_prompt = (
-        "You are an evidence extractor. Use the scout notes to read key files and extract salient facts. "
-        "Start by reading any JSONL metadata files that exist (tavily_search.jsonl, openalex/works.jsonl, "
-        "arxiv/papers.jsonl, youtube/videos.jsonl, local/manifest.jsonl) to identify sources. "
-        "Do not cite JSONL index files in your evidence; cite the underlying source URLs and extracted text/PDF files. "
-        "If full text files are missing, you may use abstracts/summaries from metadata (e.g., arXiv summary or "
-        "OpenAlex abstract) but still cite the original source URL, not the JSONL. "
-        "If a supporting folder exists (./supporting/...), also read supporting/web_search.jsonl and "
-        "supporting/web_extract or supporting/web_text to incorporate updated web evidence. "
-        "Use JSONL to locate the actual content (extracts, PDFs, transcripts) and summarize those sources. "
-        "If a source is off-topic relative to the report focus, skip it. "
-        "Cite file paths in square brackets. Prefer existing extracted text files; use PDFs only when needed. "
-        "Capture original source URLs (not only archive paths) when available. "
-        f"Deliver concise bullet lists grouped by source type in {language}. "
-        "Keep proper nouns and source titles in their original language."
-    )
-    evidence_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, evidence_prompt, backend)
->>>>>>> rollback-federlicht
+    evidence_prompt = resolve_agent_prompt("evidence", build_evidence_prompt(language), agent_overrides)
+    evidence_model = resolve_agent_model("evidence", args.model, agent_overrides)
+    evidence_agent = create_agent_with_fallback(create_deep_agent, evidence_model, tools, evidence_prompt, backend)
     evidence_parts = list(context_lines)
     evidence_parts.extend(["", "Scout notes:", scout_notes])
     evidence_parts.extend(["", "Plan:", plan_text])
@@ -5921,7 +5797,14 @@ def main() -> int:
     print_progress("Plan Update", plan_text, args.progress, args.progress_chars)
     (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
 
-<<<<<<< HEAD
+    claim_map = feder_tools.build_claim_map(evidence_notes, max_claims=80)
+    claim_map_text = feder_tools.format_claim_map(claim_map)
+    (notes_dir / "claim_map.md").write_text(claim_map_text, encoding="utf-8")
+    plan_text = feder_tools.attach_evidence_to_plan(plan_text, claim_map, max_evidence=2)
+    (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
+    gap_text = feder_tools.build_gap_report(plan_text, claim_map)
+    (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
+
     writer_prompt = resolve_agent_prompt(
         "writer",
         build_writer_prompt(
@@ -5936,77 +5819,6 @@ def main() -> int:
     )
     writer_model = resolve_agent_model("writer", args.model, agent_overrides)
     writer_agent = create_agent_with_fallback(create_deep_agent, writer_model, tools, writer_prompt, backend)
-=======
-    claim_map = feder_tools.build_claim_map(evidence_notes, max_claims=80)
-    claim_map_text = feder_tools.format_claim_map(claim_map)
-    (notes_dir / "claim_map.md").write_text(claim_map_text, encoding="utf-8")
-    plan_text = feder_tools.attach_evidence_to_plan(plan_text, claim_map, max_evidence=2)
-    (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
-    gap_text = feder_tools.build_gap_report(plan_text, claim_map)
-    (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
-
-    critics_guidance = ""
-    if any(section.lower().startswith("critics") for section in required_sections):
-        critics_guidance = (
-            "For the Critics section, write in a concise editorial tone with a short headline, brief paragraphs, "
-            "and a few bullet points highlighting orthogonal or contrarian viewpoints, risks, or overlooked constraints. "
-            "If relevant, touch on AI ethics, regulation (e.g., EU AI Act), safety/security, and explainability. "
-        )
-    section_heading_instruction = (
-        "Use the following exact H2 headings in this order (do not rename; do not add extra H2 headings):\n"
-        if output_format != "tex"
-        else "Use the following exact \\section headings in this order (do not rename; do not add extra \\section headings):\n"
-    )
-    citation_instruction = (
-        "Avoid printing full URLs in the body; use short link labels like [source] or [paper] instead. "
-        "Prefer markdown links for file paths so they are clickable. "
-        if output_format != "tex"
-        else "When citing sources, include the raw URL or file path inside square brackets "
-        "(e.g., [https://example.com], [./archive/path.txt]). Do not use Markdown links. "
-        "Avoid printing full URLs elsewhere in the body. "
-    )
-    format_instruction = ""
-    if output_format == "tex":
-        format_instruction = (
-            "Write LaTeX body only (no documentclass/preamble). "
-            "Use \\section{...} headings for each required section and \\subsection for subpoints. "
-            "Do not use Markdown formatting. "
-            "Avoid square brackets except for raw source citations. "
-        )
-    tone_instruction = (
-        "Use a formal/academic research-journal tone suitable for PRL/Nature/Annual Review-style manuscripts. "
-        if template_spec.name in FORMAL_TEMPLATES
-        else "Use an explanatory review style (설명형 리뷰) with a professional yet natural narrative tone. "
-    )
-    writer_prompt = (
-        "You are a senior research writer. Using the instruction, baseline report, and evidence notes, "
-        "produce a detailed report with citations. "
-        f"{tone_instruction}"
-        f"{section_heading_instruction}{report_skeleton}\n"
-        f"{'Template guidance:\\n' + template_guidance_text + '\\n' if template_guidance_text else ''}"
-        f"{format_instruction}"
-        "Math formatting rule: Any formula or symbolic expression must be valid LaTeX and wrapped in $...$ "
-        "(inline) or $$...$$ (block). Do not use bare brackets [ ... ] for equations. "
-        "Always wrap subscripts/superscripts (e.g., $\\Delta E_{ST}$, $E(S_1)$, $S_1/T_1$). "
-        "Synthesize across sources (not a list of summaries), use clear transitions, and surface actionable insights. "
-        "Do not dump JSONL contents; focus on analyzing the referenced documents and articles. "
-        "Never cite JSONL index files (e.g., tavily_search.jsonl, openalex/works.jsonl). Cite actual source URLs "
-        "and extracted text/PDF/transcript files instead. "
-        "Do not include a full References list; the script appends a Source Index automatically. "
-        "Do not add Report Prompt or Clarifications sections; the script appends them automatically. "
-        "Do not add a separate section enumerating figures or page numbers; the script inserts figure callouts. "
-        "If you mention a figure, only do so when the source text explicitly explains it. "
-        "When citing file paths, use relative paths like ./archive/... or ./instruction/... (avoid absolute paths). "
-        f"{citation_instruction}"
-        "When formulas are important, render them in LaTeX using $...$ or $$...$$ so they can be rendered in HTML. "
-        f"{critics_guidance}"
-        "If supporting web research exists under ./supporting/..., integrate it as updated evidence and label it as "
-        "web-derived support (not primary experimental evidence). "
-        f"Write the report in {language}. Keep proper nouns and source titles in their original language. "
-        "Avoid speculation and clearly separate facts from interpretation."
-    )
-    writer_agent = create_agent_with_fallback(create_deep_agent, args.model, tools, writer_prompt, backend)
->>>>>>> rollback-federlicht
     writer_parts = list(context_lines)
     writer_parts.extend(["", "Evidence notes:", evidence_notes])
     writer_parts.extend(["", "Updated plan:", plan_text])
