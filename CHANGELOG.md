@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+- Add configurable max input token guardrails for models without profile limits (env/CLI/agent-config) and expose values in `--agent-info`.
+- Apply max input token overrides across agents, including quality/evaluation stages and template adjuster.
+- Add writer output validation/retry to prevent placeholder/meta responses and enforce required H2 headings in free-format.
+
 ## 0.5.0
 - Add agent streaming output with debug logging and optional Markdown echo (`--stream`, `--stream-debug`, `--echo-markdown`).
 - Add separate check model selection for alignment/plan checks (`--check-model`, default gpt-4o).

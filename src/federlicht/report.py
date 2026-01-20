@@ -84,6 +84,9 @@ REPORT_PLACEHOLDER_RE = re.compile(
     r"다시 작성|작업을 마친 후|I will update|I will revise|I will finalize|will update the report)",
     re.IGNORECASE,
 )
+MAX_INPUT_TOKENS_ENV = "FEDERLICHT_MAX_INPUT_TOKENS"
+DEFAULT_MAX_INPUT_TOKENS: Optional[int] = None
+DEFAULT_MAX_INPUT_TOKENS_SOURCE = "none"
 
 
 def templates_dir() -> Path:
@@ -137,6 +140,7 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=epilog,
     )
+    env_max_input_tokens = parse_max_input_tokens(os.getenv(MAX_INPUT_TOKENS_ENV))
     ap.add_argument("--run", help="Path to run folder (or its archive/ subfolder).")
     ap.add_argument(
         "--output",
@@ -147,6 +151,18 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=False,
         help="When --output is set, also print the markdown report to stdout (default: disabled).",
+    )
+    ap.add_argument(
+        "--max-input-tokens",
+        "--max_input_tokens",
+        dest="max_input_tokens",
+        type=int,
+        default=env_max_input_tokens,
+        help=(
+            "Fallback max input tokens for models missing profile limits (default: "
+            f"{env_max_input_tokens if env_max_input_tokens else 'unset'}; "
+            f"env: {MAX_INPUT_TOKENS_ENV})."
+        ),
     )
     ap.add_argument(
         "--pdf",
@@ -348,7 +364,15 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--web-max-results", type=int, default=5, help="Max results per web query.")
     ap.add_argument("--web-max-fetch", type=int, default=6, help="Max URLs to fetch across web results.")
     ap.add_argument("--supporting-dir", help="Optional folder for web supporting info.")
-    return ap.parse_args()
+    args = ap.parse_args()
+    cli_tokens = "--max-input-tokens" in sys.argv or "--max_input_tokens" in sys.argv
+    if cli_tokens:
+        args.max_input_tokens_source = "cli"
+    elif env_max_input_tokens:
+        args.max_input_tokens_source = "env"
+    else:
+        args.max_input_tokens_source = "none"
+    return args
 
 
 def resolve_archive(path: Path) -> tuple[Path, Path, str]:
@@ -944,6 +968,25 @@ def truncate_text(text: str, max_chars: int) -> str:
     return f"{head}\n... [truncated] ...\n{tail}"
 
 
+def parse_max_input_tokens(value: object) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            parsed = int(text)
+        except ValueError:
+            return None
+        return parsed if parsed > 0 else None
+    return None
+
+
 def choose_format(output: Optional[str]) -> str:
     if output and output.lower().endswith((".html", ".htm")):
         return "html"
@@ -1242,10 +1285,20 @@ def evaluate_report(
     tools,
     backend,
     max_chars: int,
+    max_input_tokens: Optional[int] = None,
+    max_input_tokens_source: str = "none",
 ) -> dict:
     metrics = ", ".join(QUALITY_WEIGHTS.keys())
     evaluator_prompt = build_evaluate_prompt(metrics)
-    evaluator_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, evaluator_prompt, backend)
+    evaluator_agent = create_agent_with_fallback(
+        create_deep_agent,
+        model_name,
+        tools,
+        evaluator_prompt,
+        backend,
+        max_input_tokens=max_input_tokens,
+        max_input_tokens_source=max_input_tokens_source,
+    )
     format_note = "LaTeX" if output_format == "tex" else "Markdown/HTML"
     evaluator_input = "\n".join(
         [
@@ -1304,9 +1357,19 @@ def compare_reports_pairwise(
     tools,
     backend,
     max_chars: int,
+    max_input_tokens: Optional[int] = None,
+    max_input_tokens_source: str = "none",
 ) -> dict:
     judge_prompt = build_compare_prompt()
-    judge_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, judge_prompt, backend)
+    judge_agent = create_agent_with_fallback(
+        create_deep_agent,
+        model_name,
+        tools,
+        judge_prompt,
+        backend,
+        max_input_tokens=max_input_tokens,
+        max_input_tokens_source=max_input_tokens_source,
+    )
     format_note = "LaTeX" if output_format == "tex" else "Markdown/HTML"
     judge_input = "\n".join(
         [
@@ -1368,10 +1431,21 @@ def synthesize_reports(
     tools,
     backend,
     max_chars: int,
+    free_form: bool = False,
+    max_input_tokens: Optional[int] = None,
+    max_input_tokens_source: str = "none",
 ) -> str:
-    format_instructions = build_format_instructions(output_format, required_sections, free_form=args.free_format)
+    format_instructions = build_format_instructions(output_format, required_sections, free_form=free_form)
     synthesis_prompt = build_synthesize_prompt(format_instructions, template_guidance_text, language)
-    synthesis_agent = create_agent_with_fallback(create_deep_agent, model_name, tools, synthesis_prompt, backend)
+    synthesis_agent = create_agent_with_fallback(
+        create_deep_agent,
+        model_name,
+        tools,
+        synthesis_prompt,
+        backend,
+        max_input_tokens=max_input_tokens,
+        max_input_tokens_source=max_input_tokens_source,
+    )
     notes = "\n".join(
         f"- {note.get('reason', '')} (winner={note.get('winner')})"
         for note in pairwise_notes
@@ -1682,6 +1756,8 @@ def adjust_template_spec(
     adjust_mode: str = "extend",
     prompt_override: Optional[str] = None,
     model_override: Optional[str] = None,
+    max_input_tokens: Optional[int] = None,
+    max_input_tokens_source: str = "none",
 ) -> tuple[TemplateSpec, Optional[dict]]:
     if not report_prompt and not scout_notes:
         return template_spec, None
@@ -1759,7 +1835,15 @@ def adjust_template_spec(
     if clarification_answers:
         user_parts.extend(["", "User clarifications:", truncate_text(clarification_answers, 1200)])
     agent_model = model_override or model_name
-    agent = create_agent_with_fallback(create_deep_agent, agent_model, [], prompt, backend)
+    agent = create_agent_with_fallback(
+        create_deep_agent,
+        agent_model,
+        [],
+        prompt,
+        backend,
+        max_input_tokens=max_input_tokens,
+        max_input_tokens_source=max_input_tokens_source,
+    )
     result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
     text = extract_agent_text(result)
     parsed = extract_json_object(text)
@@ -2307,6 +2391,7 @@ def normalize_config_overrides(raw: dict) -> dict:
         "repair_debug",
         "interactive",
         "free_format",
+        "max_input_tokens",
         "language",
         "lang",
     ):
@@ -2354,6 +2439,10 @@ def apply_config_overrides(args: argparse.Namespace, config: dict) -> None:
         args.interactive = config["interactive"]
     if isinstance(config.get("free_format"), bool):
         args.free_format = config["free_format"]
+    config_max_input = parse_max_input_tokens(config.get("max_input_tokens"))
+    if config_max_input:
+        args.max_input_tokens = config_max_input
+        args.max_input_tokens_source = "config"
     if isinstance(config.get("language"), str) and config["language"].strip():
         args.lang = config["language"].strip()
     if isinstance(config.get("lang"), str) and config["lang"].strip():
@@ -2374,6 +2463,9 @@ def normalize_agent_overrides(raw: Optional[dict]) -> dict:
             payload["system_prompt"] = entry["system_prompt"].strip()
         if isinstance(entry.get("enabled"), bool):
             payload["enabled"] = entry["enabled"]
+        max_input = parse_max_input_tokens(entry.get("max_input_tokens"))
+        if max_input:
+            payload["max_input_tokens"] = max_input
         if payload:
             overrides[str(name)] = payload
     return overrides
@@ -2401,6 +2493,46 @@ def resolve_agent_model(name: str, default_model: str, overrides: dict) -> str:
         return default_model
     model = entry.get("model")
     return model if isinstance(model, str) and model.strip() else default_model
+
+
+def resolve_agent_max_input_tokens(
+    name: str,
+    args: argparse.Namespace,
+    overrides: dict,
+) -> tuple[Optional[int], str]:
+    entry = overrides.get(name)
+    if isinstance(entry, dict):
+        agent_max = parse_max_input_tokens(entry.get("max_input_tokens"))
+        if agent_max:
+            return agent_max, "agent"
+    cli_max = parse_max_input_tokens(getattr(args, "max_input_tokens", None))
+    if cli_max:
+        source = getattr(args, "max_input_tokens_source", "cli")
+        return cli_max, source
+    return None, "none"
+
+
+def apply_model_profile_max_input_tokens(
+    model: object,
+    max_input_tokens: Optional[int],
+    force: bool = False,
+) -> Optional[int]:
+    if not max_input_tokens:
+        return None
+    try:
+        profile = getattr(model, "profile", None)
+    except Exception:
+        profile = None
+    if isinstance(profile, dict) and "max_input_tokens" in profile and isinstance(profile["max_input_tokens"], int):
+        if not force:
+            return profile["max_input_tokens"]
+    new_profile = dict(profile) if isinstance(profile, dict) else {}
+    new_profile["max_input_tokens"] = int(max_input_tokens)
+    try:
+        setattr(model, "profile", new_profile)
+    except Exception:
+        return None
+    return new_profile["max_input_tokens"]
 
 
 def build_agent_info(
@@ -2465,6 +2597,21 @@ def build_agent_info(
         overrides,
     )
     image_prompt = resolve_agent_prompt("image_analyst", build_image_prompt(), overrides)
+    scout_max, scout_max_source = resolve_agent_max_input_tokens("scout", args, overrides)
+    clarifier_max, clarifier_max_source = resolve_agent_max_input_tokens("clarifier", args, overrides)
+    alignment_max, alignment_max_source = resolve_agent_max_input_tokens("alignment", args, overrides)
+    planner_max, planner_max_source = resolve_agent_max_input_tokens("planner", args, overrides)
+    plan_check_max, plan_check_max_source = resolve_agent_max_input_tokens("plan_check", args, overrides)
+    web_max, web_max_source = resolve_agent_max_input_tokens("web_query", args, overrides)
+    evidence_max, evidence_max_source = resolve_agent_max_input_tokens("evidence", args, overrides)
+    writer_max, writer_max_source = resolve_agent_max_input_tokens("writer", args, overrides)
+    structural_max, structural_max_source = resolve_agent_max_input_tokens("structural_editor", args, overrides)
+    critic_max, critic_max_source = resolve_agent_max_input_tokens("critic", args, overrides)
+    reviser_max, reviser_max_source = resolve_agent_max_input_tokens("reviser", args, overrides)
+    evaluator_max, evaluator_max_source = resolve_agent_max_input_tokens("evaluator", args, overrides)
+    compare_max, compare_max_source = resolve_agent_max_input_tokens("pairwise_compare", args, overrides)
+    synth_max, synth_max_source = resolve_agent_max_input_tokens("synthesizer", args, overrides)
+    template_adjust_max, template_adjust_source = resolve_agent_max_input_tokens("template_adjuster", args, overrides)
     scout_model = resolve_agent_model("scout", args.model, overrides)
     clarifier_model = resolve_agent_model("clarifier", args.model, overrides)
     alignment_model = resolve_agent_model("alignment", args.check_model or args.model, overrides)
@@ -2502,36 +2649,104 @@ def build_agent_info(
     )
     synth_enabled = resolve_agent_enabled("synthesizer", quality_enabled, overrides)
     agents = {
-        "scout": {"model": scout_model, "system_prompt": scout_prompt},
+        "scout": {
+            "model": scout_model,
+            "system_prompt": scout_prompt,
+            "max_input_tokens": scout_max,
+            "max_input_tokens_source": scout_max_source,
+        },
         "clarifier": {
             "model": clarifier_model,
             "enabled": clarifier_enabled,
             "system_prompt": clarifier_prompt,
+            "max_input_tokens": clarifier_max,
+            "max_input_tokens_source": clarifier_max_source,
         },
-        "alignment": {"model": alignment_model, "enabled": alignment_enabled, "system_prompt": align_prompt},
-        "planner": {"model": planner_model, "system_prompt": plan_prompt},
-        "plan_check": {"model": plan_check_model, "system_prompt": plan_check_prompt},
-        "web_query": {"model": web_model, "enabled": web_enabled, "system_prompt": web_prompt},
-        "evidence": {"model": evidence_model, "system_prompt": evidence_prompt},
-        "writer": {"model": writer_model, "system_prompt": writer_prompt},
-        "structural_editor": {"model": structural_model, "system_prompt": repair_prompt},
-        "critic": {"model": critic_model, "enabled": critic_enabled, "system_prompt": critic_prompt},
-        "reviser": {"model": reviser_model, "enabled": reviser_enabled, "system_prompt": revise_prompt},
-        "evaluator": {"model": evaluator_model, "enabled": evaluator_enabled, "system_prompt": evaluate_prompt},
+        "alignment": {
+            "model": alignment_model,
+            "enabled": alignment_enabled,
+            "system_prompt": align_prompt,
+            "max_input_tokens": alignment_max,
+            "max_input_tokens_source": alignment_max_source,
+        },
+        "planner": {
+            "model": planner_model,
+            "system_prompt": plan_prompt,
+            "max_input_tokens": planner_max,
+            "max_input_tokens_source": planner_max_source,
+        },
+        "plan_check": {
+            "model": plan_check_model,
+            "system_prompt": plan_check_prompt,
+            "max_input_tokens": plan_check_max,
+            "max_input_tokens_source": plan_check_max_source,
+        },
+        "web_query": {
+            "model": web_model,
+            "enabled": web_enabled,
+            "system_prompt": web_prompt,
+            "max_input_tokens": web_max,
+            "max_input_tokens_source": web_max_source,
+        },
+        "evidence": {
+            "model": evidence_model,
+            "system_prompt": evidence_prompt,
+            "max_input_tokens": evidence_max,
+            "max_input_tokens_source": evidence_max_source,
+        },
+        "writer": {
+            "model": writer_model,
+            "system_prompt": writer_prompt,
+            "max_input_tokens": writer_max,
+            "max_input_tokens_source": writer_max_source,
+        },
+        "structural_editor": {
+            "model": structural_model,
+            "system_prompt": repair_prompt,
+            "max_input_tokens": structural_max,
+            "max_input_tokens_source": structural_max_source,
+        },
+        "critic": {
+            "model": critic_model,
+            "enabled": critic_enabled,
+            "system_prompt": critic_prompt,
+            "max_input_tokens": critic_max,
+            "max_input_tokens_source": critic_max_source,
+        },
+        "reviser": {
+            "model": reviser_model,
+            "enabled": reviser_enabled,
+            "system_prompt": revise_prompt,
+            "max_input_tokens": reviser_max,
+            "max_input_tokens_source": reviser_max_source,
+        },
+        "evaluator": {
+            "model": evaluator_model,
+            "enabled": evaluator_enabled,
+            "system_prompt": evaluate_prompt,
+            "max_input_tokens": evaluator_max,
+            "max_input_tokens_source": evaluator_max_source,
+        },
         "pairwise_compare": {
             "model": compare_model,
             "enabled": pairwise_enabled,
             "system_prompt": compare_prompt,
+            "max_input_tokens": compare_max,
+            "max_input_tokens_source": compare_max_source,
         },
         "synthesizer": {
             "model": synth_model,
             "enabled": synth_enabled,
             "system_prompt": synthesize_prompt,
+            "max_input_tokens": synth_max,
+            "max_input_tokens_source": synth_max_source,
         },
         "template_adjuster": {
             "model": template_adjuster_model,
             "enabled": template_adjust_enabled,
             "system_prompt": template_adjuster_prompt,
+            "max_input_tokens": template_adjust_max,
+            "max_input_tokens_source": template_adjust_source,
         },
         "image_analyst": {
             "model": image_model,
@@ -2549,6 +2764,8 @@ def build_agent_info(
             "template": template_spec.name,
             "template_adjust": template_adjust_enabled,
             "free_format": args.free_format,
+            "max_input_tokens": args.max_input_tokens,
+            "max_input_tokens_source": getattr(args, "max_input_tokens_source", "none"),
             "quality_iterations": args.quality_iterations,
             "quality_strategy": args.quality_strategy,
             "web_search": args.web_search,
@@ -5530,7 +5747,19 @@ def build_vision_model(model_name: str):
         raise
 
 
-def create_agent_with_fallback(create_deep_agent, model_name: str, tools, system_prompt: str, backend):
+def create_agent_with_fallback(
+    create_deep_agent,
+    model_name: str,
+    tools,
+    system_prompt: str,
+    backend,
+    max_input_tokens: Optional[int] = None,
+    max_input_tokens_source: str = "none",
+):
+    max_input_tokens = max_input_tokens if max_input_tokens is not None else DEFAULT_MAX_INPUT_TOKENS
+    if max_input_tokens_source == "none":
+        max_input_tokens_source = DEFAULT_MAX_INPUT_TOKENS_SOURCE
+    force_override = max_input_tokens_source in {"agent", "cli", "config"}
     kwargs = {"tools": tools, "system_prompt": system_prompt, "backend": backend}
     if model_name:
         model_value = model_name
@@ -5552,11 +5781,27 @@ def create_agent_with_fallback(create_deep_agent, model_name: str, tools, system
                     file=sys.stderr,
                 )
             else:
+                apply_model_profile_max_input_tokens(compat_model, max_input_tokens, force=force_override)
                 model_value = compat_model
         elif STREAMING_ENABLED and is_openai_model_name(model_name):
             compat_model = build_openai_compat_model(model_name, streaming=True)
             if compat_model is not None:
+                apply_model_profile_max_input_tokens(compat_model, max_input_tokens, force=force_override)
                 model_value = compat_model
+        if isinstance(model_value, str) and max_input_tokens:
+            try:
+                from langchain.chat_models import init_chat_model  # type: ignore
+            except Exception:
+                init_chat_model = None
+            if init_chat_model is not None:
+                try:
+                    model_obj = init_chat_model(model_value)
+                    apply_model_profile_max_input_tokens(model_obj, max_input_tokens, force=force_override)
+                    model_value = model_obj
+                except Exception:
+                    pass
+        if not isinstance(model_value, str):
+            apply_model_profile_max_input_tokens(model_value, max_input_tokens, force=force_override)
         try:
             return create_deep_agent(model=model_value, **kwargs)
         except Exception as exc:  # pragma: no cover - fallback path
@@ -5598,6 +5843,10 @@ def main() -> int:
         check_model = args.model
     global STREAMING_ENABLED
     STREAMING_ENABLED = bool(args.stream)
+    global DEFAULT_MAX_INPUT_TOKENS
+    global DEFAULT_MAX_INPUT_TOKENS_SOURCE
+    DEFAULT_MAX_INPUT_TOKENS = parse_max_input_tokens(args.max_input_tokens)
+    DEFAULT_MAX_INPUT_TOKENS_SOURCE = getattr(args, "max_input_tokens_source", "none")
     output_format = choose_format(args.output)
     start_stamp = dt.datetime.now()
     start_timer = time.monotonic()
@@ -5787,6 +6036,8 @@ def main() -> int:
         args.model_vision = vision_override
     alignment_prompt = resolve_agent_prompt("alignment", build_alignment_prompt(normalize_lang(args.lang)), agent_overrides)
     alignment_model = resolve_agent_model("alignment", check_model, agent_overrides)
+    def agent_max_tokens(name: str) -> tuple[Optional[int], str]:
+        return resolve_agent_max_input_tokens(name, args, agent_overrides)
 
     def _coerce_stream_text(value: object) -> str:
         if isinstance(value, str):
@@ -5976,7 +6227,16 @@ def main() -> int:
             agent_overrides,
         )
         repair_model = resolve_agent_model("structural_editor", args.model, agent_overrides)
-        repair_agent = create_agent_with_fallback(create_deep_agent, repair_model, tools, repair_prompt, backend)
+        repair_max, repair_max_source = agent_max_tokens("structural_editor")
+        repair_agent = create_agent_with_fallback(
+            create_deep_agent,
+            repair_model,
+            tools,
+            repair_prompt,
+            backend,
+            max_input_tokens=repair_max,
+            max_input_tokens_source=repair_max_source,
+        )
         repair_input = "\n".join(
             [
                 "Required skeleton:",
@@ -6039,7 +6299,16 @@ def main() -> int:
     def run_alignment_check(stage: str, content: str) -> Optional[str]:
         if not alignment_enabled:
             return None
-        align_agent = create_agent_with_fallback(create_deep_agent, alignment_model, tools, alignment_prompt, backend)
+        align_max, align_max_source = agent_max_tokens("alignment")
+        align_agent = create_agent_with_fallback(
+            create_deep_agent,
+            alignment_model,
+            tools,
+            alignment_prompt,
+            backend,
+            max_input_tokens=align_max,
+            max_input_tokens_source=align_max_source,
+        )
         align_input = [
             f"Stage: {stage}",
             "",
@@ -6108,7 +6377,16 @@ def main() -> int:
         context_lines.append(f"Source triage: {source_triage_path.as_posix()}")
     scout_prompt = resolve_agent_prompt("scout", build_scout_prompt(language), agent_overrides)
     scout_model = resolve_agent_model("scout", args.model, agent_overrides)
-    scout_agent = create_agent_with_fallback(create_deep_agent, scout_model, tools, scout_prompt, backend)
+    scout_max, scout_max_source = agent_max_tokens("scout")
+    scout_agent = create_agent_with_fallback(
+        create_deep_agent,
+        scout_model,
+        tools,
+        scout_prompt,
+        backend,
+        max_input_tokens=scout_max,
+        max_input_tokens_source=scout_max_source,
+    )
     scout_input = list(context_lines)
     if report_prompt:
         scout_input.extend(["", "Report focus prompt:", report_prompt])
@@ -6126,7 +6404,16 @@ def main() -> int:
     if clarifier_enabled and (args.interactive or clarification_answers):
         clarifier_prompt = resolve_agent_prompt("clarifier", build_clarifier_prompt(language), agent_overrides)
         clarifier_model = resolve_agent_model("clarifier", args.model, agent_overrides)
-        clarifier_agent = create_agent_with_fallback(create_deep_agent, clarifier_model, tools, clarifier_prompt, backend)
+        clarifier_max, clarifier_max_source = agent_max_tokens("clarifier")
+        clarifier_agent = create_agent_with_fallback(
+            create_deep_agent,
+            clarifier_model,
+            tools,
+            clarifier_prompt,
+            backend,
+            max_input_tokens=clarifier_max,
+            max_input_tokens_source=clarifier_max_source,
+        )
         clarifier_input = list(context_lines)
         clarifier_input.extend(["", "Scout notes:", scout_notes])
         if report_prompt:
@@ -6153,6 +6440,7 @@ def main() -> int:
             agent_overrides,
         )
         template_adjuster_model = resolve_agent_model("template_adjuster", args.model, agent_overrides)
+        adjust_max, adjust_max_source = agent_max_tokens("template_adjuster")
         adjusted_spec, adjustment = adjust_template_spec(
             template_spec,
             report_prompt,
@@ -6167,6 +6455,8 @@ def main() -> int:
             adjust_mode=args.template_adjust_mode,
             prompt_override=template_adjuster_prompt,
             model_override=template_adjuster_model,
+            max_input_tokens=adjust_max,
+            max_input_tokens_source=adjust_max_source,
         )
         if adjustment:
             template_adjustment_path = write_template_adjustment_note(
@@ -6193,7 +6483,16 @@ def main() -> int:
 
     plan_prompt = resolve_agent_prompt("planner", build_plan_prompt(language), agent_overrides)
     plan_model = resolve_agent_model("planner", args.model, agent_overrides)
-    plan_agent = create_agent_with_fallback(create_deep_agent, plan_model, tools, plan_prompt, backend)
+    plan_max, plan_max_source = agent_max_tokens("planner")
+    plan_agent = create_agent_with_fallback(
+        create_deep_agent,
+        plan_model,
+        tools,
+        plan_prompt,
+        backend,
+        max_input_tokens=plan_max,
+        max_input_tokens_source=plan_max_source,
+    )
     plan_input = list(context_lines)
     plan_input.extend(["", "Scout notes:", scout_notes])
     if source_triage_text:
@@ -6221,7 +6520,16 @@ def main() -> int:
         supporting_dir = resolve_supporting_dir(run_dir, args.supporting_dir)
         web_prompt = resolve_agent_prompt("web_query", build_web_prompt(), agent_overrides)
         web_model = resolve_agent_model("web_query", args.model, agent_overrides)
-        web_agent = create_agent_with_fallback(create_deep_agent, web_model, tools, web_prompt, backend)
+        web_max, web_max_source = agent_max_tokens("web_query")
+        web_agent = create_agent_with_fallback(
+            create_deep_agent,
+            web_model,
+            tools,
+            web_prompt,
+            backend,
+            max_input_tokens=web_max,
+            max_input_tokens_source=web_max_source,
+        )
         web_input = list(context_lines)
         web_input.extend(["", "Scout notes:", scout_notes, "", "Plan:", plan_text])
         if report_prompt:
@@ -6271,7 +6579,16 @@ def main() -> int:
 
     evidence_prompt = resolve_agent_prompt("evidence", build_evidence_prompt(language), agent_overrides)
     evidence_model = resolve_agent_model("evidence", args.model, agent_overrides)
-    evidence_agent = create_agent_with_fallback(create_deep_agent, evidence_model, tools, evidence_prompt, backend)
+    evidence_max, evidence_max_source = agent_max_tokens("evidence")
+    evidence_agent = create_agent_with_fallback(
+        create_deep_agent,
+        evidence_model,
+        tools,
+        evidence_prompt,
+        backend,
+        max_input_tokens=evidence_max,
+        max_input_tokens_source=evidence_max_source,
+    )
     evidence_parts = list(context_lines)
     evidence_parts.extend(["", "Scout notes:", scout_notes])
     evidence_parts.extend(["", "Plan:", plan_text])
@@ -6301,7 +6618,16 @@ def main() -> int:
 
     plan_check_prompt = resolve_agent_prompt("plan_check", build_plan_check_prompt(language), agent_overrides)
     plan_check_model = resolve_agent_model("plan_check", check_model, agent_overrides)
-    plan_check_agent = create_agent_with_fallback(create_deep_agent, plan_check_model, tools, plan_check_prompt, backend)
+    plan_check_max, plan_check_max_source = agent_max_tokens("plan_check")
+    plan_check_agent = create_agent_with_fallback(
+        create_deep_agent,
+        plan_check_model,
+        tools,
+        plan_check_prompt,
+        backend,
+        max_input_tokens=plan_check_max,
+        max_input_tokens_source=plan_check_max_source,
+    )
     plan_check_input = "\n".join(
         [
             "Plan:",
@@ -6343,7 +6669,16 @@ def main() -> int:
         agent_overrides,
     )
     writer_model = resolve_agent_model("writer", args.model, agent_overrides)
-    writer_agent = create_agent_with_fallback(create_deep_agent, writer_model, tools, writer_prompt, backend)
+    writer_max, writer_max_source = agent_max_tokens("writer")
+    writer_agent = create_agent_with_fallback(
+        create_deep_agent,
+        writer_model,
+        tools,
+        writer_prompt,
+        backend,
+        max_input_tokens=writer_max,
+        max_input_tokens_source=writer_max_source,
+    )
     writer_parts = list(context_lines)
     writer_parts.extend(["", "Evidence notes:", evidence_notes])
     writer_parts.extend(["", "Updated plan:", plan_text])
@@ -6398,7 +6733,16 @@ def main() -> int:
                 agent_overrides,
             )
             critic_model = resolve_agent_model("critic", quality_model, agent_overrides)
-            critic_agent = create_agent_with_fallback(create_deep_agent, critic_model, tools, critic_prompt, backend)
+            critic_max, critic_max_source = agent_max_tokens("critic")
+            critic_agent = create_agent_with_fallback(
+                create_deep_agent,
+                critic_model,
+                tools,
+                critic_prompt,
+                backend,
+                max_input_tokens=critic_max,
+                max_input_tokens_source=critic_max_source,
+            )
             critic_input = "\n".join(
                 [
                     "Report:",
@@ -6429,7 +6773,16 @@ def main() -> int:
                 agent_overrides,
             )
             revise_model = resolve_agent_model("reviser", quality_model, agent_overrides)
-            revise_agent = create_agent_with_fallback(create_deep_agent, revise_model, tools, revise_prompt, backend)
+            revise_max, revise_max_source = agent_max_tokens("reviser")
+            revise_agent = create_agent_with_fallback(
+                create_deep_agent,
+                revise_model,
+                tools,
+                revise_prompt,
+                backend,
+                max_input_tokens=revise_max,
+                max_input_tokens_source=revise_max_source,
+            )
             revise_input = "\n".join(
                 [
                     "Original report:",
@@ -6461,6 +6814,7 @@ def main() -> int:
         evaluations: list[dict] = []
         evaluator_model = resolve_agent_model("evaluator", quality_model, agent_overrides)
         for idx, candidate in enumerate(candidates):
+            eval_max, eval_max_source = agent_max_tokens("evaluator")
             evaluation = evaluate_report(
                 candidate["text"],
                 evidence_notes,
@@ -6474,6 +6828,8 @@ def main() -> int:
                 tools,
                 backend,
                 args.quality_max_chars,
+                max_input_tokens=eval_max,
+                max_input_tokens_source=eval_max_source,
             )
             evaluation["label"] = candidate["label"]
             evaluation["index"] = idx
@@ -6485,6 +6841,7 @@ def main() -> int:
             compare_model = resolve_agent_model("pairwise_compare", quality_model, agent_overrides)
             for i in range(len(candidates)):
                 for j in range(i + 1, len(candidates)):
+                    compare_max, compare_max_source = agent_max_tokens("pairwise_compare")
                     result = compare_reports_pairwise(
                         candidates[i]["text"],
                         candidates[j]["text"],
@@ -6500,6 +6857,8 @@ def main() -> int:
                         tools,
                         backend,
                         args.quality_max_chars,
+                        max_input_tokens=compare_max,
+                        max_input_tokens_source=compare_max_source,
                     )
                     result["a"] = candidates[i]["label"]
                     result["b"] = candidates[j]["label"]
@@ -6519,6 +6878,7 @@ def main() -> int:
             )
             top_indices = ranked[:2]
             if len(top_indices) == 2:
+                synth_max, synth_max_source = agent_max_tokens("synthesizer")
                 report = synthesize_reports(
                     candidates[top_indices[0]]["text"],
                     candidates[top_indices[1]]["text"],
@@ -6536,6 +6896,9 @@ def main() -> int:
                     tools,
                     backend,
                     args.quality_max_chars,
+                    free_form=args.free_format,
+                    max_input_tokens=synth_max,
+                    max_input_tokens_source=synth_max_source,
                 )
                 report = normalize_report_paths(report, run_dir)
             elif top_indices:
