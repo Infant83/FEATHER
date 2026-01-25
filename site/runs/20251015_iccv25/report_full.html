@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20251015_iccv25</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-technical_deep_dive {
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+  </style>
+</head>
+<body class="template-technical_deep_dive">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20251015_iccv25</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-14 06:24</p>
+<h2>Executive Summary</h2>
+<p>This run’s archive does <strong>not</strong> provide representative coverage of <em>ICCV 2025 main-conference</em> “key papers + code links.” The run index explicitly reports <strong>URLs: 0</strong> and <strong>arXiv IDs: 0</strong>, indicating that FEATHER did not crawl paper-level entries from authoritative hubs (e.g., CVF Open Access “All Papers”) and instead relied on a small OpenAlex pull that includes multiple <strong>off-scope</strong> PDFs (e.g., oncology, education, OpenCV tutorial) alongside a handful of <strong>ICCV 2025 workshop/challenge reports on arXiv</strong>. Evidence for this collection gap is visible in the run index and logs, including repeated <strong>403</strong> failures for publishers (MIT Press, MDPI), which likely further skewed the corpus. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></p>
+<p>Within the local evidence that <em>is</em> relevant to ICCV 2025, the strongest practical value comes from (i) a <strong>new dataset release</strong> with explicit Zenodo + GitHub links (<strong>R‑LiViT</strong>), and (ii) <strong>benchmark/challenge reports</strong> that provide concrete protocols, metrics, and sometimes code repositories (e.g., <strong>ISRGen‑QA</strong>, <strong>SnapUGC engagement</strong>, <strong>SAMSON</strong>). These provide actionable assets and methodological lessons—particularly around <strong>multimodal roadside perception</strong>, <strong>engagement prediction vs MOS mismatch</strong>, <strong>modern SR artifact assessment</strong>, and <strong>long-video segmentation memory/compute trade-offs</strong>—but they should be interpreted as <strong>workshop/challenge ecosystem signals</strong>, not a map of ICCV 2025 main-conference breakthroughs. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a>, <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a>, <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a>, <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></p>
+<p>Actionable recommendation: for a true “key ICCV 2025 papers + code links” report, the pipeline must ingest paper-level URLs from CVF Open Access / OpenReview / curated accepted-paper lists; otherwise, any “key papers” selection will be under-evidenced and biased by OpenAlex drift. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></p>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<p><strong>Scope (as evidenced by the run):</strong>
+- Input queries were generic (“iccv 2025”, “iccv 2025 open access”, “iccv 2025 paper code site:github.com”), with OpenAlex capped (<code>oa-max-results 5</code>). <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a>, <a href="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-viewer="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-raw="instruction/20251015_iccv25.txt" class="viewer-link">[7]</a>
+- The archive contains <strong>11 PDFs + extracted texts</strong> from OpenAlex, plus Tavily summaries. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></p>
+<p><strong>Methodology used in this report:</strong>
+1. <strong>Run-audit</strong> using the run index and logs to characterize coverage and retrieval failures. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a>, <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a>
+2. <strong>Primary evidence extraction</strong> from locally extracted PDF-to-text artifacts for the items that are plausibly tied to ICCV 2025 workshops/challenges:
+   - R‑LiViT dataset paper (arXiv). <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a>
+   - VQualA 2025 challenge reports (ISRGC‑Q, EVQA‑SnapUGC). <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a>, <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a>
+   - LSVOS 2025 VOS challenge solution report (SAMSON). <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a>
+   - DRL4Real workshop summary. <a href="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-viewer="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-raw="archive/openalex/text/W4415090288.txt" class="viewer-link">[8]</a>
+3. <strong>Secondary/contextual synthesis</strong> from the remote-sensing VLM survey in the archive (not ICCV-specific, but useful for “gaps” framing). <a href="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-viewer="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-raw="archive/openalex/text/W4411143162.txt" class="viewer-link">[9]</a></p>
+<p><strong>Important boundary condition:</strong> No CVF/OpenReview per-paper crawling occurred in this run (URLs: 0). Therefore, any “ICCV 2025 key papers + code links” coverage based on this archive is necessarily incomplete and should be treated as a <strong>coverage diagnosis + workshop/challenge asset review</strong> rather than a definitive proceedings survey. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></p>
+<hr />
+<h2>Technical Background</h2>
+<h3>What counts as “ICCV 2025 key papers” vs. “ICCV 2025 ecosystem evidence”</h3>
+<p>For an R&amp;D-oriented “key papers + code links” landscape, “key” typically implies <strong>main-conference papers</strong> (peer-reviewed, in proceedings) with:
+- clear problem novelty,
+- measurable gains on standard benchmarks,
+- and/or reusable artifacts (code, datasets, models).</p>
+<p>In contrast, this archive is dominated by:
+- <strong>Workshop/challenge reports</strong> (often valuable for benchmarking and operational insights, but not equivalent to main-conference contributions), and
+- <strong>off-topic OpenAlex matches</strong> from ambiguous query-to-venue retrieval.</p>
+<h3>Key technical themes present in the local corpus</h3>
+<ol>
+<li>
+<p><strong>Roadside multimodal perception (LiDAR + RGB + Thermal)</strong><br />
+   Multimodality improves robustness under illumination extremes. Thermal is particularly relevant for night-time and glare scenarios; fusion requires tight temporal/spatial alignment, which is often missing in public datasets. R‑LiViT positions itself explicitly in this gap. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></p>
+</li>
+<li>
+<p><strong>Quality assessment for generative super-resolution (SR-IQA)</strong>
+   Modern SR (GAN/diffusion) introduces “enhancement-induced artifacts” (hallucinated textures, oversharpening), which differ from classical degradations. The ISRGen‑QA dataset and ISRGC‑Q challenge aim to align predictions with human MOS using correlation-based evaluation. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></p>
+</li>
+<li>
+<p><strong>Engagement prediction for short-form UGC vs MOS-based VQA</strong>
+   MOS labels from small rater pools can correlate poorly with real popularity/engagement; engagement is multimodal (visual/audio/text metadata) and shaped by platform dynamics. SnapUGC reframes the target to engagement-derived metrics and positions <strong>ECR</strong> as a more duration-independent signal. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></p>
+</li>
+<li>
+<p><strong>Long-video object segmentation (LVOS/LSVOS) and memory mechanisms</strong>
+   Memory-based VOS aims at temporal consistency, but long sequences cause memory overload/distractor interference and impose compute trade-offs. SAMSON explicitly integrates SAM2-style pipelines with longer-term memory and SAM2Long post-processing; it reports leaderboard performance. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></p>
+</li>
+<li>
+<p><strong>Disentangled representation learning in realistic scenarios</strong>
+   DRL has historically overfit to synthetic benchmarks; DRL4Real highlights the need for realistic data, robust benchmarks, and unified evaluation metrics, and notes trends like diffusion-based DRL and language inductive biases. <a href="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-viewer="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-raw="archive/openalex/text/W4415090288.txt" class="viewer-link">[8]</a></p>
+</li>
+</ol>
+<hr />
+<h2>Methods &amp; Data</h2>
+<h3>A. Run collection workflow (what FEATHER actually gathered)</h3>
+<ul>
+<li>Run command includes Tavily + OpenAlex with PDF download and PDF→text extraction. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li>OpenAlex pulled 11 PDFs; however, many are not ICCV-related (Nature Cancer oncology AI agent; education review; OpenCV tutorial; e-commerce retrieval; etc.). <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li>Logs show repeated publisher download failures via <strong>HTTP 403 Forbidden</strong> (MIT Press, MDPI), reducing corpus completeness and potentially biasing toward arXiv-accessible items. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+</ul>
+<h3>B. Locally relevant datasets/benchmarks and their evaluation setups</h3>
+<h4>1) R‑LiViT dataset (roadside LiDAR+RGB+Thermal)</h4>
+<ul>
+<li>Claimed as “first dataset” combining LiDAR, RGB, thermal from roadside perspective with VRU focus.</li>
+<li>Scale: <strong>10,000 LiDAR frames</strong> + <strong>2,400 aligned RGB/thermal image pairs</strong> across <strong>150 traffic scenarios</strong>, captured at three intersections day/night. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></li>
+<li>Public artifacts explicitly provided:</li>
+<li>Zenodo DOI: <code>[\[10\]](https://doi.org/10.5281/zenodo.16356714</code>)</li>
+<li>Repro code: <code>[\[11\]](https://github.com/XITASO/r-livit</code>) <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></li>
+</ul>
+<h4>2) ISRGC‑Q (ISRGen‑QA) SR quality assessment challenge</h4>
+<ul>
+<li>Dataset: <strong>ISRGen‑QA</strong>, 720 SR images ~2K resolution, generated using a mix of GAN, diffusion, transformer, flow, CNN SR models; MOS from 21 valid participants after filtering. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></li>
+<li>Evaluation metrics:</li>
+<li>SRCC, PLCC; final ranking score $0.6\cdot \text{SRCC} + 0.4\cdot \text{PLCC}$. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></li>
+<li>Public repo: <code>[\[12\]](https://github.com/Lighting-YXLI/ISRGen-QA</code>) <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></li>
+</ul>
+<h4>3) EVQA‑SnapUGC engagement prediction challenge</h4>
+<ul>
+<li>Dataset: <strong>SnapUGC</strong>, 120,651 videos (5–60s), each with aggregated engagement data; selection criterion includes views &gt; 2000 to reduce sampling bias. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></li>
+<li>Metrics introduced:</li>
+<li><strong>NAWP</strong> (Normalized Average Watch Percentage)</li>
+<li><strong>ECR</strong> (Engagement Continuation Rate), defined as $P(\text{watch} &gt; 5s)$, described as more duration-independent and bimodal in distribution. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></li>
+<li>Project page / inference code link is embedded: <code>[\[13\]](https://github.com/dasongli1/SnapUGC_Engagement/tree/main/ECR_inference</code>) <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></li>
+</ul>
+<h4>4) LSVOS 2025 VOS Challenge (MOSE track) — SAMSON</h4>
+<ul>
+<li>Problem framing: long-term VOS challenges from occlusion/reappearance, crowded scenes; SAM2’s fixed short memory is highlighted as a constraint. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></li>
+<li>Method sketch (as reported):</li>
+<li>SAM2-based pipeline</li>
+<li>long-term memory module for re-identification</li>
+<li>SAM2Long inference post-processing to reduce error accumulation. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></li>
+<li>Optimization objective given explicitly:
+  $$L=\lambda_1 L_{BCE}+\lambda_2 L_{IoU}+\lambda_3 L_{Dice}+\lambda_4 L_{Mask}$$
+  with $L_{Mask}$ supervising predicted IoU scores for candidate masks. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></li>
+</ul>
+<h3>C. Survey-derived context: VLM in remote sensing (two-stage paradigm)</h3>
+<p>The survey provides a structured taxonomy and objective functions (e.g., CLIP-like InfoNCE) for contrastive VLM, and enumerates future research directions (alignment, vague requirement understanding, explanation-driven reliability, scalable capabilities, richer datasets). This is useful as a <strong>gap lens</strong> but not evidence of ICCV 2025 results. <a href="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-viewer="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-raw="archive/openalex/text/W4411143162.txt" class="viewer-link">[9]</a></p>
+<hr />
+<h2>Results &amp; Evidence</h2>
+<h3>1) Practical assets (immediately reusable)</h3>
+<p><strong>R‑LiViT (dataset + reproducibility code):</strong><br />
+The paper explicitly states public release of both dataset and code, with DOI and GitHub link embedded in the text—high operational value for teams building roadside VRU perception and multimodal fusion baselines. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></p>
+<p><strong>ISRGen‑QA / ISRGC‑Q (benchmark + repo):</strong><br />
+The challenge report provides a concrete protocol (SRCC/PLCC composite scoring) and a public GitHub repository, enabling reproducible SR-IQA comparisons specifically targeting modern GAN/diffusion artifacts. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></p>
+<p><strong>SnapUGC EVQA (engagement dataset framing + inference code):</strong><br />
+The report frames engagement prediction as distinct from MOS-based VQA and includes a GitHub project link for ECR inference, which is useful for teams building multimodal predictors (visual/audio/text). <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></p>
+<h3>2) Quantitative/competitive results explicitly reported</h3>
+<p><strong>SAMSON (LSVOS 2025 MOSE track):</strong>
+- Reported leaderboard outcome: <strong>J&amp;F = 0.8427</strong> (test set), and also <strong>J = 0.8182</strong>, <strong>F = 0.8671</strong> on MOSEv1 track. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a>
+- Evidence is self-reported within the solution report (challenge context), but still a useful performance anchor for comparable pipelines.</p>
+<p><strong>EVQA‑SnapUGC challenge ranking:</strong>
+- A table lists baseline and team scores with SROCC/PLCC; top reported “Final Score” ~0.710 for the leading team and 0.660 for baseline. This provides a calibration point for expected correlation ceilings under this dataset/task definition. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></p>
+<h3>3) Research gaps grounded in the local texts (synthesized across items)</h3>
+<p><strong>Gap A — Multimodal roadside VRU perception is under-instrumented, especially with thermal.</strong><br />
+R‑LiViT argues that thermal is underrepresented despite benefits in extreme lighting and that few datasets integrate LiDAR+RGB+thermal with detection/tracking support; existing LiDAR-RGB-T datasets are oriented more toward localization/depth and may lack annotations. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></p>
+<p><strong>Gap B — MOS-based “quality” is not a reliable proxy for real engagement/popularity in short video.</strong><br />
+The SnapUGC report explicitly states MOS from small raters correlates poorly with popularity and highlights that engagement depends on audio and metadata, not just visuals—implying that VQA pipelines ported to engagement tasks will systematically miss explanatory factors. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></p>
+<p><strong>Gap C — SR-IQA datasets lag behind modern generative SR artifacts.</strong><br />
+ISRGC‑Q notes that prior SR-IQA datasets rely on older SR algorithms and underrepresent GAN/diffusion outputs; enhancement-induced artifacts (hallucinated textures, unnatural patterns) require updated subjective datasets and metrics aligned to these distortions. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></p>
+<p><strong>Gap D — Long-video segmentation must reconcile memory length vs compute cost; distractor interference remains open.</strong><br />
+SAMSON’s report describes SAM2’s limited fixed memory as a long-term weakness and surveys memory overload/distractor interference issues in long sequences; it highlights a fundamental trade-off between memory length and computational cost. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></p>
+<p><strong>Gap E — Disentanglement in realistic settings lacks unified benchmarks/metrics.</strong><br />
+DRL4Real states DRL has been confined to synthetic datasets and that real-world complexity plus missing robust benchmarks and unified evaluation metrics hinder progress; it also notes trends of diffusion + language inductive biases. <a href="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-viewer="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-raw="archive/openalex/text/W4415090288.txt" class="viewer-link">[8]</a></p>
+<p><strong>Cross-cutting “actionable insight”:</strong> Across these domains, a recurring pattern is that <em>evaluation protocols are shifting toward realism</em>: real-world multimodal sensing (R‑LiViT), user-interaction-derived signals (SnapUGC), artifact-aware perceptual assessment (ISRGen‑QA), and long-horizon temporal consistency (LSVOS). Each pushes systems away from narrow lab metrics and toward deployment-relevant failure modes. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a>, <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a>, <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a>, <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></p>
+<h3>4) Why this run cannot support “key ICCV 2025 main-conference papers + code links”</h3>
+<ul>
+<li>The archive states <strong>Queries: 4 | URLs: 0 | arXiv IDs: 0</strong> and contains only OpenAlex-derived PDFs—so there is no proceedings-level enumeration of ICCV papers. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li>OpenAlex retrieved multiple non-ICCV works, indicating query drift. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li>Download failures (403) further limit representativeness. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+</ul>
+<hr />
+<h2>Limitations &amp; Open Questions</h2>
+<h3>Coverage and representativeness</h3>
+<ul>
+<li><strong>Proceedings coverage is missing by construction</strong>: without crawling CVF Open Access “All Papers” (paper-level links), the run cannot claim comprehensive or “key paper” coverage. The run index explicitly corroborates this (URLs: 0). <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li><strong>OpenAlex drift</strong>: several downloaded PDFs are unrelated to ICCV 2025 (e.g., oncology AI agent, education review), so any aggregated “ICCV landscape” from these items would be misleading. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+</ul>
+<h3>Reproducibility constraints</h3>
+<ul>
+<li>Some workshop/challenge items provide repos/links (good), but others in the archive are not clearly tied to ICCV and may not have reproducible artifacts.</li>
+<li>Access failures (403) suggest the pipeline may not reliably retrieve publisher-hosted PDFs, biasing toward arXiv and open hosts. <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+</ul>
+<h3>Scale questions for R&amp;D leaders</h3>
+<ul>
+<li><strong>Thermal+LiDAR+RGB fusion</strong>: How do we standardize calibration/alignment pipelines and define evaluation suites that reflect roadside deployment constraints (latency, bandwidth, sensor placement variability)? R‑LiViT provides a starting dataset, but generalization beyond three intersections remains open. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></li>
+<li><strong>Engagement modeling</strong>: ECR is a simple thresholded statistic; how robust is it to platform UI changes, recommendation policy shifts, and creator metadata manipulation? The report emphasizes aggregated privacy-preserving metrics but does not resolve causal confounds. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></li>
+<li><strong>Long-video memory</strong>: The SAMSON report foregrounds compute/memory trade-offs; open question is whether we can formalize optimal memory policies (e.g., learned retention) under strict latency budgets. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></li>
+</ul>
+<hr />
+<h2>Appendix</h2>
+<h3>A. Run artifacts and diagnostic evidence</h3>
+<ul>
+<li>Run index (inventory; shows URLs: 0, arXiv IDs: 0; lists downloaded PDFs/texts): <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></li>
+<li>Run log (OpenAlex download failures; 403 examples): <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[2]</a></li>
+<li>Instruction file (queries used): <a href="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-viewer="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-raw="instruction/20251015_iccv25.txt" class="viewer-link">[7]</a></li>
+</ul>
+<h3>B. Locally relevant ICCV-adjacent items (workshop/challenge ecosystem) and embedded asset links</h3>
+<ol>
+<li><strong>R‑LiViT: A LiDAR‑Visual‑Thermal Dataset</strong></li>
+<li>
+<p>Dataset DOI and GitHub reproducibility code included in text. <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">[3]</a></p>
+</li>
+<li>
+<p><strong>VQualA 2025 ISRGC‑Q challenge report (ISRGen‑QA)</strong></p>
+</li>
+<li>
+<p>Public GitHub repo; SRCC/PLCC composite score definition. <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">[4]</a></p>
+</li>
+<li>
+<p><strong>VQualA 2025 EVQA‑SnapUGC challenge report</strong></p>
+</li>
+<li>
+<p>ECR definition ($P(\text{watch}&gt;5s)$), dataset scale (120,651 videos), and GitHub project/inference link. <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">[5]</a></p>
+</li>
+<li>
+<p><strong>SAMSON: LSVOS 2025 VOS challenge solution report</strong></p>
+</li>
+<li>
+<p>Reported J&amp;F performance and explicit loss formulation. <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">[6]</a></p>
+</li>
+<li>
+<p><strong>DRL4Real workshop summary</strong></p>
+</li>
+<li>States core gap: synthetic confinement + lack of unified metrics; lists thematic trends (diffusion, language inductive bias). <a href="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-viewer="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-raw="archive/openalex/text/W4415090288.txt" class="viewer-link">[8]</a></li>
+</ol>
+<h3>C. Concrete rerun recommendation (evidence-based)</h3>
+<p>Because the run did not ingest paper-level URLs, a rerun should begin by crawling authoritative hubs (CVF Open Access proceedings pages, OpenReview group pages, curated accepted-paper lists). This recommendation is justified directly by the run inventory (URLs: 0) and OpenAlex drift. <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">[1]</a></p>
+<h2>Figures</h2>
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417156065.pdf-c03dde45.png" alt="Figure from ./archive/openalex/pdf/W4417156065.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-viewer="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-raw="archive/openalex/pdf/W4417156065.pdf" class="viewer-link">./archive/openalex/pdf/W4417156065.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417156065.pdf-c3f62fde.png" alt="Figure from ./archive/openalex/pdf/W4417156065.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-viewer="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-raw="archive/openalex/pdf/W4417156065.pdf" class="viewer-link">./archive/openalex/pdf/W4417156065.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417156065.pdf-bbfa9604.png" alt="Figure from ./archive/openalex/pdf/W4417156065.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-viewer="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-raw="archive/openalex/pdf/W4417156065.pdf" class="viewer-link">./archive/openalex/pdf/W4417156065.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417156065.pdf-4829b3e6.png" alt="Figure from ./archive/openalex/pdf/W4417156065.pdf (page 5)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-viewer="report_views/archive_openalex_pdf_W4417156065.pdf-91239aa7.html" data-raw="archive/openalex/pdf/W4417156065.pdf" class="viewer-link">./archive/openalex/pdf/W4417156065.pdf</a> (page 5)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4414756887.pdf-8ce025bc.png" alt="Figure from ./archive/openalex/pdf/W4414756887.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-viewer="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-raw="archive/openalex/pdf/W4414756887.pdf" class="viewer-link">./archive/openalex/pdf/W4414756887.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4414756887.pdf-0f4aa8ab.png" alt="Figure from ./archive/openalex/pdf/W4414756887.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-viewer="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-raw="archive/openalex/pdf/W4414756887.pdf" class="viewer-link">./archive/openalex/pdf/W4414756887.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4414756887.pdf-987921ae.png" alt="Figure from ./archive/openalex/pdf/W4414756887.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-viewer="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-raw="archive/openalex/pdf/W4414756887.pdf" class="viewer-link">./archive/openalex/pdf/W4414756887.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4414756887.pdf-931ffaa0.png" alt="Figure from ./archive/openalex/pdf/W4414756887.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-viewer="report_views/archive_openalex_pdf_W4414756887.pdf-dc27eb40.html" data-raw="archive/openalex/pdf/W4414756887.pdf" class="viewer-link">./archive/openalex/pdf/W4414756887.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417409712.pdf-9aa46dc9.png" alt="Figure from ./archive/openalex/pdf/W4417409712.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-viewer="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-raw="archive/openalex/pdf/W4417409712.pdf" class="viewer-link">./archive/openalex/pdf/W4417409712.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417409712.pdf-9ea9511f.png" alt="Figure from ./archive/openalex/pdf/W4417409712.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-viewer="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-raw="archive/openalex/pdf/W4417409712.pdf" class="viewer-link">./archive/openalex/pdf/W4417409712.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417409712.pdf-537681ca.png" alt="Figure from ./archive/openalex/pdf/W4417409712.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-viewer="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-raw="archive/openalex/pdf/W4417409712.pdf" class="viewer-link">./archive/openalex/pdf/W4417409712.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4417409712.pdf-7d3eeaf0.png" alt="Figure from ./archive/openalex/pdf/W4417409712.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-viewer="report_views/archive_openalex_pdf_W4417409712.pdf-82120020.html" data-raw="archive/openalex/pdf/W4417409712.pdf" class="viewer-link">./archive/openalex/pdf/W4417409712.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415254644.pdf-155c71d7.png" alt="Figure from ./archive/openalex/pdf/W4415254644.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-viewer="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-raw="archive/openalex/pdf/W4415254644.pdf" class="viewer-link">./archive/openalex/pdf/W4415254644.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415254644.pdf-cb49c564.png" alt="Figure from ./archive/openalex/pdf/W4415254644.pdf (page 4)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-viewer="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-raw="archive/openalex/pdf/W4415254644.pdf" class="viewer-link">./archive/openalex/pdf/W4415254644.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415254644.pdf-c1ca9a94.png" alt="Figure from ./archive/openalex/pdf/W4415254644.pdf (page 6)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-viewer="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-raw="archive/openalex/pdf/W4415254644.pdf" class="viewer-link">./archive/openalex/pdf/W4415254644.pdf</a> (page 6)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415254644.pdf-9b732b3c.png" alt="Figure from ./archive/openalex/pdf/W4415254644.pdf (page 7)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-viewer="report_views/archive_openalex_pdf_W4415254644.pdf-7a12b040.html" data-raw="archive/openalex/pdf/W4415254644.pdf" class="viewer-link">./archive/openalex/pdf/W4415254644.pdf</a> (page 7)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415090288.pdf-4906c2ab.png" alt="Figure from ./archive/openalex/pdf/W4415090288.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-viewer="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-raw="archive/openalex/pdf/W4415090288.pdf" class="viewer-link">./archive/openalex/pdf/W4415090288.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415090288.pdf-a0ead4c9.png" alt="Figure from ./archive/openalex/pdf/W4415090288.pdf (page 2)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-viewer="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-raw="archive/openalex/pdf/W4415090288.pdf" class="viewer-link">./archive/openalex/pdf/W4415090288.pdf</a> (page 2)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415090288.pdf-183f4560.png" alt="Figure from ./archive/openalex/pdf/W4415090288.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-viewer="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-raw="archive/openalex/pdf/W4415090288.pdf" class="viewer-link">./archive/openalex/pdf/W4415090288.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4415090288.pdf-fd732160.png" alt="Figure from ./archive/openalex/pdf/W4415090288.pdf (page 3)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-viewer="report_views/archive_openalex_pdf_W4415090288.pdf-da8488ab.html" data-raw="archive/openalex/pdf/W4415090288.pdf" class="viewer-link">./archive/openalex/pdf/W4415090288.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-fdcd3f6a.png" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="archive/openalex/pdf/W4411143162.pdf" class="viewer-link">./archive/openalex/pdf/W4411143162.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-d73601e9.png" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="archive/openalex/pdf/W4411143162.pdf" class="viewer-link">./archive/openalex/pdf/W4411143162.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-5317fcb4.png" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="archive/openalex/pdf/W4411143162.pdf" class="viewer-link">./archive/openalex/pdf/W4411143162.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-e2b60ba1.png" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 1)" />
+  <figcaption>Figure: <a href="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="archive/openalex/pdf/W4411143162.pdf" class="viewer-link">./archive/openalex/pdf/W4411143162.pdf</a> (page 1)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Summarize key papers, code links, and research gaps. Emphasize practical impact.</p>
+<h2>References</h2>
+<ol>
+<li>20251015_iccv25-index.md — <a href="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="archive/20251015_iccv25-index.md" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>R-LiViT: A LiDAR-Visual-Thermal Dataset — <a href="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-viewer="report_views/archive_openalex_text_W4417156065.txt-e5811766.html" data-raw="archive/openalex/text/W4417156065.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>VQualA 2025 Challenge on Image Super-Resolution Generated Content Quality Assessment: Methods and Results — <a href="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-viewer="report_views/archive_openalex_text_W4414756887.txt-0395b90b.html" data-raw="archive/openalex/text/W4414756887.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods and Results — <a href="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-viewer="report_views/archive_openalex_text_W4417409712.txt-6feb0e23.html" data-raw="archive/openalex/text/W4417409712.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge — <a href="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-viewer="report_views/archive_openalex_text_W4415254644.txt-d1a11ef6.html" data-raw="archive/openalex/text/W4415254644.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>20251015_iccv25.txt — <a href="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-viewer="report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-raw="instruction/20251015_iccv25.txt" class="viewer-link">file</a></li>
+<li>The 1st International Workshop on Disentangled Representation Learning for Controllable Generation (DRL4Real): Methods and Results — <a href="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-viewer="report_views/archive_openalex_text_W4415090288.txt-4a5d3880.html" data-raw="archive/openalex/text/W4415090288.txt" class="viewer-link">file</a> <small>citations: 0</small></li>
+<li>Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i> — <a href="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-viewer="report_views/archive_openalex_text_W4411143162.txt-ad4f0a5d.html" data-raw="archive/openalex/text/W4411143162.txt" class="viewer-link">file</a> <small>citations: 5</small></li>
+<li>doi.org/10.5281/zenodo.16356714<code>— [link](https://doi.org/10.5281/zenodo.16356714</code>)</li>
+<li>github.com/XITASO/r-livit<code>— [link](https://github.com/XITASO/r-livit</code>)</li>
+<li>github.com/Lighting-YXLI/ISRGen-QA<code>— [link](https://github.com/Lighting-YXLI/ISRGen-QA</code>)</li>
+<li>github.com/dasongli1/SnapUGC_Engagement/tree/main/ECR_inference<code>— [link](https://github.com/dasongli1/SnapUGC_Engagement/tree/main/ECR_inference</code>)</li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-14 06:24:59</li>
+<li>Duration: 00:04:55 (295.41s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: technical_deep_dive</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

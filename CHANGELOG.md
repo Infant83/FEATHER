@@ -21,6 +21,8 @@
 - Inject a report title derived from the prompt and include it in HTML/Markdown outputs and metadata.
 - Record executed stage workflow to `report_notes/report_workflow.md`/`.json` and surface it in the Miscellaneous metadata block.
 - Generate a static report hub (`site/index.html` + `site/manifest.json`) and update it after each run when outputs live under the site root (configurable via `--site-output`).
+- Add `--site-refresh [path]` to rebuild the site index/manifest by scanning `<site>/runs` for all `report*.html` outputs.
+- Add `--tags` to include manual report tags in Misc metadata and site manifests.
 
 ## 0.5.1
 - Add configurable max input token guardrails for models without profile limits (env/CLI/agent-config) and expose values in `--agent-info`.

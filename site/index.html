@@ -19,12 +19,34 @@
         --edge: rgba(255, 255, 255, 0.15);
         --glow: rgba(78, 224, 181, 0.25);
       }
+      :root[data-theme="sky"] {
+        --bg: #0b1220;
+        --bg-2: #0f1b2e;
+        --card: rgba(255, 255, 255, 0.06);
+        --ink: #f4f7ff;
+        --muted: rgba(244, 247, 255, 0.62);
+        --accent: #64b5ff;
+        --accent-2: #8fd1ff;
+        --edge: rgba(255, 255, 255, 0.18);
+        --glow: rgba(100, 181, 255, 0.28);
+      }
+      :root[data-theme="crimson"] {
+        --bg: #120a0d;
+        --bg-2: #1c0f16;
+        --card: rgba(255, 255, 255, 0.06);
+        --ink: #fff5f7;
+        --muted: rgba(255, 245, 247, 0.62);
+        --accent: #ff6b81;
+        --accent-2: #ff9aa9;
+        --edge: rgba(255, 255, 255, 0.15);
+        --glow: rgba(255, 107, 129, 0.25);
+      }
       * { box-sizing: border-box; }
       body {
         margin: 0;
         font-family: "Noto Sans KR", "Space Grotesk", sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at 20% 20%, rgba(78, 224, 181, 0.18), transparent 42%),
+        background: radial-gradient(circle at 20% 20%, var(--glow), transparent 42%),
                     radial-gradient(circle at 80% 0%, rgba(107, 211, 255, 0.2), transparent 36%),
                     linear-gradient(160deg, #0a0d12 10%, #0f1622 60%, #0b0f14 100%);
         min-height: 100vh;
@@ -60,6 +82,26 @@
         text-transform: uppercase;
         font-size: 12px;
         color: var(--muted);
+      }
+      .nav-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+      #theme-select {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--edge);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      #theme-select option {
+        color: #0b0f14;
       }
       .nav .brand {
         display: inline-flex;
@@ -168,6 +210,21 @@
         font-size: 18px;
         font-weight: 600;
       }
+      .card h3 a {
+        color: var(--accent-2);
+        text-decoration: none;
+      }
+      .card h3 a:visited {
+        color: var(--accent-2);
+      }
+      .card h3 a:hover {
+        color: var(--accent);
+      }
+      .card h3 a:focus-visible {
+        outline: 2px solid var(--accent-2);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
       .tags {
         display: flex;
         flex-wrap: wrap;
@@ -252,16 +309,23 @@
     </style>
   </head>
   <body>
-    <script id="manifest-data" type="application/json">{"revision": "2026-01-25T21:38:18.472033", "generated_at": "2026-01-25T21:38:18.472033", "items": [{"id": "20260110_qc-oled", "title": "양자 컴퓨팅과 OLED 재료 연구 동향 분석", "author": "Hyun-Jung Kim / AI Governance Team", "summary": "양자 컴퓨팅과 OLED 재료 연구 동향 분석 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:38 Abstract 본 보고서는 최근 12개월 동안의 양자 컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광 재료 개발의 관점에서 분석한다. 양자 컴퓨팅의 적용이 물질 탐색 및…", "lang": "Korean", "template": "review_of_modern_physics", "format": "html", "date": "2026-01-25", "timestamp": "2026-01-25T21:38:18.218690", "paths": {"report": "runs/20260110_qc-oled/report_full_1.html"}}]}</script>
+    <script id="manifest-data" type="application/json">{"revision": "2026-01-26T06:40:07.527078", "generated_at": "2026-01-26T06:40:07.527078", "items": [{"id": "20260110_qc-oled:report_full_1", "title": "양자 컴퓨팅과 OLED 재료 연구 동향 분석", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:38", "summary": "본 보고서는 최근 12개월 동안의 양자 컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광 재료 개발의 관점에서 분석한다. 양자 컴퓨팅의 적용이 물질 탐색 및 디자인에 미치는 영향, 특히 OLED 발광 재료에 대한 알고리즘적 접근 방식을 다룬다. 삼성디스플레이, LG디스플레이, UDC 등 주요 기업의 사례를 통해 산업계의 발전을 조망하며, 학계의 연구 흐름과 산업 적용 간의 간극,…", "lang": "unknown", "template": "review_of_modern_physics", "format": "html", "model": "gpt-4o-mini", "tags": [], "date": "2026-01-25", "timestamp": "2026-01-25T21:38:18.466440", "paths": {"report": "runs/20260110_qc-oled/report_full_1.html", "run": "runs/20260110_qc-oled"}}, {"id": "20260110_qc-oled:report_full", "title": "양자컴퓨팅과 OLED 발광 재료 개발 영향 보고서", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:27", "summary": "본 보고서는 양자컴퓨팅 기술이 OLED 발광 재료 개발에 미치는 영향을 다룬다. 최근 12개월간의 연구 동향에 묘사된 알고리즘, 워크플로 및 데이터 파이프라인의 진전을 살펴보며, OLED 재료 탐색에 사용되는 다양한 접근 방식과 그 성과를 제시한다. 삼성디스플레이, LG디스플레이, UDC와 같은 주요 산업체의 동향을 분석하여 현재 공개된 정보의 한계와 지식을 제시하고, 학계와 산업 간의 간…", "lang": "unknown", "template": "review_of_modern_physics", "format": "html", "model": "gpt-4o-mini", "tags": [], "date": "2026-01-25", "timestamp": "2026-01-25T21:28:01.367704", "paths": {"report": "runs/20260110_qc-oled/report_full.html", "run": "runs/20260110_qc-oled"}}, {"id": "20260113_linkedin-review:report_full_5", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:48", "summary": "EGGROLL(Evolution Guided General Optimization via Low-rank Learning)은 backprop-free(gradient-free) 최적화를 “현대 대규모 신경망(수십억 파라미터)”과 “대규모 population”으로 스케일링하기 위해 설계된 Evolution Strategies(ES) 계열 알고리즘을 제안한다(출처: [1], [2]). 핵심은…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-19", "timestamp": "2026-01-19T06:54:16.700791", "paths": {"report": "runs/20260113_linkedin-review/report_full_5.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full_6", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-16 00:55", "summary": "EGGROLL(Evolution Guided General Optimization via Low-rank Learning)은 “대규모(population)로 스케일 가능한 backprop-free(gradient-free) 최적화”를 표방하며, 전통적 Evolution Strategies(ES)의 병목을 low-rank perturbation으로 치환해 메모리·연산 복잡도를 낮추는 접근을…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-19", "timestamp": "2026-01-19T06:54:16.700791", "paths": {"report": "runs/20260113_linkedin-review/report_full_6.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full_4", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:35", "summary": "This section highlights the significance of EGGROLL as an innovative framework in AI training, emphasizing its efficiency gains over traditional backpropagation methods.", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-4o-mini", "tags": [], "date": "2026-01-15", "timestamp": "2026-01-15T06:35:48.093912", "paths": {"report": "runs/20260113_linkedin-review/report_full_4.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full_3", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:28", "summary": "EGGROLL (Evolution Guided General Optimization via Low-rank Learning) is positioned as a practical route to “hyperscale” backprop-free optimization—i.e., using Evolution Strategies (ES) on models with billions of parame…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-15", "timestamp": "2026-01-15T06:28:13.440741", "paths": {"report": "runs/20260113_linkedin-review/report_full_3.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full_2", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:25", "summary": "EGGROLL (“Evolution Guided General Optimization via Low-rank Learning”) is presented as a practical path to “backprop-free optimization” for hyperscale neural networks by removing a long-standing systems bottleneck in E…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-15", "timestamp": "2026-01-15T06:25:17.130995", "paths": {"report": "runs/20260113_linkedin-review/report_full_2.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full_1", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:24", "summary": "This run reviews three practitioner-facing artifacts around “Evolution Strategies at the Hyperscale” (arXiv:2511.16652) and its proposed ES variant EGGROLL. The primary, citable technical substrate in this run is the ar…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-15", "timestamp": "2026-01-15T06:24:55.074730", "paths": {"report": "runs/20260113_linkedin-review/report_full_1.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20260113_linkedin-review:report_full", "title": "Federlicht Report - 20260113_linkedin-review", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 05:08", "summary": "This review assesses a small, URLs-only evidence bundle (three sources) about EGGROLL, an evolution strategies (ES) method proposed to scale backprop-free optimization to hyperscale neural networks. The primary technica…", "lang": "unknown", "template": "default", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-15", "timestamp": "2026-01-15T05:08:28.972497", "paths": {"report": "runs/20260113_linkedin-review/report_full.html", "run": "runs/20260113_linkedin-review"}}, {"id": "20251015_iccv25:report_full_1", "title": "Federlicht Report - 20251015_iccv25", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-14 07:23", "summary": "This run (20251015_iccv25) provides (1) authoritative ICCV 2025 “entry point” portals suitable for scalable paper→code mining, and (2) an 11-paper OpenAlex sample that is not representative of ICCV 2025 main-conference…", "lang": "unknown", "template": "technical_deep_dive", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-14", "timestamp": "2026-01-14T07:23:54.228636", "paths": {"report": "runs/20251015_iccv25/report_full_1.html", "run": "runs/20251015_iccv25"}}, {"id": "20251015_iccv25:report_full", "title": "Federlicht Report - 20251015_iccv25", "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-14 06:24", "summary": "This run’s archive does not provide representative coverage of ICCV 2025 main-conference “key papers + code links.” The run index explicitly reports URLs: 0 and arXiv IDs: 0, indicating that FEATHER did not crawl paper-…", "lang": "unknown", "template": "technical_deep_dive", "format": "html", "model": "gpt-5.2", "tags": [], "date": "2026-01-14", "timestamp": "2026-01-14T06:25:00.098445", "paths": {"report": "runs/20251015_iccv25/report_full.html", "run": "runs/20251015_iccv25"}}]}</script>
     <div class="wrap">
       <header class="hero">
         <div class="nav">
           <div class="brand"><span class="pulse"></span> Federlicht Report Hub</div>
-          <div id="last-updated"></div>
+          <div class="nav-actions">
+            <div id="last-updated"></div>
+            <select id="theme-select" aria-label="Theme">
+              <option value="">Default</option>
+              <option value="sky">Sky</option>
+              <option value="crimson">Crimson</option>
+            </select>
+          </div>
         </div>
         <div class="hero-grid">
           <div>
-            <h1>연구 리포트, 매 런마다 정제.</h1>
+            <h1>Enlighten Your Technology Insight.</h1>
             <p>Federlicht가 생성한 기술 리포트를 모아둔 허브입니다. 최신 실행 결과를 자동으로 받아오며, 공유 가능한 HTML 리포트를 바로 열람할 수 있습니다.</p>
             <div class="cta">
               <a class="btn" href="#latest">최신 리포트 보기</a>
@@ -275,7 +339,7 @@
           </div>
           <div class="card" id="latest-card">
             <div class="tags" id="latest-tags"></div>
-            <h3 id="latest-title">보고서를 기다리는 중</h3>
+            <h3><a id="latest-title-link" href="#">보고서를 기다리는 중</a></h3>
             <p class="summary" id="latest-summary">manifest.json에서 최신 리포트를 불러옵니다.</p>
             <div class="meta" id="latest-meta"></div>
             <div class="links" id="latest-links"></div>
@@ -332,12 +396,18 @@
         return entries.map(([label, href]) => `<a href="${escapeHtml(href)}">${label}</a>`).join('');
       };
 
-      const renderLatest = (item) => {
+        const renderLatest = (item) => {
         if (!item) return;
-        document.getElementById('latest-title').textContent = item.title || 'Untitled report';
+        const latestLink = document.getElementById('latest-title-link');
+        if (latestLink) {
+          latestLink.textContent = item.title || 'Untitled report';
+          latestLink.href = (item.paths && item.paths.report) ? item.paths.report : '#';
+        }
         document.getElementById('latest-summary').textContent = item.summary || '요약 정보가 없습니다.';
         document.getElementById('latest-meta').textContent = `${item.date || ''} · ${item.author || 'Unknown'}`;
-        const tags = [item.lang, item.template, item.format].filter(Boolean).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
+        const tags = [item.lang, item.template, item.model, item.format]
+          .filter(tag => tag && tag !== 'unknown')
+          .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
         document.getElementById('latest-tags').innerHTML = tags;
         document.getElementById('latest-links').innerHTML = buildLinks(item.paths);
       };
@@ -351,14 +421,16 @@
         }
         target.innerHTML = items.map((item, idx) => {
           const delay = (idx % 6) * 0.05;
-          const tags = [item.lang, item.template, item.format].filter(Boolean)
+          const tags = [item.lang, item.template, item.model, item.format]
+            .filter(tag => tag && tag !== 'unknown')
             .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
           const summary = escapeHtml(item.summary || '');
           const meta = `${escapeHtml(item.date || '')} · ${escapeHtml(item.author || 'Unknown')}`;
+          const reportHref = (item.paths && item.paths.report) ? item.paths.report : '#';
           return `
             <article class="card" style="animation-delay:${delay}s">
               <div class="tags">${tags}</div>
-              <h3>${escapeHtml(item.title || 'Untitled')}</h3>
+              <h3><a href="${escapeHtml(reportHref)}">${escapeHtml(item.title || 'Untitled')}</a></h3>
               <p class="summary">${summary || '요약 정보가 없습니다.'}</p>
               <div class="meta">${meta}</div>
               <div class="links">${buildLinks(item.paths)}</div>
@@ -424,6 +496,28 @@
       try {
         localStorage.setItem('federlicht.manifest.revision', currentManifest.revision || '');
       } catch (err) {}
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const themeSelect = document.getElementById('theme-select');
+      if (themeSelect) {
+        themeSelect.value = theme || '';
+        themeSelect.addEventListener('change', (event) => {
+          const selected = event.target.value;
+          if (selected) {
+            document.documentElement.dataset.theme = selected;
+            localStorage.setItem('federlicht.theme', selected);
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.removeItem('federlicht.theme');
+          }
+        });
+      }
       setInterval(pollManifest, REFRESH_MS);
     </script>
   </body>

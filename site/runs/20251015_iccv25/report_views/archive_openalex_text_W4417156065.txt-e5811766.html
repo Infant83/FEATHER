@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4417156065.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4417156065.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> R-LiViT: A LiDAR-Visual-Thermal Dataset</p><p><strong>Authors:</strong> Jonas Mirlach, Lei Wan, Andreas Wiedholz, Hannan Ejaz Keen, Andreas Eich</p><p><strong>Journal:</strong> arXiv (Cornell University)</p><p><strong>Published:</strong> 2025-07-23</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2503.17122">http://arxiv.org/abs/2503.17122</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4417156065.pdf">./archive/openalex/pdf/W4417156065.pdf</a></p><p><strong>Summary:</strong><br />The dataset publication to the paper R-LiViT: A LiDAR-Visual-Thermal Dataset Enabling Vulnerable Road User Focused Roadside Perception <a href="https://arxiv.org/abs/2503.17122">https://arxiv.org/abs/2503.17122</a>. that was accepted at the ICCV 2025. The dataset includes RGB, LiDAR und Thermal data from a roadside perspective for autonomous driving. For more information, we refer to the paper and the READMEs in the data you can download here.</p></div><pre>
+
+===== PAGE 1 =====
+R-LiViT: A LiDAR-Visual-Thermal Dataset Enabling Vulnerable Road User
+Focused Roadside Perception
+Jonas Mirlach1*
+Lei Wan1,2*
+Andreas Wiedholz1*
+Hannan Ejaz Keen1
+Andreas Eich3
+1XITASO GmbH
+2Karlsruhe Institute of Technology
+3LiangDao GmbH
+{jonas.mirlach, lei.wan, andreas.wiedholz, hannan.keen}@xitaso.com, andreas.eich@liangdao.de
+Figure 1. Illustrative visualization of an R-LiViT frame, with the right side depicting the same location at night.
+Abstract
+In autonomous driving, the integration of roadside percep-
+tion systems is essential for overcoming occlusion chal-
+lenges and enhancing the safety of Vulnerable Road 
+Users
+(VRUs). While LiDAR and visual (RGB) sensors are com-
+monly used, thermal imaging remains underrepresented in
+datasets, despite its acknowledged advantages for VRU de-
+tection in extreme lighting conditions. In this paper, we
+present R-LiViT, the first dataset to combine LiDAR, RGB,
+and thermal imaging from a roadside perspective, with a
+strong focus on VRUs. R-LiViT captures three intersections
+during both day and night, ensuring a diverse dataset. It
+includes 10,000 LiDAR frames and 2,400 temporally and
+spatially aligned RGB and thermal images across 150 traf-
+fic scenarios, with 7 and 8 annotated classes respectively,
+providing a comprehensive resource for tasks such as object
+detection and tracking. The dataset1 and the code for repro-
+ducing our evaluation results2 are made publicly available.
+*Equal contribution
+1<a href="https://doi.org/10.5281/zenodo.16356714">https://doi.org/10.5281/zenodo.16356714</a>
+2<a href="https://github.com/XITASO/r-livit">https://github.com/XITASO/r-livit</a>
+1. Introduction
+In the domain of autonomous driving, research and de-
+velopment of early perception systems rely on large-scale
+datasets like KITTI [10] and nuScenes [4], which focus pri-
+marily on the vehicle perspective. However, in order to deal
+with occlusion, roadside perception systems play a critical
+role in achieving high-level autonomous driving and im-
+proving traffic management systems. By deploying road-
+side sensors, it is possible to detect road users more reliably
+and share this information with nearby vehicles to enhance
+the perception capabilities of connected and automated ve-
+hicles.
+Additionally, these systems can transmit data to
+traffic management platforms, enabling effective monitor-
+ing and control of traffic flow. The development of such
+systems requires high-quality annotated sensor data.
+Although several roadside perception datasets have been
+published [2, 29, 33, 39], the majority predominantly em-
+phasize vehicles while giving less attention to Vulnerab
+le Road 
+Users (VRUs), such as pedestrians and cyclists.
+Moreover, these datasets tend to focus primarily on LiDAR
+and visual (RGB) modalities. Recent research has demon-
+strated that, particularly for pedestrian detection, incorpo-
+rating thermal imaging can be highly beneficial [12]. Ther-
+1
+arXiv:2503.17122v3  [cs.CV]  30 Jul 2025
+
+
+===== PAGE 2 =====
+mal cameras capture heat radiation emitted by objects, mak-
+ing them effective for detection regardless of lighting con-
+ditions. This is particularly useful in both low-light envi-
+ronments and overexposed situations, such as glare. Con-
+sequently, the combination of RGB  and 
+thermal (RGB-T)
+has since been increasingly leveraged [3, 15, 16]. However,
+object detection and image fusion in RGB-T require tem-
+porally and spatially well-aligned data, which is currently
+available in only a limited number of datasets [12, 37].
+While existing datasets include various combinations of Li-
+DAR, RGB, and thermal modalities, few fully integrate all
+three, potentially limiting their effectiveness in ensuring
+comprehensive VRU safety.
+To address these gaps, this paper introduces a multi-
+sensor system integrating LiDAR sensors, an RGB cam-
+era, and a thermal camera, creating R-LiViT (Roadside
+LiDAR-Visual-Thermal), the first multi-modal dataset in-
+corporating these modalities from the roadside perspective
+focusing on urban traffic scenarios with significant VRU in-
+volvement. This setup allows comprehensive perception of
+all relevant road users across various lighting conditions.
+LiDAR provides precise 3D distance measurements, RGB
+cameras capture dense semantic information, and thermal
+cameras complement RGB by ensuring effective vision in
+low-light and overexposed situations.
+R-LiViT includes
+10,000 LiDAR frames and 2,400 aligned RGB-T images
+across 150 traffic scenarios with annotations for 3D/2D ob-
+ject detection and 3D object tracking.
+In summary, our contributions are:
+• We present the first dataset for autonomous driving from
+a roadside perspective at intersections that integrates Li-
+DAR, RGB, and thermal imaging, supporting object de-
+tection and tracking tasks.
+• The dataset includes diverse traffic scenarios with a sig-
+nificant focus on VRUs, addressing the gaps in existing
+roadside perception datasets.
+• With the standalone RGB-T subset, we introduce a chal-
+lenging multiclass temporally and spatially aligned RGB
+and thermal dataset with high object and VRU density,
+contributing to the recent progress in RGB-T object de-
+tection and image fusion.
+2. Related Work
+This section provides an overview of related datasets. To
+the best of our knowledge, no existing LiDAR-RGB-T or
+standalone RGB-T dataset is specifically designed for ob-
+ject detection or tracking from a roadside perspective at in-
+tersections. Therefore, we compare our dataset with those
+that share some of its characteristics. First, we have a look
+at datasets that cover all three modalities LiDAR, RGB, and
+thermal. Second, we explore roadside perception datasets
+that adopt an infrastructure perspective. Third, we analyze
+RGB-T object detection datasets.
+2.1. LiDAR-RGB-T Datasets
+In the context of autonomous driving, there exist only a few
+datasets that incorporate the three modalities LiDAR, RGB,
+and thermal collectively, and they primarily focus on local-
+ization and depth estimation [5]. Brno Urban [21] includes
+these modalities but lacks proper annotations.
+ViViD++
+[19] is a dataset that includes RGB, thermal, event, and
+depth cameras, capturing data under varying lighting con-
+ditions to support robust SLAM for autonomous navigation
+and robotics. More recently, Shin et al. [27] introduced a
+dataset that combines RGB, thermal, and LiDAR for multi-
+modal sensor fusion, primarily to improve depth estimation.
+KAIST Multi-Spectral [8] covers multiple tasks from a ve-
+hicle’s perspective and is the only dataset more specifically
+designed for object detection, though it is not publicly avail-
+able. Overall, existing LiDAR-RGB-T datasets provide lit-
+tle to no support for object detection and tracking in au-
+tonomous driving [5, 27]. R-LiViT fills this gap.
+2.2. Roadside Perception Datasets
+Roadside perception is vital to the perceptual accuracy of
+autonomous driving systems, as it addresses visual occlu-
+sions and enhances the perception capabilities of individual
+vehicles. To support research for roadside perception, sev-
+eral datasets have been released over the years.
+In 2021, Yongqiang et al. [34] introduced the BAAI-
+VANJEE dataset, which features highway and urban inter-
+section scenes captured under various weather and light-
+ing conditions.
+DAIR-V2X-I [35], released in 2022
+as part of the broader DAIR-V2X benchmark, provides
+infrastructure-side LiDAR and camera data from several in-
+tersections to support 3D object detection in cooperative
+settings. Wang et al. [29] developed IPS300+, an urban in-
+tersection recorded at a crossing near several universities,
+resulting in a relatively high presence of VRUs. The largest
+roadside perception dataset called LUMPI [2] contains data
+captured over different days in different weather conditions
+on a single intersection. Ye et al. [33] introduced Rope3D,
+a large-scale infrastructure-based dataset for monocular 3D
+object detection, with 3D annotations generated using Li-
+DAR during data collection. In 2023, the TUMTraf inter-
+section dataset [39], the successor to the A9 dataset [9], was
+published. It includes high-quality labels for object detec-
+tion and tracking using point clouds and camera images,
+with a strong focus on vehicle detection. RCooper [13], re-
+leased in 2024, enables infrastructure-to-infrastructure co-
+operative perception by capturing 3D-labeled LiDAR and
+camera data from multiple roadside units at both intersec-
+tion and straight-road scenarios. Most recently, V2X-Real-
+I2I [31], as part of V2X-Real, was introduced, and provides
+multimodal data from paired infrastructure units covering
+a dense urban intersection, with a focus on benchmarking
+cooperative 3D detection fusion.
+2
+
+
+===== PAGE 3 =====
+Dataset
+Year
+Modalities
+# Frames
+# Intersections
+# Classes
+Pedestrian density
+Supported tasks
+BAAI-VANJEE [34]
+2021
+RGB, LiDAR
+2.5k PCL,
+5k RGB
+/
+12
+/
+OD2D&amp;3D
+DAIR-V2X-I [35]
+2022
+RGB, LiDAR
+10k
+2
+10
+3.57
+OD3D
+IPS300+ [29]
+2022
+RGB, LiDAR
+14.1k
+1
+7
+8.06
+OD3D, T
+LUMPI [2]
+2022
+RGB, LiDAR
+90k PCL,
+200k RGB
+1
+6
+8.39
+OD3D
+Rope-3D [33]
+2022
+RGB, (LiDAR)
+50k
+1
+13
+3.42
+OD2D&amp;3D
+TUMTraf [39]
+2023
+RGB, LiDAR
+4.8k
+1
+10
+0.77
+OD3D, T
+RCooper [13]
+2024
+RGB, LiDAR
+50k PCL,
+30k RGB
+1
+10
+0.45
+OD3D, T
+V2X-Real-I2I [31]
+2024
+RGB, LiDAR
+15k PCL,
+31k RGB
+1
+10
+27.56
+OD3D
+R-LiViT (ours)
+2025
+RGB, Thermal, LiDAR
+10k
+3
+7
+9.61
+OD2D&amp;3D, T
+PCL = Point Cloud, OD = Object Detection, T = Tracking, / = Information not accessible
+Table 1. Comparison of R-LiViT and existing roadside perception datasets for autonomous driving. Pedestrian density refers to the
+annotated pedestrians per frame. All analyses are based solely on the publicly available versions of the datasets.
+Dataset
+Year
+Perspective
+Frequency # Image pairs # Classes # Annotated objects Object density Person density
+KAIST [15]
+2015
+Driving
+20 FPS
+95,324
+1
+109,629
+1.15
+1.15
+FLIR-aligned [36] 2018
+Driving
+24 FPS
+5,142
+3
+40,860
+7.95
+2.55
+LLVIP [16]
+2021
+Surveillance
+1 FPS
+15,488
+1
+42,437
+2.74
+2.74
+M3FD [23]
+2022 Multiplication
+-
+4,200
+6
+34,407
+8.19
+2.73
+SMOD [6]
+2024
+Driving
+2.5 FPS
+8,676
+4
+32,874
+3.97
+2.14
+R-LiViT (ours)
+2025
+Roadside
+1.25 FPS
+2,400
+8
+53,319
+22.22
+8.76
+Table 2. Comparison of the RGB-T subset of R-LiViT and existing aligned RGB-T datasets. Object density refers to the annotated objects
+per image and person density to the annotated persons per image (for SMOD, we count additionally the rider class as person).
+Table 1 provides an overview and comparison of the
+datasets discussed. While most of these datasets prioritize
+scale, they often lack diversity in terms of intersection types
+and primarily focus on vehicles with only a few datasets
+emphasizing the detection of VRUs [31, 34]. Our dataset
+specifically addresses this gap by ensuring a pronounced fo-
+cus on VRUs, while covering three intersections to ensure a
+diverse dataset and supporting standard tasks such as object
+detection and tracking.
+2.3. RGB-T Datasets
+RGB-based perception degrades in low-light or night-time
+conditions, as well as in overexposed environments where
+intense illumination, such as headlight glare, can cause
+blending. To overcome this limitation, thermal cameras are
+increasingly being incorporated into perception systems,
+gaining substantial attention in recent years [3], especially
+for pedestrian detection [12]. Accordingly, several RGB-T
+datasets have been published in recent years. However, a
+key challenge for these datasets is ensuring proper tempo-
+ral and spatial alignment of modalities, a requirement for
+most fusion algorithms that is met by only a few datasets
+[3, 12, 37].
+The KAIST dataset [15], introduced in 2015, is one of
+the first and most widely used RGB-T datasets. It contains
+a large collection of paired RGB and thermal images with
+annotated pedestrians captured during both day and night.
+It is established as a benchmark for RGB-T pedestrian de-
+tection. The FLIR dataset was the first large publicly avail-
+able RGB-T dataset with a broader range of object classes
+from the vehicle perspective and tailored specifically for au-
+tonomous driving. Due to spatial misalignment in the orig-
+inal version’s images, Zhang et al. [36] created a revised,
+aligned version referred to as FLIR-aligned. LLVIP [16]
+from 2021 is a paired RGB-T dataset for pedestrian detec-
+tion in low-light environments from a surveillance perspec-
+tive. This dataset has also gained popularity as a benchmark
+for RGB-T pedestrian detection. The M3FD dataset [23]
+features diverse scenarios, particularly focusing on environ-
+ments where the thermal modality is expected to be valu-
+able, such as adverse weather conditions. While not primar-
+ily designed for autonomous driving, it incorporates several
+traffic-related scenes. SMOD [6], published in 2024, is the
+most recent well-aligned RGB-T dataset designed for the
+driving perspective. It is specifically suited for autonomous
+driving use cases.
+3
+
+
+===== PAGE 4 =====
+Table 2 provides an overview and comparison of the
+datasets discussed. While these datasets are of good quality,
+most of them have only limited classes annotated, focusing
+predominantly on pedestrians. Moreover, although LLVIP
+has a perspective similar to roadside, there are currently
+no dedicated RGB-T traffic datasets explicitly designed for
+roadside perception at intersections. Our standalone RGB-T
+dataset is the first high-quality dataset to address this gap.
+3. The R-LiViT Dataset
+This section outlines in detail the creation and characteris-
+tics of the R-LiViT dataset.
+3.1. Data Collection
+Hardware
+Our data collection setup includes one RGB camera, one
+thermal camera, and two LiDAR sensors. These sensors are
+mounted on top of a bar on a mobile sensor platform (see
+Figure 2a) that can be extended to a height of 4.5 meters.
+We use the Hikvision DS-2TD2628-3/QA with a resolution
+of 1280x720 as RGB camera and the FLIR ADK with a
+resolution of 640x512 as thermal camera. The RGB and
+thermal cameras record at 5 Hz and 60 Hz, respectively.
+The LiDAR setup consists of an Ouster OS1 BH with 64
+beams and a RoboSense Bpearl with 32 beams. The second
+LiDAR sensor covers the blind spot of the first one, ensuring
+complete scene coverage by the LiDARs. The combined
+LiDAR system operates at 10 Hz.
+(a) Sensor setup
+LiDAR FoV
+Thermal FoV
+RGB FoV
+(b) Sensor FoVs
+Figure 2. Sensor setup in the mobile sensor station and model of
+its field of 
+views (FoVs).
+Calibration and Alignment
+The two LiDAR sensors are hardware-triggered, which
+leads to high precision in time synchronization (∼1ms)
+between them, generating the merged output mentioned
+above. The LiDARs, the RGB, and the thermal sensor are
+time synchronized with GPS. The LiDARs have integrated
+GPS modules and the RGB and thermal cameras rely on
+a GPS-NTP server integrated into the mobile sensor sta-
+tion. For the synchronization, we use the ApproximateTime
+module implemented in ROS with a maximum delay of 40
+ms between data from the different sensors.
+The system is calibrated as follows: the RGB camera
+is calibrated with the LiDAR sensors using an aluminum
+checkerboard (14x14 cm per tile and 6x8 tiles). Further,
+the thermal camera is calibrated with the RGB camera us-
+ing a 5x7 circular calibration target with diagonal spacing
+of 95 mm and a circle diameter of 55 mm. For the thermal-
+to-RGB projection we estimate the homography using the
+calibration board resulting in a mean reprojection error of
+0.038 Since the RGB images have a larger field of 
+view
+(FoV) (see Figure 2b), we project the thermal image onto
+the RGB image during post-processing. To align their di-
+mensions, the rest of the frame is padded. An example of
+this projection is shown in Figure 3.
+Figure 3. Visualization of RGB-T projection and alignment: On
+the left is the undistorted RGB image, in the center the undistorted
+and projected thermal image, and on the right both are overlaid.
+Data Recording and Selection
+The dataset was collected in spring 2024 at three intersec-
+tions (see Figure 4) in two German cities. These intersec-
+tions were selected due to their high number of accidents
+involving VRUs, based on stat</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

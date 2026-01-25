@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-01-16 00:55:53",
+  "started_at": "2026-01-16 00:50:38",
+  "duration_seconds": 314.94,
+  "duration_hms": "00:05:14",
+  "model": "gpt-5.2",
+  "model_vision": null,
+  "quality_model": null,
+  "quality_iterations": 0,
+  "quality_strategy": "none",
+  "template": "default",
+  "output_format": "html",
+  "pdf_status": "disabled",
+  "run_overview_path": "./report/run_overview.md",
+  "archive_index_path": "./archive/20260113_linkedin-review-index.md",
+  "instruction_path": "./instruction/20260113_linkedin-review.txt"
+}

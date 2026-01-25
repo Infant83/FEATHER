@@ -155,6 +155,15 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         ),
     )
     ap.add_argument(
+        "--site-refresh",
+        nargs="?",
+        const="site",
+        help=(
+            "Rebuild the site manifest/index by scanning <site>/runs for report*.html. "
+            "Optionally pass the site root path (default: site)."
+        ),
+    )
+    ap.add_argument(
         "--echo-markdown",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -203,6 +212,10 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     ap.add_argument("--prompt", help="Inline report focus prompt.")
     ap.add_argument("--prompt-file", help="Path to a text file containing a report focus prompt.")
+    ap.add_argument(
+        "--tags",
+        help="Comma-separated tags to include in the report metadata (e.g., qc,oled,tadf).",
+    )
     ap.add_argument(
         "--template",
         "--templates",
@@ -990,6 +1003,9 @@ def relpath_if_within(path: Optional[Path], root: Path) -> Optional[str]:
 
 
 def derive_report_summary(report: str, output_format: str, limit: int = 220) -> str:
+    summary = extract_section_summary(report, output_format)
+    if summary:
+        return truncate_text(summary, limit)
     text = report
     if output_format in {"html", "md"}:
         text = html_to_text(markdown_to_html(report))
@@ -1000,6 +1016,72 @@ def derive_report_summary(report: str, output_format: str, limit: int = 220) -> 
     if not text:
         return ""
     return truncate_text(text, limit)
+
+
+def extract_section_summary(report: str, output_format: str) -> Optional[str]:
+    targets = {
+        "abstract",
+        "executive summary",
+        "요약",
+        "초록",
+        "핵심 요약",
+    }
+    if output_format == "html":
+        summary = extract_section_summary_html(report, targets)
+        if summary:
+            return summary
+        return extract_section_summary_md(report, targets)
+    if output_format == "md":
+        summary = extract_section_summary_md(report, targets)
+        if summary:
+            return summary
+        return extract_section_summary_html(report, targets)
+    return None
+
+
+def extract_section_summary_html(report: str, targets: set[str]) -> Optional[str]:
+    if not report:
+        return None
+    pattern = re.compile(r"(?is)<h([1-6])[^>]*>(.*?)</h\1>(.*?)(?=<h[1-6]|\Z)")
+    for match in pattern.finditer(report):
+        title = html_to_text(match.group(2)).strip().lower()
+        title = re.sub(r"[^a-z0-9가-힣\\s]", "", title)
+        if not title:
+            continue
+        if title in targets:
+            body = match.group(3)
+            para = re.search(r"(?is)<p[^>]*>(.*?)</p>", body)
+            if para:
+                text = html_to_text(para.group(1)).strip()
+            else:
+                text = html_to_text(body).strip()
+            text = re.sub(r"\\s+", " ", text).strip()
+            return text or None
+    return None
+
+
+def extract_section_summary_md(report: str, targets: set[str]) -> Optional[str]:
+    lines = report.splitlines()
+    current_title = None
+    buffer: list[str] = []
+    def flush() -> Optional[str]:
+        if current_title and current_title in targets:
+            text = " ".join(buffer).strip()
+            text = re.sub(r"\\s+", " ", text).strip()
+            return text or None
+        return None
+    for line in lines + ["## _end_"]:
+        heading = re.match(r"^(#{1,6})\\s+(.+)", line)
+        if heading:
+            summary = flush()
+            if summary:
+                return summary
+            current_title = re.sub(r"[^a-zA-Z0-9가-힣\\s]", "", heading.group(2)).strip().lower()
+            buffer = []
+        else:
+            if line.strip():
+                buffer.append(line.strip())
+    return None
 
 
 def build_site_manifest_entry(
@@ -1015,6 +1097,8 @@ def build_site_manifest_entry(
     generated_at: dt.datetime,
     report_overview_path: Optional[Path] = None,
     workflow_path: Optional[Path] = None,
+    model_name: Optional[str] = None,
+    tags: Optional[list[str]] = None,
 ) -> Optional[dict]:
     report_rel = relpath_if_within(output_path, site_root)
     if not report_rel:
@@ -1037,6 +1121,8 @@ def build_site_manifest_entry(
         "lang": language,
         "template": template_name,
         "format": output_format,
+        "model": model_name,
+        "tags": list(tags or []),
         "date": generated_at.strftime("%Y-%m-%d"),
         "timestamp": generated_at.isoformat(),
         "paths": paths,
@@ -1107,12 +1193,34 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         --edge: rgba(255, 255, 255, 0.15);
         --glow: rgba(78, 224, 181, 0.25);
       }}
+      :root[data-theme="sky"] {{
+        --bg: #0b1220;
+        --bg-2: #0f1b2e;
+        --card: rgba(255, 255, 255, 0.06);
+        --ink: #f4f7ff;
+        --muted: rgba(244, 247, 255, 0.62);
+        --accent: #64b5ff;
+        --accent-2: #8fd1ff;
+        --edge: rgba(255, 255, 255, 0.18);
+        --glow: rgba(100, 181, 255, 0.28);
+      }}
+      :root[data-theme="crimson"] {{
+        --bg: #120a0d;
+        --bg-2: #1c0f16;
+        --card: rgba(255, 255, 255, 0.06);
+        --ink: #fff5f7;
+        --muted: rgba(255, 245, 247, 0.62);
+        --accent: #ff6b81;
+        --accent-2: #ff9aa9;
+        --edge: rgba(255, 255, 255, 0.15);
+        --glow: rgba(255, 107, 129, 0.25);
+      }}
       * {{ box-sizing: border-box; }}
       body {{
         margin: 0;
         font-family: "Noto Sans KR", "Space Grotesk", sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at 20% 20%, rgba(78, 224, 181, 0.18), transparent 42%),
+        background: radial-gradient(circle at 20% 20%, var(--glow), transparent 42%),
                     radial-gradient(circle at 80% 0%, rgba(107, 211, 255, 0.2), transparent 36%),
                     linear-gradient(160deg, #0a0d12 10%, #0f1622 60%, #0b0f14 100%);
         min-height: 100vh;
@@ -1148,6 +1256,26 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         text-transform: uppercase;
         font-size: 12px;
         color: var(--muted);
+      }}
+      .nav-actions {{
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }}
+      #theme-select {{
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--edge);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }}
+      #theme-select option {{
+        color: #0b0f14;
       }}
       .nav .brand {{
         display: inline-flex;
@@ -1256,6 +1384,21 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         font-size: 18px;
         font-weight: 600;
       }}
+      .card h3 a {{
+        color: var(--accent-2);
+        text-decoration: none;
+      }}
+      .card h3 a:visited {{
+        color: var(--accent-2);
+      }}
+      .card h3 a:hover {{
+        color: var(--accent);
+      }}
+      .card h3 a:focus-visible {{
+        outline: 2px solid var(--accent-2);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }}
       .tags {{
         display: flex;
         flex-wrap: wrap;
@@ -1345,11 +1488,18 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
       <header class="hero">
         <div class="nav">
           <div class="brand"><span class="pulse"></span> Federlicht Report Hub</div>
-          <div id="last-updated"></div>
+          <div class="nav-actions">
+            <div id="last-updated"></div>
+            <select id="theme-select" aria-label="Theme">
+              <option value="">Default</option>
+              <option value="sky">Sky</option>
+              <option value="crimson">Crimson</option>
+            </select>
+          </div>
         </div>
         <div class="hero-grid">
           <div>
-            <h1>연구 리포트, 매 런마다 정제.</h1>
+            <h1>Enlighten Your Technology Insight.</h1>
             <p>Federlicht가 생성한 기술 리포트를 모아둔 허브입니다. 최신 실행 결과를 자동으로 받아오며, 공유 가능한 HTML 리포트를 바로 열람할 수 있습니다.</p>
             <div class="cta">
               <a class="btn" href="#latest">최신 리포트 보기</a>
@@ -1363,7 +1513,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
           </div>
           <div class="card" id="latest-card">
             <div class="tags" id="latest-tags"></div>
-            <h3 id="latest-title">보고서를 기다리는 중</h3>
+            <h3><a id="latest-title-link" href="#">보고서를 기다리는 중</a></h3>
             <p class="summary" id="latest-summary">manifest.json에서 최신 리포트를 불러옵니다.</p>
             <div class="meta" id="latest-meta"></div>
             <div class="links" id="latest-links"></div>
@@ -1420,12 +1570,18 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         return entries.map(([label, href]) => `<a href="${{escapeHtml(href)}}">${{label}}</a>`).join('');
       }};
 
-      const renderLatest = (item) => {{
+        const renderLatest = (item) => {{
         if (!item) return;
-        document.getElementById('latest-title').textContent = item.title || 'Untitled report';
+        const latestLink = document.getElementById('latest-title-link');
+        if (latestLink) {{
+          latestLink.textContent = item.title || 'Untitled report';
+          latestLink.href = (item.paths && item.paths.report) ? item.paths.report : '#';
+        }}
         document.getElementById('latest-summary').textContent = item.summary || '요약 정보가 없습니다.';
         document.getElementById('latest-meta').textContent = `${{item.date || ''}} · ${{item.author || 'Unknown'}}`;
-        const tags = [item.lang, item.template, item.format].filter(Boolean).map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
+        const tags = [item.lang, item.template, item.model, item.format]
+          .filter(tag => tag && tag !== 'unknown')
+          .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
         document.getElementById('latest-tags').innerHTML = tags;
         document.getElementById('latest-links').innerHTML = buildLinks(item.paths);
       }};
@@ -1439,14 +1595,16 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         }}
         target.innerHTML = items.map((item, idx) => {{
           const delay = (idx % 6) * 0.05;
-          const tags = [item.lang, item.template, item.format].filter(Boolean)
+          const tags = [item.lang, item.template, item.model, item.format]
+            .filter(tag => tag && tag !== 'unknown')
             .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
           const summary = escapeHtml(item.summary || '');
           const meta = `${{escapeHtml(item.date || '')}} · ${{escapeHtml(item.author || 'Unknown')}}`;
+          const reportHref = (item.paths && item.paths.report) ? item.paths.report : '#';
           return `
             <article class="card" style="animation-delay:${{delay}}s">
               <div class="tags">${{tags}}</div>
-              <h3>${{escapeHtml(item.title || 'Untitled')}}</h3>
+              <h3><a href="${{escapeHtml(reportHref)}}">${{escapeHtml(item.title || 'Untitled')}}</a></h3>
               <p class="summary">${{summary || '요약 정보가 없습니다.'}}</p>
               <div class="meta">${{meta}}</div>
               <div class="links">${{buildLinks(item.paths)}}</div>
@@ -1512,6 +1670,28 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
       try {{
         localStorage.setItem('federlicht.manifest.revision', currentManifest.revision || '');
       }} catch (err) {{}}
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {{
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }}
+      const themeSelect = document.getElementById('theme-select');
+      if (themeSelect) {{
+        themeSelect.value = theme || '';
+        themeSelect.addEventListener('change', (event) => {{
+          const selected = event.target.value;
+          if (selected) {{
+            document.documentElement.dataset.theme = selected;
+            localStorage.setItem('federlicht.theme', selected);
+          }} else {{
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.removeItem('federlicht.theme');
+          }}
+        }});
+      }}
       setInterval(pollManifest, REFRESH_MS);
     </script>
   </body>
@@ -1526,9 +1706,31 @@ def write_site_index(site_root: Path, manifest: dict, refresh_minutes: int = 10)
     return index_path
 
 
+def write_site_manifest(site_root: Path, entries: list[dict]) -> dict:
+    site_root.mkdir(parents=True, exist_ok=True)
+    manifest_path = site_root / "manifest.json"
+    entries = list(entries)
+    entries.sort(key=lambda item: str(item.get("timestamp") or item.get("date") or ""), reverse=True)
+    now = dt.datetime.now().isoformat()
+    manifest = {
+        "revision": now,
+        "generated_at": now,
+        "items": entries,
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    return manifest
+
+
 def find_baseline_report(run_dir: Path) -> Optional[Path]:
     candidate = run_dir / "report.md"
     return candidate if candidate.exists() else None
+
+
+def parse_tags(value: Optional[str]) -> list[str]:
+    if not value:
+        return []
+    raw = [part.strip() for part in value.split(",")]
+    return [part for part in raw if part]
 
 
 def extract_agent_text(result: object) -> str:
@@ -2024,6 +2226,16 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
     lines.append(f"Quality strategy: {meta.get('quality_strategy', '-')}")
     lines.append(f"Quality iterations: {meta.get('quality_iterations', '-')}")
     lines.append(f"Template: {meta.get('template', '-')}")
+    if meta.get("language"):
+        lines.append(f"Language: {meta.get('language', '-')}")
+    if meta.get("tags"):
+        tags_value = meta.get("tags")
+        if isinstance(tags_value, (list, tuple)):
+            tags_text = ", ".join(str(tag) for tag in tags_value if tag)
+        else:
+            tags_text = str(tags_value)
+        if tags_text:
+            lines.append(f"Tags: {tags_text}")
     lines.append(f"Output format: {meta.get('output_format', '-')}")
     if meta.get("pdf_status"):
         lines.append(f"PDF compile: {meta.get('pdf_status')}")
@@ -6987,6 +7199,7 @@ def run_pipeline(
     end_stamp = dt.datetime.now()
     elapsed = time.monotonic() - start_timer
     meta_path = notes_dir / "report_meta.json"
+    tags_list = parse_tags(args.tags)
     meta = {
         "generated_at": end_stamp.strftime("%Y-%m-%d %H:%M:%S"),
         "started_at": start_stamp.strftime("%Y-%m-%d %H:%M:%S"),
@@ -7000,6 +7213,9 @@ def run_pipeline(
         "template": template_spec.name,
         "title": title,
         "output_format": output_format,
+        "language": language,
+        "author": author_name,
+        "tags": tags_list,
         "free_format": args.free_format,
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
     }
@@ -7108,6 +7324,8 @@ def run_pipeline(
                 end_stamp,
                 report_overview_path=report_overview_path,
                 workflow_path=result.workflow_path,
+                model_name=args.model,
+                tags=tags_list,
             )
             if entry:
                 manifest = update_site_manifest(site_root, entry)
@@ -7194,6 +7412,25 @@ def main() -> int:
         names, target = parse_stage_info_arg(args.stage_info)
         payload = get_stage_info(names)
         write_stage_info(payload, target)
+        return 0
+    if args.site_refresh:
+        site_root = resolve_site_output(args.site_refresh)
+        if not site_root:
+            print("ERROR: --site-refresh requires a valid site directory.", file=sys.stderr)
+            return 2
+        from . import site_refresh
+
+        manifest, index_path = site_refresh.refresh_site_from_runs(
+            site_root,
+            None,
+            build_site_manifest_entry,
+            write_site_manifest,
+            write_site_index,
+            refresh_minutes=10,
+            default_author=DEFAULT_AUTHOR,
+        )
+        print(f"Wrote site manifest: {site_root / 'manifest.json'}")
+        print(f"Wrote site index: {index_path}")
         return 0
     if not args.run:
         print("ERROR: --run is required unless --preview-template is used.", file=sys.stderr)

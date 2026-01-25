@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Federlicht Report - 20260113_linkedin-review</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --ink: #1d1c1a;
+      --muted: #5a5956;
+      --accent: #b24a2f;
+      --paper: #ffffff;
+      --paper-alt: #f6f1e8;
+      --rule: #e7dfd2;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --link: #1d4e89;
+      --link-hover: #0d2b4a;
+      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);
+      --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+      --mono-font: "SFMono-Regular", "Consolas", "Liberation Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 980px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+    .masthead {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: 2.4rem;
+      margin: 8px 0 6px;
+    }
+    .report-deck {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .article {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.5rem;
+      margin-top: 2.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.6rem 0;
+      padding: 0.5rem 1.2rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 78, 137, 0.35);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: #f7f6f3;
+      padding: 2px 4px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.95em;
+    }
+    .article pre {
+      background: #f7f6f3;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }
+    .article th { background: var(--paper-alt); text-align: left; }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--paper-alt);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(19, 18, 16, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: #f4efe6;
+      color: var(--ink);
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @media (max-width: 720px) {
+      .page { margin: 32px auto 56px; }
+      .article { padding: 24px; }
+      .report-title { font-size: 1.9rem; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-default">
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">Federlicht Report - 20260113_linkedin-review</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-15 06:28</p>
+<h2>Executive Summary</h2>
+<p>EGGROLL (Evolution Guided General Optimization via Low-rank Learning) is positioned as a practical route to “hyperscale” <strong>backprop-free</strong> optimization—i.e., using Evolution Strategies (ES) on models with <strong>billions of parameters</strong>—by replacing full-rank perturbations with <strong>low-rank perturbations</strong> that drastically reduce memory movement and compute per forward pass (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). The arXiv abstract makes the central technical claim: if ES perturbations for a layer would require a dense matrix $E \in \mathbb{R}^{m \times n}$, EGGROLL instead uses $AB^\top$ with $A \in \mathbb{R}^{m \times r}$ and $B \in \mathbb{R}^{n \times r}$ where $r \ll \min(m,n)$, reducing auxiliary storage from $mn$ to $r(m+n)$ and forward cost from $\mathcal{O}(mn)$ to $\mathcal{O}(r(m+n))$ (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<p>Two practitioner write-ups amplify this as a “paradigm shift” narrative (LinkedIn) and a more implementation-intuitive explanation (Tistory), but they also introduce <strong>unverified</strong> quantitative scaling claims (e.g., population size 262,144; specific candidate counts like 1,024) that do not appear in the abstract extract available in this run and therefore must be treated as author/blog assertions, not paper-grounded facts (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>; <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</p>
+<p>From a product/strategy lens, the core decision is not “ES replaces backprop,” but rather: <strong>EGGROLL makes ES a more credible option in niches where gradients are unavailable/unstable/expensive</strong>, and where one can afford large-scale parallel evaluation. The adoption bottleneck shifts from “can we form perturbations efficiently?” to “can we evaluate enough candidates safely, cheaply, and with robust objective design?”</p>
+<h2>Scope &amp; Methodology</h2>
+<p><strong>Scope constraints.</strong> This review uses only the three URLs listed in the instruction file—LinkedIn post, arXiv abstract page, and Tistory blog—and their extracted artifacts under <code><a href=".&lt;a href=" . archive tavily_extract ">/archive/tavily_extract/</a>">.<a href="./archive/tavily_extract/">/archive/tavily_extract/</a></a></code> (<a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">[4]</a>; <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">[5]</a>). No additional papers, websites, or metadata sources are included.</p>
+<p><strong>Evidence handling.</strong>
+- <strong>Primary technical ground truth</strong> is limited to what is explicitly present in the <strong>arXiv abstract page extract</strong> (not the PDF), so detailed experimental metrics and systems claims cannot be treated as verified here (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).
+- The LinkedIn post was captured via <strong>LinkedIn embed extraction</strong>, which may omit surrounding context (comments, thread nuance), so it is treated as narrative/positioning rather than comprehensive technical documentation (<a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a>).
+- Where the blog/LinkedIn add specifics beyond the abstract, this report labels them as <strong>secondary commentary</strong> rather than paper-backed results.</p>
+<h2>Key Findings</h2>
+<h3>1) What EGGROLL is (paper-backed, abstract-level)</h3>
+<p>EGGROLL is presented as an ES algorithm “designed to scale backprop-free optimization to large population sizes” for “large neural network architectures with billions of parameters” (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). The abstract frames ES as attractive for <strong>non-differentiable or noisy objectives</strong> and parallelization, but highlights that naive ES becomes “prohibitively expensive at scale” due to the cost of generating perturbation matrices and batched matrix multiplications for forward passes (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<h3>2) The core mechanism: low-rank perturbations (paper-backed)</h3>
+<p>The abstract’s central substitution is:</p>
+<ul>
+<li>Full perturbation: $E \in \mathbb{R}^{m \times n}$</li>
+<li>Low-rank perturbation: $AB^\top$, where</li>
+<li>$A \in \mathbb{R}^{m \times r}$</li>
+<li>$B \in \mathbb{R}^{n \times r}$</li>
+<li>$r \ll \min(m,n)$</li>
+</ul>
+<p>This is claimed to preserve the “high-rank” nature of the <strong>population-averaged</strong> update while reducing per-layer memory and compute (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<p><strong>Efficiency deltas (as stated in abstract):</strong>
+- Auxiliary storage: from $mn$ to $r(m+n)$ per layer
+- Forward-pass cost: from $\mathcal{O}(mn)$ to $\mathcal{O}(r(m+n))$ relative to full-rank ES<br />
+(<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>)</p>
+<h3>3) Theory claim: convergence to full-rank update (paper-backed, but only abstract-level)</h3>
+<p>The abstract claims: “A theoretical analysis reveals our low-rank update converges to the full-rank update at a fast $\mathcal{O}(1/r)$ rate” (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). Both LinkedIn and the blog echo this result and use it to justify a tunable trade-off: choose $r$ to balance cost vs fidelity (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>; <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</p>
+<h3>4) Claimed experimental headline outcomes (paper-backed only as “headline claims”)</h3>
+<p>The abstract lists three experiment-level claims (without metrics in the available extract):
+1) EGGROLL is faster and “does not compromise the performance of ES” in tabula-rasa RL settings<br />
+2) EGGROLL is “competitive with GRPO” for improving LLM reasoning<br />
+3) EGGROLL enables stable pre-training of nonlinear recurrent language models operating purely in integer datatypes<br />
+(<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>)</p>
+<p>Given the run lacks the PDF, these remain <strong>directional</strong> claims rather than decision-grade quantified evidence.</p>
+<h3>5) Practitioner interpretations: implementation intuition and “paradigm shift” framing (secondary evidence)</h3>
+<ul>
+<li>The Tistory blog emphasizes the practical motivation (“거대 모델(수십억 파라미터)” makes naive ES memory/compute prohibitive) and provides an implementation intuition: do not explicitly form $AB^\top$; instead reorder multiplications in a way like $(xB)A^\top$ for efficiency (blog explanation) (<a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</li>
+<li>The LinkedIn post frames EGGROLL as a challenge to the belief that large-scale training “requires backpropagation and differentiable structure,” presenting it as “미분이 필요없는 AI” and a “패러다임” shift (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).</li>
+</ul>
+<p><strong>Important:</strong> Several concrete scaling/system claims in LinkedIn (e.g., counter-based RNG making communication “사실상 0”, population size 262,144, throughput approaching batched inference) are not corroborated by the abstract extract and should be treated as <strong>author assertions</strong> within this run’s evidence set (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>; <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<h2>Trends &amp; Implications</h2>
+<h3>Trend 1: “LoRA-style” low-rank ideas are migrating from parameter-efficient finetuning to <em>optimization infrastructure</em></h3>
+<p>EGGROLL reuses a familiar structural idea—low-rank factors as a computational shortcut—but applies it to the <em>perturbation generation and forward evaluation</em> bottleneck in ES, not to finetuning per se (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). Strategically, this hints at a broader pattern: as models scale, algorithmic wins increasingly come from <strong>memory movement reduction and operator restructuring</strong>, not only better optimizers.</p>
+<p><strong>Implication for technical leaders:</strong> If your org already invests in inference efficiency and large-scale sampling, EGGROLL-like methods could convert that infrastructure into optimization capability—turning “batched inference” into “batched search.”</p>
+<h3>Trend 2: The ROI story shifts from “gradient-free is slow” to “evaluation is the new bottleneck”</h3>
+<p>If EGGROLL reduces the incremental cost of perturbation-based evaluation from $\mathcal{O}(mn)$ toward $\mathcal{O}(r(m+n))$, then the spend concentrates in:
+- the <strong>objective evaluation</strong> itself (reward models, simulators, unit tests, safety filters),
+- and the <strong>operations</strong> around large population rollouts (logging, selection, replay, governance).<br />
+This is aligned with the paper’s emphasis on parallelization and scaling population sizes (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>) and the practitioners’ emphasis on large-scale exploration (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>; <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</p>
+<p><strong>Business implication:</strong> The most likely early adopters are teams where <em>evaluation is already industrialized</em> (RL environments, simulation-driven robotics, compiler/verification loops, or LLM reasoning pipelines with cheap auto-checkers). Where evaluation is human-judgment-heavy, scaling ES may be economically blocked regardless of perturbation efficiency.</p>
+<h3>Trend 3: Competitive pressure on RL-style post-training for LLMs—via alternative optimization primitives</h3>
+<p>The abstract explicitly claims competitiveness with GRPO for improving LLM reasoning (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). Even without metrics, the <em>direction</em> matters: it suggests “policy optimization” for LLM reasoning might diversify beyond gradient-centric pipelines.</p>
+<p><strong>Practical take:</strong> Treat EGGROLL not as a replacement for RLHF/GRPO, but as a potential <em>second lane</em> when gradients are undesirable (e.g., integer-only networks, discrete components) or when you want exploration-heavy search in parameter space.</p>
+<h3>Evidence-backed strategy insights (3–5)</h3>
+<p>1) <strong>If your bottleneck is GPU memory bandwidth rather than FLOPs, EGGROLL is directionally aligned with your pain.</strong> The abstract directly targets “memory costs” and “memory movement” implied by full matrix perturbations and batched matmuls, replacing them with low-rank factors (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).<br />
+2) <strong>EGGROLL creates a tunable “rank budget” knob ($r$) that resembles an engineering control surface for cost/quality.</strong> The $\mathcal{O}(1/r)$ convergence statement plus $\mathcal{O}(r(m+n))$ cost form a natural trade curve: raise $r$ for fidelity; lower $r$ for throughput (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).<br />
+3) <strong>The most defensible near-term product ROI is in objectives that are non-differentiable but machine-evaluable.</strong> The abstract motivates ES for “non-differentiable or noisy objectives,” and EGGROLL aims to make that scalable (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).<br />
+4) <strong>Integer-only / discrete model components could become a legitimate frontier if the “stable pre-training” claim holds in detail.</strong> The abstract’s third headline claim explicitly targets integer datatypes for nonlinear recurrent language models (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>); the LinkedIn post also highlights “float 연산조차” 없이 integer-only RLM training (author narrative) (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).<br />
+5) <strong>However: big-population ES makes governance and safety <em>harder</em>, not easier.</strong> Scaling parallel candidate evaluation increases the surface area for reward hacking, distribution shift, and unsafe outputs—issues not addressed in the available abstract but directly implicated by the method’s reliance on massive parallel exploration (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<h2>Risks &amp; Gaps</h2>
+<h3>Evidence gaps in this run (hard constraints)</h3>
+<ul>
+<li><strong>No PDF text was captured</strong>, despite <code>download_pdf</code> being enabled, so we cannot cite experimental setups, baselines, metrics, ablations, or systems architecture beyond the abstract (<a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">[7]</a>; <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</li>
+<li>LinkedIn was captured via embed extraction; comments and context may be missing (<a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">[6]</a>).</li>
+</ul>
+<h3>Technical and product risks (interpretation grounded in what is claimed)</h3>
+<ul>
+<li><strong>Objective design risk (Goodhart’s law):</strong> ES optimizes whatever score you can compute. If the objective is proxy-based (e.g., automated “reasoning” graders), scaling population could amplify reward hacking. This is especially salient if EGGROLL is used to optimize LLM behavior as implied by the abstract’s GRPO-competitiveness claim (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>Compute economics risk:</strong> Even if per-perturbation overhead drops, ES can still be expensive because it requires <em>many evaluations</em>. The practitioners’ excitement about much larger populations (e.g., 262,144) should be treated cautiously unless verified in the paper/system section (not available here) (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).</li>
+<li><strong>Reproducibility gap:</strong> The blog includes numeric claims (e.g., “1,024 candidates vs 32”) and scaling statements (population to “수십만 명 단위”) that are not in the abstract extract, so they cannot be used as decision-grade benchmarks in this report (<a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</li>
+</ul>
+<h3>Adoption constraints (execution realities)</h3>
+<ul>
+<li><strong>Infrastructure:</strong> Large-population ES requires orchestration, failure handling, deterministic sampling/seeding, and aggregation; these details are mostly absent from the abstract extract and appear only as practitioner assertions in LinkedIn (e.g., counter-based RNG / comms near zero) (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).</li>
+<li><strong>Evaluation throughput and data governance:</strong> Scaling candidates implies scaling logging and filtering—important for regulated domains and for alignment/safety workflows.</li>
+</ul>
+<h2>Critics</h2>
+<h3>“Backprop isn’t the villain; objectives are.”</h3>
+<p>EGGROLL’s pitch is partly framed as escaping differentiability constraints (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>; <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>). A contrarian view is that many frontier failures in LLM/RL systems come not from gradients, but from <em>objective misspecification</em> and <em>evaluation leakage</em>. Scaling ES may exacerbate these.</p>
+<ul>
+<li>Massive parallel search can accelerate:</li>
+<li>reward hacking,</li>
+<li>latent capability emergence without interpretability,</li>
+<li>and “silent” safety regressions if your eval suite is incomplete.</li>
+</ul>
+<h3>“Systems claims need systems evidence.”</h3>
+<p>The LinkedIn post’s strongest claims are systems-level (communication ~0, population 262,144, throughput like batched inference) (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>). Without the PDF/system section, these are not verifiable here. Technical leaders should resist committing roadmap/resources based on narrative scaling numbers.</p>
+<h3>“Regulation and auditability won’t get easier with gradient-free training.”</h3>
+<p>Even when optimization is gradient-free, model behavior still must be audited. In regulated settings (e.g., EU AI Act contexts), large-population black-box optimization may complicate:
+- provenance tracking (which candidates influenced final weights),
+- explainability narratives,
+- and safety case construction.</p>
+<h2>Appendix</h2>
+<h3>A. Source ledger (supported vs secondary)</h3>
+<p><strong>High-confidence (paper-abstract supported):</strong>
+- EGGROLL is an ES method intended to scale backprop-free optimization to large populations for billion-parameter networks (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).
+- Uses low-rank perturbations $AB^\top$ with $r \ll \min(m,n)$ instead of full-rank $E \in \mathbb{R}^{m \times n}$ (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).
+- Storage reduced from $mn$ to $r(m+n)$; forward cost reduced from $\mathcal{O}(mn)$ to $\mathcal{O}(r(m+n))$ (relative to full-rank ES) (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).
+- Convergence claim $\mathcal{O}(1/r)$ to full-rank update (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).
+- Headline experiment claims: faster without RL performance loss (tabula-rasa), competitive with GRPO for LLM reasoning, enables stable integer-only recurrent LM pretraining (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</p>
+<p><strong>Secondary commentary (not verifiable from abstract in this run):</strong>
+- Efficient multiplication ordering like $(xB)A^\top$ without materializing $AB^\top$ (blog explanation) (<a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).
+- Population scaling numbers and comms claims (e.g., 262,144; counter-based RNG; comms ~0) (LinkedIn author assertions) (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).
+- Candidate count comparisons (e.g., 1,024 vs 32) (blog detail) (<a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">[3]</a>).</p>
+<h3>B. Actionable takeaways (conditional)</h3>
+<ul>
+<li><strong>If</strong> you operate in non-differentiable/noisy objectives (simulation, discrete components, integer-only constraints), <strong>then</strong> EGGROLL is worth a small-scale feasibility test because the abstract targets exactly that niche (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>If</strong> your infra already supports massive batched inference, <strong>then</strong> explore whether that same throughput can be repurposed for ES-style candidate evaluation—<em>but do not assume</em> the large population numbers from LinkedIn without verifying the paper/system details (<a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">[2]</a>).</li>
+<li><strong>If</strong> you consider LLM reasoning optimization, <strong>then</strong> treat “competitive with GRPO” as a hypothesis signal, and demand PDF-level metrics/ablations before allocating major roadmap weight (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</li>
+<li><strong>If</strong> you scale population-based search, <strong>then</strong> invest early in eval hardening (anti-reward-hacking tests, safety filters, provenance logs), because the method’s leverage comes from scaling exploration (<a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Write a LinkedIn-style practitioner review based on the provided sources.</p>
+<p>Focus:
+- Summarize the core claims from each source (LinkedIn post, arXiv paper, blog).
+- Extract 3-5 evidence-backed insights that matter to AI product and business strategy.
+- Highlight practical implications, adoption constraints, and ROI trade-offs.
+- Distinguish "supported by source" vs. "inferred" when needed.
+- Keep a conversational but professional tone; avoid hype.</p>
+<p>Style:
+- Short paragraphs and concise bullets.
+- Use clear labels (e.g., "Why it matters:", "Practical take:") sparingly.
+- Cite sources inline for key claims.</p>
+<p>Section emphasis:
+- Practitioner Review: prioritize execution realities and decision points.
+- Risks &amp; Caveats: call out missing data, weak evidence, or ambiguity.
+- Actionable Takeaways: 3-6 concrete actions with conditions.</p>
+<h2>References</h2>
+<ol>
+<li>0002_https_arxiv.org_abs_2511.16652.txt — <a href="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-viewer="report_views/archive_tavily_extract_0002_https_arxiv.org_abs_2511.16652.txt-ea7fa5eb.html" data-raw="archive/tavily_extract/0002_https_arxiv.org_abs_2511.16652.txt" class="viewer-link">file</a></li>
+<li>0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt — <a href="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-viewer="report_views/archive_tavily_extract_0001_https_www.linkedin.com_feed_update_urn_li_activity_7-c43d834b.html" data-raw="archive/tavily_extract/0001_https_www.linkedin.com_feed_update_urn_li_activity_7399939023072358401.txt" class="viewer-link">file</a></li>
+<li>0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt — <a href="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-viewer="report_views/archive_tavily_extract_0003_https_muni-dev.tistory.com_entry_Evolution-Strategie-9c07f789.html" data-raw="archive/tavily_extract/0003_https_muni-dev.tistory.com_entry_Evolution-Strategies-at-the-Hyperscale.txt" class="viewer-link">file</a></li>
+<li>20260113_linkedin-review.txt — <a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">file</a></li>
+<li>20260113_linkedin-review-index.md — <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">file</a></li>
+<li>_log.txt — <a href="report_views/archive__log.txt-06118313.html" data-viewer="report_views/archive__log.txt-06118313.html" data-raw="archive/_log.txt" class="viewer-link">file</a></li>
+<li>_job.json — <a href="report_views/archive__job.json-5226400e.html" data-viewer="report_views/archive__job.json-5226400e.html" data-raw="archive/_job.json" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-15 06:28:13</li>
+<li>Duration: 00:05:01 (301.39s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: default</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-viewer="report_views/archive_20260113_linkedin-review-index.md-ec349456.html" data-raw="archive/20260113_linkedin-review-index.md" class="viewer-link">./archive/20260113_linkedin-review-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-viewer="report_views/instruction_20260113_linkedin-review.txt-561509f8.html" data-raw="instruction/20260113_linkedin-review.txt" class="viewer-link">./instruction/20260113_linkedin-review.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

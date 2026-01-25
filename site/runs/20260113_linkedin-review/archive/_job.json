@@ -1,0 +1,33 @@
+{
+  "date": "2026-01-13",
+  "src_file": "examples\\instructions\\20260113_linkedin-review.txt",
+  "root_dir": "examples\\runs\\20260113_linkedin-review",
+  "out_dir": "examples\\runs\\20260113_linkedin-review\\archive",
+  "query_id": "20260113_linkedin-review",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 5,
+  "youtube_enabled": false,
+  "youtube_max_results": 5,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 5,
+  "download_pdf": true,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/",
+    "https://arxiv.org/abs/2511.16652",
+    "https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale"
+  ],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/",
+    "https://arxiv.org/abs/2511.16652",
+    "https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale"
+  ]
+}

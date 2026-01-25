@@ -1,0 +1,18 @@
+Write a LinkedIn-style practitioner review based on the provided sources.
+
+Focus:
+- Summarize the core claims from each source (LinkedIn post, arXiv paper, blog).
+- Extract 3-5 evidence-backed insights that matter to AI product and business strategy.
+- Highlight practical implications, adoption constraints, and ROI trade-offs.
+- Distinguish "supported by source" vs. "inferred" when needed.
+- Keep a conversational but professional tone; avoid hype.
+
+Style:
+- Short paragraphs and concise bullets.
+- Use clear labels (e.g., "Why it matters:", "Practical take:") sparingly.
+- Cite sources inline for key claims.
+
+Section emphasis:
+- Practitioner Review: prioritize execution realities and decision points.
+- Risks & Caveats: call out missing data, weak evidence, or ambiguity.
+- Actionable Takeaways: 3-6 concrete actions with conditions.

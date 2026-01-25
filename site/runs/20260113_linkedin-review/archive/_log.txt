@@ -1,0 +1,5 @@
+[2026-01-15 05:02:48] JOB START: 20260113_linkedin-review.txt date=2026-01-13 days=30 max_results=5
+[2026-01-15 05:02:48] LINKEDIN EMBED EXTRACT: https://www.linkedin.com/feed/update/urn:li:activity:7399939023072358401/
+[2026-01-15 05:02:49] TAVILY EXTRACT: https://arxiv.org/abs/2511.16652
+[2026-01-15 05:02:55] TAVILY EXTRACT: https://muni-dev.tistory.com/entry/Evolution-Strategies-at-the-Hyperscale
+[2026-01-15 05:03:05] JOB END

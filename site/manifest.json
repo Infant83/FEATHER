@@ -1,19 +1,192 @@
 {
-  "revision": "2026-01-25T21:38:18.472033",
-  "generated_at": "2026-01-25T21:38:18.472033",
+  "revision": "2026-01-26T06:40:07.527078",
+  "generated_at": "2026-01-26T06:40:07.527078",
   "items": [
     {
-      "id": "20260110_qc-oled",
+      "id": "20260110_qc-oled:report_full_1",
       "title": "양자 컴퓨팅과 OLED 재료 연구 동향 분석",
-      "author": "Hyun-Jung Kim / AI Governance Team",
-      "summary": "양자 컴퓨팅과 OLED 재료 연구 동향 분석 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:38 Abstract 본 보고서는 최근 12개월 동안의 양자 컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광 재료 개발의 관점에서 분석한다. 양자 컴퓨팅의 적용이 물질 탐색 및…",
-      "lang": "Korean",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:38",
+      "summary": "본 보고서는 최근 12개월 동안의 양자 컴퓨팅 기반 재료 연구 및 산업 적용 동향을 OLED 발광 재료 개발의 관점에서 분석한다. 양자 컴퓨팅의 적용이 물질 탐색 및 디자인에 미치는 영향, 특히 OLED 발광 재료에 대한 알고리즘적 접근 방식을 다룬다. 삼성디스플레이, LG디스플레이, UDC 등 주요 기업의 사례를 통해 산업계의 발전을 조망하며, 학계의 연구 흐름과 산업 적용 간의 간극,…",
+      "lang": "unknown",
       "template": "review_of_modern_physics",
       "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [],
       "date": "2026-01-25",
-      "timestamp": "2026-01-25T21:38:18.218690",
+      "timestamp": "2026-01-25T21:38:18.466440",
       "paths": {
-        "report": "runs/20260110_qc-oled/report_full_1.html"
+        "report": "runs/20260110_qc-oled/report_full_1.html",
+        "run": "runs/20260110_qc-oled"
+      }
+    },
+    {
+      "id": "20260110_qc-oled:report_full",
+      "title": "양자컴퓨팅과 OLED 발광 재료 개발 영향 보고서",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-25 21:27",
+      "summary": "본 보고서는 양자컴퓨팅 기술이 OLED 발광 재료 개발에 미치는 영향을 다룬다. 최근 12개월간의 연구 동향에 묘사된 알고리즘, 워크플로 및 데이터 파이프라인의 진전을 살펴보며, OLED 재료 탐색에 사용되는 다양한 접근 방식과 그 성과를 제시한다. 삼성디스플레이, LG디스플레이, UDC와 같은 주요 산업체의 동향을 분석하여 현재 공개된 정보의 한계와 지식을 제시하고, 학계와 산업 간의 간…",
+      "lang": "unknown",
+      "template": "review_of_modern_physics",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [],
+      "date": "2026-01-25",
+      "timestamp": "2026-01-25T21:28:01.367704",
+      "paths": {
+        "report": "runs/20260110_qc-oled/report_full.html",
+        "run": "runs/20260110_qc-oled"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_5",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:48",
+      "summary": "EGGROLL(Evolution Guided General Optimization via Low-rank Learning)은 backprop-free(gradient-free) 최적화를 “현대 대규모 신경망(수십억 파라미터)”과 “대규모 population”으로 스케일링하기 위해 설계된 Evolution Strategies(ES) 계열 알고리즘을 제안한다(출처: [1], [2]). 핵심은…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-19",
+      "timestamp": "2026-01-19T06:54:16.700791",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_5.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_6",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-16 00:55",
+      "summary": "EGGROLL(Evolution Guided General Optimization via Low-rank Learning)은 “대규모(population)로 스케일 가능한 backprop-free(gradient-free) 최적화”를 표방하며, 전통적 Evolution Strategies(ES)의 병목을 low-rank perturbation으로 치환해 메모리·연산 복잡도를 낮추는 접근을…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-19",
+      "timestamp": "2026-01-19T06:54:16.700791",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_6.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_4",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:35",
+      "summary": "This section highlights the significance of EGGROLL as an innovative framework in AI training, emphasizing its efficiency gains over traditional backpropagation methods.",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [],
+      "date": "2026-01-15",
+      "timestamp": "2026-01-15T06:35:48.093912",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_4.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_3",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:28",
+      "summary": "EGGROLL (Evolution Guided General Optimization via Low-rank Learning) is positioned as a practical route to “hyperscale” backprop-free optimization—i.e., using Evolution Strategies (ES) on models with billions of parame…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-15",
+      "timestamp": "2026-01-15T06:28:13.440741",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_3.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_2",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:25",
+      "summary": "EGGROLL (“Evolution Guided General Optimization via Low-rank Learning”) is presented as a practical path to “backprop-free optimization” for hyperscale neural networks by removing a long-standing systems bottleneck in E…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-15",
+      "timestamp": "2026-01-15T06:25:17.130995",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_2.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full_1",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 06:24",
+      "summary": "This run reviews three practitioner-facing artifacts around “Evolution Strategies at the Hyperscale” (arXiv:2511.16652) and its proposed ES variant EGGROLL. The primary, citable technical substrate in this run is the ar…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-15",
+      "timestamp": "2026-01-15T06:24:55.074730",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full_1.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20260113_linkedin-review:report_full",
+      "title": "Federlicht Report - 20260113_linkedin-review",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-15 05:08",
+      "summary": "This review assesses a small, URLs-only evidence bundle (three sources) about EGGROLL, an evolution strategies (ES) method proposed to scale backprop-free optimization to hyperscale neural networks. The primary technica…",
+      "lang": "unknown",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-15",
+      "timestamp": "2026-01-15T05:08:28.972497",
+      "paths": {
+        "report": "runs/20260113_linkedin-review/report_full.html",
+        "run": "runs/20260113_linkedin-review"
+      }
+    },
+    {
+      "id": "20251015_iccv25:report_full_1",
+      "title": "Federlicht Report - 20251015_iccv25",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-14 07:23",
+      "summary": "This run (20251015_iccv25) provides (1) authoritative ICCV 2025 “entry point” portals suitable for scalable paper→code mining, and (2) an 11-paper OpenAlex sample that is not representative of ICCV 2025 main-conference…",
+      "lang": "unknown",
+      "template": "technical_deep_dive",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-14",
+      "timestamp": "2026-01-14T07:23:54.228636",
+      "paths": {
+        "report": "runs/20251015_iccv25/report_full_1.html",
+        "run": "runs/20251015_iccv25"
+      }
+    },
+    {
+      "id": "20251015_iccv25:report_full",
+      "title": "Federlicht Report - 20251015_iccv25",
+      "author": "Hyun-Jung Kim / AI Governance Team\" — 2026-01-14 06:24",
+      "summary": "This run’s archive does not provide representative coverage of ICCV 2025 main-conference “key papers + code links.” The run index explicitly reports URLs: 0 and arXiv IDs: 0, indicating that FEATHER did not crawl paper-…",
+      "lang": "unknown",
+      "template": "technical_deep_dive",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [],
+      "date": "2026-01-14",
+      "timestamp": "2026-01-14T06:25:00.098445",
+      "paths": {
+        "report": "runs/20251015_iccv25/report_full.html",
+        "run": "runs/20251015_iccv25"
       }
     }
   ]
