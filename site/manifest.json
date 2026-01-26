@@ -1,7 +1,33 @@
 {
-  "revision": "2026-01-27T02:12:43.932440",
-  "generated_at": "2026-01-27T02:12:43.932440",
+  "revision": "2026-01-27T06:46:54.969722",
+  "generated_at": "2026-01-27T06:46:54.969722",
   "items": [
+    {
+      "id": "20260126_arxiv-3d_molgen",
+      "run": "20260126_arxiv-3d_molgen",
+      "report_stem": "report_full_4",
+      "title": "SE(3) 플로우 기반 강체 모티프 3D 분자생성 심층분석",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "SE(3) 플로우 기반 강체 모티프 3D 분자생성 심층분석 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-01-27 06:46 Executive Summary 본 보고서는 arXiv 논문 \"3D Molecule Generation from Rigid Motifs via SE(3) Flows\" (…",
+      "lang": "Korean",
+      "template": "technical_deep_dive",
+      "format": "html",
+      "model": "gpt-5-mini",
+      "tags": [
+        "모티프",
+        "flow",
+        "평가",
+        "arxiv",
+        "rigid"
+      ],
+      "date": "2026-01-27",
+      "timestamp": "2026-01-27T06:46:54.652780",
+      "source_mtime": 1769464014,
+      "source_size": 61480,
+      "paths": {
+        "report": "runs/20260126_arxiv-3d_molgen/report_full_4.html"
+      }
+    },
     {
       "id": "20260126_arxiv-3d_molgen:report_full",
       "run": "20260126_arxiv-3d_molgen",

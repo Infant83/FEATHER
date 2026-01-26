@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>주요 비판 반영 및 JSONL 인덱스 명시 보고서 보완</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid rgba(226, 232, 240, 0.18);
+      border-radius: 18px;
+      background: rgba(10, 14, 20, 0.55);
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(15, 23, 42, 0.35);
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+    .report-deck {
+      color: rgba(226, 232, 240, 0.8);
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent-strong);
+      margin: 1.6rem 0;
+      padding: 0.7rem 1.4rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(14, 165, 164, 0.4);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: rgba(15, 23, 42, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: var(--mono-font);
+      font-size: 0.92em;
+    }
+    .article pre {
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 17, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: var(--paper-strong);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media (max-width: 860px) {
+      .page { margin: 40px auto 64px; padding: 0 20px; }
+      .article { padding: 28px; }
+      .report-deck { font-size: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .report-title { font-size: 2rem; }
+      .article { padding: 22px; }
+      .article h2 { font-size: 1.35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+body.template-technical_deep_dive {
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+    body { background: var(--page-bg) !important; color: var(--site-ink); }
+    .masthead { color: #f8fafc; }
+    .report-deck { color: rgba(226, 232, 240, 0.82); }
+    .kicker { color: rgba(255, 255, 255, 0.7); }
+  </style>
+</head>
+<body class="template-technical_deep_dive">
+  <div class="backdrop">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">Federlicht</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">주요 비판 반영 및 JSONL 인덱스 명시 보고서 보완</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>주요 비판 반영 및 JSONL 인덱스 명시 보고서 보완</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-27 02:36</p>
+<p>보고서를 다른 파일로 수정하여 주요 비판 사항을 반영했고, JSONL 인덱스 데이터 사용을 명확히 기술했습니다. 또한, 새로운 섹션을 추가하여 보고서를 보완했습니다. 다른 추가 사항이나 질문이 있으면 언제든지 말씀해 주세요.</p>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: technical_deep_dive<br />
+Depth: exhaustive  </p>
+<p>목적/범위: arXiv 논문 “3D Molecule Generation from Rigid Motifs via SE(3) Flows” (2601.16955v1, 2026)의 핵심 아이디어( rigid motif 기반 3D 분자 생성, SE(3) equivariant flow 설계), 방법론, 데이터/평가, 정량 결과를 R&amp;D 리더/도메인 전문가 관점에서 재현 가능성과 검증 필요사항까지 포함해 심층 기술 검토하라. 범위는 논문/부록/TeX 소스에 근거한 내용 중심으로 하며, LinkedIn URN 링크는 주제와 직접 관련 근거가 없으므로 본문 근거로 사용하지 말고 필요 시 “오프토픽/공개정보 한계”로만 언급하라.</p>
+<p>필수 섹션(아래 순서 유지): Executive Summary, Scope &amp; Methodology, Technical Background, Methods &amp; Data, Results &amp; Evidence, Limitations &amp; Open Questions, Risks &amp; Gaps, Critics, Appendix.</p>
+<p>핵심 포함 항목:
+- Technical Background: SE(3) equivariance, flow/diffusion 계열, frame/rigid-body 표현, motif/fragment 기반 생성 개념 정의. EDM/GeoDiff/EquiFM 등 접근과의 차이를 “표현(좌표 vs 프레임/모티프)–학습 목표–샘플링 비용” 축으로 비교.
+- Methods &amp; Data: 모티프 분해/표현(필요 시 수식/기호), SE(3) flow 파라미터화, 상태공간(SE(3)^K × …)과 학습/샘플링 절차를 알고리즘 단계로 정리. 사용 데이터셋(QM9/GEOM-Drugs/QMugs 등), 전처리, 메트릭 정의(Validity, Atom/Mol stability 등)와 계산법을 명시.
+- Results &amp; Evidence: 표/그림 기반 정량 수치(성능, 안정성, 샘플링 steps/속도)와 ablation을 “주장→근거(표/그림/절 번호)”로 연결. 실험 조건 차이(steps, 모델 크기, 평가 프로토콜)를 분리해 해석.
+- Limitations/Open Questions: 재현(하이퍼파라미터, fragmentation 규칙, 코드/시드), 스케일링, 일반화(새 모티프/대형 약물), 물리적 타당성/에너지 평가 공백을 정리.
+- Risks &amp; Gaps: 검증 부족/가정(모티프 고정의 편향, 데이터 누수 가능성, 평가 메트릭 한계)을 “추가 실험 제안”과 함께 기술. 해당 없음이면 Not applicable + 사유.
+- Critics: 반대 관점(모티프 기반이 창발성 제한, SE(3) flow의 복잡도 대비 이득 불명 등) 헤드라인+짧은 문단+불릿로 제시. 해당 없음이면 Not applicable + 사유.</p>
+<p>증거/인용 정책: 1차 소스는 제공된 arXiv PDF/TeX/appendix에 한정. 각 핵심 주장에 대해 (섹션/그림/표/식 번호 또는 파일 경로)로 근거를 붙여라. 추정/해석/추가 제안은 “Speculation/Recommendation”으로 라벨링해 실증 결과와 분리. Tavily/LinkedIn은 본 주제 근거로 사용하지 말고, 관련 실증 정보 부재 시 “공개정보 한계”로 명시.</p>
+<p>언어/스타일: 한국어로 기술하되, 고유명사·논문명·모델명은 원문 표기 유지. 수식/표기(예: SE(3), equivariance, flow objective)는 명확성을 높일 때만 포함하고, 문장은 기술적·정밀·방법론 중심으로 작성하라. Appendix에는 재현 체크리스트(필수 파일, 주요 하이퍼파라미터, 평가 스크립트 가정)와 용어/기호표를 포함하라.</p>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-27 02:36:45</li>
+<li>Duration: 00:17:12 (1032.62s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality model: gpt-4o</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: technical_deep_dive</li>
+<li>Language: Korean</li>
+<li>Tags: flow, 평가, 모티프, 주요, 명시</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview.md-40ef65a9.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview.md-40ef65a9.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview_report_full_1.md-9f952eef.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview_report_full_1.md-9f952eef.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report/run_overview_report_full_1.md" class="viewer-link">./report/run_overview_report_full_1.md</a></li>
+<li>Report workflow: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_20260126_arxiv-3d_molgen-index.md-88f97152.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_20260126_arxiv-3d_molgen-index.md-88f97152.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/20260126_arxiv-3d_molgen-index.md" class="viewer-link">./archive/20260126_arxiv-3d_molgen-index.md</a></li>
+<li>Instruction file: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_20260126_arxiv-3d_molgen.txt-a1130df2.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_20260126_arxiv-3d_molgen.txt-a1130df2.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/instruction/20260126_arxiv-3d_molgen.txt" class="viewer-link">./instruction/20260126_arxiv-3d_molgen.txt</a></li>
+<li>Report prompt: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_report_prompt_report_full_1.txt-33f5a855.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_report_prompt_report_full_1.txt-33f5a855.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/instruction/report_prompt_report_full_1.txt" class="viewer-link">./instruction/report_prompt_report_full_1.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

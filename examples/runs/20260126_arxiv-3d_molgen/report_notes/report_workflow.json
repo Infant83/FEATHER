@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-01-27T02:10:55.140083",
+  "created_at": "2026-01-27T06:46:40.819231",
   "stages": {
     "scout": {
       "status": "cached",
@@ -34,8 +34,8 @@
       "detail": ""
     },
     "quality": {
-      "status": "ran",
-      "detail": "iterations=1"
+      "status": "disabled",
+      "detail": ""
     }
   },
   "order": [

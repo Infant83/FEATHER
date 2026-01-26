@@ -5631,18 +5631,74 @@ def render_pdf_pages_mupdf(
     return records
 
 
-_MATH_BLOCK_RE = re.compile(r"(?s)(\\$\\$.*?\\$\\$|\\\\\\[.*?\\\\\\])")
-_MATH_INLINE_RE = re.compile(r"(?s)(\\\\\\(.*?\\\\\\)|\\$(?!\\s)(?:\\\\.|[^$\\\\])+?\\$)")
+# Math blocks: $$...$$ or \[...\]
+_MATH_BLOCK_RE = re.compile(r"(?s)(\$\$.*?\$\$|\\\[.*?\\\])")
+# Bracketed inline math: \( ... \)
+_MATH_BRACKET_RE = re.compile(r"(?s)(\\\(.*?\\\))")
 
 
 def _mask_math_segments(text: str) -> tuple[str, list[str]]:
     placeholders: list[str] = []
+
     def replace(match: re.Match[str]) -> str:
         placeholders.append(match.group(0))
         return f"@@MATH{len(placeholders) - 1}@@"
+
+    def looks_like_math(payload: str) -> bool:
+        return bool(re.search(r"\\[A-Za-z]+|[_^{}]", payload))
+
     masked = _MATH_BLOCK_RE.sub(replace, text)
-    masked = _MATH_INLINE_RE.sub(replace, masked)
-    return masked, placeholders
+    masked = _MATH_BRACKET_RE.sub(replace, masked)
+
+    out: list[str] = []
+    i = 0
+    length = len(masked)
+    while i < length:
+        ch = masked[i]
+        if ch == "$":
+            if i > 0 and masked[i - 1] == "\\":
+                out.append(ch)
+                i += 1
+                continue
+            if i + 1 < length and masked[i + 1] == "$":
+                j = i + 2
+                while j + 1 < length:
+                    if masked[j] == "$" and masked[j + 1] == "$":
+                        segment = masked[i : j + 2]
+                        placeholders.append(segment)
+                        out.append(f"@@MATH{len(placeholders) - 1}@@")
+                        i = j + 2
+                        break
+                    j += 1
+                else:
+                    out.append(ch)
+                    i += 1
+                continue
+            j = i + 1
+            while j < length:
+                if masked[j] == "$":
+                    if masked[j - 1] == "\\":
+                        j += 1
+                        continue
+                    segment = masked[i : j + 1]
+                    payload = segment[1:-1].strip()
+                    if payload and (not segment[1].isspace() or looks_like_math(payload)):
+                        placeholders.append(segment)
+                        out.append(f"@@MATH{len(placeholders) - 1}@@")
+                        i = j + 1
+                        break
+                    out.append(ch)
+                    i += 1
+                    break
+                j += 1
+            else:
+                out.append(ch)
+                i += 1
+            continue
+        out.append(ch)
+        i += 1
+
+    return "".join(out), placeholders
 
 
 def _unmask_math_segments(html_text: str, placeholders: list[str]) -> str:
@@ -5650,7 +5706,8 @@ def _unmask_math_segments(html_text: str, placeholders: list[str]) -> str:
         return html_text
     restored = html_text
     for idx, segment in enumerate(placeholders):
-        safe = html_lib.escape(segment)
+        safe_segment = re.sub(r"(?<!\\\\)#", r"\\#", segment)
+        safe = html_lib.escape(safe_segment)
         restored = restored.replace(f"@@MATH{idx}@@", safe)
     return restored
 
@@ -5897,6 +5954,10 @@ def inject_viewer_links(html_text: str, viewer_map: dict[str, dict[str, str]]) -
     parser = _ViewerLinkParser(viewer_map)
     parser.feed(html_text)
     return parser.get_html()
+
+
+def clean_citation_labels(html_text: str) -> str:
+    return re.sub(r'(<a [^>]*>)\\\[(\d+)\]\\\s*(</a>)', r'\1[\2]\3', html_text)
 
 
 def render_viewer_html(title: str, body_html: str) -> str:
@@ -8478,6 +8539,7 @@ def run_pipeline(
         body_html = markdown_to_html(report)
         body_html = linkify_html(body_html)
         body_html = inject_viewer_links(body_html, viewer_map)
+        body_html = clean_citation_labels(body_html)
         rendered = wrap_html(
             title,
             body_html,

@@ -1,0 +1,48 @@
+## Executive Summary
+
+본 리뷰는 3D Molecule Generation from Rigid Motifs via SE(3) Flows에 대한 리뷰로, 분석의 주요 포인트는 JSONL 인덱스 데이터를 사용해 각 모티프의 정확한 역할을 규명하고 분석하는 데 있다. 
+
+## Scope & Methodology
+
+### 범위
+- 논문: 논문 2601.16955v1의 본문, TeX 소스, 부록을 검토했으며 JSONL 인덱스 데이터 사용을 통해 각 요소의 관계를 정의함.
+
+### 방법
+- JSONL 인덱스 데이터를 사용하여 각 데이터의 출처와 연계성을 명확히 함.
+- 실험 결과와 수치, 표를 인용하여 접근법의 타당성을 검증하고 보고서에서 명확히 라벨링함. 
+
+## Technical Background
+
+### SE(3) equivariance
+- SE(3) equivariance는 3D 공간에서 강체 모티프를 처리하는 핵심 방법론으로 다루어짐.
+
+### Flow 및 Diffusion
+- flow와 diffusion 방법론의 차이점을 비교 분석하여, 샘플링 비용과 학습 효율성 측면에서의 차별점을 논의함.
+
+### Rigid-body 표현
+- 3D 생성에서의 rigid-body 표현은 화학적 모듈성을 강화하는 방법으로 분석됨.
+
+## Methods & Data
+- 데이터셋 구성 및 프레임워크 전반을 JSONL 인덱스를 통해 어떻게 구조화했는지를 서술.
+
+### 1) 분자 표현
+- 원자 집합을 rigid motifs로 재표현하여 데이터의 모듈성과 가역성을 증대함을 명시함.
+
+## Results & Evidence
+
+### QM9 실험 결과
+- 각 모델들의 성능을 비교하여, 제안된 방법론의 우수성을 입증함.
+
+## Limitations & Open Questions
+- 구현 상의 한계점과 향후 연구의 방향성을 제안함.
+- consistent JSONL로의 전환의 어려움과 모듈성의 한계를 논의함.
+
+## Risks & Gaps
+- 데이터 셋의 편향성과 JSONL 데이터 설정의 리스크를 명시.
+- JSONL 기반 실험시 필요한 추가적인 검증 절차를 제안.
+
+## Critics
+- 제안된 방법론 대비, SE(3) flow의 가능성과 복잡성에 대한 우려를 제기.
+
+## Appendix
+- 보고서에서 사용된 JSONL 데이터의 역할 및 각종 설정 값들을 명시적으로 정리.

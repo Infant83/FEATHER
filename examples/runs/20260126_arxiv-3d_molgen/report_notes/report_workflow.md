@@ -9,7 +9,7 @@
 6. evidence: cached
 7. plan_check: disabled
 8. writer: ran
-9. quality: ran (iterations=1)
+9. quality: disabled
 
 ## Artifacts
 ### scout
@@ -29,8 +29,8 @@
 - Quality evaluations: ./report_notes/quality_evals.jsonl
 - Quality pairwise: ./report_notes/quality_pairwise.jsonl
 ## Outputs
-- Report overview: ./report/run_overview_report_full.md
+- Report overview: ./report/run_overview_report_full_4.md
 - Report meta: ./report_notes/report_meta.json
-- Report prompt copy: ./instruction/report_prompt_report_full.txt
+- Report prompt copy: ./instruction/report_prompt_report_full_4.txt
 - Figure candidates: ./report_views/figures_preview.html
 - Template summary: ./report_notes/report_template.txt

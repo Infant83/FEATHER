@@ -1,13 +1,15 @@
 Gaps Summary
 Claims missing evidence:
-- **arXiv (PDF/TeX: 1차 근거)**
-- **핵심 문제의식/기여(요약) + 정량 주장(steps/압축/성능)**
-- 원자 단위(atomic point cloud) 3D 생성은 잘 되지만 “화학적 모듈성(modularity)”을 버린다는 문제의식에서, 분자를 **rigid motif(강체 모티프)들의 집합**으로 재표현하고 **SE(3)-equivariant generative modeling**을 적용한다고 설명. 또한 평가에서 SOTA에 “comparable or superior”, 특히 **GEOM-DRUGS에서 atom stability를 상회**, 그리고 **generation steps를 2×~10× 감소**, **representation을 3.5× 압축**했다고 주장.
-- **방법론: 분자를 rigid motifs의 SE(3) 프레임 + motif class로 재파라미터화(표현 정의/가역성)**
-- 분자 원자 표현 \(\{(\mathbf{y}_j,h_j)\}_{j=1}^N\)을 **\(K\)개의 rigid motifs** \(\{(\mathbf{T}_i,m_i)\}_{i=1}^K\)로 바꾸며, \(\mathbf{T}_i=(\mathbf{R}_i,\mathbf{x}_i)\in \mathrm{SE}(3)\) (회전 \(\mathbf{R}_i\in \mathrm{SO}(3)\), 평행이동 \(\mathbf{x}_i\in\mathbb{R}^3\))로 정의. motif 토큰 \(m_i\in\mathcal{V}_m\)는 “exemplar fragment”로서 intra-fragment 원자 좌표/원자종/대칭군을 포함한다고 명시.
-- 이 프레임 기반 표현은 **invertible**이며, canonical pose \(\mathbf{P}_i\)에 rigid transform을 적용해 원자 좌표를 복원:
-- 따라서 생성은 \(\mathrm{SE}(3)^K \times \mathcal{V}_m^K\) 위 분포 샘플링으로 정식화한다고 서술.
-- **방법론: motif vocabulary를 위한 fragmentation 요구조건과 설계 목표**
-- motif vocabulary \(\mathcal{V}_m\) 구축을 위해 fragmentation scheme이 (i) **rigidity**(내부 rotatable bond가 없어 강체 근사), (ii) **non-degeneracy**(SE(3) frame 정의를 위해 최소 3개 비공선 점), (iii) **tractability**(데이터에서 각 motif class 빈도가 학습 가능할 만큼 충분) 조건을 만족해야 한다고 명시.
-- **실험 설계: 데이터셋/태스크/베이스라인/메트릭(정의 및 보고 관례)**
-- ... and 18 more
+- PDF (최종 렌더링)
+- TeX / 논문 소스 (핵심 본문·수식·표·캡션)
+- 텍스트 추출본 (빠른 검색·전체 문장 확인)
+- 시각자료 / 그림 (주장·압축비·ablation 근거)
+- 색인 / 메타데이터
+- 근거 수집: TeX 소스(method/appendix/experiments/background), 텍스트 추출본(검색·초록 확인), 시각자료(압축비·ablation), 확장표/테이블(부록)을 우선 검토하였다. 주요 수치·표/그림 번호는 TeX/appendix의 표/그림 라벨을 사용해 연결했다.
+- SE(3) 및 흐름(Flow Matching) 개념
+- Discrete flows via CTMC
+- Motif / frame 표현
+- 비교 축(표현–학습 목표–샘플링 비용)으로 본 논문과 선행작
+- ... and 21 more
+Claims supported only by index files:
+- arXiv 메타데이터(검색용):

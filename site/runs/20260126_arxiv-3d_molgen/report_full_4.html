@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SE(3) 플로우 기반 강체 모티프 3D 분자생성 심층분석</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid rgba(226, 232, 240, 0.18);
+      border-radius: 18px;
+      background: rgba(10, 14, 20, 0.55);
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(15, 23, 42, 0.35);
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+    .report-deck {
+      color: rgba(226, 232, 240, 0.8);
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent-strong);
+      margin: 1.6rem 0;
+      padding: 0.7rem 1.4rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(14, 165, 164, 0.4);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: rgba(15, 23, 42, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: var(--mono-font);
+      font-size: 0.92em;
+    }
+    .article pre {
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 17, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: var(--paper-strong);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media (max-width: 860px) {
+      .page { margin: 40px auto 64px; padding: 0 20px; }
+      .article { padding: 28px; }
+      .report-deck { font-size: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .report-title { font-size: 2rem; }
+      .article { padding: 22px; }
+      .article h2 { font-size: 1.35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+body.template-technical_deep_dive {
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+    body { background: var(--page-bg) !important; color: var(--site-ink); }
+    .masthead { color: #f8fafc; }
+    .report-deck { color: rgba(226, 232, 240, 0.82); }
+    .kicker { color: rgba(255, 255, 255, 0.7); }
+  </style>
+</head>
+<body class="template-technical_deep_dive">
+  <div class="backdrop">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">Federlicht</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">SE(3) 플로우 기반 강체 모티프 3D 분자생성 심층분석</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>SE(3) 플로우 기반 강체 모티프 3D 분자생성 심층분석</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-27 06:46</p>
+<h2>Executive Summary</h2>
+<p>본 보고서는 arXiv 논문 "3D Molecule Generation from Rigid Motifs via SE(3) Flows" (arXiv:2601.16955v1)의 주요 기술적 주장·방법·실험 근거를 논문 본문 및 부록(TeX 소스, PDF, 시각자료)을 근거로 종합·분석한 심층 리뷰입니다. 핵심 요지는 다음과 같습니다.</p>
+<ul>
+<li>주장 요약: 저자들은 원자 레벨 좌표 대신 'rigid motifs'—각 motif는 canonical pose, 원자 타입 정보, 유한 회전 대칭군(Symmetry set)을 갖는 단위—를 단위로 하여 상태공간 $ \mathrm{SE(3)}^{K}\times\mathcal{V}_m^{K} $ 상에서 multimodal flow(연속 SE(3) flow + discrete CTMC 기반 흐름)를 학습하는 MOTIFLOW를 제안한다. 이로써 표현 압축, 샘플링 단계 수 감소, 특히 대형·drug-like 데이터셋에서의 atom stability 개선을 보고한다 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf" class="viewer-link">\[1\]</a>; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/method.tex" class="viewer-link">\[2\]</a>; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/appendix.tex" class="viewer-link">\[3\]</a>).</li>
+<li>정량적 핵심 결과(논문 보고치): QMugs 기준 표현 압축 평균 약 $3.4\times$ (all-atom 대비) 및 샘플링 steps 50–100으로 atom-based diffusion/flow의 수백–천 단계 대비 감소 보고; GEOM-Drugs에서 atom stability 향상 사례 등 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/method.tex" class="viewer-link">\[2\]</a>; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/appendix.tex" class="viewer-link">\[3\]</a>; <a href="./archive/arxiv/src/2601.16955/visuals/">\[4\]</a>).</li>
+<li>본 리포트 관점: 방법의 수학적 정식화(연속/이산 성분), 아키텍처·학습·샘플링 파이프라인, 정량 결과의 근거 매핑, 재현성·검증에서의 한계 및 권장 추가 실험을 중점적으로 분석·권고한다. 실증적 근거는 논문 PDF·TeX 소스·부록·시각자료에 한정해 인용했다 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf" class="viewer-link">\[1\]</a>; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/text/2601.16955v1.txt" class="viewer-link">\[5\]</a>).</li>
+</ul>
+<h2>Scope &amp; Methodology</h2>
+<ul>
+<li>범위: 본 보고서는 논문 본문 및 부록(TeX 소스, PDF, visuals)에 명시된 수식·알고리즘·표·그림·하이퍼파라미터·평가 프로토콜만을 1차 근거로 사용한다. 외부 선행작(EDM, END, EquiFM 등)은 논문이 인용한 관점에서만 교차검증용으로 참조하며, 본문 근거는 제공된 아카이브 자료로 한정한다 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/appendix.tex" class="viewer-link">\[3\]</a>; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/method.tex" class="viewer-link">\[2\]</a>).</li>
+<li>근거 수집 절차: TeX 파일(method/experiments/appendix/background)에서 수식·알고리즘·하이퍼파라미터를 추출하고, 텍스트 추출본 및 시각자료(압축비·ablation 그림 등)로 정량치·분포를 교차검증했다 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/text/2601.16955v1.txt" class="viewer-link">\[5\]</a>; <a href="./archive/arxiv/src/2601.16955/visuals/">\[4\]</a>).</li>
+<li>보고서 방법론: 각 핵심 주장에 대해 "주장 → 근거 파일/절/표/그림"을 연결했다. 해석·추론·추가 제안은 명시적으로 "(해석)" 또는 "(제안)/(전망)"로 표시하여 실험적 근거와 구분한다.</li>
+</ul>
+<h2>Technical Background</h2>
+<h3>핵심 개념 정의</h3>
+<ul>
+<li>SE(3) representation: rigid frame을 $(R,x)$로 표기하며 $R\in\mathrm{SO}(3)$, $x\in\mathbb{R}^3$이다. 회전의 지오데식(geodesic) 보간과 translation의 선형 보간을 구분해 다룬다 ([method], Appendix A.1 in [appendix]).</li>
+<li>Flow matching on manifolds: 연속 성분은 SE(3)에서 정의된 타임-조건부 vector field를 학습(flow-matching), 네트워크가 $u_t$(analytic target field)를 회귀하도록 loss를 설계한다. rotation은 $\mathrm{SO}(3)$의 지오데식 거리를 사용해 보간한다 ([method]; [text]).</li>
+<li>Discrete multimodality: motif class(이산 레이블)의 노이징/복원을 CTMC(continuous-time Markov chain)로 모델링하여 mask → target으로 mass가 흘러가도록 하는 analytic rate matrix를 사용한다 ([method], eqns (80–89) 참조).</li>
+<li>Rigid motif: motif는 canonical pose $P\in\mathbb{R}^{N_i\times 3}$, atom types $h_i$, 그리고 motif의 유한 회전 대칭군 $S_i$로 정의된다. 인스턴스는 frame $T=(R,x)\in\mathrm{SE}(3)$으로 표현되며, 원자 좌표는 $P R + \mathbf{1} x^\top$로 재구성된다 ([method]).</li>
+</ul>
+<h3>비교 관점: 표현–학습 목표–샘플링 비용</h3>
+<ul>
+<li>Atom-based 접근(예: EDM, END, 일부 EquiFM 변형): 상태는 모든 원자 좌표 및 타입이며, diffusion/flow로 좌표를 직접 노이징/복원. 장점: 표현이 저수준이므로 희귀 구조 생성에 유연. 단점: 높은 샘플링 단계(일반적으로 수백~천 단계) 필요([appendix], references).</li>
+<li>Frame/motif 기반(MOTIFLOW): 상태공간을 $ \mathrm{SE(3)}^{K}\times\mathcal{V}<em j="1">m^{K} $로 압축. 장점: 표현 차원 감소 → 작은 steps로도 유효한 샘플링, motif 단위로 화학적 결합 패턴을 보존하기 쉬움. 단점: motif vocabulary 편향, 희귀 서브구조 일반화 제약 가능성 ([method]; ablation figures in [visuals]).
+- 정리(요약 표로 해석 가능): 표현(원자 좌표 vs motif frame), 학습 목표(좌표 회복 vs frame+type 복원), 샘플링 비용(steps · 함수평가 수)라는 3축에서 trade-off가 존재함(본 논문은 샘플링 steps 축에서 우위를 주장함; 근거: [appendix]).
+
+## Methods &amp; Data
+
+### 문제정의 및 표현
+
+- 데이터: 원자 포인트 클라우드 ${(y_j,h_j)}</em>^N$ (좌표 $y_j\in\mathbb{R}^3$, 타입 $h_j$). 목표는 각 분자를 $K$개의 rigid motifs $\{(T_i,m_i)\}_{i=1}^{K}$로 분해하고, 이 공간에서 샘플링하는 것이다 ([method]).</li>
+<li>상태공간 표기:
+  $$\mathcal{S} = \underbrace{\mathrm{SE(3)}\times\cdots\times\mathrm{SE(3)}}_{K\ \text{frames}}\times\underbrace{\mathcal{V}_m\times\cdots\times\mathcal{V}_m}_{K\ \text{motif classes}} = \mathrm{SE(3)}^{K}\times\mathcal{V}_m^{K}.$$
+  여기서 $\mathcal{V}_m$은 motif vocabulary이다 ([method]).</li>
+</ul>
+<h3>Rigid-motif 분해(전처리)</h3>
+<ul>
+<li>분해 규칙: (i) rigidity—rotational degree of freedom 없는 subgraph, (ii) 비퇴화(non-degeneracy)—3개 이상의 비공선 원자, (iii) tractability—데이터셋 내 발생 빈도 기준 threshold $\alpha$ 이상. 평면 고리·fused rings는 보존, 약한 결합(예: 수소)은 분해 시 자르지 않음. 희귀 motif(occurrence &lt; $\alpha$)는 재분해해 더 작은 motif로 환원한다 ([method], §Rigid-Motif Decomposition).</li>
+<li>canonical pose와 symmetry: motif graph automorphism으로부터 회전 대칭군 $S_i$를 추출하고, 각 인스턴스는 Kabsch 알고리즘으로 대표 rotation을 할당해 canonicalisation을 수행한다 ([method]).</li>
+</ul>
+<h3>Generative model: Multimodal Flow 설계</h3>
+<ul>
+<li>모델 팩터화: 시간 $t$에서의 조건부 분포는 각 motif에 대해 인자분해하여 연속(프레임)과 이산(모티프 타입)을 분리 처리:
+  $$p_t(M_t\mid M_1) = \prod_{k=1}^K p_t(m_t^k\mid m_1^k)\,p_t(T_t^k\mid T_1^k).$$
+  최종 학습 objective는 연속 component의 flow-matching loss $L_{\mathrm{SE(3)}}$와 이산 component의 denoising cross-entropy 합이다 ([method], eqns ~61–69).</li>
+<li>연속(SE(3)) component: translation은 시간별 선형 interpolant, rotation은 지오데식 보간을 목표로 한 target vector field $u_t^x, u_t^R$를 닫힌형으로 정의하고 네트워크 $v_\theta$가 이를 회귀하도록 학습한다([method]; [text]).</li>
+<li>이산(component): masking prior $p_0=\delta_{\text{[MASK]}}$에서 시작하여 CTMC rate matrix를 사용해 mask→target으로 질량이 흐르도록 설정. 네트워크는 timestep별 denoising logits을 출력하고 cross-entropy를 최소화한다([method], eqns (80–89)).</li>
+</ul>
+<h3>아키텍처 및 학습 세부</h3>
+<ul>
+<li>Backbone: IPA(Invariant Point Attention) 기반 FoldFlow-Base 확장. 주요 변경점: discrete self-conditioning(p=0.5), fragment pair용 triangular multiplicative updates, discrete readout head. 모델 크기: unconditional 약 12.4M, conditional 약 13.7M 파라미터([appendix], Implementation Details).</li>
+<li>입력 피처: motif token embedding, timestep embedding, pairwise RBF(64) 거리 임베딩, self-conditioning(선택적). 블록 구성: 4 blocks(IPA + transitions + transformer encoder 등), rot/trans split-head로 frame update 수행([appendix]).</li>
+<li>하이퍼파라미터(부록 표준값): learning rate $1\times10^{-4}$, rotational exponential scheduler factor 10, QM9 1000 epochs, GEOM-Drugs 135 epochs. 샘플링 권장 steps: 50–100 (논문 실험에서 이 범위가 적절하다고 보고) ([appendix]).</li>
+</ul>
+<h3>데이터셋 및 평가 프로토콜</h3>
+<ul>
+<li>데이터셋: QM9(약 134k, 소분자), GEOM-Drugs(약 430k, 중형 drug-like), QMugs(부분집합, 약 300k) 등. 각 데이터셋의 분할·전처리 세부는 experiments/appendix에 기재되어 있다 (<a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/experiments.tex" class="viewer-link">\[6\]</a>; [appendix]).</li>
+<li>평가 메트릭(정의 및 계산법):</li>
+<li>Atom stability: valency 규칙에 따른 원자별 안정성 비율(부록의 계산 파이프라인 사용; RDKit 기반 bond inference) ([appendix], §Evaluation Metrics).</li>
+<li>Molecule validity &amp; connectivity: RDKit sanitisation 통과 및 연결성(connected graph) 조건.</li>
+<li>Uniqueness, Total Variation (원자/결합 타입 marginals), Strain energy: MMFF로 geometry relaxation 후 계산(부록에 구현·제약 설명) ([appendix]).</li>
+<li>SA/QED: 표준 구현 방식 사용(RDKit 제공 함수). 세부 검사 파이프라인은 부록에 명세되어 있으므로 동일 파이프라인 적용이 재현성에 필수이다 ([appendix]).</li>
+</ul>
+<h3>알고리즘 흐름(요약된 단계)</h3>
+<ol>
+<li>Preprocessing: bond-cut rules → preliminary rigid motifs → prune motifs with occurrence $&lt;\alpha$ → canonical pose selection &amp; symmetry $S_i$ computation → assign frames via Kabsch ([method]).</li>
+<li>Training input: noisy frames $T_t^k$, masked motif tokens $m_t^k$, pairwise RBF features → 모델 → continuous vector fields 및 discrete logits ([appendix]).</li>
+<li>Training: minimize $L_{\mathrm{SE(3)}} + L_{\mathrm{discrete}}$ (optimizer 설정과 schedulers는 부록 참조).</li>
+<li>Sampling: prior (Gaussian for translations, uniform over $SO(3)$ for rotations, mask token for discrete)에서 시작해 learned vector field의 역적분 및 CTMC를 통한 discrete 복원 수행([method]; [appendix]).</li>
+</ol>
+<h2>Results &amp; Evidence</h2>
+<p>아래는 논문에서 보고된 주요 정량 결과를 "주장 → 근거(파일/표/그림/절)" 형태로 정리한 매핑이다.</p>
+<h3>표현 압축(compression)</h3>
+<ul>
+<li>주장: fragment/motif 기반 표현은 QMugs에서 all-atom 대비 평균 약 $3.4\times$의 표현 압축을 제공한다.<br />
+  근거: 본문 method의 압축 분석 및 시각자료(분포 그림) ([method], Fig. distribution; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_entity_distributions_distribution_qmugs_mid-591ac228.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_entity_distributions_distribution_qmugs_mid-591ac228.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf" class="viewer-link">\[7\]</a>).</li>
+</ul>
+<h3>샘플링 steps 감소(효율성)</h3>
+<ul>
+<li>
+<p>주장: MOTIFLOW은 atom-based diffusion/flow가 일반적으로 사용하는 500–1000 steps 대비 50–100 steps 범위에서 동등 또는 더 나은 성능을 달성한다(예: QM9에서 100 steps로의 비교 제시).<br />
+  근거: experiments 및 appendix의 QM9/GEOM-Drugs 비교표(메인/확장 표) — Appendix Table qm9_uncond_extended (MOTIFLOW 50/100 steps 성능 수치) ([experiments]; [appendix], Table qm9_uncond_extended).</p>
+</li>
+<li>
+<p>구체 예시(논문 표기): QM9 unconditional에서 MOTIFLOW 50 steps: Atom stability(A) ≈ 99.1%, Molecule metric(M) ≈ 92.3%; 100 steps: A ≈ 99.1%, M ≈ 92.6% — 표 참조 ([appendix], Table qm9_uncond_extended).</p>
+</li>
+</ul>
+<h3>GEOM-DRUGS에서의 atom stability 개선</h3>
+<ul>
+<li>주장: GEOM-Drugs unconditional에서 MOTIFLOW은 atom stability와 V×C (valid &amp; connected) 지표에서 atom-based baselines보다 우수한 결과를 보고한다.<br />
+  근거: Appendix GEOM-Drugs extended results: MOTIFLOW 50 steps Stable A = 96.2%, V×C = 81.3%; 100 steps Stable A = 96.3%, V×C = 82.4% — 부록 표 참조 ([appendix], Table geom_uncond_extended).</li>
+</ul>
+<h3>Conditional generation (composition / substructure)</h3>
+<ul>
+<li>주장: 조건부 과제에서 cMOTIFLOW는 composition matching/서브구조 유사도에서 경쟁력을 보임.<br />
+  근거: Appendix의 conditional generation 표(예: cMOTIFLOW 100 steps Composition matching = 95.4%, Substructure Tanimoto = 0.862) ([appendix], Table cond_gen_table_extended).</li>
+</ul>
+<h3>Ablation: fragmentation 전략 및 α 민감도</h3>
+<ul>
+<li>주장: fragmentation 전략(Planar Rings 등) 및 threshold $\alpha$ 값은 vocabulary 크기·fragments per molecule·생성 성능에 실질적 영향을 미친다. 기본값 $\alpha=0.1$이 균형을 제공한다고 보고한다.<br />
+  근거: experiments의 Ablation 섹션 및 appendix의 ablation tables, frag_comparison.png 등 시각자료 ([experiments]; <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_ablations_frag_comparison.png-f34cccd6.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_ablations_frag_comparison.png-f34cccd6.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/visuals/ablations/frag_comparison.png" class="viewer-link">\[8\]</a>; [appendix]).</li>
+</ul>
+<h3>기타 메트릭(Strain energy, TV, SA, QED)</h3>
+<ul>
+<li>결과: Extended results 테이블에 strain energy($\Delta E$), TV, SA, QED 값이 포함되어 있으며 MOTIFLOW이 일부 메트릭에서 경쟁력을 보이는 것으로 보고. 다만 strain energy는 MMFF 기반의 근사치임(부록 설명).<br />
+  근거: Appendix Extended Results tables; Evaluation Metrics 설명([appendix], §Evaluation Metrics).</li>
+</ul>
+<p>(해석) 위 수치들은 논문에서 제시한 동급 실험 설정하에서의 결과이며, cross-paper 비교의 공정성(평가 파이프라인·sampling steps·모델 크기 통제 등)을 위해서는 추가 제어 실험이 필요하다([appendix], notes on evaluation).</p>
+<h2>Limitations &amp; Open Questions</h2>
+<ul>
+<li>
+<p>희귀 motif(rare substructures) 일반화 한계<br />
+  근거: ablation 결과에서 vocabulary pruning($\alpha$)이 낮으면 uncommon motif 과소표집(undersampling) 또는 과대표집(overfitting) 현상이 관찰된다. 결과적으로 새로운 희귀 결합 패턴 생성 능력은 제한될 수 있다 ([experiments]; [appendix]). (해석)</p>
+</li>
+<li>
+<p>화학적/물리적 타당성 검증의 제약  </p>
+</li>
+<li>
+<p>strain energy는 MMFF 기반으로 계산되어 DFT 수준 검증과는 차이가 있다. 따라서 물리·에너지 기반 안정성 주장은 MMFF-근사를 넘어서는 검증(DFT single-point / geometry optimization)이 요구된다 ([appendix], §Evaluation Metrics). (제안)</p>
+</li>
+<li>
+<p>재현성(reproducibility) 관련 미비점  </p>
+</li>
+<li>
+<p>논문은 아키텍처·하이퍼파라미터·epoch 수·sampling settings 등을 부록에 제공하지만(예: lr=1e-4, QM9 1000 epochs 등), 전체 학습 스크립트·환경(requirements)·GPU·실행 시간·시드 고정에 대한 완전한 실행 지침이 누락되어 있어 "즉시 복제 가능한" 수준은 아니다([appendix]; [method]). (해석)</p>
+</li>
+<li>
+<p>평가 프로토콜 일관성 문제  </p>
+</li>
+<li>
+<p>RDKit/OpenBabel 기반 bond inference 및 sanitisation 절차가 결과(예: atom stability)에 민감하므로, baselines와의 비교는 동일한 평가 파이프라인 및 파라미터에서 재실행되어야 한다([appendix]). (제안)</p>
+</li>
+<li>
+<p>스케일링·시간 비용(실시간 추론 이득의 범위) 불확실성  </p>
+</li>
+<li>샘플링 steps 감소가 실제 wall-clock 시간 또는 FLOPs 절감으로 직결되는지는 모델 파라미터 수, ODE/solver 호출 수, CTMC sampling 오버헤드 등을 함께 고려하지 않으면 확증할 수 없다([appendix]). (해석)</li>
+</ul>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li>검증 부족·가정 및 필요 검증 사항</li>
+<li>Motif prior 편향: 빈도 기반 pruning 및 canonical exemplar 선택은 데이터셋 특유의 motif 분포를 모델에 고착화할 위험이 있다. 이로 인해 희귀 화학 구조의 생성률이 저하될 수 있다 ([method]; ablation in [appendix]).  </li>
+<li>Bond inference 의존성: 평가 지표(Atom stability 등)가 RDKit/OpenBabel의 bond lookup 규칙에 의존하므로 평가 결과는 룩업 테이블·threshold에 민감하다 ([appendix]).  </li>
+<li>물리적 안정성 검증 공백: MMFF는 근사적 방법으로, DFT 수준 검증이 요구된다(특히 약물 후보군에서의 실제 유효성 판단 시).  </li>
+<li>
+<p>비교 공정성 결여: 샘플링 step 우위를 주장하려면 동일한 계산 예산(FLOPs 또는 wall-clock)·동일 평가 파이프라인·동일 모델 크기 조건 하에서 재검증이 필요하다([appendix]).  </p>
+</li>
+<li>
+<p>권장 추가 실험(실행 가능한 제안들; 표기는 Speculation/Recommendation 혹은 제안으로 분리)</p>
+</li>
+<li>(제안) DFT 검증: 랜덤 샘플(예: 각 dataset에서 100개)을 선택해 MMFF 결과와 DFT(B3LYP/6-31G* 등) single-point / geometry optimization을 비교, strain energy와 구조 변화 상관성 평가. (Speculation/Recommendation)</li>
+<li>(제안) Compute-controlled comparison: EDM/END/EquiFM과 동일 파라미터 수 및 동일 평가 파이프라인에서 wall-clock 및 FLOPs 비교를 수행해 샘플링 steps 감소가 실제 계산비용 우위인지 확인. (Speculation/Recommendation)</li>
+<li>(제안) Rare-motif generalization: hold-out rare motif 또는 synthetic motif set을 만들어 generalization 성능 측정(coverage, atom stability, novelty). (Speculation/Recommendation)</li>
+<li>
+<p>(제안) Ablation on discrete schedule/self-conditioning/remasking η: discrete temperature schedule 및 self-conditioning 기여도 분리 실험으로 각 구성요소의 기여도를 정량화. (Speculation/Recommendation)</p>
+</li>
+<li>
+<p>증거 강도 평가: 논문은 메소드·부록·시각자료를 통해 여러 정량치와 ablation을 제공해 근거는 중간~높음이나, DFT 기반 물리 검증 및 compute-controlled baseline 비교가 결여되어 있어 일부 주장(특히 "실제 시간/비용 이득")은 약화된다.</p>
+</li>
+</ul>
+<h2>Critics</h2>
+<ul>
+<li>Headline: "Motif 기반 압축은 창발적 분자 디자인을 제한할 수 있다."<br />
+  설명: motif로 대표되는 데이터 축약은 자주 등장하는 subgraph의 재생산을 촉진하지만, 희귀한 결합 패턴이나 새로운 화학적 조합의 창발 가능성을 줄일 수 있다. 논문 ablation에서 rare motif의 under-sampling 문제가 관찰된다.  </li>
+<li>희귀 구조 생성률 감소(논문 ablation 근거) ([appendix]).  </li>
+<li>
+<p>실무적 함의: 탐색적 신약 설계에서 structural novelty가 필요한 경우 제약이 될 수 있음. (해석)</p>
+</li>
+<li>
+<p>Headline: "샘플링 steps 감소의 실효성은 계산 비용 측면에서 완전히 입증되지 않았다."<br />
+  설명: 논문은 steps 수를 줄여 성능을 유지하는 점을 강조하나, 함수 평가 수(ODE solver evaluations), discrete CTMC 오버헤드, 병렬성 차이를 통제하지 않은 채 단순 steps 비교만으로 '추론 비용 우위'를 일반화하기 어렵다 ([appendix]).  </p>
+</li>
+<li>동일 FLOPs/시간 조건에서의 비교 필요.  </li>
+<li>
+<p>일부 baseline은 adaptive solver를 사용하는 등 비교 설정 차이가 존재함. (해석)</p>
+</li>
+<li>
+<p>Headline: "평가 메트릭은 bond inference 규칙에 민감하다."<br />
+  설명: RDKit/OpenBabel 기반의 bond 추론·sanitisation 규칙이 \(Atom\ stability\) 등 결과에 직접적 영향을 주므로, baseline과 동일한 파이프라인이 아니면 비교가 왜곡될 수 있다 ([appendix]).  </p>
+</li>
+<li>제안: 동일 평가 스크립트 공유·사용 권장. (제안)</li>
+</ul>
+<p>(위 비판들은 논문 자체의 실험 결과와 부록에서 관찰되는 한계에 기반한 반대 관점이며, 추가 실험으로 어느 정도 해소 가능하다.)</p>
+<h2>Appendix</h2>
+<h3>Implementation artifacts &amp; primary files (핵심 근거/아카이브 아티팩트)</h3>
+<ul>
+<li>논문 PDF(원문): <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf" class="viewer-link">\[1\]</a> — 최종 렌더링(근거의 1차 원본).  </li>
+<li>TeX 소스(주요): <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/method.tex" class="viewer-link">\[2\]</a>, <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/experiments.tex" class="viewer-link">\[6\]</a>, <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_background.tex-b7a7d0d2.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_background.tex-b7a7d0d2.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/background.tex" class="viewer-link">\[9\]</a>, <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/appendix.tex" class="viewer-link">\[3\]</a>.  </li>
+<li>텍스트 추출본: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/text/2601.16955v1.txt" class="viewer-link">\[5\]</a> — 빠른 검색·문장 인용용.  </li>
+<li>시각자료: <a href="./archive/arxiv/src/2601.16955/visuals/">\[4\]</a> (frag_comparison.png, distribution_qmugs_middle_threshold.pdf, cond_generation/main.png 등).  </li>
+<li>빌드/매니페스트: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_00README.json-d8a9b3f6.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_00README.json-d8a9b3f6.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/00README.json" class="viewer-link">\[10\]</a>, <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_manifest.jsonl-5fb67b9e.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_manifest.jsonl-5fb67b9e.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src_manifest.jsonl" class="viewer-link">\[11\]</a>.</li>
+</ul>
+<h3>Reproducibility checklist (핵심 점검항목)</h3>
+<ul>
+<li>필수(제공됨): 모델 아키텍처·파라미터 수, 학습률, epochs, sampling steps 범위, fragmentation threshold $\alpha$ 기본값(0.1) 등은 부록에 명시되어 있다 ([appendix]).  </li>
+<li>필수(검증 필요): 실제 실행 스크립트(train/sampling), requirements.txt/conda env, GPU 종류·메모리, 시드 고정 값, 데이터 전처리 코드(분해 알고리즘 구현) — 부록/README에서 일부 지침은 있으나 전체 스크립트의 위치는 확인 필요([appendix]; [00README.json]).  </li>
+<li>평가 파이프라인: RDKit/OpenBabel 기반 sanitisation 및 bond lookup table을 동일하게 적용해야 재현성 확보. 부록의 Evaluation Metrics 설명을 따를 것([appendix], §Evaluation Metrics).  </li>
+<li>권장 재현 설정: 동일 샘플 수(예: unconditional 10^4 × 3 seeds), sampling steps(50,100), 동일 evaluation code base 사용.</li>
+</ul>
+<h3>Terms &amp; notation (용어·기호 요약)</h3>
+<ul>
+<li>SE(3): Special Euclidean group in 3D. rigid frame $T=(R,x)$, $R\in\mathrm{SO}(3), x\in\mathbb{R}^3$.  </li>
+<li>Frame state space: $\mathrm{SE(3)}^{K}$. Motif vocabulary: $\mathcal{V}_m$. 전체 상태: $\mathrm{SE(3)}^{K}\times\mathcal{V}_m^{K}$.  </li>
+<li>$L_{\mathrm{SE(3)}}$: 연속 component(flow-matching) 손실(translation + rotation terms).  </li>
+<li>CTMC: continuous-time Markov chain—discrete motif denoising을 위한 analytic rate matrix 사용.  </li>
+<li>Fragmentation threshold $\alpha$: motif pruning 기준(occurrence &lt; $\alpha$ → 재분해).  </li>
+<li>Atom stability: valency 규칙 기반 원자 안정성 비율(구체 계산법은 부록 참조).</li>
+</ul>
+<h3>Practical next steps (제안된 실행 항목)</h3>
+<ul>
+<li>(제안) 재현 스크립트 요구: authors가 공개한 실행 스크립트가 없다면, 부록의 하이퍼파라미터와 모델 스펙을 바탕으로 Dockerfile/conda 환경 템플릿 및 train/sampling 명령어 스크립트를 작성해 재현을 시도할 것을 권장한다. (Speculation/Recommendation)  </li>
+<li>(제안) 검증 실험 우선순위: (1) DFT 샘플 기반 물리 검증(작은 N), (2) compute-controlled baseline 비교(동일 FLOPs/parameter budget), (3) rare-motif hold-out generalization 테스트. (Speculation/Recommendation)</li>
+</ul>
+<p>— End of report —</p>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: Source PDF: 2601.16955v1.pdf; <a href="#fig-2">Figure 2</a>: Source PDF: 2601.16955v1.pdf; <a href="#fig-3">Figure 3</a>: Source PDF: 2601.16955v1.pdf; <a href="#fig-4">Figure 4</a>: Source PDF: 2601.16955v1.pdf; <a href="#fig-5">Figure 5</a>: Source PDF: distribution_qmugs_middle_threshold.pdf</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="../../../examples/runs/20260126_arxiv-3d_molgen/report_assets/figures/._archive_arxiv_pdf_2601.16955v1.pdf-194157d2.png" alt="Figure from ./archive/arxiv/pdf/2601.16955v1.pdf (page 7)" />
+  <figcaption>Figure 1: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf">./archive/arxiv/pdf/2601.16955v1.pdf</a> (page 7)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="../../../examples/runs/20260126_arxiv-3d_molgen/report_assets/figures/._archive_arxiv_pdf_2601.16955v1.pdf-11e6d871.png" alt="Figure from ./archive/arxiv/pdf/2601.16955v1.pdf (page 8)" />
+  <figcaption>Figure 2: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf">./archive/arxiv/pdf/2601.16955v1.pdf</a> (page 8)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="../../../examples/runs/20260126_arxiv-3d_molgen/report_assets/figures/._archive_arxiv_pdf_2601.16955v1.pdf-feef8e7a.png" alt="Figure from ./archive/arxiv/pdf/2601.16955v1.pdf (page 18)" />
+  <figcaption>Figure 3: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf">./archive/arxiv/pdf/2601.16955v1.pdf</a> (page 18)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="../../../examples/runs/20260126_arxiv-3d_molgen/report_assets/figures/._archive_arxiv_pdf_2601.16955v1.pdf-26390def.png" alt="Figure from ./archive/arxiv/pdf/2601.16955v1.pdf (page 19)" />
+  <figcaption>Figure 4: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf">./archive/arxiv/pdf/2601.16955v1.pdf</a> (page 19)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-5">
+  <img src="../../../examples/runs/20260126_arxiv-3d_molgen/report_assets/figures/._archive_arxiv_src_2601.16955_visuals_entity_distributions_distribution_qmugs_m-0c49c24a.png" alt="Figure from ./archive/arxiv/src/2601.16955/visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf (page 1)" />
+  <figcaption>Figure 5: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf">./archive/arxiv/src/2601.16955/visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf</a> (page 1)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: technical_deep_dive<br />
+Depth: exhaustive  </p>
+<p>목적/범위: arXiv 논문 “3D Molecule Generation from Rigid Motifs via SE(3) Flows” (2601.16955v1, 2026)의 핵심 아이디어( rigid motif 기반 3D 분자 생성, SE(3) equivariant flow 설계), 방법론, 데이터/평가, 정량 결과를 R&amp;D 리더/도메인 전문가 관점에서 재현 가능성과 검증 필요사항까지 포함해 심층 기술 검토하라. 범위는 논문/부록/TeX 소스에 근거한 내용 중심으로 하며, LinkedIn URN 링크는 주제와 직접 관련 근거가 없으므로 본문 근거로 사용하지 말고 필요 시 “오프토픽/공개정보 한계”로만 언급하라.</p>
+<p>필수 섹션(아래 순서 유지): Executive Summary, Scope &amp; Methodology, Technical Background, Methods &amp; Data, Results &amp; Evidence, Limitations &amp; Open Questions, Risks &amp; Gaps, Critics, Appendix.</p>
+<p>핵심 포함 항목:
+- Technical Background: SE(3) equivariance, flow/diffusion 계열, frame/rigid-body 표현, motif/fragment 기반 생성 개념 정의. EDM/GeoDiff/EquiFM 등 접근과의 차이를 “표현(좌표 vs 프레임/모티프)–학습 목표–샘플링 비용” 축으로 비교.
+- Methods &amp; Data: 모티프 분해/표현(필요 시 수식/기호), SE(3) flow 파라미터화, 상태공간(SE(3)^K × …)과 학습/샘플링 절차를 알고리즘 단계로 정리. 사용 데이터셋(QM9/GEOM-Drugs/QMugs 등), 전처리, 메트릭 정의(Validity, Atom/Mol stability 등)와 계산법을 명시.
+- Results &amp; Evidence: 표/그림 기반 정량 수치(성능, 안정성, 샘플링 steps/속도)와 ablation을 “주장→근거(표/그림/절 번호)”로 연결. 실험 조건 차이(steps, 모델 크기, 평가 프로토콜)를 분리해 해석.
+- Limitations/Open Questions: 재현(하이퍼파라미터, fragmentation 규칙, 코드/시드), 스케일링, 일반화(새 모티프/대형 약물), 물리적 타당성/에너지 평가 공백을 정리.
+- Risks &amp; Gaps: 검증 부족/가정(모티프 고정의 편향, 데이터 누수 가능성, 평가 메트릭 한계)을 “추가 실험 제안”과 함께 기술. 해당 없음이면 Not applicable + 사유.
+- Critics: 반대 관점(모티프 기반이 창발성 제한, SE(3) flow의 복잡도 대비 이득 불명 등) 헤드라인+짧은 문단+불릿로 제시. 해당 없음이면 Not applicable + 사유.</p>
+<p>증거/인용 정책: 1차 소스는 제공된 arXiv PDF/TeX/appendix에 한정. 각 핵심 주장에 대해 (섹션/그림/표/식 번호 또는 파일 경로)로 근거를 붙여라. 추정/해석/추가 제안은 “Speculation/Recommendation”으로 라벨링해 실증 결과와 분리. Tavily/LinkedIn은 본 주제 근거로 사용하지 말고, 관련 실증 정보 부재 시 “공개정보 한계”로 명시.</p>
+<p>언어/스타일: 한국어로 기술하되, 고유명사·논문명·모델명은 원문 표기 유지. 수식/표기(예: SE(3), equivariance, flow objective)는 명확성을 높일 때만 포함하고, 문장은 기술적·정밀·방법론 중심으로 작성하라. Appendix에는 재현 체크리스트(필수 파일, 주요 하이퍼파라미터, 평가 스크립트 가정)와 용어/기호표를 포함하라.</p>
+<h2>References</h2>
+<ol>
+<li>2601.16955v1.pdf — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_pdf_2601.16955v1.pdf-7e9e966d.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/pdf/2601.16955v1.pdf" class="viewer-link">file</a></li>
+<li>method.tex — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_method.tex-f5ad01de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/method.tex" class="viewer-link">file</a></li>
+<li>appendix.tex — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_appendix.tex-b567ba03.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/appendix.tex" class="viewer-link">file</a></li>
+<li>visuals — <a href="./archive/arxiv/src/2601.16955/visuals/">file</a></li>
+<li>2601.16955v1.txt — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_text_2601.16955v1.txt-e12ba5fb.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/text/2601.16955v1.txt" class="viewer-link">file</a></li>
+<li>experiments.tex — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_experiments.tex-d5621cdf.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/experiments.tex" class="viewer-link">file</a></li>
+<li>distribution_qmugs_middle_threshold.pdf — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_entity_distributions_distribution_qmugs_mid-591ac228.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_entity_distributions_distribution_qmugs_mid-591ac228.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf" class="viewer-link">file</a></li>
+<li>frag_comparison.png — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_ablations_frag_comparison.png-f34cccd6.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_visuals_ablations_frag_comparison.png-f34cccd6.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/visuals/ablations/frag_comparison.png" class="viewer-link">file</a></li>
+<li>background.tex — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_background.tex-b7a7d0d2.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_contents_background.tex-b7a7d0d2.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/contents/background.tex" class="viewer-link">file</a></li>
+<li>00README.json — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_00README.json-d8a9b3f6.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_2601.16955_00README.json-d8a9b3f6.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src/2601.16955/00README.json" class="viewer-link">file</a></li>
+<li>src_manifest.jsonl — <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_manifest.jsonl-5fb67b9e.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_arxiv_src_manifest.jsonl-5fb67b9e.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/arxiv/src_manifest.jsonl" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-27 06:46:54</li>
+<li>Duration: 00:04:40 (280.08s)</li>
+<li>Model: gpt-5-mini</li>
+<li>Quality model: gpt-5-mini</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: technical_deep_dive</li>
+<li>Language: Korean</li>
+<li>Tags: 모티프, flow, 평가, arxiv, rigid</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview.md-40ef65a9.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview.md-40ef65a9.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview_report_full_4.md-19b019fe.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_run_overview_report_full_4.md-19b019fe.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report/run_overview_report_full_4.md" class="viewer-link">./report/run_overview_report_full_4.md</a></li>
+<li>Report workflow: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_20260126_arxiv-3d_molgen-index.md-88f97152.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/archive_20260126_arxiv-3d_molgen-index.md-88f97152.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/archive/20260126_arxiv-3d_molgen-index.md" class="viewer-link">./archive/20260126_arxiv-3d_molgen-index.md</a></li>
+<li>Instruction file: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_20260126_arxiv-3d_molgen.txt-a1130df2.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_20260126_arxiv-3d_molgen.txt-a1130df2.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/instruction/20260126_arxiv-3d_molgen.txt" class="viewer-link">./instruction/20260126_arxiv-3d_molgen.txt</a></li>
+<li>Report prompt: <a href="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_report_prompt_report_full_4.txt-c1c07740.html" data-viewer="../../../examples/runs/20260126_arxiv-3d_molgen/report_views/instruction_report_prompt_report_full_4.txt-c1c07740.html" data-raw="../../../examples/runs/20260126_arxiv-3d_molgen/instruction/report_prompt_report_full_4.txt" class="viewer-link">./instruction/report_prompt_report_full_4.txt</a></li>
+<li>Figure candidates: <a href="./report_views/figures_preview.html">./report_views/figures_preview.html</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>
