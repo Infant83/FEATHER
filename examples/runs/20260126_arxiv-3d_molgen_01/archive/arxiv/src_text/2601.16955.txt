@@ -1,0 +1,1047 @@
+
+
+===== appendix.tex =====
+\newpage
+\appendix
+\onecolumn
+\section{Supplementary Material}
+
+\subsection{Flow Matching in Euclidean Spaces}
+\label{Euclidean Flow}
+The task of generative modelling can be seen as transporting a sample $\mathbf{x}_0 \sim p(\mathbf{x})$ in $\mathbb{R}^d$ from a tractable prior distribution $p$ to a data sample $\mathbf{x}_1 \sim p^*(\mathbf{x})$ of the unknown data distribution $p^*$. In this formulation, the goal is thus to construct a \textit{probability density path} $p_t$, $t\in[0,1]$, such that $p_0 \approx p$, $p_1 \approx p^*$. 
+\textit{Flow matching} \cite{fm, fm1, fm2} approaches it by introducing a \textit{flow}, i.e., an \textit{interpolant}, $\phi_t(\mathbf{x}_0)$, such that $\mathbf{x}_t = \phi_t(\mathbf{x}_0) \sim p_t$ if $\mathbf{x}_0 \sim p_0$. One can model $\phi_t(\mathbf{x}_0)$ as a solution of an ordinary differential equation (ODE) with a time-varying \textit{vector field} $u_t(\mathbf{x}_t)\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ and the initial condition $\phi_0(\mathbf{x}_0) = \mathbf{x}_0$:
+\begin{equation*}
+\frac{d\mathbf{x}_t}{dt} = u_t(\mathbf{x}_t) \quad \text{and} \quad \phi_1(\mathbf{x}_0) = \mathbf{x}_0 + \int_0^1 u_t(\mathbf{x}_t) \, dt.
+\end{equation*}
+The training objective arises from regressing a neural network $v_\theta\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ to the vector field $u_t$:
+\begin{equation*}
+    \mathcal{L}_{\text{FM}}(\theta) = \mathbb{E}_{\substack{\mathbf{x}_t \sim p_t(\mathbf{x}) \\ t \sim \mathcal{U}(0, 1)}} \|v_\theta(\mathbf{x}_t, t) - u_t(\mathbf{x}_t)\|^2.
+\end{equation*}
+Computing this loss requires access to intractable $u_t(\mathbf{x})$ and $p_t$. It can be shown (e.g., \citealp{fm}) that optimising $\mathcal{L}_{\text{FM}}$ is equivalent in expectation to optimising the \textit{conditional flow matching} (CFM) objective $\mathcal{L}_{\text{CFM}}$:
+\begin{equation*}
+    \mathcal{L}_{\text{CFM}}(\theta) = \mathbb{E}_{\substack{\mathbf{z} \sim p(\mathbf{z}), \,\mathbf{x}_t \sim p_t(\mathbf{x} \mid \mathbf{z}) \\ t \sim \mathcal{U}(0, 1)}} \|v_\theta(\mathbf{x}_t, t) - u_t(\mathbf{x}_t \mid \mathbf{z})\|^2,
+\end{equation*}
+where $u_t(\mathbf{x} \mid \mathbf{z})\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ is a conditional vector field that generates a conditional probability path $p_t(\mathbf{x} \mid \mathbf{z})$. That is, instead of regressing over the marginal vector field, we regress over conditional vector fields. The conditioning is commonly done on the data point $\mathbf{z} = \mathbf{x}_1$ or on a source-target coupling $\mathbf{z} = (\mathbf{x}_0, \mathbf{x}_1)$ \cite{ot_cfm}.
+
+\subsection{Implementation Details} \label{Implementation Details}
+
+\paragraph{Architecture}
+Our model architecture is based on the \textsc{FoldFlow-Base} backbone \cite{foldflow}, which utilises Invariant Point Attention (IPA) \cite{alphafold2} to process 3D rigid frames. To adapt this protein-specific architecture for general rigid-motif molecular generation, we make several key modifications. We reduce the hidden dimension per attention head to $64$ for each of $8$ heads, resulting in a compact model size of $12.4$ million parameters for the unconditional model, compared to $17$ million in the original \textsc{FoldFlow-Base}. The conditional variant, \textsc{c}\oursacro, utilises $13.7$ million parameters due to the additional projection layers required for processing conditioning signals.
+
+\paragraph{Embeddings and Input Processing}
+The network accepts a set of noisy rigid frames $\mathbf{T}_t$ and discrete motif tokens $m_t$. The node embeddings are initialized by projecting the motif token embeddings, sinusoidal timestep embeddings, and, during training, with $50\%$ probability, the self-conditioning embeddings derived from the previous step's prediction.
+
+Unlike protein models that rely on residue index offsets for edge initialization, our motifs have no intrinsic linear ordering. Consequently, we replace sequence-based edge biases with purely geometric information. We compute pairwise Euclidean distances between the centers of rigid motifs and encode them using Gaussian Radial Basis Functions (RBFs) with $64$ basis functions. These geometric features are concatenated with the cross-concatenated node features to form the initial edge embeddings. The point cloud of fragments is treated as a fully connected graph, i.e., each pair of fragments is assigned an edge embedding.
+
+\paragraph{Backbone and Updates}
+The backbone consists of 4 blocks, each containing an IPA layer, transition modules, and 2 transformer encoder layers. To better capture the global geometric constraints of an unordered molecule, we augment the standard IPA blocks with triangle multiplicative updates \cite{alphafold2}. Specifically, we apply both outgoing and incoming triangle updates to the edge representations before the attention mechanism in every block.
+
+For the geometry updates, we employ a split-head design: the rotational update is predicted via a linear layer initialized to zero, while the translational update is predicted via a small 2-layer MLP.
+
+\paragraph{Conditioning}
+For conditional generation tasks, we follow the conditioning strategy of \citet{end}. The conditioning signal $\mathbf{c}$, i.e., either atom composition or substructure fingerprint, is encoded into a global context vector via a dedicated MLP. For composition conditioning, we learn embeddings for each atom type and compute a weighted sum based on the target counts before passing it to the MLP. This global context is injected into the network at three points: 
+\begin{enumerate*}[label=(\roman*)]
+    \item concatenated to the initial node embeddings,
+    \item added as a bias to the node representations within each IPA block, and
+    \item concatenated to the final node representations before the discrete readout head.
+\end{enumerate*}
+
+\paragraph{Training}
+We train the model using the flow matching objective described in Section \ref{Method}. For the rotational component of the $\mathrm{SE}(3)$ flow, we use the exponential rate scheduler \cite{foldflow} with the factor of 10, following \citet{se3diffusion}. In each experiment, we use learning rate of $10^{-4}$.
+
+\subsection{Experimental Details} \label{Experimental Details} 
+
+\subsubsection{Baseline Details} \label{Baseline Details}
+
+In this section, we briefly overview the baseline methods used for comparison in our experiments. All baselines are atom-based generative models that generate 3D molecules by determining the type and coordinates of individual atoms.
+
+\textbf{\textsc{EDM} \citep{edm}} is a seminal work that introduces a score-based generative model operating directly on the continuous coordinates and discrete atom types of the molecule. It utilizes an $\mathrm{E}(3)$-equivariant graph neural network \cite{engnn} to learn a denoising process that reverses a diffusion process, which transforms data into Gaussian noise. The model ensures that the generated likelihood is invariant to rotations and translations.
+
+\textbf{\textsc{EDM-Bridge} \citep{edm_bridge}} improves upon the \textsc{EDM} framework by replacing the standard Gaussian prior with an informative prior that contains structural or physical information. It learns a bridge process that connects this informative prior to the data distribution, utilizing Lyapunov functions to guide the generation and improve stability and validity.
+
+\textbf{\textsc{GeoLDM} \citep{geoldm}} is a latent diffusion framework for 3D molecules. Unlike \textsc{EDM}, which operates in the data space, \textsc{GeoLDM} first compresses molecular structures into a low-dimensional, continuous latent space using an $\mathrm{E}(3)$-invariant autoencoder. A diffusion model is then trained in this latent space, enabling more efficient sampling and the capture of high-level geometric features.
+
+\textbf{\textsc{EquiFM} \citep{equifm}} applies the flow matching framework to 3D molecular generation. It proposes a hybrid probability transport path: it uses optimal transport for continuous atomic coordinates to generate straight trajectories, and a conditional probability path for discrete atom types. This formulation allows significantly faster sampling speeds than diffusion-based equivalents while maintaining $\mathrm{SE}(3)$ equivariance.
+
+\textbf{\textsc{END} \citep{end}} is a recent diffusion-based method that introduces a learnable forward process. Unlike standard diffusion models that use a fixed, predefined corruption process (e.g., adding Gaussian noise), END parameterises the forward process with a time- and data-dependent transformation that is equivariant to rigid transformations. This flexibility allows the model to learn a more optimal degradation and restoration path for molecular geometries.
+
+\textbf{\textsc{GeoBFN} \citep{geobfn}} adapts the Bayesian flow network \cite{bfn} framework to 3D geometry. Instead of adding noise to the data directly, \textsc{GeoBFN} operates on the parameters of the data distribution (e.g., mean and variance for coordinates, probabilities for atom types). It updates these parameters iteratively using Bayesian inference and a neural network, unifying the generation of discrete and continuous modalities in a differentiable parameter space.
+
+\subsubsection{Evaluation Metrics} \label{Evaluation Metrics}
+
+We adopt the evaluation framework and metric definitions from previous works \cite{frag_fm, end, hierdiff}. All metrics are implemented using \texttt{rdkit} \cite{rdkit}. Consistent with the reference methodology \cite{frag_fm, end}, unless otherwise noted, raw generated coordinate samples are converted into molecular objects using \texttt{OpenBabel} \cite{openbabel} and property metrics are calculated exclusively on samples that are both valid and connected.
+
+\begin{itemize}
+    \item \textbf{Molecule Stability:} Atom stability is determined by valency constraints; an atom is stable if its charge is 0. Molecular stability requires every atom in the structure to be stable. Bond types are inferred from pairwise atomic distances using the lookup table method from \citet{edm}.
+
+    \item \textbf{Validity and Connectivity:} \textit{Validity} measures the percentage of generated samples that successfully pass \texttt{rdkit}'s parsing and sanitisation checks. However, standard sanitisation does not penalise disconnected molecules. To address this, particularly for larger molecules in \textsc{GEOM-Drugs} and \textsc{QMugs} datasets, we report \textit{Connectivity}, which verifies that a valid molecule consists of a single connected component.
+
+    \item \textbf{Uniqueness:} This metric reports the percentage of valid samples that possess a unique SMILES string \cite{smiles}. Following standard practice for larger molecules in \textsc{GEOM-Drugs} and \textsc{QMugs} datasets, we omit uniqueness from those results as generated samples are almost invariably unique.
+
+    \item \textbf{Total Variation (TV):} To measure the distributional fidelity of atom and bond types, we compute the total variation. This is defined as the mean absolute error between the marginal distributions of atom and bond types in the training set and those in the generated samples.
+
+    \item \textbf{Strain Energy:} This metric assesses the geometric quality of the molecules. It is calculated as the difference between the energy of the generated structure and the energy of its relaxed conformation. The relaxation is performed using the MMFF force field within \texttt{rdkit} \cite{rdkit}.
+
+    \item \textbf{Chemical Properties (SA, QED):} We report a couple of standard molecular descriptors:
+    \begin{itemize}
+        \item \textbf{SA:} The Synthetic Accessibility score \cite{sa_score} estimates the difficulty of synthesising a molecule. We follow \citet{end} and normalise this score to the interval $[0, 1]$, where 1 indicates high synthesisability (easy to synthesise) and 0 indicates low synthesisability.
+        \item \textbf{QED:} The Quantitative Estimation of Drug-likeness.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Extended Experimental Results} \label{Extended Results}
+
+\subsubsection{Unconditional Generation}
+\paragraph{\textsc{QM9}}
+We provide the extended results in Table \ref{qm9_uncond_extended}.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Extended results at unconditional generation on \textsc{QM9} with additional metrics from \citet{hierdiff}. $^\dagger$\citet{equifm} uses Dopri5 adaptive solver, with an average of $210$ function evaluations during sampling.}
+\label{qm9_uncond_extended}
+\begin{tabular}{@{} l c c c c c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{2}{c}{Stability ($\uparrow$)} & \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} & \multicolumn{2}{c}{TV ($\downarrow$)} & \multicolumn{1}{c}{Str. En. ($\downarrow$)} & \multirow{2}{*}{SA ($\uparrow$)} & \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(l){3-8}
+ & & A, \% & M, \% & V, \% & V $\times$ U, \% & A$\left[10^{-2}\right]$ & B$\left[10^{-3}\right]$ & $\Delta \text{E} \left[\frac{\text{kcal}}{\text{mol}}\right]$ & & \\
+\midrule
+\makecell[l]{Data} & -- & $99.0$ & $95.2$ & $97.7$ & $97.7$ & -- & -- & $7.7$ & $0.63$ & $0.46$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+% EDM block
+\makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} \\ (\scriptsize\citeyear{edm})}
+  & $10^3$ & $98.7$ & $82.0$ & $91.9$ & $90.7$ & -- & -- & -- & -- & -- \\
+\midrule
+
+% EDM-Bridge block
+\makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+  & $10^3$ & $98.8$ & $84.6$ & $92.0$ & $90.7$ & -- & -- & -- & -- & -- \\
+\midrule
+
+% GeoLDM block
+\makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+  & $10^3$ & $98.9_{\text{\tiny $\pm$.1}}$ & $89.4_{\text{\tiny $\pm$.5}}$ & $93.8_{\text{\tiny $\pm$.4}}$ & $92.7_{\text{\tiny $\pm$.5}}$ & $1.6$ & $1.3$ & $10.4$ & -- & -- \\
+\midrule
+
+% EquiFM block
+\makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+  & $-^{\dagger}$ & 
+  $98.9_{\text{\tiny $\pm$.1}}$ & $88.3_{\text{\tiny $\pm$.3}}$ & 
+  $94.7_{\text{\tiny $\pm$.4}}$ & $93.5_{\text{\tiny $\pm$.3}}$ &
+  -- & -- & -- & -- & -- \\
+\midrule
+
+% END block
+\multirow{5}{*}{\makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}} 
+  & $50$   & $98.6_{\text{\tiny $\pm$.0}}$ & $84.6_{\text{\tiny $\pm$.1}}$ & $92.7_{\text{\tiny $\pm$.1}}$ & $91.4_{\text{\tiny $\pm$.1}}$ & $1.5_{\text{\tiny $\pm$.1}}$ & $1.9_{\text{\tiny $\pm$.4}}$ & $12.1_{\text{\tiny $\pm$.3}}$ & $0.60_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.8_{\text{\tiny $\pm$.0}}$ & $87.4_{\text{\tiny $\pm$.2}}$ & $94.1_{\text{\tiny $\pm$.0}}$ & $92.3_{\text{\tiny $\pm$.2}}$ & $1.3_{\text{\tiny $\pm$.0}}$ & $1.8_{\text{\tiny $\pm$.3}}$ & $10.6_{\text{\tiny $\pm$.2}}$ & $0.61_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $250$  & $98.9_{\text{\tiny $\pm$.1}}$ & $88.8_{\text{\tiny $\pm$.5}}$ & $94.7_{\text{\tiny $\pm$.2}}$ & $92.6_{\text{\tiny $\pm$.1}}$ & $1.2_{\text{\tiny $\pm$.1}}$ & $0.8_{\text{\tiny $\pm$.2}}$ & $9.6_{\text{\tiny $\pm$.2}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $500$  & $98.9_{\text{\tiny $\pm$.0}}$ & $88.8_{\text{\tiny $\pm$.4}}$ & $94.8_{\text{\tiny $\pm$.2}}$ & $92.8_{\text{\tiny $\pm$.2}}$ & $1.2_{\text{\tiny $\pm$.1}}$ & $0.8_{\text{\tiny $\pm$.5}}$ & $9.5_{\text{\tiny $\pm$.1}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $10^3$ & $98.9_{\text{\tiny $\pm$.0}}$ & $89.1_{\text{\tiny $\pm$.1}}$ & $94.8_{\text{\tiny $\pm$.1}}$ & $92.6_{\text{\tiny $\pm$.2}}$ & $1.2_{\text{\tiny $\pm$.1}}$ & $0.8_{\text{\tiny $\pm$.5}}$ & $9.3_{\text{\tiny $\pm$.1}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% EDM* block
+\multirow{5}{*}{\makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}} 
+  & $50$   & $97.6_{\text{\tiny $\pm$.0}}$ & $77.6_{\text{\tiny $\pm$.5}}$ & $90.2_{\text{\tiny $\pm$.2}}$ & $89.2_{\text{\tiny $\pm$.2}}$ & $4.6_{\text{\tiny $\pm$.1}}$ & $1.7_{\text{\tiny $\pm$.5}}$ & $16.4_{\text{\tiny $\pm$.2}}$ & $0.61_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.1_{\text{\tiny $\pm$.0}}$ & $81.9_{\text{\tiny $\pm$.4}}$ & $92.1_{\text{\tiny $\pm$.2}}$ & $90.9_{\text{\tiny $\pm$.2}}$ & $3.5_{\text{\tiny $\pm$.1}}$ & $1.4_{\text{\tiny $\pm$.3}}$ & $13.5_{\text{\tiny $\pm$.1}}$ & $0.61_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $250$  & $98.3_{\text{\tiny $\pm$.0}}$ & $84.3_{\text{\tiny $\pm$.1}}$ & $93.2_{\text{\tiny $\pm$.4}}$ & $91.7_{\text{\tiny $\pm$.3}}$ & $2.8_{\text{\tiny $\pm$.2}}$ & $1.3_{\text{\tiny $\pm$.4}}$ & $12.3_{\text{\tiny $\pm$.4}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $500$  & $98.4_{\text{\tiny $\pm$.0}}$ & $85.2_{\text{\tiny $\pm$.5}}$ & $93.5_{\text{\tiny $\pm$.2}}$ & $92.2_{\text{\tiny $\pm$.3}}$ & $2.6_{\text{\tiny $\pm$.2}}$ & $1.3_{\text{\tiny $\pm$.4}}$ & $11.7_{\text{\tiny $\pm$.1}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+  & $10^3$ & $98.4_{\text{\tiny $\pm$.0}}$ & $85.3_{\text{\tiny $\pm$.3}}$ & $93.5_{\text{\tiny $\pm$.1}}$ & $91.9_{\text{\tiny $\pm$.1}}$ & $2.5_{\text{\tiny $\pm$.1}}$ & $1.4_{\text{\tiny $\pm$.4}}$ & $11.3_{\text{\tiny $\pm$.1}}$ & $0.62_{\text{\tiny $\pm$.00}}$ & $0.46_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% GeoBFN block
+\multirow{4}{*}{\makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}} 
+  & $50$   & $98.3_{\text{\tiny $\pm$.1}}$ & $85.1_{\text{\tiny $\pm$.5}}$ & $92.3_{\text{\tiny $\pm$.4}}$ & $90.7_{\text{\tiny $\pm$.3}}$ & -- & -- & -- & -- & -- \\
+  & $100$  & $98.6_{\text{\tiny $\pm$.1}}$ & $87.2_{\text{\tiny $\pm$.3}}$ & $93.0_{\text{\tiny $\pm$.3}}$ & $91.5_{\text{\tiny $\pm$.3}}$ & -- & -- & -- & -- & -- \\
+  & $500$  & $98.8_{\text{\tiny $\pm$.8}}$ & $88.4_{\text{\tiny $\pm$.2}}$ & $93.4_{\text{\tiny $\pm$.2}}$ & $91.8_{\text{\tiny $\pm$.2}}$ & -- & -- & -- & -- & -- \\
+  & $10^3$ & $99.1_{\text{\tiny $\pm$.1}}$ & $90.9_{\text{\tiny $\pm$.2}}$ & $95.3_{\text{\tiny $\pm$.1}}$ & $93.0_{\text{\tiny $\pm$.1}}$ & -- & -- & -- & -- & -- \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  & $50$   & $99.1_{\text{\tiny $\pm$.0}}$ & $92.3_{\text{\tiny $\pm$.3}}$ & $96.6_{\text{\tiny $\pm$.1}}$ & $88.4_{\text{\tiny $\pm$.2}}$ & $2.41_{\text{\tiny $\pm$.08}}$ & $2.2_{\text{\tiny $\pm$.3}}$ & $13.6_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $99.1_{\text{\tiny $\pm$.1}}$ & $92.6_{\text{\tiny $\pm$.5}}$ & $95.3_{\text{\tiny $\pm$.6}}$ & $86.3_{\text{\tiny $\pm$.9}}$ & $2.24_{\text{\tiny $\pm$.10}}$ & $2.7_{\text{\tiny $\pm$.4}}$ & $10.3_{\text{\tiny $\pm$.4}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+We observed no improvement in generation when setting more than $100$ steps in the sampling process, consistent with the evidence that flow models generally require fewer steps than diffusion models \cite{fm}. We used a linear schedule for sampling temperature in the discrete flow, with a minimum of $1.0$ and a maximum of $1.5$. For all \textsc{QM9} experiments, we set the remasking probability $\eta$ \cite{discrete_flows} in the discrete flow to zero, thus disabling it.
+
+On \textsc{QM9}, we train all models for $1000$ epochs.
+
+\paragraph{\textsc{GEOM-Drugs}} We follow \citet{edm} and opt not to report the molecular stability, neither inferring it via their lookup tables nor via \texttt{OpenBabel}, since the latter introduces significant bias and errors \cite{codesign}. We used a fixed sampling temperature of $0.1$ in the discrete flow. For \textsc{GEOM-Drugs}, we set the remasking probability in the discrete flow to $\eta = 1.5$.
+
+We train the model for $135$ epochs. The extended results are provided in Table \ref{geom_uncond_extended}.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{10.2pt}
+\caption{Extended results at unconditional generation on GEOM-Drugs. $^\dagger$\citet{equifm} uses Dopri5 adaptive solver, with an average of $210$ function evaluations during sampling. Results obtained by \citet{end} on the model of \citet{geoldm} are denoted with $\ddagger$.}
+\label{geom_uncond_extended}
+\begin{tabular}{@{} l c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{1}{c}{Stability} & \multicolumn{1}{c}{V $\times$ C} & \multicolumn{1}{c}{TV ($\downarrow$)} & \multirow{2}{*}{SA ($\uparrow$)} & \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5}
+ & & A, \% ($\uparrow$) & \% ($\uparrow$) & A$\left[10^{-2}\right]$ & & \\
+\midrule
+\makecell[l]{Data} & -- & $86.5$ & $99.0$ & -- & $0.83$ & $0.67$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+% EDM block
+\makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} \\ (\scriptsize\citeyear{edm})}
+  & $10^3$ & $81.3$ & -- & -- & -- & -- \\
+\midrule
+
+% EDM-Bridge block
+\makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+  & $10^3$ & $82.4$ & -- & -- & -- & -- \\
+\midrule
+
+% GeoLDM block
+\makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+  & $10^3$ & $84.4$ & $45.8^{\ddagger}$  & $10.6$ & -- & -- \\
+\midrule
+
+% EquiFM block
+\makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+  & $-^{\dagger}$ & 
+  $84.1$ & -- & 
+  -- & -- & -- \\
+\midrule
+
+% END block
+\multirow{5}{*}{\makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}} 
+  & $50$   & $87.1_{\text{\tiny $\pm$.1}}$ & $66.0_{\text{\tiny $\pm$.4}}$ & $5.9_{\text{\tiny $\pm$.1}}$ &  $0.62_{\text{\tiny $\pm$.00}}$ & $0.48_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $87.2_{\text{\tiny $\pm$.1}}$ & $73.7_{\text{\tiny $\pm$.4}}$ & $4.5_{\text{\tiny $\pm$.1}}$ &  $0.66_{\text{\tiny $\pm$.00}}$ & $0.55_{\text{\tiny $\pm$.00}}$ \\
+  & $250$  & $87.1_{\text{\tiny $\pm$.1}}$ & $77.4_{\text{\tiny $\pm$.4}}$ & $3.5_{\text{\tiny $\pm$.0}}$ &  $0.69_{\text{\tiny $\pm$.00}}$ & $0.58_{\text{\tiny $\pm$.00}}$ \\
+  & $500$  & $87.0_{\text{\tiny $\pm$.0}}$ & $78.6_{\text{\tiny $\pm$.3}}$ & $3.3_{\text{\tiny $\pm$.0}}$ &  $0.70_{\text{\tiny $\pm$.00}}$ & $0.59_{\text{\tiny $\pm$.00}}$ \\
+  & $10^3$ & $87.0_{\text{\tiny $\pm$.0}}$ & $79.4_{\text{\tiny $\pm$.4}}$ & $3.0_{\text{\tiny $\pm$.0}}$ &  $0.70_{\text{\tiny $\pm$.00}}$ & $0.59_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% EDM* block
+\multirow{5}{*}{\makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}} 
+  & $50$   & $84.7_{\text{\tiny $\pm$.0}}$ & $46.6_{\text{\tiny $\pm$.3}}$ & $10.5_{\text{\tiny $\pm$.1}}$ &  $0.59_{\text{\tiny $\pm$.00}}$ & $0.48_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $85.2_{\text{\tiny $\pm$.1}}$ & $56.2_{\text{\tiny $\pm$.4}}$ & $8.0_{\text{\tiny $\pm$.1}}$ &  $0.61_{\text{\tiny $\pm$.00}}$ & $0.53_{\text{\tiny $\pm$.00}}$ \\
+  & $250$  & $85.4_{\text{\tiny $\pm$.0}}$ & $61.4_{\text{\tiny $\pm$.6}}$ & $6.7_{\text{\tiny $\pm$.1}}$ &  $0.63_{\text{\tiny $\pm$.00}}$ & $0.56_{\text{\tiny $\pm$.00}}$ \\
+  & $500$  & $85.4_{\text{\tiny $\pm$.0}}$ & $63.4_{\text{\tiny $\pm$.1}}$ & $6.4_{\text{\tiny $\pm$.1}}$ &  $0.64_{\text{\tiny $\pm$.00}}$ & $0.57_{\text{\tiny $\pm$.00}}$ \\
+  & $10^3$ & $85.3_{\text{\tiny $\pm$.1}}$ & $64.2_{\text{\tiny $\pm$.6}}$ & $6.2_{\text{\tiny $\pm$.0}}$ &  $0.64_{\text{\tiny $\pm$.00}}$ & $0.57_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% GeoBFN block
+\multirow{4}{*}{\makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}} 
+  & $50$ & $75.1$ & -- & -- & -- & -- \\
+  & $100$  & $78.9$ & -- & -- & -- & -- \\
+  & $500$  & $81.4$ & -- & -- & -- & -- \\
+  & $10^3$ & $85.6$ & -- & -- & -- & -- \\
+\midrule
+% Our block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  & $50$ & $96.2_{\text{\tiny $\pm$.0}}$ & $81.3_{\text{\tiny $\pm$.2}}$  & $8.1_{\text{\tiny $\pm$.1}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $0.72_{\text{\tiny $\pm$.00}}$ \\
+  & $100$ & $96.3_{\text{\tiny $\pm$.0}}$ & $82.4_{\text{\tiny $\pm$.2}}$  & $7.4_{\text{\tiny $\pm$.1}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $0.72_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{visuals/uncond_samples/geom.png} 
+    \caption{Randomly selected molecules that are sampled unconditionally from \oursacro trained on \textsc{GEOM-Drugs}.}
+    \label{uncond_geom_appendix}
+    \vspace{5mm}
+    \includegraphics[width=\textwidth]{visuals/uncond_samples/qmugs.png} 
+    \caption{Randomly selected molecules that are sampled unconditionally from \oursacro trained on \textsc{QMugs}.}
+    \label{uncond_qmugs_appendix}
+\end{figure}
+
+\subsubsection{Conditional Generation}
+
+Results on the atom composition and substructural features conditioning with additional generation steps configurations are reflected in Table \ref{cond_gen_table_extended}. Figures \ref{composition_appendix} and \ref{substucture_appendix} present instances of conditionally sampled molecules for both tasks.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Results on atom composition and substructural features conditional generation tasks.}
+\label{cond_gen_table_extended}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{1}{c}{\textsc{Composition}} & \multicolumn{1}{c}{\textsc{Substructure}} \\ 
+\cmidrule(lr){3-3} \cmidrule(lr){4-4}
+ & & Matching, $\%$ ($\uparrow$) & Tanimoto Sim. ($\uparrow$) \\
+\midrule
+
+\makecell[l]{\textsc{cEDM} \\ \scriptsize\citet{eegsde}}
+  & $10^3$ & -- & $.671_{\text{\tiny $\pm$.004}}$ \\
+\midrule
+
+\makecell[l]{\textsc{EEGSDE} \\ \scriptsize\citet{eegsde}}
+  & $10^3$ & -- & $.750_{\text{\tiny $\pm$.003}}$ \\
+\midrule
+
+% cEDM* Block
+\multirow{5}{*}{\makecell[l]{\textsc{cEDM}* \\ \scriptsize\citet{end}}} 
+  & $50$   & $69.6_{\text{\tiny $\pm$0.6}}$ & $.601_{\text{\tiny $\pm$.000}}$ \\
+  & $100$  & $73.0_{\text{\tiny $\pm$0.6}}$ & $.640_{\text{\tiny $\pm$.002}}$ \\
+  & $250$  & $74.1_{\text{\tiny $\pm$1.4}}$ & $.663_{\text{\tiny $\pm$.002}}$ \\
+  & $500$  & $76.2_{\text{\tiny $\pm$0.6}}$ & $.669_{\text{\tiny $\pm$.001}}$ \\
+  & $10^3$ & $75.5_{\text{\tiny $\pm$0.5}}$ & $.673_{\text{\tiny $\pm$.002}}$ \\
+\midrule
+
+% cEND Block
+\multirow{5}{*}{\makecell[l]{\textsc{cEND} \\ \scriptsize\citet{end}}} 
+  & $50$   & $89.2_{\text{\tiny $\pm$0.8}}$ & $.783_{\text{\tiny $\pm$.001}}$ \\
+  & $100$  & $90.1_{\text{\tiny $\pm$1.0}}$ & $.807_{\text{\tiny $\pm$.001}}$ \\
+  & $250$  & $91.2_{\text{\tiny $\pm$0.8}}$ & $.819_{\text{\tiny $\pm$.001}}$ \\
+  & $500$  & $91.5_{\text{\tiny $\pm$0.8}}$ & $.825_{\text{\tiny $\pm$.001}}$ \\
+  & $10^3$ & $91.0_{\text{\tiny $\pm$0.9}}$ & $.828_{\text{\tiny $\pm$.001}}$ \\
+\midrule
+
+% Our block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  & $50$   & $92.2_{\text{\tiny $\pm$0.4}}$ & $.830_{\text{\tiny $\pm$.001}}$ \\
+  & $100$  & $95.4_{\text{\tiny $\pm$0.5}}$ & $.862_{\text{\tiny $\pm$.002}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[h]
+    \centering
+    % First Image
+    \includegraphics[width=0.65\columnwidth]{visuals/cond_generation/composition_appendix.png}
+    \caption{Randomly chosen samples from the atom composition conditional task.}
+    \label{composition_appendix}
+    
+    \vspace{2mm}
+    
+    % Second Image
+    \includegraphics[width=0.65\columnwidth]{visuals/cond_generation/substructure_appendix.png}
+    \caption{Randomly chosen samples from the fingerprint substructure conditional task.}
+    \label{substucture_appendix}
+\end{figure}
+
+\subsubsection{Ablation Details} \label{Ablation Details}
+
+\textbf{Fragmentation statistics}: in Section \ref{Ablations}, we compare our proposed \textsc{Planar Rings} decomposition strategy against a fine-grained \textsc{No Rings} variant and across different occurrence thresholds $\alpha$. Here, we provide detailed statistics on these decompositions for the training subsets of \textsc{GEOM-Drugs} and \textsc{QMugs}.
+
+\textbf{Dataset properties}: the general statistics of the molecules in the training splits used for the ablation studies are summarised in Table \ref{tab:dataset_stats}. \textsc{QMugs} contains generally larger and heavier molecules than \textsc{GEOM-Drugs}.
+
+\begin{table}[h]
+    \centering
+    \small
+    \caption{Statistics of the training subsets of the datasets used in the ablation study.}
+    \label{tab:dataset_stats}
+    \begin{tabular}{@{}l ccc ccc@{}}
+    \toprule
+    \multirow{2}{*}{Dataset} & \multicolumn{3}{c}{Total Atoms} & \multicolumn{3}{c}{Heavy Atoms} \\
+    \cmidrule(lr){2-4} \cmidrule(l){5-7}
+     & Mean & Median & Max & Mean & Median & Max \\
+    \midrule
+    \textsc{GEOM-Drugs} & $45.2$ & $45.0$ & $143$ & $25.3$ & $25.0$ & $77$ \\
+    \textsc{QMugs}      & $53.6$ & $52.0$ & $178$ & $29.9$ & $29.0$ & $96$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Fragmentation settings}: the \textsc{No Rings} strategy decomposes molecules by cutting all bonds except those to hydrogens and double/triple bonds, effectively breaking rings. For the \textsc{Planar Rings} strategy, we vary the hyperparameter $\alpha$, reported as a percentage of the total dataset size. This threshold determines the minimum absolute occurrence count required for a motif to be retained in the vocabulary $\mathcal{V}_m$; motifs appearing less frequently are recursively decomposed. 
+
+Table \ref{tab:frag_stats} details the resulting fragment statistics. We observe that lower $\alpha$ thresholds (e.g., $0.01\%$) lead to a larger vocabulary with larger motifs up to 23 atoms and fewer fragments per molecule. Conversely, the \textsc{No Rings} baseline yields the highest number of fragments per molecule with the smallest maximum fragment size. Note that the fragment size includes necessary dummy atoms added to lock the coordinate frames of collinear or single-atom motifs. Across all configurations and datasets, the maximum size of the discrete symmetry group $|\mathcal{S}_i|$ encountered for any motif was 12.
+
+\begin{table}[h]
+    \centering
+    \small
+    \setlength{\tabcolsep}{4.8pt}
+    \caption{Detailed statistics of the ablated rigid-motif decomposition strategies. The \textit{Cut-off} column indicates the absolute number of occurrences required for a motif to be preserved in the vocabulary. \textit{Max. Size} denotes the maximum number of atoms, including dummy ones, in a single motif.}
+    \label{tab:frag_stats}
+    \begin{tabular}{@{}l l c ccc c@{}}
+    \toprule
+    \multirow{2}{*}{Dataset} & \multirow{2}{*}{Fragmentation} & \multirow{2}{*}{Cut-off} & \multicolumn{3}{c}{Fragments per molecule} & \multirow{2}{*}{Max. Size} \\
+    \cmidrule(lr){4-6}
+     & & & Mean & Median & Max & \\
+    \midrule
+    \multirow{4}{*}{\textsc{GEOM-Drugs}} 
+      & \textsc{No Rings} & -- & $16.8$ & $17.0$ & $57$ & $6$ \\
+      & \textsc{Planar Rings} \scriptsize $0.5\%$ & $964$ & $13.7$ & $13.0$ & $57$ & $17$ \\
+      & \textsc{Planar Rings} \scriptsize $0.1\%$  & $192$ & $13.1$ & $13.0$ & $57$ & $17$ \\
+      & \textsc{Planar Rings} \scriptsize $0.01\%$ & $19$ & $12.7$ & $12.0$ & $57$ & $23$ \\
+    \midrule
+    \multirow{4}{*}{\textsc{QMugs}} 
+      & \textsc{No Rings} & -- & $19.9$ & $19.0$ & $80$ & $6$ \\
+      & \textsc{Planar Rings} \scriptsize $0.5\%$  & $1419$ & $16.7$ & $16.0$ & $78$ & $17$ \\
+      & \textsc{Planar Rings} \scriptsize $0.1\%$  & $283$ & $15.9$ & $15.0$ & $78$ & $17$ \\
+      & \textsc{Planar Rings} \scriptsize $0.01\%$ & $28$ & $15.3$ & $15.0$ & $78$ & $23$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+We provide the extended results of our ablation study on the unconditional performance of different fragmentation methods in Table \ref{ablation_extended}. The training on \textsc{GEOM-Drugs} is done for $70$ epochs, and for $50$ epochs on \textsc{QMugs}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{4.8pt}
+\caption{Extended ablation results for the unconditional generation on \textsc{GEOM-Drugs} and \textsc{QMugs} for various fragmentation strategies.}
+\label{ablation_extended}
+\begin{tabular}{@{} l c ccccc ccccc @{}}
+\toprule
+\multirow{3}{*}{Fragmentation} & \multirow{3}{*}{Steps} & \multicolumn{5}{c}{\textsc{QMugs}} & \multicolumn{5}{c}{\textsc{GEOM-Drugs}} \\ 
+\cmidrule(lr){3-7} \cmidrule(l){8-12}
+ & & \multicolumn{1}{c}{Stability} & \multicolumn{1}{c}{V $\times$ C} & \multirow{2}{*}{SA ($\uparrow$)} & \multirow{2}{*}{QED ($\uparrow$)} & \multicolumn{1}{c}{TV ($\uparrow$)} & \multicolumn{1}{c}{Stability} & \multicolumn{1}{c}{V $\times$ C} & \multirow{2}{*}{SA ($\uparrow$)} & \multirow{2}{*}{QED ($\uparrow$)} & \multicolumn{1}{c}{TV ($\uparrow$)} \\
+ \cmidrule(lr){3-4} \cmidrule(lr){7-7} \cmidrule(lr){8-9} \cmidrule(l){12-12}
+ & & A, \% ($\uparrow$) & \% ($\uparrow$) & & & A $\left[10^{-2}\right]$ & A, \% ($\uparrow$) & \% ($\uparrow$) & & & A$\left[10^{-2}\right]$\\
+\midrule
+
+\multirow{2}{*}{{\textsc{No Rings}}}
+  & $50$ & $86.5_{\text{\tiny $\pm$0.6}}$ & $83.0_{\text{\tiny $\pm$.2}}$ & $0.74_{\text{\tiny $\pm$.00}}$ & $0.51_{\text{\tiny $\pm$.00}}$ & $5.12_{\text{\tiny $\pm$.06}}$ & $89.1_{\text{\tiny $\pm$0.7}}$ & $80.9_{\text{\tiny $\pm$.2}}$ & $0.71_{\text{\tiny $\pm$.00}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $3.57_{\text{\tiny $\pm$.05}}$ \\
+  & $100$ & $85.5_{\text{\tiny $\pm$1.8}}$ & $85.6_{\text{\tiny $\pm$.3}}$ & $0.74_{\text{\tiny $\pm$.00}}$ & $0.50_{\text{\tiny $\pm$.00}}$ & $4.98_{\text{\tiny $\pm$.06}}$ & $86.7_{\text{\tiny $\pm$1.8}}$ & $82.9_{\text{\tiny $\pm$.4}}$ & $0.71_{\text{\tiny $\pm$.00}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $3.36_{\text{\tiny $\pm$.08}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.5\%$}}
+  & $50$  & $95.1_{\text{\tiny $\pm$0.1}}$ & $82.2_{\text{\tiny $\pm$.8}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $0.60_{\text{\tiny $\pm$.00}}$ & $8.56_{\text{\tiny $\pm$.04}}$ & $94.9_{\text{\tiny $\pm$0.0}}$ & $81.3_{\text{\tiny $\pm$.4}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.71_{\text{\tiny $\pm$.00}}$ & $4.47_{\text{\tiny $\pm$.02}}$ \\
+  & $100$ & $95.5_{\text{\tiny $\pm$0.1}}$ & $84.0_{\text{\tiny $\pm$.5}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $0.60_{\text{\tiny $\pm$.00}}$ & $8.08_{\text{\tiny $\pm$.17}}$ & $95.2_{\text{\tiny $\pm$0.1}}$ & $82.1_{\text{\tiny $\pm$.3}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.71_{\text{\tiny $\pm$.00}}$ & $4.24_{\text{\tiny $\pm$.14}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.1\%$}}
+  & $50$  & $95.7_{\text{\tiny $\pm$0.0}}$ & $81.6_{\text{\tiny $\pm$.3}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $0.58_{\text{\tiny $\pm$.00}}$ & $8.47_{\text{\tiny $\pm$.08}}$ & $94.8_{\text{\tiny $\pm$0.0}}$ & $79.6_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.68_{\text{\tiny $\pm$.00}}$ & $4.45_{\text{\tiny $\pm$.12}}$ \\
+  & $100$ & $96.1_{\text{\tiny $\pm$0.0}}$ & $83.1_{\text{\tiny $\pm$.4}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $0.58_{\text{\tiny $\pm$.00}}$ & $8.01_{\text{\tiny $\pm$.22}}$ & $95.0_{\text{\tiny $\pm$0.0}}$ & $81.2_{\text{\tiny $\pm$.3}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $0.68_{\text{\tiny $\pm$.00}}$ & $3.93_{\text{\tiny $\pm$.09}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.01\%$}}
+  & $50$  & $95.1_{\text{\tiny $\pm$0.0}}$ & $78.8_{\text{\tiny $\pm$.3}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $0.49_{\text{\tiny $\pm$.01}}$ & $11.62_{\text{\tiny $\pm$.11}}$ & $96.2_{\text{\tiny $\pm$0.0}}$ & $81.3_{\text{\tiny $\pm$.2}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $8.07_{\text{\tiny $\pm$.06}}$ \\
+  & $100$ & $95.3_{\text{\tiny $\pm$0.0}}$ & $80.4_{\text{\tiny $\pm$.5}}$ & $0.73_{\text{\tiny $\pm$.00}}$ & $0.49_{\text{\tiny $\pm$.00}}$ & $11.10_{\text{\tiny $\pm$.03}}$ & $96.3_{\text{\tiny $\pm$0.0}}$ & $82.4_{\text{\tiny $\pm$.3}}$ & $0.69_{\text{\tiny $\pm$.00}}$ & $0.72_{\text{\tiny $\pm$.00}}$ & $7.43_{\text{\tiny $\pm$.05}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\paragraph{Architectural Ablations} We ablate the design choices used in our main method presented in Section \ref{Method} on the unconditional generation with \textsc{QM9}. The results are summarised in Table \ref{qm9_architecture_ablation}.
+
+\textbf{Discrete Prior}: we first evaluate the choice of the prior distribution for the discrete flow. While our default method uses a masking prior $m_0 = [\text{MASK}]$, the \textsc{Uniform Prior} variant employs a probability path that interpolates from a uniform categorical distribution over the vocabulary $\mathcal{V}_m$ to the target class.
+
+\textbf{Motif Symmetry Handling}: to validate our dynamic alignment strategy, we compare it against three alternative approaches for handling motif symmetries. First, we consider a naive baseline \textsc{No} $\mathcal{L}_{\textsc{GeoDiff}}$ that ignores symmetry, regressing directly towards the arbitrary orientation fixed during preprocessing. Second, in \textsc{With} $\mathcal{L}_{\textsc{AF3}}$, we test the alignment mechanism from \textsc{AlphaFold3} \cite{alphafold3}, which aligns the target frame to the model's prediction $\hat{\mathbf{R}}_1$ rather than the noisy input $\mathbf{R}_t$. Third, instead of resolving symmetries analytically in the loss, we employ data augmentation in the \textsc{With Augmentation} variant, where we randomly sample a symmetry element $\mathbf{S} \in \mathcal{S}_k$ from the motif's orbit at each training step and apply it to the target: $\tilde{\mathbf{R}}_1^k \leftarrow \mathbf{R}_1^k \mathbf{S}$.
+
+\textbf{Backbone Components}: finally, we assess the contributions of specific architectural features. We evaluate the model performance without the triangle multiplicative updates in \textsc{No} $\Delta$-\textsc{Update}. Additionally, we train a variant with \textsc{No Self-Conditioning} to measure the impact of feeding the model's own discrete predictions of the clean motif types $\hat{m}_1$ back as input.
+
+The results indicate that the most influential factor on the quality of unconditional generation is the removal of the triangle multiplicative update, confirming our hypothesis that it is useful for efficient modelling of unstructured molecular fragments. We did not observe a significant effect from applying data augmentation, since, strictly speaking, the target rotations are already chosen arbitrarily from equivalent orientations during preprocessing. Overall, our base method performs best, and thus reinforces the design choices outlined in Section \ref{Method}.
+
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{5.3pt}
+\caption{Architectural ablations on \textsc{QM9}.}
+\label{qm9_architecture_ablation}
+\begin{tabular}{@{} l c c c c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{2}{c}{Stability ($\uparrow$)} & \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} & \multicolumn{2}{c}{TV ($\downarrow$)} & \multicolumn{1}{c}{Str. En. ($\downarrow$)} & \multirow{2}{*}{SA ($\uparrow$)} & \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(l){3-8}
+ & & A, \% & M, \% & V, \% & V $\times$ U, \% & A$\left[10^{-2}\right]$ & B$\left[10^{-3}\right]$ & $\Delta \text{E} \left[\frac{\text{kcal}}{\text{mol}}\right]$ & & \\
+\midrule
+\makecell[l]{Data} & -- & $99.0$ & $95.2$ & $97.7$ & $97.7$ & -- & -- & $7.7$ & $0.63$ & $0.46$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+\multirow{2}{*}{\makecell[l]{\textsc{Uniform} \\ \textsc{Prior}}}
+  & $50$   & $98.7_{\text{\tiny $\pm$.1}}$ & $90.8_{\text{\tiny $\pm$.1}}$ & $95.2_{\text{\tiny $\pm$.5}}$ & $89.2_{\text{\tiny $\pm$.5}}$ & $1.42_{\text{\tiny $\pm$.06}}$ & $12.2_{\text{\tiny $\pm$.6}}$ & $14.3_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.7_{\text{\tiny $\pm$.1}}$ & $90.4_{\text{\tiny $\pm$.4}}$ & $93.5_{\text{\tiny $\pm$.3}}$ & $87.5_{\text{\tiny $\pm$.4}}$ & $1.38_{\text{\tiny $\pm$.09}}$ & $15.2_{\text{\tiny $\pm$.2}}$ & $10.7_{\text{\tiny $\pm$.1}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No} $\mathcal{L}_{\textsc{GeoDiff}}$}}
+  & $50$   & $98.6_{\text{\tiny $\pm$.0}}$ & $89.5_{\text{\tiny $\pm$.2}}$ & $95.5_{\text{\tiny $\pm$.1}}$ & $88.7_{\text{\tiny $\pm$.5}}$ & $2.35_{\text{\tiny $\pm$.05}}$ & $4.9_{\text{\tiny $\pm$.5}}$ & $16.5_{\text{\tiny $\pm$.2}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.9_{\text{\tiny $\pm$.0}}$ & $90.8_{\text{\tiny $\pm$.2}}$ & $94.5_{\text{\tiny $\pm$.1}}$ & $88.0_{\text{\tiny $\pm$.4}}$ & $2.35_{\text{\tiny $\pm$.08}}$ & $6.4_{\text{\tiny $\pm$.5}}$ & $11.8_{\text{\tiny $\pm$.1}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{With} $\mathcal{L}_{\textsc{AF3}}$}}
+  & $50$   & $98.5_{\text{\tiny $\pm$.0}}$ & $88.7_{\text{\tiny $\pm$.2}}$ & $93.8_{\text{\tiny $\pm$.2}}$ & $85.4_{\text{\tiny $\pm$.4}}$ & $2.81_{\text{\tiny $\pm$.04}}$ & $4.0_{\text{\tiny $\pm$.7}}$ & $16.6_{\text{\tiny $\pm$.6}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.6_{\text{\tiny $\pm$.1}}$ & $89.4_{\text{\tiny $\pm$.5}}$ & $92.4_{\text{\tiny $\pm$.5}}$ & $83.6_{\text{\tiny $\pm$.4}}$ & $2.87_{\text{\tiny $\pm$.05}}$ & $5.6_{\text{\tiny $\pm$1.5}}$ & $12.1_{\text{\tiny $\pm$.5}}$ & $0.71_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{With} \\ \textsc{Augmentation}}}
+  & $50$   & $98.8_{\text{\tiny $\pm$.0}}$ & $90.8_{\text{\tiny $\pm$.3}}$ & $95.9_{\text{\tiny $\pm$.1}}$ & $87.9_{\text{\tiny $\pm$.5}}$ & $2.44_{\text{\tiny $\pm$.05}}$ & $4.6_{\text{\tiny $\pm$.8}}$ & $15.4_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.8_{\text{\tiny $\pm$.0}}$ & $90.2_{\text{\tiny $\pm$.3}}$ & $93.5_{\text{\tiny $\pm$.3}}$ & $85.0_{\text{\tiny $\pm$.4}}$ & $2.32_{\text{\tiny $\pm$.07}}$ & $8.4_{\text{\tiny $\pm$1.3}}$ & $11.3_{\text{\tiny $\pm$.3}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No} \\ $\Delta$-\textsc{Update}}}
+  & $50$   & $98.3_{\text{\tiny $\pm$.1}}$ & $86.2_{\text{\tiny $\pm$.6}}$ & $93.4_{\text{\tiny $\pm$.4}}$ & $85.7_{\text{\tiny $\pm$.5}}$ & $2.28_{\text{\tiny $\pm$.08}}$ & $4.4_{\text{\tiny $\pm$.5}}$ & $16.9_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.2_{\text{\tiny $\pm$.1}}$ & $85.7_{\text{\tiny $\pm$1.4}}$ & $90.8_{\text{\tiny $\pm$1.4}}$ & $82.0_{\text{\tiny $\pm$1.3}}$ & $2.51_{\text{\tiny $\pm$.08}}$ & $6.8_{\text{\tiny $\pm$1.8}}$ & $13.3_{\text{\tiny $\pm$.1}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No Self-} \\ \textsc{Conditioning}}}
+  & $50$   & $98.9_{\text{\tiny $\pm$.0}}$ & $91.0_{\text{\tiny $\pm$.3}}$ & $96.1_{\text{\tiny $\pm$.3}}$ & $88.3_{\text{\tiny $\pm$.4}}$ & $1.73_{\text{\tiny $\pm$.05}}$ & $4.7_{\text{\tiny $\pm$.4}}$ & $15.5_{\text{\tiny $\pm$.3}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $98.8_{\text{\tiny $\pm$.0}}$ & $90.6_{\text{\tiny $\pm$.3}}$ & $93.7_{\text{\tiny $\pm$.3}}$ & $85.2_{\text{\tiny $\pm$.5}}$ & $1.66_{\text{\tiny $\pm$.04}}$ & $7.4_{\text{\tiny $\pm$.1}}$ & $10.9_{\text{\tiny $\pm$.2}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% Our default block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  & $50$   & $99.1_{\text{\tiny $\pm$.0}}$ & $92.3_{\text{\tiny $\pm$.3}}$ & $96.6_{\text{\tiny $\pm$.1}}$ & $88.4_{\text{\tiny $\pm$.2}}$ & $2.41_{\text{\tiny $\pm$.08}}$ & $2.2_{\text{\tiny $\pm$.3}}$ & $13.6_{\text{\tiny $\pm$.5}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+  & $100$  & $99.1_{\text{\tiny $\pm$.1}}$ & $92.6_{\text{\tiny $\pm$.5}}$ & $95.3_{\text{\tiny $\pm$.6}}$ & $86.3_{\text{\tiny $\pm$.9}}$ & $2.24_{\text{\tiny $\pm$.10}}$ & $2.7_{\text{\tiny $\pm$.4}}$ & $10.3_{\text{\tiny $\pm$.4}}$ & $0.70_{\text{\tiny $\pm$.00}}$ & $0.47_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+===== background.tex =====
+\vspace{-2mm} 
+\section{Background}
+\vspace{-1mm} 
+\label{Background}
+In this section, we provide a brief overview of the theoretical concepts necessary to establish our generative framework. 
+% Throughout the paper, we denote matrices and tuples that include a matrix with uppercase bold letters ($\mathbf{R}$), vectors and tuples of vectors with lowercase bold letters ($\mathbf{x}$), and scalars with lowercase regular letters ($m$).
+\vspace{-2mm} 
+\subsection{Flow Matching on $\mathrm{SE}(3)$ Manifold}
+\vspace{-1mm} 
+\label{SE(3) Flow}
+\paragraph{Geometric Preliminaries}
+The group of rigid motions $\mathrm{SE}(3) \cong \mathbb{R}^3 \rtimes \mathrm{SO}(3)$ describes the configuration of rigid bodies in 3D space. While the translational component $\mathbb{R}^3$ is Euclidean (see Appendix \ref{Euclidean Flow}), the rotational one $\mathrm{SO}(3)$ is a \textit{compact Lie group} -- a smooth manifold equipped with a group structure. To define flows on this curved space, we rely on Riemannian geometry. At any point $\mathbf{R} \in \mathrm{SO}(3)$, the \textit{tangent space} $\mathcal{T}_{\mathbf{R}}\mathrm{SO}(3)$ is the vector space containing all possible velocity vectors passing through $\mathbf{R}$. We equip the manifold with the canonical bi-invariant \textit{Riemannian metric} defined by the inner product $\langle \mathbf{U}, \mathbf{V} \rangle_{\mathbf{R}} = \frac{1}{2}\mathrm{Tr}\left(\mathbf{U}^\top \mathbf{V}\right)$ for tangent vectors $\mathbf{U}, \mathbf{V} \in \mathcal{T}_{\mathbf{R}}\mathrm{SO}(3)$. This metric induces the norm $\|\mathbf{U}\|_{\mathrm{SO}(3)} = \sqrt{\langle \mathbf{U}, \mathbf{U} \rangle_{\mathbf{R}}}$. The bijective mapping between the tangent space and the manifold is handled by the \textit{exponential map} $\mathbf{Q} = \exp_{\mathbf{R}}\left(\mathbf{V}\right)$, which projects a tangent vector $\mathbf{V}$ along a geodesic to a point $\mathbf{Q}$ on the manifold, and its inverse, the \textit{logarithmic map} $\mathbf{V} = \log_{\mathbf{R}}\left(\mathbf{Q}\right)$, which recovers the tangent vector, connecting $\mathbf{R}$ to $\mathbf{Q}$.
+\vspace{-2mm} 
+\paragraph{$\mathrm{SE}(3)$ Flow Matching} 
+We decouple the generative process on $\mathrm{SE}(3)$ into independent translational and rotational components \cite{se3diffusion}. 
+% Euclidean translational component is reviewed in Appendix \ref{Euclidean Flow}. 
+For the rotational component, we follow the \textsc{FoldFlow-Base} framework of \citet{foldflow}. This method extends \textit{Riemannian flow matching} \cite{rfm} by deriving a closed-form expression for the ground-truth conditional vector field, thereby significantly improving training speed and stability.
+
+We define a probability path $\mathbf{R}_t$ that interpolates along the geodesic connecting a sample from the uniform prior $\mathbf{R}_0 \sim \mathcal{U}_{\mathrm{SO}(3)}$ to a data sample $\mathbf{R}_1$. The conditional vector field $u^{\mathbf{R}}_t\left(\mathbf{R}_t \mid \mathbf{R}_1\right) \in \mathcal{T}_{\mathbf{R}_t}\mathrm{SO}(3)$ generating this path is:
+\begin{equation*}
+    u_t^{\mathbf{R}}\left(\mathbf{R}_t \mid \mathbf{R}_1\right) = \frac{1}{1-t} \log_{\mathbf{R}_t}(\mathbf{R}_1).
+\end{equation*}
+Computing $\log_{\mathbf{R}_t}(\mathbf{R}_1)$ naively requires evaluating an infinite matrix power series, which is computationally expensive and numerically unstable. To circumvent this, \citet{foldflow} exploits the Lie group structure. Instead of computing the logarithm directly at $\mathbf{R}_t$, they first compute the relative rotation $\mathbf{R}_{\text{rel}} = \mathbf{R}_t^\top \mathbf{R}_1$. This maps the problem to the identity-tangent space, the Lie algebra $\mathfrak{so}(3)$, where the logarithm admits a fast, closed-form solution via the Rodrigues' formula. The resulting vector is then transported back to the tangent space at $\mathbf{R}_t$ via left-multiplication, rendering the calculation efficient and exact.
+
+To train the model, one samples intermediate noisy frames $\mathbf{T}_t = \left(\mathbf{R}_t, \mathbf{x}_t\right)$. The rotation evolves according to the geodesic formula $\mathbf{R}_t = \exp_{\mathbf{R}_0}\left(t \log_{\mathbf{R}_0}\left(\mathbf{R}_1\right)\right)$. For translation, the conditional probability path $p_t\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right)$ is defined by the linear interpolation $\mathbf{x}_t = (1-t)\mathbf{x}_0 + t\mathbf{x}_1$, which corresponds to the constant conditional vector field $u_t^\mathbf{x}\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right) = \mathbf{x}_1 - \mathbf{x}_0$ on $\mathbb{R}^3$.
+
+The final objective is to regress the neural vector field $v_\theta = \left(v_\theta^{\mathbf{x}}, v_\theta^{\mathbf{R}}\right)$ to these target fields. Assuming an independent coupling between the prior $p_0$ and the data $p^*$, the loss is:
+\begin{equation*}
+\resizebox{\columnwidth}{!}{$\displaystyle
+\begin{aligned}
+    \mathcal{L}_{\mathrm{SE}(3)}(\theta)
+    &= \mathbb{E}_{\substack{\mathbf{T}_0 \sim p_0, \mathbf{T}_1 \sim p^* \\ t \sim \mathcal{U}(0,1)}} \Big[\,
+        \| v_\theta^{\mathbf{x}}\left(\mathbf{T}_t, t\right) - u_t^\mathbf{x}\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right) \|^2 \\
+    &+\; \| v_\theta^{\mathbf{R}}\left(\mathbf{T}_t, t\right) - u_t^{\mathbf{R}}\left(\mathbf{R}_t \mid \mathbf{R}_1\right) \|_{\mathrm{SO}(3)}^2
+    \Big].
+\end{aligned}
+$}
+\end{equation*}
+At inference, one samples an initial frame $\mathbf{T}_0 = \left(\mathbf{R}_0, \mathbf{x}_0\right)$ from the product prior $p_0 = \mathcal{N}(\mathbf{0}, \mathbf{I}) \times \mathcal{U}_{\mathrm{SO}(3)}$ and numerically integrate the learned joint vector field $v_\theta$ to generate the final rigid frame configuration $\mathbf{T}_1 = \left(\mathbf{R}_1, \mathbf{x}_1\right)$.
+\vspace{-2mm} 
+\subsection{Discrete Flows}
+\label{Discrete Flows}
+\vspace{-1mm}
+While continuous approaches to flow matching on the categorical simplex exist (e.g., \citealp{catflow, fisher_fm}), we follow \citet{discrete_flows} and handle generative modelling of discrete data with \textit{continuous-time Markov chains} (CTMCs). Let $m$ denote a discrete random variable taking values in a finite vocabulary $\mathcal{V}_m$. Analogous to the continuous case, we aim to transform a sample $m_0$ from a tractable prior distribution $p_0$, e.g., a uniform distribution or a $[\text{MASK}]$ state, to a data sample $m_1 \sim p^*$ via a probability path $p_t$ for $t \in [0, 1]$.
+\vspace{-2mm} 
+\paragraph{CTMC Dynamics}
+The evolution of the marginal probability mass function $p_t$ over $\mathcal{V}_m$ is governed by the \textit{Kolmogorov forward equation}. For a time-dependent transition \textit{rate matrix} $\mathbf{Q}_t \in \mathbb{R}^{|\mathcal{V}_m| \times |\mathcal{V}_m|}$, the dynamics are given by:
+\begin{equation*}
+    \partial_t p_t(k) = \sum_{j \neq k} p_t(j) \mathbf{Q}_t(j, k) - p_t(k) \sum_{j \neq k} \mathbf{Q}_t(k, j),
+\end{equation*}
+where $\mathbf{Q}_t(j, k) \geq 0$ for $j \neq k$ represents the instantaneous rate of jumping from state $j$ to state $k$. This linear system serves as the discrete analogue to the continuity equation in continuous flow matching, with $\mathbf{Q}_t$ playing the role of the vector field $u_t$.
+\vspace{-2mm} 
+\paragraph{Discrete Flow Matching}
+Constructing a generative model requires finding a rate matrix $\mathbf{Q}_t$ that generates a desired probability path $p_t$. Following the conditional flow matching paradigm, we define the marginal path as an expectation over conditional paths $p_t(m_t \mid m_1)$ anchored at the data sample $m_1$:
+\vspace{-2mm}
+\begin{equation*}
+    p_t(m_t) = \mathbb{E}_{m_1 \sim p^*}\left[p_t(m_t \mid m_1)\right].
+\end{equation*}
+The conditional flow $p_t(\cdot \vert m_1)$ is typically chosen as a linear interpolation in probability space, such that $p_0(\cdot \mid m_1) = p_0(\cdot)$ and $p_1(\cdot \mid m_1) = \delta_{m_1}(\cdot)$, where $\delta$ is the Dirac delta. \citet{discrete_flows} demonstrate that the marginal rate matrix $\mathbf{Q}_t$ can be realized as the expectation of a \textit{conditional rate matrix} $\mathbf{Q}_t(\cdot \mid m_1)$ which generates $p_t(\cdot \mid m_1)$:
+\begin{equation*}
+    \mathbf{Q}_t(j, k) = \mathbb{E}_{m_1 \sim p(m_1 \mid m_t=j)} \left[ \mathbf{Q}_t(j, k \mid m_1) \right].
+\end{equation*}
+Here, $\mathbf{Q}_t(j, k \mid m_1)$ is a closed-form rate matrix derived analytically to satisfy the conditional Kolmogorov equation for the chosen interpolant.
+
+Unlike the continuous case, where we regress a vector field directly, learning the marginal rate matrix requires access to the posterior $p(m_1 \mid m_t=j)$. Consequently, we parameterise a denoising neural network $p_\theta(m_1 \mid m_t)$ to approximate the clean data distribution given a noisy state. The training objective is thus the cross-entropy loss:
+\begin{equation*}
+    \mathcal{L}_{\text{DFM}}(\theta) = \mathbb{E}_{\substack{m_1 \sim p^*, \, m_t \sim p_t(\cdot \mid m_1) \\ t \sim \mathcal{U}(0, 1)}} \left[ - \log p_\theta(m_1 \mid m_t) \right].
+\end{equation*}
+At inference time, we construct the generative rate matrix $\mathbf{Q}_t^\theta$ using the learned denoiser: $\mathbf{Q}_t^\theta(j, k) = \mathbb{E}_{m_1 \sim p_\theta(\cdot \mid m_t=j)} [ \mathbf{Q}_t(j, k \mid m_1) ]$. New samples are generated by initialising $m_0 \sim p_0$ and simulating the CTMC trajectory defined by $\mathbf{Q}_t^\theta$.
+
+
+===== conclusion.tex =====
+\vspace{-4mm} 
+\section{Conclusion}
+\vspace{-1mm} 
+In this work, we introduced \oursacro, a novel generative framework for 3D molecules that operates on \textit{rigid motifs} rather than individual atoms. By combining the rigid-motif decomposition strategy with the multimodal flow matching objective, we generate drug-like molecules via flows on the $\mathrm{SE(3)}$ manifold coupled with discrete categorical flows. Our empirical evaluation on standard benchmarks demonstrates that this higher-level representation yields improved stability on larger molecules compared to established all-atom methods, while offering more concise molecular representations as well as significant advantages in sampling efficiency and conditional generation capabilities.
+\vspace{-3mm} 
+\paragraph{Limitations and Future Work} This method, while extending \textit{motif-based} molecular graph generation to the 3D space, also inherits its limitations. Most notably, the reliance on a predefined vocabulary introduces a trade-off between vocabulary size and generalisation: as the vocabulary grows to capture larger motifs, the frequency of individual classes drops, leading to lower coverage of uncommon substructures during sampling. An alternative, \textit{scaffold-based} generation \cite{magnet}, however, is non-trivial in 3D due to the vastly different spatial geometries of fragments of the same shape, and thus its integration into our method constitutes an exciting direction for future work. Of potential interest could also be an extension of our method to models that jointly generate 3D and 2D molecular structures (e.g., \citealp{codesign}), thereby bridging motif-based generation with explicit modelling of all bonds.
+\vspace{-3mm} 
+\paragraph{Broader Impact} Generative models for molecules have the potential to accelerate \textit{in-silico} discovery
+and the design of novel drugs and materials, but they also carry potential dangers, as such models could be misused for designing chemicals with socially adverse properties.
+
+===== experiments.tex =====
+\vspace{-5mm} 
+\section{Experiments} \label{Experiments}
+% \begin{figure*}[t] 
+%     \centering
+%     \includegraphics[width=\textwidth]{visuals/uncond_samples/main.png} 
+%     \caption{Examples of samples generated unconditionally by our method trained on \textsc{GEOM-Drugs} (\textit{top}) and \textsc{QMugs} (\textit{bottom}).}
+%     \label{test_wide}
+% \end{figure*}
+% In this section, we empirically validate the performance of our method across several setups. 
+\paragraph{Tasks and Datasets} In Section \ref{Unconditional Generation}, we consider the task of unconditional generation on two common benchmarks, \textsc{QM9} \cite{qm9} and \textsc{GEOM-Drugs} \cite{geom}. The former dataset contains $134$k small organic molecules with up to $29$ atoms in total, with a maximum of $9$ heavy atoms. The latter, larger-scale dataset of molecular conformers comprises $430$k medium-sized molecules, with up to $181$ atoms and an average of $44.4$ atoms per molecule. For both datasets, we follow the same setup as in previous works \cite{edm, end, geodiff}. We then proceed to the two conditional experiments on \textsc{QM9} in Section \ref{Conditional Generation}, demonstrating our method's ability to generate molecules with desired properties. We conclude by studying the proposed rigid-motif fragmentation strategy and its modifications on the two datasets containing larger molecules, which is the principal use case of our method: the aforementioned \textsc{GEOM-Drugs} and \textsc{QMugs} \cite{qmugs}. The \textsc{QMugs} dataset contains $665$k large drug-like molecules, with up to $100$ heavy atoms; we use its subset of $300$k conformations for our experiments. For experimental details and extended results, see Appendix \ref{Experimental Details} and \ref{Extended Results}.
+\vspace{-3mm} 
+\paragraph{Baselines} We compare the performance of \oursacro to models within the same paradigm of inferring bonds from interatomic distances \cite{edm, edm_bridge, geoldm, equifm, end, geobfn}. Further details are in Appendix \ref{Baseline Details}.
+\vspace{-3mm} 
+\subsection{Unconditional Generation} \label{Unconditional Generation}
+\vspace{-1mm} 
+For this task, we follow \citet{end} and sample $10^4$ molecules across $3$ seeds, reporting the mean and standard deviation. For each baseline with fixed-step solvers, we provide the step configuration that yielded the best molecular stability for \textsc{QM9} and atom stability for \textsc{GEOM-Drugs}, among those reported in the respective papers.
+\vspace{-3mm} 
+\paragraph{Metrics} Following the established practice \cite{edm, equifm}, we report the percentages of stable atoms A and molecules M, as well as valid V and valid and unique V$\times$U molecules computed on \texttt{RDKit} \cite{rdkit}. Since for larger \textsc{GEOM-Drugs}, the connectivity of the generated molecules is commonly reported to be more challenging, while practically all samples are unique, we follow \citet{end} and report the percentage of valid and connected V$\times$C molecules instead. In line with the baselines, we also do not report molecular stability for \textsc{GEOM-Drugs}, as it was found to be non-informative when bonds are inferred from interatomic distances \cite{edm, equifm}.
+\vspace{-3mm} 
+\paragraph{\textsc{QM9}} Main results are provided in Table \ref{qm9_uncond}. The \textsc{QM9} benchmark is fairly saturated on unconditional generation and thus mainly reported for completeness. Overall, \oursacro performs on par with methods that use $10\times$ the number of generation steps: we obtain higher molecular stability and lower uniqueness than the best-performing \textsc{EquiFM} \cite{equifm}, both being the consequence of using rigid motifs as larger building blocks on small molecules; this trade-off is controllable via, e.g., the sampling temperature in the discrete flow.
+\begin{table}[t]
+    \centering
+    \footnotesize 
+    \setlength{\tabcolsep}{2.2pt}
+    \renewcommand{\arraystretch}{0.7}
+    \caption{Results of unconditional generation on \textsc{QM9}.}
+    \label{qm9_uncond}
+    \begin{tabular}{@{} l c c c c c @{}}
+    \toprule
+    \multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{2}{c}{Stability ($\uparrow$)} & \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} \\ 
+    \cmidrule(lr){3-4} \cmidrule(l){5-6}
+     & & A, \% & M, \% & V, \% & V $\times$ U, \% \\
+    \midrule
+    \makecell[l]{Data} & -- & $99.0$ & $95.2$ & $97.7$ & $97.7$ \\
+    \midrule 
+    
+    % EDM block
+    \makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} (\scriptsize\citeyear{edm})}
+      & $10^3$ & $98.7$ & $82.0$ & $91.9$ & $90.7$ \\
+    
+    % EDM-Bridge block
+    \makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+      & $10^3$ & $98.8$ & $84.6$ & $92.0$ & $90.7$ \\
+    
+    % GeoLDM block
+    \makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+      & $10^3$ & $98.9_{\text{\tiny $\pm$.1}}$ & $89.4_{\text{\tiny $\pm$.5}}$ & $93.8_{\text{\tiny $\pm$.4}}$ & $92.7_{\text{\tiny $\pm$.5}}$ \\
+    
+    % EquiFM block
+    \makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+      & $-$ & 
+      $98.9_{\text{\tiny $\pm$.1}}$ & $88.3_{\text{\tiny $\pm$.3}}$ & 
+      $94.7_{\text{\tiny $\pm$.4}}$ & $\mathbf{93.5_{\text{\tiny $\pm$.3}}}$ \\
+    
+    % END block
+    \makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}
+      & $10^3$ & $98.9_{\text{\tiny $\pm$.0}}$ & $89.1_{\text{\tiny $\pm$.1}}$ & $94.8_{\text{\tiny $\pm$.1}}$ & $92.6_{\text{\tiny $\pm$.2}}$ \\
+    
+    % EDM* block
+    \makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}
+    & $10^3$ & $98.4_{\text{\tiny $\pm$.0}}$ & $85.3_{\text{\tiny $\pm$.3}}$ & $93.5_{\text{\tiny $\pm$.1}}$ & $91.9_{\text{\tiny $\pm$.1}}$ \\
+    
+    % GeoBFN block
+    \makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}
+    & $10^3$ & $99.1_{\text{\tiny $\pm$.1}}$ & $90.9_{\text{\tiny $\pm$.2}}$ & $95.3_{\text{\tiny $\pm$.1}}$ & $93.0_{\text{\tiny $\pm$.1}}$ \\
+    \midrule
+    
+    % Our block
+    \makecell[l]{\oursacro}
+    & $10^2$  & $99.1_{\text{\tiny $\pm$.1}}$ & $\mathbf{92.6_{\text{\tiny $\pm$.5}}}$ & $95.3_{\text{\tiny $\pm$.6}}$ & $86.3_{\text{\tiny $\pm$.9}}$ \\
+    \bottomrule
+    \end{tabular}
+    \vspace{-5mm}
+\end{table}
+\vspace{-3mm} 
+\paragraph{\textsc{GEOM-Drugs}} Main results\footnote{\citet{end} have conflicting V$\times$C results on \textsc{GEOM-Drugs} for their \textsc{END} model reported in the appendix and main body of their paper; we resort to results provided in the main body.} are presented in Table \ref{geom_uncond}. On this dataset of larger, more realistic, and challenging molecules, \oursacro significantly outperforms the baselines. We note that our use of rigid motifs as larger building blocks also allows us to ameliorate errors in atom valencies that the true atom-level data exhibits when assessed by the bond lookup mechanism of \citet{edm}.
+
+\vspace{-3mm} 
+\subsection{Conditional Generation} \label{Conditional Generation}
+\vspace{-1mm} 
+With the conditional experiments, we seek to answer two primary questions that arise naturally from the proposed change in molecular representations:
+\begin{enumerate}[label=(\roman*), noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt, wide=0pt]
+  \item \textit{Fine-grained conditioning}: does the motif-based representation perform competitively at generation conditioned on the \textit{atom-level} information, despite only modelling it implicitly?
+  \item \textit{Coarse-grained conditioning}: does the use of fragments lead to better generation of desired \textit{substructures}?
+\end{enumerate}
+
+We adopt the tasks for both scenarios from the previous works \cite{end, eegsde}. For the fine-grained level, we condition on the \textit{atom composition} $\mathbf{c} = (c_1, \dots, c_{|\mathcal{V}_a|}) \in \mathbb{R}^{|\mathcal{V}_a|}$, where $c_j$ is the number of atoms of the type $j$ that the desired sampled molecule is required to have. Following \citet{end}, we generate $10$ samples for each unique target atom composition from the validation and test sets across $3$ seeds, and report the percentage of matched compositions. For the coarse-grained level, we condition on the \textit{substructural features}: concretely, we use a molecular fingerprint $\mathbf{c} = (c_1, \dots,c_{F}) \in \{0, 1\}^F$, each entry of which indicates the presence or absence of a certain substructure in the molecule. We use \texttt{OpenBabel} \cite{openbabel} to generate the fingerprints for the test set, and evaluate the generation by computing Tanimoto similarity between the fingerprints of generated molecules and those from the test set, which are injected as conditions to the model. To ensure a fair comparison with the baselines in both tasks, we follow the strategy of \citet{end}: while many techniques for guiding flow models exist \cite{cfg, discrete_cfg}, in this section, we directly use the conditional model $v_\theta(\bm{\mathcal{M}}_t, t, \mathbf{c})$ by adding the conditioning information $\mathbf{c}$ directly to the input. We denote this version as \textsc{c}\oursacro.
+
+The results are summarised in Table \ref{cond_gen_table}, with extended results and qualitative examples in Appendix \ref{Extended Results}. The tasks are concisely summarised in Figure \ref{cond_gen_pic}. \textsc{c}\oursacro outperforms the baselines, achieving better adherence to conditioning information at both levels of molecular granularity while requiring fewer generation steps.
+
+\begin{table}[t]
+    \centering
+    \footnotesize 
+    \setlength{\tabcolsep}{3.6pt}
+    \renewcommand{\arraystretch}{0.95} 
+    \caption{Results of unconditional generation on \textsc{GEOM-Drugs}. $^\ddagger$Results are obtained by \citet{end}.}
+    \label{geom_uncond}
+    \begin{tabular}{@{} l c c c @{}}
+    \toprule
+    Method & Steps & Stable A, \% ($\uparrow$) & V $\times$ C, \% ($\uparrow$) \\ 
+    \midrule
+    Data & -- & $86.5$ & $99.0$ \\
+    \midrule
+    
+    \textsc{GeoLDM} {\scriptsize\citet{geoldm}}
+      & $1000$ & $84.4$ & $45.8^\ddagger$ \\
+    
+    \textsc{EquiFM} {\scriptsize\citet{equifm}}
+      & $-$ & $84.1$ & $-$ \\
+    
+    \textsc{END} {\scriptsize\citet{end}}
+      & $100$  & $87.2_{\text{\tiny $\pm$.1}}$ & $73.7_{\text{\tiny $\pm$.4}}$ \\
+    
+    \textsc{EDM*} {\scriptsize\citet{end}}
+      & $250$  & $85.4_{\text{\tiny $\pm$.0}}$ & $61.4_{\text{\tiny $\pm$.6}}$ \\
+    
+    \textsc{GeoBFN} {\scriptsize\citet{geobfn}}
+      & $1000$ & $85.6$ & -- \\
+    \midrule
+    
+    \oursacro
+        & $100$  & $\mathbf{95.0_{\scriptscriptstyle \pm.0}}$ & $\mathbf{81.2_{\scriptscriptstyle \pm.3}}$ \\
+    \bottomrule
+    \end{tabular}
+    \vspace{-4mm}
+\end{table}
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5.6pt}
+\caption{Results of the two conditional generation tasks on \textsc{QM9}.}
+\label{cond_gen_table}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{Steps} & \multicolumn{1}{c}{\textsc{Composition}} & \multicolumn{1}{c}{\textsc{Substructure}} \\ 
+\cmidrule(lr){3-3}\cmidrule(l){4-4}
+ & & Matching, $\%$ ($\uparrow$) & Tanimoto Sim. ($\uparrow$) \\
+\midrule
+
+% Single Step Baselines (Table 4 top section)
+\makecell[l]{\textsc{cEDM} \\ \scriptsize\citet{eegsde}}
+  & $1000$ & -- & $.671_{\text{\tiny $\pm$.004}}$ \\
+
+\makecell[l]{\textsc{EEGSDE} \\ \scriptsize\citet{eegsde}}
+  & $1000$ & -- & $.750_{\text{\tiny $\pm$.003}}$ \\
+
+% cEDM* Block
+\multirow{2}{*}{\makecell[l]{\textsc{cEDM}* \\ \scriptsize\citet{end}}}
+  & $500$  & $76.2_{\text{\tiny $\pm$0.6}}$ & $.669_{\text{\tiny $\pm$.001}}$ \\
+  & $1000$ & $75.5_{\text{\tiny $\pm$0.5}}$ & $.673_{\text{\tiny $\pm$.002}}$ \\
+
+% cEND Block
+\multirow{2}{*}{\makecell[l]{\textsc{cEND} \\ \scriptsize\citet{end}}}
+  & $500$  & $91.5_{\text{\tiny $\pm$0.8}}$ & $.825_{\text{\tiny $\pm$.001}}$ \\
+  & $1000$ & $91.0_{\text{\tiny $\pm$0.9}}$ & $.828_{\text{\tiny $\pm$.001}}$ \\
+\midrule
+
+% Our block
+\makecell[l]{\textsc{c}\oursacro}
+  & $100$  & $\mathbf{95.4_{\scriptscriptstyle \pm0.5}}$ & $\mathbf{.862_{\scriptscriptstyle \pm.002}}$ \\
+\bottomrule
+\end{tabular}
+\vspace{-1mm} 
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/cond_generation/main.png}
+\caption{Examples of results for the conditional tasks on \textsc{QM9}: atom composition (\textit{left}) and fingerprint substructure (\textit{right}).}
+\label{cond_gen_pic}
+\vspace{-4mm} 
+\end{figure}
+\vspace{-2mm}
+\subsection{Ablations} \label{Ablations}
+\vspace{-1mm} 
+The purpose of this section is to further study the effects of the rigid-motif decomposition on 3D molecular generation. As noted by existing literature (e.g., \citealp{magnet}), the motif-based molecular graph decomposition offers a trade-off: while many larger functional groups are present in the data, adding larger motifs to the vocabulary leads, on average, to less frequent classes observed during training, which could make generalisation to uncommon substructures challenging. At the same time, we hypothesise that in 3D, larger rigid motifs, if sufficiently frequent, bring about the benefits of the fragment-based generation, which were empirically established in Sections \ref{Unconditional Generation} and \ref{Conditional Generation}.
+
+To verify this, we consider several variations of the rigid-motif decomposition. In the \textsc{No Rings} variant, we only preserve bonds to hydrogen atoms, as well as double and triple bonds. This configuration allows us to evaluate the performance of the finer-grained vocabulary with fewer rare fragments. On the opposite side of the spectrum, we consider our main decomposition introduced in Section \ref{Rigid-Motif Decomposition}, which preserves approximately planar rings and 
+fused ring systems. For this \textsc{Planar Rings} fragmentation, we consider three thresholds (including our base one, $\alpha=0.1$) for the minimal frequency of a fragment relative to the dataset size; i.e., a smaller threshold corresponds to a larger vocabulary with more rare motifs, while with a larger threshold, they are decomposed further into finer components. An example of a molecule from \textsc{GEOM-Drugs} under different rigid-motif decompositions is provided in Figure \ref{decomp_various}. Detailed information on the setup can be found in Appendix \ref{Ablation Details}.
+
+First, we ablate the performance of each fragmentation strategy at the unconditional generation on \textsc{GEOM-Drugs} and \textsc{QMugs}; as it is for the main unconditional experiments, we evaluate the metrics based on $10^4$ samples obtained with $3$ seeds; results are in Table \ref{ablation}. Our hypothesis is largely confirmed: all rigid-motif vocabularies that treat planar rings as distinct classes yield superior atom-stability performance compared to finer fragmentation, with the two smaller threshold configurations scoring best.
+
+To assess the extent to which uncommon motifs are purposefully sampled during generation, we analyse the motif set of generated molecules. We first formally define \textit{common} and \textit{uncommon} motifs as those that exceed the base occurrence threshold $\alpha=0.1$ and those that do not reach its frequency in the data, respectively. For each group, we then compute the total counts of its constituent motifs, normalised to the total number of molecules, independently for the training and generated sets. The ratio of these normalised counts, if the model accurately represents the underlying distribution of motifs, should be close to $1$ for both common and uncommon motifs. Figure \ref{motif_distr_qmugs} shows that, while common motifs are consistently generated with close to the true occurrence, the uncommon motifs are notably oversampled for the finer \textsc{No Rings} strategy. Further, we observe an escalating undersampling behaviour for \textsc{Planar Rings} strategy with the decrease in threshold $\alpha$, confirming the expected trade-off between the vocabulary size and uncommon motif coverage \cite{magnet}. We thus conclude that frequency-based fragmentation with planar ring systems at a relatively high $\alpha = 0.1$ offers the optimal trade-off, significantly improving generation over conventional atom-based baselines and other rigid decomposition strategies.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h!]
+\centering
+\small
+\setlength{\tabcolsep}{1.7pt}
+\caption{Ablation results for different fragmentation strategies. Metrics are reported for sampling with $100$ reverse steps.}
+\label{ablation}
+\begin{tabular}{@{} l ccc ccc @{}}
+\toprule
+\multirow{3}{*}{\makecell[l]{Strategy}} & \multicolumn{3}{c}{\textsc{QMugs}} & \multicolumn{3}{c}{\textsc{GEOM-Drugs}} \\ 
+\cmidrule(lr){2-4} \cmidrule(l){5-7}
+ & \multirow{2}{*}{$|\mathcal{V}_m|$} & Stability & V $\times$ C & \multirow{2}{*}{$|\mathcal{V}_m|$} & Stability & V $\times$ C \\
+ & & A, \% ($\uparrow$) & \% ($\uparrow$) & & A, \% ($\uparrow$) & \% ($\uparrow$) \\
+\midrule
+
+\textsc{No Rings} & 
+  $49$ &
+  $85.5_{\text{\tiny $\pm$1.8}}$ & 
+  $\mathbf{85.6_{\scriptscriptstyle \pm.3}}$ &
+  $39$ &
+  $86.7_{\text{\tiny $\pm$1.8}}$ & $\mathbf{82.9_{\scriptscriptstyle \pm.4}}$ \\
+
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.5\%$} &
+  $96$ &
+  $95.5_{\text{\tiny $\pm$0.1}}$ & $84.0_{\text{\tiny $\pm$.5}}$ & 
+  $81$ &
+  $95.2_{\text{\tiny $\pm$0.1}}$ & $82.1_{\text{\tiny $\pm$.3}}$ \\
+  
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.1\%$} & $253$
+  & $\mathbf{96.1_{\scriptscriptstyle \pm0.0}}$
+  & $83.1_{\text{\tiny $\pm$.4}}$ & $202$
+  &
+  $95.0_{\text{\tiny $\pm$0.0}}$ & $81.2_{\text{\tiny $\pm$.3}}$ \\
+
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.01\%$} & $1184$
+  & $95.3_{\text{\tiny $\pm$0.0}}$ & $80.4_{\text{\tiny $\pm$.5}}$ & $867$ & 
+  $\mathbf{96.3_{\scriptscriptstyle \pm0.0}}$ & $82.4_{\text{\tiny $\pm$.3}}$ \\
+\bottomrule
+\end{tabular}
+\vspace{-2mm}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/ablations/frag_comparison.png}
+\caption{Resulting sets of rigid motifs for a \textsc{GEOM-Drugs} molecule $\text{C}_{17}\text{H}_{15}\text{N}_{3}\text{O}_{4}\text{S}$ under different fragmentation strategies.}
+\label{decomp_various}
+\end{figure}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/ablations/motif_distr_qmugs.pdf}
+\caption{Comparison of sampled motif types to their frequencies in the training distribution of \textsc{QMugs}. A ratio of 1 is optimal.}
+\label{motif_distr_qmugs}
+\vspace{-3mm}
+\end{figure}
+
+===== intro.tex =====
+\section{Introduction}
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=0.95\columnwidth]{visuals/title_figure.png}
+\caption{Molecule $\bm{\mathcal{M}}$ is generated from motifs $\mathcal{M}$ in a joint flow on the product space of rigid frames $\mathbf{T}$ and motif classes $m$.}
+\label{title_figure}
+\vspace{-3mm}
+\end{figure}
+The generation of 3D molecular structures is a cornerstone of \textit{in silico} drug discovery and material design. Recent advances in deep learning have enabled the development of powerful generative models that treat molecules as point clouds of atoms, utilising $\mathrm{E(3)}$- and $\mathrm{SE(3)}$-equivariant diffusion-based frameworks to determine atomic coordinates \cite{edm, geoldm}. While these atom-based approaches achieve impressive performance, they operate at a low level of abstraction, discarding the rich chemical modularity inherent to molecular structures. In the realm of molecular graph generation, however, this hierarchical nature is widely exploited by fragment-based methods \cite{jtvae, magnet}, which assemble molecules from chemically meaningful motifs or scaffolds to capture high-level semantics and ensure validity. In the domain of 3D protein structure generation, such a modular perspective has also proven highly effective. Seminal works such as \textsc{AlphaFold2} \cite{alphafold2} and \textsc{FrameDiff} \cite{se3diffusion} demonstrated the efficacy of abstracting amino acid residues as \textit{rigid frames} in $\mathrm{SE(3)}$, decoupling backbone geometry from local side-chain details. However, lifting these ideas to general drug-like molecule generation in 3D presents significant challenges: unlike proteins, which are linear chains of a fixed set of residues, small molecules exhibit arbitrary branching, diverse topologies, and a vastly larger vocabulary of chemical motifs. 
+
+In this work, we propose to bridge this gap by treating general molecules as collections of \textit{rigid motifs}. By decomposing molecules into chemically meaningful rigid fragments, we lift the generative task from the $\mathbb{R}^3$ atom space to the $\mathrm{SE(3)}$ manifold of fragments. We adopt a multimodal flow matching framework that jointly learns the discrete distribution of motif types and their continuous spatial configuration, illustrated in Figure \ref{title_figure}. This formulation enables us to generate high-fidelity molecular structures with significantly fewer sampling steps, leveraging chemically inspired representations that are substantially more concise than those of standard all-atom approaches.
+\vspace{-2mm} 
+\paragraph{Contributions} Our primary contributions are as follows. We propose \oursacro, a framework for 3D molecule generation that parametrises molecules as sets of rigid-body motifs in $\mathrm{SE}(3)$ rather than individual atoms. We develop a data-driven fragmentation and canonicalisation strategy that handles arbitrary molecular topologies and accounts for motif symmetries.
+Further, we adapt the multimodal flow \citep{discrete_flows} to the task of \textit{de novo} 3D structure generation of drug-like molecules. This formulation allows us to natively handle the joint generation of discrete fragment identities and their continuous geometric configurations without relying on autoregressive steps or learned decoding back onto the atom-level structure. Finally, we empirically demonstrate that our method achieves superior performance compared to state-of-the-art atom-based baselines on medium- and large-sized molecules in the \textsc{GEOM-Drugs} benchmark \cite{geom} and scales to the larger molecules of the \textsc{QMugs} dataset \cite{qmugs}. \oursacro produces high-quality molecular structures using an order of magnitude fewer generation steps and excels at conditional generation tasks.
+
+===== method.tex =====
+\vspace{-2mm} 
+\section{Method} \label{Method}
+\vspace{-1mm} 
+In this section, we start with a common representation of a molecule  $\{(\mathbf{y}_j, h_j)\}_{j=1}^{N}$ as a point cloud of $N$ atoms, each with coordinates $\mathbf{y}_j \in \mathbb{R}^3$ and the atom type $h_j \in \mathcal{V}_{a}$. Here, $\mathcal{V}_{a}$ is the vocabulary of all atom types, including ions. 
+% Note that we do not model bonds explicitly, following the corresponding line of existing methods (e.g., \citealp{edm, end}).
+
+In Section \ref{Rigid-Motif Decomposition}, we describe the \textit{frame fragmentation}; its purpose is to reparametrise the molecule as $K$ rigid motifs $\{\mathcal{M}_i\}_{i=1}^K = \{(\mathbf{T}_i, m_i)\}_{i=1}^K$ where a frame $\mathbf{T}_i = \left(\mathbf{R}_i, \mathbf{x}_i\right) \in \mathrm{SE}(3)$ has a rotation matrix $\mathbf{R}_i \in \mathrm{SO}(3)$ and a translation vector $\mathbf{x}_i \in \mathbb{R}^3$ from the origin to the geometric centre of the motif. Each frame's rotation is defined relative to this motif's \textit{exemplar fragment} $m_i \in \mathcal{V}_m$ from the \textit{motif vocabulary} $\mathcal{V}_m$. 
+
+A fragment $m_i$ with $N_i$ atoms in this vocabulary describes the atom-level structure of the rigid motif, and is thus a tuple $m_i = (\mathbf{P}_i, \mathbf{h}_i, \mathcal{S}_i)$. Here, the fixed set of 3D coordinates of intra-fragment atoms $\mathbf{P}_i \in \mathbb{R}^{N_i \times 3}$ defines the motif's \textit{canonical pose} centred at the origin. The corresponding types of intra-fragment atoms are denoted by $\mathbf{h}_i \in \mathcal{V}_a^{N_i}$. The third element, $\mathcal{S}_i \subset \mathrm{SO}(3)$, represents the \textit{discrete symmetry group of the motif}, i.e., the set of all rotations that, if applied to the pose $\mathbf{P}_i$, result in an indistinguishable molecular motif in 3D space.
+
+We note that such frame-based representation is \textit{invertible}: to recover the atom-level representation $\mathbf{Y}_i \in \mathbb{R}^{N_i \times 3}$ of atoms that corresponds to the rigid fragment $m_i$ with the frame $\mathbf{T}_i = \left(\mathbf{R}_i, \mathbf{x}_i\right)$ in a molecule in 3D space, one has to apply the rigid transformation to the motif's canonical pose:
+\begin{equation*}
+\mathbf{Y}_i = \mathbf{P}_i \mathbf{R}_i + \mathbf{1}_{N_i}\mathbf{x}_i^\top \equiv \mathbf{P}_i \mathbf{S} \mathbf{R}_i + \mathbf{1}_{N_i}\mathbf{x}_i^\top, \,\, \forall \mathbf{S} \in \mathcal{S}_i
+\end{equation*}
+Under this rigid-frame parametrisation, generating \textit{de novo} molecules with $K$ fragments can be seen as a task of sampling from the distribution on  $\mathrm{SE}(3)^K \times \mathcal{V}_m^K$.  In Section \ref{Multimodal Flow}, we formulate our generative framework \oursacro.
+% \begin{figure*}[t] 
+%     \centering
+%     \includegraphics[width=\textwidth]{visuals/method_figure.png} 
+%     \caption{Method test.}
+%     \label{method_figure}
+% \end{figure*}
+\vspace{-1mm} 
+\subsection{Rigid-Motif Decomposition} \label{Rigid-Motif Decomposition}
+\vspace{-1mm} 
+To establish a motif vocabulary $\mathcal{V}_m$, we need to define a fragmentation scheme. Such a scheme has to satisfy several requirements, namely,
+\begin{enumerate*}[label=(\roman*)]
+  \item \textit{rigidity}: fragments must be structurally rigid approximations  (i.e., lacking internal rotatable bonds) to accurately represent all instances of a motif throughout the data,
+  \item \textit{non-degeneracy}: each fragment must possess at least three non-collinear points to define a frame $\mathbf{T} \in \mathrm{SE}(3)$ and
+  \item \textit{tractability}, meaning that the frequency of each distinct class of $\mathcal{V}_m$ in the data has to be sufficiently high for learning the distribution over $\mathcal{V}_m^K$.
+\end{enumerate*}
+
+The fragmentation comprises two stages. We begin by identifying all sufficiently rigid structures: we preserve double and triple bonds, as well as all bonds within approximately \textit{planar} rings and fused ring systems. Further, while we do cut the bonds between heavy atoms that are acyclic but adjacent to a cycle, unlike common fragmentation techniques \cite{hiervae, moler}, we do not cut bonds to hydrogens. This helps introduce fewer ill-defined rigid frames at the expense of having more unique motifs. After the chosen bonds are cut and the preliminary set of rigid motifs is established, we proceed by \textit{pruning} them: analogous to common methods in molecular graph decomposition (e.g., \citealp{hiervae}), we further fragment rigid motifs whose total number of occurrences across the dataset is less than $\alpha\%$ of the dataset size. We ablate different values of the hyperparameter $\alpha$ and its influence on the generation in Section \ref{Ablations}.  By default, we use $\alpha=0.1$.
+
+At this point, the only ill-defined frames are those that are collinear motifs (e.g., alkynes) or isolated atoms (e.g., $\text{Cl}$ atom cut from a $\text{C}_6\text{H}_5\text{Cl}$ chlorobenzene ring). To be able to uniquely define their rotation matrix $\mathbf{R} \in \mathrm{SO}(3)$, similar to \citet{sigmadock}, we start adding dummy atoms placed at a unit distance to the nearest non-collinear neighbours of this fragment in the original molecule until the orientation of the frame is locked and the rigid body is well-defined.
+\vspace{-2mm} 
+\subsection{Canonicalisation and Vocabulary} \label{Canonicalisation and Vocabulary}
+\vspace{-1mm} 
+Once the rigid motifs are defined, we proceed with constructing a vocabulary $\mathcal{V}_m$ where each element is a canonical descriptor of a chemical motif, formally defined as a tuple $m_i = (\mathbf{P}_i, \mathbf{h}_i, \mathcal{S}_i)$. For a given motif class $i$, the canonical fragment with its centred pose $\mathbf{P}_i \in \mathbb{R}^{N_i \times 3}$ and atom types $\mathbf{h}_i \in \mathcal{V}_a^{N_i}$ is chosen arbitrarily as the rigid motif's first occurrence during the dataset preprocessing and fixed. We compute $\mathcal{S}_i$ by identifying the set of all graph automorphisms $\Pi_i$, i.e., node permutations, that preserve chemical connectivity and element types in the motif. For each automorphism $\pi \in \Pi_i$, we derive the corresponding rotation matrix $\mathbf{R}^{\pi}_i$ that maps the exemplar onto its permuted self, i.e., $\mathbf{P}_{i} \approx \pi(\mathbf{P}_{i}) \mathbf{R}^{\pi}_i$. This explicitly encodes the rotational invariance of symmetric motifs, e.g., the indistinguishable orientations of cyclopropane $(\text{CH}_2)_3$, into the vocabulary.
+
+We further assign a ground truth pose $\mathbf{T}_j =\left(\mathbf{R}_j, \mathbf{x}_j\right) \in \mathrm{SE}(3)$ to each fragment instance $\mathcal{M}_j$ of type $m_i$ found in the data. The translation vector $\mathbf{x}_j$ is defined as the vector from the origin to the geometric centre of $\mathcal{M}_j$. We then compute a representative rotation $\mathbf{R}_j$ via the Kabsch algorithm \cite{kabsch} given any valid automorphism $\pi \in \Pi_i$ establishing the atom-wise correspondence:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{2pt}
+\begin{equation*}
+    \mathbf{R}_j = \mathop{\mathrm{argmin}}_{\mathbf{R} \in \mathrm{SO}(3)} \sum_{a=1}^{N_i} \left\| \mathbf{P}_{i, a} \mathbf{R} -\mathbf{Y}^{\pi}_{j, a} \right\|^2,
+\end{equation*}
+}%
+where $\mathbf{P}_{i,a}$ denotes the position of the $a$-th atom in $m_i$.
+This method allows for representing an arbitrary non-collinear molecule as a collection of well-defined rigid motifs from a tractable vocabulary $\mathcal{V}_m$. In Figure \ref{qmugs_distr}, we show for the \textsc{QMugs} dataset that on average, such a fragment-based molecular parametrisation compresses the common all-atom and heavy-atom representations by factors of $3.4$ and $1.8$, respectively, without resorting to learning a latent space or requiring a computationally expensive reconstruction.
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf}
+\caption{Comparison of molecular representations on \textsc{QMugs} dataset \cite{qmugs}. Fragmentation is reported for $\alpha = 0.1$.}
+\label{qmugs_distr}
+\vspace{-3mm} 
+\end{figure}
+\vspace{-3mm} 
+\subsection{Multimodal Flow on $\mathrm{SE}(3)^K \times \mathcal{V}_m^K$} 
+\label{Multimodal Flow}
+\vspace{-1mm}
+Given the larger size of the motif vocabulary $\mathcal{V}_m$ compared to the common atom vocabulary $\mathcal{V}_a$, we opt not to approximate the discrete fragment classes in a one-hot continuous fashion, as commonly done in the literature \cite{edm, end}. Instead, we propose to natively handle the discrete and continuous supports of $m \in \mathcal{V}_m$ and $\mathbf{T} \in \mathrm{SE}(3)$, respectively, in a \textit{multimodal flow} \cite{discrete_flows}. Concretely, for a molecule with $K$ rigid motifs $\bm{\mathcal{M}} = \{\mathcal{M}^k\}_{k=1}^K$, \oursacro models the following conditional flow\footnote{For brevity, $p_{t}(\cdot \mid \cdot)$ refers to probability density and probability mass functions for continuous and discrete variables.}, factorised over modalities and individual rigid-motif frames:
+{
+\begin{equation*}
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+p_{t}(\bm{\mathcal{M}}_t  \mid \bm{\mathcal{M}}_1) := \prod_{k=1}^{K} \underbrace{p_{t}(m_t^k  \mid m_1^k)}_{\text{Discrete Flow}} \underbrace{p_{t}(\mathbf{T}_t^k  \mid \mathbf{T}_1^k)}_{\text{SE}(3) \text{ Flow}}.
+\end{equation*}
+}%
+This factorisation implies that the generative process for each rigid motif is independent \textit{conditional} on the data sample $\bm{\mathcal{M}}_1$, allowing us to train the joint model by minimising a sum of modality-specific losses.
+\vspace{-3mm} 
+\paragraph{Continuous Dynamics} 
+For the geometric component, we independently apply the $\mathrm{SE}(3)$ flow matching framework described in Section \ref{SE(3) Flow} to each of the $K$ rigid frames. The conditional probability path $p_t(\mathbf{T}_t^k \mid \mathbf{T}_1^k)$ is constructed via the product of the Euclidean interpolant for translations and the geodesic one for rotations. The training objective $\mathcal{L}_{\mathrm{SE}(3)}$ is the sum over $K$ motifs of the regression loss between the network outputs and the target vector fields $u_t^\mathbf{x}$ and $u_t^\mathbf{R}$.
+\vspace{-3mm} 
+\paragraph{Discrete Dynamics} 
+For the motif types, we adopt the discrete flow from Section \ref{Discrete Flows} using a \textit{masking} prior. Specifically, we set the prior $p_0$ to be a Dirac delta on a special token, $m_0^k = [\text{MASK}]$ for all $k$. The conditional probability path interpolates linearly between this mask state and the true motif type $m_1^k$:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\begin{equation*}
+    p_t(m_t^k \mid m_1^k) = (1-t)\delta_{[\text{MASK}]}(m_t^k) + t\delta_{m_1^k}(m_t^k).
+\end{equation*}
+}%
+To generate this path via a CTMC, we require the conditional rate matrix $\mathbf{Q}_t(j, l \mid m_1^k)$. For the masking interpolant, this matrix takes a simple analytic form where probability mass is transferred solely from $[\text{MASK}]$ to the target class $m_1^k$ \cite{discrete_flows}:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\begin{equation*}
+    \mathbf{Q}_t(j, l \mid m_1^k) = \mathbb{I}(j = [\text{MASK}]) \cdot \mathbb{I}(l = m_1^k) \cdot \frac{1}{1-t}.
+\end{equation*}
+}%
+Intuitively, at any time $t \in (0, 1)$, a masked motif has a rate of $(1-t)^{-1}$ to unmask to its true value $m_1^k$, while unmasked motifs remain fixed. To train the model, we employ a denoising network $p_\theta(m_1^k \mid \bm{\mathcal{M}}_t)$ that predicts the categorical distribution over $\mathcal{V}_m$ given the noisy state of the entire molecule. The discrete objective $\mathcal{L}_{\text{DFM}}$ is the cross-entropy between the predicted logits and the true motif type $m_1^k$, summed over all masked motifs.
+\vspace{-2mm} 
+\paragraph{Architecture}
+We parameterise the time-dependent vector fields and the discrete denoiser using a single unified neural network $v_\theta(\bm{\mathcal{M}}_t, t)$. Our architecture builds upon the \textsc{FoldFlow-Base} backbone \cite{foldflow}, which utilises invariant point attention (IPA) \cite{alphafold2} to process 3D rigid frames. The network takes as input the noisy frames $\{\mathbf{T}_t^k\}_{k=1}^K$ and the embeddings of the partially masked motif tokens $\{m_t^k\}_{k=1}^K$. We introduce three modifications to adapt this architecture for multimodal molecular generation. First, we incorporate \textit{self-conditioning} \cite{self_cond, harm_self_cond} for the discrete modality: during training, with a probability $0.5$, we feed the model's own estimated clean motif types $\hat{m}_1$ back as input, improving coherence between the geometric and semantic features. Second, we augment the network's layers with triangular multiplicative updates \cite{alphafold2} on the pair of fragment representations to better capture the geometric constraints between rigid motifs, which, unlike residues in the protein backbones, are ordered arbitrarily. Finally, the network is equipped with an additional third prediction head that outputs logits over $\mathcal{V}_m$ for the discrete flow.
+\vspace{-2mm} 
+\paragraph{Symmetries}
+This generative process has two kinds of physical symmetries. The first one, global $\mathrm{SE}(3)$ equivariance, is guaranteed by the IPA backbone, ensuring that if the entire molecule is rotated and translated, the generated vector fields rotate and translate accordingly. Additionally, individual motifs $m_i$ may also possess non-trivial finite groups of rotational symmetries $\mathcal{S}_i$, and the true distribution is invariant to the choice of canonical pose representation from its orbit $\{\mathbf{P}_i \mathbf{S}_1, \dots \mathbf{P}_i \mathbf{S}_{|\mathcal{S}_i|}\}$. Note that we set $\mathcal{S}_{[\text{MASK}]} \coloneqq \{\mathbf{I}\}$.  
+
+% Instead of hard-coding this invariance into the network, e.g., via frame averaging \cite{frame_averaging}, we learn it with data augmentation: during training, for every motif $k$, we randomly sample a symmetry element $\mathbf{S} \in \mathcal{S}_k$ and transform the ground truth frame $\mathbf{R}_1^k \leftarrow \mathbf{R}_1^k \mathbf{S}$.
+
+To handle this, we adopt a \textsc{GeoDiff}-style alignment strategy \cite{geodiff} for the loss computation. Instead of regressing towards a fixed canonical frame, we dynamically select the target rotation $\tilde{\mathbf{R}}_1^k$ from the symmetry orbit that is closest to the current noisy frame $\mathbf{R}_t^k$:
+\begin{equation*}
+    \tilde{\mathbf{R}}_1^k = \mathbf{S}^*\mathbf{R}_1^k, \quad \text{where} \quad \mathbf{S}^* = \mathop{\mathrm{argmax}}_{\mathbf{S} \in \mathcal{S}_k} \mathrm{Tr}\left((\mathbf{R}_t^k)^\top \mathbf{S}\mathbf{R}_1^k\right).
+\end{equation*}
+Minimising the geodesic distance on $\mathrm{SO}(3)$ corresponds to maximising the trace of the relative rotation matrix, which is computationally negligible as the finite symmetry groups of motifs are small. Empirically, we found that this alignment stabilises training at small times $t$, where the noisy state is close to the uninformed prior, preventing the flow from receiving conflicting gradients from equivalent but spatially distant symmetric targets.
+
+We ablate the effects of the design choices and compare them with alternative options in Appendix \ref{Ablation Details}. Further implementation details are provided in Appendix \ref{Implementation Details}.
+
+
+===== related_work.tex =====
+\vspace{-2mm} 
+\section{Related Work}
+\label{Related Work}
+\vspace{-1mm} 
+\paragraph{Fragment-Based Molecule Generation} In the task of molecular graph generation, several approaches to tokenising molecules into motifs exist, which can be classified into chemically inspired and data-driven ones. The former group \cite{hiervae, moler, jtvae, frag_fm} focuses on top-down separation of acyclic and cyclic parts in the molecule, while the latter group \cite{psvae, micam} adopts the bottom-up merging strategy starting from individual atoms. As an alternative to motif-based methods, \citet{magnet} proposed \textit{scaffold-based} fragmentation, in which the molecular assembly starts from basic geometric shapes and attributes the chemical properties in the subsequent stages of generation. To the best of our knowledge, neither motif-based nor scaffold-based fragmentation has been widely explored in 3D. A notable exception is \textsc{HierDiff} \cite{hierdiff}, which utilises a hierarchical diffusion framework to position coarse fragment nodes in 3D space. In contrast to our approach, which generates the full $\mathrm{SE}(3)$ configuration of rigid motifs without auxiliary mechanisms, \textsc{HierDiff} relies on a learnable decoding procedure to resolve the specific identities and geometries of the fragments, thereby taking a fundamentally different route.
+\vspace{-3mm} 
+\paragraph{3D Molecule Generation} Generation of spatial molecular structure is primarily tackled with flow-based \cite{enflows, enlinker, flowmol} and autoregressive \cite{autoreg1, autoreg2, quetzal} models on atom coordinates. A notable exception to these directions is the work of \citet{voxel}, where 3D molecules are represented as atomic densities on regular grids. Existing approaches to 3D molecular generation can also be roughly classified into two categories based on how they treat bonds. The seminal work of \citet{edm} uses a lookup table to infer bond types from pairwise atom distances, which is the approach we adopt. Recently, a line of work \cite{codesign, midi, semlaflow, moldiff} has proposed a joint modelling of the 2D molecular graph topology and 3D atom coordinates. While they show improvement over point cloud approaches, we perform our experiments without modelling the graph structure beyond intra-motif connectivity, i.e., beyond the bond structure within the fragments; therefore, we do not directly compare our method to these approaches.
+% Recently, there has been an emerging interest in the \textit{trans-dimensional} generation of molecules \cite{branchingflows, jumpdiffusion}, i.e., where molecules are generated atom-by-atom in a single reverse process, rather than residing on a fixed, predefined support of $N$ atoms, which can be seen as a medium between autoregressive and flow-based approaches. We note that, while our number of fragments $K$ is fixed for a given molecule during generation, as in any conventional flow matching, the number of atoms $\hat{N}(K)$ generated can be vastly different due to the difference in rigid motifs' sizes. From that perspective, our framework offers flexibility, albeit limited, in the number of atoms generated, without relying on branching or jump process ideas.
+\vspace{-3mm} 
+\paragraph{Rigid-body Generation} Parametrising protein residues as rigid frames has been originally introduced in the seminal work of \citet{alphafold2} and received a widespread adoption in the subsequent methods for protein structure prediction and design \cite{rfdiffusion, se3diffusion, foldflow}. Generative modelling with rigid frames outside the protein application, however, is limited. A concurrent work \cite{sigmadock} explores rigid-fragment $\mathrm{SE}(3)$ diffusion for molecular docking, which is an orthogonal task to ours. \textit{De novo} generation of 3D structure of general molecules from rigid fragments thus remains underexplored, which is a gap the present paper aims to fill.
+
+===== main.tex =====
+\documentclass{article}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+% \usepackage{icml2026}
+% For preprint, use
+\usepackage[preprint]{icml2026}
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage[inline]{enumitem}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{makecell}
+
+\usepackage{xspace} 
+\newcommand{\oursacro}{\textsc{MotiFlow}\xspace}
+
+% Theorems
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\usepackage[textsize=tiny]{todonotes}
+
+
+\icmltitlerunning{3D Molecule Generation from Rigid Motifs}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{3D Molecule Generation from Rigid Motifs via \texorpdfstring{$\mathrm{SE}(3)$}{SE(3)} Flows}
+
+  \icmlsetsymbol{equal}{*}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Roman Poletukhin}{cit}
+    \icmlauthor{Marcel Kollovieh}{cit,mcml}
+    \icmlauthor{Eike Eberhard}{cit,mdsi}
+    \icmlauthor{Stephan Günnemann}{cit,mcml,mdsi}
+  \end{icmlauthorlist}
+
+  \icmlaffiliation{cit}{School of Computation, Information and Technology, Technical University of Munich,
+Germany}
+  \icmlaffiliation{mdsi}{Munich Data Science Institute (MDSI), Technical University of Munich, Germany}
+  \icmlaffiliation{mcml}{Munich Center for Machine Learning (MCML), Munich, Germany}
+
+  \icmlcorrespondingauthor{Roman Poletukhin}{roman.poletukhin@tum.de}
+
+  \icmlkeywords{Machine Learning, Biology, Chemistry, AI4Science, ICML}
+
+  \vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}  % no special notice 
+
+\begin{abstract}
+Three-dimensional molecular structure generation is typically performed at the level of individual atoms, yet molecular graph generation techniques often consider \textit{fragments} as their structural units. Building on the advances in \textit{frame-based} protein structure generation, we extend these fragmentation ideas to 3D, treating general molecules as sets of \textit{rigid-body motifs}. Utilising this representation, we employ $\mathrm{SE}(3)$-equivariant generative modelling for \textit{de novo} 3D molecule generation from rigid motifs. In our evaluations, we observe comparable or superior results to state-of-the-art across benchmarks, surpassing it in atom stability on \textsc{GEOM-Drugs}, while yielding a $2\times$ to $10\times$ reduction in generation steps and offering $3.5\times$ compression in molecular representations compared to the standard atom-based methods.
+\end{abstract}
+
+\input{contents/intro}
+\input{contents/background}
+\input{contents/method}
+\input{contents/related_work}
+\input{contents/experiments}
+\input{contents/conclusion}
+\bibliography{references}
+\bibliographystyle{icml2026}
+
+\clearpage
+\input{contents/appendix}
+
+\end{document}

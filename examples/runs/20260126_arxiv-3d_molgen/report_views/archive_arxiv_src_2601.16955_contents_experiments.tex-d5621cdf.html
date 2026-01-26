@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/arxiv/src/2601.16955/contents/experiments.tex</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/arxiv/src/2601.16955/contents/experiments.tex</h1></header>
+  <main><pre>\vspace{-5mm} 
+\section{Experiments} \label{Experiments}
+% \begin{figure*}[t] 
+%     \centering
+%     \includegraphics[width=\textwidth]{visuals/uncond_samples/main.png} 
+%     \caption{Examples of samples generated unconditionally by our method trained on \textsc{GEOM-Drugs} (\textit{top}) and \textsc{QMugs} (\textit{bottom}).}
+%     \label{test_wide}
+% \end{figure*}
+% In this section, we empirically validate the performance of our method across several setups. 
+\paragraph{Tasks and Datasets} In Section \ref{Unconditional Generation}, we consider the task of unconditional generation on two common benchmarks, \textsc{QM9} \cite{qm9} and \textsc{GEOM-Drugs} \cite{geom}. The former dataset contains $134$k small organic molecules with up to $29$ atoms in total, with a maximum of $9$ heavy atoms. The latter, larger-scale dataset of molecular conformers comprises $430$k medium-sized molecules, with up to $181$ atoms and an average of $44.4$ atoms per molecule. For both datasets, we follow the same setup as in previous works \cite{edm, end, geodiff}. We then proceed to the two conditional experiments on \textsc{QM9} in Section \ref{Conditional Generation}, demonstrating our method&#x27;s ability to generate molecules with desired properties. We conclude by studying the proposed rigid-motif fragmentation strategy and its modifications on the two datasets containing larger molecules, which is the principal use case of our method: the aforementioned \textsc{GEOM-Drugs} and \textsc{QMugs} \cite{qmugs}. The \textsc{QMugs} dataset contains $665$k large drug-like molecules, with up to $100$ heavy atoms; we use its subset of $300$k conformations for our experiments. For experimental details and extended results, see Appendix \ref{Experimental Details} and \ref{Extended Results}.
+\vspace{-3mm} 
+\paragraph{Baselines} We compare the performance of \oursacro to models within the same paradigm of inferring bonds from interatomic distances \cite{edm, edm_bridge, geoldm, equifm, end, geobfn}. Further details are in Appendix \ref{Baseline Details}.
+\vspace{-3mm} 
+\subsection{Unconditional Generation} \label{Unconditional Generation}
+\vspace{-1mm} 
+For this task, we follow \citet{end} and sample $10^4$ molecules across $3$ seeds, reporting the mean and standard deviation. For each baseline with fixed-step solvers, we provide the step configuration that yielded the best molecular stability for \textsc{QM9} and atom stability for \textsc{GEOM-Drugs}, among those reported in the respective papers.
+\vspace{-3mm} 
+\paragraph{Metrics} Following the established practice \cite{edm, equifm}, we report the percentages of stable atoms A and molecules M, as well as valid V and valid and unique V$\times$U molecules computed on \texttt{RDKit} \cite{rdkit}. Since for larger \textsc{GEOM-Drugs}, the connectivity of the generated molecules is commonly reported to be more challenging, while practically all samples are unique, we follow \citet{end} and report the percentage of valid and connected V$\times$C molecules instead. In line with the baselines, we also do not report molecular stability for \textsc{GEOM-Drugs}, as it was found to be non-informative when bonds are inferred from interatomic distances \cite{edm, equifm}.
+\vspace{-3mm} 
+\paragraph{\textsc{QM9}} Main results are provided in Table \ref{qm9_uncond}. The \textsc{QM9} benchmark is fairly saturated on unconditional generation and thus mainly reported for completeness. Overall, \oursacro performs on par with methods that use $10\times$ the number of generation steps: we obtain higher molecular stability and lower uniqueness than the best-performing \textsc{EquiFM} \cite{equifm}, both being the consequence of using rigid motifs as larger building blocks on small molecules; this trade-off is controllable via, e.g., the sampling temperature in the discrete flow.
+\begin{table}[t]
+    \centering
+    \footnotesize 
+    \setlength{\tabcolsep}{2.2pt}
+    \renewcommand{\arraystretch}{0.7}
+    \caption{Results of unconditional generation on \textsc{QM9}.}
+    \label{qm9_uncond}
+    \begin{tabular}{@{} l c c c c c @{}}
+    \toprule
+    \multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{2}{c}{Stability ($\uparrow$)} &amp; \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} \\ 
+    \cmidrule(lr){3-4} \cmidrule(l){5-6}
+     &amp; &amp; A, \% &amp; M, \% &amp; V, \% &amp; V $\times$ U, \% \\
+    \midrule
+    \makecell[l]{Data} &amp; -- &amp; $99.0$ &amp; $95.2$ &amp; $97.7$ &amp; $97.7$ \\
+    \midrule 
+    
+    % EDM block
+    \makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} (\scriptsize\citeyear{edm})}
+      &amp; $10^3$ &amp; $98.7$ &amp; $82.0$ &amp; $91.9$ &amp; $90.7$ \\
+    
+    % EDM-Bridge block
+    \makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+      &amp; $10^3$ &amp; $98.8$ &amp; $84.6$ &amp; $92.0$ &amp; $90.7$ \\
+    
+    % GeoLDM block
+    \makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+      &amp; $10^3$ &amp; $98.9_{\text{\tiny $\pm$.1}}$ &amp; $89.4_{\text{\tiny $\pm$.5}}$ &amp; $93.8_{\text{\tiny $\pm$.4}}$ &amp; $92.7_{\text{\tiny $\pm$.5}}$ \\
+    
+    % EquiFM block
+    \makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+      &amp; $-$ &amp; 
+      $98.9_{\text{\tiny $\pm$.1}}$ &amp; $88.3_{\text{\tiny $\pm$.3}}$ &amp; 
+      $94.7_{\text{\tiny $\pm$.4}}$ &amp; $\mathbf{93.5_{\text{\tiny $\pm$.3}}}$ \\
+    
+    % END block
+    \makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}
+      &amp; $10^3$ &amp; $98.9_{\text{\tiny $\pm$.0}}$ &amp; $89.1_{\text{\tiny $\pm$.1}}$ &amp; $94.8_{\text{\tiny $\pm$.1}}$ &amp; $92.6_{\text{\tiny $\pm$.2}}$ \\
+    
+    % EDM* block
+    \makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}
+    &amp; $10^3$ &amp; $98.4_{\text{\tiny $\pm$.0}}$ &amp; $85.3_{\text{\tiny $\pm$.3}}$ &amp; $93.5_{\text{\tiny $\pm$.1}}$ &amp; $91.9_{\text{\tiny $\pm$.1}}$ \\
+    
+    % GeoBFN block
+    \makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}
+    &amp; $10^3$ &amp; $99.1_{\text{\tiny $\pm$.1}}$ &amp; $90.9_{\text{\tiny $\pm$.2}}$ &amp; $95.3_{\text{\tiny $\pm$.1}}$ &amp; $93.0_{\text{\tiny $\pm$.1}}$ \\
+    \midrule
+    
+    % Our block
+    \makecell[l]{\oursacro}
+    &amp; $10^2$  &amp; $99.1_{\text{\tiny $\pm$.1}}$ &amp; $\mathbf{92.6_{\text{\tiny $\pm$.5}}}$ &amp; $95.3_{\text{\tiny $\pm$.6}}$ &amp; $86.3_{\text{\tiny $\pm$.9}}$ \\
+    \bottomrule
+    \end{tabular}
+    \vspace{-5mm}
+\end{table}
+\vspace{-3mm} 
+\paragraph{\textsc{GEOM-Drugs}} Main results\footnote{\citet{end} have conflicting V$\times$C results on \textsc{GEOM-Drugs} for their \textsc{END} model reported in the appendix and main body of their paper; we resort to results provided in the main body.} are presented in Table \ref{geom_uncond}. On this dataset of larger, more realistic, and challenging molecules, \oursacro significantly outperforms the baselines. We note that our use of rigid motifs as larger building blocks also allows us to ameliorate errors in atom valencies that the true atom-level data exhibits when assessed by the bond lookup mechanism of \citet{edm}.
+
+\vspace{-3mm} 
+\subsection{Conditional Generation} \label{Conditional Generation}
+\vspace{-1mm} 
+With the conditional experiments, we seek to answer two primary questions that arise naturally from the proposed change in molecular representations:
+\begin{enumerate}[label=(\roman*), noitemsep, topsep=0pt, parsep=0pt, partopsep=0pt, wide=0pt]
+  \item \textit{Fine-grained conditioning}: does the motif-based representation perform competitively at generation conditioned on the \textit{atom-level} information, despite only modelling it implicitly?
+  \item \textit{Coarse-grained conditioning}: does the use of fragments lead to better generation of desired \textit{substructures}?
+\end{enumerate}
+
+We adopt the tasks for both scenarios from the previous works \cite{end, eegsde}. For the fine-grained level, we condition on the \textit{atom composition} $\mathbf{c} = (c_1, \dots, c_{|\mathcal{V}_a|}) \in \mathbb{R}^{|\mathcal{V}_a|}$, where $c_j$ is the number of atoms of the type $j$ that the desired sampled molecule is required to have. Following \citet{end}, we generate $10$ samples for each unique target atom composition from the validation and test sets across $3$ seeds, and report the percentage of matched compositions. For the coarse-grained level, we condition on the \textit{substructural features}: concretely, we use a molecular fingerprint $\mathbf{c} = (c_1, \dots,c_{F}) \in \{0, 1\}^F$, each entry of which indicates the presence or absence of a certain substructure in the molecule. We use \texttt{OpenBabel} \cite{openbabel} to generate the fingerprints for the test set, and evaluate the generation by computing Tanimoto similarity between the fingerprints of generated molecules and those from the test set, which are injected as conditions to the model. To ensure a fair comparison with the baselines in both tasks, we follow the strategy of \citet{end}: while many techniques for guiding flow models exist \cite{cfg, discrete_cfg}, in this section, we directly use the conditional model $v_\theta(\bm{\mathcal{M}}_t, t, \mathbf{c})$ by adding the conditioning information $\mathbf{c}$ directly to the input. We denote this version as \textsc{c}\oursacro.
+
+The results are summarised in Table \ref{cond_gen_table}, with extended results and qualitative examples in Appendix \ref{Extended Results}. The tasks are concisely summarised in Figure \ref{cond_gen_pic}. \textsc{c}\oursacro outperforms the baselines, achieving better adherence to conditioning information at both levels of molecular granularity while requiring fewer generation steps.
+
+\begin{table}[t]
+    \centering
+    \footnotesize 
+    \setlength{\tabcolsep}{3.6pt}
+    \renewcommand{\arraystretch}{0.95} 
+    \caption{Results of unconditional generation on \textsc{GEOM-Drugs}. $^\ddagger$Results are obtained by \citet{end}.}
+    \label{geom_uncond}
+    \begin{tabular}{@{} l c c c @{}}
+    \toprule
+    Method &amp; Steps &amp; Stable A, \% ($\uparrow$) &amp; V $\times$ C, \% ($\uparrow$) \\ 
+    \midrule
+    Data &amp; -- &amp; $86.5$ &amp; $99.0$ \\
+    \midrule
+    
+    \textsc{GeoLDM} {\scriptsize\citet{geoldm}}
+      &amp; $1000$ &amp; $84.4$ &amp; $45.8^\ddagger$ \\
+    
+    \textsc{EquiFM} {\scriptsize\citet{equifm}}
+      &amp; $-$ &amp; $84.1$ &amp; $-$ \\
+    
+    \textsc{END} {\scriptsize\citet{end}}
+      &amp; $100$  &amp; $87.2_{\text{\tiny $\pm$.1}}$ &amp; $73.7_{\text{\tiny $\pm$.4}}$ \\
+    
+    \textsc{EDM*} {\scriptsize\citet{end}}
+      &amp; $250$  &amp; $85.4_{\text{\tiny $\pm$.0}}$ &amp; $61.4_{\text{\tiny $\pm$.6}}$ \\
+    
+    \textsc{GeoBFN} {\scriptsize\citet{geobfn}}
+      &amp; $1000$ &amp; $85.6$ &amp; -- \\
+    \midrule
+    
+    \oursacro
+        &amp; $100$  &amp; $\mathbf{95.0_{\scriptscriptstyle \pm.0}}$ &amp; $\mathbf{81.2_{\scriptscriptstyle \pm.3}}$ \\
+    \bottomrule
+    \end{tabular}
+    \vspace{-4mm}
+\end{table}
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5.6pt}
+\caption{Results of the two conditional generation tasks on \textsc{QM9}.}
+\label{cond_gen_table}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{1}{c}{\textsc{Composition}} &amp; \multicolumn{1}{c}{\textsc{Substructure}} \\ 
+\cmidrule(lr){3-3}\cmidrule(l){4-4}
+ &amp; &amp; Matching, $\%$ ($\uparrow$) &amp; Tanimoto Sim. ($\uparrow$) \\
+\midrule
+
+% Single Step Baselines (Table 4 top section)
+\makecell[l]{\textsc{cEDM} \\ \scriptsize\citet{eegsde}}
+  &amp; $1000$ &amp; -- &amp; $.671_{\text{\tiny $\pm$.004}}$ \\
+
+\makecell[l]{\textsc{EEGSDE} \\ \scriptsize\citet{eegsde}}
+  &amp; $1000$ &amp; -- &amp; $.750_{\text{\tiny $\pm$.003}}$ \\
+
+% cEDM* Block
+\multirow{2}{*}{\makecell[l]{\textsc{cEDM}* \\ \scriptsize\citet{end}}}
+  &amp; $500$  &amp; $76.2_{\text{\tiny $\pm$0.6}}$ &amp; $.669_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $1000$ &amp; $75.5_{\text{\tiny $\pm$0.5}}$ &amp; $.673_{\text{\tiny $\pm$.002}}$ \\
+
+% cEND Block
+\multirow{2}{*}{\makecell[l]{\textsc{cEND} \\ \scriptsize\citet{end}}}
+  &amp; $500$  &amp; $91.5_{\text{\tiny $\pm$0.8}}$ &amp; $.825_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $1000$ &amp; $91.0_{\text{\tiny $\pm$0.9}}$ &amp; $.828_{\text{\tiny $\pm$.001}}$ \\
+\midrule
+
+% Our block
+\makecell[l]{\textsc{c}\oursacro}
+  &amp; $100$  &amp; $\mathbf{95.4_{\scriptscriptstyle \pm0.5}}$ &amp; $\mathbf{.862_{\scriptscriptstyle \pm.002}}$ \\
+\bottomrule
+\end{tabular}
+\vspace{-1mm} 
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/cond_generation/main.png}
+\caption{Examples of results for the conditional tasks on \textsc{QM9}: atom composition (\textit{left}) and fingerprint substructure (\textit{right}).}
+\label{cond_gen_pic}
+\vspace{-4mm} 
+\end{figure}
+\vspace{-2mm}
+\subsection{Ablations} \label{Ablations}
+\vspace{-1mm} 
+The purpose of this section is to further study the effects of the rigid-motif decomposition on 3D molecular generation. As noted by existing literature (e.g., \citealp{magnet}), the motif-based molecular graph decomposition offers a trade-off: while many larger functional groups are present in the data, adding larger motifs to the vocabulary leads, on average, to less frequent classes observed during training, which could make generalisation to uncommon substructures challenging. At the same time, we hypothesise that in 3D, larger rigid motifs, if sufficiently frequent, bring about the benefits of the fragment-based generation, which were empirically established in Sections \ref{Unconditional Generation} and \ref{Conditional Generation}.
+
+To verify this, we consider several variations of the rigid-motif decomposition. In the \textsc{No Rings} variant, we only preserve bonds to hydrogen atoms, as well as double and triple bonds. This configuration allows us to evaluate the performance of the finer-grained vocabulary with fewer rare fragments. On the opposite side of the spectrum, we consider our main decomposition introduced in Section \ref{Rigid-Motif Decomposition}, which preserves approximately planar rings and 
+fused ring systems. For this \textsc{Planar Rings} fragmentation, we consider three thresholds (including our base one, $\alpha=0.1$) for the minimal frequency of a fragment relative to the dataset size; i.e., a smaller threshold corresponds to a larger vocabulary with more rare motifs, while with a larger threshold, they are decomposed further into finer components. An example of a molecule from \textsc{GEOM-Drugs} under different rigid-motif decompositions is provided in Figure \ref{decomp_various}. Detailed information on the setup can be found in Appendix \ref{Ablation Details}.
+
+First, we ablate the performance of each fragmentation strategy at the unconditional generation on \textsc{GEOM-Drugs} and \textsc{QMugs}; as it is for the main unconditional experiments, we evaluate the metrics based on $10^4$ samples obtained with $3$ seeds; results are in Table \ref{ablation}. Our hypothesis is largely confirmed: all rigid-motif vocabularies that treat planar rings as distinct classes yield superior atom-stability performance compared to finer fragmentation, with the two smaller threshold configurations scoring best.
+
+To assess the extent to which uncommon motifs are purposefully sampled during generation, we analyse the motif set of generated molecules. We first formally define \textit{common} and \textit{uncommon} motifs as those that exceed the base occurrence threshold $\alpha=0.1$ and those that do not reach its frequency in the data, respectively. For each group, we then compute the total counts of its constituent motifs, normalised to the total number of molecules, independently for the training and generated sets. The ratio of these normalised counts, if the model accurately represents the underlying distribution of motifs, should be close to $1$ for both common and uncommon motifs. Figure \ref{motif_distr_qmugs} shows that, while common motifs are consistently generated with close to the true occurrence, the uncommon motifs are notably oversampled for the finer \textsc{No Rings} strategy. Further, we observe an escalating undersampling behaviour for \textsc{Planar Rings} strategy with the decrease in threshold $\alpha$, confirming the expected trade-off between the vocabulary size and uncommon motif coverage \cite{magnet}. We thus conclude that frequency-based fragmentation with planar ring systems at a relatively high $\alpha = 0.1$ offers the optimal trade-off, significantly improving generation over conventional atom-based baselines and other rigid decomposition strategies.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h!]
+\centering
+\small
+\setlength{\tabcolsep}{1.7pt}
+\caption{Ablation results for different fragmentation strategies. Metrics are reported for sampling with $100$ reverse steps.}
+\label{ablation}
+\begin{tabular}{@{} l ccc ccc @{}}
+\toprule
+\multirow{3}{*}{\makecell[l]{Strategy}} &amp; \multicolumn{3}{c}{\textsc{QMugs}} &amp; \multicolumn{3}{c}{\textsc{GEOM-Drugs}} \\ 
+\cmidrule(lr){2-4} \cmidrule(l){5-7}
+ &amp; \multirow{2}{*}{$|\mathcal{V}_m|$} &amp; Stability &amp; V $\times$ C &amp; \multirow{2}{*}{$|\mathcal{V}_m|$} &amp; Stability &amp; V $\times$ C \\
+ &amp; &amp; A, \% ($\uparrow$) &amp; \% ($\uparrow$) &amp; &amp; A, \% ($\uparrow$) &amp; \% ($\uparrow$) \\
+\midrule
+
+\textsc{No Rings} &amp; 
+  $49$ &amp;
+  $85.5_{\text{\tiny $\pm$1.8}}$ &amp; 
+  $\mathbf{85.6_{\scriptscriptstyle \pm.3}}$ &amp;
+  $39$ &amp;
+  $86.7_{\text{\tiny $\pm$1.8}}$ &amp; $\mathbf{82.9_{\scriptscriptstyle \pm.4}}$ \\
+
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.5\%$} &amp;
+  $96$ &amp;
+  $95.5_{\text{\tiny $\pm$0.1}}$ &amp; $84.0_{\text{\tiny $\pm$.5}}$ &amp; 
+  $81$ &amp;
+  $95.2_{\text{\tiny $\pm$0.1}}$ &amp; $82.1_{\text{\tiny $\pm$.3}}$ \\
+  
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.1\%$} &amp; $253$
+  &amp; $\mathbf{96.1_{\scriptscriptstyle \pm0.0}}$
+  &amp; $83.1_{\text{\tiny $\pm$.4}}$ &amp; $202$
+  &amp;
+  $95.0_{\text{\tiny $\pm$0.0}}$ &amp; $81.2_{\text{\tiny $\pm$.3}}$ \\
+
+\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.01\%$} &amp; $1184$
+  &amp; $95.3_{\text{\tiny $\pm$0.0}}$ &amp; $80.4_{\text{\tiny $\pm$.5}}$ &amp; $867$ &amp; 
+  $\mathbf{96.3_{\scriptscriptstyle \pm0.0}}$ &amp; $82.4_{\text{\tiny $\pm$.3}}$ \\
+\bottomrule
+\end{tabular}
+\vspace{-2mm}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/ablations/frag_comparison.png}
+\caption{Resulting sets of rigid motifs for a \textsc{GEOM-Drugs} molecule $\text{C}_{17}\text{H}_{15}\text{N}_{3}\text{O}_{4}\text{S}$ under different fragmentation strategies.}
+\label{decomp_various}
+\end{figure}
+
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/ablations/motif_distr_qmugs.pdf}
+\caption{Comparison of sampled motif types to their frequencies in the training distribution of \textsc{QMugs}. A ratio of 1 is optimal.}
+\label{motif_distr_qmugs}
+\vspace{-3mm}
+\end{figure}</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

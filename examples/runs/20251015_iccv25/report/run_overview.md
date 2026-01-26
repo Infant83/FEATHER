@@ -1,0 +1,58 @@
+# Run Overview
+
+## Instruction
+Source: ./instruction/20251015_iccv25.txt
+
+```
+github
+iccv 2025
+international conference on computer vision 2025
+iccv 2025 open access
+iccv 2025 paper code
+```
+
+## Archive Index
+Source: ./archive/20251015_iccv25-index.md
+
+# Archive 20251015_iccv25
+
+- Query ID: `20251015_iccv25`
+- Date: 2025-10-15 (range: last 180 days)
+- Queries: 4 | URLs: 0 | arXiv IDs: 0
+
+## Run Command
+- `python -m feather --input C:\Users\angpa\myProjects\FEATHER\examples\instructions\20251015_iccv25.txt --output examples\runs --days 180 --max-results 8 --download-pdf --openalex --oa-max-results 5`
+
+## Instruction
+- `../instruction/20251015_iccv25.txt`
+
+## Tavily Search
+- `./tavily_search.jsonl`
+- Includes per-result `summary` and `query_summary`
+
+## OpenAlex (OA)
+- `./openalex/works.jsonl`
+- PDFs: 11
+- PDF file: `./openalex/pdf/W4409578551.pdf` | Title: Trajectory prediction via proposal guided transformer with out way attention | Source: https://www.nature.com/articles/s41598-025-97244-4.pdf | Citations: 4
+- PDF file: `./openalex/pdf/W4410841160.pdf` | Title: OpenCV for Computer Vision Applications | Source: https://www.ijfmr.com/papers/2025/3/44280.pdf | Citations: 59
+- PDF file: `./openalex/pdf/W4411100445.pdf` | Title: Development and validation of an autonomous artificial intelligence agent for clinical decision-making in oncology | Source: https://www.nature.com/articles/s43018-025-00991-6.pdf | Citations: 41
+- PDF file: `./openalex/pdf/W4411143162.pdf` | Title: Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i> | Source: https://arxiv.org/pdf/2505.14361 | Citations: 5
+- PDF file: `./openalex/pdf/W4411166620.pdf` | Title: Pedagogical Applications of Generative AI in Higher Education: A Systematic Review of the Field | Source: https://link.springer.com/content/pdf/10.1007/s11528-025-01100-1.pdf | Citations: 22
+- PDF file: `./openalex/pdf/W4411466105.pdf` | Title: Research on Multi-Modal Retrieval System of E-Commerce Platform Based on Pre-Training Model | Source: https://ojs.scineer-pub.com/index.php/AITR/article/download/6879/6579 | Citations: 18
+- PDF file: `./openalex/pdf/W4414756887.pdf` | Title: VQualA 2025 Challenge on Image Super-Resolution Generated Content Quality Assessment: Methods and Results | Source: https://arxiv.org/pdf/2509.06413 | Citations: 0
+- PDF file: `./openalex/pdf/W4415090288.pdf` | Title: The 1st International Workshop on Disentangled Representation Learning for Controllable Generation (DRL4Real): Methods and Results | Source: https://arxiv.org/pdf/2509.10463 | Citations: 0
+- PDF file: `./openalex/pdf/W4415254644.pdf` | Title: SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge | Source: https://arxiv.org/pdf/2509.17500 | Citations: 0
+- PDF file: `./openalex/pdf/W4417156065.pdf` | Title: R-LiViT: A LiDAR-Visual-Thermal Dataset | Source: https://arxiv.org/pdf/2503.17122 | Citations: 0
+- PDF file: `./openalex/pdf/W4417409712.pdf` | Title: VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods and Results | Source: https://arxiv.org/pdf/2509.02969 | Citations: 0
+- Extracted texts: 11
+- Text file: `./openalex/text/W4409578551.txt` | Title: Trajectory prediction via proposal guided transformer with out way attention | Source: https://www.nature.com/articles/s41598-025-97244-4.pdf | Citations: 4
+- Text file: `./openalex/text/W4410841160.txt` | Title: OpenCV for Computer Vision Applications | Source: https://www.ijfmr.com/papers/2025/3/44280.pdf | Citations: 59
+- Text file: `./openalex/text/W4411100445.txt` | Title: Development and validation of an autonomous artificial intelligence agent for clinical decision-making in oncology | Source: https://www.nature.com/articles/s43018-025-00991-6.pdf | Citations: 41
+- Text file: `./openalex/text/W4411143162.txt` | Title: Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i> | Source: https://arxiv.org/pdf/2505.14361 | Citations: 5
+- Text file: `./openalex/text/W4411166620.txt` | Title: Pedagogical Applications of Generative AI in Higher Education: A Systematic Review of the Field | Source: https://link.springer.com/content/pdf/10.1007/s11528-025-01100-1.pdf | Citations: 22
+- Text file: `./openalex/text/W4411466105.txt` | Title: Research on Multi-Modal Retrieval System of E-Commerce Platform Based on Pre-Training Model | Source: https://ojs.scineer-pub.com/index.php/AITR/article/download/6879/6579 | Citations: 18
+- Text file: `./openalex/text/W4414756887.txt` | Title: VQualA 2025 Challenge on Image Super-Resolution Generated Content Quality Assessment: Methods and Results | Source: https://arxiv.org/pdf/2509.06413 | Citations: 0
+- Text file: `./openalex/text/W4415090288.txt` | Title: The 1st International Workshop on Disentangled Representation Learning for Controllable Generation (DRL4Real): Methods and Results | Source: https://arxiv.org/pdf/2509.10463 | Citations: 0
+- Text file: `./openalex/text/W4415254644.txt` | Title: SAMSON: 3rd Place Solution of LSVOS 2025 VOS Challenge | Source: https://arxiv.org/pdf/2509.17500 | Citations: 0
+- Text file: `./openalex/text/W4417156065.txt` | Title: R-LiViT: A LiDAR-Visual-Thermal Dataset | Source: https://arxiv.org/pdf/2503.17122 | Citations: 0
+- Text file: `./openalex/text/W4417409712.txt` | Title: VQualA 2025 Challenge on Engagement Prediction for Short Videos: Methods and Results | Source: https://arxiv.org/pdf/2509.02969 | Citations: 0

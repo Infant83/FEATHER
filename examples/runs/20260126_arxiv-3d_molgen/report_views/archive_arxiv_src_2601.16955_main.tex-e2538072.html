@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/arxiv/src/2601.16955/main.tex</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/arxiv/src/2601.16955/main.tex</h1></header>
+  <main><pre>\documentclass{article}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+% \usepackage{icml2026}
+% For preprint, use
+\usepackage[preprint]{icml2026}
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage[inline]{enumitem}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{makecell}
+
+\usepackage{xspace} 
+\newcommand{\oursacro}{\textsc{MotiFlow}\xspace}
+
+% Theorems
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\usepackage[textsize=tiny]{todonotes}
+
+
+\icmltitlerunning{3D Molecule Generation from Rigid Motifs}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{3D Molecule Generation from Rigid Motifs via \texorpdfstring{$\mathrm{SE}(3)$}{SE(3)} Flows}
+
+  \icmlsetsymbol{equal}{*}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Roman Poletukhin}{cit}
+    \icmlauthor{Marcel Kollovieh}{cit,mcml}
+    \icmlauthor{Eike Eberhard}{cit,mdsi}
+    \icmlauthor{Stephan Günnemann}{cit,mcml,mdsi}
+  \end{icmlauthorlist}
+
+  \icmlaffiliation{cit}{School of Computation, Information and Technology, Technical University of Munich,
+Germany}
+  \icmlaffiliation{mdsi}{Munich Data Science Institute (MDSI), Technical University of Munich, Germany}
+  \icmlaffiliation{mcml}{Munich Center for Machine Learning (MCML), Munich, Germany}
+
+  \icmlcorrespondingauthor{Roman Poletukhin}{roman.poletukhin@tum.de}
+
+  \icmlkeywords{Machine Learning, Biology, Chemistry, AI4Science, ICML}
+
+  \vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}  % no special notice 
+
+\begin{abstract}
+Three-dimensional molecular structure generation is typically performed at the level of individual atoms, yet molecular graph generation techniques often consider \textit{fragments} as their structural units. Building on the advances in \textit{frame-based} protein structure generation, we extend these fragmentation ideas to 3D, treating general molecules as sets of \textit{rigid-body motifs}. Utilising this representation, we employ $\mathrm{SE}(3)$-equivariant generative modelling for \textit{de novo} 3D molecule generation from rigid motifs. In our evaluations, we observe comparable or superior results to state-of-the-art across benchmarks, surpassing it in atom stability on \textsc{GEOM-Drugs}, while yielding a $2\times$ to $10\times$ reduction in generation steps and offering $3.5\times$ compression in molecular representations compared to the standard atom-based methods.
+\end{abstract}
+
+\input{contents/intro}
+\input{contents/background}
+\input{contents/method}
+\input{contents/related_work}
+\input{contents/experiments}
+\input{contents/conclusion}
+\bibliography{references}
+\bibliographystyle{icml2026}
+
+\clearpage
+\input{contents/appendix}
+
+\end{document}</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

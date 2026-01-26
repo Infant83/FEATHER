@@ -1,17 +1,51 @@
-Alignment score: 86
-Aligned:
-- Directly addresses the focus prompt by summarizing (from in-archive evidence) key items, explicitly calling out code/dataset links and framing practical impact.
-- Clearly distinguishes what is actually in the archive (11 OpenAlex texts + portal “entry points”) vs what is not (no full ICCV 2025 proceedings crawl), reducing overclaim risk.
-- Identifies concrete research gaps grounded in the cited archived texts and ties them to actionable implications.
+정합성 점수: 75
 
-Gaps/Risks:
-- “Key papers” coverage is necessarily thin and workshop-skewed; the output acknowledges this, but the title/structure still reads like a broader ICCV 2025 summary and could mislead skim readers.
-- Code-link section is uneven: some items have explicit GitHub/DOI links, others are described without confirming whether a repo exists in the archived text (risk of implied availability).
-- The report references “authoritative portals” but does not list the actual portal URLs in the visible excerpt (may be in truncated section); this weakens the “entry point” deliverable promised in the Executive Summary.
-- Some extracted claims (e.g., leaderboard scores/metrics) appear precise; if they come from partial text excerpts, there’s a risk of missing context (track, split, evaluation protocol).
+정합:
+- 전반적 일치성: 제출된 Stage 내용은 리포트 포커스 프롬프트의 목적(“ICCV 2025 오픈액세스·코드 공개 현황과 GitHub 생태계 검토”)과 톤(심층 리뷰)에 잘 부합함. 제목·한 줄 요약·본문·참고링크·부록 등 요구된 출력 형식을 대부분 갖추고 있음.
+- 핵심 요구사항 반영:
+  - ICCV 2025 일정(2025-10-19–23) 및 CVF Open Access 존재성을 명시했고 관련 링크를 제시함 → 요구사항(2)의 핵심(일정·OA 정책 반영)을 부분 충족.
+  - GitHub 저장소 유형(커뮤니티 집계, 공식 구현, 재현·튜토리얼, 워크숍/데이터셋 등)을 분류·예시 제시함 → 요구사항(4) 충족.
+  - 불확실·미확인 항목(코드 공개 비율·라이선스 일관성 등)을 ‘Open Questions’에서 명시함 → 요구사항(5) 충족.
+  - 재현성 체크리스트·방법론 제안 포함 → 실무적 가치 제공.
 
-Next-step guidance:
-- Add a “Key Links” table near the top: Paper/Artifact → Venue (workshop/challenge/main) → Task → Dataset/Code URL(s) (only those explicitly present in archived texts).
-- Insert a one-line banner in Executive Summary: “This run does not contain the ICCV 2025 main proceedings; items below are limited to the archived OpenAlex sample + discovered portals.”
-- Ensure the portals section enumerates the discovered CVF/ICCV pages and any curated paper→code lists with URLs, labeled as “not archived beyond discovery.”
-- For any item without an explicit repo/DOI in the archived text, label as “repo not found in archive excerpt” rather than implying availability.
+누락/리스크:
+- 참고문헌 표 미작성(요구사항 3): 프롬프트는 “참고문헌에 대해 표로 내용을 정리할 것”을 명시했으나 Stage 내용은 링크 목록 및 부록 형태로만 제공. 표(예: 소스, 유형, 확인된 사실, 액세스일자)를 추가해야 함.
+- 키워드별(각 키워드: github, iccv 2025, international conference on computer vision 2025, iccv 2025 open access, iccv 2025 paper code) 명시적 분해·요약 부족(요구사항 1): 본문은 주제별·층별로 잘 구성되어 있으나, “각 키워드별 핵심 사실·관련 링크·확인된 출처 요약”을 키워드별 섹션으로 명확히 분할해 제시하지 않음.
+- CFP/세부정책 부족(요구사항 2 세부): ICCV CFP(제출·저작권·데드라인·저작권 양도/라이선스 관련 세부) 및 CVF의 오픈액세스 정책 원문(예: 저작권 보유·재사용 조건)에 대한 직접 인용/요약이 약함. “확인되면 반드시 반영”이라는 요구에 일부 반영되었으나 세부 조항(저작권·라이선스 조항 등) 확인 필요.
+- GitHub 저장소 유형 분류의 누락 항목: 프롬프트에 예시로 언급된 ‘CFP 추적’·‘논문 목록’·‘코드 모음’ 등 구체적 유형(및 각 유형의 대표 레포/통계)이 완전하게 망라되지 않음(특히 CFP 추적/논문 메타 레포 관련 예시·수량·상호중복 분석 미흡).
+- 정량분석·메트릭 부재: 보고서는 code_share 식을 제시했으나 실제 샘플링·정량값(혹은 샘플 계산 예시)이 없음. 사용된 근거가 스냅샷임을 명확히 밝히고 있으나, 사용자 요구(심층보고서)에서 기대되는 정량 결과가 누락됨.
+- 출처 검증·액세스일자 미기재: 링크는 제공되나 각 출처의 액세스일자·검증 수준(원문 확인 여부)이 표에 포함되어 있지 않음 → 재현성·검토성이 떨어짐.
+- 참고문헌 표·메타데이터(예: LICENSE 유무, 체크포인트 제공 유무)를 요구사항 3에서 명시했음에도 표 형식·구조화 데이터 부재.
+
+다음 단계 가이드:
+- 우선순위(긴급 → 중요):
+  1) 참고문헌 표 추가(긴급)
+     - 작업: 모든 주요 출처를 표로 정리(열: 소스명, URL, 유형[공식사이트/CVF OA/GitHub/OpenReview/arXiv 등], 확인된 핵심사실(요약 1문장), 액세스일자).
+     - 목적: 요구사항 3의 “참고문헌 표” 충족 및 독자가 출처를 빠르게 검증하도록 함.
+  2) 키워드별 섹션화(긴급)
+     - 작업: 리포트 내에 각 키워드(총 5개)를 별도 소절로 만들고, 각 소절에 대해 (a) 핵심 사실 2–4개, (b) 관련 링크(표시된 출처로 연결), (c) 해당 사실이 확인된 근거(출처 및 액세스일) 요약을 배치.
+     - 목적: 요구사항 1을 명확히 만족.
+  3) ICCV CFP·OA 정책 원문 검증 및 요약(중요)
+     - 작업: ICCV 공식 사이트·CVF 정책 페이지에서 CFP·저작권·OA 정책 전문을 확인하여 핵심 조항(저작권 귀속, 허용 재사용 범위, supplementary·dataset 요구사항 등) 요약 및 인용문 포함.
+     - 목적: 요구사항 2의 완전한 충족.
+  4) GitHub 저장소 유형 분류 완성 및 대표 사례 표(중요)
+     - 작업: 저장소 유형을 표준화(예: CFP 추적, 논문 목록/집계, 공식 구현, 비공식 재현/포크, 데이터셋/리더보드, 튜토리얼/워크숍 코드, 체크포인트/모델 허브 등). 각 유형별로 2–4개 대표 레포와 간단 메타(OWNER, stars, LICENSE 존재 여부, 체크포인트 유무) 표기.
+     - 목적: 요구사항 4를 체계적으로 반영하고 독자에게 생태계 구조를 한눈에 제시.
+  5) 정량분석 계획 수립 및 샘플 실행(권장)
+     - 작업: code_share를 계산할 샘플 정의(예: 전체 ICCV 2025 논문 전수 vs. 무작위 n=100 샘플), ‘linked repo’ 판정 규칙(정의: 논문 내 링크 OR CVF OA 보조자료 링크 OR Google/README에서 명시), 자동 크롤러 스크립트(논문→링크 파싱, GitHub API로 메타 수집), 샘플 결과(예: code_share, LICENSE 분포, 체크포인트 비율) 산출.
+     - 도구·방법: GitHub API, CVF OpenAccess HTML 파서, rate-limit 고려, 샘플 수동 검증(무작위 10%).
+     - 목적: 보고서에 신뢰 가능한 정량 수치 추가.
+  6) 불확실성·리스크 문장 보강(권장)
+     - 작업: 각 불확실 항목(예: ‘공개 비율’)에 대해 “검증 방법+예상 결과 범위+잔여 리스크”를 명시.
+     - 목적: 독자가 어떤 추가 확인이 필요한지 즉시 알게 함.
+- 실행 권장 도구와 분업 제안:
+  - 소규모 자동화(권장): task(서브에이전트)로 1) CVF OA 페이지 전수 크롤링, 2) GitHub API 기반 메타수집(레포 존재·LICENSE·README·체크포인트 링크 여부) 두 작업을 병렬로 수행하도록 분리하면 효율적임.
+  - 일정관리: write_todos 도구로 위 6개 주요 작업을 세부할 일정(예: 크롤링→샘플검증→표 작성→리포트 업데이트)을 작성·진행상태 표시하면 좋음.
+- 출력 형식 보완 예시(구체적 지시):
+  - 참고문헌 표(예시 컬럼): [번호 | 출처명 | URL | 유형 | 확인된 사실(간단) | 액세스일]
+  - GitHub 저장소 표(예시 컬럼): [유형 | 레포명 | URL | 소유자 | stars | LICENSE 존재 여부 | 체크포인트 유무 | 비고]
+  - 키워드별 소절 구조(예시): “키워드: github” → 핵심사실(3개) / 관련 링크(2–3개) / 확인 출처(요약).
+- 산출물·승인 기준:
+  - 최종 리포트는 (A) 키워드별 요약, (B) 참고문헌 표, (C) GitHub 유형 표(대표 레포 포함), (D) 최소 하나의 정량 샘플(code_share 계산 예시)을 반드시 포함해야 ‘요구사항 완전 충족’으로 간주됨.
+
+간결 요약: Stage 초안은 구조·내용 측면에서 강점(현황·리스크·체크리스트 제시)이 있으나, 요구된 형식적 산출물(참고문헌 표, 키워드별 정리, CFP·OA 조항의 원문 확인, GitHub 유형 표와 정량 샘플)이 빠져 있어 보완이 필요함. 위 순서대로 보완 작업을 수행하면 포커스 프롬프트의 모든 요구사항을 충족할 수 있음.

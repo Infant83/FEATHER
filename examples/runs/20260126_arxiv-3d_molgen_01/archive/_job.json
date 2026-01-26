@@ -1,0 +1,35 @@
+{
+  "date": "2026-01-26",
+  "src_file": "examples\\instructions\\20260126_arxiv-3d_molgen.txt",
+  "root_dir": "examples\\runs\\20260126_arxiv-3d_molgen_01",
+  "out_dir": "examples\\runs\\20260126_arxiv-3d_molgen_01\\archive",
+  "query_id": "20260126_arxiv-3d_molgen_01",
+  "lang_pref": null,
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 30,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": true,
+  "update_run": false,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://arxiv.org/pdf/2601.16955",
+    "https://www.linkedin.com/feed/update/urn:li:activity:7421560260718501888/"
+  ],
+  "arxiv_ids": [
+    "2601.16955"
+  ],
+  "site_hints": [],
+  "raw_lines": [
+    "https://arxiv.org/pdf/2601.16955",
+    "https://www.linkedin.com/feed/update/urn:li:activity:7421560260718501888/"
+  ]
+}

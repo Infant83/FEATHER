@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/arxiv/src/2601.16955/contents/appendix.tex</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/arxiv/src/2601.16955/contents/appendix.tex</h1></header>
+  <main><pre>\newpage
+\appendix
+\onecolumn
+\section{Supplementary Material}
+
+\subsection{Flow Matching in Euclidean Spaces}
+\label{Euclidean Flow}
+The task of generative modelling can be seen as transporting a sample $\mathbf{x}_0 \sim p(\mathbf{x})$ in $\mathbb{R}^d$ from a tractable prior distribution $p$ to a data sample $\mathbf{x}_1 \sim p^*(\mathbf{x})$ of the unknown data distribution $p^*$. In this formulation, the goal is thus to construct a \textit{probability density path} $p_t$, $t\in[0,1]$, such that $p_0 \approx p$, $p_1 \approx p^*$. 
+\textit{Flow matching} \cite{fm, fm1, fm2} approaches it by introducing a \textit{flow}, i.e., an \textit{interpolant}, $\phi_t(\mathbf{x}_0)$, such that $\mathbf{x}_t = \phi_t(\mathbf{x}_0) \sim p_t$ if $\mathbf{x}_0 \sim p_0$. One can model $\phi_t(\mathbf{x}_0)$ as a solution of an ordinary differential equation (ODE) with a time-varying \textit{vector field} $u_t(\mathbf{x}_t)\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ and the initial condition $\phi_0(\mathbf{x}_0) = \mathbf{x}_0$:
+\begin{equation*}
+\frac{d\mathbf{x}_t}{dt} = u_t(\mathbf{x}_t) \quad \text{and} \quad \phi_1(\mathbf{x}_0) = \mathbf{x}_0 + \int_0^1 u_t(\mathbf{x}_t) \, dt.
+\end{equation*}
+The training objective arises from regressing a neural network $v_\theta\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ to the vector field $u_t$:
+\begin{equation*}
+    \mathcal{L}_{\text{FM}}(\theta) = \mathbb{E}_{\substack{\mathbf{x}_t \sim p_t(\mathbf{x}) \\ t \sim \mathcal{U}(0, 1)}} \|v_\theta(\mathbf{x}_t, t) - u_t(\mathbf{x}_t)\|^2.
+\end{equation*}
+Computing this loss requires access to intractable $u_t(\mathbf{x})$ and $p_t$. It can be shown (e.g., \citealp{fm}) that optimising $\mathcal{L}_{\text{FM}}$ is equivalent in expectation to optimising the \textit{conditional flow matching} (CFM) objective $\mathcal{L}_{\text{CFM}}$:
+\begin{equation*}
+    \mathcal{L}_{\text{CFM}}(\theta) = \mathbb{E}_{\substack{\mathbf{z} \sim p(\mathbf{z}), \,\mathbf{x}_t \sim p_t(\mathbf{x} \mid \mathbf{z}) \\ t \sim \mathcal{U}(0, 1)}} \|v_\theta(\mathbf{x}_t, t) - u_t(\mathbf{x}_t \mid \mathbf{z})\|^2,
+\end{equation*}
+where $u_t(\mathbf{x} \mid \mathbf{z})\colon \mathbb{R}^d \times [0, 1] \rightarrow \mathbb{R}^d$ is a conditional vector field that generates a conditional probability path $p_t(\mathbf{x} \mid \mathbf{z})$. That is, instead of regressing over the marginal vector field, we regress over conditional vector fields. The conditioning is commonly done on the data point $\mathbf{z} = \mathbf{x}_1$ or on a source-target coupling $\mathbf{z} = (\mathbf{x}_0, \mathbf{x}_1)$ \cite{ot_cfm}.
+
+\subsection{Implementation Details} \label{Implementation Details}
+
+\paragraph{Architecture}
+Our model architecture is based on the \textsc{FoldFlow-Base} backbone \cite{foldflow}, which utilises Invariant Point Attention (IPA) \cite{alphafold2} to process 3D rigid frames. To adapt this protein-specific architecture for general rigid-motif molecular generation, we make several key modifications. We reduce the hidden dimension per attention head to $64$ for each of $8$ heads, resulting in a compact model size of $12.4$ million parameters for the unconditional model, compared to $17$ million in the original \textsc{FoldFlow-Base}. The conditional variant, \textsc{c}\oursacro, utilises $13.7$ million parameters due to the additional projection layers required for processing conditioning signals.
+
+\paragraph{Embeddings and Input Processing}
+The network accepts a set of noisy rigid frames $\mathbf{T}_t$ and discrete motif tokens $m_t$. The node embeddings are initialized by projecting the motif token embeddings, sinusoidal timestep embeddings, and, during training, with $50\%$ probability, the self-conditioning embeddings derived from the previous step&#x27;s prediction.
+
+Unlike protein models that rely on residue index offsets for edge initialization, our motifs have no intrinsic linear ordering. Consequently, we replace sequence-based edge biases with purely geometric information. We compute pairwise Euclidean distances between the centers of rigid motifs and encode them using Gaussian Radial Basis Functions (RBFs) with $64$ basis functions. These geometric features are concatenated with the cross-concatenated node features to form the initial edge embeddings. The point cloud of fragments is treated as a fully connected graph, i.e., each pair of fragments is assigned an edge embedding.
+
+\paragraph{Backbone and Updates}
+The backbone consists of 4 blocks, each containing an IPA layer, transition modules, and 2 transformer encoder layers. To better capture the global geometric constraints of an unordered molecule, we augment the standard IPA blocks with triangle multiplicative updates \cite{alphafold2}. Specifically, we apply both outgoing and incoming triangle updates to the edge representations before the attention mechanism in every block.
+
+For the geometry updates, we employ a split-head design: the rotational update is predicted via a linear layer initialized to zero, while the translational update is predicted via a small 2-layer MLP.
+
+\paragraph{Conditioning}
+For conditional generation tasks, we follow the conditioning strategy of \citet{end}. The conditioning signal $\mathbf{c}$, i.e., either atom composition or substructure fingerprint, is encoded into a global context vector via a dedicated MLP. For composition conditioning, we learn embeddings for each atom type and compute a weighted sum based on the target counts before passing it to the MLP. This global context is injected into the network at three points: 
+\begin{enumerate*}[label=(\roman*)]
+    \item concatenated to the initial node embeddings,
+    \item added as a bias to the node representations within each IPA block, and
+    \item concatenated to the final node representations before the discrete readout head.
+\end{enumerate*}
+
+\paragraph{Training}
+We train the model using the flow matching objective described in Section \ref{Method}. For the rotational component of the $\mathrm{SE}(3)$ flow, we use the exponential rate scheduler \cite{foldflow} with the factor of 10, following \citet{se3diffusion}. In each experiment, we use learning rate of $10^{-4}$.
+
+\subsection{Experimental Details} \label{Experimental Details} 
+
+\subsubsection{Baseline Details} \label{Baseline Details}
+
+In this section, we briefly overview the baseline methods used for comparison in our experiments. All baselines are atom-based generative models that generate 3D molecules by determining the type and coordinates of individual atoms.
+
+\textbf{\textsc{EDM} \citep{edm}} is a seminal work that introduces a score-based generative model operating directly on the continuous coordinates and discrete atom types of the molecule. It utilizes an $\mathrm{E}(3)$-equivariant graph neural network \cite{engnn} to learn a denoising process that reverses a diffusion process, which transforms data into Gaussian noise. The model ensures that the generated likelihood is invariant to rotations and translations.
+
+\textbf{\textsc{EDM-Bridge} \citep{edm_bridge}} improves upon the \textsc{EDM} framework by replacing the standard Gaussian prior with an informative prior that contains structural or physical information. It learns a bridge process that connects this informative prior to the data distribution, utilizing Lyapunov functions to guide the generation and improve stability and validity.
+
+\textbf{\textsc{GeoLDM} \citep{geoldm}} is a latent diffusion framework for 3D molecules. Unlike \textsc{EDM}, which operates in the data space, \textsc{GeoLDM} first compresses molecular structures into a low-dimensional, continuous latent space using an $\mathrm{E}(3)$-invariant autoencoder. A diffusion model is then trained in this latent space, enabling more efficient sampling and the capture of high-level geometric features.
+
+\textbf{\textsc{EquiFM} \citep{equifm}} applies the flow matching framework to 3D molecular generation. It proposes a hybrid probability transport path: it uses optimal transport for continuous atomic coordinates to generate straight trajectories, and a conditional probability path for discrete atom types. This formulation allows significantly faster sampling speeds than diffusion-based equivalents while maintaining $\mathrm{SE}(3)$ equivariance.
+
+\textbf{\textsc{END} \citep{end}} is a recent diffusion-based method that introduces a learnable forward process. Unlike standard diffusion models that use a fixed, predefined corruption process (e.g., adding Gaussian noise), END parameterises the forward process with a time- and data-dependent transformation that is equivariant to rigid transformations. This flexibility allows the model to learn a more optimal degradation and restoration path for molecular geometries.
+
+\textbf{\textsc{GeoBFN} \citep{geobfn}} adapts the Bayesian flow network \cite{bfn} framework to 3D geometry. Instead of adding noise to the data directly, \textsc{GeoBFN} operates on the parameters of the data distribution (e.g., mean and variance for coordinates, probabilities for atom types). It updates these parameters iteratively using Bayesian inference and a neural network, unifying the generation of discrete and continuous modalities in a differentiable parameter space.
+
+\subsubsection{Evaluation Metrics} \label{Evaluation Metrics}
+
+We adopt the evaluation framework and metric definitions from previous works \cite{frag_fm, end, hierdiff}. All metrics are implemented using \texttt{rdkit} \cite{rdkit}. Consistent with the reference methodology \cite{frag_fm, end}, unless otherwise noted, raw generated coordinate samples are converted into molecular objects using \texttt{OpenBabel} \cite{openbabel} and property metrics are calculated exclusively on samples that are both valid and connected.
+
+\begin{itemize}
+    \item \textbf{Molecule Stability:} Atom stability is determined by valency constraints; an atom is stable if its charge is 0. Molecular stability requires every atom in the structure to be stable. Bond types are inferred from pairwise atomic distances using the lookup table method from \citet{edm}.
+
+    \item \textbf{Validity and Connectivity:} \textit{Validity} measures the percentage of generated samples that successfully pass \texttt{rdkit}&#x27;s parsing and sanitisation checks. However, standard sanitisation does not penalise disconnected molecules. To address this, particularly for larger molecules in \textsc{GEOM-Drugs} and \textsc{QMugs} datasets, we report \textit{Connectivity}, which verifies that a valid molecule consists of a single connected component.
+
+    \item \textbf{Uniqueness:} This metric reports the percentage of valid samples that possess a unique SMILES string \cite{smiles}. Following standard practice for larger molecules in \textsc{GEOM-Drugs} and \textsc{QMugs} datasets, we omit uniqueness from those results as generated samples are almost invariably unique.
+
+    \item \textbf{Total Variation (TV):} To measure the distributional fidelity of atom and bond types, we compute the total variation. This is defined as the mean absolute error between the marginal distributions of atom and bond types in the training set and those in the generated samples.
+
+    \item \textbf{Strain Energy:} This metric assesses the geometric quality of the molecules. It is calculated as the difference between the energy of the generated structure and the energy of its relaxed conformation. The relaxation is performed using the MMFF force field within \texttt{rdkit} \cite{rdkit}.
+
+    \item \textbf{Chemical Properties (SA, QED):} We report a couple of standard molecular descriptors:
+    \begin{itemize}
+        \item \textbf{SA:} The Synthetic Accessibility score \cite{sa_score} estimates the difficulty of synthesising a molecule. We follow \citet{end} and normalise this score to the interval $[0, 1]$, where 1 indicates high synthesisability (easy to synthesise) and 0 indicates low synthesisability.
+        \item \textbf{QED:} The Quantitative Estimation of Drug-likeness.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Extended Experimental Results} \label{Extended Results}
+
+\subsubsection{Unconditional Generation}
+\paragraph{\textsc{QM9}}
+We provide the extended results in Table \ref{qm9_uncond_extended}.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Extended results at unconditional generation on \textsc{QM9} with additional metrics from \citet{hierdiff}. $^\dagger$\citet{equifm} uses Dopri5 adaptive solver, with an average of $210$ function evaluations during sampling.}
+\label{qm9_uncond_extended}
+\begin{tabular}{@{} l c c c c c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{2}{c}{Stability ($\uparrow$)} &amp; \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} &amp; \multicolumn{2}{c}{TV ($\downarrow$)} &amp; \multicolumn{1}{c}{Str. En. ($\downarrow$)} &amp; \multirow{2}{*}{SA ($\uparrow$)} &amp; \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(l){3-8}
+ &amp; &amp; A, \% &amp; M, \% &amp; V, \% &amp; V $\times$ U, \% &amp; A$\left[10^{-2}\right]$ &amp; B$\left[10^{-3}\right]$ &amp; $\Delta \text{E} \left[\frac{\text{kcal}}{\text{mol}}\right]$ &amp; &amp; \\
+\midrule
+\makecell[l]{Data} &amp; -- &amp; $99.0$ &amp; $95.2$ &amp; $97.7$ &amp; $97.7$ &amp; -- &amp; -- &amp; $7.7$ &amp; $0.63$ &amp; $0.46$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+% EDM block
+\makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} \\ (\scriptsize\citeyear{edm})}
+  &amp; $10^3$ &amp; $98.7$ &amp; $82.0$ &amp; $91.9$ &amp; $90.7$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+% EDM-Bridge block
+\makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+  &amp; $10^3$ &amp; $98.8$ &amp; $84.6$ &amp; $92.0$ &amp; $90.7$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+% GeoLDM block
+\makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+  &amp; $10^3$ &amp; $98.9_{\text{\tiny $\pm$.1}}$ &amp; $89.4_{\text{\tiny $\pm$.5}}$ &amp; $93.8_{\text{\tiny $\pm$.4}}$ &amp; $92.7_{\text{\tiny $\pm$.5}}$ &amp; $1.6$ &amp; $1.3$ &amp; $10.4$ &amp; -- &amp; -- \\
+\midrule
+
+% EquiFM block
+\makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+  &amp; $-^{\dagger}$ &amp; 
+  $98.9_{\text{\tiny $\pm$.1}}$ &amp; $88.3_{\text{\tiny $\pm$.3}}$ &amp; 
+  $94.7_{\text{\tiny $\pm$.4}}$ &amp; $93.5_{\text{\tiny $\pm$.3}}$ &amp;
+  -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+% END block
+\multirow{5}{*}{\makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $98.6_{\text{\tiny $\pm$.0}}$ &amp; $84.6_{\text{\tiny $\pm$.1}}$ &amp; $92.7_{\text{\tiny $\pm$.1}}$ &amp; $91.4_{\text{\tiny $\pm$.1}}$ &amp; $1.5_{\text{\tiny $\pm$.1}}$ &amp; $1.9_{\text{\tiny $\pm$.4}}$ &amp; $12.1_{\text{\tiny $\pm$.3}}$ &amp; $0.60_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.8_{\text{\tiny $\pm$.0}}$ &amp; $87.4_{\text{\tiny $\pm$.2}}$ &amp; $94.1_{\text{\tiny $\pm$.0}}$ &amp; $92.3_{\text{\tiny $\pm$.2}}$ &amp; $1.3_{\text{\tiny $\pm$.0}}$ &amp; $1.8_{\text{\tiny $\pm$.3}}$ &amp; $10.6_{\text{\tiny $\pm$.2}}$ &amp; $0.61_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $250$  &amp; $98.9_{\text{\tiny $\pm$.1}}$ &amp; $88.8_{\text{\tiny $\pm$.5}}$ &amp; $94.7_{\text{\tiny $\pm$.2}}$ &amp; $92.6_{\text{\tiny $\pm$.1}}$ &amp; $1.2_{\text{\tiny $\pm$.1}}$ &amp; $0.8_{\text{\tiny $\pm$.2}}$ &amp; $9.6_{\text{\tiny $\pm$.2}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $500$  &amp; $98.9_{\text{\tiny $\pm$.0}}$ &amp; $88.8_{\text{\tiny $\pm$.4}}$ &amp; $94.8_{\text{\tiny $\pm$.2}}$ &amp; $92.8_{\text{\tiny $\pm$.2}}$ &amp; $1.2_{\text{\tiny $\pm$.1}}$ &amp; $0.8_{\text{\tiny $\pm$.5}}$ &amp; $9.5_{\text{\tiny $\pm$.1}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $10^3$ &amp; $98.9_{\text{\tiny $\pm$.0}}$ &amp; $89.1_{\text{\tiny $\pm$.1}}$ &amp; $94.8_{\text{\tiny $\pm$.1}}$ &amp; $92.6_{\text{\tiny $\pm$.2}}$ &amp; $1.2_{\text{\tiny $\pm$.1}}$ &amp; $0.8_{\text{\tiny $\pm$.5}}$ &amp; $9.3_{\text{\tiny $\pm$.1}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% EDM* block
+\multirow{5}{*}{\makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $97.6_{\text{\tiny $\pm$.0}}$ &amp; $77.6_{\text{\tiny $\pm$.5}}$ &amp; $90.2_{\text{\tiny $\pm$.2}}$ &amp; $89.2_{\text{\tiny $\pm$.2}}$ &amp; $4.6_{\text{\tiny $\pm$.1}}$ &amp; $1.7_{\text{\tiny $\pm$.5}}$ &amp; $16.4_{\text{\tiny $\pm$.2}}$ &amp; $0.61_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.1_{\text{\tiny $\pm$.0}}$ &amp; $81.9_{\text{\tiny $\pm$.4}}$ &amp; $92.1_{\text{\tiny $\pm$.2}}$ &amp; $90.9_{\text{\tiny $\pm$.2}}$ &amp; $3.5_{\text{\tiny $\pm$.1}}$ &amp; $1.4_{\text{\tiny $\pm$.3}}$ &amp; $13.5_{\text{\tiny $\pm$.1}}$ &amp; $0.61_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $250$  &amp; $98.3_{\text{\tiny $\pm$.0}}$ &amp; $84.3_{\text{\tiny $\pm$.1}}$ &amp; $93.2_{\text{\tiny $\pm$.4}}$ &amp; $91.7_{\text{\tiny $\pm$.3}}$ &amp; $2.8_{\text{\tiny $\pm$.2}}$ &amp; $1.3_{\text{\tiny $\pm$.4}}$ &amp; $12.3_{\text{\tiny $\pm$.4}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $500$  &amp; $98.4_{\text{\tiny $\pm$.0}}$ &amp; $85.2_{\text{\tiny $\pm$.5}}$ &amp; $93.5_{\text{\tiny $\pm$.2}}$ &amp; $92.2_{\text{\tiny $\pm$.3}}$ &amp; $2.6_{\text{\tiny $\pm$.2}}$ &amp; $1.3_{\text{\tiny $\pm$.4}}$ &amp; $11.7_{\text{\tiny $\pm$.1}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $10^3$ &amp; $98.4_{\text{\tiny $\pm$.0}}$ &amp; $85.3_{\text{\tiny $\pm$.3}}$ &amp; $93.5_{\text{\tiny $\pm$.1}}$ &amp; $91.9_{\text{\tiny $\pm$.1}}$ &amp; $2.5_{\text{\tiny $\pm$.1}}$ &amp; $1.4_{\text{\tiny $\pm$.4}}$ &amp; $11.3_{\text{\tiny $\pm$.1}}$ &amp; $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.46_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% GeoBFN block
+\multirow{4}{*}{\makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}} 
+  &amp; $50$   &amp; $98.3_{\text{\tiny $\pm$.1}}$ &amp; $85.1_{\text{\tiny $\pm$.5}}$ &amp; $92.3_{\text{\tiny $\pm$.4}}$ &amp; $90.7_{\text{\tiny $\pm$.3}}$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $100$  &amp; $98.6_{\text{\tiny $\pm$.1}}$ &amp; $87.2_{\text{\tiny $\pm$.3}}$ &amp; $93.0_{\text{\tiny $\pm$.3}}$ &amp; $91.5_{\text{\tiny $\pm$.3}}$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $500$  &amp; $98.8_{\text{\tiny $\pm$.8}}$ &amp; $88.4_{\text{\tiny $\pm$.2}}$ &amp; $93.4_{\text{\tiny $\pm$.2}}$ &amp; $91.8_{\text{\tiny $\pm$.2}}$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $10^3$ &amp; $99.1_{\text{\tiny $\pm$.1}}$ &amp; $90.9_{\text{\tiny $\pm$.2}}$ &amp; $95.3_{\text{\tiny $\pm$.1}}$ &amp; $93.0_{\text{\tiny $\pm$.1}}$ &amp; -- &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  &amp; $50$   &amp; $99.1_{\text{\tiny $\pm$.0}}$ &amp; $92.3_{\text{\tiny $\pm$.3}}$ &amp; $96.6_{\text{\tiny $\pm$.1}}$ &amp; $88.4_{\text{\tiny $\pm$.2}}$ &amp; $2.41_{\text{\tiny $\pm$.08}}$ &amp; $2.2_{\text{\tiny $\pm$.3}}$ &amp; $13.6_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $99.1_{\text{\tiny $\pm$.1}}$ &amp; $92.6_{\text{\tiny $\pm$.5}}$ &amp; $95.3_{\text{\tiny $\pm$.6}}$ &amp; $86.3_{\text{\tiny $\pm$.9}}$ &amp; $2.24_{\text{\tiny $\pm$.10}}$ &amp; $2.7_{\text{\tiny $\pm$.4}}$ &amp; $10.3_{\text{\tiny $\pm$.4}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+We observed no improvement in generation when setting more than $100$ steps in the sampling process, consistent with the evidence that flow models generally require fewer steps than diffusion models \cite{fm}. We used a linear schedule for sampling temperature in the discrete flow, with a minimum of $1.0$ and a maximum of $1.5$. For all \textsc{QM9} experiments, we set the remasking probability $\eta$ \cite{discrete_flows} in the discrete flow to zero, thus disabling it.
+
+On \textsc{QM9}, we train all models for $1000$ epochs.
+
+\paragraph{\textsc{GEOM-Drugs}} We follow \citet{edm} and opt not to report the molecular stability, neither inferring it via their lookup tables nor via \texttt{OpenBabel}, since the latter introduces significant bias and errors \cite{codesign}. We used a fixed sampling temperature of $0.1$ in the discrete flow. For \textsc{GEOM-Drugs}, we set the remasking probability in the discrete flow to $\eta = 1.5$.
+
+We train the model for $135$ epochs. The extended results are provided in Table \ref{geom_uncond_extended}.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{10.2pt}
+\caption{Extended results at unconditional generation on GEOM-Drugs. $^\dagger$\citet{equifm} uses Dopri5 adaptive solver, with an average of $210$ function evaluations during sampling. Results obtained by \citet{end} on the model of \citet{geoldm} are denoted with $\ddagger$.}
+\label{geom_uncond_extended}
+\begin{tabular}{@{} l c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{1}{c}{Stability} &amp; \multicolumn{1}{c}{V $\times$ C} &amp; \multicolumn{1}{c}{TV ($\downarrow$)} &amp; \multirow{2}{*}{SA ($\uparrow$)} &amp; \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5}
+ &amp; &amp; A, \% ($\uparrow$) &amp; \% ($\uparrow$) &amp; A$\left[10^{-2}\right]$ &amp; &amp; \\
+\midrule
+\makecell[l]{Data} &amp; -- &amp; $86.5$ &amp; $99.0$ &amp; -- &amp; $0.83$ &amp; $0.67$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+% EDM block
+\makecell[l]{\textsc{EDM} \\ \scriptsize\citeauthor{edm} \\ (\scriptsize\citeyear{edm})}
+  &amp; $10^3$ &amp; $81.3$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+% EDM-Bridge block
+\makecell[l]{\textsc{EDM-Bridge} \\ \scriptsize\citet{edm_bridge}}
+  &amp; $10^3$ &amp; $82.4$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+
+% GeoLDM block
+\makecell[l]{\textsc{GeoLDM} \\ \scriptsize\citet{geoldm}}
+  &amp; $10^3$ &amp; $84.4$ &amp; $45.8^{\ddagger}$  &amp; $10.6$ &amp; -- &amp; -- \\
+\midrule
+
+% EquiFM block
+\makecell[l]{\textsc{EquiFM} \\ \scriptsize\citet{equifm}}
+  &amp; $-^{\dagger}$ &amp; 
+  $84.1$ &amp; -- &amp; 
+  -- &amp; -- &amp; -- \\
+\midrule
+
+% END block
+\multirow{5}{*}{\makecell[l]{\textsc{END} \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $87.1_{\text{\tiny $\pm$.1}}$ &amp; $66.0_{\text{\tiny $\pm$.4}}$ &amp; $5.9_{\text{\tiny $\pm$.1}}$ &amp;  $0.62_{\text{\tiny $\pm$.00}}$ &amp; $0.48_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $87.2_{\text{\tiny $\pm$.1}}$ &amp; $73.7_{\text{\tiny $\pm$.4}}$ &amp; $4.5_{\text{\tiny $\pm$.1}}$ &amp;  $0.66_{\text{\tiny $\pm$.00}}$ &amp; $0.55_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $250$  &amp; $87.1_{\text{\tiny $\pm$.1}}$ &amp; $77.4_{\text{\tiny $\pm$.4}}$ &amp; $3.5_{\text{\tiny $\pm$.0}}$ &amp;  $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.58_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $500$  &amp; $87.0_{\text{\tiny $\pm$.0}}$ &amp; $78.6_{\text{\tiny $\pm$.3}}$ &amp; $3.3_{\text{\tiny $\pm$.0}}$ &amp;  $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.59_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $10^3$ &amp; $87.0_{\text{\tiny $\pm$.0}}$ &amp; $79.4_{\text{\tiny $\pm$.4}}$ &amp; $3.0_{\text{\tiny $\pm$.0}}$ &amp;  $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.59_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% EDM* block
+\multirow{5}{*}{\makecell[l]{\textsc{EDM*} \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $84.7_{\text{\tiny $\pm$.0}}$ &amp; $46.6_{\text{\tiny $\pm$.3}}$ &amp; $10.5_{\text{\tiny $\pm$.1}}$ &amp;  $0.59_{\text{\tiny $\pm$.00}}$ &amp; $0.48_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $85.2_{\text{\tiny $\pm$.1}}$ &amp; $56.2_{\text{\tiny $\pm$.4}}$ &amp; $8.0_{\text{\tiny $\pm$.1}}$ &amp;  $0.61_{\text{\tiny $\pm$.00}}$ &amp; $0.53_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $250$  &amp; $85.4_{\text{\tiny $\pm$.0}}$ &amp; $61.4_{\text{\tiny $\pm$.6}}$ &amp; $6.7_{\text{\tiny $\pm$.1}}$ &amp;  $0.63_{\text{\tiny $\pm$.00}}$ &amp; $0.56_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $500$  &amp; $85.4_{\text{\tiny $\pm$.0}}$ &amp; $63.4_{\text{\tiny $\pm$.1}}$ &amp; $6.4_{\text{\tiny $\pm$.1}}$ &amp;  $0.64_{\text{\tiny $\pm$.00}}$ &amp; $0.57_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $10^3$ &amp; $85.3_{\text{\tiny $\pm$.1}}$ &amp; $64.2_{\text{\tiny $\pm$.6}}$ &amp; $6.2_{\text{\tiny $\pm$.0}}$ &amp;  $0.64_{\text{\tiny $\pm$.00}}$ &amp; $0.57_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% GeoBFN block
+\multirow{4}{*}{\makecell[l]{\textsc{GeoBFN} \\ \scriptsize\citet{geobfn}}} 
+  &amp; $50$ &amp; $75.1$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $100$  &amp; $78.9$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $500$  &amp; $81.4$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+  &amp; $10^3$ &amp; $85.6$ &amp; -- &amp; -- &amp; -- &amp; -- \\
+\midrule
+% Our block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  &amp; $50$ &amp; $96.2_{\text{\tiny $\pm$.0}}$ &amp; $81.3_{\text{\tiny $\pm$.2}}$  &amp; $8.1_{\text{\tiny $\pm$.1}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$ &amp; $96.3_{\text{\tiny $\pm$.0}}$ &amp; $82.4_{\text{\tiny $\pm$.2}}$  &amp; $7.4_{\text{\tiny $\pm$.1}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{visuals/uncond_samples/geom.png} 
+    \caption{Randomly selected molecules that are sampled unconditionally from \oursacro trained on \textsc{GEOM-Drugs}.}
+    \label{uncond_geom_appendix}
+    \vspace{5mm}
+    \includegraphics[width=\textwidth]{visuals/uncond_samples/qmugs.png} 
+    \caption{Randomly selected molecules that are sampled unconditionally from \oursacro trained on \textsc{QMugs}.}
+    \label{uncond_qmugs_appendix}
+\end{figure}
+
+\subsubsection{Conditional Generation}
+
+Results on the atom composition and substructural features conditioning with additional generation steps configurations are reflected in Table \ref{cond_gen_table_extended}. Figures \ref{composition_appendix} and \ref{substucture_appendix} present instances of conditionally sampled molecules for both tasks.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Results on atom composition and substructural features conditional generation tasks.}
+\label{cond_gen_table_extended}
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{1}{c}{\textsc{Composition}} &amp; \multicolumn{1}{c}{\textsc{Substructure}} \\ 
+\cmidrule(lr){3-3} \cmidrule(lr){4-4}
+ &amp; &amp; Matching, $\%$ ($\uparrow$) &amp; Tanimoto Sim. ($\uparrow$) \\
+\midrule
+
+\makecell[l]{\textsc{cEDM} \\ \scriptsize\citet{eegsde}}
+  &amp; $10^3$ &amp; -- &amp; $.671_{\text{\tiny $\pm$.004}}$ \\
+\midrule
+
+\makecell[l]{\textsc{EEGSDE} \\ \scriptsize\citet{eegsde}}
+  &amp; $10^3$ &amp; -- &amp; $.750_{\text{\tiny $\pm$.003}}$ \\
+\midrule
+
+% cEDM* Block
+\multirow{5}{*}{\makecell[l]{\textsc{cEDM}* \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $69.6_{\text{\tiny $\pm$0.6}}$ &amp; $.601_{\text{\tiny $\pm$.000}}$ \\
+  &amp; $100$  &amp; $73.0_{\text{\tiny $\pm$0.6}}$ &amp; $.640_{\text{\tiny $\pm$.002}}$ \\
+  &amp; $250$  &amp; $74.1_{\text{\tiny $\pm$1.4}}$ &amp; $.663_{\text{\tiny $\pm$.002}}$ \\
+  &amp; $500$  &amp; $76.2_{\text{\tiny $\pm$0.6}}$ &amp; $.669_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $10^3$ &amp; $75.5_{\text{\tiny $\pm$0.5}}$ &amp; $.673_{\text{\tiny $\pm$.002}}$ \\
+\midrule
+
+% cEND Block
+\multirow{5}{*}{\makecell[l]{\textsc{cEND} \\ \scriptsize\citet{end}}} 
+  &amp; $50$   &amp; $89.2_{\text{\tiny $\pm$0.8}}$ &amp; $.783_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $100$  &amp; $90.1_{\text{\tiny $\pm$1.0}}$ &amp; $.807_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $250$  &amp; $91.2_{\text{\tiny $\pm$0.8}}$ &amp; $.819_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $500$  &amp; $91.5_{\text{\tiny $\pm$0.8}}$ &amp; $.825_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $10^3$ &amp; $91.0_{\text{\tiny $\pm$0.9}}$ &amp; $.828_{\text{\tiny $\pm$.001}}$ \\
+\midrule
+
+% Our block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  &amp; $50$   &amp; $92.2_{\text{\tiny $\pm$0.4}}$ &amp; $.830_{\text{\tiny $\pm$.001}}$ \\
+  &amp; $100$  &amp; $95.4_{\text{\tiny $\pm$0.5}}$ &amp; $.862_{\text{\tiny $\pm$.002}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\begin{figure}[h]
+    \centering
+    % First Image
+    \includegraphics[width=0.65\columnwidth]{visuals/cond_generation/composition_appendix.png}
+    \caption{Randomly chosen samples from the atom composition conditional task.}
+    \label{composition_appendix}
+    
+    \vspace{2mm}
+    
+    % Second Image
+    \includegraphics[width=0.65\columnwidth]{visuals/cond_generation/substructure_appendix.png}
+    \caption{Randomly chosen samples from the fingerprint substructure conditional task.}
+    \label{substucture_appendix}
+\end{figure}
+
+\subsubsection{Ablation Details} \label{Ablation Details}
+
+\textbf{Fragmentation statistics}: in Section \ref{Ablations}, we compare our proposed \textsc{Planar Rings} decomposition strategy against a fine-grained \textsc{No Rings} variant and across different occurrence thresholds $\alpha$. Here, we provide detailed statistics on these decompositions for the training subsets of \textsc{GEOM-Drugs} and \textsc{QMugs}.
+
+\textbf{Dataset properties}: the general statistics of the molecules in the training splits used for the ablation studies are summarised in Table \ref{tab:dataset_stats}. \textsc{QMugs} contains generally larger and heavier molecules than \textsc{GEOM-Drugs}.
+
+\begin{table}[h]
+    \centering
+    \small
+    \caption{Statistics of the training subsets of the datasets used in the ablation study.}
+    \label{tab:dataset_stats}
+    \begin{tabular}{@{}l ccc ccc@{}}
+    \toprule
+    \multirow{2}{*}{Dataset} &amp; \multicolumn{3}{c}{Total Atoms} &amp; \multicolumn{3}{c}{Heavy Atoms} \\
+    \cmidrule(lr){2-4} \cmidrule(l){5-7}
+     &amp; Mean &amp; Median &amp; Max &amp; Mean &amp; Median &amp; Max \\
+    \midrule
+    \textsc{GEOM-Drugs} &amp; $45.2$ &amp; $45.0$ &amp; $143$ &amp; $25.3$ &amp; $25.0$ &amp; $77$ \\
+    \textsc{QMugs}      &amp; $53.6$ &amp; $52.0$ &amp; $178$ &amp; $29.9$ &amp; $29.0$ &amp; $96$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Fragmentation settings}: the \textsc{No Rings} strategy decomposes molecules by cutting all bonds except those to hydrogens and double/triple bonds, effectively breaking rings. For the \textsc{Planar Rings} strategy, we vary the hyperparameter $\alpha$, reported as a percentage of the total dataset size. This threshold determines the minimum absolute occurrence count required for a motif to be retained in the vocabulary $\mathcal{V}_m$; motifs appearing less frequently are recursively decomposed. 
+
+Table \ref{tab:frag_stats} details the resulting fragment statistics. We observe that lower $\alpha$ thresholds (e.g., $0.01\%$) lead to a larger vocabulary with larger motifs up to 23 atoms and fewer fragments per molecule. Conversely, the \textsc{No Rings} baseline yields the highest number of fragments per molecule with the smallest maximum fragment size. Note that the fragment size includes necessary dummy atoms added to lock the coordinate frames of collinear or single-atom motifs. Across all configurations and datasets, the maximum size of the discrete symmetry group $|\mathcal{S}_i|$ encountered for any motif was 12.
+
+\begin{table}[h]
+    \centering
+    \small
+    \setlength{\tabcolsep}{4.8pt}
+    \caption{Detailed statistics of the ablated rigid-motif decomposition strategies. The \textit{Cut-off} column indicates the absolute number of occurrences required for a motif to be preserved in the vocabulary. \textit{Max. Size} denotes the maximum number of atoms, including dummy ones, in a single motif.}
+    \label{tab:frag_stats}
+    \begin{tabular}{@{}l l c ccc c@{}}
+    \toprule
+    \multirow{2}{*}{Dataset} &amp; \multirow{2}{*}{Fragmentation} &amp; \multirow{2}{*}{Cut-off} &amp; \multicolumn{3}{c}{Fragments per molecule} &amp; \multirow{2}{*}{Max. Size} \\
+    \cmidrule(lr){4-6}
+     &amp; &amp; &amp; Mean &amp; Median &amp; Max &amp; \\
+    \midrule
+    \multirow{4}{*}{\textsc{GEOM-Drugs}} 
+      &amp; \textsc{No Rings} &amp; -- &amp; $16.8$ &amp; $17.0$ &amp; $57$ &amp; $6$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.5\%$ &amp; $964$ &amp; $13.7$ &amp; $13.0$ &amp; $57$ &amp; $17$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.1\%$  &amp; $192$ &amp; $13.1$ &amp; $13.0$ &amp; $57$ &amp; $17$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.01\%$ &amp; $19$ &amp; $12.7$ &amp; $12.0$ &amp; $57$ &amp; $23$ \\
+    \midrule
+    \multirow{4}{*}{\textsc{QMugs}} 
+      &amp; \textsc{No Rings} &amp; -- &amp; $19.9$ &amp; $19.0$ &amp; $80$ &amp; $6$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.5\%$  &amp; $1419$ &amp; $16.7$ &amp; $16.0$ &amp; $78$ &amp; $17$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.1\%$  &amp; $283$ &amp; $15.9$ &amp; $15.0$ &amp; $78$ &amp; $17$ \\
+      &amp; \textsc{Planar Rings} \scriptsize $0.01\%$ &amp; $28$ &amp; $15.3$ &amp; $15.0$ &amp; $78$ &amp; $23$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+We provide the extended results of our ablation study on the unconditional performance of different fragmentation methods in Table \ref{ablation_extended}. The training on \textsc{GEOM-Drugs} is done for $70$ epochs, and for $50$ epochs on \textsc{QMugs}.
+
+\renewcommand{\arraystretch}{1.15}
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{4.8pt}
+\caption{Extended ablation results for the unconditional generation on \textsc{GEOM-Drugs} and \textsc{QMugs} for various fragmentation strategies.}
+\label{ablation_extended}
+\begin{tabular}{@{} l c ccccc ccccc @{}}
+\toprule
+\multirow{3}{*}{Fragmentation} &amp; \multirow{3}{*}{Steps} &amp; \multicolumn{5}{c}{\textsc{QMugs}} &amp; \multicolumn{5}{c}{\textsc{GEOM-Drugs}} \\ 
+\cmidrule(lr){3-7} \cmidrule(l){8-12}
+ &amp; &amp; \multicolumn{1}{c}{Stability} &amp; \multicolumn{1}{c}{V $\times$ C} &amp; \multirow{2}{*}{SA ($\uparrow$)} &amp; \multirow{2}{*}{QED ($\uparrow$)} &amp; \multicolumn{1}{c}{TV ($\uparrow$)} &amp; \multicolumn{1}{c}{Stability} &amp; \multicolumn{1}{c}{V $\times$ C} &amp; \multirow{2}{*}{SA ($\uparrow$)} &amp; \multirow{2}{*}{QED ($\uparrow$)} &amp; \multicolumn{1}{c}{TV ($\uparrow$)} \\
+ \cmidrule(lr){3-4} \cmidrule(lr){7-7} \cmidrule(lr){8-9} \cmidrule(l){12-12}
+ &amp; &amp; A, \% ($\uparrow$) &amp; \% ($\uparrow$) &amp; &amp; &amp; A $\left[10^{-2}\right]$ &amp; A, \% ($\uparrow$) &amp; \% ($\uparrow$) &amp; &amp; &amp; A$\left[10^{-2}\right]$\\
+\midrule
+
+\multirow{2}{*}{{\textsc{No Rings}}}
+  &amp; $50$ &amp; $86.5_{\text{\tiny $\pm$0.6}}$ &amp; $83.0_{\text{\tiny $\pm$.2}}$ &amp; $0.74_{\text{\tiny $\pm$.00}}$ &amp; $0.51_{\text{\tiny $\pm$.00}}$ &amp; $5.12_{\text{\tiny $\pm$.06}}$ &amp; $89.1_{\text{\tiny $\pm$0.7}}$ &amp; $80.9_{\text{\tiny $\pm$.2}}$ &amp; $0.71_{\text{\tiny $\pm$.00}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $3.57_{\text{\tiny $\pm$.05}}$ \\
+  &amp; $100$ &amp; $85.5_{\text{\tiny $\pm$1.8}}$ &amp; $85.6_{\text{\tiny $\pm$.3}}$ &amp; $0.74_{\text{\tiny $\pm$.00}}$ &amp; $0.50_{\text{\tiny $\pm$.00}}$ &amp; $4.98_{\text{\tiny $\pm$.06}}$ &amp; $86.7_{\text{\tiny $\pm$1.8}}$ &amp; $82.9_{\text{\tiny $\pm$.4}}$ &amp; $0.71_{\text{\tiny $\pm$.00}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $3.36_{\text{\tiny $\pm$.08}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.5\%$}}
+  &amp; $50$  &amp; $95.1_{\text{\tiny $\pm$0.1}}$ &amp; $82.2_{\text{\tiny $\pm$.8}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $0.60_{\text{\tiny $\pm$.00}}$ &amp; $8.56_{\text{\tiny $\pm$.04}}$ &amp; $94.9_{\text{\tiny $\pm$0.0}}$ &amp; $81.3_{\text{\tiny $\pm$.4}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.71_{\text{\tiny $\pm$.00}}$ &amp; $4.47_{\text{\tiny $\pm$.02}}$ \\
+  &amp; $100$ &amp; $95.5_{\text{\tiny $\pm$0.1}}$ &amp; $84.0_{\text{\tiny $\pm$.5}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $0.60_{\text{\tiny $\pm$.00}}$ &amp; $8.08_{\text{\tiny $\pm$.17}}$ &amp; $95.2_{\text{\tiny $\pm$0.1}}$ &amp; $82.1_{\text{\tiny $\pm$.3}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.71_{\text{\tiny $\pm$.00}}$ &amp; $4.24_{\text{\tiny $\pm$.14}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.1\%$}}
+  &amp; $50$  &amp; $95.7_{\text{\tiny $\pm$0.0}}$ &amp; $81.6_{\text{\tiny $\pm$.3}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $0.58_{\text{\tiny $\pm$.00}}$ &amp; $8.47_{\text{\tiny $\pm$.08}}$ &amp; $94.8_{\text{\tiny $\pm$0.0}}$ &amp; $79.6_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.68_{\text{\tiny $\pm$.00}}$ &amp; $4.45_{\text{\tiny $\pm$.12}}$ \\
+  &amp; $100$ &amp; $96.1_{\text{\tiny $\pm$0.0}}$ &amp; $83.1_{\text{\tiny $\pm$.4}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $0.58_{\text{\tiny $\pm$.00}}$ &amp; $8.01_{\text{\tiny $\pm$.22}}$ &amp; $95.0_{\text{\tiny $\pm$0.0}}$ &amp; $81.2_{\text{\tiny $\pm$.3}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.68_{\text{\tiny $\pm$.00}}$ &amp; $3.93_{\text{\tiny $\pm$.09}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{Planar} \\ \textsc{Rings} \scriptsize $0.01\%$}}
+  &amp; $50$  &amp; $95.1_{\text{\tiny $\pm$0.0}}$ &amp; $78.8_{\text{\tiny $\pm$.3}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $0.49_{\text{\tiny $\pm$.01}}$ &amp; $11.62_{\text{\tiny $\pm$.11}}$ &amp; $96.2_{\text{\tiny $\pm$0.0}}$ &amp; $81.3_{\text{\tiny $\pm$.2}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $8.07_{\text{\tiny $\pm$.06}}$ \\
+  &amp; $100$ &amp; $95.3_{\text{\tiny $\pm$0.0}}$ &amp; $80.4_{\text{\tiny $\pm$.5}}$ &amp; $0.73_{\text{\tiny $\pm$.00}}$ &amp; $0.49_{\text{\tiny $\pm$.00}}$ &amp; $11.10_{\text{\tiny $\pm$.03}}$ &amp; $96.3_{\text{\tiny $\pm$0.0}}$ &amp; $82.4_{\text{\tiny $\pm$.3}}$ &amp; $0.69_{\text{\tiny $\pm$.00}}$ &amp; $0.72_{\text{\tiny $\pm$.00}}$ &amp; $7.43_{\text{\tiny $\pm$.05}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+
+\paragraph{Architectural Ablations} We ablate the design choices used in our main method presented in Section \ref{Method} on the unconditional generation with \textsc{QM9}. The results are summarised in Table \ref{qm9_architecture_ablation}.
+
+\textbf{Discrete Prior}: we first evaluate the choice of the prior distribution for the discrete flow. While our default method uses a masking prior $m_0 = [\text{MASK}]$, the \textsc{Uniform Prior} variant employs a probability path that interpolates from a uniform categorical distribution over the vocabulary $\mathcal{V}_m$ to the target class.
+
+\textbf{Motif Symmetry Handling}: to validate our dynamic alignment strategy, we compare it against three alternative approaches for handling motif symmetries. First, we consider a naive baseline \textsc{No} $\mathcal{L}_{\textsc{GeoDiff}}$ that ignores symmetry, regressing directly towards the arbitrary orientation fixed during preprocessing. Second, in \textsc{With} $\mathcal{L}_{\textsc{AF3}}$, we test the alignment mechanism from \textsc{AlphaFold3} \cite{alphafold3}, which aligns the target frame to the model&#x27;s prediction $\hat{\mathbf{R}}_1$ rather than the noisy input $\mathbf{R}_t$. Third, instead of resolving symmetries analytically in the loss, we employ data augmentation in the \textsc{With Augmentation} variant, where we randomly sample a symmetry element $\mathbf{S} \in \mathcal{S}_k$ from the motif&#x27;s orbit at each training step and apply it to the target: $\tilde{\mathbf{R}}_1^k \leftarrow \mathbf{R}_1^k \mathbf{S}$.
+
+\textbf{Backbone Components}: finally, we assess the contributions of specific architectural features. We evaluate the model performance without the triangle multiplicative updates in \textsc{No} $\Delta$-\textsc{Update}. Additionally, we train a variant with \textsc{No Self-Conditioning} to measure the impact of feeding the model&#x27;s own discrete predictions of the clean motif types $\hat{m}_1$ back as input.
+
+The results indicate that the most influential factor on the quality of unconditional generation is the removal of the triangle multiplicative update, confirming our hypothesis that it is useful for efficient modelling of unstructured molecular fragments. We did not observe a significant effect from applying data augmentation, since, strictly speaking, the target rotations are already chosen arbitrarily from equivalent orientations during preprocessing. Overall, our base method performs best, and thus reinforces the design choices outlined in Section \ref{Method}.
+
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{5.3pt}
+\caption{Architectural ablations on \textsc{QM9}.}
+\label{qm9_architecture_ablation}
+\begin{tabular}{@{} l c c c c c c c c c c @{}}
+\toprule
+\multirow{2}{*}{Method} &amp; \multirow{2}{*}{Steps} &amp; \multicolumn{2}{c}{Stability ($\uparrow$)} &amp; \multicolumn{2}{c}{Val. / Uniq. ($\uparrow$)} &amp; \multicolumn{2}{c}{TV ($\downarrow$)} &amp; \multicolumn{1}{c}{Str. En. ($\downarrow$)} &amp; \multirow{2}{*}{SA ($\uparrow$)} &amp; \multirow{2}{*}{QED ($\uparrow$)} \\ 
+\cmidrule(l){3-8}
+ &amp; &amp; A, \% &amp; M, \% &amp; V, \% &amp; V $\times$ U, \% &amp; A$\left[10^{-2}\right]$ &amp; B$\left[10^{-3}\right]$ &amp; $\Delta \text{E} \left[\frac{\text{kcal}}{\text{mol}}\right]$ &amp; &amp; \\
+\midrule
+\makecell[l]{Data} &amp; -- &amp; $99.0$ &amp; $95.2$ &amp; $97.7$ &amp; $97.7$ &amp; -- &amp; -- &amp; $7.7$ &amp; $0.63$ &amp; $0.46$ \\
+\specialrule{0.7pt}{3pt}{3pt}
+
+\multirow{2}{*}{\makecell[l]{\textsc{Uniform} \\ \textsc{Prior}}}
+  &amp; $50$   &amp; $98.7_{\text{\tiny $\pm$.1}}$ &amp; $90.8_{\text{\tiny $\pm$.1}}$ &amp; $95.2_{\text{\tiny $\pm$.5}}$ &amp; $89.2_{\text{\tiny $\pm$.5}}$ &amp; $1.42_{\text{\tiny $\pm$.06}}$ &amp; $12.2_{\text{\tiny $\pm$.6}}$ &amp; $14.3_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.7_{\text{\tiny $\pm$.1}}$ &amp; $90.4_{\text{\tiny $\pm$.4}}$ &amp; $93.5_{\text{\tiny $\pm$.3}}$ &amp; $87.5_{\text{\tiny $\pm$.4}}$ &amp; $1.38_{\text{\tiny $\pm$.09}}$ &amp; $15.2_{\text{\tiny $\pm$.2}}$ &amp; $10.7_{\text{\tiny $\pm$.1}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No} $\mathcal{L}_{\textsc{GeoDiff}}$}}
+  &amp; $50$   &amp; $98.6_{\text{\tiny $\pm$.0}}$ &amp; $89.5_{\text{\tiny $\pm$.2}}$ &amp; $95.5_{\text{\tiny $\pm$.1}}$ &amp; $88.7_{\text{\tiny $\pm$.5}}$ &amp; $2.35_{\text{\tiny $\pm$.05}}$ &amp; $4.9_{\text{\tiny $\pm$.5}}$ &amp; $16.5_{\text{\tiny $\pm$.2}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.9_{\text{\tiny $\pm$.0}}$ &amp; $90.8_{\text{\tiny $\pm$.2}}$ &amp; $94.5_{\text{\tiny $\pm$.1}}$ &amp; $88.0_{\text{\tiny $\pm$.4}}$ &amp; $2.35_{\text{\tiny $\pm$.08}}$ &amp; $6.4_{\text{\tiny $\pm$.5}}$ &amp; $11.8_{\text{\tiny $\pm$.1}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{With} $\mathcal{L}_{\textsc{AF3}}$}}
+  &amp; $50$   &amp; $98.5_{\text{\tiny $\pm$.0}}$ &amp; $88.7_{\text{\tiny $\pm$.2}}$ &amp; $93.8_{\text{\tiny $\pm$.2}}$ &amp; $85.4_{\text{\tiny $\pm$.4}}$ &amp; $2.81_{\text{\tiny $\pm$.04}}$ &amp; $4.0_{\text{\tiny $\pm$.7}}$ &amp; $16.6_{\text{\tiny $\pm$.6}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.6_{\text{\tiny $\pm$.1}}$ &amp; $89.4_{\text{\tiny $\pm$.5}}$ &amp; $92.4_{\text{\tiny $\pm$.5}}$ &amp; $83.6_{\text{\tiny $\pm$.4}}$ &amp; $2.87_{\text{\tiny $\pm$.05}}$ &amp; $5.6_{\text{\tiny $\pm$1.5}}$ &amp; $12.1_{\text{\tiny $\pm$.5}}$ &amp; $0.71_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{With} \\ \textsc{Augmentation}}}
+  &amp; $50$   &amp; $98.8_{\text{\tiny $\pm$.0}}$ &amp; $90.8_{\text{\tiny $\pm$.3}}$ &amp; $95.9_{\text{\tiny $\pm$.1}}$ &amp; $87.9_{\text{\tiny $\pm$.5}}$ &amp; $2.44_{\text{\tiny $\pm$.05}}$ &amp; $4.6_{\text{\tiny $\pm$.8}}$ &amp; $15.4_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.8_{\text{\tiny $\pm$.0}}$ &amp; $90.2_{\text{\tiny $\pm$.3}}$ &amp; $93.5_{\text{\tiny $\pm$.3}}$ &amp; $85.0_{\text{\tiny $\pm$.4}}$ &amp; $2.32_{\text{\tiny $\pm$.07}}$ &amp; $8.4_{\text{\tiny $\pm$1.3}}$ &amp; $11.3_{\text{\tiny $\pm$.3}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No} \\ $\Delta$-\textsc{Update}}}
+  &amp; $50$   &amp; $98.3_{\text{\tiny $\pm$.1}}$ &amp; $86.2_{\text{\tiny $\pm$.6}}$ &amp; $93.4_{\text{\tiny $\pm$.4}}$ &amp; $85.7_{\text{\tiny $\pm$.5}}$ &amp; $2.28_{\text{\tiny $\pm$.08}}$ &amp; $4.4_{\text{\tiny $\pm$.5}}$ &amp; $16.9_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.2_{\text{\tiny $\pm$.1}}$ &amp; $85.7_{\text{\tiny $\pm$1.4}}$ &amp; $90.8_{\text{\tiny $\pm$1.4}}$ &amp; $82.0_{\text{\tiny $\pm$1.3}}$ &amp; $2.51_{\text{\tiny $\pm$.08}}$ &amp; $6.8_{\text{\tiny $\pm$1.8}}$ &amp; $13.3_{\text{\tiny $\pm$.1}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+\multirow{2}{*}{\makecell[l]{\textsc{No Self-} \\ \textsc{Conditioning}}}
+  &amp; $50$   &amp; $98.9_{\text{\tiny $\pm$.0}}$ &amp; $91.0_{\text{\tiny $\pm$.3}}$ &amp; $96.1_{\text{\tiny $\pm$.3}}$ &amp; $88.3_{\text{\tiny $\pm$.4}}$ &amp; $1.73_{\text{\tiny $\pm$.05}}$ &amp; $4.7_{\text{\tiny $\pm$.4}}$ &amp; $15.5_{\text{\tiny $\pm$.3}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $98.8_{\text{\tiny $\pm$.0}}$ &amp; $90.6_{\text{\tiny $\pm$.3}}$ &amp; $93.7_{\text{\tiny $\pm$.3}}$ &amp; $85.2_{\text{\tiny $\pm$.5}}$ &amp; $1.66_{\text{\tiny $\pm$.04}}$ &amp; $7.4_{\text{\tiny $\pm$.1}}$ &amp; $10.9_{\text{\tiny $\pm$.2}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\midrule
+
+% Our default block
+\multirow{2}{*}{\makecell[l]{\oursacro}}
+  &amp; $50$   &amp; $99.1_{\text{\tiny $\pm$.0}}$ &amp; $92.3_{\text{\tiny $\pm$.3}}$ &amp; $96.6_{\text{\tiny $\pm$.1}}$ &amp; $88.4_{\text{\tiny $\pm$.2}}$ &amp; $2.41_{\text{\tiny $\pm$.08}}$ &amp; $2.2_{\text{\tiny $\pm$.3}}$ &amp; $13.6_{\text{\tiny $\pm$.5}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+  &amp; $100$  &amp; $99.1_{\text{\tiny $\pm$.1}}$ &amp; $92.6_{\text{\tiny $\pm$.5}}$ &amp; $95.3_{\text{\tiny $\pm$.6}}$ &amp; $86.3_{\text{\tiny $\pm$.9}}$ &amp; $2.24_{\text{\tiny $\pm$.10}}$ &amp; $2.7_{\text{\tiny $\pm$.4}}$ &amp; $10.3_{\text{\tiny $\pm$.4}}$ &amp; $0.70_{\text{\tiny $\pm$.00}}$ &amp; $0.47_{\text{\tiny $\pm$.00}}$ \\
+\bottomrule
+
+\end{tabular}
+\end{table}
+\renewcommand{\arraystretch}{1.0}</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

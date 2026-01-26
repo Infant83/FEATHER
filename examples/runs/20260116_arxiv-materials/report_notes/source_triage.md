@@ -1,0 +1,1 @@
+- [arxiv] WildSci: Advancing Scientific Reasoning from In-the-Wild Literature — http://arxiv.org/abs/2601.05567v1 (score=0.97; year=2026; text=./archive/arxiv/text/2601.05567v1.txt)

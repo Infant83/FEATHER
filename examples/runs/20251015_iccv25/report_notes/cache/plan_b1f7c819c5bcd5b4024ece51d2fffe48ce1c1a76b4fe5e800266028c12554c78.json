@@ -1,0 +1,10 @@
+{
+  "content": "\ucd5c\uc885 \ubcf4\uace0\uc11c\uac00 \uc791\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uac01 \uc139\uc158\uc740 ICCV 2025\uc5d0 \ub300\ud55c \ud575\uc2ec \uc694\uc57d, \uc8fc\uc694 \ubc1c\uacac, \ud2b8\ub80c\ub4dc \ubc0f \ud568\uc758, \ub9ac\uc2a4\ud06c \ubc0f \uaca9\ucc28, \ube44\ud310, \ubc94\uc704 \ubc0f \ubc29\ubc95\ub860, \ubd80\ub85d\uc774 \ud3ec\ud568\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4. \ubcf4\uace0\uc11c\ub294 `/final_report_iccv_2025.md` \uacbd\ub85c\uc5d0 \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.\n\n\ud544\uc694\ud55c \ucd94\uac00 \uc218\uc815\uc774\ub098 \uc9c8\ubb38\uc774 \uc788\uc73c\uc2dc\uba74 \uc5b8\uc81c\ub4e0\uc9c0 \ub9d0\uc500\ud574 \uc8fc\uc138\uc694!",
+  "meta": {
+    "stage": "plan",
+    "model": "gpt-4o-mini",
+    "prompt_hash": "093d4dbfb1fbaad282f2fa12eb4e0bb8f85bbf74efb1b117b73aa608b1d03393",
+    "input_hash": "efe430c10152f93460d940c562f749640cf617ca9fd4957aa31cee671df408ab"
+  },
+  "created_at": "2026-01-26T22:17:30.405110"
+}

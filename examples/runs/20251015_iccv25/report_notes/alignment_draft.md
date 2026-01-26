@@ -1,17 +1,40 @@
-Alignment score: 86
-Aligned:
-- Directly addresses the focus prompt by summarizing “key papers” available in-archive, extracting practical artifacts (datasets, metrics, leaderboards) and explicitly calling out code/dataset links where present.
-- Emphasizes practical impact (“what you can build/evaluate now”) and includes concrete benchmark numbers/metrics for challenge reports, matching the “practical impact” requirement.
-- Clearly states scope limitations (only 11 OpenAlex texts; not a full ICCV 2025 proceedings crawl) to avoid overclaiming, which aligns with good provenance and auditability.
+정합성 점수: 80
 
-Gaps/Risks:
-- “Key papers” may be interpreted as ICCV 2025 main-conference highlights; the draft repeatedly notes the sample is not representative, but the structure still reads like a conference summary and could mislead without stronger labeling (e.g., “Key *archived* ICCV-adjacent items”).
-- Code links are uneven: some items have explicit repos/DOIs, others (e.g., SAMSON) do not; the report could more systematically separate “has verified code link” vs “no code link observed in archived excerpt”.
-- The portals/entry points are mentioned but not summarized as “key paper/code hubs” with actionable guidance (how to use them for scalable mining), even though the run claims portal discovery is a major output.
-- Some included papers appear workshop/challenge/dataset oriented; if the template expects breadth across major ICCV areas (detection, diffusion, 3D, video, etc.), coverage is thin—though this is due to archive constraints and should be surfaced earlier/more prominently.
+정합:
+- 보고서 제목·한 줄 요약·레포 형식이 프롬프트 요구(심층보고서, 한국어)와 일치함.
+- ICCV 2025 개최일(2025-10-19–23)과 CVF Open Access의 역할을 명시해 “오픈액세스 정책/실제 배포 경로” 요구를 반영함.
+- GitHub 저장소 유형(커뮤니티 집계, 공식 구현, 재현/튜토리얼 등) 분류 및 예시 레포 링크를 제시해 키워드 'github' 관련 요구를 충족함.
+- 오픈액세스 논문·코드 공개 관행(논문: CVF OA + arXiv 병행, 코드: 다양한 공개 경로)과 재현성·라이선스 리스크를 잘 서술함(요구사항 2·4·5 관련).
+- 불확실 항목(코드 공개 비율·라이선스 일관성 등)을 명시하고, 추가 검증 필요 항목(샘플링·자동화 크롤 등)을 제시해 “불확실 정보 표시” 요구를 반영함.
 
-Next-step guidance:
-- Add an explicit framing header early: “This draft summarizes only the ICCV-2025-related items present in the archive (mostly workshops/challenges), not ICCV 2025 main proceedings.”
-- Introduce a small table: Paper/Item | Venue type (workshop/challenge/dataset) | Task | Verified code link? | Verified dataset link? | Practical takeaway.
-- Expand the “entry point portals” section into an actionable workflow (steps/rules for paper→code mining; prioritization strategy; deduplication policy), while keeping claims limited to what’s in the archive.
-- For each gap, tie to a concrete next experiment or artifact to build (e.g., “collect aligned RGB-T-LiDAR roadside set; propose baseline; define evaluation protocol”), maintaining the practical-impact emphasis.
+누락/리스크:
+- 키워드별(각 키워드: github / iccv 2025 / international conference on computer vision 2025 / iccv 2025 open access / iccv 2025 paper code)로 정리된 "핵심 사실·관련 링크·확인된 출처 요약"이 명확한 항목별 구조로 제공되지 않음(프롬프트 1 미준수).
+- 참고문헌에 대해 요청된 "표(테이블)"가 포함되어 있지 않음(프롬프트 3 미준수). Appendix의 링크 목록은 있으나 표 형식 요약(논문 ↔ OA 링크 ↔ 코드 ↔ 라이선스 등)이 빠짐.
+- ICCV CFP(논문 제출 가이드라인·저작권/오픈액세스 정책)와 공식 일정·정책의 원문(조항) 인용·요약이 부족함 — CVF/OpenReview 링크는 제시했으나 CFP 세부(저작권 양도 여부, OA 정책 조항 등)를 직접 인용해 반영하지 않음(프롬프트 2 요구의 완전한 반영 미흡).
+- '오픈액세스 논문/코드 공개 현황'에 대한 정량적 분석(예: code_share 값, 표본 크기, 신뢰구간 등)이 제공되지 않음 — 정성적 스냅샷에 그침(프롬프트 3에서 "가능하면 예시 포함; 표" 요구 미충족).
+- 예시 레포들의 라이선스·체크포인트·README 유무 등의 메타요약(테이블 열)이 빠져 있어 재현성 평가 근거가 약함.
+- 일부 주장(예: 특정 집계 레포의 커버리지·정확성)은 근거가 불충분하며 수치적 검증이 없음(리스크).
+
+다음 단계 가이드:
+- (구조 보강) 각 키워드별 섹션을 별도로 만들어 아래 3항목을 명확히 작성:
+  1) 핵심 사실(한두 문장)  
+  2) 관련 링크(직접 URL)  
+  3) 확인된 출처 요약(어떠한 근거로 확인했는지: CVF OA 페이지, OpenReview, arXiv, GitHub 레포 등)
+- (참고표 작성) 요청된 표 생성: 권장 열 — Paper Title | Authors | CVF OA URL | arXiv URL | Code Repo URL(s) | LICENSE | Supplementary/Checkpoint 유무 | 검증 상태(확인/불확실). 우선 대표 샘플 30–50편으로 파일럿 표를 만들고, 이후 전체 집계로 확장.
+- (CFP·정책 정확화) ICCV/CVF 공식 문서(프로그램·CFP·저작권/오픈액세스 정책)를 직접 크롤·인용하여 핵심 정책 조항(저작권/배포 권리, OA 포맷, supplementary 규정 등)을 보고서에 발췌·요약 포함.
+- (정량분석 계획) code_share 산출을 위한 방법론을 정의:
+  - 모집단: 모든 ICCV2025 논문(CVF OA 인덱스) 또는 무작위 표본(n≥200 권장)
+  - 'linked repo' 정의: 논문 본문/보조자료/프로그램 페이지에 직접 링크된 GitHub URL 또는 저자 README 링크 포함
+  - 메타 추출 항목: repo 존재 여부, LICENSE, requirements/Docker, checkpoint 유무, README 재현성 지표
+  - 자동화: CVF OA 페이지 파싱 → 논문 내 링크 수집 → GitHub API로 LICENSE·파일 존재 여부 검사 → 표 생성
+- (검증·샘플링) 자동 수집 결과는 1차 자동화 + 10–20% 수동 검증(무작위 샘플)으로 정확도 평가(오탐·누락 비율 산정).
+- (라이선스 분류) 수집된 레포의 LICENSE 파일을 분류(허용범위: permissive/reciprocal/non-commercial/none)하고 결과를 요약해 재사용 리스크를 명시.
+- (불확실성 표기) 보고서 전반에 대해 '확인됨' / '부분 확인(근거·한계)' / '불확실' 3단계 플래그를 사용해 독자가 신뢰도를 쉽게 파악하도록 표준화.
+- (우선 작업 권장 순서)
+  1) CVF OpenAccess ICCV2025 인덱스와 ICCV 공식 CFP·정책 문서 원문 확보 및 요약(긴급)  
+  2) 대표 샘플(30–50편)에 대해 수동으로 표 작성(빠른 산출물)  
+  3) 자동화 파이프라인(파서 + GitHub API)를 설계·실행하여 전체/대규모 통계 생성  
+  4) 샘플 검증 및 라이선스 분석 후 최종 보고서 업데이트
+- (툴 제안) 이 작업은 다단계·자동화가 필요하므로 write_todos로 작업 분해·진행 관리 및 task 서브에이전트로 병렬화(예: CVF 파싱 에이전트, GitHub 메타 수집 에이전트, 샘플 수동 검증 에이전트)를 권장함.
+
+간결 요약: 현 초안은 질적·정성적 스냅샷으로 프롬프트 요구의 대부분(내용·형식·언어)은 충족하지만, "키워드별 구조화", "참고문헌 표(정량적 메타)", "CFP·정책 원문 인용" 및 "code_share 정량분석" 등의 핵심 항목이 누락되어 있어 이들을 보완하면 프롬프트에 완전 부합하는 심층보고서가 될 수 있음.

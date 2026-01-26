@@ -1,0 +1,32 @@
+Template: technical_deep_dive
+Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\technical_deep_dive.md
+Latex: default.tex
+Sections:
+- Executive Summary
+- Scope & Methodology
+- Technical Background
+- Methods & Data
+- Results & Evidence
+- Limitations & Open Questions
+- Risks & Gaps
+- Critics
+- Appendix
+
+Guidance:
+Template description: Deep technical review with methods and evidence focus.
+
+Template tone: Technical, precise, method-oriented.
+
+Template audience: R&D leaders and domain experts.
+
+Section guidance:
+- Technical Background: define key terms and compare approaches.
+- Methods & Data: detail algorithms, datasets, and workflows.
+- Results & Evidence: highlight quantitative or experimental results.
+- Limitations & Open Questions: include reproducibility and scale issues.
+- Risks & Gaps: highlight missing evidence, constraints, unknowns, and validation needs. If not applicable, state Not applicable and give a brief reason; scale depth to evidence strength and context.
+- Critics: short headline + brief paragraphs + bullets; include contrarian views. If not applicable, state Not applicable and give a brief reason; scale depth to evidence strength and context.
+
+Template writing guidance:
+Use equations or notation when it improves clarity.
+Prefer primary sources; separate empirical results from speculation.

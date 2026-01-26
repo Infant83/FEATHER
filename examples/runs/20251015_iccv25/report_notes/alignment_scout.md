@@ -1,17 +1,49 @@
-Alignment score: 86
-Aligned:
-- Correctly maps the run contents and identifies the highest-signal sources for “ICCV 2025 papers + code links” (CVF Open Access portals, virtual program, third-party lists).
-- Flags important **coverage gaps** (missing arXiv/local/youtube manifests) and clearly states the practical implication: this is not a full ICCV’25 crawl.
-- Separates likely ICCV’25 workshop/challenge items from off-topic OpenAlex pulls, reducing risk of misrepresenting scope.
-- Provides an actionable, prioritized reading plan oriented toward extracting practical assets (datasets, GitHub links) and identifying gaps.
+정합성 점수: 75
 
-Gaps/Risks:
-- The stage output does **not yet extract/verify actual code links** beyond one mentioned GitHub repo; the report focus explicitly asks for “code links” and “key papers.”
-- “Key papers” risk: the OpenAlex PDFs are skewed toward workshops/challenges; without pulling from CVF “All Papers,” the eventual summary could overrepresent workshops and underrepresent main conference highlights.
-- A few statements are slightly speculative (“includes GitHub link in abstract”, “accepted at ICCV 2025”) without quoting/anchoring to exact archive lines.
-- No explicit “practical impact” synthesis yet (e.g., what practitioners can adopt, benchmarks/datasets/tools), only a plan to get there.
+정합:
+- 전체 구조와 톤: 리포트 포맷(제목, 한 줄 요약, 섹션별 본문, 참고 링크 등)과 한국어 심층보고서 형태 요건을 충족하고 있음.
+- 키워드별 접근: "ICCV 2025", "Open Access", "GitHub", "paper code" 등 각 키워드에 대해 핵심 사실·관련 링크·출처 요약을 초기적으로 제시함(섹션 A–D).
+- 출처·메타데이터 관리: 관련 인덱스/메타파일(archive/openalex 등)을 참조한 점을 명시해 근거 추적성이 확보되어 있음.
+- 우선 읽기(우선순위) 목록: 공식 페이지·CVF OA·OpenReview·대표 GitHub 레포 등 핵심 소스를 우선순위로 정리해 실제 검증 절차가 설계되어 있음.
+- GitHub 분류: 커뮤니티 집계형 / 공식 레포 / 워크숍·데이터 레포 / 재현 레포 등 실무적 분류 제공으로 요구사항(4)을 실질적으로 충족함.
+- 불확실성 표기: 커뮤니티 제공 수치(예: acceptance rate)나 일부 레포의 “official” 표기에 대해 검증 필요성을 명확히 표기함.
 
-Next-step guidance:
-- Read `archive/tavily_search.jsonl` and `archive/20251015_iccv25-index.md` to enumerate candidate ICCV’25 papers/pages, then extract **project/code/dataset links** into a table.
-- Read `archive/openalex/works.jsonl` + the 5 ICCV-related `archive/openalex/text/*.txt` files to confirm venue/context and pull any URLs; cite exact snippets/fields.
-- If the goal is “key ICCV’25 papers,” schedule a follow-up crawl/scrape of `openaccess.thecvf.com/ICCV2025?day=all` to capture main-conference papers + official code/project links.
+누락/리스크:
+- CFP·공식 일정·오픈액세스 정책의 상세 추출 미완료: Stage에는 공식 일정(행사 날짜)과 CVF OA 존재 언급은 있으나, CFP(제출 마감·리뷰 타임라인·저작권/라이선스 정책) 및 OpenAccess 정책의 원문/세부 조항(저작권 귀속, 버전 정책 등)을 공식 소스에서 직접 인용·요약한 부분이 부족함(현재 TODO로 in_progress).
+- 참고문헌 표 미완성(요구사항 3): "참고문헌 표"가 예시 형태로만 제시되어 있으며, 최소 요구량(예: 12개 핵심 논문)에 대한 실제 항목·OA/코드 여부·링크·라이선스 등 표 작성이 완료되지 않음.
+- 실증적 통계 결여: 논문 대비 코드 공개 비율, 공식 코드 비율, 샘플링 기반 OA 비율 등 수치가 제시되지 않음 — 현재 다수 수치가 커뮤니티 소스에 의존하고 있어 검증 필요.
+- 커뮤니티 레포 신뢰성 리스크: amusi 등 집계 레포의 수치·매핑 정확도는 PR/이슈·기여자에 따라 달라짐._stage 내용에선 이를 "추가 검증 필요"로 표기했으나, 리포 결과를 바로 통계로 사용하면 오차 발생 위험이 있음.
+- 부분적으로 미완성된 리포트 텍스트: 본문 일부(예: 참고문헌 표에 대한 실제 행)가 중단되어 있음.
+
+다음 단계 가이드 (간결·실행 가능):
+1. 공식 소스(우선순위 1–2)에서 CFP·Deadlines·오픈액세스 정책 원문을 확정적으로 추출하고 요약하라.
+   - 작업: https://iccv.thecvf.com/Conferences/2025/Dates 및 ICCV/CFP 페이지와 CVF OpenAccess 정책 페이지 내용을 캡쳐(요약문 포함).
+   - 완료 기준: 주요 마감일(제출, 리비전/저자반론, 최종 카메라레디)과 OA 관련 문구(어떤 버전 허용·저작권 표준)가 리포트에 인용문(또는 링크)과 함께 반영됨.
+
+2. CVF OpenAccess ICCV2025 페이지에서 샘플링(권장: 50개 논문)하여 OA 유형 분류 수행.
+   - 분류 기준: (a) CVF OA PDF 있음, (b) arXiv만 있음, (c) supp 자료 포함 여부, (d) 코드 링크(본문/footnote) 유무.
+   - 완료 기준: 샘플 통계(예: CVF OA 제공 비율, arXiv 중복 비율) 및 대표적 예시 5–10개를 리포트 표에 포함.
+
+3. GitHub 레포 수집·분류 및 수치 산출
+   - 소스: GitHub topic iccv2025, amusi/ICCV2025-Papers-with-Code, 주요 연구실(리스트에 명시된 레포들).
+   - 분류 항목: 집계형 / 공식(저자) / 비공식 재현 / 워크숍·데이터 / 데모·체크포인트 등.
+   - 완료 기준: 각 카테고리별 저장소 수(예: 집계형 N개, 공식 구현 M개), 신뢰도 메모(official 표기 여부·저자 확인 여부) 및 대표 레포 링크 10개 제시.
+
+4. 참고문헌 표 완성(요구사항 3)
+   - 목표: 최소 12개 주요 ICCV2025 논문에 대해 다음 열을 채울 것 — Paper Title | OA 여부(Yes/No) | OA 출처(URL) | 코드 공개 여부(Yes/No) | 코드 링크(URL) | 라이선스(가능하면) | 비고(예: 체크포인트 제공/데모 유무).
+   - 데이터 수집 방식: CVF OA 페이지 + 논문 본문(footer) + GitHub 검색 → 확인된 링크만 표에 포함.
+   - 완료 기준: 표가 리포트에 삽입되고, 각 항목에 대해 출처(URL)가 제공됨.
+
+5. 민감·불확실 정보 처리 규칙 정립
+   - 모든 커뮤니티 제공 수치(acceptance rate 등)는 "커뮤니티 출처"로 분명히 표기하고, 가능한 경우 공식 출처로 교차검증(없으면 불확실로 표기).
+   - 리포트 내에는 "검증 완료" / "검증 필요" 태그를 붙여 독자가 신뢰도를 즉시 알 수 있도록 할 것.
+
+6. 작업 관리(툴 업데이트)
+   - 현재 write_todos에 등록된 첫 작업("ICCV 공식 페이지에서 Dates/CFP/오픈액세스 정책...")은 in_progress 상태임. 다음 행동: 해당 페이지에서 세부 추출을 완료하면 즉시 write_todos에서 해당 항목을 completed로 표시하고, 표 작성/샘플링/수치 집계 작업을 각각 in_progress로 전환하여 투명하게 관리할 것.
+
+권장 우선순위(즉시 수행)
+- 즉시: (1) 공식 CFP/Deadlines/OA 원문 확인 및 리포트 반영 — 이 항목이 가장 중요.
+- 그다음: (2) CVF OA 샘플링(50건) 및 (3) GitHub 레포 집계·분류 후 표 완성.
+- 마지막: (4) 통계 수치 검증 및 리포트 최종화(불확실 항목 주석 포함).
+
+요약: 현재 스테이지 산출물은 구조·출처 식별·분석 계획 면에서 양호하지만, 핵심 요구사항(특히 참고문헌 표 완성, 공식 CFP/오픈액세스 정책의 원문 기반 요약, 정량적 통계 산출)은 미완료 상태임. 다음 단계에서 위 6개 가이드를 따라 공식 소스 확인과 표 완성을 우선 진행하면 정식 심층보고서 요건을 충족할 수 있음.

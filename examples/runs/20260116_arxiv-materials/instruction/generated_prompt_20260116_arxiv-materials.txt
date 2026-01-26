@@ -1,0 +1,19 @@
+Language: Korean
+
+Template: technical_deep_dive  
+Depth: exhaustive  
+
+목적/범위: Run ID 20260116_arxiv-materials 아카이브에 포함된 단일 1차 소스 arXiv 논문 “WildSci: Advancing Scientific Reasoning from In-the-Wild Literature”(arXiv:2601.05567v1)만을 근거로, 데이터셋/학습방법(RLVR/GRPO 등)/실험설계/정량 결과를 중심으로 심층 기술 리뷰를 작성하라. 외부 문헌 확장(related work 망, 후속버전, 블로그/영상)은 본 런에 수집되지 않았으므로 필요한 경우 ‘공개정보 한계’로 명시하라.  
+
+필수 섹션(고정): Executive Summary, Scope & Methodology, Technical Background, Methods & Data, Results & Evidence, Limitations & Open Questions, Risks & Gaps, Critics, Appendix.  
+
+핵심 포함 항목:  
+- Technical Background: scientific reasoning, in-the-wild literature 기반 QA 생성, RLVR/GRPO, reward(정답 매칭/검증) 정의를 명확히 정리하고 기존 접근(수학/코딩 RL 데이터와 대비)을 비교. 필요한 경우 간단한 수식/기호로 목표함수·보상·정확도 정의 제시.  
+- Methods & Data: WildSci 데이터 생성 파이프라인(문헌 소스, 필터링/중복제거, refinement로 옵션 확장, model voting, subset/val 구성), 사용 모델(Qwen2.5-32B-Instruct 등), 학습 세팅(rollout, lr, context length, 하드웨어, 프레임워크 verl)과 워크플로를 재현 가능 수준으로 기술.  
+- Results & Evidence: 논문 표/그림/수치 기반으로 성능 향상, 도메인별 경향, “post-saturation generalization” 주장 등은 반드시 정량값과 함께 인용. 그림(pipeline/umap/valid_test_allaligned*)을 근거로 분포·일반화 해석을 구분(관찰 vs 추론).  
+
+증거/인용 정책: 인용은 본 아카이브 파일에 한정. 각 핵심 주장마다 (1) 파일 경로 (예: archive/arxiv/src/2601.05567/ch_results.tex) 또는 (2) arXiv 텍스트 위치를 명시. 외부 비교/추정은 “추측”으로 라벨링. 누락 데이터(OpenAlex/tavily_search/youtube 등)로 인해 검증 불가한 항목은 ‘공개정보 한계’.  
+
+권장 근거 소스(우선): archive/arxiv/text/2601.05567v1.txt, archive/arxiv/src_text/2601.05567.txt, ch_method.tex/ch_experiments.tex/ch_results.tex/ch_appendix.tex 및 figs/*.pdf.  
+
+언어/스타일: 한국어로 기술적·정밀·방법론 중심 문체. 고유명사/논문 제목은 원문 유지. 불확실성, 재현성, 스케일 한계는 Limitations/Risks에서 구체적 검증 과제로 제시. Critics는 반대 관점 헤드라인+짧은 단락+불릿으로 구성하며, 해당 시 비판 근거도 본문 인용에 연결.

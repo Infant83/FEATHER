@@ -341,7 +341,13 @@ class ReportOrchestrator:
                 if txt_path:
                     text = normalize_rel_paths(read_text_file(txt_path, start, limit))
                     return f"[from text] {txt_path.relative_to(run_dir).as_posix()}\n\n{text}"
-                pdf_text = helpers.read_pdf_with_fitz(path, page_limit, limit)
+                pdf_text = helpers.read_pdf_with_fitz(
+                    path,
+                    page_limit,
+                    limit,
+                    auto_extend_pages=int(getattr(args, "pdf_extend_pages", 0) or 0),
+                    extend_min_chars=int(getattr(args, "pdf_extend_min_chars", 0) or 0),
+                )
                 return f"[from pdf] {path.relative_to(run_dir).as_posix()}\n\n{pdf_text}"
             text = normalize_rel_paths(read_text_file(path, start, limit))
             return f"[from text] {path.relative_to(run_dir).as_posix()}\n\n{text}"
@@ -488,20 +494,57 @@ class ReportOrchestrator:
         def agent_max_tokens(name: str) -> tuple[Optional[int], str]:
             return helpers.resolve_agent_max_input_tokens(name, args, self._agent_overrides)
 
+        def normalize_depth(value: Optional[str]) -> Optional[str]:
+            if not value:
+                return None
+            token = str(value).strip().lower()
+            if token in {"brief", "short", "summary", "요약", "간단"}:
+                return "brief"
+            if token in {"normal", "default", "standard", "일반", "보통"}:
+                return "normal"
+            if token in {"deep", "long-form", "comprehensive", "학술", "리뷰", "journal", "심층"}:
+                return "deep"
+            if token in {
+                "exhaustive",
+                "deepest",
+                "ultra",
+                "ultra-deep",
+                "very deep",
+                "극심",
+                "매우심층",
+                "최심층",
+            }:
+                return "exhaustive"
+            return None
+
+        def infer_prompt_depth(prompt_text: Optional[str]) -> Optional[str]:
+            text = (prompt_text or "").lower()
+            if any(
+                token in text
+                for token in ("deepest", "exhaustive", "ultra", "ultra-deep", "매우심층", "최심층", "극심")
+            ):
+                return "exhaustive"
+            if any(token in text for token in ("심층", "deep", "long-form", "comprehensive", "학술", "리뷰", "journal")):
+                return "deep"
+            if any(token in text for token in ("요약", "brief", "short", "간단", "summary")):
+                return "brief"
+            return None
+
         def infer_policy(prompt_text: Optional[str]) -> dict:
             text = (prompt_text or "").lower()
-            depth = "normal"
-            if any(token in text for token in ("심층", "deep", "long-form", "comprehensive", "학술", "리뷰", "journal")):
-                depth = "deep"
-            elif any(token in text for token in ("요약", "brief", "short", "간단", "summary")):
-                depth = "brief"
+            prompt_depth = infer_prompt_depth(prompt_text)
             wants_web = any(token in text for token in ("최근", "latest", "trend", "news", "동향", "시장"))
             style = "default"
             if any(token in text for token in ("linkedin", "인플루언서", "홍보", "마케팅", "소개")):
                 style = "influencer"
             elif any(token in text for token in ("journal", "논문", "academic", "학술", "리뷰")):
                 style = "journal"
-            return {"depth": depth, "wants_web": wants_web, "style": style}
+            return {"depth": prompt_depth, "wants_web": wants_web, "style": style}
+
+        def infer_context_depth(template: TemplateSpec, style: str) -> str:
+            if style == "journal" or template.name in prompts.FORMAL_TEMPLATES:
+                return "deep"
+            return "normal"
 
         def estimate_tokens(text: str) -> int:
             if not text:
@@ -709,6 +752,7 @@ class ReportOrchestrator:
                     required_sections,
                     output_format,
                     language,
+                    depth,
                 ),
                 self._agent_overrides,
             )
@@ -867,18 +911,25 @@ class ReportOrchestrator:
             report_prompt = state.report_prompt
         template_spec = helpers.load_template_spec(args.template, report_prompt)
         policy = infer_policy(report_prompt)
-        depth = policy["depth"]
+        prompt_depth = normalize_depth(policy["depth"])
         style = policy["style"]
         wants_web = policy["wants_web"]
+        depth = infer_context_depth(template_spec, style)
+        if prompt_depth:
+            depth = prompt_depth
         if state and state.depth:
-            depth = state.depth
+            depth = normalize_depth(state.depth) or depth
+        cli_depth = normalize_depth(getattr(args, "depth", None))
+        if cli_depth:
+            depth = cli_depth
+        is_deep = depth in {"deep", "exhaustive"}
         if depth == "brief":
             alignment_enabled = False
             template_adjust_enabled = False
         use_web_search = bool(args.web_search and wants_web and stage_enabled("web"))
         use_evidence = depth != "brief" and stage_enabled("evidence")
         if args.quality_iterations <= 0:
-            args.quality_iterations = 1 if depth == "deep" else 0
+            args.quality_iterations = 1 if is_deep else 0
         quality_iterations = args.quality_iterations
         if not stage_enabled("quality"):
             quality_iterations = 0
@@ -1341,7 +1392,7 @@ class ReportOrchestrator:
             (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
             gap_text = feder_tools.build_gap_report(plan_text, claim_map)
             (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
-            if depth != "deep":
+            if not is_deep:
                 condensed = "\n".join(section for section in [claim_map_text, gap_text] if section)
                 evidence_for_writer = condensed or helpers.truncate_text(evidence_notes, pack_limit)
             else:
@@ -1364,7 +1415,7 @@ class ReportOrchestrator:
             if state.supporting_summary and not supporting_summary:
                 supporting_summary = state.supporting_summary
         if evidence_notes:
-            if depth != "deep" and condensed:
+            if not is_deep and condensed:
                 evidence_for_writer = condensed
             elif not evidence_for_writer:
                 evidence_for_writer = evidence_notes
@@ -1414,7 +1465,7 @@ class ReportOrchestrator:
                 workflow_summary=workflow_summary,
                 workflow_path=workflow_path,
             )
-        plan_for_writer = plan_text if depth == "deep" else plan_context
+        plan_for_writer = plan_text if is_deep else plan_context
         writer_prompt = helpers.resolve_agent_prompt(
             "writer",
             prompts.build_writer_prompt(
@@ -1424,6 +1475,7 @@ class ReportOrchestrator:
                 required_sections,
                 output_format,
                 language,
+                depth,
             ),
             self._agent_overrides,
         )
@@ -1444,7 +1496,7 @@ class ReportOrchestrator:
             parts.extend(["", "Updated plan:", plan_for_writer])
             if source_triage_text:
                 parts.extend(["", "Source triage (lightweight):", source_triage_text])
-            if depth == "deep":
+            if is_deep:
                 if claim_map_text:
                     parts.extend(["", "Claim map (lightweight):", claim_map_text])
                 if gap_text:

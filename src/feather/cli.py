@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -51,9 +52,14 @@ def build_parser() -> argparse.ArgumentParser:
         "download_pdf=False, arxiv_source=False); "
         "t=TavilyClient(os.getenv('TAVILY_API_KEY')); [run_job(j, t) for j in jobs]\"\n"
     )
+    class CleanHelpFormatter(argparse.RawDescriptionHelpFormatter):
+        def __init__(self, prog: str) -> None:
+            width = shutil.get_terminal_size((120, 20)).columns
+            super().__init__(prog, width=width, max_help_position=32)
+
     ap = argparse.ArgumentParser(
         description="Feather-light knowledge intake. Non-LLM web/arXiv collector driven by TXT instructions.",
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=CleanHelpFormatter,
         epilog=epilog,
     )
     group = ap.add_mutually_exclusive_group(required=True)

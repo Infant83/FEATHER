@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "url": "https://www.linkedin.com/feed/update/urn:li:activity:7421560260718501888/",
+      "title": "Most generative models invent molecules in 2D, then worry about 3D later… | Fan Li",
+      "raw_content": "Most generative models invent molecules in 2D, then worry about 3D later. In practice, that separation comes with trade-offs.\n\nSMILES strings and molecular graphs are the usual outputs of generative models for new molecules. They are compact and expressive, but they omit molecular geometry, which must be computed afterward.\n\nAn alternative is to make geometry part of the generative process itself. These models place atoms directly in space, allowing them to learn spatial constraints and enabling conditioning on shape or arrangement. The downside is that such atom level operations are computationally expensive.\n\nA recent preprint instead focuses on 3D molecular generation based on rigid chemical motifs, matching how chemists actually think about molecular structure. Each motif has a fixed internal structure, and generation focuses on choosing which motifs appear and how they are arranged relative to each other.\n\nSome highlights of the approach:\n\n🔹Representation: Rigid motifs like benzene rings and carboxylic acids are selected using a data-driven fragmentation strategy that preserves chemically stable substructures, while controlling vocabulary size through frequency thresholds.\n\n🔹Model architecture: Instead of operating on atoms or graphs, the model operates on rigid building blocks, borrowing design ideas from frame-based protein models like AlphaFold.\n\n🔹Training process: The model is trained to jointly predict which motifs appear and how they are arranged, combining discrete decisions and continuous geometry in a single generative process.\n\n🔹Generated output: The result is a complete molecular structure assembled directly from motifs, without a separate conformer generation or atom-level reconstruction step.\n\nThe model achieves 95% atom stability versus 87% for previous methods, using 100 generation steps instead of 1000. At the same time, conditional generation improves, both for matching exact composition constraints and for targeting specific substructures.\n\n📄 3D Molecule Generation from Rigid Motifs via SE(3) Flows, arXiv, January 23, 2026\n🔗 https://lnkd.in/e2qsfRvC\n____________________\nI'm Fan Li, Ph.D. I write about AI, molecules, and how R&D gets done. Follow or DM if this resonates.",
+      "description": "Most generative models invent molecules in 2D, then worry about 3D later. In practice, that separation comes with trade-offs.\n\nSMILES strings and molecular graphs are the usual outputs of generative models for new molecules. They are compact and expressive, but they omit molecular geometry, which must be computed afterward.\n\nAn alternative is to make geometry part of the generative process itself. These models place atoms directly in space, allowing them to learn spatial constraints and enabling conditioning on shape or arrangement. The downside is that such atom level operations are computationally expensive.\n\nA recent preprint instead focuses on 3D molecular generation based on rigid chemical motifs, matching how chemists actually think about molecular structure. Each motif has a fixed internal structure, and generation focuses on choosing which motifs appear and how they are arranged relative to each other.\n\nSome highlights of the approach:\n\n🔹Representation: Rigid motifs like benzene rings and carboxylic acids are selected using a data-driven fragmentation strategy that preserves chemically stable substructures, while controlling vocabulary size through frequency thresholds.\n\n🔹Model architecture: Instead of operating on atoms or graphs, the model operates on rigid building blocks, borrowing design ideas from frame-based protein models like AlphaFold.\n\n🔹Training process: The model is trained to jointly predict which motifs appear and how they are arranged, combining discrete decisions and continuous geometry in a single generative process.\n\n🔹Generated output: The result is a complete molecular structure assembled directly from motifs, without a separate conformer generation or atom-level reconstruction step.\n\nThe model achieves 95% atom stability versus 87% for previous methods, using 100 generation steps instead of 1000. At the same time, conditional generation improves, both for matching exact composition constraints and for targeting specific substructures.\n\n📄 3D Molecule Generation from Rigid Motifs via SE(3) Flows, arXiv, January 23, 2026\n🔗 https://lnkd.in/e2qsfRvC\n____________________\nI'm Fan Li, Ph.D. I write about AI, molecules, and how R&D gets done. Follow or DM if this resonates.",
+      "links": [
+        "https://lnkd.in/e2qsfRvC"
+      ],
+      "images": [
+        "https://media.licdn.com/dms/image/v2/D4E03AQEbn9MYJpWG0Q/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1673318720923?e=2147483647&v=beta&t=OQ_DKK3Qe8w33Y5XdnyJPD2iRtcqyiYSN3-ZyVexd9A",
+        "https://static.licdn.com/aero-v1/sc/h/8fkga714vy9b2wk5auqo5reeb",
+        "https://media.licdn.com/dms/image/v2/D4E22AQHcNWfc92x2ww/feedshare-shrink_800/B4EZv6tuouG0Ag-/0/1769437850433?e=2147483647&v=beta&t=_vuGYgPfAjmMGm84c52DaPXV5fjzTq6hHCaWOlRVMwE",
+        "https://static.licdn.com/aero-v1/sc/h/bn39hirwzjqj18ej1fkz55671",
+        "https://static.licdn.com/aero-v1/sc/h/70k0g8kmgdfjjymflqqzipzxj",
+        "https://static.licdn.com/aero-v1/sc/h/4ol9mo4lxvobj5ww3va90wz1o",
+        "https://static.licdn.com/aero-v1/sc/h/l7s88viq07vqke49pnrbl5e4",
+        "https://static.licdn.com/aero-v1/sc/h/gs508lg3t2o81tq7pmcgn6m2",
+        "https://static.licdn.com/aero-v1/sc/h/64x33s3lxd27lb5jrntc2qt3s",
+        "https://static.licdn.com/aero-v1/sc/h/a6mgx8l1bgv7yyvnzsn6mnxhn",
+        "https://static.licdn.com/aero-v1/sc/h/e97efymj9gvxv32086hxtsg5r",
+        "https://static.licdn.com/aero-v1/sc/h/985sqoiudwdfnuemt74raqc27"
+      ],
+      "embed_url": "https://www.linkedin.com/embed/feed/update/urn:li:activity:7421560260718501888",
+      "activity_id": "7421560260718501888",
+      "extractor": "linkedin_embed"
+    }
+  ],
+  "failed_results": [],
+  "response_time": 0.0,
+  "request_id": "local-linkedin-embed"
+}

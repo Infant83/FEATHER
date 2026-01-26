@@ -1,0 +1,69 @@
+\vspace{-2mm} 
+\section{Background}
+\vspace{-1mm} 
+\label{Background}
+In this section, we provide a brief overview of the theoretical concepts necessary to establish our generative framework. 
+% Throughout the paper, we denote matrices and tuples that include a matrix with uppercase bold letters ($\mathbf{R}$), vectors and tuples of vectors with lowercase bold letters ($\mathbf{x}$), and scalars with lowercase regular letters ($m$).
+\vspace{-2mm} 
+\subsection{Flow Matching on $\mathrm{SE}(3)$ Manifold}
+\vspace{-1mm} 
+\label{SE(3) Flow}
+\paragraph{Geometric Preliminaries}
+The group of rigid motions $\mathrm{SE}(3) \cong \mathbb{R}^3 \rtimes \mathrm{SO}(3)$ describes the configuration of rigid bodies in 3D space. While the translational component $\mathbb{R}^3$ is Euclidean (see Appendix \ref{Euclidean Flow}), the rotational one $\mathrm{SO}(3)$ is a \textit{compact Lie group} -- a smooth manifold equipped with a group structure. To define flows on this curved space, we rely on Riemannian geometry. At any point $\mathbf{R} \in \mathrm{SO}(3)$, the \textit{tangent space} $\mathcal{T}_{\mathbf{R}}\mathrm{SO}(3)$ is the vector space containing all possible velocity vectors passing through $\mathbf{R}$. We equip the manifold with the canonical bi-invariant \textit{Riemannian metric} defined by the inner product $\langle \mathbf{U}, \mathbf{V} \rangle_{\mathbf{R}} = \frac{1}{2}\mathrm{Tr}\left(\mathbf{U}^\top \mathbf{V}\right)$ for tangent vectors $\mathbf{U}, \mathbf{V} \in \mathcal{T}_{\mathbf{R}}\mathrm{SO}(3)$. This metric induces the norm $\|\mathbf{U}\|_{\mathrm{SO}(3)} = \sqrt{\langle \mathbf{U}, \mathbf{U} \rangle_{\mathbf{R}}}$. The bijective mapping between the tangent space and the manifold is handled by the \textit{exponential map} $\mathbf{Q} = \exp_{\mathbf{R}}\left(\mathbf{V}\right)$, which projects a tangent vector $\mathbf{V}$ along a geodesic to a point $\mathbf{Q}$ on the manifold, and its inverse, the \textit{logarithmic map} $\mathbf{V} = \log_{\mathbf{R}}\left(\mathbf{Q}\right)$, which recovers the tangent vector, connecting $\mathbf{R}$ to $\mathbf{Q}$.
+\vspace{-2mm} 
+\paragraph{$\mathrm{SE}(3)$ Flow Matching} 
+We decouple the generative process on $\mathrm{SE}(3)$ into independent translational and rotational components \cite{se3diffusion}. 
+% Euclidean translational component is reviewed in Appendix \ref{Euclidean Flow}. 
+For the rotational component, we follow the \textsc{FoldFlow-Base} framework of \citet{foldflow}. This method extends \textit{Riemannian flow matching} \cite{rfm} by deriving a closed-form expression for the ground-truth conditional vector field, thereby significantly improving training speed and stability.
+
+We define a probability path $\mathbf{R}_t$ that interpolates along the geodesic connecting a sample from the uniform prior $\mathbf{R}_0 \sim \mathcal{U}_{\mathrm{SO}(3)}$ to a data sample $\mathbf{R}_1$. The conditional vector field $u^{\mathbf{R}}_t\left(\mathbf{R}_t \mid \mathbf{R}_1\right) \in \mathcal{T}_{\mathbf{R}_t}\mathrm{SO}(3)$ generating this path is:
+\begin{equation*}
+    u_t^{\mathbf{R}}\left(\mathbf{R}_t \mid \mathbf{R}_1\right) = \frac{1}{1-t} \log_{\mathbf{R}_t}(\mathbf{R}_1).
+\end{equation*}
+Computing $\log_{\mathbf{R}_t}(\mathbf{R}_1)$ naively requires evaluating an infinite matrix power series, which is computationally expensive and numerically unstable. To circumvent this, \citet{foldflow} exploits the Lie group structure. Instead of computing the logarithm directly at $\mathbf{R}_t$, they first compute the relative rotation $\mathbf{R}_{\text{rel}} = \mathbf{R}_t^\top \mathbf{R}_1$. This maps the problem to the identity-tangent space, the Lie algebra $\mathfrak{so}(3)$, where the logarithm admits a fast, closed-form solution via the Rodrigues' formula. The resulting vector is then transported back to the tangent space at $\mathbf{R}_t$ via left-multiplication, rendering the calculation efficient and exact.
+
+To train the model, one samples intermediate noisy frames $\mathbf{T}_t = \left(\mathbf{R}_t, \mathbf{x}_t\right)$. The rotation evolves according to the geodesic formula $\mathbf{R}_t = \exp_{\mathbf{R}_0}\left(t \log_{\mathbf{R}_0}\left(\mathbf{R}_1\right)\right)$. For translation, the conditional probability path $p_t\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right)$ is defined by the linear interpolation $\mathbf{x}_t = (1-t)\mathbf{x}_0 + t\mathbf{x}_1$, which corresponds to the constant conditional vector field $u_t^\mathbf{x}\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right) = \mathbf{x}_1 - \mathbf{x}_0$ on $\mathbb{R}^3$.
+
+The final objective is to regress the neural vector field $v_\theta = \left(v_\theta^{\mathbf{x}}, v_\theta^{\mathbf{R}}\right)$ to these target fields. Assuming an independent coupling between the prior $p_0$ and the data $p^*$, the loss is:
+\begin{equation*}
+\resizebox{\columnwidth}{!}{$\displaystyle
+\begin{aligned}
+    \mathcal{L}_{\mathrm{SE}(3)}(\theta)
+    &= \mathbb{E}_{\substack{\mathbf{T}_0 \sim p_0, \mathbf{T}_1 \sim p^* \\ t \sim \mathcal{U}(0,1)}} \Big[\,
+        \| v_\theta^{\mathbf{x}}\left(\mathbf{T}_t, t\right) - u_t^\mathbf{x}\left(\mathbf{x}_t \mid \mathbf{x}_0, \mathbf{x}_1\right) \|^2 \\
+    &+\; \| v_\theta^{\mathbf{R}}\left(\mathbf{T}_t, t\right) - u_t^{\mathbf{R}}\left(\mathbf{R}_t \mid \mathbf{R}_1\right) \|_{\mathrm{SO}(3)}^2
+    \Big].
+\end{aligned}
+$}
+\end{equation*}
+At inference, one samples an initial frame $\mathbf{T}_0 = \left(\mathbf{R}_0, \mathbf{x}_0\right)$ from the product prior $p_0 = \mathcal{N}(\mathbf{0}, \mathbf{I}) \times \mathcal{U}_{\mathrm{SO}(3)}$ and numerically integrate the learned joint vector field $v_\theta$ to generate the final rigid frame configuration $\mathbf{T}_1 = \left(\mathbf{R}_1, \mathbf{x}_1\right)$.
+\vspace{-2mm} 
+\subsection{Discrete Flows}
+\label{Discrete Flows}
+\vspace{-1mm}
+While continuous approaches to flow matching on the categorical simplex exist (e.g., \citealp{catflow, fisher_fm}), we follow \citet{discrete_flows} and handle generative modelling of discrete data with \textit{continuous-time Markov chains} (CTMCs). Let $m$ denote a discrete random variable taking values in a finite vocabulary $\mathcal{V}_m$. Analogous to the continuous case, we aim to transform a sample $m_0$ from a tractable prior distribution $p_0$, e.g., a uniform distribution or a $[\text{MASK}]$ state, to a data sample $m_1 \sim p^*$ via a probability path $p_t$ for $t \in [0, 1]$.
+\vspace{-2mm} 
+\paragraph{CTMC Dynamics}
+The evolution of the marginal probability mass function $p_t$ over $\mathcal{V}_m$ is governed by the \textit{Kolmogorov forward equation}. For a time-dependent transition \textit{rate matrix} $\mathbf{Q}_t \in \mathbb{R}^{|\mathcal{V}_m| \times |\mathcal{V}_m|}$, the dynamics are given by:
+\begin{equation*}
+    \partial_t p_t(k) = \sum_{j \neq k} p_t(j) \mathbf{Q}_t(j, k) - p_t(k) \sum_{j \neq k} \mathbf{Q}_t(k, j),
+\end{equation*}
+where $\mathbf{Q}_t(j, k) \geq 0$ for $j \neq k$ represents the instantaneous rate of jumping from state $j$ to state $k$. This linear system serves as the discrete analogue to the continuity equation in continuous flow matching, with $\mathbf{Q}_t$ playing the role of the vector field $u_t$.
+\vspace{-2mm} 
+\paragraph{Discrete Flow Matching}
+Constructing a generative model requires finding a rate matrix $\mathbf{Q}_t$ that generates a desired probability path $p_t$. Following the conditional flow matching paradigm, we define the marginal path as an expectation over conditional paths $p_t(m_t \mid m_1)$ anchored at the data sample $m_1$:
+\vspace{-2mm}
+\begin{equation*}
+    p_t(m_t) = \mathbb{E}_{m_1 \sim p^*}\left[p_t(m_t \mid m_1)\right].
+\end{equation*}
+The conditional flow $p_t(\cdot \vert m_1)$ is typically chosen as a linear interpolation in probability space, such that $p_0(\cdot \mid m_1) = p_0(\cdot)$ and $p_1(\cdot \mid m_1) = \delta_{m_1}(\cdot)$, where $\delta$ is the Dirac delta. \citet{discrete_flows} demonstrate that the marginal rate matrix $\mathbf{Q}_t$ can be realized as the expectation of a \textit{conditional rate matrix} $\mathbf{Q}_t(\cdot \mid m_1)$ which generates $p_t(\cdot \mid m_1)$:
+\begin{equation*}
+    \mathbf{Q}_t(j, k) = \mathbb{E}_{m_1 \sim p(m_1 \mid m_t=j)} \left[ \mathbf{Q}_t(j, k \mid m_1) \right].
+\end{equation*}
+Here, $\mathbf{Q}_t(j, k \mid m_1)$ is a closed-form rate matrix derived analytically to satisfy the conditional Kolmogorov equation for the chosen interpolant.
+
+Unlike the continuous case, where we regress a vector field directly, learning the marginal rate matrix requires access to the posterior $p(m_1 \mid m_t=j)$. Consequently, we parameterise a denoising neural network $p_\theta(m_1 \mid m_t)$ to approximate the clean data distribution given a noisy state. The training objective is thus the cross-entropy loss:
+\begin{equation*}
+    \mathcal{L}_{\text{DFM}}(\theta) = \mathbb{E}_{\substack{m_1 \sim p^*, \, m_t \sim p_t(\cdot \mid m_1) \\ t \sim \mathcal{U}(0, 1)}} \left[ - \log p_\theta(m_1 \mid m_t) \right].
+\end{equation*}
+At inference time, we construct the generative rate matrix $\mathbf{Q}_t^\theta$ using the learned denoiser: $\mathbf{Q}_t^\theta(j, k) = \mathbb{E}_{m_1 \sim p_\theta(\cdot \mid m_t=j)} [ \mathbf{Q}_t(j, k \mid m_1) ]$. New samples are generated by initialising $m_0 \sim p_0$ and simulating the CTMC trajectory defined by $\mathbf{Q}_t^\theta$.

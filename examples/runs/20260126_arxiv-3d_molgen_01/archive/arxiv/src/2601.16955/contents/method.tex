@@ -1,0 +1,107 @@
+\vspace{-2mm} 
+\section{Method} \label{Method}
+\vspace{-1mm} 
+In this section, we start with a common representation of a molecule  $\{(\mathbf{y}_j, h_j)\}_{j=1}^{N}$ as a point cloud of $N$ atoms, each with coordinates $\mathbf{y}_j \in \mathbb{R}^3$ and the atom type $h_j \in \mathcal{V}_{a}$. Here, $\mathcal{V}_{a}$ is the vocabulary of all atom types, including ions. 
+% Note that we do not model bonds explicitly, following the corresponding line of existing methods (e.g., \citealp{edm, end}).
+
+In Section \ref{Rigid-Motif Decomposition}, we describe the \textit{frame fragmentation}; its purpose is to reparametrise the molecule as $K$ rigid motifs $\{\mathcal{M}_i\}_{i=1}^K = \{(\mathbf{T}_i, m_i)\}_{i=1}^K$ where a frame $\mathbf{T}_i = \left(\mathbf{R}_i, \mathbf{x}_i\right) \in \mathrm{SE}(3)$ has a rotation matrix $\mathbf{R}_i \in \mathrm{SO}(3)$ and a translation vector $\mathbf{x}_i \in \mathbb{R}^3$ from the origin to the geometric centre of the motif. Each frame's rotation is defined relative to this motif's \textit{exemplar fragment} $m_i \in \mathcal{V}_m$ from the \textit{motif vocabulary} $\mathcal{V}_m$. 
+
+A fragment $m_i$ with $N_i$ atoms in this vocabulary describes the atom-level structure of the rigid motif, and is thus a tuple $m_i = (\mathbf{P}_i, \mathbf{h}_i, \mathcal{S}_i)$. Here, the fixed set of 3D coordinates of intra-fragment atoms $\mathbf{P}_i \in \mathbb{R}^{N_i \times 3}$ defines the motif's \textit{canonical pose} centred at the origin. The corresponding types of intra-fragment atoms are denoted by $\mathbf{h}_i \in \mathcal{V}_a^{N_i}$. The third element, $\mathcal{S}_i \subset \mathrm{SO}(3)$, represents the \textit{discrete symmetry group of the motif}, i.e., the set of all rotations that, if applied to the pose $\mathbf{P}_i$, result in an indistinguishable molecular motif in 3D space.
+
+We note that such frame-based representation is \textit{invertible}: to recover the atom-level representation $\mathbf{Y}_i \in \mathbb{R}^{N_i \times 3}$ of atoms that corresponds to the rigid fragment $m_i$ with the frame $\mathbf{T}_i = \left(\mathbf{R}_i, \mathbf{x}_i\right)$ in a molecule in 3D space, one has to apply the rigid transformation to the motif's canonical pose:
+\begin{equation*}
+\mathbf{Y}_i = \mathbf{P}_i \mathbf{R}_i + \mathbf{1}_{N_i}\mathbf{x}_i^\top \equiv \mathbf{P}_i \mathbf{S} \mathbf{R}_i + \mathbf{1}_{N_i}\mathbf{x}_i^\top, \,\, \forall \mathbf{S} \in \mathcal{S}_i
+\end{equation*}
+Under this rigid-frame parametrisation, generating \textit{de novo} molecules with $K$ fragments can be seen as a task of sampling from the distribution on  $\mathrm{SE}(3)^K \times \mathcal{V}_m^K$.  In Section \ref{Multimodal Flow}, we formulate our generative framework \oursacro.
+% \begin{figure*}[t] 
+%     \centering
+%     \includegraphics[width=\textwidth]{visuals/method_figure.png} 
+%     \caption{Method test.}
+%     \label{method_figure}
+% \end{figure*}
+\vspace{-1mm} 
+\subsection{Rigid-Motif Decomposition} \label{Rigid-Motif Decomposition}
+\vspace{-1mm} 
+To establish a motif vocabulary $\mathcal{V}_m$, we need to define a fragmentation scheme. Such a scheme has to satisfy several requirements, namely,
+\begin{enumerate*}[label=(\roman*)]
+  \item \textit{rigidity}: fragments must be structurally rigid approximations  (i.e., lacking internal rotatable bonds) to accurately represent all instances of a motif throughout the data,
+  \item \textit{non-degeneracy}: each fragment must possess at least three non-collinear points to define a frame $\mathbf{T} \in \mathrm{SE}(3)$ and
+  \item \textit{tractability}, meaning that the frequency of each distinct class of $\mathcal{V}_m$ in the data has to be sufficiently high for learning the distribution over $\mathcal{V}_m^K$.
+\end{enumerate*}
+
+The fragmentation comprises two stages. We begin by identifying all sufficiently rigid structures: we preserve double and triple bonds, as well as all bonds within approximately \textit{planar} rings and fused ring systems. Further, while we do cut the bonds between heavy atoms that are acyclic but adjacent to a cycle, unlike common fragmentation techniques \cite{hiervae, moler}, we do not cut bonds to hydrogens. This helps introduce fewer ill-defined rigid frames at the expense of having more unique motifs. After the chosen bonds are cut and the preliminary set of rigid motifs is established, we proceed by \textit{pruning} them: analogous to common methods in molecular graph decomposition (e.g., \citealp{hiervae}), we further fragment rigid motifs whose total number of occurrences across the dataset is less than $\alpha\%$ of the dataset size. We ablate different values of the hyperparameter $\alpha$ and its influence on the generation in Section \ref{Ablations}.  By default, we use $\alpha=0.1$.
+
+At this point, the only ill-defined frames are those that are collinear motifs (e.g., alkynes) or isolated atoms (e.g., $\text{Cl}$ atom cut from a $\text{C}_6\text{H}_5\text{Cl}$ chlorobenzene ring). To be able to uniquely define their rotation matrix $\mathbf{R} \in \mathrm{SO}(3)$, similar to \citet{sigmadock}, we start adding dummy atoms placed at a unit distance to the nearest non-collinear neighbours of this fragment in the original molecule until the orientation of the frame is locked and the rigid body is well-defined.
+\vspace{-2mm} 
+\subsection{Canonicalisation and Vocabulary} \label{Canonicalisation and Vocabulary}
+\vspace{-1mm} 
+Once the rigid motifs are defined, we proceed with constructing a vocabulary $\mathcal{V}_m$ where each element is a canonical descriptor of a chemical motif, formally defined as a tuple $m_i = (\mathbf{P}_i, \mathbf{h}_i, \mathcal{S}_i)$. For a given motif class $i$, the canonical fragment with its centred pose $\mathbf{P}_i \in \mathbb{R}^{N_i \times 3}$ and atom types $\mathbf{h}_i \in \mathcal{V}_a^{N_i}$ is chosen arbitrarily as the rigid motif's first occurrence during the dataset preprocessing and fixed. We compute $\mathcal{S}_i$ by identifying the set of all graph automorphisms $\Pi_i$, i.e., node permutations, that preserve chemical connectivity and element types in the motif. For each automorphism $\pi \in \Pi_i$, we derive the corresponding rotation matrix $\mathbf{R}^{\pi}_i$ that maps the exemplar onto its permuted self, i.e., $\mathbf{P}_{i} \approx \pi(\mathbf{P}_{i}) \mathbf{R}^{\pi}_i$. This explicitly encodes the rotational invariance of symmetric motifs, e.g., the indistinguishable orientations of cyclopropane $(\text{CH}_2)_3$, into the vocabulary.
+
+We further assign a ground truth pose $\mathbf{T}_j =\left(\mathbf{R}_j, \mathbf{x}_j\right) \in \mathrm{SE}(3)$ to each fragment instance $\mathcal{M}_j$ of type $m_i$ found in the data. The translation vector $\mathbf{x}_j$ is defined as the vector from the origin to the geometric centre of $\mathcal{M}_j$. We then compute a representative rotation $\mathbf{R}_j$ via the Kabsch algorithm \cite{kabsch} given any valid automorphism $\pi \in \Pi_i$ establishing the atom-wise correspondence:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{2pt}
+\begin{equation*}
+    \mathbf{R}_j = \mathop{\mathrm{argmin}}_{\mathbf{R} \in \mathrm{SO}(3)} \sum_{a=1}^{N_i} \left\| \mathbf{P}_{i, a} \mathbf{R} -\mathbf{Y}^{\pi}_{j, a} \right\|^2,
+\end{equation*}
+}%
+where $\mathbf{P}_{i,a}$ denotes the position of the $a$-th atom in $m_i$.
+This method allows for representing an arbitrary non-collinear molecule as a collection of well-defined rigid motifs from a tractable vocabulary $\mathcal{V}_m$. In Figure \ref{qmugs_distr}, we show for the \textsc{QMugs} dataset that on average, such a fragment-based molecular parametrisation compresses the common all-atom and heavy-atom representations by factors of $3.4$ and $1.8$, respectively, without resorting to learning a latent space or requiring a computationally expensive reconstruction.
+\begin{figure}[ht]
+\centering 
+\includegraphics[width=\columnwidth]{visuals/entity_distributions/distribution_qmugs_middle_threshold.pdf}
+\caption{Comparison of molecular representations on \textsc{QMugs} dataset \cite{qmugs}. Fragmentation is reported for $\alpha = 0.1$.}
+\label{qmugs_distr}
+\vspace{-3mm} 
+\end{figure}
+\vspace{-3mm} 
+\subsection{Multimodal Flow on $\mathrm{SE}(3)^K \times \mathcal{V}_m^K$} 
+\label{Multimodal Flow}
+\vspace{-1mm}
+Given the larger size of the motif vocabulary $\mathcal{V}_m$ compared to the common atom vocabulary $\mathcal{V}_a$, we opt not to approximate the discrete fragment classes in a one-hot continuous fashion, as commonly done in the literature \cite{edm, end}. Instead, we propose to natively handle the discrete and continuous supports of $m \in \mathcal{V}_m$ and $\mathbf{T} \in \mathrm{SE}(3)$, respectively, in a \textit{multimodal flow} \cite{discrete_flows}. Concretely, for a molecule with $K$ rigid motifs $\bm{\mathcal{M}} = \{\mathcal{M}^k\}_{k=1}^K$, \oursacro models the following conditional flow\footnote{For brevity, $p_{t}(\cdot \mid \cdot)$ refers to probability density and probability mass functions for continuous and discrete variables.}, factorised over modalities and individual rigid-motif frames:
+{
+\begin{equation*}
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+p_{t}(\bm{\mathcal{M}}_t  \mid \bm{\mathcal{M}}_1) := \prod_{k=1}^{K} \underbrace{p_{t}(m_t^k  \mid m_1^k)}_{\text{Discrete Flow}} \underbrace{p_{t}(\mathbf{T}_t^k  \mid \mathbf{T}_1^k)}_{\text{SE}(3) \text{ Flow}}.
+\end{equation*}
+}%
+This factorisation implies that the generative process for each rigid motif is independent \textit{conditional} on the data sample $\bm{\mathcal{M}}_1$, allowing us to train the joint model by minimising a sum of modality-specific losses.
+\vspace{-3mm} 
+\paragraph{Continuous Dynamics} 
+For the geometric component, we independently apply the $\mathrm{SE}(3)$ flow matching framework described in Section \ref{SE(3) Flow} to each of the $K$ rigid frames. The conditional probability path $p_t(\mathbf{T}_t^k \mid \mathbf{T}_1^k)$ is constructed via the product of the Euclidean interpolant for translations and the geodesic one for rotations. The training objective $\mathcal{L}_{\mathrm{SE}(3)}$ is the sum over $K$ motifs of the regression loss between the network outputs and the target vector fields $u_t^\mathbf{x}$ and $u_t^\mathbf{R}$.
+\vspace{-3mm} 
+\paragraph{Discrete Dynamics} 
+For the motif types, we adopt the discrete flow from Section \ref{Discrete Flows} using a \textit{masking} prior. Specifically, we set the prior $p_0$ to be a Dirac delta on a special token, $m_0^k = [\text{MASK}]$ for all $k$. The conditional probability path interpolates linearly between this mask state and the true motif type $m_1^k$:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\begin{equation*}
+    p_t(m_t^k \mid m_1^k) = (1-t)\delta_{[\text{MASK}]}(m_t^k) + t\delta_{m_1^k}(m_t^k).
+\end{equation*}
+}%
+To generate this path via a CTMC, we require the conditional rate matrix $\mathbf{Q}_t(j, l \mid m_1^k)$. For the masking interpolant, this matrix takes a simple analytic form where probability mass is transferred solely from $[\text{MASK}]$ to the target class $m_1^k$ \cite{discrete_flows}:
+{
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\begin{equation*}
+    \mathbf{Q}_t(j, l \mid m_1^k) = \mathbb{I}(j = [\text{MASK}]) \cdot \mathbb{I}(l = m_1^k) \cdot \frac{1}{1-t}.
+\end{equation*}
+}%
+Intuitively, at any time $t \in (0, 1)$, a masked motif has a rate of $(1-t)^{-1}$ to unmask to its true value $m_1^k$, while unmasked motifs remain fixed. To train the model, we employ a denoising network $p_\theta(m_1^k \mid \bm{\mathcal{M}}_t)$ that predicts the categorical distribution over $\mathcal{V}_m$ given the noisy state of the entire molecule. The discrete objective $\mathcal{L}_{\text{DFM}}$ is the cross-entropy between the predicted logits and the true motif type $m_1^k$, summed over all masked motifs.
+\vspace{-2mm} 
+\paragraph{Architecture}
+We parameterise the time-dependent vector fields and the discrete denoiser using a single unified neural network $v_\theta(\bm{\mathcal{M}}_t, t)$. Our architecture builds upon the \textsc{FoldFlow-Base} backbone \cite{foldflow}, which utilises invariant point attention (IPA) \cite{alphafold2} to process 3D rigid frames. The network takes as input the noisy frames $\{\mathbf{T}_t^k\}_{k=1}^K$ and the embeddings of the partially masked motif tokens $\{m_t^k\}_{k=1}^K$. We introduce three modifications to adapt this architecture for multimodal molecular generation. First, we incorporate \textit{self-conditioning} \cite{self_cond, harm_self_cond} for the discrete modality: during training, with a probability $0.5$, we feed the model's own estimated clean motif types $\hat{m}_1$ back as input, improving coherence between the geometric and semantic features. Second, we augment the network's layers with triangular multiplicative updates \cite{alphafold2} on the pair of fragment representations to better capture the geometric constraints between rigid motifs, which, unlike residues in the protein backbones, are ordered arbitrarily. Finally, the network is equipped with an additional third prediction head that outputs logits over $\mathcal{V}_m$ for the discrete flow.
+\vspace{-2mm} 
+\paragraph{Symmetries}
+This generative process has two kinds of physical symmetries. The first one, global $\mathrm{SE}(3)$ equivariance, is guaranteed by the IPA backbone, ensuring that if the entire molecule is rotated and translated, the generated vector fields rotate and translate accordingly. Additionally, individual motifs $m_i$ may also possess non-trivial finite groups of rotational symmetries $\mathcal{S}_i$, and the true distribution is invariant to the choice of canonical pose representation from its orbit $\{\mathbf{P}_i \mathbf{S}_1, \dots \mathbf{P}_i \mathbf{S}_{|\mathcal{S}_i|}\}$. Note that we set $\mathcal{S}_{[\text{MASK}]} \coloneqq \{\mathbf{I}\}$.  
+
+% Instead of hard-coding this invariance into the network, e.g., via frame averaging \cite{frame_averaging}, we learn it with data augmentation: during training, for every motif $k$, we randomly sample a symmetry element $\mathbf{S} \in \mathcal{S}_k$ and transform the ground truth frame $\mathbf{R}_1^k \leftarrow \mathbf{R}_1^k \mathbf{S}$.
+
+To handle this, we adopt a \textsc{GeoDiff}-style alignment strategy \cite{geodiff} for the loss computation. Instead of regressing towards a fixed canonical frame, we dynamically select the target rotation $\tilde{\mathbf{R}}_1^k$ from the symmetry orbit that is closest to the current noisy frame $\mathbf{R}_t^k$:
+\begin{equation*}
+    \tilde{\mathbf{R}}_1^k = \mathbf{S}^*\mathbf{R}_1^k, \quad \text{where} \quad \mathbf{S}^* = \mathop{\mathrm{argmax}}_{\mathbf{S} \in \mathcal{S}_k} \mathrm{Tr}\left((\mathbf{R}_t^k)^\top \mathbf{S}\mathbf{R}_1^k\right).
+\end{equation*}
+Minimising the geodesic distance on $\mathrm{SO}(3)$ corresponds to maximising the trace of the relative rotation matrix, which is computationally negligible as the finite symmetry groups of motifs are small. Empirically, we found that this alignment stabilises training at small times $t$, where the noisy state is close to the uninformed prior, preventing the flow from receiving conflicting gradients from equivalent but spatially distant symmetric targets.
+
+We ablate the effects of the design choices and compare them with alternative options in Appendix \ref{Ablation Details}. Further implementation details are provided in Appendix \ref{Implementation Details}.

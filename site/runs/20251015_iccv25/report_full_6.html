@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ICCV 2025 논문·코드 매핑 및 재현성 검토 지침</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.18);
+      margin-bottom: 36px;
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+    .report-deck {
+      color: rgba(226, 232, 240, 0.8);
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent-strong);
+      margin: 1.6rem 0;
+      padding: 0.7rem 1.4rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(14, 165, 164, 0.4);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: rgba(15, 23, 42, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: var(--mono-font);
+      font-size: 0.92em;
+    }
+    .article pre {
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 17, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: var(--paper-strong);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media (max-width: 860px) {
+      .page { margin: 40px auto 64px; padding: 0 20px; }
+      .article { padding: 28px; }
+      .report-deck { font-size: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .report-title { font-size: 2rem; }
+      .article { padding: 22px; }
+      .article h2 { font-size: 1.35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+body.template-quanta_magazine {
+  --ink: #1b1c22;
+  --muted: #4c5566;
+  --accent: #2f4b8f;
+  --link: #2f4b8f;
+  --page-bg: radial-gradient(1200px 700px at 15% -10%, #e9eef9 0%, #f4f6fb 45%, #ffffff 100%);
+  --body-font: "Baskerville", "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-quanta_magazine .report-title {
+  font-size: 2.8rem;
+}
+
+body.template-quanta_magazine .article {
+  border-radius: 20px;
+  box-shadow: 0 26px 70px rgba(43, 69, 121, 0.16);
+}
+
+body.template-quanta_magazine .article p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.2rem;
+  line-height: 1;
+  padding-right: 8px;
+  color: var(--accent);
+  font-family: var(--heading-font);
+}
+
+body.template-quanta_magazine .article h2 {
+  border-top: 1px solid rgba(47, 75, 143, 0.3);
+}
+
+  </style>
+</head>
+<body class="template-quanta_magazine">
+  <div class="backdrop">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">ICCV 2025 논문·코드 매핑 및 재현성 검토 지침</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>ICCV 2025 논문·코드 매핑 및 재현성 검토 지침</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-26 22:31</p>
+<h2>Lede</h2>
+<p>ICCV 2025의 논문 집합은 단순한 연례 학회 목록을 넘어선다. 이번 실행(run)은 로컬에 수집된 메타데이터·PDF·코드 리포지토리의 '지도'를 만들어, 어떤 논문에 코드가 붙어 있는지, 재현성의 걸림돌은 무엇인지, 그리고 향후 어떤 작업을 우선적으로 리뷰해야 할지를 빠르게 가려내려는 시도였다. 이 보고서는 로컬 아카이브와 공개 큐레이션 소스의 교차검증을 통해 ICCV 2025 프로그램(오픈 액세스)과 관련 코드 리포지토리를 정리하고, 초기 1차 스캔(최대 12건)을 권고하는 근거와 방법론을 제시한다 (근거: CVF OpenAccess 포털 및 로컬 인덱스 파일 참조) [CVF OpenAccess], [archive index].</p>
+<p>로컬 스냅샷은 두 가지 실무적 문제를 풀어낸다. 첫째, '어떤 논문이 실제로 코드·체크포인트를 함께 공개했는가'를 확인해 재현성 우선순위를 만드는 일, 둘째, 아카이브와 웹(커뮤니티 큐레이션)의 불일치에서 누락·중복·메타데이터 오류를 찾아내는 일이다. 이 보고서는 현재 로컬에 존재하는 핵심 아티팩트와 외부 큐레이션(예: Papers-with-Code 스타일 리포지토리)의 매핑 결과를 바탕으로 우선 읽기 후보와 검토 절차를 제안한다 (근거: <a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/source_index.jsonl" class="viewer-link">./report_notes/source_index.jsonl</a>, amusi 큐레이션) [source index], [amusi ICCV2025-Papers-with-Code].</p>
+<h2>Central Question</h2>
+<p>ICCV 2025의 광범위한 논문 집합에서 '코드·데이터·체크포인트가 공개되어 실제로 재현 가능한 논문'은 어떻게 빠르고 신뢰성 있게 골라낼 수 있는가? 또한 로컬 아카이브(다운로드된 PDF/텍스트)와 공개 큐레이션(예: CVF OpenAccess, GitHub 리스트) 사이의 불일치는 재현성 평가에 어떤 제약을 남기는가?</p>
+<h2>The Story So Far</h2>
+<ul>
+<li>데이터 수집: 본 실행은 세 가지 축으로 자료를 모았다 — (1) CVF OpenAccess의 ICCV 2025 전체 페이지(공식 논문·PDF 링크), (2) OpenAlex 기반으로 수집된 메타데이터와 로컬 PDF(<a href=".&lt;a href=" . archive openalex">/archive/openalex</a>">.<a href="./archive/openalex">/archive/openalex</a></a> 폴더), (3) 커뮤니티·개별 GitHub 큐레이션(예: amusi/ICCV2025-Papers-with-Code) [CVF OpenAccess], [source index], [amusi ICCV2025-Papers-with-Code].</li>
+<li>로컬 인덱싱: 마스터 인덱스 파일(<a href=".&lt;a href=" . archive 20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">/archive/20251015_iccv25-index.md</a></a>)이 이번 작업의 출발점으로 지정되었다. 이 인덱스는 로컬에 저장된 PDF·추출 텍스트·메타데이터의 맵을 제공하며, 우선 읽기 후보 선정의 근거로 사용되었다 (근거 파일: <a href=".&lt;a href=" . archive 20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">/archive/20251015_iccv25-index.md</a></a>) [archive index].</li>
+<li>메타소스 교차검증: tavily 검색 결과와 OpenAlex 메타데이터(<a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a>)는 외부에서 어떤 논문이 주목받았는지를 알려주지만, 로컬 보유 여부와 코드 공개 여부는 별도 확인이 필요했다 (근거: <a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="../../../examples/runs/20251015_iccv25/archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>, <a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a> — 로컬에서 확인 권고) [tavily search], [openalex works].</li>
+<li>초기 후보: 로컬에 수집된 PDF들 중에서 Vision–Language × Remote Sensing(예: <a href=".&lt;a href=" . archive openalex pdf w4411143162.pdf">/archive/openalex/pdf/W4411143162.pdf</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">/archive/openalex/pdf/W4411143162.pdf</a></a>), 의료 AI agent(<a href=".&lt;a href=" . archive openalex pdf w4411100445.pdf">/archive/openalex/pdf/W4411100445.pdf</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf" class="viewer-link">/archive/openalex/pdf/W4411100445.pdf</a></a>), trajectory prediction(<a href=".&lt;a href=" . archive openalex pdf w4409578551.pdf">/archive/openalex/pdf/W4409578551.pdf</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf" class="viewer-link">/archive/openalex/pdf/W4409578551.pdf</a></a>) 등 영역별 대표 논문들을 우선 스캔 대상으로 선정했다. 또한 커뮤니티에서 코드로 식별된 리포지토리들(RAIVNLab/trajvit, RayZer, HyTIP, HoliTracer)을 우선 검토 목록에 올렸다 <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">[3]</a>, [RAIVNLab/trajvit repo], [RayZer repo], [HyTIP repo].</li>
+</ul>
+<p>키 액터: CVF(OpenAccess)·OpenAlex 메타·커뮤니티 큐레이터(amusi 등)와 개별 연구실(코드 공개 리포지토리 제공자)이 핵심 소스다. 이들 간 교차검증이 높은 신뢰도의 재현성 판단을 만든다.</p>
+<h2>How It Works</h2>
+<p>개념적으로 이 작업은 '논문 ↔ 코드 ↔ 로컬 PDF'의 삼각 매핑을 만들고, 매핑 품질에 따라 우선순위를 매기는 과정이다.</p>
+<ul>
+<li>입력: CVF OpenAccess 프로그램(논문 목록·PDF URL), 로컬 아카이브의 메타파일(<a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/source_index.jsonl" class="viewer-link">./report_notes/source_index.jsonl</a> 등), 외부 큐레이션(예: amusi GitHub 리스트), 개별 GitHub 리포지토리.</li>
+<li>처리: 각 논문에 대해 (A) 로컬 PDF 존재 여부, (B) 코드 리포지토리 존재 여부, (C) 공개된 체크포인트/데이터 접근성, (D) 라이선스·README의 재현 지침 유무를 확인하여 '재현성 지표'를 계산한다.</li>
+<li>출력: 재현성 우선순위 목록(상·중·하), 각 리포지토리의 재현성 리스크 요약, 그리고 우선 리뷰할 최대 12건의 상세 읽기 리스트.</li>
+</ul>
+<p>간단한 재현성 스코어 예시(설명용):
+$$
+R = w_C \cdot C + w_L \cdot L + w_{CK} \cdot CK + w_D \cdot D
+$$
+여기서 $C$는 코드 공개 여부(0/1), $L$은 라이선스 개방성(0..1), $CK$는 체크포인트 공개(0/1), $D$는 데이터 접근성(0..1), $w_*$는 가중치다. (구체적 가중치는 검토 목적에 맞춰 조정 가능.) 이 단순 모델은 판단의 투명성을 위해 도입했으며, 실제 우선순위 산출 시에는 README·스크립트·의존성 검사 결과를 정성적으로 보정한다 (근거: amusi 큐레이션·개별 repo README 관찰) [amusi ICCV2025-Papers-with-Code], [RAIVNLab/trajvit repo].</p>
+<p>실무 팁: 코드가 공개되어 있어도 재현 난이도가 높은 경우(대형 데이터·비공개 데이터·복잡한 의존성)는 우선순위를 낮춰 '검증 가능한' 소형 실험부터 재현을 시도한다. 이 점은 README·run 스크립트·checkpoints 유무에서 즉시 드러난다 (근거: 개별 GitHub 리포지토리 조사 원칙) [RayZer repo], [HyTIP repo].</p>
+<h2>Why It Matters</h2>
+<p>연구자·엔지니어·리뷰어에게 ICCV 같은 대형 컨퍼런스의 '논문→코드' 매핑은 몇 가지 중요한 실무적 가치를 제공한다.</p>
+<ul>
+<li>재현성 및 검증 속도: 코드·체크포인트가 공개된 논문을 우선적으로 재현하면, 새로운 방법의 실제 성능과 한계를 빠르게 검증할 수 있다. 이는 학문적 검증의 효율성을 높이며, 후속 연구의 신뢰도를 높인다 (근거: CVF OpenAccess의 논문·supplementary 접근성 및 커뮤니티 코드 매핑 사례) [CVF OpenAccess], [amusi ICCV2025-Papers-with-Code].</li>
+<li>산업적 적용과 기술 이전: 공개된 리포지토리는 적용 가능한 모듈(예: view synthesis, trajectory prediction, multimodal encoders)을 실무에 옮기는 출발점이 된다. 실제로 RAIVNLab/trajvit 등은 trajectory 예측 커뮤니티에서 곧바로 시험 적용 가능한 코드를 제공했다 (근거: RAIVNLab/trajvit repo) [RAIVNLab/trajvit repo].</li>
+<li>분야 추세 파악: 로컬 아카이브에 수집된 PDF들(예: Vision–Language × Remote Sensing survey)은 ICCV에서 드러난 주제적 흐름(멀티모달·agent·3D/뷰 합성 등)을 조망하는 데 유용하다. 이러한 survey·overview 논문은 데이터셋·평가 지표·오픈 이슈를 집약해 준다 (근거: <a href=".&lt;a href=" . archive openalex pdf w4411143162.pdf">/archive/openalex/pdf/W4411143162.pdf</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">/archive/openalex/pdf/W4411143162.pdf</a></a>) <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">[3]</a>.</li>
+</ul>
+<p>즉, 논문-코드 통합 매핑은 단순 색인 이상으로 '검증 가능한 과학'과 '현업 적용성' 사이의 다리 역할을 한다.</p>
+<h2>Open Questions</h2>
+<ol>
+<li>로컬 인덱스와 CVF OpenAccess/커뮤니티 큐레이션 사이의 불일치 비율은 어느 정도인가? (현재 관련 검색·스크랩 로그 파일의 완전한 검토가 필요 — 예: <a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="../../../examples/runs/20251015_iccv25/archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>, <a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a>) [tavily search], [openalex works].</li>
+<li>'코드 공개'가 실제로 재현 가능한지 여부를 자동 판별할 신뢰도 높은 메트릭은 무엇인가? (단순 존재 여부를 넘는 정성적 검사 필요) — README·run 스크립트·checkpoint·데이터·라이선스 항목의 가중치 설정이 관건이다 [RAIVNLab/trajvit repo].</li>
+<li>대형 모델·비공개 데이터셋을 사용하는 논문은 어떻게 공정하게 비교/재현 대상에 포함시킬 것인가? (데이터 접근성의 불균형 문제)</li>
+<li>커뮤니티 큐레이션(예: amusi 리스트)은 얼마나 최신성을 유지하며, 누락·오류를 보정하려면 어떤 워크플로가 필요한가? (자동화된 크롤러 vs 수동 검토의 균형)</li>
+<li>규제·윤리(예: 의료 AI agent 사례의 임상적 검증 요구)는 코드 공개만으로 충족되지 않는다 — 임상검증·책임소재는 어떻게 기록·검증될 것인가? (근거: 의료 AI agent 논문 PDF가 로컬에 존재함) <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf" class="viewer-link">[4]</a>.</li>
+</ol>
+<p>각 질문은 현재 자료(로컬 인덱스·웹 큐레이션·개별 리포지토리)로 부분적 답을 얻을 수 있으나, 완전한 해답은 추가 데이터 수집·자동 검사 파이프라인·도메인별 재현 프로토콜 확립을 요구한다.</p>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li>증거의 불완전성: 현재 많은 주장과 우선순위 결정의 근거가 '로컬 인덱스 메타데이터'에 기반해 있으나, <a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="../../../examples/runs/20251015_iccv25/archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>, <a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a> 등 스크랩 메타파일의 완전한 파싱이 아직 진행되지 않았다. 이로 인해 누락된 논문·코드 매핑이 존재할 가능성이 크다 (근거: report_notes의 gaps summary) [source index], [tavily search], [openalex works].</li>
+<li>자동 판별의 한계: "코드가 공개되어 있다"는 사실만으로 재현성을 보장할 수 없다. 많은 리포지토리는 의존성, 데이터 접근성, 비공개 체크포인트, 불충분한 실행 지침 등으로 실제 재현이 불가능한 경우가 있다 (관찰 근거: 개별 GitHub README·checkpoint 관찰 권고) [RayZer repo], [HyTIP repo].</li>
+<li>라이선스·데이터 제약: 일부 공개 리포지토리는 상업적 제한이 있거나, 데이터셋이 비공개여서 재현 불가능할 수 있다. 라이선스 확인은 필수 단계다 (근거: GitHub repo 조사 지침) [RAIVNLab/trajvit repo].</li>
+<li>스케일과 리소스: 대형 모델(예: view synthesis, VLM)들은 고성능 하드웨어와 긴 학습 시간 때문에 재현 비용이 많이 든다. 우선 재현은 소규모 샘플 실험(transfer / ablation)으로 제한해야 한다 (근거: RayZer 등 view synthesis 리포지토리 관찰) [RayZer repo].</li>
+<li>검증 절차의 부재: 현재 자동화된 '재현성 검사 파이프라인'이 구축되어 있지 않다. 수동 검토/실행이 병행되어야 하며, 이는 시간·노동 집중적이다 (근거: Updated plan의 작업 항목) [source index].</li>
+</ul>
+<p>요약: 증거의 강도는 부분적으로 낮음(메타파일들이 아직 완전히 파싱되지 않음). 따라서 본 보고서의 우선순위·권고는 '초기 스캔'에 적합하며, 본격적인 재현성 결론을 내리기 위해선 추가 데이터 수집과 자동 검사 도구가 필요하다.</p>
+<h2>Critics</h2>
+<p>단순한 재현성 매핑은 과대평가될 수 있다</p>
+<p>연구자·검토자 일부는 "코드 공개 여부를 우선 기준으로 삼는 것은 새로운 알고리즘 아이디어의 과학적 가치를 과소평가할 위험이 있다"고 주장한다. 또한 오픈 소스라고 해도 실무적 제약(대용량 데이터·특수 하드웨어·데이터 사용 허가)이 남아 있어 '공개 = 재현 가능'이라는 등식은 성립하지 않는다.</p>
+<ul>
+<li>코드 중심 비판:</li>
+<li>공개 코드가 있지만 데이터·체크포인트가 없으면 재현 의미가 제한적이다.</li>
+<li>포크·비공식 구현이 많아 '원저자 구현'을 찾는 데 시간 소모가 크다.</li>
+<li>규제·윤리적 비판:</li>
+<li>의료·안보 관련 응용은 코드 공개만으로 안전·윤리 문제를 해결하지 못한다(임상 검증·인간 감독 필요) <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf" class="viewer-link">[4]</a>.</li>
+<li>방법론적 비판:</li>
+<li>자동화된 매핑은 메타데이터 오류에 취약하며, 인간 검토가 병행되어야 한다.</li>
+</ul>
+<p>대안적 관점: 일부 평론가들은 '체크리스트 기반 재현성 라벨링'과 같은 혼합 접근(자동화 + 수동 검토)을 제안하며, 라이선스·데이터 접근성·체크포인트 유무를 별도 레이어로 분리해 평가할 것을 권한다 (근거: 재현성 체크리스트 권고안 — Appendix 참조).</p>
+<h2>Appendix</h2>
+<h3>근거/아카이브 아티팩트(주요 파일)</h3>
+<ul>
+<li><a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">[1]</a> — 로컬에 저장된 PDF·텍스트·메타의 전체 맵으로, 반드시 첫 검토 대상이다.  </li>
+<li><a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/source_index.jsonl" class="viewer-link">[2]</a> — 논문↔로컬파일 경로↔(가능시)코드 URL 매핑의 원자료.  </li>
+<li>CVF 오픈액세스(공식): [CVF OpenAccess(ICCV2025)] — ICCV 2025의 공식 논문·PDF 포털(프로그램 전체).  </li>
+<li>커뮤니티 큐레이션: [amusi/ICCV2025-Papers-with-Code] — 논문-코드 매핑을 제공하는 커뮤니티 리포지토리(검증 필요).  </li>
+<li>로컬 저장 PDF(예시):</li>
+<li><a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">[3]</a> — survey형 논문(멀티모달·remote sensing 트렌드 파악용).  </li>
+<li><a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf" class="viewer-link">[4]</a> — 의료 AI agent 사례.  </li>
+<li><a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf" class="viewer-link">[5]</a> — trajectory prediction 대표 논문.  </li>
+<li>식별된 GitHub 리포지토리(우선 검토):</li>
+<li>[RAIVNLab/trajvit repo] — trajectory tokenization/transformer 구현 예시.  </li>
+<li>[RayZer repo] — view synthesis 관련 구현.  </li>
+<li>[HyTIP repo] — 비디오/코덱 관련 구현.  </li>
+<li>[HoliTracer repo] — 관련 구현체 예시.</li>
+</ul>
+<p>(참고: tavily 검색 메타데이터 파일(<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="../../../examples/runs/20251015_iccv25/archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>)과 OpenAlex 수집 파일(<a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a>)은 현재 추가 파싱이 권장된다.)</p>
+<h3>방법·재현성 체크리스트</h3>
+<ul>
+<li>사전 확인(문서): README, run scripts, requirements.txt/CONDA environment, license 명시 여부 확인.  </li>
+<li>데이터 접근성: 사용 데이터가 공개인지, 대체 소형 데이터로 실험 가능한지, 데이터 사용 계약이 필요한지 확인.  </li>
+<li>체크포인트 유무: pre-trained model checkpoint의 공개 여부 및 다운로드 링크 존재 확인.  </li>
+<li>재현 난이도 표기: (낮/중/높)로 분류 — 낮: 단일 스크립트로 실행 가능·샘플 데이터 포함 / 중: 외부 데이터·추가 구성 필요 / 높: 대형 클러스터·비공개 데이터 필요.  </li>
+<li>실행 검증: 소형 샘플로 'inference' 실행 확인(가능하면 도커/컨테이너 사용 권장).  </li>
+<li>문서화: 실험 파라미터·seed·하드웨어 명시 여부 확인.</li>
+</ul>
+<p>예상 소요 시간(참고): 리포지토리 1건(README 점검 + 소형 실행) 약 30–90분, 논문 1건 정밀 스캔(본문+supplementary) 약 30–90분.</p>
+<h3>범위·한계 요약</h3>
+<ul>
+<li>범위: ICCV 2025 오픈 액세스 논문과 로컬 아카이브(다운로드된 PDF/텍스트) 및 식별된 GitHub 리포지토리의 초동 교차검증. 초점은 '코드·체크포인트 공개 여부'와 '재현성 우선순위' 산정에 있다.  </li>
+<li>한계: tavily·OpenAlex의 전체 스크랩 로그 및 일부 메타파일의 완전한 파싱이 남아 있어, 누락된 논문·리포지토리가 존재할 가능성이 있다. 또한 공개된 코드의 품질은 다양하며 자동화된 평가는 한계가 있다(수동 검토 필요).  </li>
+<li>권고: (1) 우선 6–12건의 '실행 가능' 후보를 골라 실제 소형 재현을 시도해 패턴을 수집하고, (2) 메타파일(<a href=".&lt;a href=" . archive tavily_search.jsonl">/archive/tavily_search.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="../../../examples/runs/20251015_iccv25/archive/tavily_search.jsonl" class="viewer-link">/archive/tavily_search.jsonl</a></a>, <a href=".&lt;a href=" . archive openalex works.jsonl">/archive/openalex/works.jsonl</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_works.jsonl-d064a937.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/works.jsonl" class="viewer-link">/archive/openalex/works.jsonl</a></a>)을 완전 파싱해 누락 확인 후 목록을 보강하라.</li>
+</ul>
+<hr />
+<p>참고로 본 보고서는 로컬 아카이브와 공개 큐레이션을 기반으로 한 '초기 스캔·우선순위' 제안이다. 다음 단계로는 마스터 인덱스(<a href=".&lt;a href=" . archive 20251015_iccv25-index.md">/archive/20251015_iccv25-index.md</a>">.<a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">/archive/20251015_iccv25-index.md</a></a>) 검토를 우선 진행해 누락·중복을 확인하고, 상위 후보들(최대 12건)에 대해 실제 실행 검증을 수행하는 것을 권고한다 (구체적 작업 계획은 필요 시 즉시 작성 가능) [archive index], [source index], [CVF OpenAccess].</p>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: A high-resolution aerial photograph of a large airport terminal showing a curved multi-gate concourse with numerous com…; <a href="#fig-2">Figure 2</a>: Aerial photograph showing multiple long, narrow racing boats with many paddlers moving in parallel across a body of wat…; <a href="#fig-3">Figure 3</a>: A multi-panel composite figure showing satellite/aerial image examples for various remote-sensing tasks: each panel con…; <a href="#fig-4">Figure 4</a>: Left panel illustrates a self-cascaded generation workflow across spatial resolutions using a sliding window, where a c…; <a href="#fig-5">Figure 5</a>: A simple grayscale icon showing a vertically stacked cylindrical database symbol with three horizontal segments and, ov…; <a href="#fig-6">Figure 6</a>: Grayscale medical scan image showing a brain slice with visible cortical surface and sulci. Four blue square outlines,…; <a href="#fig-7">Figure 7</a>: Grayscale axial cross-sectional medical image (likely an abdominal MRI) showing heterogeneous soft-tissue contrast with…; <a href="#fig-8">Figure 8</a>: Multi-panel figure: (A) horizontal bar chart titled &#x27;Sex Distribution&#x27; showing more female (F) patients than male (M);…; <a href="#fig-9">Figure 9</a>: A model architecture diagram showing inputs (History Trajectory and Map) feeding an Encoder and Decoder. The Encoder co…; <a href="#fig-10">Figure 10</a>: Pseudocode listing for a multimodal trajectory-prediction pipeline: inputs (historical trajectories X ∈ R^{M×T_obs×K},…; <a href="#fig-11">Figure 11</a>: Two side-by-side 8x8 heatmaps titled &#x27;w/o softmax1&#x27; (left) and &#x27;w/ softmax1&#x27; (right) with axes labeled Input (x) and Ou…; <a href="#fig-12">Figure 12</a>: Two side-by-side 8x8 attention heatmaps labeled &#x27;w/o Softmax1&#x27; (left) and &#x27;w/ Softmax1&#x27; (right) with x-axis &#x27;Attn Key&#x27;…</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-2c0b0b57.png" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 12)" />
+  <figcaption>Figure 1: A high-resolution aerial photograph of a large airport terminal showing a curved multi-gate concourse with numerous commercial aircraft parked at jet bridges, adjacent aprons and taxiways, ground service vehicles, and rooftop installations including arrays that appear to be solar panels. Concrete ramp markings, gate positions, service staging areas, and aircraft shadows are clearly visible. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf">./archive/openalex/pdf/W4411143162.pdf</a>, page 12)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-4e78cf36.jpeg" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 12)" />
+  <figcaption>Figure 2: Aerial photograph showing multiple long, narrow racing boats with many paddlers moving in parallel across a body of water and leaving visible wakes; a shoreline with buildings, parked cars, and a quay is visible along the bottom edge of the image. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf">./archive/openalex/pdf/W4411143162.pdf</a>, page 12)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-db1f4b18.jpeg" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 14)" />
+  <figcaption>Figure 3: A multi-panel composite figure showing satellite/aerial image examples for various remote-sensing tasks: each panel contains image sequences with colored bounding boxes, an &#x27;Instruction&#x27; text box and a corresponding &#x27;Label&#x27; box. Panels are titled (visible) for tasks such as Temporal Scene Classification, Building Localization and Damage Classification, Bitemporal Building Change Detection, Spatial Change Referring Expression, Change Question Answering, Region-based Change Question Answering, Temporal Referring Expression, and Region-based Temporal Question Answering. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf">./archive/openalex/pdf/W4411143162.pdf</a>, page 14)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411143162.pdf-82c0d920.jpeg" alt="Figure from ./archive/openalex/pdf/W4411143162.pdf (page 17)" />
+  <figcaption>Figure 4: Left panel illustrates a self-cascaded generation workflow across spatial resolutions using a sliding window, where a conditional input at stage k-1 is processed by a &#x27;Self-cascaded generation&#x27; block to produce the generation output at stage k. Right panel details the stage-k pipeline: timestep t and spatial resolution s^(k) are passed to a &#x27;Frequency encoding f_ω&#x27; producing timestep and resolution embeddings that are summed and, together with a conditional image encoded by &#x27;Image Encoder E_tr&#x27;, up-sampled Gaussian noise via &#x27;Up-sampling layers F_up&#x27;, are input to a denoising model ε_θ (applied ×T) to yield the generated image x_0^(k). (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf">./archive/openalex/pdf/W4411143162.pdf</a>, page 17)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-5">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411100445.pdf-544e2493.jpeg" alt="Figure from ./archive/openalex/pdf/W4411100445.pdf (page 2)" />
+  <figcaption>Figure 5: A simple grayscale icon showing a vertically stacked cylindrical database symbol with three horizontal segments and, overlapping its lower-right, a circle containing a check mark. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf">./archive/openalex/pdf/W4411100445.pdf</a>, page 2)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-6">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411100445.pdf-5f75408f.jpeg" alt="Figure from ./archive/openalex/pdf/W4411100445.pdf (page 2)" />
+  <figcaption>Figure 6: Grayscale medical scan image showing a brain slice with visible cortical surface and sulci. Four blue square outlines, each containing a smaller yellow filled square, mark regions of interest arranged along a curved path near the cortex. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf">./archive/openalex/pdf/W4411100445.pdf</a>, page 2)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-7">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411100445.pdf-d243f28f.jpeg" alt="Figure from ./archive/openalex/pdf/W4411100445.pdf (page 2)" />
+  <figcaption>Figure 7: Grayscale axial cross-sectional medical image (likely an abdominal MRI) showing heterogeneous soft-tissue contrast with three blue square markers with yellow centers placed over three focal areas in the upper-right and mid regions of the image; a round darker structure is visible near the lower center. The markers appear to highlight specific small regions of interest within the bright tissue mass. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf">./archive/openalex/pdf/W4411100445.pdf</a>, page 2)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-8">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4411100445.pdf-06ce36cb.png" alt="Figure from ./archive/openalex/pdf/W4411100445.pdf (page 14)" />
+  <figcaption>Figure 8: Multi-panel figure: (A) horizontal bar chart titled &#x27;Sex Distribution&#x27; showing more female (F) patients than male (M); (B) green histogram titled &#x27;Age Distribution&#x27; spanning roughly ages 35–70 with visible peaks around the mid-50s to mid-60s; (C) pie chart titled &#x27;Ethnicity Distribution&#x27; dominated by a 55% &#x27;n/a&#x27; slice and a 15% &#x27;Black American&#x27; slice with several other ethnic categories at ~5% each; (D) a large grid of small labeled heatmaps/matrix plots titled &#x27;Tool Usage for [Surname]&#x27; (many surnames) showing binary or intensity indicators of tool usage per individual across multiple tool categories. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf">./archive/openalex/pdf/W4411100445.pdf</a>, page 14)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-9">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4409578551.pdf-4b8e7302.png" alt="Figure from ./archive/openalex/pdf/W4409578551.pdf (page 3)" />
+  <figcaption>Figure 9: A model architecture diagram showing inputs (History Trajectory and Map) feeding an Encoder and Decoder. The Encoder contains a Motion Extractor, FFN, Permutation-Invariant Positional Encoding, and a Temporal &amp; Social Out-Way Attention block; the Decoder uses a Learnable Proposal Matrix, FFN, and Temporal &amp; Social Out-Way Attention to produce predicted trajectories, and the bottom-right shows mathematical definitions for OutWayAttention and a Softmax formulation. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf">./archive/openalex/pdf/W4409578551.pdf</a>, page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-10">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4409578551.pdf-1ebb20b9.png" alt="Figure from ./archive/openalex/pdf/W4409578551.pdf (page 6)" />
+  <figcaption>Figure 10: Pseudocode listing for a multimodal trajectory-prediction pipeline: inputs (historical trajectories X ∈ R^{M×T_obs×K}, HD map features M ∈ R^{N_poly×N_pts×3}, number of proposals c, prediction horizon T_pred) and outputs (predicted trajectories Ŷ ∈ R^{M×c×T_pred×2}, mode probabilities p ∈ R^c). The code is organized into labeled stages (Initialization, Input Processing, Encoder Processing, Context Fusion, Multimodal Decoding, Final Output) and shows operations such as LinearProj, SinusoidalPE, LayerNorm+FFN, an OWA/OWAD attention block, MapEncoder and MeanPool fusion, proposal-specific FFN/Decoder/TrajHead/ProbHead, TopK selection and Softmax normalization. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf">./archive/openalex/pdf/W4409578551.pdf</a>, page 6)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-11">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4409578551.pdf-baeeec98.jpeg" alt="Figure from ./archive/openalex/pdf/W4409578551.pdf (page 9)" />
+  <figcaption>Figure 11: Two side-by-side 8x8 heatmaps titled &#x27;w/o softmax1&#x27; (left) and &#x27;w/ softmax1&#x27; (right) with axes labeled Input (x) and Output (y) and a colorbar ranging 0.0 (dark purple) to 1.0 (yellow). The left heatmap shows more diffuse, lower-intensity activations distributed across many input–output pairs, while the right heatmap is sparser with concentrated high-intensity (near 1) values at a few input–output locations forming clearer block/diagonal-like patterns. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf">./archive/openalex/pdf/W4409578551.pdf</a>, page 9)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-12">
+  <img src="../../../examples/runs/20251015_iccv25/report_assets/figures/._archive_openalex_pdf_W4409578551.pdf-440ad633.jpeg" alt="Figure from ./archive/openalex/pdf/W4409578551.pdf (page 10)" />
+  <figcaption>Figure 12: Two side-by-side 8x8 attention heatmaps labeled &#x27;w/o Softmax1&#x27; (left) and &#x27;w/ Softmax1&#x27; (right) with x-axis &#x27;Attn Key&#x27; and y-axis &#x27;Attn Query&#x27;. A vertical colorbar from 0.0 to 0.7 maps purple (low) to yellow (high); red rectangular annotations highlight several localized high-value regions that differ in position and intensity between the two plots. (Source: <a href="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf">./archive/openalex/pdf/W4409578551.pdf</a>, page 10)</figcaption>
+</figure>
+<h2>References</h2>
+<ol>
+<li>20251015_iccv25-index.md — <a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">file</a></li>
+<li>source_index.jsonl — <a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_source_index.jsonl-69956240.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/source_index.jsonl" class="viewer-link">file</a></li>
+<li>Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i> — <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411143162.pdf-69d13f36.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411143162.pdf" class="viewer-link">file</a> <small>citations: 5</small></li>
+<li>Development and validation of an autonomous artificial intelligence agent for clinical decision-making in oncology — <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4411100445.pdf-d039341f.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4411100445.pdf" class="viewer-link">file</a> <small>citations: 41</small></li>
+<li>Trajectory prediction via proposal guided transformer with out way attention — <a href="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_openalex_pdf_W4409578551.pdf-9daa4fc1.html" data-raw="../../../examples/runs/20251015_iccv25/archive/openalex/pdf/W4409578551.pdf" class="viewer-link">file</a> <small>citations: 4</small></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-26 22:34:03</li>
+<li>Duration: 00:07:03 (423.94s)</li>
+<li>Model: gpt-5-mini</li>
+<li>Vision model: gpt-5-mini</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: quanta_magazine</li>
+<li>Language: Korean</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="../../../examples/runs/20251015_iccv25/report_views/report_run_overview.md-40ef65a9.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_run_overview.md-40ef65a9.html" data-raw="../../../examples/runs/20251015_iccv25/report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="../../../examples/runs/20251015_iccv25/report_views/report_run_overview_report_full_6.md-7088ee68.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_run_overview_report_full_6.md-7088ee68.html" data-raw="../../../examples/runs/20251015_iccv25/report/run_overview_report_full_6.md" class="viewer-link">./report/run_overview_report_full_6.md</a></li>
+<li>Report workflow: <a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">./archive/20251015_iccv25-index.md</a></li>
+<li>Instruction file: <a href="../../../examples/runs/20251015_iccv25/report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-raw="../../../examples/runs/20251015_iccv25/instruction/20251015_iccv25.txt" class="viewer-link">./instruction/20251015_iccv25.txt</a></li>
+<li>Report prompt: <a href="../../../examples/runs/20251015_iccv25/report_views/instruction_report_prompt_report_full_6.txt-6e1d9629.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/instruction_report_prompt_report_full_6.txt-6e1d9629.html" data-raw="../../../examples/runs/20251015_iccv25/instruction/report_prompt_report_full_6.txt" class="viewer-link">./instruction/report_prompt_report_full_6.txt</a></li>
+<li>Figure candidates: <a href="./report_views/figures_preview.html">./report_views/figures_preview.html</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

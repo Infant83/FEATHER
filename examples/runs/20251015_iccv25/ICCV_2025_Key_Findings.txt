@@ -1,0 +1,35 @@
+**주요 발견 (Key Findings) - ICCV 2025**
+
+1. **Trajectory Prediction Enhancements**:
+   - 발표: Wei Xu 외, "Trajectory prediction via proposal guided transformer with out way attention"
+   - 주요 사항: 새로운 주의 메커니즘인 "Out Way Attention"을 소개하여 자율 주행 차량의 주변 행동 예측 정확성을 향상시킴. 이 메커니즘은 다양한 주행 상황에 동적으로 적응할 수 있는 능력을 강화함.
+   - 결과: 세 가지 공공 데이터셋 (Argoverse, Trajnet++, ETH/UCY)에서 모델 검증 완료.
+
+2. **OpenCV의 응용**:
+   - 발표: Ekta Sinha 외, "OpenCV for Computer Vision Applications"
+   - 주요 사항: OpenCV를 활용하여 감시, 얼굴 인증, 가장자 감지 및 모바일 비디오 처리와 같은 실시간 응용 프로그램에 대한 혁신적 기능 탐색.
+   - 응용 사용 사례: 고급 이미지 필터링, 변환 및 추적을 통한 다양한 시스템의 효율성 향상.
+
+3. **인공지능 및 임상 의사결정 지원**:
+   - 발표: Dyke Ferber 외, "Development and validation of an autonomous artificial intelligence agent for clinical decision-making in oncology"
+   - 주요 사항: GPT-4와 정밀한 종양학 도구를 이용한 자율 임상 AI 에이전트 개발. 20가지의 현실적인 환자 사례에서 높은 정확도로 임상 결론 도출.
+
+4. **Vision-Language Modeling의 발전**:
+   - 발표: Xingxing Weng 외, "Vision-Language Modeling Meets Remote Sensing"
+   - 주요 사항: VLM이 구체적인 원격 감지 작업에서의 강력한 성능을 발휘하고, 일반 지식의 활용이 검사됨.
+   - 연구 목표: 다양한 원격 감지 데이터 분석 작업에서 강력한 성능 발휘하기.
+
+5. **Generative AI의 교육적 응용**:
+   - 발표: Yufeng Qian, "Pedagogical Applications of Generative AI in Higher Education"
+   - 주요 사항: Generative AI의 채택이 교육 시스템 내에서 어떤 변화를 가져왔는지에 대한 체계적 문헌 검토. 창의성, 비판적 사고 및 학습 자율성을 강조.
+   - 연구 필요성: 학생-교사-AI 협력을 증진하기 위한 연구 필요성이 제기됨.
+
+6. **다중 모달 검색 시스템**:
+   - 발표: Bingbing Zhang 외, "Research on Multi-Modal Retrieval System of E-Commerce Platform"
+   - 주요 사항: 기존 키워드 기반 검색의 한계를 극복하고 이미지-텍스트 쌍을 이용한 보다 정확하고 효율적인 그래픽 일치를 실현.
+
+7. **단기 비디오 참여 예측**:
+   - 발표: Dasong Li 외, "VQualA 2025 Challenge on Engagement Prediction for Short Videos"
+   - 주요 사항: 사용자 생성 콘텐츠의 인기도를 이해하고 모델링하는 새로운 단기 비디오 데이터셋 개발. 다양한 다중 모달 특성을 탐구한 97명의 참가자.
+
+이 문서는 ICCV 2025에서 발표된 주요 연구와 발견 사항을 요약한 것입니다.

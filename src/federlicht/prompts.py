@@ -111,6 +111,7 @@ def build_writer_prompt(
     required_sections: list[str],
     output_format: str,
     language: str,
+    depth: str | None = None,
 ) -> str:
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
@@ -145,6 +146,29 @@ def build_writer_prompt(
             "소개·정리하는 섹션입니다. 일반론만 나열하지 말고, 핵심 변수/관측량/메커니즘이 "
             "어떤 이론적 전제에서 나오는지 연결을 명확히 설명하세요. "
         )
+    depth_guidance = ""
+    if depth == "exhaustive":
+        depth_guidance = (
+            "Depth=exhaustive: 핵심 분석 섹션(Introduction, Theory & Foundations, Methods & Experimental Evidence, "
+            "Applications & Benchmarks, Synthesis & Outlook)은 근거가 충분할 때 4~7문단 이상으로 확장하세요. "
+            "섹션 내 소제목(H3)을 적극 활용하고, 교차 연결(핵심 주장→근거→한계→의미)을 반복적으로 정리하세요. "
+            "근거가 얕으면 과장하지 말고, 공백/제약을 명시한 뒤 더 짧게 정리하세요. "
+        )
+    elif depth == "deep":
+        depth_guidance = (
+            "Depth=deep: 핵심 분석 섹션(Introduction, Theory & Foundations, Methods & Experimental Evidence, "
+            "Applications & Benchmarks, Synthesis & Outlook)은 근거가 충분할 때 3~5문단 이상으로 확장하세요. "
+            "근거가 얕으면 과장하지 말고, 공백/제약을 명시한 뒤 더 짧게 정리하세요. "
+            "섹션 내 소제목(H3)을 활용해 흐름을 유지하세요. "
+        )
+    elif depth == "brief":
+        depth_guidance = (
+            "Depth=brief: 핵심 섹션은 1~2문단으로 간결하게 요약하고, 상세 배경은 최소화하세요. "
+        )
+    else:
+        depth_guidance = (
+            "Depth=normal: 핵심 섹션은 보통 2~3문단을 목표로 하고, 필요 시 근거 수준에 맞춰 조정하세요. "
+        )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -161,7 +185,9 @@ def build_writer_prompt(
         "대괄호 [ ... ] 안에 수식을 쓰지 마세요. "
         "첨자/윗첨자는 항상 감싸세요 (예: $\\Delta E_{ST}$, $E(S_1)$, $S_1/T_1$). "
         "소스 요약 나열이 아니라, 소스 간을 종합해 명확한 전개와 실행 가능한 인사이트를 제시하세요. "
-        "핵심 주장마다 최소 1개의 출처 인용을 포함하세요. "
+        "사실/수치/출처 의존 주장에는 인용을 반드시 포함하세요. "
+        "해석/추론/제안/전망은 인용이 필수가 아니지만, 문장에 '(해석)', '(추론)', '(제안)', '(전망)' 중 하나를 명시하세요. "
+        "일반적 배경 설명은 인용 없이 작성해도 됩니다. "
         "JSONL 인덱스 내용을 그대로 덤프하지 말고, 실제 문서/기사 내용을 분석하세요. "
         "JSONL 인덱스 파일을 인용하지 마세요(tavily_search.jsonl, openalex/works.jsonl 등). "
         "대신 실제 원문 URL과 추출 텍스트/PDF/트랜스크립트를 인용하세요. "
@@ -172,6 +198,7 @@ def build_writer_prompt(
         "파일 경로 인용 시 ./archive/... 또는 ./instruction/... 같은 상대 경로를 사용하세요(절대 경로 금지). "
         f"{format_instructions.citation_instruction}"
         "수식이 중요할 때는 LaTeX($...$ 또는 $$...$$)로 렌더링되게 작성하세요. "
+        f"{depth_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
         f"{not_applicable_guidance}"
@@ -191,6 +218,7 @@ def build_writer_finalizer_prompt(
     required_sections: list[str],
     output_format: str,
     language: str,
+    depth: str | None = None,
 ) -> str:
     base_prompt = build_writer_prompt(
         format_instructions,
@@ -199,6 +227,7 @@ def build_writer_finalizer_prompt(
         required_sections,
         output_format,
         language,
+        depth,
     )
     finalizer_guidance = (
         "이 단계는 선택된 초안에 대한 최종 정리 패스입니다. "
@@ -256,6 +285,8 @@ def build_critic_prompt(language: str, required_sections: list[str]) -> str:
         "당신은 엄격한 저널 편집자입니다. 보고서의 명확성, 서술 흐름, 통찰 깊이, 근거 사용, "
         "보고서 포커스와의 정합성을 비판적으로 검토하세요. "
         "JSONL 인덱스 데이터를 원문 대신 사용했는지, 또는 JSONL을 인용했는지 여부도 지적하세요. "
+        "사실/수치/출처 의존 주장에 인용이 있는지 확인하세요. "
+        "인용이 없는 해석/추론/제안/전망 문장은 라벨이 있는지 확인하세요(예: '(해석)'). "
         f"{section_check}"
         "보고서가 이미 충분히 우수하면 'NO_CHANGES'로 답하세요. "
         f"{language}로 작성하세요."
@@ -272,6 +303,8 @@ def build_revise_prompt(format_instructions: "FormatInstructions", output_format
         "당신은 시니어 에디터입니다. 비판 내용을 반영해 보고서를 수정하세요. "
         f"{section_rule}"
         "서술 흐름, 종합성, 기술적 엄밀성을 개선하세요. "
+        "사실/수치/출처 의존 주장은 인용을 추가해 보강하세요. "
+        "인용 없이 남길 해석/추론/제안/전망 문장은 라벨을 붙이세요(예: '(해석)'). "
         "References 전체 목록은 추가하지 마세요(스크립트가 Source Index를 자동 추가). "
         f"{'LaTeX 서식을 유지하고 섹션 명령을 사용하세요. Markdown으로 변환하지 마세요. ' if output_format == 'tex' else ''}"
         f"{format_instructions.latex_safety_instruction}"
@@ -311,6 +344,8 @@ def build_synthesize_prompt(
     return (
         "당신은 수석 편집자입니다. Report A와 Report B의 강점을 결합하고 약점을 수정해 더 높은 품질의 최종 보고서를 작성하세요. "
         "인용을 보존하고 새로운 출처를 만들지 마세요. "
+        "사실/수치/출처 의존 주장에는 인용을 유지하세요. "
+        "인용 없는 해석/추론/제안/전망 문장은 라벨을 붙이세요(예: '(해석)'). "
         "References 전체 목록은 추가하지 마세요(스크립트가 자동 추가). "
         f"{format_instructions.section_heading_instruction}{format_instructions.report_skeleton}\n"
         f"{'Template guidance:\n' + template_guidance_text + '\n' if template_guidance_text else ''}"
@@ -353,4 +388,19 @@ def build_image_prompt() -> str:
         "당신은 이미지 분석가입니다. 보이는 것에 근거해 도표를 설명하세요. "
         "다음 키만 포함한 JSON을 반환하세요: summary(1-2문장), type(chart/diagram/table/screenshot/photo/other), "
         "relevance(0-100), recommended(yes/no). 불명확하면 summary='unclear'로 작성하세요."
+    )
+
+
+def build_prompt_generator_prompt(language: str) -> str:
+    return (
+        "당신은 보고서 프롬프트 생성기입니다. 스카우트 노트, 템플릿 정보, 요청된 depth를 바탕으로 "
+        "사용자가 직접 편집할 수 있는 보고서 프롬프트를 작성하세요. "
+        "출력은 평문 텍스트만 사용하며, 불필요한 설명/메타 코멘트는 포함하지 마세요. "
+        "다음 규칙을 따르세요:\n"
+        "1) 첫 줄에 'Template: <template_name>'를 넣고, 둘째 줄에 'Depth: <depth>'를 넣으세요.\n"
+        "2) 보고서 목적/범위, 핵심 포함 항목, 증거/인용 정책, 언어 지시를 간결하게 정리하세요.\n"
+        "3) 스카우트 노트에서 확인된 소스 범위/공백을 반영해, 근거가 부족한 부분은 '공개정보 한계'로 명시하세요.\n"
+        "4) 템플릿의 섹션/가이드를 과도하게 복제하지 말고, 핵심 요구사항만 추려서 프롬프트로 요약하세요.\n"
+        "5) 길이는 200~400 단어(또는 그에 상응하는 분량)로 제한하세요.\n"
+        f"모든 문장은 {language}로 작성하되, 고유명사/논문 제목은 원문 언어를 유지하세요."
     )

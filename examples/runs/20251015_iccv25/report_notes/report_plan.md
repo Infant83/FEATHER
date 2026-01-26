@@ -1,12 +1,7 @@
-Plan (updated)
-
-- [x] Scope & constraints check — Confirm this run is a Tavily portal crawl + small OpenAlex sample (workshop/challenge-heavy), not a full ICCV’25 main-conference ingest; decide how to phrase limitations up front.
-- [x] Enumerate authoritative ICCV’25 entry points — Read `archive/tavily_search.jsonl` + `archive/20251015_iccv25-index.md` to list the highest-signal hubs for “key papers + code”: CVF Open Access (landing + All Papers), ICCV virtual papers page, MMLab accepted list, selected industry “accepted publications” pages (e.g., Amazon; also Apple showed up in Tavily results).
-- [ ] Build a “paper universe” extraction sheet — From Tavily results, extract the URLs/patterns needed to later pull paper pages and code/project links at scale (e.g., CVF OA `?day=all` entries → per-paper pages/PDF/supp/arXiv; MMLab rows → `[arXiv]` + `[Project Page]`).
-- [ ] (Missing) Define the scalable code-link mining approach explicitly — Decide rules for “code link” sources (CVF paper pages vs arXiv vs project pages vs curated GitHub lists), and how duplicates/conflicts will be handled in the report.
-- [ ] Normalize the in-archive OpenAlex sample — Parse `archive/openalex/works.jsonl` to tabulate the 11 downloaded works with: title, venue/context (ICCV workshop/challenge vs off-topic), DOI/arXiv, landing page, PDF URL, and any explicit repo/dataset links in the abstract.
-- [ ] Deep-read ICCV-relevant OpenAlex texts — Read the high-signal extracted texts (`W4417156065`, `W4414756887`, `W4417409712`, `W4415254644`, `W4415090288`) to pull: task definitions, datasets (size/splits/modalities), methods, metrics, and verbatim code/dataset URLs for citation.
-- [ ] PDF spot checks for evidence gaps — Open the corresponding PDFs to capture tables/leaderboards/dataset specs that may be lost in text extraction; record any additional links (GitHub/Zenodo/Codalab).
-- [ ] Synthesize practical impact + gaps — Convert extracted evidence into: (1) “Key resources & code links” table, (2) short technical briefs per key item (what it enables, how to use it), and (3) prioritized research gaps.
-- [ ] Draft the final report in `technical_deep_dive` form — Populate sections (Technical Background; Methods & Data; Results & Evidence; Limitations & Open Questions) with anchored citations, and clearly separate what’s verified in-archive vs what requires a follow-up crawl of CVF “All Papers”.
-- [ ] (Missing) Validate whether OpenReview listing is in-scope as an authoritative entry point and note it as secondary metadata (useful for venue metadata, but not the main “papers+code” surface compared to CVF OA).
+- [ ] 공식 일정·CFP·오픈액세스 정책 확인 — ICCV 공식 사이트(ICCV, Dates, Virtual Papers)와 OpenReview 그룹·CVF OpenAccess 정책 원문을 읽어 주요 마감일·CFP 조건·OA 정책(저작권·버전 규정)을 근거로 추출. | Evidence: https://iccv.thecvf.com/, https://iccv.thecvf.com/Conferences/2025/Dates
+- [ ] CVF OpenAccess 샘플링 및 OA 유형 분류 — CVF ICCV2025 페이지에서 권장 샘플(권장: 50편)을 추출해 각 논문에 대해 CVF OA PDF·arXiv·supp·본문의 코드 링크 유무를 분류하고 대표 예시 수개 발췌. | Evidence: https://openaccess.thecvf.com/ICCV2025, pdf
+- [ ] GitHub 저장소 수집·분류·검증 — amusi 등 커뮤니티 집계 레포, topic: iccv2025, 주요 연구실·개별 논문 레포를 수집해 (집계형/공식저자/비공식재현/워크숍·데이터/데모)로 분류하고 “official” 표기는 논문 본문/소속 페이지로 교차검증.
+- [ ] 참고문헌 표 작성(최소 12편) — Paper Title | OA 여부·출처(URL) | 코드 공개 여부·코드 링크(URL) | 라이선스(가능시) | 비고 항목을 채운 표를 만들어 각 항목에 출처 링크 포함. | Evidence: https://openaccess.thecvf.com/ICCV2025
+- [ ] 정량 통계 산출 및 신뢰도 표기 — 샘플 기반으로 OA 제공 비율, 코드 공개 비율, 저장소 카테고리별 수치 산출하고 각 수치는 “공식 출처 확인”/“커뮤니티 출처”로 신뢰도 태그 부여.
+- [ ] 리포트 초안 작성(Quanta 스타일 템플릿) — Lede, Central Question, The Story So Far, How It Works, Why It Matters, Open Questions, Risks & Gaps, Critics 섹션을 근거(출처 링크 포함)로 채워 서사형 심층보고서 초안 작성. | Evidence: https://openaccess.thecvf.com/ICCV2025, ./instruction/20251015_iccv25.txt
+- [ ] 검증·주석·최종화 — 커뮤니티 기반 데이터(매핑·count 등)는 공식 소스와 교차검증하거나 불확실 항목에 명확히 라벨을 달고, 모든 링크·인용을 정리해 최종 보고서를 확정. | Evidence: https://iccv.thecvf.com/

@@ -1,0 +1,2425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/arxiv/text/2601.16955v1.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/arxiv/text/2601.16955v1.txt</h1></header>
+  <main><div class="meta-block"><p><strong>Title:</strong> 3D Molecule Generation from Rigid Motifs via SE(3) Flows</p><p><strong>Authors:</strong> Roman Poletukhin, Marcel Kollovieh, Eike Eberhard, Stephan Günnemann</p><p><strong>Published:</strong> 2026-01-23T18:24:57+00:00</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2601.16955v1">http://arxiv.org/abs/2601.16955v1</a></p><p><strong>PDF:</strong> <a href="../archive/arxiv/pdf/2601.16955v1.pdf">./archive/arxiv/pdf/2601.16955v1.pdf</a></p><p><strong>Summary:</strong><br />Three-dimensional molecular structure generation is typically performed at the level of individual atoms, yet molecular graph generation techniques often consider fragments as their structural units. Building on the advances in frame-based protein structure generation, we extend these fragmentation ideas to 3D, treating general molecules as sets of rigid-body motifs. Utilising this representation, we employ SE(3)-equivariant generative modelling for de novo 3D molecule generation from rigid motifs. In our evaluations, we observe comparable or superior results to state-of-the-art across benchmarks, surpassing it in atom stability on GEOM-Drugs, while yielding a 2x to 10x reduction in generation steps and offering 3.5x compression in molecular representations compared to the standard atom-based methods.</p></div><pre>
+
+===== PAGE 1 =====
+3D Molecule Generation from Rigid Motifs via SE(3) Flows
+Roman Poletukhin 1 Marcel Kollovieh 1 2 Eike Eberhard 1 3 Stephan G¨unnemann 1 2 3
+Abstract
+Three-dimensional molecular structure generation
+is typically performed at the level of individual
+atoms, yet molecular graph generation techniques
+often consider fragments as their structural units.
+Building on the advances in frame-based protein
+structure generation, we extend these fragmenta-
+tion ideas to 3D, treating general molecules as
+sets of rigid-body motifs. Utilising this represen-
+tation, we employ SE(3)-equivariant generative
+modelling for de novo 3D molecule generation
+from rigid motifs. In our evaluations, we observe
+comparable or superior results to state-of-the-art
+across benchmarks, surpassing it in atom stabil-
+ity on GEOM-DRUGS, while yielding a 2× to
+10× reduction in generation steps and offering
+3.5× compression in molecular representations
+compared to the standard atom-based methods.
+1. Introduction
+The generation of 3D molecular structures is a cornerstone
+of in silico drug discovery and material design. Recent ad-
+vances in deep learning have enabled the development of
+powerful generative models that treat molecules as point
+clouds of atoms, utilising E(3)- and SE(3)-equivariant
+diffusion-based frameworks to determine atomic coordi-
+nates (Hoogeboom et al., 2022; Xu et al., 2023). While these
+atom-based approaches achieve impressive performance,
+they operate at a low level of abstraction, discarding the
+rich chemical modularity inherent to molecular structures.
+In the realm of molecular graph generation, however, this
+hierarchical nature is widely exploited by fragment-based
+methods (Jin et al., 2018; Hetzel et al., 2025), which as-
+semble molecules from chemically meaningful motifs or
+scaffolds to capture high-level semantics and ensure validity.
+In the domain of 3D protein structure generation, such a
+1School of Computation, Information and Technology, Techni-
+cal University of Munich, Germany 2Munich Center for Machine
+Learning (MCML), Munich, Germany 3Munich Data Science In-
+stitute (MDSI), Technical University of Munich, Germany. Corre-
+spondence to: Roman Poletukhin &lt;roman.poletukhin@tum.de&gt;.
+Preprint. January 26, 2026.
+Figure 1. Molecule M is generated from motifs M in a joint flow
+on the product space of rigid frames T and motif classes m.
+modular perspective has also proven highly effective. Semi-
+nal works such as ALPHAFOLD2 (Jumper et al., 2021) and
+FRAMEDIFF (Yim et al., 2023) demonstrated the efficacy of
+abstracting amino acid residues as rigid frames in SE(3), de-
+coupling backbone geometry from local side-chain details.
+However, lifting these ideas to general drug-like molecule
+generation in 3D presents significant challenges: unlike pro-
+teins, which are linear chains of a fixed set of residues, small
+molecules exhibit arbitrary branching, diverse topologies,
+and a vastly larger vocabulary of chemical motifs.
+In this work, we propose to bridge this gap by treating gen-
+eral molecules as collections of rigid motifs. By decompos-
+ing molecules into chemically meaningful rigid fragments,
+we lift the generative task from the R3 atom space to the
+SE(3) manifold of fragments. We adopt a multimodal flow
+matching framework that jointly learns the discrete distribu-
+tion of motif types and their continuous spatial configuration,
+illustrated in Figure 1. This formulation enables us to gen-
+erate high-fidelity molecular structures with significantly
+fewer sampling steps, leveraging chemically inspired repre-
+sentations that are substantially more concise than those of
+standard all-atom approaches.
+Contributions
+Our primary contributions are as follows.
+We propose MOTIFLOW, a framework for 3D molecule gen-
+1
+arXiv:2601.16955v1  [cs.LG]  23 Jan 2026
+
+
+===== PAGE 2 =====
+3D Molecule Generation from Rigid Motifs
+eration that parametrises molecules as sets of rigid-body
+motifs in SE(3) rather than individual atoms. We develop
+a data-driven fragmentation and canonicalisation strategy
+that handles arbitrary molecular topologies and accounts
+for motif symmetries. Further, we adapt the multimodal
+flow (Campbell et al., 2024) to the task of de novo 3D struc-
+ture generation of drug-like molecules. This formulation
+allows us to natively handle the joint generation of discrete
+fragment identities and their continuous geometric config-
+urations without relying on autoregressive steps or learned
+decoding back onto the atom-level structure. Finally, we
+empirically demonstrate that our method achieves superior
+performance compared to state-of-the-art atom-based base-
+lines on medium- and large-sized molecules in the GEOM-
+DRUGS benchmark (Axelrod &amp; Gomez-Bombarelli, 2022)
+and scales to the larger molecules of the QMUGS dataset (Is-
+ert et al., 2022). MOTIFLOW produces high-quality molecu-
+lar structures using an order of magnitude fewer generation
+steps and excels at conditional generation tasks.
+2. Background
+In this section, we provide a brief overview of the theoretical
+concepts necessary to establish our generative framework.
+2.1. Flow Matching on SE(3) Manifold
+Geometric Preliminaries
+The group of rigid motions
+SE(3) ∼= R3 ⋊SO(3) describes the configuration of rigid
+bodies in 3D space. While the translational component R3
+is Euclidean (see Appendix A.1), the rotational one SO(3)
+is a compact Lie group – a smooth manifold equipped with
+a group structure. To define flows on this curved space, we
+rely on Riemannian geometry. At any point R ∈SO(3), the
+tangent space TRSO(3) is the vector space containing all
+possible velocity vectors passing through R. We equip the
+manifold with the canonical bi-invariant Riemannian metric
+defined by the inner product ⟨U, V⟩R = 1
+2Tr
+ U⊤V
+
+for
+tangent vectors U, V ∈TRSO(3). This metric induces the
+norm ∥U∥SO(3) =
+p
+⟨U, U⟩R. The bijective mapping be-
+tween the tangent space and the manifold is handled by the
+exponential map Q = expR (V), which projects a tangent
+vector V along a geodesic to a point Q on the manifold,
+and its inverse, the logarithmic map V = logR (Q), which
+recovers the tangent vector, connecting R to Q.
+SE(3) Flow Matching
+We decouple the generative pro-
+cess on SE(3) into independent translational and rotational
+components (Yim et al., 2023). For the rotational com-
+ponent, we follow the FOLDFLOW-BASE framework of
+Bose et al. (2023). This method extends Riemannian flow
+matching (Chen &amp; Lipman, 2024) by deriving a closed-
+form expression for the ground-truth conditional vector field,
+thereby significantly improving training speed and stability.
+We define a probability path Rt that interpolates along the
+geodesic connecting a sample from the uniform prior R0 ∼
+USO(3) to a data sample R1. The conditional vector field
+uR
+t (Rt | R1) ∈TRtSO(3) generating this path is:
+uR
+t (Rt | R1) =
+1
+1 −t logRt(R1).
+Computing logRt(R1) naively requires evaluating an infi-
+nite matrix power series, which is computationally expen-
+sive and numerically unstable. To circumvent this, Bose
+et al. (2023) exploits the Lie group structure. Instead of
+computing the logarithm directly at Rt, they first compute
+the relative rotation Rrel = R⊤
+t R1. This maps the problem
+to the identity-tangent space, the Lie algebra so(3), where
+the logarithm admits a fast, closed-form solution via the
+Rodrigues’ formula. The resulting vector is then transported
+back to the tangent space at Rt via left-multiplication, ren-
+dering the calculation efficient and exact.
+To train the model, one samples intermediate noisy frames
+Tt = (Rt, xt).
+The rotation evolves according to the
+geodesic formula Rt = expR0
+ t logR0 (R1)
+
+. For trans-
+lation, the conditional probability path pt (xt | x0, x1) is
+defined by the linear interpolation xt = (1 −t)x0 + tx1,
+which corresponds to the constant conditional vector field
+ux
+t (xt | x0, x1) = x1 −x0 on R3.
+The final objective is to regress the neural vector field vθ =
+ vx
+θ , vR
+θ
+
+to these target fields. Assuming an independent
+coupling between the prior p0 and the data p∗, the loss is:
+LSE(3)(θ) = ET0∼p0,T1∼p∗
+t∼U(0,1)
+h
+∥vx
+θ (Tt, t) −ux
+t (xt | x0, x1) ∥2
++ ∥vR
+θ (Tt, t) −uR
+t (Rt | R1) ∥2
+SO(3)
+i
+.
+At inference, one samples an initial frame T0 = (R0, x0)
+from the product prior p0 = N(0, I) × USO(3) and numeri-
+cally integrate the learned joint vector field vθ to generate
+the final rigid frame configuration T1 = (R1, x1).
+2.2. Discrete Flows
+While continuous approaches to flow matching on the cate-
+gorical simplex exist (e.g., Eijkelboom et al., 2025; Davis
+et al., 2024), we follow Campbell et al. (2024) and handle
+generative modelling of discrete data with continuous-time
+Markov chains (CTMCs). Let m denote a discrete random
+variable taking values in a finite vocabulary Vm. Analogous
+to the continuous case, we aim to transform a sample m0
+from a tractable prior distribution p0, e.g., a uniform distri-
+bution or a [MASK] state, to a data sample m1 ∼p∗via a
+probability path pt for t ∈[0, 1].
+CTMC Dynamics
+The evolution of the marginal probabil-
+ity mass function pt over Vm is governed by the Kolmogorov
+forward equation. For a time-dependent transition rate ma-
+trix Qt ∈R|Vm|×|Vm|, the dynamics are given by:
+∂tpt(k) =
+X
+j̸=k
+pt(j)Qt(j, k) −pt(k)
+X
+j̸=k
+Qt(k, j),
+2
+
+
+===== PAGE 3 =====
+3D Molecule Generation from Rigid Motifs
+where Qt(j, k) ≥0 for j ̸= k represents the instantaneous
+rate of jumping from state j to state k. This linear system
+serves as the discrete analogue to the continuity equation in
+continuous flow matching, with Qt playing the role of the
+vector field ut.
+Discrete Flow Matching
+Constructing a generative model
+requires finding a rate matrix Qt that generates a desired
+probability path pt. Following the conditional flow matching
+paradigm, we define the marginal path as an expectation
+over conditional paths pt(mt | m1) anchored at the data
+sample m1:
+pt(mt) = Em1∼p∗[pt(mt | m1)] .
+The conditional flow pt(·|m1) is typically chosen as a linear
+interpolation in probability space, such that p0(· | m1) =
+p0(·) and p1(· | m1) = δm1(·), where δ is the Dirac delta.
+Campbell et al. (2024) demonstrate that the marginal rate
+matrix Qt can be realized as the expectation of a conditional
+rate matrix Qt(· | m1) which generates pt(· | m1):
+Qt(j, k) = Em1∼p(m1|mt=j) [Qt(j, k | m1)] .
+Here, Qt(j, k | m1) is a closed-form rate matrix derived
+analytically to satisfy the conditional Kolmogorov equation
+for the chosen interpolant.
+Unlike the continuous case, where we regress a vector field
+directly, learning the marginal rate matrix requires access
+to the posterior p(m1 | mt = j). Consequently, we param-
+eterise a denoising neural network pθ(m1 | mt) to approx-
+imate the clean data distribution given a noisy state. The
+training objective is thus the cross-entropy loss:
+LDFM(θ) = Em1∼p∗, mt∼pt(·|m1)
+t∼U(0,1)
+[−log pθ(m1 | mt)] .
+At inference time, we construct the generative rate
+matrix Qθ
+t using the learned denoiser:
+Qθ
+t (j, k)
+=
+Em1∼pθ(·|mt=j)[Qt(j, k | m1)]. New samples are gener-
+ated by initialising m0 ∼p0 and simulating the CTMC
+trajectory defined by Qθ
+t.
+3. Method
+In this section, we start with a common representation of a
+molecule {(yj, hj)}N
+j=1 as a point cloud of N atoms, each
+with coordinates yj ∈R3 and the atom type hj ∈Va. Here,
+Va is the vocabulary of all atom types, including ions.
+In Section 3.1, we describe the frame fragmentation; its
+purpose is to reparametrise the molecule as K rigid mo-
+tifs {Mi}K
+i=1 = {(Ti, mi)}K
+i=1 where a frame Ti =
+(Ri, xi) ∈SE(3) has a rotation matrix Ri ∈SO(3) and a
+translation vector xi ∈R3 from the origin to the geometric
+centre of the motif. Each frame’s rotation is defined relative
+to this motif’s exemplar fragment mi ∈Vm from the motif
+vocabulary Vm.
+A fragment mi with Ni atoms in this vocabulary describes
+the atom-level structure of the rigid motif, and is thus a tuple
+mi = (Pi, hi, Si). Here, the fixed set of 3D coordinates
+of intra-fragment atoms Pi ∈RNi×3 defines the motif’s
+canonical pose centred at the origin. The corresponding
+types of intra-fragment atoms are denoted by hi ∈VNi
+a .
+The third element, Si ⊂SO(3), represents the discrete
+symmetry group of the motif, i.e., the set of all rotations
+that, if applied to the pose Pi, result in an indistinguishable
+molecular motif in 3D space.
+We note that such frame-based representation is invertible:
+to recover the atom-level representation Yi ∈RNi×3 of
+atoms that corresponds to the rigid fragment mi with the
+frame Ti = (Ri, xi) in a molecule in 3D space, one has to
+apply the rigid transformation to the motif’s canonical pose:
+Yi = PiRi + 1Nix⊤
+i ≡PiSRi + 1Nix⊤
+i , ∀S ∈Si
+Under this rigid-frame parametrisation, generating de novo
+molecules with K fragments can be seen as a task of sam-
+pling from the distribution on SE(3)K × VK
+m. In Section
+3.3, we formulate our generative framework MOTIFLOW.
+3.1. Rigid-Motif Decomposition
+To establish a motif vocabulary Vm, we need to define a
+fragmentation scheme. Such a scheme has to satisfy sev-
+eral requirements, namely, (i) rigidity: fragments must be
+structurally rigid approximations (i.e., lacking internal rotat-
+able bonds) to accurately represent all instances of a motif
+throughout the data, (ii) non-degeneracy: each fragment
+must possess at least three non-collinear points to define a
+frame T ∈SE(3) and (iii) tractability, meaning that the
+frequency of each distinct class of Vm in the data has to be
+sufficiently high for learning the distribution over VK
+m.
+The fragmentation comprises two stages. We begin by iden-
+tifying all sufficiently rigid structures: we preserve double
+and triple bonds, as well as all bonds within approximately
+planar rings and fused ring systems. Further, while we do
+cut the bonds between heavy atoms that are acyclic but ad-
+jacent to a cycle, unlike common fragmentation techniques
+(Jin et al., 2020; Maziarz et al., 2022), we do not cut bonds
+to hydrogens. This helps introduce fewer ill-defined rigid
+frames at the expense of having more unique motifs. After
+the chosen bonds are cut and the preliminary set of rigid mo-
+tifs is established, we proceed by pruning them: analogous
+to common methods in molecular graph decomposition (e.g.,
+Jin et al., 2020), we further fragment rigid motifs whose
+total number of occurrences across the dataset is less than
+α% of the dataset size. We ablate different values of the
+hyperparameter α and its influence on the generation in
+Section 5.3. By default, we use α = 0.1.
+At this point, the only ill-defined frames are those that are
+collinear motifs (e.g., alkynes) or isolated atoms (e.g., Cl
+3
+
+
+===== PAGE 4 =====
+3D Molecule Generation from Rigid Motifs
+atom cut from a C6H5Cl chlorobenzene ring). To be able
+to uniquely define their rotation matrix R ∈SO(3), similar
+to Prat et al. (2025), we start adding dummy atoms placed
+at a unit distance to the nearest non-collinear neighbours of
+this fragment in the original molecule until the orientation
+of the frame is locked and the rigid body is well-defined.
+3.2. Canonicalisation and Vocabulary
+Once the rigid motifs are defined, we proceed with con-
+structing a vocabulary Vm where each element is a canonical
+descriptor of a chemical motif, formally defined as a tuple
+mi = (Pi, hi, Si). For a given motif class i, the canoni-
+cal fragment with its centred pose Pi ∈RNi×3 and atom
+types hi ∈VNi
+a
+is chosen arbitrarily as the rigid motif’s
+first occurrence during the dataset preprocessing and fixed.
+We compute Si by identifying the set of all graph automor-
+phisms Πi, i.e., node permutations, that preserve chemical
+connectivity and element types in the motif. For each au-
+tomorphism π ∈Πi, we derive the corresponding rotation
+matrix Rπ
+i that maps the exemplar onto its permuted self,
+i.e., Pi ≈π(Pi)Rπ
+i . This explicitly encodes the rotational
+invariance of symmetric motifs, e.g., the indistinguishable
+orientations of cyclopropane (CH2)3, into the vocabulary.
+We further assign a ground truth pose Tj = (Rj, xj) ∈
+SE(3) to each fragment instance Mj of type mi found
+in the data. The translation vector xj is defined as the
+vector from the origin to the geometric centre of Mj. We
+then compute a representative rotation Rj via the Kabsch
+algorithm (Kabsch, 1976) given any valid automorphism
+π ∈Πi establishing the atom-wise correspondence:
+Rj = argmin
+R∈SO(3)
+Ni
+X
+a=1
+
+
+Pi,aR −Yπ
+j,a
+
+
+2 ,
+where Pi,a denotes the position of the a-th atom in mi. This
+method allows for representing an arbitrary non-collinear
+molecule as a collection of well-defined rigid motifs from
+a tractable vocabulary Vm. In Figure 2, we show for the
+QMUGS dataset that on average, such a fragment-based
+molecular parametrisation compresses the common all-atom
+and heavy-atom representations by factors of 3.4 and 1.8,
+respectively, without resorting to learning a latent space or
+requiring a computationally expensive reconstruction.
+3.3. Multimodal Flow on SE(3)K × VK
+m
+Given the larger size of the motif vocabulary Vm compared
+to the common atom vocabulary Va, we opt not to approx-
+imate the discrete fragment classes in a one-hot continu-
+ous fashion, as commonly done in the literature (Hooge-
+boom et al., 2022; Cornet et al., 2024). Instead, we propose
+to natively handle the discrete and continuous supports of
+m ∈Vm and T ∈SE(3), respectively, in a multimodal flow
+(Campbell et al., 2024). Concretely, for a molecule with
+K rigid motifs M = {Mk}K
+k=1, MOTIFLOW models the
+0
+20
+40
+60
+80
+100
+120
+140
+160
+Entities per molecule
+1
+10
+102
+103
+104
+Count (log scale)
+Number of atoms
+Number of heavy atoms
+Number of fragments
+Mean
+Figure 2. Comparison of molecular representations on QMUGS
+dataset (Isert et al., 2022). Fragmentation is reported for α = 0.1.
+following conditional flow1, factorised over modalities and
+individual rigid-motif frames:
+pt(Mt | M1) :=
+K
+Y
+k=1
+pt(mk
+t | mk
+1)
+|
+{z
+}
+Discrete Flow
+pt(Tk
+t | Tk
+1)
+|
+{z
+}
+SE(3) Flow
+.
+This factorisation implies that the generative process for
+each rigid motif is independent conditional on the data sam-
+ple M1, allowing us to train the joint model by minimising
+a sum of modality-specific losses.
+Continuous Dynamics
+For the geometric component, we
+independently apply the SE(3) flow matching framework
+described in Section 2.1 to each of the K rigid frames. The
+conditional probability path pt(Tk
+t | Tk
+1) is constructed via
+the product of the Euclidean interpolant for translations and
+the geodesic one for rotations. The training objective LSE(3)
+is the sum over K motifs of the regression loss between the
+network outputs and the target vector fields ux
+t and uR
+t .
+Discrete Dynamics
+For the motif types, we adopt the
+discrete flow from Section 2.2 using a masking prior. Specif-
+ically, we set the prior p0 to be a Dirac delta on a special
+token, mk
+0 = [MASK] for all k. The conditional probability
+path interpolates linearly between this mask state and the
+true motif type mk
+1:
+pt(mk
+t | mk
+1) = (1 −t)δ[MASK](mk
+t ) + tδmk
+1(mk
+t ).
+To generate this path via a CTMC, we require the conditional
+rate matrix Qt(j, l | mk
+1). For the masking interpolant, this
+matrix takes a simple analytic form where probability mass
+is transferred solely from [MASK] to the target class mk
+1
+(Campbell et al., 2024):
+Qt(j, l | mk
+1) = I(j = [MASK]) · I(l = mk
+1) ·
+1
+1 −t.
+1For brevity, pt(· | ·) refers to probability density and probabil-
+ity mass functions for continuous and discrete variables.
+4
+
+
+===== PAGE 5 =====
+3D Molecule Generation from Rigid Motifs
+Intuitively, at any time t ∈(0, 1), a masked motif has a
+rate of (1 −t)−1 to unmask to its true value mk
+1, while
+unmasked motifs remain fixed. To train the model, we
+employ a denoising network pθ(mk
+1 | Mt) that predicts the
+categorical distribution over Vm given the noisy state of the
+entire molecule. The discrete objective LDFM is the cross-
+entropy between the predicted logits and the true motif type
+mk
+1, summed over all masked motifs.
+Architecture
+We parameterise the time-dependent vec-
+tor fields and the discrete denoiser using a single unified
+neural network vθ(Mt, t). Our architecture builds upon
+the FOLDFLOW-BASE backbone (Bose et al., 2023), which
+utilises invariant point attention (IPA) (Jumper et al., 2021)
+to process 3D rigid frames. The network takes as input the
+noisy frames {Tk
+t }K
+k=1 and the embeddings of the partially
+masked motif tokens {mk
+t }K
+k=1. We introduce three modifi-
+cations to adapt this architecture for multimodal molecular
+generation. First, we incorporate self-conditioning (Chen
+et al., 2023; St¨ark et al., 2024) for the discrete modality:
+during training, with a probability 0.5, we feed the model’s
+own estimated clean motif types ˆm1 back as input, improv-
+ing coherence between the geometric and semantic features.
+Second, we augment the network’s layers with triangular
+multiplicative updates (Jumper et al., 2021) on the pair of
+fragment representations to better capture the geometric
+constraints between rigid motifs, which, unlike residues in
+the protein backbones, are ordered arbitrarily. Finally, the
+network is equipped with an additional third prediction head
+that outputs logits over Vm for the discrete flow.
+Symmetries
+This generative process has two kinds of
+physical symmetries. The first one, global SE(3) equivari-
+ance, is guaranteed by the IPA backbone, ensuring that if
+the entire molecule is rotated and translated, the generated
+vector fields rotate and translate accordingly. Additionally,
+individual motifs mi may also possess non-trivial finite
+groups of rotational symmetries Si, and the true distribu-
+tion is invariant to the choice of canonical pose represen-
+tation from its orbit {PiS1, . . . PiS|Si|}. Note that we set
+S[MASK] := {I}.
+To handle this, we adopt a GEODIFF-style alignment strat-
+egy (Xu et al., 2022) for the loss computation. Instead of
+regressing towards a fixed canonical frame, we dynamically
+select the target rotation ˜Rk
+1 from the symmetry orbit that is
+closest to the current noisy frame Rk
+t :
+˜Rk
+1 = S∗Rk
+1,
+where
+S∗= argmax
+S∈Sk
+Tr
+ (Rk
+t )⊤SRk
+1
+
+.
+Minimising the geodesic distance on SO(3) corresponds to
+maximising the trace of the relative rotation matrix, which is
+computationally negligible as the finite symmetry groups of
+motifs are small. Empirically, we found that this alignment
+stabilises training at small times t, where the noisy state
+is close to the uninformed prior, preventing the flow from
+receiving conflicting gradients from equivalent but spatially
+distant symmetric targets.
+We ablate the effects of the design choices and compare
+them with alternative options in Appendix A.4.3. Further
+implementation details are provided in Appendix A.2.
+4. Related Work
+Fragment-Based Molecule Generation
+In the task of
+molecular graph generation, several approaches to tokenis-
+ing molecules into motifs exist, which can be classified into
+chemically inspired and data-driven ones. The former group
+(Jin et al., 2020; Maziarz et al., 2022; Jin et al., 2018; Lee
+et al., 2025) focuses on top-down separation of acyclic and
+cyclic parts in the molecule, while the latter group (Kong
+et al., 2022; Geng et al., 2023) adopts the bottom-up merg-
+ing strategy starting from individual atoms. As an alterna-
+tive to motif-based methods, Hetzel et al. (2025) proposed
+scaffold-based fragmentation, in which the molecular as-
+sembly starts from basic geometric shapes and attributes
+the chemical properties in the subsequent stages of genera-
+tion. To the best of our knowledge, neither motif-based nor
+scaffold-based fragmentation has been widely explored in
+3D. A notable exception is HIERDIFF (Qiang et al., 2023),
+which utilises a hierarchical diffusion framework to posi-
+tion coarse fragment nodes in 3D space. In contrast to our
+approach, which generates the full SE(3) configuration of
+rigid motifs without auxiliary mechanisms, HIERDIFF relies
+on a learnable decoding procedure to resolve the specific
+identities and geometries of the fragments, thereby taking a
+fundamentally different route.
+3D Molecule Generation
+Generation of spatial molecu-
+lar structure is primarily tackled with flow-based (Satorras
+et al., 2021a; Igashov et al., 2024; Dunn &amp; Koes, 2024)
+and autoregressive (Gebauer et al., 2022; Daigavane et al.,
+2024; Cheng et al., 2025) models on atom coordinates. A
+notable exception to these directions is the work of Pin-
+heiro et al. (2024), where 3D molecules are represented as
+atomic densities on regular grids. Existing approaches to
+3D molecular generation can also be roughly classified into
+two categories based on how they treat bonds. The seminal
+work of Hoogeboom et al. (2022) uses a lookup table to
+infer bond types from pairwise atom distances, which is
+the approach we adopt. Recently, a line of work (Reiden-
+bach et al., 2025; Vignac et al., 2023; Irwin et al., 2024;
+Peng et al., 2023) has proposed a joint modelling of the 2D
+molecular graph topology and 3D atom coordinates. While
+they show improvement over point cloud approaches, we
+perform our experiments without modelling the graph struc-
+ture beyond intra-motif connectivity, i.e., beyond the bond
+structure within the fragments; therefore, we do not directly
+compare our method to these approaches.
+Rigid-body Generation
+Parametrising protein residues
+as rigid frames has been originally introduced in the seminal
+5
+
+
+===== PAGE 6 =====
+3D Molecule Generation from Rigid Motifs
+work of Jumper et al. (2021) and received a widespread
+adoption in the subsequent methods for protein structure
+prediction and design (Watson et al., 2023; Yim et al., 2023;
+Bose et al., 2023). Generative modelling with rigid frames
+outside the protein application, however, is limited. A con-
+current work (Prat et al., 2025) explores rigid-fragment
+SE(3) diffusion for molecular docking, which is an orthog-
+onal task to ours. De novo generation of 3D structure of
+general molecules from rigid fragments thus remains un-
+derexplored, which is a gap the present paper aims to fill.
+5. Experiments
+Tasks and Datasets
+In Section 5.1, we consider the task
+of unconditional generation on two common benchmarks,
+QM9 (Ramakrishnan et al., 2014) and GEOM-DRUGS
+(Axelrod &amp; Gomez-Bombarelli, 2022). The former dataset
+contains 134k small organic molecules with up to 29 atoms
+in total, with a maximum of 9 heavy atoms. The latter,
+larger-scale dataset of molecular conformers comprises
+430k medium-sized molecules, with up to 181 atoms and
+an average of 44.4 atoms per molecule. For both datasets,
+we follow the same setup as in previous works (Hoogeboom
+et al., 2022; Cornet et al., 2024; Xu et al., 2022). We then
+proceed to the two conditional experiments on QM9 in
+Section 5.2, demonstrating our method’s ability to generate
+molecules with desired properties. We conclude by studying
+the proposed rigid-motif fragmentation strategy and its mod-
+ifications on the two datasets containing larger molecules,
+which is the principal use case of our method: the aforemen-
+tioned GEOM-DRUGS and QMUGS (Isert et al., 2022). The
+QMUGS dataset contains 665k large drug-like molecules,
+with up to 100 heavy atoms; we use its subset of 300k con-
+formations for our experiments. For experimental details
+and extended results, see Appendix A.3 and A.4.
+Baselines
+We compare the performance of MOTIFLOW to
+models within the same paradigm of inferring bonds from
+interatomic distances (Hoogeboom et al., 2022; Wu et al.,
+2022; Xu et al., 2023; Song et al., 2023; Cornet et al., 2024;
+Song et al., 2024). Further details are in Appendix A.3.1.
+5.1. Unconditional Generation
+For this task, we follow Cornet et al. (2024) and sample 104
+molecules across 3 seeds, reporting the mean and standard
+deviation. For each baseline with fixed-step solvers, we pro-
+vide the step configuration that yielded the best molecular
+stability for QM9 and atom stability for GEOM-DRUGS,
+among those reported in the respective papers.
+Metrics
+Following the established practice (Hoogeboom
+et al., 2022; Song et al., 2023), we report the percentages
+of stable atoms A and molecules M, as well as valid V
+and valid and unique V×U molecules computed on RDKit
+(Landrum et al., 2025). Since for larger GEOM-DRUGS,
+the connectivity of the generated molecules is commonly re-
+Table 1. Results of unconditional generation on QM9.
+Method
+Steps
+Stability (↑)
+Val. / Uniq. (↑)
+A, %
+M, %
+V, %
+V × U, %
+Data
+–
+99.0
+95.2
+97.7
+97.7
+EDM
+Hoogeboom et al. (2022)
+103
+98.7
+82.0
+91.9
+90.7
+EDM-BRIDGE
+Wu et al. (2022)
+103
+98.8
+84.6
+92.0
+90.7
+GEOLDM
+Xu et al. (2023)
+103
+98.9±.1 89.4±.5 93.8±.4
+92.7±.5
+EQUIFM
+Song et al. (2023)
+−
+98.9±.1 88.3±.3 94.7±.4
+93.5±.3
+END
+Cornet et al. (2024)
+103
+98.9±.0 89.1±.1 94.8±.1
+92.6±.2
+EDM*
+Cornet et al. (2024)
+103
+98.4±.0 85.3±.3 93.5±.1
+91.9±.1
+GEOBFN
+Song et al. (2024)
+103
+99.1±.1 90.9±.2 95.3±.1
+93.0±.1
+MOTIFLOW
+102
+99.1±.1 92.6±.5 95.3±.6
+86.3±.9
+ported to be more challenging, while practically all samples
+are unique, we follow Cornet et al. (2024) and report the
+percentage of valid and connected V×C molecules instead.
+In line with the baselines, we also do not report molec-
+ular stability for GEOM-DRUGS, as it was found to be
+non-informative when bonds are inferred from interatomic
+distances (Hoogeboom et al., 2022; Song et al., 2023).
+QM9
+Main results are provided in Table 1. The QM9
+benchmark is fairly saturated on unconditional generation
+and thus mainly reported for completeness. Overall, MOTI-
+FLOW performs on par with methods that use 10× the num-
+ber of generation steps: we obtain higher molecular stability
+and lower uniqueness than the best-performing EQUIFM
+(Song et al., 2023), both being the consequence of using
+rigid motifs as larger building blocks on small molecules;
+this trade-off is controllable via, e.g., the sampling tempera-
+ture in the discrete flow.
+GEOM-DRUGS
+Main results2 are presented in Table 2.
+On this dataset of larger, more realistic, and challenging
+molecules, MOTIFLOW significantly outperforms the base-
+lines. We note that our use of rigid motifs as larger building
+blocks also allows us to ameliorate errors in atom valencies
+that the true atom-level data exhibits when assessed by the
+bond lookup mechanism of Hoogeboom et al. (2022).
+5.2. Conditional Generation
+With the conditional experiments, we seek to answer two
+primary questions that arise naturally from the proposed
+change in molecular representations:
+(i) Fine-grained conditioning: does the motif-based repre-
+sentation perform competitively at generation conditioned
+2Cornet et al. (2024) have conflicting V×C results on GEOM-
+DRUGS for their END model reported in the appendix and main
+body of their paper; we resort to results provided in the main body.
+6
+
+
+===== PAGE 7 =====
+3D Molecule Generation from Rigid Motifs
+Table 2. Results of unconditional generation on GEOM-DRUGS.
+‡Results are obtained by Cornet et al. (2024).
+Method
+Steps
+Stable A, % (↑)
+V × C, % (↑)
+Data
+–
+86.5
+99.0
+GEOLDM Xu et al. (2023)
+1000
+84.4
+45.8‡
+EQUIFM Song et al. (2023)
+−
+84.1
+−
+END Cornet et al. (2024)
+100
+87.2±.1
+73.7±.4
+EDM* Cornet et al. (2024)
+250
+85.4±.0
+61.4±.6
+GEOBFN Song et al. (2024)
+1000
+85.6
+–
+MOTIFLOW
+100
+95.0±.0
+81.2±.3
+on the atom-level information, despite only modelling it
+implicitly?
+(ii) Coarse-grained conditioning: does the use of fragments
+lead to better generation of desired substructures?
+We adopt the tasks for both scenarios from the previous
+works (Cornet et al., 2024; Bao et al., 2023).
+For the
+fine-grained level, we condition on the atom composition
+c = (c1, . . . , c|Va|) ∈R|Va|, where cj is the number of
+atoms of the type j that the desired sampled molecule is re-
+quired to have. Following Cornet et al. (2024), we generate
+10 samples for each unique target atom composition from
+the validation and test sets across 3 seeds, and report the
+percentage of matched compositions. For the coarse-grained
+level, we condition on the substructural features: concretely,
+we use a molecular fingerprint c = (c1, . . . , cF ) ∈{0, 1}F ,
+each entry of which indicates the presence or absence of a
+certain substructure in the molecule. We use OpenBabel
+(O’Boyle et al., 2011) to generate the fingerprints for the
+test set, and evaluate the generation by computing Tanimoto
+similarity between the fingerprints of generated molecules
+and those from the test set, which are injected as conditions
+to the model. To ensure a fair comparison with the baselines
+in both tasks, we follow the strategy of Cornet et al. (2024):
+while many techniques for guiding flow models exist (Ho
+&amp; Salimans, 2022; Schiff et al., 2025), in this section, we
+directly use the conditional model vθ(Mt, t, c) by adding
+the conditioning information c directly to the input. We
+denote this version as CMOTIFLOW.
+The results are summarised in Table 3, with extended results
+and qualitative examples in Appendix A.4. The tasks are
+concisely summarised in Figure 3. CMOTIFLOW outper-
+forms the baselines, achieving better adherence to condi-
+tioning information at both levels of molecular granularity
+while requiring fewer generation steps.
+5.3. Ablations
+The purpose of this section is to further study the effects of
+the rigid-motif decomposition on 3D molecular generation.
+As noted by existing literature (e.g., Hetzel et al., 2025),
+the motif-based molecular graph decomposition offers a
+trade-off: while many larger functional groups are present
+in the data, adding larger motifs to the vocabulary leads, on
+Table 3. Results of the two conditional generation tasks on QM9.
+Method
+Steps
+COMPOSITION
+SUBSTRUCTURE
+Matching, % (↑)
+Tanimoto Sim. (↑)
+CEDM
+Bao et al. (2023)
+1000
+–
+.671±.004
+EEGSDE
+Bao et al. (2023)
+1000
+–
+.750±.003
+CEDM*
+Cornet et al. (2024)
+500
+76.2±0.6
+.669±.001
+1000
+75.5±0.5
+.673±.002
+CEND
+Cornet et al. (2024)
+500
+91.5±0.8
+.825±.001
+1000
+91.0±0.9
+.828±.001
+CMOTIFLOW
+100
+95.4±0.5
+.862±.002
+Figure 3. Examples of results for the conditional tasks on QM9:
+atom composition (left) and fingerprint substructure (right).
+average, to less frequent classes observed during training,
+which could make generalisation to uncommon substruc-
+tures challenging. At the same time, we hypothesise that in
+3D, larger rigid motifs, if sufficiently frequent, bring about
+the benefits of the fragment-based generation, which were
+empirically established in Sections 5.1 and 5.2.
+To verify this, we consider several variations of the rigid-
+motif decomposition. In the NO RINGS variant, we only
+preserve bonds to hydrogen atoms, as well as double and
+triple bonds. This configuration allows us to evaluate the
+performance of the finer-grained vocabulary with fewer rare
+fragments. On the opposite side of the spectrum, we con-
+sider our main decomposition introduced in Section 3.1,
+which preserves approximately planar rings and fused ring
+systems. For this PLANAR RINGS fragmentation, we con-
+sider three thresholds (including our base one, α = 0.1) for
+the minimal frequency of a fragment relative to the dataset
+size; i.e., a smaller threshold corresponds to a larger vocab-
+ulary with more rare motifs, while with a larger threshold,
+they are decomposed further into finer components. An ex-
+ample of a molecule from GEOM-DRUGS under different
+rigid-motif decompositions is provided in Figure 4. Detailed
+information on the setup can be found in Appendix A.4.3.
+First, we ablate the performance of each fragmentation strat-
+egy at the unconditional generation on GEOM-DRUGS and
+QMUGS; as it is for the main unconditional experiments,
+we evaluate the metrics based on 104 samples obtained with
+7
+
+
+===== PAGE 8 =====
+3D Molecule Generation from Rigid Motifs
+3 seeds; results are in Table 4. Our hypothesis is largely
+confirmed: all rigid-motif vocabularies that treat planar
+rings as distinct classes yield superior atom-stability per-
+formance compared to finer fragmentation, with the two
+smaller threshold configurations scoring best.
+To assess the extent to which uncommon motifs are purpose-
+fully sampled during generation, we analyse the motif set of
+generated molecules. We first formally define common and
+uncommon motifs as those that exceed the base occurrence
+threshold α = 0.1 and those that do not reach its frequency
+in the data, respectively. For each group, we then compute
+the total counts of its constituent motifs, normalised to the
+total number of molecules, independently for the training
+and generated sets. The ratio of these normalised counts, if
+the model accurately represents the underlying distribution
+of motifs, should be close to 1 for both common and uncom-
+mon motifs. Figure 5 shows that, while common motifs are
+consistently generated with close to the true occurrence, the
+uncommon motifs are notably oversampled for the finer NO
+RINGS strategy. Further, we observe an escalating under-
+sampling behaviour for PLANAR RINGS strategy with the
+decrease in threshold α, confirming the expected trade-off
+between the vocabulary size and uncommon motif coverage
+(Hetzel et al., 2025). We thus conclude that frequency-based
+fragmentation with planar ring systems at a relatively high
+α = 0.1 offers the optimal trade-off, significantly improv-
+ing generation over conventional atom-based baselines and
+other rigid decomposition strategies.
+Table 4. Ablation results for different fragmentation strategies.
+Metrics are reported for sampling with 100 reverse steps.
+Strategy
+QMUGS
+GEOM-DRUGS
+|Vm| Stability
+V × C |Vm| Stability
+V × C
+A, % (↑)
+% (↑)
+A, % (↑)
+% (↑)
+NO RINGS
+49
+85.5±1.8 85.6±.3
+39
+86.7±1.8 82.9±.4
+PLANAR
+RINGS 0.5%
+96
+95.5±0.1
+84.0±.5
+81
+95.2±0.1
+82.1±.3
+PLANAR
+RINGS 0.1%
+253 96.1±0.0 83.1±.4
+202
+95.0±0.0
+81.2±.3
+PLANAR
+RINGS 0.01% 1184 95.3±0.0
+80.4±.5
+867 96.3±0.0 82.4±.3
+6. Conclusion
+In this work, we introduced MOTIFLOW, a novel generative
+framework for 3D molecules that operates on rigid motifs
+rather than individual atoms. By combining the rigid-motif
+decomposition strategy with the multimodal flow match-
+ing objective, we generate drug-like molecules via flows
+on the SE(3) manifold coupled with discrete categorical
+flows. Our empirical evaluation on standard benchmarks
+demonstrates that this higher-level representation yields im-
+proved stability on larger molecules compared to established
+all-atom methods, while offering more concise molecular
+Figure 4. Resulting sets of rigid motifs for a GEOM-DRUGS
+molecule C17H15N3O4S under different fragmentation strategies.
+Figure 5. Comparison of sampled motif types to their frequencies
+in the training distribution of QMUGS. A ratio of 1 is optimal.
+representations as well as significant advantages in sampling
+efficiency and conditional generation capabilities.
+Limitations and Future Work
+This method, while ex-
+tending motif-based molecular graph generation to the 3D
+space, also inherits its limitations. Most notably, the reliance
+on a predefined vocabulary introduces a trade-off between
+vocabulary size and generalisation: as the vocabulary grows
+to capture larger motifs, the frequency of individual classes
+drops, leading to lower coverage of uncommon substruc-
+tures during sampling. An alternative, scaffold-based gen-
+eration (Hetzel et al., 2025), however, is non-trivial in 3D
+due to the vastly different spatial geometries of fragments
+of the same shape, and thus its integration into our method
+constitutes an exciting direction for future work. Of poten-
+tial interest could also be an extension of our method to
+models that jointly generate 3D and 2D molecular structures
+(e.g., Reidenbach et al., 2025), thereby bridging motif-based
+generation with explicit modelling of all bonds.
+Broader Impact
+Generative models for molecules have
+the potential to accelerate in-silico discovery and the design
+of novel drugs and materials, but they also carry potential
+dangers, as such models could be misused for designing
+chemicals with socially adverse properties.
+8
+
+
+===== PAGE 9 =====
+3D Molecule Generation from Rigid Motifs
+References
+Abramson, J., Adler, J., Dunger, J., Evans, R., Green, T.,
+Pritzel, A., Ronneberger, O., Willmore, L., Ballard, A. J.,
+Bambrick, J., et al.
+Accurate structure prediction of
+biomolecular interactions with AlphaFold 3. Nature, 630
+(8016):493–500, 2024.
+Albergo, M. S. and Vanden-Eijnden, E. Building Normal-
+izing Flows with Stochastic Interpolants. arXiv Preprint
+arXiv:2209.15571, 2022.
+Axelrod, S. and Gomez-Bombarelli, R. GEOM, Energy-
+Annotated Molecular Conformations for Property Predic-
+tion and Molecular Generation. Scientific Data, 9(1):185,
+2022.
+Bao, F., Zhao, M., Hao, Z., Li, P., Li, C., and Zhu, J. Equiv-
+ariant Energy-Guided SDE for Inverse Molecular Design.
+In The Eleventh International Conference on Learning
+Representations, 2023. URL <a href="https://openreview">https://openreview</a>.
+net/forum?id=r0otLtOwYW.
+Bose, A. J., Akhound-Sadegh, T., Huguet, G., Fatras, K.,
+Rector-Brooks, J., Liu, C.-H., Nica, A. C., Korablyov,
+M., Bronstein, M., and Tong, A.
+SE(3)-Stochastic
+Flow Matching for Protein Backbone Generation. arXiv
+Preprint arXiv:2310.02391, 2023.
+Campbell, A., Yim, J., Barzilay, R., Rainforth, T., and
+Jaakkola, T. Generative Flows on Discrete State-Spaces:
+Enabling Multimodal Flows with Applications to Protein
+Co-Design. arXiv Preprint arXiv:2402.04997, 2024.
+Chen, R. T. Q. and Lipman, Y. Flow Matching on General
+Geometries. In The Twelfth International Conference
+on Learning Representations, 2024. URL https://
+openreview.net/forum?id=g7ohDlTITL.
+Chen, T., Zhang, R., and Hinton, G. Analog Bits: Gener-
+ating Discrete Data using Diffusion Models with Self-
+Conditioning.
+In The Eleventh International Confer-
+ence on Learning Representations, 2023. URL https:
+//openreview.net/forum?id=3itjR9QxFw.
+Cheng, A. H., Sun, C., and Aspuru-Guzik, A. Scalable
+Autoregressive 3D Molecule Generation, 2025. URL
+<a href="https://arxiv.org/abs/2505.13791">https://arxiv.org/abs/2505.13791</a>.
+Cornet, F., Bartosh, G., Schmidt, M., and Andersson Naes-
+seth, C. Equivariant Neural Diffusion for Molecule Gen-
+eration. Advances in Neural Information Processing Sys-
+tems, 37:49429–49460, 2024.
+Daigavane, A., Kim, S. E., Geiger, M., and Smidt, T. Sym-
+phony: Symmetry-Equivariant Point-Centered Spherical
+Harmonics for 3D Molecule Generation. In The Twelfth
+International Conference on Learning Representations,
+2024. URL <a href="https://openreview.net/forum?">https://openreview.net/forum?</a>
+id=MIEnYtlGyv.
+Davis, O., Kessler, S., Petrache, M., Ceylan, I. I., Bronstein,
+M. M., and Bose, J. Fisher Flow Matching for Genera-
+tive Modeling over Discrete Data. In The Thirty-Eighth
+Annual Conference on Neural Information Processing
+Systems, 2024. URL <a href="https://openreview.net/">https://openreview.net/</a>
+forum?id=6jOScqwdHU.
+Dunn, I. and Koes, D. R. Mixed Continuous and Categor-
+ical Flow Matching for 3D De Novo Molecule Genera-
+tion, 2024. URL <a href="https://arxiv.org/abs/2404">https://arxiv.org/abs/2404</a>.
+19739.
+Eijkelboom, F., Bartosh, G., Naesseth, C. A., Welling, M.,
+and van de Meent, J.-W. Variational Flow Matching
+for Graph Generation, 2025. URL <a href="https://arxiv">https://arxiv</a>.
+org/abs/2406.04843.
+Ertl, P. and Schuffenhauer, A. Estimation of synthetic acces-
+sibility score of drug-like molecules based on molecular
+complexity and fragment contributions. Journal of chem-
+informatics, 1(1):8, 2009.
+Gebauer, N. W., Gastegger, M., Hessmann, S. S., M¨uller,
+K.-R., and Sch¨utt, K. T. Inverse Design of 3D Molecular
+Structures with Conditional Generative Neural Networks.
+Nature Communications, 13(1):973, 2022.
+Geng, Z., Xie, S., Xia, Y., Wu, L., Qin, T., Wang, J., Zhang,
+Y., Wu, F., and Liu, T.-Y. De Novo Molecular Generation
+via Connection-Aware Motif Mining. arXiv Preprint
+arXiv:2302.01129, 2023.
+Graves, A., Srivastava, R. K., Atkinson, T., and Gomez,
+F.
+Bayesian Flow Networks.
+arXiv preprint
+arXiv:2308.07037, 2023.
+Hetzel, L., Sommer, J., Rieck, B., Theis, F. J., and
+G¨unnemann, S.
+MAGNet: Motif-Agnostic Genera-
+tion of Molecules from Scaffolds. In The Thirteenth
+International Conference on Learning Representations,
+2025. URL <a href="https://openreview.net/forum?">https://openreview.net/forum?</a>
+id=5FXKgOxmb2.
+Ho, J. and Salimans, T. Classifier-Free Diffusion Guid-
+ance, 2022.
+URL <a href="https://arxiv.org/abs/">https://arxiv.org/abs/</a>
+2207.12598.
+Hoogeboom, E., Satorras, V. G., Vignac, C., and Welling,
+M. Equivariant Diffusion for Molecule Generation in 3D.
+In International Conference on Machine Learning, pp.
+8867–8887. PMLR, 2022.
+Igashov, I., St¨ark, H., Vignac, C., Schneuing, A., Satorras,
+V. G., Frossard, P., Welling, M., Bronstein, M., and Cor-
+reia, B. Equivariant 3D-Conditional Diffusion Model for
+9
+
+
+===== PAGE 10 =====
+3D Molecule Generation from Rigid Motifs
+Molecular Linker Design. Nature Machine Intelligence,
+6(4):417–427, 2024.
+Irwin, R., Tibo, A., Janet, J. P., and Olsson, S. SemlaFlow
+— Efficient 3D Molecular Generation with Latent At-
+tention and Equivariant Flow Matching. arXiv Preprint
+arXiv:2406.07266, 2024.
+Isert, C., Atz, K., Jim´enez-Luna, J., and Schneider, G.
+QMugs, quantum mechanical properties of drug-like
+molecules. Scientific Data, 9(1):273, 2022.
+Jin, W., Barzilay, R., and Jaakkola, T. Junction Tree Vari-
+ational Autoencoder for Molecular Graph Generation.
+In International Conference on Machine Learning, pp.
+2323–2332. PMLR, 2018.
+Jin, W., Barzilay, R., and Jaakkola, T. Hierarchical Gener-
+ation of Molecular Graphs Using Structural Motifs. In
+International Conference on Machine Learning, pp. 4839–
+4848. PMLR, 2020.
+Jumper, J., Evans, R., Pritzel, A., Green, T., Figurnov, M.,
+Ronneberger, O., Tunyasuvunakool, K., Bates, R., ˇZ´ıdek,
+A., Potapenko, A., et al. Highly Accurate Protein Struc-
+ture Prediction with AlphaFold. Nature, 596(7873):583–
+589, 2021.
+Kabsch, W. A Solution for the Best Rotation to Relate Two
+Sets of Vectors. Foundations of Crystallography, 32(5):
+922–923, 1976.
+Kong, X., Huang, W., Tan, Z., and Liu, Y. Molecule Gen-
+eration by Principal Subgraph Mining and Assembling.
+Advances in Neural Information Processing Systems, 35:
+2550–2563, 2022.
+Landrum, G. et al. RDKit: Open-source cheminformat-
+ics, 2025. URL <a href="http://www.rdkit.org">http://www.rdkit.org</a>. Version
+2025.09.2.
+Lee, J., Kim, S., Moon, S., Kim, H., and Kim, W. Y.
+FragFM: Hierarchical Framework for Efficient Molecule
+Generation via Fragment-Level Discrete Flow Match-
+ing, 2025. URL <a href="https://arxiv.org/abs/2502">https://arxiv.org/abs/2502</a>.
+15805.
+Lipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., and
+Le, M. Flow Matching for Generative Modeling. arXiv
+Preprint arXiv:2210.02747, 2022.
+Liu, X., Gong, C., and Liu, Q. Flow Straight and Fast:
+Learning to Generate and Transfer Data with Rectified
+Flow. arXiv Preprint arXiv:2209.03003, 2022.
+Maziarz, K., Jackson-Flux, H. R., Cameron, P., Sirockin, F.,
+Schneider, N., Stiefl, N., Segler, M., and Brockschmidt,
+M. Learning to Extend Molecular Scaffolds with Struc-
+tural Motifs. In International Conference on Learning
+Representations, 2022. URL <a href="https://openreview">https://openreview</a>.
+net/forum?id=ZTsoE8G3GG.
+O’Boyle, N. M., Banck, M., James, C. A., Morley, C., Van-
+dermeersch, T., and Hutchison, G. R. Open Babel: An
+open chemical toolbox. Journal of cheminformatics, 3(1):
+33, 2011.
+Peng, X., Guan, J., Liu, Q., and Ma, J. MolDiff: Addressing
+the Atom-Bond Inconsistency Problem in 3D Molecule
+Diffusion Generation. arXiv Preprint arXiv:2305.07508,
+2023.
+Pinheiro, P. O., Rackers, J., Kleinhenz, J., Maser, M.,
+Mahmood, O., Watkins, A. M., Ra, S., Sresht, V.,
+and Saremi, S.
+3D Molecule Generation by Denois-
+ing Voxel Grids, 2024. URL <a href="https://arxiv.org/">https://arxiv.org/</a>
+abs/2306.07473.
+Prat, A., Zhang, L., Deane, C. M., Teh, Y. W., and Morris,
+G. M. Sigmadock: Untwisting Molecular Docking with
+Fragment-Based SE(3) Diffusion, 2025. URL https:
+//arxiv.org/abs/2511.04854.
+Qiang, B., Song, Y., Xu, M., Gong, J., Gao, B., Zhou,
+H., Ma, W.-Y., and Lan, Y. Coarse-to-Fine: A Hierar-
+chical Diffusion Model for Molecule Generation in 3D.
+In International Conference on Machine Learning, pp.
+28277–28299. PMLR, 2023.
+Ramakrishnan, R., Dral, P. O., Rupp, M., and Von Lilienfeld,
+O. A. Quantum Chemistry Structures and Properties of
+134 Kilo Molecules. Scientific Data, 1(1):1–7, 2014.
+Reidenbach, D., Nikitin, F., Isayev, O., and Paliwal, S.
+Applications of Modular Co-Design for De Novo 3D
+Molecule Generation. arXiv Preprint arXiv:2505.18392,
+2025.
+Satorras, V. G., Hoogeboom, E., Fuchs, F. B., Posner, I.,
+and Welling, M. E(n) Equivariant Normalizing Flows. In
+Beygelzimer, A., Dauphin, Y., Liang, P., and Vaughan,
+J. W. (eds.), Advances in Neural Information Processing
+Systems, 2021a. URL <a href="https://openreview.net/">https://openreview.net/</a>
+forum?id=N5hQI_RowVA.
+Satorras, V. G., Hoogeboom, E., and Welling, M. E(n)
+Equivariant Graph Neural Networks. In International
+conference on machine learning, pp. 9323–9332. PMLR,
+2021b.
+Schiff, Y., Sahoo, S. S., Phung, H., Wang, G., Boshar, S.,
+Dalla-torre, H., de Almeida, B. P., Rush, A., Pierrot,
+T., and Kuleshov, V.
+Simple Guidance Mechanisms
+for Discrete Diffusion Models, 2025.
+URL https:
+//arxiv.org/abs/2412.10193.
+10
+
+
+===== PAGE 11 =====
+3D Molecule Generation from Rigid Motifs
+Song, Y., Gong, J., Xu, M., Cao, Z., Lan, Y., Ermon,
+S., Zhou, H., and Ma, W.-Y. Equivariant Flow Match-
+ing with Hybrid Probability Transport for 3D Molecule
+Generation.
+In Thirty-seventh Conference on Neural
+Information Processing Systems, 2023. URL https:
+//openreview.net/forum?id=hHUZ5V9XFu.
+Song, Y., Gong, J., Zhou, H., Zheng, M., Liu, J., and Ma,
+W.-Y. Unified Generative Modeling of 3D Molecules
+with Bayesian Flow Networks.
+In The Twelfth In-
+ternational Conference on Learning Representations,
+2024. URL <a href="https://openreview.net/forum?">https://openreview.net/forum?</a>
+id=NSVtmmzeRB.
+St¨ark, H., Jing, B., Barzilay, R., and Jaakkola, T. Har-
+monic Self-Conditioned Flow Matching for Multi-Ligand
+Docking and Binding Site Design, 2024. URL https:
+//arxiv.org/abs/2310.05764.
+Tong, A., Fatras, K., Malkin, N., Huguet, G., Zhang,
+Y., Rector-Brooks, J., Wolf, G., and Bengio, Y.
+Im-
+proving and Generalizing Flow-Based Generative Mod-
+els with Minibatch Optimal Transport.
+Transactions
+on Machine Learning Research, 2024.
+ISSN 2835-
+8856. URL <a href="https://openreview.net/forum?">https://openreview.net/forum?</a>
+id=CD9Snc73AW. Expert Certification.
+Vignac, C., Osman, N., Toni, L., and Frossard, P. MiDi:
+Mixed Graph and 3D Denoising Diffusion for Molecule
+Generation, 2023. URL <a href="https://arxiv.org/abs/">https://arxiv.org/abs/</a>
+2302.09048.
+Watson, J. L., Juergens, D., Bennett, N. R., Trippe, B. L.,
+Yim, J., Eisenach, H. E., Ahern, W., Borst, A. J., Ragotte,
+R. J., Milles, L. F., et al. De Novo Design of Protein
+Structure and Function with RFdiffusion. Nature, 620
+(7976):1089–1100, 2023.
+Weininger, D. Smiles, a chemical language and information
+system. 1. Introduction to methodology and encoding
+rules. Journal of chemical information and computer
+sciences, 28(1):31–36, 1988.
+Wu, L., Gong, C., Liu, X., Ye, M., and Liu, Q. Diffusion-
+Based Molecule Generation with Informative Prior
+Bridges. In Oh, A. H., Agarwal, A., Belgrave, D., and
+Cho, K. (eds.), Advances in Neural Information Pro-
+cessing Systems, 2022. URL <a href="https://openreview">https://openreview</a>.
+net/forum?id=TJUNtiZiTKE.
+Xu, M., Yu, L., Song, Y., Shi, C., Ermon, S., and Tang, J.
+GeoDiff: A Geometric Diffusion Model for Molecular
+Conformation Generation. In International Conference
+on Learning Representations, 2022. URL https://
+openreview.net/forum?id=PzcvxEMzvQC.
+Xu, M., Powers, A. S., Dror, R. O., Ermon, S., and Leskovec,
+J. Geometric Latent Diffusion Models for 3D Molecule
+Generation. In International Conference on Machine
+Learning, pp. 38592–38610. PMLR, 2023.
+Yim, J., Trippe, B. L., Bortoli, V. D., Mathieu, E., Doucet,
+A., Barzilay, R., and Jaakkola, T. SE(3) Diffusion Model
+with Application to Protein Backbone Generation, 2023.
+URL <a href="https://arxiv.org/abs/2302.02277">https://arxiv.org/abs/2302.02277</a>.
+11
+
+
+===== PAGE 12 =====
+3D Molecule Generation from Rigid Motifs
+A. Supplementary Material
+A.1. Flow Matching in Euclidean Spaces
+The task of generative modelling can be seen as transporting a sample x0 ∼p(x) in Rd from a tractable prior distribution p to
+a data sample x1 ∼p∗(x) of the unknown data distribution p∗. In this formulation, the goal is thus to construct a probability
+density path pt, t ∈[0, 1], such that p0 ≈p, p1 ≈p∗. Flow matching (Lipman et al., 2022; Albergo &amp; Vanden-Eijnden,
+2022; Liu et al., 2022) approaches it by introducing a flow, i.e., an interpolant, ϕt(x0), such that xt = ϕt(x0) ∼pt if
+x0 ∼p0. One can model ϕt(x0) as a solution of an ordinary differential equation (ODE) with a time-varying vector field
+ut(xt): Rd × [0, 1] →Rd and the initial condition ϕ0(x0) = x0:
+dxt
+dt = ut(xt)
+and
+ϕ1(x0) = x0 +
+Z 1
+0
+ut(xt) dt.
+The training objective arises from regressing a neural network vθ : Rd × [0, 1] →Rd to the vector field ut:
+LFM(θ) = Ext∼pt(x)
+t∼U(0,1)
+∥vθ(xt, t) −ut(xt)∥2.
+Computing this loss requires access to intractable ut(x) and pt. It can be shown (e.g., Lipman et al., 2022) that optimising
+LFM is equivalent in expectation to optimising the conditional flow matching (CFM) objective LCFM:
+LCFM(θ) = Ez∼p(z), xt∼pt(x|z)
+t∼U(0,1)
+∥vθ(xt, t) −ut(xt | z)∥2,
+where ut(x | z): Rd × [0, 1] →Rd is a conditional vector field that generates a conditional probability path pt(x | z).
+That is, instead of regressing over the marginal vector field, we regress over conditional vector fields. The conditioning is
+commonly done on the data point z = x1 or on a source-target coupling z = (x0, x1) (Tong et al., 2024).
+A.2. Implementation Details
+Architecture
+Our model architecture is based on the FOLDFLOW-BASE backbone (Bose et al., 2023), which utilises
+Invariant Point Attention (IPA) (Jumper et al., 2021) to process 3D rigid frames. To adapt this protein-specific architecture
+for general rigid-motif molecular generation, we make several key modifications. We reduce the hidden dimension per
+attention head to 64 for each of 8 heads, resulting in a compact model size of 12.4 million parameters for the unconditional
+model, compared to 17 million in the original FOLDFLOW-BASE. The conditional variant, CMOTIFLOW, utilises 13.7
+million parameters due to the additional projection layers required for processing conditioning signals.
+Embeddings and Input Processing
+The network accepts a set of noisy rigid frames Tt and discrete motif tokens mt.
+The node embeddings are initialized by projecting the motif token embeddings, sinusoidal timestep embeddings, and, during
+training, with 50% probability, the self-conditioning embeddings derived from the previous step’s prediction.
+Unlike protein models that rely on residue index offsets for edge initialization, our motifs have no intrinsic linear ordering.
+Consequently, we replace sequence-based edge biases with purely geometric information. We compute pairwise Euclidean
+distances between the centers of rigid motifs and encode them using Gaussian Radial Basis Functions (RBFs) with 64 basis
+functions. These geometric features are concatenated with the cross-concatenated node features to form the initial edge
+embeddings. The point cloud of fragments is treated as a fully connected graph, i.e., each pair of fragments is assigned an
+edge embedding.
+Backbone and Updates
+The backbone consists of 4 blocks, each containing an IPA layer, transition modules, and 2
+transformer encoder layers. To better capture the global geometric constraints of an unordered molecule, we augment the
+standard IPA blocks with triangle multiplicative updates (Jumper et al., 2021). Specifically, we apply both outgoing and
+incoming triangle updates to the edge representations before the attention mechanism in every block.
+For the geometry updates, we employ a split-head design: the rotational update is predicted via a linear layer initialized to
+zero, while the translational update is predicted via a small 2-layer MLP.
+12
+
+
+===== PAGE 13 =====
+3D Molecule Generation from Rigid Motifs
+Conditioning
+For conditional generation tasks, we follow the conditioning strategy of Cornet et al. (2024). The condition-
+ing signal c, i.e., either atom composition or substructure fingerprint, is encoded into a global context vector via a dedicated
+MLP. For composition conditioning, we learn embeddings for each atom type and compute a weighted sum based on the
+target counts before passing it to the MLP. This global context is injected into the network at three points: (i) concatenated
+to the initial node embeddings, (ii) added as a bias to the node representations within each IPA block, and (iii) concatenated
+to the final node representations before the discrete readout head.
+Training
+We train the model using the flow matching objective described in Section 3. For the rotational component of
+the SE(3) flow, we use the exponential rate scheduler (Bose et al., 2023) with the factor of 10, following Yim et al. (2023).
+In each experiment, we use learning rate of 10−4.
+A.3. Experimental Details
+A.3.1. BASELINE DETAILS
+In this section, we briefly overview the baseline methods used for comparison in our experiments. All baselines are
+atom-based generative models that generate 3D molecules by determining the type and coordinates of individual atoms.
+EDM (Hoogeboom et al., 2022) is a seminal work that introduces a score-based generative model operating directly on
+the continuous coordinates and discrete atom types of the molecule. It utilizes an E(3)-equivariant graph neural network
+(Satorras et al., 2021b) to learn a denoising process that reverses a diffusion process, which transforms data into Gaussian
+noise. The model ensures that the generated likelihood is invariant to rotations and translations.
+EDM-BRIDGE (Wu et al., 2022) improves upon the EDM framework by replacing the standard Gaussian prior with an
+informative prior that contains structural or physical information. It learns a bridge process that connects this informative
+prior to the data distribution, utilizing Lyapunov functions to guide the generation and improve stability and validity.
+GEOLDM (Xu et al., 2023) is a latent diffusion framework for 3D molecules. Unlike EDM, which operates in the
+data space, GEOLDM first compresses molecular structures into a low-dimensional, continuous latent space using an
+E(3)-invariant autoencoder. A diffusion model is then trained in this latent space, enabling more efficient sampling and the
+capture of high-level geometric features.
+EQUIFM (Song et al., 2023) applies the flow matching framework to 3D molecular generation. It proposes a hybrid
+probability transport path: it uses optimal transport for continuous atomic coordinates to generate straight trajectories, and
+a conditional probability path for discrete atom types. This formulation allows significantly faster sampling speeds than
+diffusion-based equivalents while maintaining SE(3) equivariance.
+END (Cornet et al., 2024) is a recent diffusion-based method that introduces a learnable forward process. Unlike standard
+diffusion models that use a fixed, predefined corruption process (e.g., adding Gaussian noise), END parameterises the
+forward process with a time- and data-dependent transformation that is equivariant to rigid transformations. This flexibility
+allows the model to learn a more optimal degradation and restoration path for molecular geometries.
+GEOBFN (Song et al., 2024) adapts the Bayesian flow network (Graves et al., 2023) framework to 3D geometry. Instead of
+adding noise to the data directly, GEOBFN operates on the parameters of the data distribution (e.g., mean and variance for
+coordinates, probabilities for atom types). It updates these parameters iteratively using Bayesian inference and a neural
+network, unifying the generation of discrete and continuous modalities in a differentiable parameter space.
+A.3.2. EVALUATION METRICS
+We adopt the evaluation framework and metric definitions from previous works (Lee et al., 2025; Cornet et al., 2024; Qiang
+et al., 2023). All metrics are implemented using rdkit (Landrum et al., 2025). Consistent with the reference methodology
+(Lee et al., 2025; Cornet et al., 2024), unless otherwise noted, raw generated coordinate samples are converted into molecular
+objects using OpenBabel (O’Boyle et al., 2011) and property metrics are calculated exclusively on samples that are both
+valid and connected.
+• Molecule Stability: Atom stability is determined by valency constraints; an atom is stable if its charge is 0. Molecular
+stability requires every atom in the structure to be stable. Bond types are inferred from pairwise atomic distances using
+the lookup table method from Hoogeboom et al. (2022).
+13
+
+
+===== PAGE 14 =====
+3D Molecule Generation from Rigid Motifs
+• Validity and Connectivity: Validity measures the percentage of generated samples that successfully pass rdkit’s
+parsing and sanitisation checks. However, standard sanitisation does not penalise disconnected molecules. To address
+this, particularly for larger molecules in GEOM-DRUGS and QMUGS datasets, we report Connectivity, which verifies
+that a valid molecule consists of a single connected component.
+• Uniqueness: This metric reports the percentage of valid samples that possess a unique SMILES string (Weininger,
+1988). Following standard practice for larger molecules in GEOM-DRUGS and QMUGS datasets, we omit uniqueness
+from those results as generated samples are almost invariably unique.
+• Total Variation (TV): To measure the distributional fidelity of atom and bond types, we compute the total variation.
+This is defined as the mean absolute error between the marginal distributions of atom and bond types in the training set
+and those in the generated samples.
+• Strain Energy: This metric assesses the geometric quality of the molecules. It is calculated as the difference between
+the energy of the generated structure and the energy of its relaxed conformation. The relaxation is performed using the
+MMFF force field within rdkit (Landrum et al., 2025).
+• Chemical Properties (SA, QED): We report a couple of standard molecular descriptors:
+– SA: The Synthetic Accessibility score (Ertl &amp; Schuffenhauer, 2009) estimates the difficulty of synthesising a
+molecule. We follow Cornet et al. (2024) and normalise this score to the interval [0, 1], where 1 indicates high
+synthesisability (easy to synthesise) and 0 indicates low synthesisability.
+– QED: The Quantitative Estimation of Drug-likeness.
+A.4. Extended Experimental Results
+A.4.1. UNCONDITIONAL GENERATION
+QM9
+We provide the extended results in Table 5.
+We observed no improvement in generation when setting more than 100 steps in the sampling process, consistent with
+the evidence that flow models generally require fewer steps than diffusion models (Lipman et al., 2022). We used a linear
+schedule for sampling temperature in the discrete flow, with a minimum of 1.0 and a maximum of 1.5. For all QM9
+experiments, we set the remasking probability η (Campbell et al., 2024) in the discrete flow to zero, thus disabling it.
+On QM9, we train all models for 1000 epochs.
+GEOM-DRUGS
+We follow Hoogeboom et al. (2022) and opt not to report the molecular stability, neither inferring it via
+their lookup tables nor via OpenBabel, since the latter introduces significant bias and errors (Reidenbach et al., 2025). We
+used a fixed sampling temperature of 0.1 in the discrete flow. For GEOM-DRUGS, we set the remasking probability in the
+discrete flow to η = 1.5.
+We train the model for 135 epochs. The extended results are provided in Table 6.
+A.4.2. CONDITIONAL GENERATION
+Results on the atom composition and substructural features conditioning with additional generation steps configurations are
+reflected in Table 7. Figures 8 and 9 present instances of conditionally sampled molecules for both tasks.
+A.4.3. ABLATION DETAILS
+Fragmentation statistics: in Section 5.3, we compare our proposed PLANAR RINGS decomposition strategy against a
+fine-grained NO RINGS variant and across different occurrence thresholds α. Here, we provide detailed statistics on these
+decompositions for the training subsets of GEOM-DRUGS and QMUGS.
+Dataset properties: the general statistics of the molecules in the training splits used for the ablation studies are summarised
+in Table 8. QMUGS contains generally larger and heavier molecules than GEOM-DRUGS.
+Fragmentation settings: the NO RINGS strategy decomposes molecules by cutting all bonds except those to hydrogens and
+double/triple bonds, effectively breaking rings. For the PLANAR RINGS strategy, we vary the hyperparameter α, reported as
+14
+
+
+===== PAGE 15 =====
+3D Molecule Generation from Rigid Motifs
+Table 5. Extended results at unconditional generation on QM9 with additional metrics from Qiang et al. (2023). †Song et al. (2023) uses
+Dopri5 adaptive solver, with an average of 210 function evaluations during sampling.
+Method
+Steps
+Stability (↑)
+Val. / Uniq. (↑)
+TV (↓)
+Str. En. (↓)
+SA (↑)
+QED (↑)
+A, %
+M, %
+V, %
+V × U, %
+A
+
+10−2
+B
+
+10−3
+∆E
+ kcal
+mol
+
+Data
+–
+99.0
+95.2
+97.7
+97.7
+–
+–
+7.7
+0.63
+0.46
+EDM
+Hoogeboom et al.
+(2022)
+103
+98.7
+82.0
+91.9
+90.7
+–
+–
+–
+–
+–
+EDM-BRIDGE
+Wu et al. (2022)
+103
+98.8
+84.6
+92.0
+90.7
+–
+–
+–
+–
+–
+GEOLDM
+Xu et al. (2023)
+103
+98.9±.1
+89.4±.5
+93.8±.4
+92.7±.5
+1.6
+1.3
+10.4
+–
+–
+EQUIFM
+Song et al. (2023)
+−†
+98.9±.1
+88.3±.3
+94.7±.4
+93.5±.3
+–
+–
+–
+–
+–
+END
+Cornet et al. (2024)
+50
+98.6±.0
+84.6±.1
+92.7±.1
+91.4±.1
+1.5±.1
+1.9±.4
+12.1±.3
+0.60±.00
+0.46±.00
+100
+98.8±.0
+87.4±.2
+94.1±.0
+92.3±.2
+1.3±.0
+1.8±.3
+10.6±.2
+0.61±.00
+0.46±.00
+250
+98.9±.1
+88.8±.5
+94.7±.2
+92.6±.1
+1.2±.1
+0.8±.2
+9.6±.2
+0.62±.00
+0.46±.00
+500
+98.9±.0
+88.8±.4
+94.8±.2
+92.8±.2
+1.2±.1
+0.8±.5
+9.5±.1
+0.62±.00
+0.46±.00
+103
+98.9±.0
+89.1±.1
+94.8±.1
+92.6±.2
+1.2±.1
+0.8±.5
+9.3±.1
+0.62±.00
+0.46±.00
+EDM*
+Cornet et al. (2024)
+50
+97.6±.0
+77.6±.5
+90.2±.2
+89.2±.2
+4.6±.1
+1.7±.5
+16.4±.2
+0.61±.00
+0.46±.00
+100
+98.1±.0
+81.9±.4
+92.1±.2
+90.9±.2
+3.5±.1
+1.4±.3
+13.5±.1
+0.61±.00
+0.46±.00
+250
+98.3±.0
+84.3±.1
+93.2±.4
+91.7±.3
+2.8±.2
+1.3±.4
+12.3±.4
+0.62±.00
+0.46±.00
+500
+98.4±.0
+85.2±.5
+93.5±.2
+92.2±.3
+2.6±.2
+1.3±.4
+11.7±.1
+0.62±.00
+0.46±.00
+103
+98.4±.0
+85.3±.3
+93.5±.1
+91.9±.1
+2.5±.1
+1.4±.4
+11.3±.1
+0.62±.00
+0.46±.00
+GEOBFN
+Song et al. (2024)
+50
+98.3±.1
+85.1±.5
+92.3±.4
+90.7±.3
+–
+–
+–
+–
+–
+100
+98.6±.1
+87.2±.3
+93.0±.3
+91.5±.3
+–
+–
+–
+–
+–
+500
+98.8±.8
+88.4±.2
+93.4±.2
+91.8±.2
+–
+–
+–
+–
+–
+103
+99.1±.1
+90.9±.2
+95.3±.1
+93.0±.1
+–
+–
+–
+–
+–
+MOTIFLOW
+50
+99.1±.0
+92.3±.3
+96.6±.1
+88.4±.2
+2.41±.08
+2.2±.3
+13.6±.5
+0.70±.00
+0.47±.00
+100
+99.1±.1
+92.6±.5
+95.3±.6
+86.3±.9
+2.24±.10
+2.7±.4
+10.3±.4
+0.70±.00
+0.47±.00
+a percentage of the total dataset size. This threshold determines the minimum absolute occurrence count required for a motif
+to be retained in the vocabulary Vm; motifs appearing less frequently are recursively decomposed.
+Table 9 details the resulting fragment statistics. We observe that lower α thresholds (e.g., 0.01%) lead to a larger vocabulary
+with larger motifs up to 23 atoms and fewer fragments per molecule. Conversely, the NO RINGS baseline yields the highest
+number of fragments per molecule with the smallest maximum fragment size. Note that the fragment size includes necessary
+dummy atoms added to lock the coordinate frames of collinear or single-atom motifs. Across all configurations and datasets,
+the maximum size of the discrete symmetry group |Si| encountered for any motif was 12.
+We provide the extended results of our ablation study on the unconditional performance of different fragmentation methods
+in Table 10. The training on GEOM-DRUGS is done for 70 epochs, and for 50 epochs on QMUGS.
+Architectural Ablations
+We ablate the design choices used in our main method presented in Section 3 on the unconditional
+generation with QM9. The results are summarised in Table 11.
+Discrete Prior: we first evaluate the choice of the prior distribution for the discrete flow. While our default method uses a
+masking prior m0 = [MASK], the UNIFORM PRIOR variant employs a probability path that interpolates from a uniform
+categorical distribution over the vocabulary Vm to the target class.
+Motif Symmetry Handling: to validate our dynamic alignment strategy, we compare it against three alternative approaches
+for handling motif symmetries. First, we consider a naive baseline NO LGEODIFF that ignores symmetry, regressing directly
+15
+
+
+===== PAGE 16 =====
+3D Molecule Generation from Rigid Motifs
+Table 6. Extended results at unconditional generation on GEOM-Drugs. †Song et al. (2023) uses Dopri5 adaptive solver, with an average
+of 210 function evaluations during sampling. Results obtained by Cornet et al. (2024) on the model of Xu et al. (2023) are denoted with ‡.
+Method
+Steps
+Stability
+V × C
+TV (↓)
+SA (↑)
+QED (↑)
+A, % (↑)
+% (↑)
+A
+
+10−2
+Data
+–
+86.5
+99.0
+–
+0.83
+0.67
+EDM
+Hoogeboom et al.
+(2022)
+103
+81.3
+–
+–
+–
+–
+EDM-BRIDGE
+Wu et al. (2022)
+103
+82.4
+–
+–
+–
+–
+GEOLDM
+Xu et al. (2023)
+103
+84.4
+45.8‡
+10.6
+–
+–
+EQUIFM
+Song et al. (2023)
+−†
+84.1
+–
+–
+–
+–
+END
+Cornet et al. (2024)
+50
+87.1±.1
+66.0±.4
+5.9±.1
+0.62±.00
+0.48±.00
+100
+87.2±.1
+73.7±.4
+4.5±.1
+0.66±.00
+0.55±.00
+250
+87.1±.1
+77.4±.4
+3.5±.0
+0.69±.00
+0.58±.00
+500
+87.0±.0
+78.6±.3
+3.3±.0
+0.70±.00
+0.59±.00
+103
+87.0±.0
+79.4±.4
+3.0±.0
+0.70±.00
+0.59±.00
+EDM*
+Cornet et al. (2024)
+50
+84.7±.0
+46.6±.3
+10.5±.1
+0.59±.00
+0.48±.00
+100
+85.2±.1
+56.2±.4
+8.0±.1
+0.61±.00
+0.53±.00
+250
+85.4±.0
+61.4±.6
+6.7±.1
+0.63±.00
+0.56±.00
+500
+85.4±.0
+63.4±.1
+6.4±.1
+0.64±.00
+0.57±.00
+103
+85.3±.1
+64.2±.6
+6.2±.0
+0.64±.00
+0.57±.00
+GEOBFN
+Song et al. (2024)
+50
+75.1
+–
+–
+–
+–
+100
+78.9
+–
+–
+–
+–
+500
+81.4
+–
+–
+–
+–
+103
+85.6
+–
+–
+–
+–
+MOTIFLOW
+50
+96.2±.0
+81.3±.2
+8.1±.1
+0.69±.00
+0.72±.00
+100
+96.3±.0
+82.4±.2
+7.4±.1
+0.69±.00
+0.72±.00
+towards the arbitrary orientation fixed during preprocessing. Second, in WITH LAF3, we test the alignment mechanism
+from ALPHAFOLD3 (Abramson et al., 2024), which aligns the target frame to the model’s prediction ˆR1 rather than the
+noisy input Rt. Third, instead of resolving symmetries analytically in the loss, we employ data augmentation in the WITH
+AUGMENTATION variant, where we randomly sample a symmetry element S ∈Sk from the motif’s orbit at each training
+step and apply it to the target: ˜Rk
+1 ←Rk
+1S.
+Backbone Components: finally, we assess the contributions of specific architectural features. We evaluate the model
+performance without the triangle multiplicative updates in NO ∆-UPDATE. Additionally, we train a variant with NO
+SELF-CONDITIONING to measure the impact of feeding the model’s own discrete predictions of the clean motif types ˆm1
+back as input.
+The results indicate that the most influential factor on the quality of unconditional generation is the removal of the triangle
+multiplicative update, confirming our hypothesis that it is useful for efficient modelling of unstructured molecular fragments.
+We did not observe a significant effect from applying data augmentation, since, strictly speaking, the target rotations are
+already chosen arbitrarily from equivalent orientations during preprocessing. Overall, our base method performs best, and
+thus reinforces the design choices outlined in Section 3.
+16
+
+
+===== PAGE 17 =====
+3D Molecule Generation from Rigid Motifs
+Table 7. Results on atom composition and substructural features conditional generation tasks.
+Method
+Steps
+COMPOSITION
+SUBSTRUCTURE
+Matching, % (↑)
+Tanimoto Sim. (↑)
+CEDM
+Bao et al. (2023)
+103
+–
+.671±.004
+EEGSDE
+Bao et al. (2023)
+103
+–
+.750±.003
+CEDM*
+Cornet et al. (2024)
+50
+69.6±0.6
+.601±.000
+100
+73.0±0.6
+.640±.002
+250
+74.1±1.4
+.663±.002
+500
+76.2±0.6
+.669±.001
+103
+75.5±0.5
+.673±.002
+CEND
+Cornet et al. (2024)
+50
+89.2±0.8
+.783±.001
+100
+90.1±1.0
+.807±.001
+250
+91.2±0.8
+.819±.001
+500
+91.5±0.8
+.825±.001
+103
+91.0±0.9
+.828±.001
+MOTIFLOW
+50
+92.2±0.4
+.830±.001
+100
+95.4±0.5
+.862±.002
+Table 8. Statistics of the training subsets of the datasets used in the ablation study.
+Dataset
+Total Atoms
+Heavy Atoms
+Mean
+Median
+Max
+Mean
+Median
+Max
+GEOM-DRUGS
+45.2
+45.0
+143
+25.3
+25.0
+77
+QMUGS
+53.6
+52.0
+178
+29.9
+29.0
+96
+Table 9. Detailed statistics of the ablated rigid-motif decomposition strategies. The Cut-off column indicates the absolute number of
+occurrences required for a motif to be preserved in the vocabulary. Max. Size denotes the maximum number of atoms, including dummy
+ones, in a single motif.
+Dataset
+Fragmentation
+Cut-off
+Fragments per molecule
+Max. Size
+Mean
+Median
+Max
+GEOM-DRUGS
+NO RINGS
+–
+16.8
+17.0
+57
+6
+PLANAR RINGS 0.5%
+964
+13.7
+13.0
+57
+17
+PLANAR RINGS 0.1%
+192
+13.1
+13.0
+57
+17
+PLANAR RINGS 0.01%
+19
+12.7
+12.0
+57
+23
+QMUGS
+NO RINGS
+–
+19.9
+19.0
+80
+6
+PLANAR RINGS 0.5%
+1419
+16.7
+16.0
+78
+17
+PLANAR RINGS 0.1%
+283
+15.9
+15.0
+78
+17
+PLANAR RINGS 0.01%
+28
+15.3
+15.0
+78
+23
+17
+
+
+===== PAGE 18 =====
+3D Molecule Generation from Rigid Motifs
+Figure 6. Randomly selected molecules that are sampled unconditionally from MOTIFLOW trained on GEOM-DRUGS.
+Figure 7. Randomly selected molecules that are sampled unconditionally from MOTIFLOW trained on QMUGS.
+18
+
+
+===== PAGE 19 =====
+3D Molecule Generation from Rigid Motifs
+Figure 8. Randomly chosen samples from the atom composition conditional task.
+Figure 9. Randomly chosen samples from the fingerprint substructure conditional task.
+19
+
+
+===== PAGE 20 =====
+3D Molecule Generation from Rigid Motifs
+Table 10. Extended ablation results for the unconditional generation on GEOM-DRUGS and QMUGS for various fragmentation strategies.
+Fragmentation
+Steps
+QMUGS
+GEOM-DRUGS
+Stability
+V × C
+SA (↑)
+QED (↑)
+TV (↑)
+Stability
+V × C
+SA (↑)
+QED (↑)
+TV (↑)
+A, % (↑)
+% (↑)
+A
+
+10−2
+A, % (↑)
+% (↑)
+A
+
+10−2
+NO RINGS
+50
+86.5±0.6
+83.0±.2
+0.74±.00
+0.51±.00
+5.12±.06
+89.1±0.7
+80.9±.2
+0.71±.00
+0.69±.00
+3.57±.05
+100
+85.5±1.8
+85.6±.3
+0.74±.00
+0.50±.00
+4.98±.06
+86.7±1.8
+82.9±.4
+0.71±.00
+0.69±.00
+3.36±.08
+PLANAR
+RINGS 0.5%
+50
+95.1±0.1
+82.2±.8
+0.72±.00
+0.60±.00
+8.56±.04
+94.9±0.0
+81.3±.4
+0.70±.00
+0.71±.00
+4.47±.02
+100
+95.5±0.1
+84.0±.5
+0.72±.00
+0.60±.00
+8.08±.17
+95.2±0.1
+82.1±.3
+0.70±.00
+0.71±.00
+4.24±.14
+PLANAR
+RINGS 0.1%
+50
+95.7±0.0
+81.6±.3
+0.72±.00
+0.58±.00
+8.47±.08
+94.8±0.0
+79.6±.5
+0.70±.00
+0.68±.00
+4.45±.12
+100
+96.1±0.0
+83.1±.4
+0.72±.00
+0.58±.00
+8.01±.22
+95.0±0.0
+81.2±.3
+0.69±.00
+0.68±.00
+3.93±.09
+PLANAR
+RINGS 0.01%
+50
+95.1±0.0
+78.8±.3
+0.72±.00
+0.49±.01
+11.62±.11
+96.2±0.0
+81.3±.2
+0.69±.00
+0.72±.00
+8.07±.06
+100
+95.3±0.0
+80.4±.5
+0.73±.00
+0.49±.00
+11.10±.03
+96.3±0.0
+82.4±.3
+0.69±.00
+0.72±.00
+7.43±.05
+Table 11. Architectural ablations on QM9.
+Method
+Steps
+Stability (↑)
+Val. / Uniq. (↑)
+TV (↓)
+Str. En. (↓)
+SA (↑)
+QED (↑)
+A, %
+M, %
+V, %
+V × U, %
+A
+
+10−2
+B
+
+10−3
+∆E
+ kcal
+mol
+
+Data
+–
+99.0
+95.2
+97.7
+97.7
+–
+–
+7.7
+0.63
+0.46
+UNIFORM
+PRIOR
+50
+98.7±.1
+90.8±.1
+95.2±.5
+89.2±.5
+1.42±.06
+12.2±.6
+14.3±.5
+0.70±.00
+0.47±.00
+100
+98.7±.1
+90.4±.4
+93.5±.3
+87.5±.4
+1.38±.09
+15.2±.2
+10.7±.1
+0.70±.00
+0.47±.00
+NO LGEODIFF
+50
+98.6±.0
+89.5±.2
+95.5±.1
+88.7±.5
+2.35±.05
+4.9±.5
+16.5±.2
+0.70±.00
+0.47±.00
+100
+98.9±.0
+90.8±.2
+94.5±.1
+88.0±.4
+2.35±.08
+6.4±.5
+11.8±.1
+0.70±.00
+0.47±.00
+WITH LAF3
+50
+98.5±.0
+88.7±.2
+93.8±.2
+85.4±.4
+2.81±.04
+4.0±.7
+16.6±.6
+0.70±.00
+0.47±.00
+100
+98.6±.1
+89.4±.5
+92.4±.5
+83.6±.4
+2.87±.05
+5.6±1.5
+12.1±.5
+0.71±.00
+0.47±.00
+WITH
+AUGMENTATION
+50
+98.8±.0
+90.8±.3
+95.9±.1
+87.9±.5
+2.44±.05
+4.6±.8
+15.4±.5
+0.70±.00
+0.47±.00
+100
+98.8±.0
+90.2±.3
+93.5±.3
+85.0±.4
+2.32±.07
+8.4±1.3
+11.3±.3
+0.70±.00
+0.47±.00
+NO
+∆-UPDATE
+50
+98.3±.1
+86.2±.6
+93.4±.4
+85.7±.5
+2.28±.08
+4.4±.5
+16.9±.5
+0.70±.00
+0.47±.00
+100
+98.2±.1
+85.7±1.4
+90.8±1.4
+82.0±1.3
+2.51±.08
+6.8±1.8
+13.3±.1
+0.70±.00
+0.47±.00
+NO SELF-
+CONDITIONING
+50
+98.9±.0
+91.0±.3
+96.1±.3
+88.3±.4
+1.73±.05
+4.7±.4
+15.5±.3
+0.70±.00
+0.47±.00
+100
+98.8±.0
+90.6±.3
+93.7±.3
+85.2±.5
+1.66±.04
+7.4±.1
+10.9±.2
+0.70±.00
+0.47±.00
+MOTIFLOW
+50
+99.1±.0
+92.3±.3
+96.6±.1
+88.4±.2
+2.41±.08
+2.2±.3
+13.6±.5
+0.70±.00
+0.47±.00
+100
+99.1±.1
+92.6±.5
+95.3±.6
+86.3±.9
+2.24±.10
+2.7±.4
+10.3±.4
+0.70±.00
+0.47±.00
+20
+</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

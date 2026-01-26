@@ -1,18 +1,61 @@
-Alignment score: 92
-Aligned:
-- The plan is consistent with the report focus: it targets “key papers, code links, and research gaps” and explicitly plans to synthesize practical impact.
-- It is grounded in the run context: references the correct in-archive artifacts (`tavily_search.jsonl`, `20251015_iccv25-index.md`, `openalex/works.jsonl`, specific OpenAlex work IDs, PDFs).
-- It includes an explicit limitations check (not full ICCV’25 ingest) and intends to phrase constraints up front, which matches typical “technical_deep_dive” rigor.
-- It has a clear evidence pipeline: discover hubs → extract universe → normalize metadata → deep-read → PDF verification → synthesize tables/gaps → draft report.
+정합성 점수: 90
 
-Gaps/Risks:
-- “Key papers” may remain under-covered if the run is indeed workshop/challenge-heavy; the plan risks delivering a list of hubs + a small sample rather than a representative ICCV’25 set unless the follow-up crawl is executed (or the report is framed as “sample-based”).
-- The plan mentions “code links” extraction primarily from OpenAlex texts/PDFs; many ICCV papers’ code links live on CVF pages or project pages and may not appear in OpenAlex abstracts—risk of missing practical repos.
-- No explicit selection criteria for what counts as “key” (e.g., citation proxies, best paper awards, oral highlights, benchmark impact, industry adoption). This can cause subjective inclusion.
-- It doesn’t explicitly ensure that every claimed code/dataset link is validated as reachable and correct (GitHub/Zenodo/Codalab), which can weaken practical impact claims.
+정합:
+- 전체 목표(ICC V2025 관련 OA·코드 현황 조사 및 GitHub 저장소 분류, Quanta 스타일 심층 리포트 작성)와 Stage content의 태스크(공식 일정·CFP·OA 정책 확인, CVF 샘플링, GitHub 수집·분류, 참고문헌 표 작성, 정량 통계, 초안 작성, 검증)가 직접적으로 일치합니다.
+- 요구사항 1~5(키워드별 핵심 사실·링크·출처 요약, 공식 일정/CFP/오픈액세스 반영, OA/코드 공개 현황 표, GitHub 저장소 유형 분류, 불확실 정보 표기)을 모두 커버하는 작업 항목이 계획에 포함되어 있습니다.
+- 출력 형식(Quanta 템플릿, 한국어, 심층보고서)—Stage의 마지막 항목(리포트 초안 작성)이 이를 반영하고 있습니다.
+- 작업 관리 규칙(write_todos 사용 지침)을 따르고 있으며, 첫 작업을 in_progress로 표시해 진행 중임을 보여줍니다(도구 사용 규약 준수).
 
-Next-step guidance:
-- Add a concrete “keyness” rubric (e.g., awards/orals, benchmark leadership, widely-used datasets, strong code availability, or topical relevance to the run’s scope) and state it in the report.
-- Ensure the report clearly distinguishes: (a) verified items from the archived sample, (b) “authoritative entry points” for broader coverage, and (c) what would require a full CVF All Papers crawl.
-- Include a dedicated step to extract/validate code links from CVF paper pages (when available in-archive) and to sanity-check repo availability (stars/recent commits/license) for practical impact.
-- If the archive lacks CVF paper-page HTML, explicitly plan a “best-effort within-archive” section + a recommended follow-up crawl procedure (query patterns/URLs) rather than implying completeness.
+누락/리스크:
+- 공식 출처 접근 방법 및 우선순위 불명확: “ICCV 공식 사이트, CVF OpenAccess, OpenReview”를 확인하겠다는 항목은 있으나, 구체적 URL·API·검색 쿼리나 우선 확인 문서(예: CFP PDF, OA 정책 원문 위치)를 명시하지 않아 검증 과정에서 시간 손실 가능.
+- 샘플링 방법의 불명확성: CVF 권장 “50편” 샘플링 근거(페이지/목록 위치)와 선정 기준(랜덤/대표성/세션별)이 명시되어 있지 않아 편향 가능.
+- “공식” 표기 검증 방안 부족: GitHub 저장소가 “official”인지 판별하기 위한 구체적 교차검증 절차(논문 본문/저자 프로필/소속 기관 페이지 스냅샷 등)가 적시되어 있지 않습니다.
+- 라이선스·코드 공개 여부 자동화 난이도: 코드 링크·라이선스 수집은 수작업·스크래핑 혼합이 필요하며, 자동화 도구(예: GitHub API 사용) 사용 계획이 없음.
+- 데이터 신뢰도 표기 규칙 미정: “공식 출처 확인” vs “커뮤니티 출처”를 결과에 표시할 것이라 했으나, 각 유형에 대한 구체적 정의(예: OpenReview/CVF = 공식, GitHub 집계 레포 = 커뮤니티)와 레이블 규칙이 없다.
+- 분량·일정 리스크: 최소 12편 표(요구사항) 및 50편 샘플·GitHub 전수조사는 시간·토큰이 많이 소요될 수 있음. 병렬화·우선순위 지정이 필요.
+
+다음 단계 가이드:
+- (즉시) 로컬 문서 우선 확인: 제공된 파일들 먼저 읽기 — ./instruction/20251015_iccv25.txt, ./archive/20251015_iccv25-index.md, ./report_notes/source_index.jsonl, ./report_notes/source_triage.md. 목적: 이미 수집된 출처·링크·메모 활용. (도구: read_document/read_file)
+- 공식 출처 우선 확보 및 기준 문서 지정:
+  - ICCV 공식 사이트(Conference home, Dates, CFP 페이지) URL 확보 및 CFP 원문/마감일 캡쳐.
+  - CVF OpenAccess 정책 원문(페이지 또는 PDF) 확보.
+  - OpenReview 그룹(If ICCV uses OpenReview) 또는 기타 컨퍼런스 제출 시스템 페이지 확보.
+  - 결과물에 “공식 출처”로 표시할 정확한 문서(예: “ICCV2025 CFP PDF v1 — YYYY-MM-DD”)를 명시.
+- 샘플링 규칙 확정(필수): CVF 권장 50편을 어떻게 선정할지 결정
+  - 제안 A(권장): CVF에서 명시한 50편 목록 그대로 사용.
+  - 제안 B(대체): 세션별/트랙별 대표 샘플(각 트랙에서 N편씩).
+  - 선택 후 해당 기준을 리포트에 명확히 기재.
+- 병렬 작업 분할(권장): GitHub 수집·CVF 샘플링·참고문헌 표 작성은 독립적이므로 task 도구로 병렬 서브에이전트 활용 권장
+  - 예: task(subagent_type="general-purpose")로 GitHub 검색·수집(주제: iccv2025, topic:iccv2025, repos by author 등)을 위임.
+  - 또 다른 subagent로 CVF 샘플의 OA/pdf/arXiv/code 링크 수집을 병렬화.
+- GitHub “official” 검증 절차(권장 템플릿):
+  1. 저장소 README 또는 repo description에 논문 DOI/제목/저자 링크 존재 여부 확인.
+  2. 논문 본문(프로젝트 페이지/ACM/IEEE/ArXiv/공식 페이지)에 코드 링크 기재 여부 확인(스크린샷/URL 캡쳐).
+  3. 소속 연구실/저자 개인 페이지에 해당 repo 링크가 있는지 확인.
+  4. 위 3중 중 적어도 1건 이상이 논문·저자・소속에서 직접 연결되면 “official”로 표기, 아니면 “community” 또는 “unverified”.
+- 참고문헌 표(12편 이상) 작성 계획:
+  - 우선 CVF 권장/추천 50편 중 12~20편을 우선 선정해 표 템플릿(Title | OA 여부(URL) | 코드 공개 여부(URL) | 라이선스 | 비고)을 채움.
+  - 각 항목마다 출처(URL)를 필수 열로 포함.
+- 통계·신뢰도 규칙 설정:
+  - “OA 제공 비율”, “코드 공개 비율” 산출 시 분모(샘플 수)와 표본 선택 기준 명시.
+  - 신뢰도 태그 예: “공식 출처 확인”(OpenReview/CVF/논문 페이지), “커뮤니티 출처”(GitHub/집계 레포), “미확인”(링크 깨짐/정보 불충분).
+- 리포트 초안 작성 전 체크리스트:
+  1. 공식 일정/CFP/OA 정책 문서 확보 및 핵심 문구(저작권·버전·저자 권리) 인용 준비.
+  2. CVF 샘플 50편 목록 확보 또는 샘플링 규칙 확정.
+  3. 최소 12편 표 초안 완성(각 항목 출처 포함).
+  4. GitHub 저장소 분류(집계형/공식저자/비공식/워크숍 등) 샘플 수집 및 표본화(예: 상위 100 repos).
+  5. 정량 통계 계산 및 신뢰도 라벨 부착.
+- 검증·라벨링 지침:
+  - 불확실 정보는 “미확인” 또는 “검증 필요”로 라벨링하고, 가능하면 왜 미확인인지(링크 없음/접근제한/정보 모순)를 한 줄로 기재.
+  - 모든 통계는 샘플 사이즈와 신뢰도 태그와 함께 표기.
+- 작업 도구 활용 권고:
+  - write_todos: 현재 리스트에 이어 각 주요 단계(파일 확인, 공식 소스 확보, CVF 샘플링, GitHub 수집, 표 작성, 통계 산출, 초안 작성, 검증)를 in_progress/complete로 세분화해 실시간 업데이트.
+  - task: GitHub 수집과 CVF 샘플링을 병렬로 돌려 시간 단축.
+  - grep/glob/read_file: 로컬 제공 자료(인스트럭션·인덱스)를 먼저 스캔해 이미 수집된 링크·메타데이터 활용.
+
+요약(행동 우선순위, 1-3):
+1) 로컬 문서(./instruction, ./archive, ./report_notes) 즉시 확인(필수).  
+2) ICCV 공식 사이트·CVF OA·OpenReview 원문 확보 및 핵심조항 캡처(우선순위 높음).  
+3) CVF 샘플링 규칙 확정 후 병렬로 (a) CVF 샘플 OA/코드 수집, (b) GitHub 저장소 수집·분류 진행 — task 도구 권장.
+
+간결하고 실행 가능한 지침들을 제공했으며, 위 가이드대로 진행하면 요구사항을 충족하는 심층보고서 작성이 가능할 것입니다.

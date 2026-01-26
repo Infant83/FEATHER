@@ -132,6 +132,71 @@ print(reporter.stage_info())                # all stages
 print(reporter.stage_info(["scout", "web"]))  # subset
 ```
 
+### Figures (PDF extraction & selection)
+Federlicht can extract figures from referenced PDFs and insert them into the report. Candidates are derived from
+PDFs cited in the report body (e.g., `./archive/.../pdf/...`); it does **not** scan the entire archive.
+
+Default behavior (`--figures-mode auto`) inserts all candidates. For manual curation, switch to `select` mode:
+1) Run once to generate candidates and the preview (`report_views/figures_preview.html`).
+2) Add selected IDs to `report_notes/figures_selected.txt` and rerun.
+
+You can also add a custom caption by appending `|`:
+```
+fig-001 | Overview of the model architecture
+fig-002 | Dataset distribution summary
+```
+
+Preview-only (no report regeneration):
+```bash
+federlicht --run ./examples/runs/20260104_oled \
+  --output ./examples/runs/20260104_oled/report_full.html \
+  --figures-preview
+```
+
+See `scripts/README_federlicht_report.md` for full figure options and dependencies.
+
+## Hosting the Report Hub (GitHub/GitLab Pages)
+Federlicht can generate a static report hub under `./site` (`index.html` + `manifest.json`). To host on an internal GitHub/GitLab, keep all report outputs under `site/runs/` and refresh the index before deployment.
+
+1) Generate reports under `site/`:
+```bash
+federlicht --run ./examples/runs/20260110_qc-oled \
+  --output ./site/runs/20260110_qc-oled/report_full.html \
+  --template review_of_modern_physics --lang ko \
+  --prompt-file ./examples/instructions/20260110_prompt_qc-oled.txt --no-figures
+```
+
+2) Rebuild the hub index:
+```bash
+federlicht --site-refresh ./site
+```
+
+3) Commit and push the `site/` folder.
+
+### GitLab Pages (internal)
+Add a minimal `.gitlab-ci.yml`:
+```yaml
+pages:
+  stage: deploy
+  script:
+    - rm -rf public
+    - mv site public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+```
+Then enable Pages in your GitLab project settings.
+
+### GitHub Pages (enterprise)
+Option A: set Pages source to the `site/` folder.  
+Option B: copy `site/` to `docs/` and set Pages source to `/docs`.
+
+Notes:
+- The hub expects relative paths under `site/`, so keep reports inside `site/runs/`.
+- When reports are updated, run `federlicht --site-refresh ./site` and redeploy.
+
 ## Workflow (Feather -> Federlicht)
 Use Feather to collect sources, then Federlicht to synthesize a report.
 

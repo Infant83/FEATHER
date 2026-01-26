@@ -89,6 +89,12 @@ DEFAULT_MAX_INPUT_TOKENS: Optional[int] = None
 DEFAULT_MAX_INPUT_TOKENS_SOURCE = "none"
 
 
+class CleanHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog: str) -> None:
+        width = shutil.get_terminal_size((120, 20)).columns
+        super().__init__(prog, width=width, max_help_position=32)
+
+
 def templates_dir() -> Path:
     env = os.getenv("FEDERLICHT_TEMPLATES_DIR") or os.getenv("FEATHER_TEMPLATES_DIR")
     if env:
@@ -137,7 +143,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     ap = argparse.ArgumentParser(
         description="Deepagents in-depth report generator.",
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=CleanHelpFormatter,
         epilog=epilog,
     )
     env_max_input_tokens = parse_max_input_tokens(os.getenv(MAX_INPUT_TOKENS_ENV))
@@ -210,11 +216,38 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
             "en/eng/english -> English. Other values are passed through as-is."
         ),
     )
+    ap.add_argument(
+        "--depth",
+        help=(
+            "Report depth preference (brief|normal|deep|exhaustive). "
+            "Aliases: deepest/ultra map to exhaustive. "
+            "If omitted, the orchestrator infers depth from the prompt/context."
+        ),
+    )
     ap.add_argument("--prompt", help="Inline report focus prompt.")
     ap.add_argument("--prompt-file", help="Path to a text file containing a report focus prompt.")
     ap.add_argument(
+        "--generate-prompt",
+        action="store_true",
+        default=False,
+        help=(
+            "Generate a report focus prompt by scouting the run and template. "
+            "Writes to --output if provided, otherwise to <run>/instruction/generated_prompt_<run>.txt."
+        ),
+    )
+    ap.add_argument(
         "--tags",
-        help="Comma-separated tags to include in the report metadata (e.g., qc,oled,tadf).",
+        help=(
+            "Comma-separated tags to include in the report metadata (e.g., qc,oled,tadf). "
+            "Use 'auto' to force auto-tagging. "
+            "If omitted, up to 5 auto tags are generated unless --no-tags is set."
+        ),
+    )
+    ap.add_argument(
+        "--no-tags",
+        action="store_true",
+        default=False,
+        help="Disable tags (also disables auto tags).",
     )
     ap.add_argument(
         "--template",
@@ -291,7 +324,12 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=DEFAULT_CHECK_MODEL,
         help=f"Model name for alignment/plan checks and quality loops (default: {DEFAULT_CHECK_MODEL}).",
     )
-    ap.add_argument("--quality-max-chars", type=int, default=12000, help="Max chars passed to critique/revision.")
+    ap.add_argument(
+        "--quality-max-chars",
+        type=int,
+        default=12000,
+        help="Max chars passed to critique/revision (default: 12000).",
+    )
     ap.add_argument(
         "--model",
         default=DEFAULT_MODEL,
@@ -348,10 +386,50 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=False,
         help="Log structural repair diagnostics (default: disabled).",
     )
-    ap.add_argument("--progress-chars", type=int, default=800, help="Max chars for progress snippets.")
-    ap.add_argument("--max-files", type=int, default=200, help="Max files to list in tool output.")
-    ap.add_argument("--max-chars", type=int, default=16000, help="Max chars returned by read tool.")
-    ap.add_argument("--max-pdf-pages", type=int, default=6, help="Max PDF pages to extract when needed.")
+    ap.add_argument(
+        "--progress-chars",
+        type=int,
+        default=800,
+        help="Max chars for progress snippets (default: 800).",
+    )
+    ap.add_argument(
+        "--max-files",
+        type=int,
+        default=200,
+        help="Max files to list in tool output (default: 200).",
+    )
+    ap.add_argument(
+        "--max-chars",
+        type=int,
+        default=16000,
+        help="Max chars returned by read tool (default: 16000).",
+    )
+    ap.add_argument(
+        "--max-pdf-pages",
+        type=int,
+        default=6,
+        help=(
+            "Max PDF pages to extract when needed (default: 6). "
+            "Use 0 to attempt reading all pages."
+        ),
+    )
+    ap.add_argument(
+        "--pdf-extend-pages",
+        type=int,
+        default=2,
+        help=(
+            "Auto-read next N pages when extracted PDF text is too short (default: 2). "
+            "Set to 0 to disable."
+        ),
+    )
+    ap.add_argument(
+        "--pdf-extend-min-chars",
+        type=int,
+        default=1200,
+        help=(
+            "Minimum extracted characters before triggering auto page extension (default: 1200)."
+        ),
+    )
     ap.add_argument(
         "--figures",
         dest="extract_figures",
@@ -365,24 +443,45 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         action="store_false",
         help="Disable embedded PDF figure extraction.",
     )
-    ap.add_argument("--figures-max-per-pdf", type=int, default=4, help="Max figures extracted per PDF.")
-    ap.add_argument("--figures-min-area", type=int, default=12000, help="Min image area (px^2) to keep.")
+    ap.add_argument(
+        "--figures-max-per-pdf",
+        type=int,
+        default=4,
+        help="Max figures extracted per PDF (default: 4).",
+    )
+    ap.add_argument(
+        "--figures-min-area",
+        type=int,
+        default=12000,
+        help="Min image area (px^2) to keep (default: 12000).",
+    )
     ap.add_argument(
         "--figures-renderer",
         default="auto",
         choices=["auto", "pdfium", "poppler", "mupdf", "none"],
         help="Renderer for vector PDF pages when needed (default: auto).",
     )
-    ap.add_argument("--figures-dpi", type=int, default=150, help="DPI for rendered PDF pages.")
+    ap.add_argument(
+        "--figures-dpi",
+        type=int,
+        default=150,
+        help="DPI for rendered PDF pages (default: 150).",
+    )
     ap.add_argument(
         "--figures-mode",
         choices=["select", "auto"],
-        default="select",
-        help="Figure insertion mode: select requires a selection file; auto inserts all candidates.",
+        default="auto",
+        help="Figure insertion mode: auto inserts all candidates; select requires a selection file.",
     )
     ap.add_argument(
         "--figures-select",
         help="Path to a figure selection file (default: report_notes/figures_selected.txt).",
+    )
+    ap.add_argument(
+        "--figures-preview",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Generate figures_preview.html from an existing report and exit.",
     )
     ap.add_argument("--max-refs", type=int, default=200, help="Max references to append (default: 200).")
     ap.add_argument("--notes-dir", help="Optional folder to save intermediate notes (scout/evidence).")
@@ -1022,9 +1121,16 @@ def extract_section_summary(report: str, output_format: str) -> Optional[str]:
     targets = {
         "abstract",
         "executive summary",
+        "lede",
+        "hook",
+        "synopsis",
+        "overview",
+        "summary",
         "요약",
         "초록",
         "핵심 요약",
+        "개요",
+        "개관",
     }
     if output_format == "html":
         summary = extract_section_summary_html(report, targets)
@@ -1113,8 +1219,11 @@ def build_site_manifest_entry(
     run_rel = relpath_if_within(run_dir, site_root)
     if run_rel:
         paths["run"] = run_rel
+    stat = output_path.stat()
     return {
         "id": run_dir.name,
+        "run": run_dir.name,
+        "report_stem": output_path.stem,
         "title": title,
         "author": author,
         "summary": summary,
@@ -1125,6 +1234,8 @@ def build_site_manifest_entry(
         "tags": list(tags or []),
         "date": generated_at.strftime("%Y-%m-%d"),
         "timestamp": generated_at.isoformat(),
+        "source_mtime": int(stat.st_mtime),
+        "source_size": int(stat.st_size),
         "paths": paths,
     }
 
@@ -1363,6 +1474,147 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         margin: 0 0 24px;
         color: var(--muted);
       }}
+      .filter-bar {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+      }}
+      .filter-bar input,
+      .filter-bar select {{
+        background: rgba(0, 0, 0, 0.28);
+        color: var(--ink);
+        border: 1px solid var(--edge);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-family: "Space Grotesk", "Noto Sans KR", sans-serif;
+      }}
+      .filter-bar select option {{
+        color: #0b0f14;
+      }}
+      .tabs {{
+        margin-top: 18px;
+        border: 1px solid var(--edge);
+        border-radius: 18px;
+        padding: 18px;
+        background: rgba(0, 0, 0, 0.2);
+      }}
+      .tab-buttons {{
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }}
+      .tab-button {{
+        border: 1px solid var(--edge);
+        background: transparent;
+        color: var(--muted);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        cursor: pointer;
+        font-family: "Space Grotesk", "Noto Sans KR", sans-serif;
+      }}
+      .tab-button.active {{
+        background: var(--accent);
+        color: #071016;
+        border-color: transparent;
+      }}
+      .tab-panel {{
+        display: none;
+      }}
+      .tab-panel.active {{
+        display: block;
+      }}
+      .chip-list {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }}
+      .chip {{
+        border: 1px solid var(--edge);
+        background: transparent;
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+      }}
+      .chip strong {{
+        color: var(--ink);
+        font-weight: 600;
+        margin-left: 6px;
+      }}
+      .insights {{
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        margin-top: 14px;
+      }}
+      .insight-card {{
+        border: 1px solid var(--edge);
+        border-radius: 14px;
+        padding: 14px;
+        background: rgba(0, 0, 0, 0.22);
+      }}
+      .insight-card h4 {{
+        margin: 0 0 8px;
+        font-size: 12px;
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }}
+      .insight-item {{
+        font-size: 13px;
+        color: var(--ink);
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }}
+      .word-cloud {{
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid var(--edge);
+        background: rgba(0, 0, 0, 0.24);
+        position: relative;
+        min-height: 220px;
+        overflow: hidden;
+      }}
+      .word-cloud .word {{
+        font-family: "Space Grotesk", "Noto Sans KR", sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        position: absolute;
+        white-space: nowrap;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: linear-gradient(120deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+        transition: transform 0.25s ease, color 0.25s ease, border-color 0.25s ease, filter 0.25s ease;
+        font-size: calc(12px + var(--weight, 0.4) * 20px);
+        background-image: var(--cloud-gradient, linear-gradient(120deg, #6bd3ff, #4ee0b5));
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+        text-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+        opacity: var(--cloud-opacity, 0.75);
+        animation: cloudFloat var(--cloud-duration, 6s) ease-in-out infinite;
+        animation-delay: var(--cloud-delay, 0s);
+        transform: translate3d(0, 0, 0) rotate(var(--cloud-tilt, 0deg));
+      }}
+      .word-cloud .word:hover {{
+        transform: translate3d(0, -6px, 0) rotate(var(--cloud-tilt, 0deg));
+        filter: drop-shadow(0 12px 18px rgba(78, 224, 181, 0.3));
+        border-color: var(--accent);
+      }}
+      @keyframes cloudFloat {{
+        0% {{ transform: translate3d(0, 0, 0) rotate(var(--cloud-tilt, 0deg)); }}
+        50% {{ transform: translate3d(0, -10px, 0) rotate(var(--cloud-tilt, 0deg)); }}
+        100% {{ transform: translate3d(0, 0, 0) rotate(var(--cloud-tilt, 0deg)); }}
+      }}
       .grid {{
         display: grid;
         gap: 18px;
@@ -1433,6 +1685,24 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         color: var(--accent-2);
         text-decoration: none;
       }}
+      .load-more {{
+        margin-top: 18px;
+        display: flex;
+        justify-content: center;
+      }}
+      .load-more button {{
+        border: 1px solid var(--edge);
+        background: transparent;
+        color: var(--ink);
+        font-weight: 600;
+        padding: 10px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+      }}
+      .load-more button:hover {{
+        color: var(--accent);
+        border-color: var(--accent);
+      }}
       .banner {{
         position: fixed;
         left: 50%;
@@ -1499,7 +1769,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         </div>
         <div class="hero-grid">
           <div>
-            <h1>Enlighten Your Technology Insight.</h1>
+            <h1>Enlighten your Technology Insight.</h1>
             <p>Federlicht가 생성한 기술 리포트를 모아둔 허브입니다. 최신 실행 결과를 자동으로 받아오며, 공유 가능한 HTML 리포트를 바로 열람할 수 있습니다.</p>
             <div class="cta">
               <a class="btn" href="#latest">최신 리포트 보기</a>
@@ -1525,12 +1795,46 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         <h2>Latest Reports</h2>
         <p>최근 생성된 리포트부터 순서대로 정렬됩니다. 새 리포트가 감지되면 배너로 알려드립니다.</p>
         <div class="grid" id="report-grid"></div>
+        <div class="load-more"><button id="report-more">더 보기</button></div>
+      </section>
+
+      <section class="section" id="explore">
+        <h2>Explore</h2>
+        <p>태그/템플릿/작성자 기준으로 빠르게 탐색합니다.</p>
+        <div class="tabs">
+          <div class="tab-buttons">
+            <button class="tab-button active" data-tab="topics">Topics</button>
+            <button class="tab-button" data-tab="templates">Templates</button>
+            <button class="tab-button" data-tab="authors">Authors</button>
+          </div>
+          <div class="tab-panel active" id="tab-topics"></div>
+          <div class="tab-panel" id="tab-templates"></div>
+          <div class="tab-panel" id="tab-authors"></div>
+        </div>
+        <div class="insights" id="trend-insights"></div>
+        <div class="word-cloud" id="word-cloud"></div>
       </section>
 
       <section class="section" id="archive">
         <h2>Archive</h2>
         <p>모든 리포트를 한 번에 탐색하거나, 템플릿/언어/형식을 기준으로 비교할 수 있습니다.</p>
+        <div class="filter-bar">
+          <input id="search-input" type="search" placeholder="Search title, summary, author" />
+          <select id="filter-template">
+            <option value="">All templates</option>
+          </select>
+          <select id="filter-lang">
+            <option value="">All languages</option>
+          </select>
+          <select id="filter-tag">
+            <option value="">All tags</option>
+          </select>
+          <select id="filter-author">
+            <option value="">All authors</option>
+          </select>
+        </div>
         <div class="grid" id="archive-grid"></div>
+        <div class="load-more"><button id="archive-more">더 보기</button></div>
       </section>
     </div>
 
@@ -1555,6 +1859,20 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 
+      const countBy = (items, getter) => {{
+        const counts = new Map();
+        items.forEach((item) => {{
+          const value = getter(item);
+          const values = Array.isArray(value) ? value : [value];
+          values.forEach((raw) => {{
+            const key = (raw || '').toString().trim();
+            if (!key || key === 'unknown') return;
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }});
+        }});
+        return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+      }};
+
       const sortItems = (items) => items.slice().sort((a, b) => {{
         const ta = Date.parse(a.timestamp || a.date || 0) || 0;
         const tb = Date.parse(b.timestamp || b.date || 0) || 0;
@@ -1566,7 +1884,6 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         if (paths.report) entries.push(['Report', paths.report]);
         if (paths.overview) entries.push(['Overview', paths.overview]);
         if (paths.workflow) entries.push(['Workflow', paths.workflow]);
-        if (paths.run) entries.push(['Run Folder', paths.run]);
         return entries.map(([label, href]) => `<a href="${{escapeHtml(href)}}">${{label}}</a>`).join('');
       }};
 
@@ -1586,31 +1903,56 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         document.getElementById('latest-links').innerHTML = buildLinks(item.paths);
       }};
 
-      const renderGrid = (targetId, items) => {{
+      const buildCardHtml = (item, idx) => {{
+        const delay = (idx % 6) * 0.05;
+        const tags = [item.lang, item.template, item.model, item.format]
+          .filter(tag => tag && tag !== 'unknown')
+          .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
+        const summary = escapeHtml(item.summary || '');
+        const meta = `${{escapeHtml(item.date || '')}} · ${{escapeHtml(item.author || 'Unknown')}}`;
+        const reportHref = (item.paths && item.paths.report) ? item.paths.report : '#';
+        return `
+          <article class="card" style="animation-delay:${{delay}}s">
+            <div class="tags">${{tags}}</div>
+            <h3><a href="${{escapeHtml(reportHref)}}">${{escapeHtml(item.title || 'Untitled')}}</a></h3>
+            <p class="summary">${{summary || '요약 정보가 없습니다.'}}</p>
+            <div class="meta">${{meta}}</div>
+            <div class="links">${{buildLinks(item.paths)}}</div>
+          </article>
+        `;
+      }};
+
+      const createPager = (targetId, buttonId, pageSize) => {{
+        let items = [];
+        let index = 0;
         const target = document.getElementById(targetId);
-        if (!target) return;
-        if (!items.length) {{
-          target.innerHTML = '<div class="empty">아직 등록된 리포트가 없습니다.</div>';
-          return;
+        const button = document.getElementById(buttonId);
+        const renderNext = () => {{
+          if (!target) return;
+          if (!items.length) {{
+            target.innerHTML = '<div class="empty">아직 등록된 리포트가 없습니다.</div>';
+            if (button) button.style.display = 'none';
+            return;
+          }}
+          const slice = items.slice(index, index + pageSize);
+          slice.forEach((item, idx) => {{
+            target.insertAdjacentHTML('beforeend', buildCardHtml(item, index + idx));
+          }});
+          index += slice.length;
+          if (button) {{
+            button.style.display = index >= items.length ? 'none' : 'inline-flex';
+          }}
+        }};
+        if (button) {{
+          button.addEventListener('click', renderNext);
         }}
-        target.innerHTML = items.map((item, idx) => {{
-          const delay = (idx % 6) * 0.05;
-          const tags = [item.lang, item.template, item.model, item.format]
-            .filter(tag => tag && tag !== 'unknown')
-            .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
-          const summary = escapeHtml(item.summary || '');
-          const meta = `${{escapeHtml(item.date || '')}} · ${{escapeHtml(item.author || 'Unknown')}}`;
-          const reportHref = (item.paths && item.paths.report) ? item.paths.report : '#';
-          return `
-            <article class="card" style="animation-delay:${{delay}}s">
-              <div class="tags">${{tags}}</div>
-              <h3><a href="${{escapeHtml(reportHref)}}">${{escapeHtml(item.title || 'Untitled')}}</a></h3>
-              <p class="summary">${{summary || '요약 정보가 없습니다.'}}</p>
-              <div class="meta">${{meta}}</div>
-              <div class="links">${{buildLinks(item.paths)}}</div>
-            </article>
-          `;
-        }}).join('');
+        const reset = (nextItems) => {{
+          items = nextItems || [];
+          index = 0;
+          if (target) target.innerHTML = '';
+          renderNext();
+        }};
+        return {{ reset }};
       }};
 
       const renderStats = (items) => {{
@@ -1621,11 +1963,216 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         document.getElementById('stat-templates').textContent = templateCount;
       }};
 
+      const withinDays = (items, days) => {{
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+        return items.filter(item => {{
+          const stamp = item.timestamp || item.date;
+          if (!stamp) return false;
+          const time = Date.parse(stamp);
+          return !Number.isNaN(time) && time >= cutoff;
+        }});
+      }};
+
+      const buildKeywordStats = (items) => {{
+        const counts = new Map();
+        items.forEach(item => {{
+          (item.keywords || []).forEach((entry) => {{
+            if (!entry) return;
+            let term = '';
+            let count = 1;
+            if (Array.isArray(entry)) {{
+              term = String(entry[0] || '').trim();
+              count = Number(entry[1] || 1);
+            }} else {{
+              term = String(entry || '').trim();
+            }}
+            if (!term) return;
+            counts.set(term, (counts.get(term) || 0) + (Number.isFinite(count) ? count : 1));
+          }});
+        }});
+        return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+      }};
+
+      const layoutWordCloud = (container) => {{
+        if (!container) return;
+        const words = Array.from(container.querySelectorAll('.word'));
+        if (!words.length) return;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const placed = [];
+        const center = {{ x: width / 2, y: height / 2 }};
+        const overlaps = (rect) => {{
+          return placed.some((p) =>
+            rect.x < p.x + p.w && rect.x + rect.w > p.x &&
+            rect.y < p.y + p.h && rect.y + rect.h > p.y
+          );
+        }};
+        words.forEach((word) => {{
+          const w = word.offsetWidth;
+          const h = word.offsetHeight;
+          let angle = Math.random() * Math.PI * 2;
+          let radius = 0;
+          let found = null;
+          for (let i = 0; i < 220; i++) {{
+            const x = center.x + Math.cos(angle) * radius - w / 2;
+            const y = center.y + Math.sin(angle) * radius - h / 2;
+            const rect = {{ x, y, w, h }};
+            if (x >= 0 && y >= 0 && x + w <= width && y + h <= height && !overlaps(rect)) {{
+              found = rect;
+              break;
+            }}
+            angle += 0.35;
+            radius += 2.2;
+          }}
+          if (!found) {{
+            const x = Math.max(0, Math.random() * Math.max(1, width - w));
+            const y = Math.max(0, Math.random() * Math.max(1, height - h));
+            found = {{ x, y, w, h }};
+          }}
+          placed.push(found);
+          word.style.left = `${{found.x.toFixed(1)}}px`;
+          word.style.top = `${{found.y.toFixed(1)}}px`;
+        }});
+      }};
+
+      const latestPager = createPager('report-grid', 'report-more', 6);
+      const archivePager = createPager('archive-grid', 'archive-more', 12);
+
+      const populateFilters = (items) => {{
+        const templateSelect = document.getElementById('filter-template');
+        const langSelect = document.getElementById('filter-lang');
+        const tagSelect = document.getElementById('filter-tag');
+        const authorSelect = document.getElementById('filter-author');
+        if (!templateSelect || !langSelect || !tagSelect || !authorSelect) return;
+        const templates = Array.from(new Set(items.map(item => item.template).filter(Boolean))).sort();
+        const langs = Array.from(new Set(items.map(item => item.lang).filter(Boolean))).sort();
+        const tags = Array.from(new Set(items.flatMap(item => item.tags || []))).sort();
+        const authors = Array.from(new Set(items.map(item => item.author).filter(Boolean))).sort();
+        const fill = (select, values, label) => {{
+          const current = select.value;
+          select.innerHTML = `<option value="">${{label}}</option>` +
+            values.map(value => `<option value="${{escapeHtml(value)}}">${{escapeHtml(value)}}</option>`).join('');
+          select.value = current;
+        }};
+        fill(templateSelect, templates, 'All templates');
+        fill(langSelect, langs, 'All languages');
+        fill(tagSelect, tags, 'All tags');
+        fill(authorSelect, authors, 'All authors');
+      }};
+
+      const applyFilters = (items) => {{
+        const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+        const template = document.getElementById('filter-template')?.value || '';
+        const lang = document.getElementById('filter-lang')?.value || '';
+        const tag = document.getElementById('filter-tag')?.value || '';
+        const author = document.getElementById('filter-author')?.value || '';
+        return items.filter(item => {{
+          if (template && item.template !== template) return false;
+          if (lang && item.lang !== lang) return false;
+          if (tag && !(item.tags || []).includes(tag)) return false;
+          if (author && item.author !== author) return false;
+          if (!query) return true;
+          const haystack = `${{item.title || ''}} ${{item.summary || ''}} ${{item.author || ''}}`.toLowerCase();
+          return haystack.includes(query);
+        }});
+      }};
+
+      const renderTabs = (items) => {{
+        const tabTopics = document.getElementById('tab-topics');
+        const tabTemplates = document.getElementById('tab-templates');
+        const tabAuthors = document.getElementById('tab-authors');
+        if (!tabTopics || !tabTemplates || !tabAuthors) return;
+        const topTags = countBy(items, item => item.tags || []).slice(0, 20);
+        const topTemplates = countBy(items, item => item.template).slice(0, 20);
+        const topAuthors = countBy(items, item => item.author).slice(0, 20);
+        const chipHtml = (list, type) => {{
+          if (!list.length) return '<div class="empty">데이터가 없습니다.</div>';
+          return `<div class="chip-list">` + list.map(([value, count]) =>
+            `<button class="chip" data-type="${{type}}" data-value="${{escapeHtml(value)}}">${{escapeHtml(value)}} <strong>${{count}}</strong></button>`
+          ).join('') + `</div>`;
+        }};
+        tabTopics.innerHTML = chipHtml(topTags, 'tag');
+        tabTemplates.innerHTML = chipHtml(topTemplates, 'template');
+        tabAuthors.innerHTML = chipHtml(topAuthors, 'author');
+      }};
+
+      const renderTrends = (items) => {{
+        const target = document.getElementById('trend-insights');
+        if (!target) return;
+        const scoped = withinDays(items, 30);
+        const pool = scoped.length ? scoped : items;
+        const topTags = countBy(pool, item => item.tags || []).slice(0, 3);
+        const topTemplates = countBy(pool, item => item.template).slice(0, 3);
+        const topAuthors = countBy(pool, item => item.author).slice(0, 3);
+        const block = (title, list) => {{
+          const rows = list.length
+            ? list.map(([value, count]) => `<div class="insight-item"><span>${{escapeHtml(value)}}</span><strong>${{count}}</strong></div>`).join('')
+            : '<div class="insight-item"><span>데이터 없음</span><strong>-</strong></div>';
+          return `<div class="insight-card"><h4>${{title}}</h4>${{rows}}</div>`;
+        }};
+        target.innerHTML = block('Top Tags', topTags) + block('Top Templates', topTemplates) + block('Top Authors', topAuthors);
+      }};
+
+      const renderWordCloud = (items) => {{
+        const target = document.getElementById('word-cloud');
+        if (!target) return;
+        const scoped = withinDays(items, 30);
+        const pool = scoped.length ? scoped : items;
+        const stats = buildKeywordStats(pool).slice(0, 40);
+        if (!stats.length) {{
+          target.innerHTML = '<div class="empty">최근 30일 키워드가 없습니다.</div>';
+          return;
+        }}
+        const max = stats[0][1] || 1;
+        const gradients = [
+          'linear-gradient(120deg, #6bd3ff, #4ee0b5)',
+          'linear-gradient(120deg, #ff8c96, #ffd36b)',
+          'linear-gradient(120deg, #c6b7ff, #7df0ff)',
+          'linear-gradient(120deg, #4ee0b5, #8fd1ff)',
+          'linear-gradient(120deg, #ff9aa9, #ff6b81)',
+        ];
+        target.innerHTML = stats.map(([term, count], idx) => {{
+          const ratio = count / max;
+          const weight = Math.max(0.25, Math.min(1, Math.pow(ratio, 0.6)));
+          const opacity = Math.max(0.45, Math.min(1, 0.35 + Math.pow(ratio, 0.5) * 0.65));
+          const gradient = gradients[idx % gradients.length];
+          const delay = (Math.random() * 2).toFixed(2);
+          const duration = (5 + Math.random() * 4).toFixed(2);
+          const tilt = ((Math.random() * 6) - 3).toFixed(2);
+          return `<span class="word" style="--weight:${{weight.toFixed(2)}};--cloud-opacity:${{opacity.toFixed(2)}};--cloud-gradient:${{gradient}};--cloud-delay:${{delay}}s;--cloud-duration:${{duration}}s;--cloud-tilt:${{tilt}}deg;">${{escapeHtml(term)}}</span>`;
+        }}).join('');
+        requestAnimationFrame(() => layoutWordCloud(target));
+      }};
+
+      const setFilterValue = (type, value) => {{
+        if (!value) return;
+        if (type === 'tag') {{
+          const tagSelect = document.getElementById('filter-tag');
+          if (tagSelect) tagSelect.value = value;
+        }} else if (type === 'template') {{
+          const templateSelect = document.getElementById('filter-template');
+          if (templateSelect) templateSelect.value = value;
+        }} else if (type === 'author') {{
+          const authorSelect = document.getElementById('filter-author');
+          if (authorSelect) authorSelect.value = value;
+        }}
+        const items = sortItems(currentManifest.items || []);
+        const filtered = applyFilters(items);
+        archivePager.reset(filtered);
+        renderTrends(filtered);
+        renderWordCloud(filtered);
+      }};
+
       const renderAll = (manifest) => {{
         const items = sortItems(manifest.items || []);
         renderLatest(items[0]);
-        renderGrid('report-grid', items.slice(0, 6));
-        renderGrid('archive-grid', items);
+        latestPager.reset(items);
+        populateFilters(items);
+        renderTabs(items);
+        renderTrends(items);
+        renderWordCloud(items);
+        const filtered = applyFilters(items);
+        archivePager.reset(filtered);
         renderStats(items);
         const updated = manifest.generated_at ? new Date(manifest.generated_at).toLocaleString() : '';
         document.getElementById('last-updated').textContent = updated ? `Updated ${{updated}}` : '';
@@ -1665,6 +2212,76 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
           }})
           .catch(() => {{}});
       }};
+
+      const filterInputs = ['search-input', 'filter-template', 'filter-lang', 'filter-tag', 'filter-author'];
+      filterInputs.forEach((id) => {{
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {{
+          const items = sortItems(currentManifest.items || []);
+          const filtered = applyFilters(items);
+          archivePager.reset(filtered);
+          renderTrends(filtered);
+          renderWordCloud(filtered);
+        }});
+        el.addEventListener('change', () => {{
+          const items = sortItems(currentManifest.items || []);
+          const filtered = applyFilters(items);
+          archivePager.reset(filtered);
+          renderTrends(filtered);
+          renderWordCloud(filtered);
+        }});
+      }});
+
+      window.addEventListener('resize', () => {{
+        const items = sortItems(currentManifest.items || []);
+        const filtered = applyFilters(items);
+        renderWordCloud(filtered);
+      }});
+
+      document.querySelectorAll('.tab-button').forEach((button) => {{
+        button.addEventListener('click', () => {{
+          document.querySelectorAll('.tab-button').forEach((btn) => btn.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
+          button.classList.add('active');
+          const tabId = button.dataset.tab;
+          const panel = document.getElementById(`tab-${{tabId}}`);
+          if (panel) panel.classList.add('active');
+        }});
+      }});
+
+      document.addEventListener('click', (event) => {{
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.classList.contains('chip')) return;
+        const type = target.dataset.type;
+        const value = target.dataset.value;
+        if (!type || !value) return;
+        setFilterValue(type, value);
+        document.getElementById('archive')?.scrollIntoView({{ behavior: 'smooth' }});
+      }});
+
+      document.addEventListener('click', (event) => {{
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.classList.contains('word')) return;
+        const term = target.textContent || '';
+        if (!term) return;
+        const tagSelect = document.getElementById('filter-tag');
+        if (tagSelect) {{
+          tagSelect.value = '';
+        }}
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {{
+          searchInput.value = term;
+        }}
+        const items = sortItems(currentManifest.items || []);
+        const filtered = applyFilters(items);
+        archivePager.reset(filtered);
+        renderTrends(filtered);
+        renderWordCloud(filtered);
+        document.getElementById('archive')?.scrollIntoView({{ behavior: 'smooth' }});
+      }});
 
       renderAll(currentManifest);
       try {{
@@ -1731,6 +2348,91 @@ def parse_tags(value: Optional[str]) -> list[str]:
         return []
     raw = [part.strip() for part in value.split(",")]
     return [part for part in raw if part]
+
+
+def build_auto_tags(
+    prompt: Optional[str],
+    title: Optional[str],
+    summary: Optional[str] = None,
+    max_tags: int = 5,
+) -> list[str]:
+    text = " ".join(part for part in [title, prompt, summary] if part).strip()
+    if not text:
+        return []
+    english_stop = {
+        "report",
+        "analysis",
+        "review",
+        "survey",
+        "summary",
+        "overview",
+        "study",
+        "based",
+        "using",
+        "about",
+        "with",
+        "from",
+        "this",
+        "that",
+        "which",
+        "their",
+        "your",
+        "into",
+        "between",
+        "within",
+        "without",
+        "recent",
+        "latest",
+        "federlicht",
+    }
+    korean_stop = {
+        "보고서",
+        "리포트",
+        "요약",
+        "분석",
+        "동향",
+        "연구",
+        "기반",
+        "사용",
+        "작성",
+        "설명",
+        "프롬프트",
+        "최근",
+    }
+    tokens = re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", text)
+    tokens.extend(re.findall(r"[가-힣]{2,}", text))
+    if not tokens:
+        return []
+    counts: dict[str, dict[str, object]] = {}
+    for idx, token in enumerate(tokens):
+        if re.fullmatch(r"[A-Za-z0-9_-]+", token):
+            key = token.lower()
+            if key in english_stop:
+                continue
+            display = token if token.isupper() and 2 <= len(token) <= 6 else key
+        else:
+            key = token
+            if key in korean_stop:
+                continue
+            display = token
+        if key not in counts:
+            counts[key] = {"count": 0, "index": idx, "display": display}
+        entry = counts[key]
+        entry["count"] = int(entry["count"]) + 1
+        if isinstance(display, str) and display.isupper() and display != entry["display"]:
+            entry["display"] = display
+    ranked = sorted(
+        counts.values(),
+        key=lambda item: (-int(item["count"]), int(item["index"])),
+    )
+    tags: list[str] = []
+    for item in ranked:
+        display = str(item["display"]).strip()
+        if display and display not in tags:
+            tags.append(display)
+        if len(tags) >= max_tags:
+            break
+    return tags
 
 
 def extract_agent_text(result: object) -> str:
@@ -2053,6 +2755,161 @@ def generate_title_with_llm(
     cleaned = enforce_concise_title(cleaned, language)
     return cleaned or None
 
+
+def normalize_depth_choice(value: Optional[str]) -> str:
+    if not value:
+        return "normal"
+    token = str(value).strip().lower()
+    if token in {"brief", "short", "summary", "요약", "간단"}:
+        return "brief"
+    if token in {"normal", "default", "standard", "일반", "보통"}:
+        return "normal"
+    if token in {"deep", "long-form", "comprehensive", "학술", "리뷰", "journal", "심층"}:
+        return "deep"
+    if token in {
+        "exhaustive",
+        "deepest",
+        "ultra",
+        "ultra-deep",
+        "very deep",
+        "극심",
+        "매우심층",
+        "최심층",
+    }:
+        return "exhaustive"
+    return "normal"
+
+
+def strip_code_fences(text: str) -> str:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```[a-zA-Z0-9_-]*\\s*", "", stripped)
+        stripped = re.sub(r"\\s*```$", "", stripped)
+    return stripped.strip()
+
+
+def ensure_prompt_headers(text: str, template_name: str, depth: str, language: str) -> str:
+    lower = text.lower()
+    lines = text.splitlines()
+    header_lines: list[str] = []
+    if "template:" not in lower:
+        header_lines.append(f"Template: {template_name}")
+    if "depth:" not in lower:
+        header_lines.append(f"Depth: {depth}")
+    if "language:" not in lower and "언어:" not in lower:
+        header_lines.append(f"Language: {language}")
+    if header_lines:
+        header_lines.append("")
+        return "\n".join(header_lines + lines).strip()
+    return text.strip()
+
+
+def build_prompt_generator_input(
+    template_spec: "TemplateSpec",
+    required_sections: list[str],
+    depth: str,
+    language: str,
+    query_id: str,
+    scout_notes: str,
+    instruction_text: str,
+    seed_prompt: str,
+    template_guidance_text: str,
+) -> str:
+    lines = [
+        f"Template name: {template_spec.name}",
+        f"Template description: {template_spec.description or '-'}",
+        f"Template tone: {template_spec.tone or '-'}",
+        f"Template audience: {template_spec.audience or '-'}",
+        f"Requested depth: {depth}",
+        f"Language: {language}",
+        f"Run ID: {query_id}",
+        "",
+    ]
+    if required_sections:
+        lines.append("Required sections:")
+        lines.extend([f"- {section}" for section in required_sections])
+        lines.append("")
+    if template_guidance_text:
+        lines.extend(["Template guidance (summary):", truncate_text(template_guidance_text, 2000), ""])
+    if instruction_text:
+        lines.extend(["Instruction snippet:", truncate_text(instruction_text, 2000), ""])
+    if seed_prompt:
+        lines.extend(["Seed prompt (if any):", truncate_text(seed_prompt, 2000), ""])
+    if scout_notes:
+        lines.extend(["Scout notes:", truncate_text(scout_notes, 6000), ""])
+    return "\n".join(lines).strip()
+
+
+def resolve_prompt_output_path(args: argparse.Namespace, run_dir: Path, query_id: str) -> Path:
+    if args.output:
+        output_path = Path(args.output)
+        if output_path.exists() and output_path.is_dir():
+            output_path = output_path / f"generated_prompt_{query_id}.txt"
+    else:
+        instr_dir = run_dir / "instruction"
+        instr_dir.mkdir(parents=True, exist_ok=True)
+        output_path = instr_dir / f"generated_prompt_{query_id}.txt"
+    return resolve_output_path(output_path, args.overwrite_output)
+
+
+def generate_prompt_from_scout(
+    result: PipelineResult,
+    args: argparse.Namespace,
+    agent_overrides: dict,
+    create_deep_agent,
+) -> str:
+    template_spec = result.template_spec
+    required_sections = result.required_sections or list(DEFAULT_SECTIONS)
+    language = result.language
+    depth = normalize_depth_choice(getattr(args, "depth", None) or result.depth)
+    seed_prompt = load_report_prompt(args.prompt, args.prompt_file) or ""
+    instruction_text = ""
+    if result.instruction_file and result.instruction_file.exists():
+        instruction_text = result.instruction_file.read_text(encoding="utf-8", errors="replace").strip()
+    template_guidance_text = result.template_guidance_text or build_template_guidance_text(template_spec)
+
+    user_text = build_prompt_generator_input(
+        template_spec,
+        required_sections,
+        depth,
+        language,
+        result.query_id,
+        result.scout_notes,
+        instruction_text,
+        seed_prompt,
+        template_guidance_text,
+    )
+    system_prompt = prompts.build_prompt_generator_prompt(language)
+    prompt_model = resolve_agent_model("prompt_generator", args.model, agent_overrides)
+    prompt_max, prompt_max_source = resolve_agent_max_input_tokens("prompt_generator", args, agent_overrides)
+    backend = SafeFilesystemBackend(root_dir=result.run_dir)
+    agent = create_agent_with_fallback(
+        create_deep_agent,
+        prompt_model,
+        [],
+        system_prompt,
+        backend,
+        max_input_tokens=prompt_max,
+        max_input_tokens_source=prompt_max_source,
+    )
+    try:
+        response = agent.invoke({"messages": [{"role": "user", "content": user_text}]})
+        generated = extract_agent_text(response).strip()
+    except Exception:
+        generated = ""
+    if not generated:
+        generated = (
+            f"Template: {template_spec.name}\n"
+            f"Depth: {depth}\n"
+            f"Language: {language}\n\n"
+            f"보고서 주제: {result.query_id}\n"
+            "아카이브를 기반으로 핵심 동향, 근거, 한계, 시사점을 구조화해 정리하세요.\n"
+            "근거는 논문/리뷰/공식 발표를 우선하고, 웹 자료는 supporting으로 구분하세요.\n"
+            "근거가 부족한 영역은 공개정보 한계를 명시하세요.\n"
+        )
+    generated = strip_code_fences(generated)
+    generated = ensure_prompt_headers(generated, template_spec.name, depth, language)
+    return generated.strip() + "\n"
 
 def format_report_title(title: str, output_format: str) -> str:
     if output_format == "tex":
@@ -3596,6 +4453,7 @@ def build_agent_info(
         language=language,
     )
     metrics = ", ".join(QUALITY_WEIGHTS.keys())
+    depth = getattr(args, "depth", None)
     writer_prompt = resolve_agent_prompt(
         "writer",
         prompts.build_writer_prompt(
@@ -3605,6 +4463,7 @@ def build_agent_info(
             required_sections,
             output_format,
             language,
+            depth,
         ),
         overrides,
     )
@@ -4128,18 +4987,53 @@ def normalize_report_for_format(report_text: str, output_format: str) -> str:
     return cleaned
 
 
-def read_pdf_with_fitz(pdf_path: Path, max_pages: int, max_chars: int) -> str:
+def read_pdf_with_fitz(
+    pdf_path: Path,
+    max_pages: int,
+    max_chars: int,
+    auto_extend_pages: int = 0,
+    extend_min_chars: int = 0,
+) -> str:
     try:
         import fitz  # type: ignore
     except Exception:
         return "PyMuPDF (pymupdf) is not installed. Cannot read PDF."
     doc = fitz.open(str(pdf_path))
-    pages = min(max_pages, doc.page_count)
-    chunks = []
+    total_pages = doc.page_count
+    if max_pages <= 0:
+        pages = total_pages
+    else:
+        pages = min(max_pages, total_pages)
+    chunks: list[str] = []
     for page in range(pages):
         chunks.append(doc.load_page(page).get_text())
+    pages_read = pages
     text = "\n".join(chunks)
-    return text[:max_chars]
+    if (
+        auto_extend_pages
+        and extend_min_chars
+        and len(text) < extend_min_chars
+        and pages_read < total_pages
+    ):
+        extra = min(auto_extend_pages, total_pages - pages_read)
+        for page in range(pages_read, pages_read + extra):
+            chunks.append(doc.load_page(page).get_text())
+        pages_read += extra
+        text = "\n".join(chunks)
+    note = ""
+    if pages_read < total_pages:
+        note = (
+            f"\n\n[note] PDF scan truncated: pages 1-{pages_read} of {total_pages}. "
+            "Increase --max-pdf-pages or --pdf-extend-pages to read more."
+        )
+    if max_chars > 0:
+        if note:
+            remaining = max_chars - len(note)
+            if remaining <= 0:
+                return note[:max_chars]
+            return f"{text[:remaining]}{note}"
+        return text[:max_chars]
+    return f"{text}{note}"
 
 
 def extract_pdf_images(
@@ -4737,13 +5631,39 @@ def render_pdf_pages_mupdf(
     return records
 
 
+_MATH_BLOCK_RE = re.compile(r"(?s)(\\$\\$.*?\\$\\$|\\\\\\[.*?\\\\\\])")
+_MATH_INLINE_RE = re.compile(r"(?s)(\\\\\\(.*?\\\\\\)|\\$(?!\\s)(?:\\\\.|[^$\\\\])+?\\$)")
+
+
+def _mask_math_segments(text: str) -> tuple[str, list[str]]:
+    placeholders: list[str] = []
+    def replace(match: re.Match[str]) -> str:
+        placeholders.append(match.group(0))
+        return f"@@MATH{len(placeholders) - 1}@@"
+    masked = _MATH_BLOCK_RE.sub(replace, text)
+    masked = _MATH_INLINE_RE.sub(replace, masked)
+    return masked, placeholders
+
+
+def _unmask_math_segments(html_text: str, placeholders: list[str]) -> str:
+    if not placeholders:
+        return html_text
+    restored = html_text
+    for idx, segment in enumerate(placeholders):
+        safe = html_lib.escape(segment)
+        restored = restored.replace(f"@@MATH{idx}@@", safe)
+    return restored
+
+
 def markdown_to_html(markdown_text: str) -> str:
     try:
         import markdown  # type: ignore
     except Exception:
         escaped = html_lib.escape(markdown_text)
         return f"<pre>{escaped}</pre>"
-    return markdown.markdown(markdown_text, extensions=["extra", "tables", "fenced_code"])
+    masked, placeholders = _mask_math_segments(markdown_text)
+    html_text = markdown.markdown(masked, extensions=["extra", "tables", "fenced_code"])
+    return _unmask_math_segments(html_text, placeholders)
 
 
 _URL_RE = re.compile(r"(https?://[^\s<]+)")
@@ -5498,81 +6418,218 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "  </script>\n"
         "  <script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>\n"
         "  <style>\n"
+        "    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');\n"
         "    :root {\n"
-        "      --ink: #1d1c1a;\n"
-        "      --muted: #5a5956;\n"
-        "      --accent: #b24a2f;\n"
-        "      --paper: #ffffff;\n"
-        "      --paper-alt: #f6f1e8;\n"
-        "      --rule: #e7dfd2;\n"
-        "      --shadow: rgba(0, 0, 0, 0.08);\n"
-        "      --link: #1d4e89;\n"
-        "      --link-hover: #0d2b4a;\n"
-        "      --page-bg: radial-gradient(1200px 600px at 20% -10%, #f2efe8 0%, #f7f4ee 45%, #fdfcf9 100%);\n"
-        "      --body-font: \"Iowan Old Style\", \"Charter\", \"Palatino Linotype\", \"Book Antiqua\", Georgia, serif;\n"
-        "      --heading-font: \"Avenir Next\", \"Gill Sans\", \"Trebuchet MS\", \"Helvetica Neue\", sans-serif;\n"
-        "      --ui-font: \"Avenir Next\", \"Gill Sans\", \"Trebuchet MS\", \"Helvetica Neue\", sans-serif;\n"
-        "      --mono-font: \"SFMono-Regular\", \"Consolas\", \"Liberation Mono\", \"Courier New\", monospace;\n"
+        "      --bg: #0b0f14;\n"
+        "      --bg-2: #121821;\n"
+        "      --card: rgba(255, 255, 255, 0.06);\n"
+        "      --site-ink: #f5f7fb;\n"
+        "      --site-muted: rgba(245, 247, 251, 0.65);\n"
+        "      --accent: #4ee0b5;\n"
+        "      --accent-2: #6bd3ff;\n"
+        "      --edge: rgba(255, 255, 255, 0.15);\n"
+        "      --glow: rgba(78, 224, 181, 0.25);\n"
+        "      --ink: #0b1220;\n"
+        "      --muted: #425066;\n"
+        "      --accent-strong: #2fb892;\n"
+        "      --paper: rgba(255, 255, 255, 0.94);\n"
+        "      --paper-strong: #ffffff;\n"
+        "      --paper-alt: rgba(240, 245, 255, 0.6);\n"
+        "      --rule: rgba(15, 23, 42, 0.12);\n"
+        "      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);\n"
+        "      --link: var(--accent-2);\n"
+        "      --link-hover: var(--accent);\n"
+        "      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),\n"
+        "        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),\n"
+        "        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);\n"
+        "      --body-font: \"Fraunces\", \"Charter\", Georgia, serif;\n"
+        "      --heading-font: \"Space Grotesk\", \"Segoe UI\", sans-serif;\n"
+        "      --ui-font: \"Space Grotesk\", \"Segoe UI\", sans-serif;\n"
+        "      --mono-font: \"JetBrains Mono\", \"Consolas\", monospace;\n"
+        "    }\n"
+        "    :root[data-theme=\"sky\"] {\n"
+        "      --bg: #0b1220;\n"
+        "      --bg-2: #0f1b2e;\n"
+        "      --card: rgba(255, 255, 255, 0.06);\n"
+        "      --site-ink: #f4f7ff;\n"
+        "      --site-muted: rgba(244, 247, 255, 0.62);\n"
+        "      --accent: #64b5ff;\n"
+        "      --accent-2: #8fd1ff;\n"
+        "      --edge: rgba(255, 255, 255, 0.18);\n"
+        "      --glow: rgba(100, 181, 255, 0.28);\n"
+        "      --accent-strong: #3f8ed1;\n"
+        "    }\n"
+        "    :root[data-theme=\"crimson\"] {\n"
+        "      --bg: #120a0d;\n"
+        "      --bg-2: #1c0f16;\n"
+        "      --card: rgba(255, 255, 255, 0.06);\n"
+        "      --site-ink: #fff5f7;\n"
+        "      --site-muted: rgba(255, 245, 247, 0.62);\n"
+        "      --accent: #ff6b81;\n"
+        "      --accent-2: #ff9aa9;\n"
+        "      --edge: rgba(255, 255, 255, 0.15);\n"
+        "      --glow: rgba(255, 107, 129, 0.25);\n"
+        "      --accent-strong: #e3546d;\n"
         "    }\n"
         "    * { box-sizing: border-box; }\n"
         "    body {\n"
         "      margin: 0;\n"
-        "      color: var(--ink);\n"
+        "      min-height: 100vh;\n"
+        "      color: #e2e8f0;\n"
         "      background: var(--page-bg);\n"
         "      font-family: var(--body-font);\n"
-        "      line-height: 1.6;\n"
+        "      line-height: 1.7;\n"
+        "      letter-spacing: -0.01em;\n"
+        "      overflow-x: hidden;\n"
+        "    }\n"
+        "    .backdrop {\n"
+        "      position: fixed;\n"
+        "      inset: 0;\n"
+        "      pointer-events: none;\n"
+        "      z-index: 0;\n"
+        "      overflow: hidden;\n"
+        "    }\n"
+        "    .orb {\n"
+        "      position: absolute;\n"
+        "      border-radius: 999px;\n"
+        "      opacity: 0.6;\n"
+        "      mix-blend-mode: screen;\n"
+        "      filter: blur(0px);\n"
+        "      animation: float 16s ease-in-out infinite;\n"
+        "    }\n"
+        "    .orb-1 {\n"
+        "      width: 520px;\n"
+        "      height: 520px;\n"
+        "      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);\n"
+        "      top: -220px;\n"
+        "      left: -160px;\n"
+        "    }\n"
+        "    .orb-2 {\n"
+        "      width: 440px;\n"
+        "      height: 440px;\n"
+        "      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);\n"
+        "      top: 80px;\n"
+        "      right: -120px;\n"
+        "      animation-delay: -4s;\n"
+        "    }\n"
+        "    .orb-3 {\n"
+        "      width: 340px;\n"
+        "      height: 340px;\n"
+        "      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);\n"
+        "      bottom: -180px;\n"
+        "      left: 22%;\n"
+        "      animation-delay: -8s;\n"
         "    }\n"
         "    .page {\n"
-        "      max-width: 980px;\n"
-        "      margin: 48px auto 80px;\n"
-        "      padding: 0 24px;\n"
+        "      position: relative;\n"
+        "      z-index: 1;\n"
+        "      max-width: 1040px;\n"
+        "      margin: 56px auto 96px;\n"
+        "      padding: 0 28px;\n"
         "    }\n"
         "    .masthead {\n"
-        "      border-bottom: 1px solid var(--rule);\n"
-        "      padding-bottom: 16px;\n"
-        "      margin-bottom: 32px;\n"
+        "      display: flex;\n"
+        "      flex-direction: column;\n"
+        "      gap: 12px;\n"
+        "      padding: 18px 22px 22px;\n"
+        "      border: 1px solid rgba(226, 232, 240, 0.18);\n"
+        "      border-radius: 18px;\n"
+        "      background: rgba(10, 14, 20, 0.55);\n"
+        "      backdrop-filter: blur(8px);\n"
+        "      margin-bottom: 36px;\n"
+        "      animation: fadeIn 0.7s ease-out both;\n"
+        "    }\n"
+        "    .masthead-top {\n"
+        "      display: flex;\n"
+        "      align-items: center;\n"
+        "      justify-content: space-between;\n"
+        "      gap: 16px;\n"
         "    }\n"
         "    .kicker {\n"
         "      font-family: var(--ui-font);\n"
         "      font-size: 0.82rem;\n"
-        "      letter-spacing: 0.22em;\n"
+        "      letter-spacing: 0.28em;\n"
         "      text-transform: uppercase;\n"
-        "      color: var(--accent);\n"
+        "      color: rgba(255, 255, 255, 0.68);\n"
+        "    }\n"
+        "    .back-link {\n"
+        "      display: none;\n"
+        "      align-items: center;\n"
+        "      gap: 8px;\n"
+        "      font-family: var(--ui-font);\n"
+        "      font-size: 0.78rem;\n"
+        "      text-decoration: none;\n"
+        "      padding: 6px 12px;\n"
+        "      border-radius: 999px;\n"
+        "      border: 1px solid rgba(255, 255, 255, 0.2);\n"
+        "      color: rgba(255, 255, 255, 0.78);\n"
+        "      background: rgba(15, 23, 42, 0.35);\n"
+        "      transition: all 0.2s ease;\n"
+        "    }\n"
+        "    .back-link:hover {\n"
+        "      color: #fff;\n"
+        "      border-color: rgba(255, 255, 255, 0.45);\n"
+        "      transform: translateY(-1px);\n"
         "    }\n"
         "    .report-title {\n"
         "      font-family: var(--heading-font);\n"
-        "      font-size: 2.4rem;\n"
-        "      margin: 8px 0 6px;\n"
+        "      font-size: clamp(2.2rem, 3.6vw, 3.6rem);\n"
+        "      margin: 0;\n"
+        "      line-height: 1.08;\n"
+        "      letter-spacing: -0.03em;\n"
+        "      color: #f8fafc;\n"
         "    }\n"
         "    .report-deck {\n"
-        "      color: var(--muted);\n"
+        "      color: rgba(226, 232, 240, 0.8);\n"
         "      font-size: 1.05rem;\n"
+        "      max-width: 720px;\n"
         "    }\n"
         "    .article {\n"
         "      background: var(--paper);\n"
-        "      border: 1px solid var(--rule);\n"
-        "      border-radius: 16px;\n"
-        "      padding: 36px 40px;\n"
-        "      box-shadow: 0 18px 45px var(--shadow);\n"
+        "      color: var(--ink);\n"
+        "      border: 1px solid rgba(255, 255, 255, 0.6);\n"
+        "      border-radius: 22px;\n"
+        "      padding: 40px 44px;\n"
+        "      box-shadow: var(--shadow);\n"
+        "      backdrop-filter: blur(8px);\n"
+        "      animation: rise 0.8s ease-out both;\n"
         "    }\n"
+        "    .article > * { animation: rise 0.6s ease-out both; }\n"
+        "    .article > *:nth-child(1) { animation-delay: 0.05s; }\n"
+        "    .article > *:nth-child(2) { animation-delay: 0.1s; }\n"
+        "    .article > *:nth-child(3) { animation-delay: 0.15s; }\n"
+        "    .article > *:nth-child(4) { animation-delay: 0.2s; }\n"
+        "    .article > *:nth-child(5) { animation-delay: 0.25s; }\n"
         "    .article h1, .article h2, .article h3, .article h4 {\n"
         "      font-family: var(--heading-font);\n"
         "      color: var(--ink);\n"
         "    }\n"
         "    .article h1 { font-size: 2rem; margin-top: 0; }\n"
         "    .article h2 {\n"
-        "      font-size: 1.5rem;\n"
-        "      margin-top: 2.4rem;\n"
-        "      padding-top: 0.6rem;\n"
+        "      font-size: 1.55rem;\n"
+        "      margin-top: 2.6rem;\n"
+        "      padding-top: 1rem;\n"
         "      border-top: 1px solid var(--rule);\n"
+        "      position: relative;\n"
+        "      padding-left: 18px;\n"
         "    }\n"
-        "    .article h3 { font-size: 1.2rem; margin-top: 1.6rem; }\n"
+        "    .article h2::before {\n"
+        "      content: '';\n"
+        "      position: absolute;\n"
+        "      left: 0;\n"
+        "      top: 1.45rem;\n"
+        "      width: 8px;\n"
+        "      height: 8px;\n"
+        "      border-radius: 999px;\n"
+        "      background: var(--accent-strong);\n"
+        "    }\n"
+        "    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }\n"
         "    .article p { font-size: 1.05rem; }\n"
         "    .article ul, .article ol { padding-left: 1.4rem; }\n"
         "    .article blockquote {\n"
-        "      border-left: 3px solid var(--accent);\n"
+        "      border-left: 3px solid var(--accent-strong);\n"
         "      margin: 1.6rem 0;\n"
-        "      padding: 0.5rem 1.2rem;\n"
+        "      padding: 0.7rem 1.4rem;\n"
         "      background: var(--paper-alt);\n"
         "      color: var(--muted);\n"
         "      font-style: italic;\n"
@@ -5580,28 +6637,29 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "    .article a {\n"
         "      color: var(--link);\n"
         "      text-decoration: none;\n"
-        "      border-bottom: 1px solid rgba(29, 78, 137, 0.35);\n"
+        "      border-bottom: 1px solid rgba(14, 165, 164, 0.4);\n"
         "    }\n"
         "    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }\n"
         "    .article code {\n"
-        "      background: #f7f6f3;\n"
-        "      padding: 2px 4px;\n"
-        "      border-radius: 6px;\n"
+        "      background: rgba(15, 23, 42, 0.06);\n"
+        "      padding: 2px 6px;\n"
+        "      border-radius: 8px;\n"
         "      font-family: var(--mono-font);\n"
-        "      font-size: 0.95em;\n"
+        "      font-size: 0.92em;\n"
         "    }\n"
         "    .article pre {\n"
-        "      background: #f7f6f3;\n"
-        "      border: 1px solid var(--rule);\n"
-        "      border-radius: 12px;\n"
-        "      padding: 14px;\n"
+        "      background: rgba(15, 23, 42, 0.06);\n"
+        "      border: 1px solid rgba(15, 23, 42, 0.12);\n"
+        "      border-radius: 14px;\n"
+        "      padding: 16px;\n"
         "      overflow-x: auto;\n"
         "      white-space: pre-wrap;\n"
         "      font-family: var(--mono-font);\n"
         "    }\n"
-        "    .article table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; }\n"
-        "    .article th, .article td { border: 1px solid var(--rule); padding: 8px 10px; }\n"
-        "    .article th { background: var(--paper-alt); text-align: left; }\n"
+        "    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }\n"
+        "    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }\n"
+        "    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }\n"
+        "    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }\n"
         "    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }\n"
         "    .misc-block {\n"
         "      font-size: 0.85rem;\n"
@@ -5612,10 +6670,11 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "    .misc-block li { margin: 0.2rem 0; }\n"
         "    .report-figure {\n"
         "      margin: 1.4rem 0;\n"
-        "      padding: 0.8rem 1rem;\n"
+        "      padding: 0.9rem 1.1rem;\n"
         "      border: 1px solid var(--rule);\n"
-        "      border-radius: 12px;\n"
-        "      background: var(--paper-alt);\n"
+        "      border-radius: 14px;\n"
+        "      background: rgba(248, 250, 252, 0.8);\n"
+        "      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);\n"
         "    }\n"
         "    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }\n"
         "    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }\n"
@@ -5623,7 +6682,7 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "    .viewer-overlay {\n"
         "      position: fixed;\n"
         "      inset: 0;\n"
-        "      background: rgba(19, 18, 16, 0.35);\n"
+        "      background: rgba(6, 10, 17, 0.45);\n"
         "      opacity: 0;\n"
         "      pointer-events: none;\n"
         "      transition: opacity 0.2s ease;\n"
@@ -5635,10 +6694,10 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "      right: 20px;\n"
         "      width: min(560px, 92vw);\n"
         "      height: calc(100% - 40px);\n"
-        "      background: #ffffff;\n"
-        "      border: 1px solid var(--rule);\n"
-        "      border-radius: 16px;\n"
-        "      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);\n"
+        "      background: var(--paper-strong);\n"
+        "      border: 1px solid rgba(15, 23, 42, 0.12);\n"
+        "      border-radius: 18px;\n"
+        "      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);\n"
         "      transform: translateX(120%);\n"
         "      transition: transform 0.25s ease;\n"
         "      display: flex;\n"
@@ -5664,26 +6723,49 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "    }\n"
         "    .viewer-close {\n"
         "      border: none;\n"
-        "      background: #f4efe6;\n"
-        "      color: var(--ink);\n"
+        "      background: rgba(15, 23, 42, 0.08);\n"
+        "      color: #0f172a;\n"
         "      border-radius: 999px;\n"
         "      width: 28px;\n"
         "      height: 28px;\n"
         "      cursor: pointer;\n"
         "    }\n"
         "    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }\n"
-        "    @media (max-width: 720px) {\n"
-        "      .page { margin: 32px auto 56px; }\n"
-        "      .article { padding: 24px; }\n"
-        "      .report-title { font-size: 1.9rem; }\n"
+        "    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }\n"
+        "    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }\n"
+        "    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }\n"
+        "    @media (max-width: 860px) {\n"
+        "      .page { margin: 40px auto 64px; padding: 0 20px; }\n"
+        "      .article { padding: 28px; }\n"
+        "      .report-deck { font-size: 1rem; }\n"
+        "    }\n"
+        "    @media (max-width: 600px) {\n"
+        "      .report-title { font-size: 2rem; }\n"
+        "      .article { padding: 22px; }\n"
+        "      .article h2 { font-size: 1.35rem; }\n"
+        "    }\n"
+        "    @media (prefers-reduced-motion: reduce) {\n"
+        "      * { animation: none !important; transition: none !important; }\n"
         "    }\n"
         f"{theme_css or ''}\n"
+        "    body { background: var(--page-bg) !important; color: var(--site-ink); }\n"
+        "    .masthead { color: #f8fafc; }\n"
+        "    .report-deck { color: rgba(226, 232, 240, 0.82); }\n"
+        "    .kicker { color: rgba(255, 255, 255, 0.7); }\n"
         "  </style>\n"
         "</head>\n"
         f"<body class=\"{template_class.strip()}\">\n"
+        "  <div class=\"backdrop\">\n"
+        "    <span class=\"orb orb-1\"></span>\n"
+        "    <span class=\"orb orb-2\"></span>\n"
+        "    <span class=\"orb orb-3\"></span>\n"
+        "  </div>\n"
         "  <div class=\"page\">\n"
         "    <header class=\"masthead\">\n"
-        "      <div class=\"kicker\">Federlicht</div>\n"
+        "      <div class=\"masthead-top\">\n"
+        "        <div class=\"kicker\">Federlicht</div>\n"
+        "        <a class=\"back-link\" id=\"back-link\" href=\"#\">목록으로</a>\n"
+        "      </div>\n"
         f"      <div class=\"report-title\">{safe_title}</div>\n"
         "      <div class=\"report-deck\">Research review and tech survey</div>\n"
         "    </header>\n"
@@ -5704,6 +6786,23 @@ def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, t
         "  </aside>\n"
         "  <script>\n"
         "    (function() {\n"
+        "      const params = new URLSearchParams(window.location.search);\n"
+        "      const themeParam = params.get('theme');\n"
+        "      const storedTheme = localStorage.getItem('federlicht.theme');\n"
+        "      const theme = themeParam || storedTheme;\n"
+        "      if (theme) {\n"
+        "        document.documentElement.dataset.theme = theme;\n"
+        "        localStorage.setItem('federlicht.theme', theme);\n"
+        "      }\n"
+        "      const backLink = document.getElementById('back-link');\n"
+        "      if (backLink) {\n"
+        "        const path = window.location.pathname.replace(/\\\\/g, '/');\n"
+        "        const idx = path.lastIndexOf('/runs/');\n"
+        "        if (idx !== -1) {\n"
+        "          backLink.href = `${path.slice(0, idx)}/index.html`;\n"
+        "          backLink.style.display = 'inline-flex';\n"
+        "        }\n"
+        "      }\n"
         "      const panel = document.getElementById('viewer-panel');\n"
         "      const overlay = document.getElementById('viewer-overlay');\n"
         "      const frame = document.getElementById('viewer-frame');\n"
@@ -6012,6 +7111,41 @@ def extract_pdf_captions(
         import pdfplumber  # type: ignore
     except Exception:
         return {}
+    captions: dict[int, list[str]] = {}
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            if pages:
+                page_indices = sorted({page - 1 for page in pages if page > 0})
+                if max_pages > 0:
+                    page_indices = page_indices[:max_pages]
+            else:
+                page_count = min(len(pdf.pages), max_pages) if max_pages > 0 else len(pdf.pages)
+                page_indices = list(range(page_count))
+            for page_index in page_indices:
+                if page_index < 0 or page_index >= len(pdf.pages):
+                    continue
+                try:
+                    text = pdf.pages[page_index].extract_text() or ""
+                except Exception:
+                    continue
+                lines = [line.strip() for line in text.splitlines() if line.strip()]
+                if not lines:
+                    continue
+                found: list[str] = []
+                for idx, line in enumerate(lines):
+                    if not _FIGURE_CAPTION_RE.match(line):
+                        continue
+                    caption = line
+                    if idx + 1 < len(lines) and len(caption) < 140:
+                        follow = lines[idx + 1]
+                        if follow and not _FIGURE_CAPTION_RE.match(follow):
+                            caption = f"{caption} {follow}"
+                    found.append(caption)
+                if found:
+                    captions[page_index + 1] = found
+    except Exception:
+        return {}
+    return captions
 
 
 def should_expand_appendix(section_text: str, output_format: str) -> bool:
@@ -6126,41 +7260,6 @@ def ensure_appendix_contents(
         new_section = f"{header}\n\n{merged_body}\n"
         return report_text[:start] + new_section + report_text[end:]
     return report_text
-    captions: dict[int, list[str]] = {}
-    try:
-        with pdfplumber.open(pdf_path) as pdf:
-            if pages:
-                page_indices = sorted({page - 1 for page in pages if page > 0})
-                if max_pages > 0:
-                    page_indices = page_indices[:max_pages]
-            else:
-                page_count = min(len(pdf.pages), max_pages) if max_pages > 0 else len(pdf.pages)
-                page_indices = list(range(page_count))
-            for page_index in page_indices:
-                if page_index < 0 or page_index >= len(pdf.pages):
-                    continue
-                try:
-                    text = pdf.pages[page_index].extract_text() or ""
-                except Exception:
-                    continue
-                lines = [line.strip() for line in text.splitlines() if line.strip()]
-                if not lines:
-                    continue
-                found: list[str] = []
-                for idx, line in enumerate(lines):
-                    if not _FIGURE_CAPTION_RE.match(line):
-                        continue
-                    caption = line
-                    if idx + 1 < len(lines) and len(caption) < 140:
-                        follow = lines[idx + 1]
-                        if follow and not _FIGURE_CAPTION_RE.match(follow):
-                            caption = f"{caption} {follow}"
-                    found.append(caption)
-                if found:
-                    captions[page_index + 1] = found
-    except Exception:
-        return {}
-    return captions
 
 
 def build_figure_plan(
@@ -6330,6 +7429,7 @@ def write_figure_candidates(
     if not select_path.exists():
         select_path.write_text(
             "# Add one candidate_id per line (e.g., fig-001)\n"
+            "# Optional: add a custom caption after | (e.g., fig-001 | My caption)\n"
             "# Lines starting with '#' are ignored.\n",
             encoding="utf-8",
         )
@@ -6392,11 +7492,17 @@ def select_figures(
         return []
     raw = selection_path.read_text(encoding="utf-8", errors="replace").splitlines()
     tokens: set[str] = set()
+    captions: dict[str, str] = {}
     for line in raw:
-        cleaned = line.split("|", 1)[0].strip()
-        if not cleaned or cleaned.startswith("#"):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        parts = [part.strip() for part in line.split("|", 1)]
+        cleaned = parts[0]
+        if not cleaned:
             continue
         tokens.add(cleaned)
+        if len(parts) > 1 and parts[1]:
+            captions[cleaned] = parts[1]
     if not tokens:
         return []
     selected: list[dict] = []
@@ -6404,11 +7510,31 @@ def select_figures(
         candidate_id = entry.get("candidate_id")
         img_path = entry.get("image_path")
         if candidate_id in tokens:
+            override = captions.get(candidate_id)
+            if override:
+                entry["caption"] = override
             selected.append(entry)
             continue
         if img_path in tokens or (isinstance(img_path, str) and img_path.lstrip("./") in tokens):
+            override = captions.get(img_path) or captions.get(img_path.lstrip("./")) if isinstance(img_path, str) else None
+            if override:
+                entry["caption"] = override
             selected.append(entry)
     return selected
+
+
+def auto_select_figures(entries: list[dict], prefer_recommended: bool = False) -> list[dict]:
+    if not entries:
+        return []
+    if prefer_recommended:
+        recommended = [
+            entry
+            for entry in entries
+            if str(entry.get("vision_recommended") or "").strip().lower() == "yes"
+        ]
+        if recommended:
+            return recommended
+    return entries
 
 
 def render_figure_block(
@@ -6522,6 +7648,38 @@ def insert_figures_by_section(
             callout_block = f"{callout}\n\n" if callout else ""
             rebuilt = rebuilt.rstrip() + "\n\n## Figures\n" + callout_block + block + "\n"
     return rebuilt
+
+
+def generate_figures_preview(
+    report_path: Path,
+    run_dir: Path,
+    archive_dir: Path,
+    supporting_dir: Optional[Path],
+    notes_dir: Path,
+    output_format: str,
+    max_per_pdf: int,
+    min_area: int,
+    renderer: str,
+    dpi: int,
+    vision_model_name: Optional[str],
+) -> Optional[Path]:
+    report_text = report_path.read_text(encoding="utf-8", errors="replace")
+    report_dir = report_path.resolve().parent
+    candidates = build_figure_plan(
+        report_text,
+        run_dir,
+        archive_dir,
+        supporting_dir,
+        output_format,
+        max_per_pdf,
+        min_area,
+        renderer,
+        dpi,
+        notes_dir,
+        vision_model_name,
+    )
+    viewer_dir = run_dir / "report_views"
+    return write_figure_candidates(candidates, notes_dir, run_dir, report_dir, viewer_dir)
 
 
 def extract_used_sources(text: Optional[str]) -> set[str]:
@@ -7140,15 +8298,35 @@ def run_pipeline(
         selection_path = Path(args.figures_select) if args.figures_select else (notes_dir / "figures_selected.txt")
         selection_path = selection_path if selection_path.is_absolute() else (run_dir / selection_path)
         if args.figures_mode == "auto":
-            figure_entries = candidates
+            figure_entries = auto_select_figures(candidates)
         else:
             figure_entries = select_figures(candidates, selection_path)
             if not figure_entries:
-                print(
-                    "No figures selected. Add candidate IDs to "
-                    f"{selection_path.relative_to(run_dir).as_posix()} and rerun.",
-                    file=sys.stderr,
+                argv_flags = set(getattr(args, "_cli_argv", []))
+                explicit_figures = "--figures" in argv_flags
+                explicit_mode = any(
+                    flag.startswith("--figures-mode") or flag.startswith("--figures-select")
+                    for flag in argv_flags
                 )
+                if not candidates:
+                    print(
+                        "No figure candidates found. Ensure the report cites PDF paths "
+                        "(e.g., ./archive/.../pdf/...) and rerun with --figures.",
+                        file=sys.stderr,
+                    )
+                elif explicit_figures and not explicit_mode:
+                    figure_entries = auto_select_figures(candidates, prefer_recommended=True)
+                    print(
+                        "No figures selected; auto-selected candidates because --figures "
+                        "was explicitly set. Use --figures-mode select to require manual selection.",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        "No figures selected. Add candidate IDs to "
+                        f"{selection_path.relative_to(run_dir).as_posix()} and rerun.",
+                        file=sys.stderr,
+                    )
         if figure_entries:
             for idx, entry in enumerate(figure_entries, start=1):
                 entry["figure_number"] = idx
@@ -7199,7 +8377,20 @@ def run_pipeline(
     end_stamp = dt.datetime.now()
     elapsed = time.monotonic() - start_timer
     meta_path = notes_dir / "report_meta.json"
-    tags_list = parse_tags(args.tags)
+    report_summary = derive_report_summary(report, output_format)
+    auto_tags_enabled = False
+    if args.no_tags:
+        tags_list = []
+    else:
+        raw_tags = (args.tags or "").strip()
+        if raw_tags.lower() == "auto":
+            auto_tags_enabled = True
+            tags_list = []
+        else:
+            tags_list = parse_tags(args.tags)
+            auto_tags_enabled = not tags_list
+    if auto_tags_enabled:
+        tags_list = build_auto_tags(report_prompt, title, report_summary, max_tags=5)
     meta = {
         "generated_at": end_stamp.strftime("%Y-%m-%d %H:%M:%S"),
         "started_at": start_stamp.strftime("%Y-%m-%d %H:%M:%S"),
@@ -7212,6 +8403,7 @@ def run_pipeline(
         "quality_strategy": args.quality_strategy if args.quality_iterations > 0 else "none",
         "template": template_spec.name,
         "title": title,
+        "summary": report_summary,
         "output_format": output_format,
         "language": language,
         "author": author_name,
@@ -7219,6 +8411,10 @@ def run_pipeline(
         "free_format": args.free_format,
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
     }
+    if final_path:
+        meta["report_stem"] = final_path.stem
+    elif out_path:
+        meta["report_stem"] = out_path.stem
     if result.workflow_summary:
         meta["stage_workflow"] = list(result.workflow_summary)
     if result.workflow_path:
@@ -7247,7 +8443,6 @@ def run_pipeline(
         notes_dir,
         preview_path,
     )
-    report_summary = derive_report_summary(report, output_format)
     report = f"{report.rstrip()}{format_metadata_block(meta, output_format)}"
     preview_text = report
     if output_format == "html":
@@ -7431,6 +8626,80 @@ def main() -> int:
         )
         print(f"Wrote site manifest: {site_root / 'manifest.json'}")
         print(f"Wrote site index: {index_path}")
+        return 0
+    if args.generate_prompt:
+        if not args.run:
+            print("ERROR: --generate-prompt requires --run.", file=sys.stderr)
+            return 2
+        output_format, check_model = prepare_runtime(args, config_overrides)
+        create_deep_agent = resolve_create_deep_agent(None)
+        prompt_args = argparse.Namespace(**vars(args))
+        prompt_args.stages = "scout"
+        prompt_args.skip_stages = None
+        prompt_args.alignment_check = False
+        prompt_args.web_search = False
+        prompt_args.template_adjust = False
+        prompt_args.quality_iterations = 0
+        pipeline_context = PipelineContext(args=prompt_args, output_format=output_format, check_model=check_model)
+        orchestrator = ReportOrchestrator(pipeline_context, sys.modules[__name__], agent_overrides, create_deep_agent)
+        try:
+            result = orchestrator.run(allow_partial=True)
+        except Exception as exc:
+            print(f"ERROR: failed to run scout for prompt generation: {exc}", file=sys.stderr)
+            return 2
+        prompt_text = generate_prompt_from_scout(result, args, agent_overrides or {}, create_deep_agent)
+        output_path = resolve_prompt_output_path(args, result.run_dir, result.query_id)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(prompt_text, encoding="utf-8")
+        print(f"Wrote prompt: {output_path}")
+        return 0
+    if args.figures_preview:
+        if not args.run:
+            print("ERROR: --figures-preview requires --run.", file=sys.stderr)
+            return 2
+        if not args.output:
+            print("ERROR: --figures-preview requires --output pointing to an existing report.", file=sys.stderr)
+            return 2
+        report_path = Path(args.output)
+        if not report_path.exists():
+            print(f"ERROR: report not found for --figures-preview: {report_path}", file=sys.stderr)
+            return 2
+        try:
+            archive_dir, run_dir, _ = resolve_archive(Path(args.run))
+        except FileNotFoundError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        supporting_dir = None
+        if args.supporting_dir:
+            candidate = Path(args.supporting_dir)
+            if not candidate.is_absolute():
+                candidate = run_dir / candidate
+            if candidate.exists():
+                supporting_dir = candidate
+            else:
+                print(
+                    f"Warning: supporting dir not found, ignoring: {candidate}",
+                    file=sys.stderr,
+                )
+        notes_dir = resolve_notes_dir(run_dir, args.notes_dir)
+        output_format = choose_format(str(report_path))
+        preview_path = generate_figures_preview(
+            report_path,
+            run_dir,
+            archive_dir,
+            supporting_dir,
+            notes_dir,
+            output_format,
+            args.figures_max_per_pdf,
+            args.figures_min_area,
+            args.figures_renderer,
+            args.figures_dpi,
+            args.model_vision,
+        )
+        if preview_path:
+            print(f"Wrote figure preview: {preview_path}")
+        else:
+            print("No figure candidates found.", file=sys.stderr)
         return 0
     if not args.run:
         print("ERROR: --run is required unless --preview-template is used.", file=sys.stderr)

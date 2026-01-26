@@ -1,0 +1,10 @@
+[2026-01-27 00:14:18] JOB START: 20260126_arxiv-3d_molgen.txt date=2026-01-26 days=30 max_results=8
+[2026-01-27 00:14:18] TAVILY EXTRACT: https://arxiv.org/pdf/2601.16955
+[2026-01-27 00:14:24] LINKEDIN EMBED EXTRACT: https://www.linkedin.com/feed/update/urn:li:activity:7421560260718501888/
+[2026-01-27 00:14:25] ARXIV ID FETCH: 2601.16955
+[2026-01-27 00:14:26] WARN citations lookup failed arxiv_id=2601.16955v1 err=HTTPError('400 Client Error: Bad Request for url: https://api.openalex.org/works?api_key=6ndeGuzS4ekLd9O7DvxEpE&filter=arxiv%3A2601.16955')
+[2026-01-27 00:14:26] ARXIV PDF DOWNLOAD: https://arxiv.org/pdf/2601.16955v1 -> 2601.16955v1.pdf
+[2026-01-27 00:14:27] PDF->TEXT: 2601.16955v1.pdf
+[2026-01-27 00:14:28] ARXIV SRC DOWNLOAD: 2601.16955
+[2026-01-27 00:14:28] ARXIV SRC EXTRACT: 2601.16955.tar.gz
+[2026-01-27 00:14:28] JOB END

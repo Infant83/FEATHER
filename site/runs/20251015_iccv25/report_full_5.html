@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ICCV 2025 분석 보고서</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.18);
+      margin-bottom: 36px;
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+    .report-deck {
+      color: rgba(226, 232, 240, 0.8);
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent-strong);
+      margin: 1.6rem 0;
+      padding: 0.7rem 1.4rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(14, 165, 164, 0.4);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: rgba(15, 23, 42, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: var(--mono-font);
+      font-size: 0.92em;
+    }
+    .article pre {
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 17, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: var(--paper-strong);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media (max-width: 860px) {
+      .page { margin: 40px auto 64px; padding: 0 20px; }
+      .article { padding: 28px; }
+      .report-deck { font-size: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .report-title { font-size: 2rem; }
+      .article { padding: 22px; }
+      .article h2 { font-size: 1.35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="template-default">
+  <div class="backdrop">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="kicker">Federlicht</div>
+      <div class="report-title">ICCV 2025 분석 보고서</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>ICCV 2025 분석 보고서</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-26 22:19</p>
+<h2>Executive Summary</h2>
+<p>본 보고서는 ICCV 2025에 관한 주요 정보와 최신 동향을 분석하고, 이에 따른 연구 방향과 잠재적 리스크를 제시한다. 특히, 새로운 연구 동향과 기법들이 컴퓨터 비전 분야에서의 발전에 중대한 영향을 미치고 있으며, 다수의 연구 결과가 해당 분야의 발전에 기여할 것으로 예상된다. 이를 기반으로, ICCV 2025에서 발표된 주요 논문들은 고도의 정확성과 효율성을 달성하기 위한 혁신적인 접근법을 제안하고 있다. 이러한 변화는 앞으로의 연구 방향에 큰 시사점을 제공하며, 연구자들이 주목해야 할 여러 가지 기회를 열어줄 것이다. 그러나, 데이터의 부족이나 연구의 편향성 같은 잠재적 리스크도 존재하기 때문에, 이러한 요소들을 철저히 검토하고 고려해야 한다.</p>
+<h2>Scope &amp; Methodology</h2>
+<p>본 보고서는 ICCV 2025에 투고된 논문, 학회 발표 자료 및 관련 웹사이트에서 수집된 자료를 기반으로 작성되었다. 주요 출처로는 ICCV 공식 웹사이트, 논문 저장소, 관련 연구소들의 사이트가 포함됐다. 핵심 연구 논문에 대한 자세한 분석과 함께, 관련 데이터 세트 및 연구 결과를 종합하여 주요 동향과 발견사항을 도출했다. 정보의 신뢰성을 검증하기 위해 각 자료의 출처를 명시함으로써, 연구의 정확성을 유지하고자 했다.</p>
+<h2>Key Findings</h2>
+<ol>
+<li><strong>높은 성능의 비전-언어 모델</strong>: 최근 비전-언어 모델이 Remote Sensing에 적용되면서 높은 성능을 보였다 (<a href="http://arxiv.org/abs/2505.14361" target="_blank" rel="noopener">[1]</a>).</li>
+<li><strong>제안된 변환기 기반의 예측 모델</strong>: 변환기를 기반으로 한 새로운 접근법이 궤적 예측에 적용되었으며, 이로 인해 예측 정확도가 향상되었다 (<a href="https://doi.org/10.1038/s41598-025-97244-4" target="_blank" rel="noopener">[2]</a>).</li>
+<li><strong>OpenCV의 활용</strong>: OpenCV가 다양한 컴퓨터 비전 응용 프로그램에서 사용되고 있으며, 이에 관한 연구 결과들이 다수 발표되었다 (<a href="https://doi.org/10.36948/ijfmr.2025.v07i03.44280" target="_blank" rel="noopener">[3]</a>).</li>
+<li><strong>사전 훈련된 모델의 적용 증가</strong>: 최근 연구들은 사전 훈련된 모델을 활용하여 학습 시간을 단축하고 성능을 향상시키고 있다.</li>
+<li><strong>증강 현실과 가상 현실의 통합</strong>: 컴퓨터 비전 기술이 증강 현실 및 가상 현실 분야에서 더욱 각광받고 있으며, 이와 관련된 연구 활동이 활발하다.</li>
+</ol>
+<h2>Trends &amp; Implications</h2>
+<p>최근 조사에서 드러난CI 기술의 발전은 앞으로의 연구와 개발에 중대한 영향을 미칠 것이다. 높은 정확성을 제공하는 새로운 알고리즘과 기법들이 계속해서 발전하면서, 컴퓨터 비전 분야의 다양한 어플리케이션에서 활용될 것이며, 이는 기업 및 연구기관에서의 투자로 이어질 가능성이 크다. 따라서, 연구자와 전문가들은 이런 새로운 기법을 접목하여 경쟁력을 강화할 필요가 있다.</p>
+<h2>Risks &amp; Gaps</h2>
+<p>연구 데이터의 부족과 특정 분야에 대한 편향이 문제점으로 지적된다. 데이터 세트의 다양성이 결여될 경우, 알고리즘의 일반화 능력이 제한될 수 있으며, 결과적으로 연구 성과의 유효성에 의문을 초래할 수 있다. 또한, 최신 경향 중 일부는 특정 기술 또는 방법론에 과도하게 의존하고 있을 수 있으며, 이는 장기적으로 지속 가능성에 악영향을 미칠 수 있다.</p>
+<h2>Critics</h2>
+<h3>반대 의견</h3>
+<p>ICCV 2025와 관련된 연구에서 나타난 일부 비판적인 의견들은 다음과 같다.
+- <strong>편향된 데이터 문제</strong>: 특정 데이터 세트에 대한 의존성이 다수의 연구 결과에 영향을 미치고 있으며, 이는 모델의 일반화 능력을 저해할 수 있다.
+- <strong>연구의 복잡성</strong>: 일부 연구자들은 새로운 기술이 너무 복잡해 연구자들이 이를 완전히 이해하고 활용하기 어렵다고 지적하고 있다.
+- <strong>사용자 친화성 부족</strong>: 많은 연구 결과들이 이론적인 접근에 집중하고 있어, 실제 어플리케이션에서의 활용 가능성은 제한될 수 있다.</p>
+<h2>Appendix</h2>
+<h3>1. 근거/아카이브 아티팩트 링크 목록</h3>
+<ul>
+<li><a href="https://www.amazon.science/conferences-and-events/iccv-2025" target="_blank" rel="noopener">[4]</a></li>
+<li><a href="https://openaccess.thecvf.com/ICCV2025?day=all" target="_blank" rel="noopener">[5]</a></li>
+<li><a href="https://www.mmlab-ntu.com/conference/iccv2025/index.html" target="_blank" rel="noopener">[6]</a></li>
+</ul>
+<h3>2. 방법·재현성 체크리스트</h3>
+<ul>
+<li>이용된 데이터 세트의 출처 및 공신력 여부 확인</li>
+<li>동일한 설정 하에 실험 결과 재현 가능 여부 점검</li>
+<li>다양한 환경에서의 알고리즘 성능 평가</li>
+</ul>
+<h3>3. 범위/한계 요약</h3>
+<ul>
+<li>본 연구는 ICCV 2025에서 발표된 일부 자료에 한정되며, 전체적인 방향성을 제시하기에는 한계가 있을 수 있다.</li>
+<li>특정 기법에 대한 심층 분석이 부족해 전체적인 기술 발전을 망라하지 못할 수도 있다.</li>
+</ul>
+<h2>References</h2>
+<ol>
+<li>Vision-Language Modeling Meets Remote Sensing: <i>Models, datasets, and perspectives</i> — <a href="http://arxiv.org/abs/2505.14361" target="_blank" rel="noopener">link</a> <small>citations: 5</small></li>
+<li>Trajectory prediction via proposal guided transformer with out way attention — <a href="https://doi.org/10.1038/s41598-025-97244-4" target="_blank" rel="noopener">link</a> <small>citations: 4</small></li>
+<li>OpenCV for Computer Vision Applications — <a href="https://doi.org/10.36948/ijfmr.2025.v07i03.44280" target="_blank" rel="noopener">link</a> <small>citations: 59</small></li>
+<li>ICCV 2025 - Amazon Science — <a href="https://www.amazon.science/conferences-and-events/iccv-2025" target="_blank" rel="noopener">link</a></li>
+<li>All Papers - ICCV 2025 Open Access Repository — <a href="https://openaccess.thecvf.com/ICCV2025?day=all" target="_blank" rel="noopener">link</a></li>
+<li>ICCV 2025 Accepted Papers - MMLab@NTU — <a href="https://www.mmlab-ntu.com/conference/iccv2025/index.html" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-26 22:19:07</li>
+<li>Duration: 00:09:17 (557.52s)</li>
+<li>Model: gpt-4o-mini</li>
+<li>Vision model: gpt-4o</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: default</li>
+<li>Language: Korean</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="../../../examples/runs/20251015_iccv25/report_views/report_run_overview.md-40ef65a9.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_run_overview.md-40ef65a9.html" data-raw="../../../examples/runs/20251015_iccv25/report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="../../../examples/runs/20251015_iccv25/report_views/report_run_overview_report_full_5.md-51e57bb1.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_run_overview_report_full_5.md-51e57bb1.html" data-raw="../../../examples/runs/20251015_iccv25/report/run_overview_report_full_5.md" class="viewer-link">./report/run_overview_report_full_5.md</a></li>
+<li>Report workflow: <a href="../../../examples/runs/20251015_iccv25/report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="../../../examples/runs/20251015_iccv25/report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/archive_20251015_iccv25-index.md-c7bf6010.html" data-raw="../../../examples/runs/20251015_iccv25/archive/20251015_iccv25-index.md" class="viewer-link">./archive/20251015_iccv25-index.md</a></li>
+<li>Instruction file: <a href="../../../examples/runs/20251015_iccv25/report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/instruction_20251015_iccv25.txt-b127a44f.html" data-raw="../../../examples/runs/20251015_iccv25/instruction/20251015_iccv25.txt" class="viewer-link">./instruction/20251015_iccv25.txt</a></li>
+<li>Report prompt: <a href="../../../examples/runs/20251015_iccv25/report_views/instruction_report_prompt_report_full_5.txt-a49bdb0e.html" data-viewer="../../../examples/runs/20251015_iccv25/report_views/instruction_report_prompt_report_full_5.txt-a49bdb0e.html" data-raw="../../../examples/runs/20251015_iccv25/instruction/report_prompt_report_full_5.txt" class="viewer-link">./instruction/report_prompt_report_full_5.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

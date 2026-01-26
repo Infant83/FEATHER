@@ -159,7 +159,21 @@ Default workflow is two-stage:
 1) Run once to generate candidates and a preview (`report_views/figures_preview.html`).
 2) Add selected candidate IDs to `report_notes/figures_selected.txt` and rerun.
 
-Use `--figures-mode auto` to insert all candidates without manual selection.
+Default is `--figures-mode auto` (insert all candidates). Use `select` to require manual selection.
+
+Optional: add a custom caption in the selection file:
+```
+fig-001 | Overview of the model architecture
+fig-002 | Dataset distribution summary
+```
+
+Preview-only (no report regeneration):
+```bash
+federlicht \
+  --run ./examples/runs/20260104_oled \
+  --output ./examples/runs/20260104_oled/report_full.html \
+  --figures-preview
+```
 
 ```bash
 federlicht \
@@ -178,8 +192,9 @@ Options:
 - `--figures-min-area`: discard small icons/logos (area in pixels squared).
 - `--figures-renderer`: render vector pages when embedded images are absent (`auto`, `pdfium`, `poppler`, `mupdf`, `none`).
 - `--figures-dpi`: render quality for vector pages.
-- `--figures-mode`: `select` (default) or `auto`.
+- `--figures-mode`: `auto` (default) or `select`.
 - `--figures-select`: path to a selection file (defaults to `report_notes/figures_selected.txt`).
+- `--figures-preview`: generate `figures_preview.html` from an existing report and exit.
 - `--model-vision`: optional vision model for figure analysis (uses `OPENAI_BASE_URL_VISION` / `OPENAI_API_KEY_VISION` if set).
 
 Requires `pymupdf` (already included in `.[all]`). For vector-only PDFs, install:

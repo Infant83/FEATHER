@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0
+- Add `--generate-prompt` to scout a run and emit an editable report prompt (saved to `--output` or `instruction/`).
+- Add a prompt generator system prompt with Template/Depth/Language headers and scoped guidance for evidence gaps.
+- Record report summaries in `report_meta.json` and reuse them during `--site-refresh`.
+- Make `--site-refresh` incremental: reuse manifest entries when report `mtime/size` are unchanged to avoid full HTML parsing.
+- Add lazy rendering to the site index with “더 보기” pagination for Latest/Archive.
+- Add search + template/lang/tag filters that also use lazy rendering for results.
+- Enrich site manifest entries with `run`, `report_stem`, `source_mtime`, and `source_size`.
+- Add PDF auto-extend reading (`--pdf-extend-pages`, `--pdf-extend-min-chars`) and emit truncation notes when not all pages are scanned.
+- Allow `--max-pdf-pages 0` to attempt full PDF reads (documented in `--help`).
+- Update API schema to include PDF extension controls.
+
 ## 0.6.0
 - Split report generation into a reporting orchestrator with subagent stages to reduce `report.py` monolith and isolate pipeline logic.
 - Move agent prompt builders into a dedicated reporting module for cleaner reuse and customization.
