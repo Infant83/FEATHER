@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/arxiv/text/2412.10149v2.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/arxiv/text/2412.10149v2.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> Learning Radical Excited States from Sparse Data</p><p><strong>Authors:</strong> Jingkun Shen, Lucy E. Walker, Kevin Ma, James D. Green, Hugo Bronstein, Keith T. Butler, Timothy J. H. Hele</p><p><strong>Published:</strong> 2024-12-13T14:07:19+00:00</p><p><strong>Source:</strong> <a href="http://arxiv.org/abs/2412.10149v2">http://arxiv.org/abs/2412.10149v2</a></p><p><strong>PDF:</strong> <a href="../archive/arxiv/pdf/2412.10149v2.pdf">./archive/arxiv/pdf/2412.10149v2.pdf</a></p><p><strong>Summary:</strong><br />Emissive organic radicals are currently of great interest for their potential use in the next generation of highly efficient organic light emitting diode (OLED) devices and as molecular qubits. However, simulating their optoelectronic properties is challenging, largely due to spin-contamination and the multireference character of their excited states. Here we present a data-driven approach where, for the first time, the excited electronic states of organic radicals are learned directly from experimental excited state data, using a much smaller amount of data than typically required by Machine Learning. We adopt ExROPPP, a fast and spin-pure semiempirical method for calculation of the excited states of radicals, as a surrogate physical model for which we learn the optimal set of parameters. To achieve this we compile the largest known database of organic radical geometries and their UV-vis data, which we use to train our model. Our trained model gives Root Mean Square (RMS) and mean absolute errors for excited state energies of 0.24 and 0.16 eV respectively, improving hugely over ExROPPP with literature parameters. Four new organic radicals are synthesised and we test the model on their spectra, finding even lower errors and similar correlation as for the testing set. This model paves the way for the high throughput discovery of next generation radical-based optoelectronics.</p></div><pre>
+
+===== PAGE 1 =====
+arXiv:2412.10149v2  [physics.chem-ph]  12 Jun 2025
+Journal Name
+Learning Radical Excited States from Sparse Data†
+Jingkun Shen,a,‡ Lucy E. Walker,b,c,‡ Kevin Ma,a,‡ James D. Green,a,‡ Hugo Bronstein,b,c
+Keith T. Butlera and Timothy J. H. Hele∗a
+Emissive organic radicals are currently of great interest for their potential use in the next generation
+of highly efficient organic light emitting diode (OLED) devices and as molecular qubits. However,
+simulating their optoelectronic properties is challenging, largely due to spin-contamination and the
+multireference character of their excited states. Here we present a data-driven approach where, for
+the first time, the excited electronic states of organic radicals are learned directly from experimental
+excited state data, using a much smaller amount of data than typically required by Machine Learning.
+We adopt ExROPPP, a fast and spin-pure semiempirical method for calculation of the excited states
+of radicals, as a surrogate physical model for which we learn the optimal set of parameters. To achieve
+this we compile the largest known database of organic radical geometries and their UV-vis data, which
+we use to train our model. Our trained model gives Root Mean Square (RMS) and mean absolute
+errors for excited state energies of 0.24 and 0.16 eV respectively, improving hugely over ExROPPP
+with literature parameters. Four new organic radicals are synthesised and we test the model on their
+spectra, finding even lower errors and similar correlation as for the testing set. This model paves the
+way for the high throughput discovery of next generation radical-based optoelectronics.
+1
+Introduction
+Recent years have shown a great interest in radicals for organic
+light emitting diodes (OLEDs), which display internal quantum
+efficiencies (IQE) of near 100% and intense emission in the deep
+red, NIR and IR spectral regions, features which are unusual and
+highly desirable. 1–8 These radical OLEDs, based on organic mono-
+radicals, offer an alternative for the next generation of highly ef-
+ficient lighting. Furthermore, the optical readout of the quartet
+state of some radicals has potential applications in quantum infor-
+mation science and paves the way for next-generation molecular
+qubits. 9 However, historically many organic radicals have been
+non-emissive, such that trial-and-error exploration of chemical
+space is inefficient, and there is therefore a large and unmet need
+for a method which facilitates the fast, accurate and spin-pure cal-
+culation of the low-lying excited states of a wide variety of radical
+molecules. Such a computational method would also be invalu-
+able for the high-throughput screening of radicals for their UV-
+visible spectra. This work focuses on organic monoradicals, i.e.
+a Department of Chemistry, Christopher Ingold Building, University College London,
+WC1H 0AJ, UK.
+∗E-mail: t.hele@ucl.ac.uk
+b Yusuf Hamied Department of Chemistry, University of Cambridge, CB2 1EW, UK.
+c Department of Physics, Cavendish Laboratory, Cambridge University, Cambridge CB3
+0HF, UK.
+‡These authors contributed equally.
+† Supplementary Information available: [details of any supplementary information
+available should be included here]. See DOI: 00.0000/00000000.
+molecules with only one unpaired electron, however, it should be
+noted that the excited state properties of organic biradicals and
+organic radicals with many unpaired electrons are generally dif-
+ferent to those discussed here. 10,11
+Calculating the excited electronic states of radicals is chal-
+lenging due to spin-contamination and their multiconfigurational
+character. There exist several highly accurate methods for cal-
+culation of the excited states of radicals, such as multiconfig-
+urational self-consistent field (MCSCF), complete active space
+perturbation theory to the 2nd order (CASPT2) and Coupled-
+cluster theory, however, these methods are very computationally
+expensive, making them unsuitable for high-throughput work-
+flows. 12–14 Moreover, computationally cheaper methods such as
+conventional Time-Dependent Density Functional Theory (TD-
+DFT) can lead to spin-contaminated and functional-dependent
+results for the electronically excited states of radicals. 15,16 Addi-
+tionally, it has been shown that for the most accurate calcula-
+tion of excited state energies one must also include nuclear quan-
+tum effects. 17 Recently, an alternative, semiempirical method was
+developed — ExROPPP (Extended Restricted Open-shell Pariser-
+Parr-Pople theory), which is significantly faster, yet as accurate
+as higher level methods for calculating excited states of hydro-
+carbon radicals. 18 ExROPPP is a based on the Pariser-Parr-Pople
+(PPP) Hamiltonian 19–23 with a subsequent Extended Configura-
+tion Interaction Singles (XCIS) 24 calculation which ensures spin
+purity.
+PPP theory has gained recent popularity for predict-
+ing electronic properties at a significantly reduced computational
+Journal Name, [year], [vol.],1–12 | 1
+
+
+===== PAGE 2 =====
+cost. 18,25–29 Being a semiempirical method, PPP theory and con-
+sequently ExROPPP requires parameters which must be specified
+at the start of a calculation. 19–23 The carbon atom PPP parame-
+ters already existing in the literature have been shown to be suc-
+cessful for predicting excited state energies for hydrocarbons in
+ExROPPP. 18 However, emissive radicals commonly contain nitro-
+gen and chlorine atoms, and we are not aware of any consistent,
+unified and widely-accepted set of parameters for including het-
+eroatoms such as these in PPP theory or ExROPPP. 23,30,31 The ad-
+vent of ExROPPP has opened up the possibility of rapid screening
+of the electronically excited states of radicals, however, extending
+and generalizing this method requires an optimal set of parame-
+ters to be found.
+In recent years Machine Learning (ML) has become an indis-
+pensable tool for the study of chemical systems. 32 Such models
+allow for accurate prediction of chemical and physical properties
+with huge computational savings compared to methods such as
+DFT, provided sufficient data are available, and are often seen
+as an alternative to semiempirical and classical force-field meth-
+ods. 33 ML has seen numerous applications in predicting energies,
+structures and reactivity patterns of molecules and materials. 32–38
+Furthermore it has been applied to calculating the excited states
+of molecules and simulating excited state potential energy sur-
+faces. 33,39–45 However, while a wealth of previous studies have
+been successful for closed-shell species, we find very few exam-
+ples of ML for the electronically excited states of radicals. In re-
+cent work ML was applied to calculate the electronically excited
+states of radicals by training on closed-shell molecules, however
+to our knowledge, learning the excited states directly from ex-
+cited state data of organic radicals themselves has yet to be at-
+tempted. 46 Furthermore, typical ML models, in which no strong
+priors about the system are assumed at the outset, generally re-
+quire large amounts of data, e.g.
+the properties of thousands
+of molecules or more, in order to be successful 32,33,35 and we
+are unaware of any such large datasets for radicals.
+In addi-
+tion, predicting electronically excited states using ML is chal-
+lenging as they are a largely non-local property which cannot
+in general be treated using atom-wise descriptors. 42 Moreover,
+the prediction of primary outputs of quantum chemistry such as
+the N-electron wavefunction (and thus the composition of ex-
+cited electronic states) is a highly desirable feature of an ML
+model, yet few ML models can predict these quantities for ex-
+cited states. 42 There has, however, been much recent interest in
+leveraging wavefunction-based descriptors in quantum ML mod-
+els allowing them to retain some of the physical intuition of con-
+ventional quantum chemistry, and this work follows in a similar
+spirit to these developments. 47–49
+Due to the lack of sufficient excited state data available in
+databases for organic radicals and the aforementioned chal-
+lenges, adopting a trusted physical model such as ExROPPP and
+learning its optimal parameters may be a viable alternative to
+conventional ML for the excited states of radicals. 18,25,26,50–56 Us-
+ing such a model also allows for the direct prediction of a variety
+of primary quantum chemical quantities such as molecular or-
+bitals and transition dipole moments. In this paper we will focus
+on predicting molecular UV-visible linear absorption spectra and
+leave the computation of emission spectra, which usually requires
+excited state geometries that are difficult to acquire, for future re-
+search.
+The linear UV-visible absorption spectra of organic radicals
+are usually characterised by two main features.
+These are an
+intense absorption (or absorptions) in the UV, usually between
+300-400 nm, and a much weaker absorption in the visible. The
+weak visible D1 state has been investigated using various levels
+of theory (TD-DFT, PPP, MCSCF). 2,9,18 In the special case of al-
+ternant hydrocarbons, D1 is a minus combination |Ψ−
+i0⟩of the
+HOMO-SOMO and SOMO-LUMO excitations and is essentially
+dark in the absorption spectrum. 6,18,57–59 Alternant hydrocarbons
+are usually non-emissive as non-radiative processes outcompete
+fluorescence. 6,17 Conversely, in non-alternant molecules, the D1
+state may have significantly higher absorption intensity.
+One
+widely explored class of non-alternant radicals are those with
+a donor-acceptor structure, such as TTM-1Cz, in which the D1
+state is bright, charge transfer (CT) in nature and is mostly com-
+posed of the HOMO-SOMO excitation. 1,2,9 These radicals are also
+highly emissive and have been incorporated into high-performing
+OLEDs. 1,2 Another class of emissive radicals have recently been
+discovered which lack a donor-acceptor structure and CT char-
+acteristics, but instead employ mesityl groups leading to a large
+increase in the photoluminescence quantum yield.
+However,
+mesityl substitution does not significantly affect the absorption
+characteristics. 5
+In this paper we learn the excited states of organic radicals di-
+rectly from their experimental data for the first time. To achieve
+this we use a modest amount of published UV-visible absorption
+data to learn an optimal set of ExROPPP parameters for organic
+radicals containing carbon, hydrogen, nitrogen and chlorine. De-
+spite only containing a modest amount of data, we believe our
+compiled database of UV-Visible absorption data of π-conjugated
+organic radicals to be the largest of its kind. 46 Four new radicals
+are synthesised and we test our model on their absorption spec-
+tra to demonstrate its predictability and transferability. We find
+that the trained model has a significantly higher accuracy than
+the model using parameters taken from the literature and is able
+to make accurate predictions about the electronic excited states
+of unseen molecules.
+2
+Methodology
+2.1
+Data collection
+We obtained spectroscopic data for 81 organic radicals from pre-
+viously published work whose structures are given in Fig. 1 and
+Fig. 2. 2,5–7,9,46,60–68 In order to compile a database of suitable rad-
+icals, we considered all radicals we could find in the literature
+containing only carbon, hydrogen, chlorine and pyrrole, aniline
+and pyridine type nitrogen atoms. Those radicals whose spectro-
+scopic absorption data could be found were added to the database
+along with their data. We also obtained DFT optimised molecu-
+lar geometries for these molecules from previous studies. 2,5,9,46,61
+However, the molecular geometries for some molecules could not
+be found in the literature so these structures were optimised us-
+ing unrestricted DFT in GAMESS-US. 69 These data constitute the
+2 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 3 =====
+training set of the ML ExROPPP model. Further details pertaining
+to the collation of the database and geometry calculations can be
+found in SI Section I.
+The target properties used for training are the energies ED1 of
+the the first excited doublet states (D1), the energies Ebrt of the
+brightest absorptions in the UV-visible spectra, and Irel.
+D1 = ϵD1/ϵbrt
+which is the ratio of the molar extinction coefficients of these the
+two absorptions, extracted from linear UV-visible absorption spec-
+tra. These target properties are similar to those previously used
+in ML of molecular spectra 33. Exceptions are made for TTM-1Cz-
+An and TTM-1Cz-PhAn whereby due to their unusual electronic
+structure, their first excited doublet state (D1) is a dark triplet-
+coupled doublet state and the lowest energy bright doublet state
+is D2 which is by majority composed of the carbazole HOMO-
+TTM SOMO excitation (same orbital parentage as D1 in typical
+radicals). 9 Therefore, for these exceptional molecules we fit the
+D2 (instead of D1) energy and oscillator strength to the corre-
+sponding lowest energy D2 absorption seen in experiment. For
+these two molecules, we will group this state (D2) in with the D1
+states for all the other molecules when performing the statistical
+analyses.
+2.2
+Training
+We train the ExROPPP model on experimental UV-visible data of
+known organic radicals, using a fitness function of the computed
+energies and intensities compared to those obtained from experi-
+ment, which quantifies how well the predictions of the ExROPPP
+model fit with the experimental data. The fitness function takes
+the form
+f =wD1(ED1,calc. −ED1,exp.)2 + wbrt(Ebrt,calc. −Ebrt,exp.)2
++ wI(Irel.
+D1,calc. −Irel.
+D1,exp.)2,
+(1)
+where wD1, wbrt and wI are the weights of the three respective
+terms in Eq. (1). The weights of the first two terms have units
+of eV−2 and wI is dimensionless such that f is a dimensionless
+quantity. While there are many other fitness functions which we
+could use, such as those based on the theory of optimal trans-
+port (between experimental and calculated spectra), we choose
+to use the above function as it encapsulates the essential spectral
+information of organic radicals which we believe is most impor-
+tant to be able to predict and only requires a small amount of raw
+spectral data for each radical. 70
+Training is achieved by finding a set of ExROPPP parameters
+which minimises this fitness function utilising the derivative-free
+Nelder-Mead optimiser in Python as shown in Fig. 3. 71 The algo-
+rithm first reads in the initial parameters, molecular geometries
+and experimental absorption data for all training molecules and
+classifies the molecules into hydrocarbons or heterocycles, which
+are treated slightly differently. For hydrocarbons, the fitness func-
+tion comprises of only energy terms, with wD1 and wbrt set to 1
+and wI set to zero as the D1 state for hydrocarbons gives a very
+weak absorption in experiment and in ExROPPP has zero oscilla-
+tor strength. 57 For heterocycles, all three terms are included with
+weights of 1 (except for a few molecules whose bright state data
+could not be found, see radicals-spreadsheet.xlsx in Data Avail-
+ability). Then the parameters are iteratively varied and the fitness
+calculated on each iteration until convergence.
+We found that pre-training separately on subsets of molecules
+of different heteroatom types to obtain better initial guess pa-
+rameters before training on all molecules for all parameters, an
+approach which we call ‘stratified’ training, lead to lower errors
+than not including these pre-training steps. The results of the
+trained model presented in the next section are obtained using
+this stratified approach. Details of the training process are dis-
+cussed further in SI Section II. These calculations are parallelised
+for maximum efficiency.
+2.3
+Testing on novel radicals
+Four new radicals: M2TTM-4Me, M2TTM-3PCz, M2TTM-3TPA
+and M2TTM-4TPA, shown in Fig. 6 were synthesised, their UV-
+visible absorption spectra were measured, and their minimum
+energy geometries were obtained using DFT. The spectroscopic
+data (ED1, Ebrt and Irel.
+D1) and </pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

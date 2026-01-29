@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>희소 실험 UV–vis로 학습한 ExROPPP 유기 라디칼 여기상태 예측</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid rgba(226, 232, 240, 0.18);
+      border-radius: 18px;
+      background: rgba(10, 14, 20, 0.55);
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(15, 23, 42, 0.35);
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+    .report-deck {
+      color: rgba(226, 232, 240, 0.8);
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      border-left: 3px solid var(--accent-strong);
+      margin: 1.6rem 0;
+      padding: 0.7rem 1.4rem;
+      background: var(--paper-alt);
+      color: var(--muted);
+      font-style: italic;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(14, 165, 164, 0.4);
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      background: rgba(15, 23, 42, 0.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-family: var(--mono-font);
+      font-size: 0.92em;
+    }
+    .article pre {
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono-font);
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .misc-block {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+    }
+    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }
+    .misc-block li { margin: 0.2rem 0; }
+    .report-figure {
+      margin: 1.4rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: rgba(248, 250, 252, 0.8);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }
+    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 17, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: min(560px, 92vw);
+      height: calc(100% - 40px);
+      background: var(--paper-strong);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+      transform: translateX(120%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--ui-font);
+      gap: 12px;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.85rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .viewer-close {
+      border: none;
+      background: rgba(15, 23, 42, 0.08);
+      color: #0f172a;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media (max-width: 860px) {
+      .page { margin: 40px auto 64px; padding: 0 20px; }
+      .article { padding: 28px; }
+      .report-deck { font-size: 1rem; }
+    }
+    @media (max-width: 600px) {
+      .report-title { font-size: 2rem; }
+      .article { padding: 22px; }
+      .article h2 { font-size: 1.35rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+    body { background: var(--page-bg) !important; color: var(--site-ink); }
+    .masthead { color: #f8fafc; }
+    .report-deck { color: rgba(226, 232, 240, 0.82); }
+    .kicker { color: rgba(255, 255, 255, 0.7); }
+  </style>
+</head>
+<body class="template-acs_review">
+  <div class="backdrop">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">Federlicht</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">희소 실험 UV–vis로 학습한 ExROPPP 유기 라디칼 여기상태 예측</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>희소 실험 UV–vis로 학습한 ExROPPP 유기 라디칼 여기상태 예측</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-01-30 06:37</p>
+<h2>Abstract</h2>
+<p>유기 라디칼(organic radical)의 전자 들뜬상태는 스핀 오염(spin contamination)과 다중참조(multireference) 성격으로 인해, 저비용 TD-DFT 기반 예측의 신뢰성이 제한되고 고정확도 다체 방법은 고비용이라는 병목을 갖는다[paper]. Shen <em>et al.</em>은 스핀-순수(spin-pure) 준경험적 방법인 ExROPPP(Extended Restricted Open-shell Pariser–Parr–Pople + XCIS)를 “물리 기반 서로게이트(surrogate) 모델”로 두고, 희소한 실험 UV–vis 흡수 데이터로 ExROPPP 파라미터를 데이터-드리븐으로 학습하는 프레임워크를 제시한다[paper]. 저자들은 C/H/N/Cl로 구성된 유기 단일 라디칼 81종의 기하구조와 UV–vis 스펙트럼으로 학습 데이터를 구축하고, $E_{D1}$, $E_{brt}$, $I_{D1}^{rel}$의 요약량을 목적함수로 최적화하여 문헌 파라미터 대비 예측오차를 크게 낮춘다(RMSE 0.86 eV → 0.24 eV)[paper]. 또한 4종 신규 라디칼을 합성·측정하여 전이 가능성(transferability)을 시험했고, 테스트셋에서 RMSE 0.15 eV, $R^2=0.93$을 보고한다[paper]. 결과적으로 본 연구는 “대규모 데이터의 블랙박스 ML” 대신, 실험 기반 파라미터 학습을 통해 라디칼 들뜬상태 예측을 고속화하는 실용적 경로를 제시한다[paper].  </p>
+<h2>Introduction</h2>
+<p>발광성 유기 라디칼은 deep red/NIR/IR 영역에서 높은 내부양자효율(IQE)에 근접한 OLED 구현 가능성과, 일부 라디칼의 quartet 상태 광학 판독을 통한 분자 큐비트(molecular qubit) 응용 가능성 때문에 최근 재료·광전자 분야에서 주목받고 있다[paper]. 그러나 라디칼의 들뜬상태 계산은 (i) 단일결정론적(singlereference) 전자구조 근사가 흔히 유도하는 스핀 오염, (ii) 다중전자배치 기여가 큰 전자상태의 다중참조 성격 때문에 난도가 높다[paper]. MCSCF, CASPT2, coupled-cluster 등 고정확도 방법은 유효하나, 고처리량(high-throughput) 탐색에는 계산비용이 치명적이다[paper]. 반대로 TD-DFT는 비용 효율적이지만 라디칼의 들뜬상태에서 함수 의존성과 스핀 오염 문제가 두드러질 수 있다[paper].</p>
+<p>이 논문은 위 간극을 “물리 모델 + 희소 실험 데이터 학습”으로 메우려는 시도다. 즉, ExROPPP를 빠르고 스핀-순수한 서로게이트로 채택하고, 유기 라디칼의 실험 UV–vis 흡수 스펙트럼에서 추출한 핵심 타깃을 맞추도록 ExROPPP 파라미터를 최적화함으로써, (데이터가 적은) 라디칼 영역에서 직접적 end-to-end ML을 대체하는 전략을 제시한다[paper].  </p>
+<h2>Current Landscape</h2>
+<h3>1) 고정확도 전자구조법: 정확하지만 스크리닝에 부적합</h3>
+<p>라디칼 들뜬상태는 다중참조 성격이 강해 MCSCF, CASPT2, coupled-cluster 등 고급 방법이 신뢰 가능한 기준으로 언급된다[paper]. 다만 저자들이 강조하듯 이러한 방법은 계산비용이 높아 대규모 후보 탐색(예: OLED 소재 라이브러리 스크리닝)에 직접 적용하기 어렵다[paper].  </p>
+<h3>2) TD-DFT: 비용 효율적이나 스핀/함수 민감성</h3>
+<p>TD-DFT는 일반적으로 널리 쓰이나, 라디칼 들뜬상태에서 스핀 오염 및 함수 선택에 따른 결과 변동이 문제로 제기된다[paper]. 본 논문은 이 한계를 “스핀-순수한 서로게이트” 채택의 동기로 명확히 둔다[paper].  </p>
+<h3>3) 준경험적·물리기반 모델(ExROPPP): 빠르나 파라미터 일반성이 병목</h3>
+<p>ExROPPP는 PPP Hamiltonian과 XCIS(Extended Configuration Interaction Singles)를 결합하여 라디칼 들뜬상태를 스핀-순수하게 취급하는 방법으로 소개된다[paper]. 기존 문헌의 탄화수소 파라미터는 비교적 성공적이었으나, 실제 고성능 발광 라디칼에 흔한 N, Cl 등 헤테로원자까지 포함하는 “일관되고 널리 수용된” 파라미터 세트가 부재하다는 점이 본 연구의 직접적 공백(gap)으로 제시된다[paper].  </p>
+<h3>4) ML 접근: 데이터 부족·비국소성·파동함수 예측의 난점</h3>
+<p>저자들은 라디칼 들뜬상태에 대한 ML 연구가 드물고, (i) 대규모 라디칼 데이터셋의 부재, (ii) 들뜬상태의 비국소적 성격으로 인한 원자-분해 기술자(atom-wise descriptor) 한계, (iii) 파동함수/오비탈/전이쌍극자 등 “1차 양자화학 출력”을 예측하기 어려움 등을 ML의 구조적 난점으로 지적한다[paper]. 이에 대한 대안으로 “강한 물리 사전지식(prior)을 갖는 서로게이트 모델의 파라미터 학습”이 선택된다[paper].  </p>
+<h2>Mechanistic Insights</h2>
+<h3>1) 학습 타깃: UV–vis 스펙트럼의 ‘핵심 요약량’에 집중</h3>
+<p>본 모델은 스펙트럼 전체를 직접 맞추기보다는, 라디칼 UV–vis에서 대표적 특징으로 간주되는 세 가지 요약량을 학습 타깃으로 둔다:<br />
+- 첫 번째 들뜬 doublet 상태 에너지 $E_{D1}$<br />
+- 가장 강한(가장 밝은) 흡수 피크 에너지 $E_{brt}$<br />
+- 상대 세기비 $I_{D1}^{rel}=\varepsilon_{D1}/\varepsilon_{brt}$[paper]</p>
+<p>또한 예외로 TTM-1Cz-An, TTM-1Cz-PhAn은 “$D_1$이 어두운(triplet-coupled) doublet”이고 가장 낮은 에너지의 밝은 상태가 $D_2$인 특이 전자구조를 갖기 때문에, 이들에 대해서는 $D_1$ 대신 $D_2$를 타깃으로 맞추어 통계분석에서는 이를 $D_1$ 그룹에 포함시킨다[paper]. 이는 데이터 정합을 위한 ‘라벨링 규칙’이자, 모델이 포착해야 할 전자상태의 물리적 의미를 명시적으로 반영한 설계다(해석).  </p>
+<h3>2) 목적함수와 최적화: Nelder–Mead 기반 파라미터 피팅</h3>
+<p>학습은 계산-실험 간 오차 제곱합 형태의 fitness function을 최소화하는 방식이다:<br />
+$$
+f=w_{D1}(E_{D1}^{calc}-E_{D1}^{exp})^2+w_{brt}(E_{brt}^{calc}-E_{brt}^{exp})^2+w_I(I_{D1}^{rel,calc}-I_{D1}^{rel,exp})^2
+$$<br />
+가중치 $w_{D1}$, $w_{brt}$는 $\mathrm{eV}^{-2}$ 단위를, $w_I$는 무차원을 갖도록 정의되어 $f$가 무차원량이 되도록 구성된다[paper]. 최적화는 도함수 없이 수행 가능한 Nelder–Mead 알고리즘을 사용하며, 분자 기하/실험 스펙트럼/초기 파라미터를 읽어 반복적으로 ExROPPP 계산을 수행하고 수렴 여부를 판단한다[paper].  </p>
+<p>하나의 중요한 구현 디테일은 “hydrocarbon”과 “heterocycle”을 구분 처리한다는 점이다. 탄화수소 라디칼은 실험적으로 $D_1$ 흡수가 매우 약하고 ExROPPP에서 oscillator strength가 0이므로, 탄화수소에 대해서는 에너지 항만 포함하고 $w_I=0$으로 둔다[paper]. 이는 데이터의 측정 가능성/물리적 제약을 목적함수에 반영한 것으로, 학습 안정성 측면에서 합리적이다(해석).  </p>
+<h3>3) stratified training: 헤테로원자 부분집합 예비학습의 역할</h3>
+<p>저자들은 서로 다른 헤테로원자 유형의 부분집합에 대해 예비학습을 수행해 더 좋은 초기 추정치를 얻은 뒤 전체 학습을 수행하는 “stratified training”이 더 낮은 오차를 준다고 보고한다[paper]. 이는 비선형·다자유도 파라미터 공간에서 초기값 민감성을 완화하고, 다양한 화학적 서브도메인의 파라미터를 점진적으로 정렬시키는 효과가 있었음을 시사한다(추론).  </p>
+<h3>4) PPP 파라미터화: 원자종-특이 파라미터와 결합(홉핑) 함수형</h3>
+<p>PPP Hamiltonian의 파라미터는 on-site 에너지 $\epsilon_\mu$, hopping $t$, Hubbard $U$, 거리 스케일 $r_{0}$로 구성되며, 2전자 적분에는 Mataga–Nishimoto 형태를 사용한다:<br />
+$$
+\gamma_{\mu\nu}\simeq (\mu\mu|\nu\nu)=\frac{U_{\mu\nu}}{1+r_{\mu\nu}/r_{0,\mu\nu}}
+$$<br />
+서로 다른 원자종 사이의 $U_{\mu\nu}$ 및 $r_{0,\mu\nu}$는 평균으로 처리한다[paper]. hopping은 $t_{\mu\nu}=A\exp(-br_{\mu\nu})\cos\theta$ 형태로 거리 지수감쇠와 비틀림각(dihedral) 코사인 스케일을 포함한다[paper]. 또한 질소는 $\pi$-전자 기여가 다른 pyridine type(1전자 기여)과 pyrrole/aniline type(2전자 기여)으로 구분하며, 원자핵+코어전자를 유효 점전하로 모델링한다[paper]. 이와 같은 “화학적 유형 분해(type decomposition)”가 소량 데이터에서도 파라미터 학습을 가능케 하는 강한 구조적 사전지식으로 작동한다(해석).  </p>
+<h2>Applications</h2>
+<h3>1) 라디칼 기반 OLED 소재의 고처리량 탐색</h3>
+<p>논문은 ExROPPP 기반 학습 모델이 라디칼 UV–vis 흡수 스펙트럼의 핵심 특징을 빠르게 예측함으로써, 차세대 라디칼 OLED 후보 물질의 고처리량 스크리닝을 가능케 한다고 결론짓는다[paper]. 특히 TTM-1Cz가 실제 OLED 구현에 사용된 대표 라디칼로 제시되며, 학습된 파라미터가 해당 계열 스펙트럼 재현을 개선하는 사례가 포함된다[paper].  </p>
+<h3>2) 분자 큐비트 설계에서의 전자상태 질서(energy ordering) 점검</h3>
+<p>TTM-1Cz-An은 첫 들뜬상태가 quartet이라는 복잡한 전자구조를 갖고 양자정보 응용 가능성이 언급되는 분자로 제시되며, ExROPPP가 quartet 상태가 낮은 에너지에 존재한다는 정성적 특징을 실험/고급계산 문헌과 일치하게 예측한다고 보고한다[paper]. 이는 단순한 피크 위치 맞춤을 넘어 “상태의 상대적 질서”를 일정 수준 보존할 수 있음을 시사한다(해석).  </p>
+<h3>3) 설계 규칙(design rules)의 실험적 확인과 모델의 해석가능성</h3>
+<p>신규 4종 라디칼(M2TTM-4Me, M2TTM-3PCz, M2TTM-3TPA, M2TTM-4TPA) 합성·측정에서, 저자들은 (i) alternancy symmetry가 깨져야 유의미한 $D_1$ 흡수가 나타난다는 규칙, (ii) donor의 HOMO가 결합 위치에 오비탈 진폭을 가져야 CT 전이가 밝아진다는 규칙을 실험적으로 확인했다고 주장한다[paper]. 특히 TPA 단독 PPP 계산에서 para(4) 위치 진폭이 크고 meta(3) 위치 진폭이 작아, M2TTM-4TPA는 밝고 M2TTM-3TPA는 어둡다는 예측이 실험과 일치했다고 서술한다[paper]. 이는 “학습된 파라미터가 설계 규칙의 정성 예측까지 지지”하는 방향으로 응용될 수 있음을 보여준다(해석).  </p>
+<h2>Challenges</h2>
+<h3>1) 스펙트럼 ‘요약량’ 목적함수의 구조적 한계</h3>
+<p>저자들은 fitness function이 $D_1$($D_2$ 예외 포함), 가장 밝은 피크, 그리고 상대세기비만을 포함하므로, 스펙트럼의 다른 상태/피크를 직접 제약하지 못한다는 점을 명시한다[paper]. 실제로 TTM-1Cz 및 TTM-1Cz-An에서 실험에 없는 약 500 nm 부근 추가 흡수를 예측할 수 있으며, 이를 목적함수 선택의 artifact 가능성으로 언급한다[paper]. 즉, 모델이 타깃 요약량에는 최적화되나, 스펙트럼 전체 재현도는 목적함수 설계에 좌우될 수 있다(해석).  </p>
+<h3>2) 화학 공간 범위: C/H/N/Cl 및 특정 라디칼 계열 중심</h3>
+<p>데이터베이스는 C/H/Cl 및 pyrrole/aniline/pyridine type N을 포함하는 라디칼로 구성되며, 이는 본 모델의 파라미터 전이 범위를 사실상 규정한다[paper]. 결론에서 O, S, F 및 nitrile/nitro/aminoxyl/trifluoromethyl 등으로의 확장을 ‘향후 과제’로 제시하는 것은, 현재 버전이 해당 작용기/원소로 즉시 일반화되지는 않음을 반증적으로 보여준다[paper].  </p>
+<h3>3) 검증 규모와 과적합 판정의 한계</h3>
+<p>테스트는 4종 신규 라디칼에 대해 수행되며, 테스트셋에서 RMSE 0.15 eV, MAD 0.13 eV, $R^2=0.93$을 보고하면서 “오히려 훈련보다 오차가 작아 과적합이 아니다”라고 해석한다[paper]. 다만 표본 수가 매우 작기 때문에, 이 결론은 강한 의미의 통계적 일반화보다는 “적어도 이 계열 설계 변화에서는 유망하다” 정도로 읽는 것이 타당하다(해석).  </p>
+<h2>Outlook</h2>
+<h3>1) ‘물리기반-학습형’ 준경험 모델의 확장: 원소/작용기 및 방출 스펙트럼</h3>
+<p>저자들은 향후 방출 스펙트럼 예측(이는 들뜬상태 기하가 필요해 데이터 획득이 어렵다고 언급)과, O/S/F 등 다른 원소 및 라디칼에 흔한 작용기군으로의 확장을 제안한다[paper]. (전망) 실제로 이 경로가 실현되려면, 각 작용기·원소에 대한 일관된 타깃 정의(흡수/방출 요약량 또는 스펙트럼 거리 기반 목적함수)와, 실험 데이터의 품질·조건(용매/농도/온도)의 메타데이터 표준화가 병행되어야 한다.  </p>
+<h3>2) 목적함수의 스펙트럼 전역화: optimal transport 등 대안</h3>
+<p>논문은 스펙트럼 간 optimal transport 기반 목적함수 같은 대안이 있음을 언급하지만, 현재는 요약량 기반을 선택했다[paper]. (제안) 후속 연구에서는 요약량 기반 목적함수와 전역 스펙트럼 거리 목적함수를 혼합한 다중목적 최적화(예: 핵심 피크 위치는 강제, 나머지는 스펙트럼 거리로 정규화)를 통해 “추가 피크 artifact”를 줄이면서도 희소 데이터 상황의 학습 안정성을 유지하는 전략이 유효할 수 있다.  </p>
+<h3>3) 1차 양자화학 출력(오비탈/전이쌍극자)의 보조 검증 강화</h3>
+<p>저자들은 ExROPPP 오비탈(SOMO/HOMO)과 ROHF(B3LYP/6-31G(d,p))의 정성적 일치를 통해 파라미터 전이성과 해석가능성을 강조한다[paper]. (전망) 향후에는 오비탈 유사도 지표, 전이쌍극자 방향성/세기 분포, 상태 조성(configuration weights) 등 “비-스펙트럼” 보조 타깃을 소량이라도 포함하면, 물리적 일관성을 유지하는 방향으로 파라미터가 더 잘 구속될 가능성이 있다.  </p>
+<h2>Risks &amp; Gaps</h2>
+<h3>1) 재현성 갭: SI 및 데이터 리포지터리 의존 정보의 미확인</h3>
+<p>논문은 데이터(기하, 스펙트럼에서 추출한 $E_{D1}$, $E_{brt}$, $I_{D1}^{rel}$)와 초기/최적 파라미터가 UCL Research Data Repository에 있다고 명시하고, K-fold 검증 및 학습 상세가 SI에 있다고 반복적으로 안내한다[paper]. 그러나 본 보고서 작성 범위에서 SI/리포지터리 원문을 직접 대조하지 않았으므로(자료 미제공), (i) 파라미터 수와 경계조건, (ii) 전처리(피크 추출 규칙), (iii) fold 구성과 랜덤시드 등 재현 핵심 요소는 추가 확인이 필요하다(해석).  </p>
+<h3>2) 실험 조건 다양성에 대한 모델 민감도 불확실</h3>
+<p>훈련 데이터는 “이전에 출판된” UV–vis 자료를 취합한 것으로, 용매·농도·온도·측정 장비 조건이 완전히 동일하지 않을 가능성이 높다[paper]. 이 이질성이 오차의 일부를 구성할 수 있으나, 모델이 이를 어떻게 흡수/왜곡하는지 정량 분석은 본문에서 제한적이다(해석).  </p>
+<h3>3) 일반화 범위 리스크: 화학적 외삽(extrapolation)과 상태 복잡도</h3>
+<p>본 모델은 C/H/N/Cl 중심이며, 또한 단일 라디칼(monradical) 범주에 초점을 둔다[paper]. biradical 또는 다중 비짝전자 시스템은 전자구조가 “일반적으로 다르다”고 서론에서 명시하므로[paper], 해당 영역으로의 외삽은 현 단계에서 고위험이다(해석).  </p>
+<h2>Critics</h2>
+<h3>“요약량 피팅은 정확도를 ‘보이는 곳’에만 맞춘다”</h3>
+<p>저자들이 선택한 목적함수는 핵심 피크 몇 개로 스펙트럼 정보를 압축한다[paper]. 이는 희소 데이터 학습에는 강점이지만, 스펙트럼의 나머지 부분(추가 피크, 어두운 상태의 에너지 질서, vibronic 구조)을 보장하지 못한다는 비판이 가능하다.</p>
+<ul>
+<li>목적함수에서 제외된 상태들이 “자유도”로 남아, 실험에 없는 피크(예: $\sim 500$ nm)를 만들어낼 수 있음을 저자 스스로 인정한다[paper].  </li>
+<li>81종 훈련 및 4종 테스트의 화학 공간이 특정 계열(TTM/PTM 기반)로 편중되어 있다면, “전이 가능성”은 동족계열 내 보간(interpolation)에 가까울 수 있다(추론).  </li>
+<li>반대 관점에서는, ExROPPP의 물리적 제약이 강하므로 블랙박스 ML보다 “틀린 방식으로 맞추기”가 어렵다는 장점이 있으며, 실제로 ROHF 오비탈과의 정성 일치가 보고된다[paper]. 즉, 논쟁의 핵심은 ‘어떤 수준의 전역 스펙트럼/상태 보장’을 요구하는가에 달려 있다(해석).  </li>
+</ul>
+<h2>Appendix</h2>
+<h3>A1. 본 보고서에서 사용한 핵심 아카이브 아티팩트</h3>
+<ul>
+<li>논문 본문(텍스트 추출): <a href="report_views/archive_arxiv_text_2412.10149v2.txt-6697aef3.html" data-viewer="report_views/archive_arxiv_text_2412.10149v2.txt-6697aef3.html" data-raw="archive/arxiv/text/2412.10149v2.txt" class="viewer-link">\[1\]</a>  </li>
+<li>논문 PDF(그림/표 포함 원문): <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">\[2\]</a>  </li>
+<li>실행 지시문: <a href="report_views/instruction_mytest.txt-b0a0e786.html" data-viewer="report_views/instruction_mytest.txt-b0a0e786.html" data-raw="instruction/mytest.txt" class="viewer-link">\[3\]</a>  </li>
+<li>아카이브 인덱스: <a href="report_views/archive_mytest_01-index.md-f216e434.html" data-viewer="report_views/archive_mytest_01-index.md-f216e434.html" data-raw="archive/mytest_01-index.md" class="viewer-link">\[4\]</a>  </li>
+</ul>
+<h3>A2. 재현성 체크리스트(요약)</h3>
+<ul>
+<li>학습 타깃 정의: $E_{D1}$, $E_{brt}$, $I_{D1}^{rel}$ 및 예외 분자에서 $D_2$로 대체 규칙을 명문화할 것[paper].  </li>
+<li>목적함수/가중치: Eq. (1)의 $w_{D1}, w_{brt}, w_I$ 값(또는 선택 규칙)과 “일부 분자에서 bright state 데이터 부재 시 처리”를 확인할 것[paper].  </li>
+<li>최적화 설정: Nelder–Mead의 초기값, 수렴 기준, 반복 제한, 병렬화 설정을 기록할 것[paper].  </li>
+<li>데이터 일관성: 문헌 UV–vis 데이터의 용매/농도/온도 차이를 메타데이터로 정리하고, 피크 추출 규칙이 일관적인지 점검할 것(제안).  </li>
+</ul>
+<h3>A3. 범위/한계 요약</h3>
+<ul>
+<li>본 연구의 직접 범위는 유기 단일 라디칼(monradical)이며, biradical/다중 비짝전자 라디칼은 다른 성격을 가질 수 있음을 명시한다[paper].  </li>
+<li>파라미터 학습은 C/H/N/Cl(질소는 pyridine vs pyrrole/aniline type 구분)로 제한된다[paper].  </li>
+<li>방출 스펙트럼 및 O/S/F 등 원소 확장은 향후 과제로 제시되며, 현재 모델의 즉시 적용 범위 밖이다[paper].</li>
+</ul>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: Source PDF: 2412.10149v2.pdf; <a href="#fig-2">Figure 2</a>: Source PDF: 2412.10149v2.pdf; <a href="#fig-3">Figure 3</a>: Source PDF: 2412.10149v2.pdf; <a href="#fig-4">Figure 4</a>: Source PDF: 2412.10149v2.pdf</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2412.10149v2.pdf-c16bfb85.jpeg" alt="Figure from ./archive/arxiv/pdf/2412.10149v2.pdf (page 1)" />
+  <figcaption>Figure 1: <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">./archive/arxiv/pdf/2412.10149v2.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2412.10149v2.pdf-f5e19c58.jpeg" alt="Figure from ./archive/arxiv/pdf/2412.10149v2.pdf (page 4)" />
+  <figcaption>Figure 2: <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">./archive/arxiv/pdf/2412.10149v2.pdf</a> (page 4)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2412.10149v2.pdf-43d99009.jpeg" alt="Figure from ./archive/arxiv/pdf/2412.10149v2.pdf (page 5)" />
+  <figcaption>Figure 3: <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">./archive/arxiv/pdf/2412.10149v2.pdf</a> (page 5)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="report_assets/figures/._archive_arxiv_pdf_2412.10149v2.pdf-bf566930.jpeg" alt="Figure from ./archive/arxiv/pdf/2412.10149v2.pdf (page 8)" />
+  <figcaption>Figure 4: <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">./archive/arxiv/pdf/2412.10149v2.pdf</a> (page 8)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>다음 논문을 요약해줘.</p>
+<p>다음 논문을 요약해줘.</p>
+<h2>References</h2>
+<ol>
+<li>2412.10149v2.txt — <a href="report_views/archive_arxiv_text_2412.10149v2.txt-6697aef3.html" data-viewer="report_views/archive_arxiv_text_2412.10149v2.txt-6697aef3.html" data-raw="archive/arxiv/text/2412.10149v2.txt" class="viewer-link">file</a></li>
+<li>2412.10149v2.pdf — <a href="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-viewer="report_views/archive_arxiv_pdf_2412.10149v2.pdf-2366a42a.html" data-raw="archive/arxiv/pdf/2412.10149v2.pdf" class="viewer-link">file</a></li>
+<li>mytest.txt — <a href="report_views/instruction_mytest.txt-b0a0e786.html" data-viewer="report_views/instruction_mytest.txt-b0a0e786.html" data-raw="instruction/mytest.txt" class="viewer-link">file</a></li>
+<li>mytest_01-index.md — <a href="report_views/archive_mytest_01-index.md-f216e434.html" data-viewer="report_views/archive_mytest_01-index.md-f216e434.html" data-raw="archive/mytest_01-index.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-01-30 06:38:15</li>
+<li>Duration: 00:06:16 (376.27s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: 유기, 라디칼, vis, exroppp, 희소</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-viewer="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-raw="report/run_overview_report_full.md" class="viewer-link">./report/run_overview_report_full.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_mytest_01-index.md-f216e434.html" data-viewer="report_views/archive_mytest_01-index.md-f216e434.html" data-raw="archive/mytest_01-index.md" class="viewer-link">./archive/mytest_01-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_mytest.txt-b0a0e786.html" data-viewer="report_views/instruction_mytest.txt-b0a0e786.html" data-raw="instruction/mytest.txt" class="viewer-link">./instruction/mytest.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-viewer="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-raw="instruction/report_prompt_report_full.txt" class="viewer-link">./instruction/report_prompt_report_full.txt</a></li>
+<li>Figure candidates: <a href="./report_views/figures_preview.html">./report_views/figures_preview.html</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+        const viewer = link.getAttribute('data-viewer');
+        if (viewer) {
+          link.addEventListener('click', (event) => {
+            if (event.metaKey || event.ctrlKey) { return; }
+            event.preventDefault();
+            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());
+          });
+        }
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { closeViewer(); }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1071 @@
+
+
+===== PAGE 1 =====
+arXiv:2412.10149v2  [physics.chem-ph]  12 Jun 2025
+Journal Name
+Learning Radical Excited States from Sparse Data†
+Jingkun Shen,a,‡ Lucy E. Walker,b,c,‡ Kevin Ma,a,‡ James D. Green,a,‡ Hugo Bronstein,b,c
+Keith T. Butlera and Timothy J. H. Hele∗a
+Emissive organic radicals are currently of great interest for their potential use in the next generation
+of highly efficient organic light emitting diode (OLED) devices and as molecular qubits. However,
+simulating their optoelectronic properties is challenging, largely due to spin-contamination and the
+multireference character of their excited states. Here we present a data-driven approach where, for
+the first time, the excited electronic states of organic radicals are learned directly from experimental
+excited state data, using a much smaller amount of data than typically required by Machine Learning.
+We adopt ExROPPP, a fast and spin-pure semiempirical method for calculation of the excited states
+of radicals, as a surrogate physical model for which we learn the optimal set of parameters. To achieve
+this we compile the largest known database of organic radical geometries and their UV-vis data, which
+we use to train our model. Our trained model gives Root Mean Square (RMS) and mean absolute
+errors for excited state energies of 0.24 and 0.16 eV respectively, improving hugely over ExROPPP
+with literature parameters. Four new organic radicals are synthesised and we test the model on their
+spectra, finding even lower errors and similar correlation as for the testing set. This model paves the
+way for the high throughput discovery of next generation radical-based optoelectronics.
+1
+Introduction
+Recent years have shown a great interest in radicals for organic
+light emitting diodes (OLEDs), which display internal quantum
+efficiencies (IQE) of near 100% and intense emission in the deep
+red, NIR and IR spectral regions, features which are unusual and
+highly desirable. 1–8 These radical OLEDs, based on organic mono-
+radicals, offer an alternative for the next generation of highly ef-
+ficient lighting. Furthermore, the optical readout of the quartet
+state of some radicals has potential applications in quantum infor-
+mation science and paves the way for next-generation molecular
+qubits. 9 However, historically many organic radicals have been
+non-emissive, such that trial-and-error exploration of chemical
+space is inefficient, and there is therefore a large and unmet need
+for a method which facilitates the fast, accurate and spin-pure cal-
+culation of the low-lying excited states of a wide variety of radical
+molecules. Such a computational method would also be invalu-
+able for the high-throughput screening of radicals for their UV-
+visible spectra. This work focuses on organic monoradicals, i.e.
+a Department of Chemistry, Christopher Ingold Building, University College London,
+WC1H 0AJ, UK.
+∗E-mail: t.hele@ucl.ac.uk
+b Yusuf Hamied Department of Chemistry, University of Cambridge, CB2 1EW, UK.
+c Department of Physics, Cavendish Laboratory, Cambridge University, Cambridge CB3
+0HF, UK.
+‡These authors contributed equally.
+† Supplementary Information available: [details of any supplementary information
+available should be included here]. See DOI: 00.0000/00000000.
+molecules with only one unpaired electron, however, it should be
+noted that the excited state properties of organic biradicals and
+organic radicals with many unpaired electrons are generally dif-
+ferent to those discussed here. 10,11
+Calculating the excited electronic states of radicals is chal-
+lenging due to spin-contamination and their multiconfigurational
+character. There exist several highly accurate methods for cal-
+culation of the excited states of radicals, such as multiconfig-
+urational self-consistent field (MCSCF), complete active space
+perturbation theory to the 2nd order (CASPT2) and Coupled-
+cluster theory, however, these methods are very computationally
+expensive, making them unsuitable for high-throughput work-
+flows. 12–14 Moreover, computationally cheaper methods such as
+conventional Time-Dependent Density Functional Theory (TD-
+DFT) can lead to spin-contaminated and functional-dependent
+results for the electronically excited states of radicals. 15,16 Addi-
+tionally, it has been shown that for the most accurate calcula-
+tion of excited state energies one must also include nuclear quan-
+tum effects. 17 Recently, an alternative, semiempirical method was
+developed — ExROPPP (Extended Restricted Open-shell Pariser-
+Parr-Pople theory), which is significantly faster, yet as accurate
+as higher level methods for calculating excited states of hydro-
+carbon radicals. 18 ExROPPP is a based on the Pariser-Parr-Pople
+(PPP) Hamiltonian 19–23 with a subsequent Extended Configura-
+tion Interaction Singles (XCIS) 24 calculation which ensures spin
+purity.
+PPP theory has gained recent popularity for predict-
+ing electronic properties at a significantly reduced computational
+Journal Name, [year], [vol.],1–12 | 1
+
+
+===== PAGE 2 =====
+cost. 18,25–29 Being a semiempirical method, PPP theory and con-
+sequently ExROPPP requires parameters which must be specified
+at the start of a calculation. 19–23 The carbon atom PPP parame-
+ters already existing in the literature have been shown to be suc-
+cessful for predicting excited state energies for hydrocarbons in
+ExROPPP. 18 However, emissive radicals commonly contain nitro-
+gen and chlorine atoms, and we are not aware of any consistent,
+unified and widely-accepted set of parameters for including het-
+eroatoms such as these in PPP theory or ExROPPP. 23,30,31 The ad-
+vent of ExROPPP has opened up the possibility of rapid screening
+of the electronically excited states of radicals, however, extending
+and generalizing this method requires an optimal set of parame-
+ters to be found.
+In recent years Machine Learning (ML) has become an indis-
+pensable tool for the study of chemical systems. 32 Such models
+allow for accurate prediction of chemical and physical properties
+with huge computational savings compared to methods such as
+DFT, provided sufficient data are available, and are often seen
+as an alternative to semiempirical and classical force-field meth-
+ods. 33 ML has seen numerous applications in predicting energies,
+structures and reactivity patterns of molecules and materials. 32–38
+Furthermore it has been applied to calculating the excited states
+of molecules and simulating excited state potential energy sur-
+faces. 33,39–45 However, while a wealth of previous studies have
+been successful for closed-shell species, we find very few exam-
+ples of ML for the electronically excited states of radicals. In re-
+cent work ML was applied to calculate the electronically excited
+states of radicals by training on closed-shell molecules, however
+to our knowledge, learning the excited states directly from ex-
+cited state data of organic radicals themselves has yet to be at-
+tempted. 46 Furthermore, typical ML models, in which no strong
+priors about the system are assumed at the outset, generally re-
+quire large amounts of data, e.g.
+the properties of thousands
+of molecules or more, in order to be successful 32,33,35 and we
+are unaware of any such large datasets for radicals.
+In addi-
+tion, predicting electronically excited states using ML is chal-
+lenging as they are a largely non-local property which cannot
+in general be treated using atom-wise descriptors. 42 Moreover,
+the prediction of primary outputs of quantum chemistry such as
+the N-electron wavefunction (and thus the composition of ex-
+cited electronic states) is a highly desirable feature of an ML
+model, yet few ML models can predict these quantities for ex-
+cited states. 42 There has, however, been much recent interest in
+leveraging wavefunction-based descriptors in quantum ML mod-
+els allowing them to retain some of the physical intuition of con-
+ventional quantum chemistry, and this work follows in a similar
+spirit to these developments. 47–49
+Due to the lack of sufficient excited state data available in
+databases for organic radicals and the aforementioned chal-
+lenges, adopting a trusted physical model such as ExROPPP and
+learning its optimal parameters may be a viable alternative to
+conventional ML for the excited states of radicals. 18,25,26,50–56 Us-
+ing such a model also allows for the direct prediction of a variety
+of primary quantum chemical quantities such as molecular or-
+bitals and transition dipole moments. In this paper we will focus
+on predicting molecular UV-visible linear absorption spectra and
+leave the computation of emission spectra, which usually requires
+excited state geometries that are difficult to acquire, for future re-
+search.
+The linear UV-visible absorption spectra of organic radicals
+are usually characterised by two main features.
+These are an
+intense absorption (or absorptions) in the UV, usually between
+300-400 nm, and a much weaker absorption in the visible. The
+weak visible D1 state has been investigated using various levels
+of theory (TD-DFT, PPP, MCSCF). 2,9,18 In the special case of al-
+ternant hydrocarbons, D1 is a minus combination |Ψ−
+i0⟩of the
+HOMO-SOMO and SOMO-LUMO excitations and is essentially
+dark in the absorption spectrum. 6,18,57–59 Alternant hydrocarbons
+are usually non-emissive as non-radiative processes outcompete
+fluorescence. 6,17 Conversely, in non-alternant molecules, the D1
+state may have significantly higher absorption intensity.
+One
+widely explored class of non-alternant radicals are those with
+a donor-acceptor structure, such as TTM-1Cz, in which the D1
+state is bright, charge transfer (CT) in nature and is mostly com-
+posed of the HOMO-SOMO excitation. 1,2,9 These radicals are also
+highly emissive and have been incorporated into high-performing
+OLEDs. 1,2 Another class of emissive radicals have recently been
+discovered which lack a donor-acceptor structure and CT char-
+acteristics, but instead employ mesityl groups leading to a large
+increase in the photoluminescence quantum yield.
+However,
+mesityl substitution does not significantly affect the absorption
+characteristics. 5
+In this paper we learn the excited states of organic radicals di-
+rectly from their experimental data for the first time. To achieve
+this we use a modest amount of published UV-visible absorption
+data to learn an optimal set of ExROPPP parameters for organic
+radicals containing carbon, hydrogen, nitrogen and chlorine. De-
+spite only containing a modest amount of data, we believe our
+compiled database of UV-Visible absorption data of π-conjugated
+organic radicals to be the largest of its kind. 46 Four new radicals
+are synthesised and we test our model on their absorption spec-
+tra to demonstrate its predictability and transferability. We find
+that the trained model has a significantly higher accuracy than
+the model using parameters taken from the literature and is able
+to make accurate predictions about the electronic excited states
+of unseen molecules.
+2
+Methodology
+2.1
+Data collection
+We obtained spectroscopic data for 81 organic radicals from pre-
+viously published work whose structures are given in Fig. 1 and
+Fig. 2. 2,5–7,9,46,60–68 In order to compile a database of suitable rad-
+icals, we considered all radicals we could find in the literature
+containing only carbon, hydrogen, chlorine and pyrrole, aniline
+and pyridine type nitrogen atoms. Those radicals whose spectro-
+scopic absorption data could be found were added to the database
+along with their data. We also obtained DFT optimised molecu-
+lar geometries for these molecules from previous studies. 2,5,9,46,61
+However, the molecular geometries for some molecules could not
+be found in the literature so these structures were optimised us-
+ing unrestricted DFT in GAMESS-US. 69 These data constitute the
+2 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 3 =====
+training set of the ML ExROPPP model. Further details pertaining
+to the collation of the database and geometry calculations can be
+found in SI Section I.
+The target properties used for training are the energies ED1 of
+the the first excited doublet states (D1), the energies Ebrt of the
+brightest absorptions in the UV-visible spectra, and Irel.
+D1 = ϵD1/ϵbrt
+which is the ratio of the molar extinction coefficients of these the
+two absorptions, extracted from linear UV-visible absorption spec-
+tra. These target properties are similar to those previously used
+in ML of molecular spectra 33. Exceptions are made for TTM-1Cz-
+An and TTM-1Cz-PhAn whereby due to their unusual electronic
+structure, their first excited doublet state (D1) is a dark triplet-
+coupled doublet state and the lowest energy bright doublet state
+is D2 which is by majority composed of the carbazole HOMO-
+TTM SOMO excitation (same orbital parentage as D1 in typical
+radicals). 9 Therefore, for these exceptional molecules we fit the
+D2 (instead of D1) energy and oscillator strength to the corre-
+sponding lowest energy D2 absorption seen in experiment. For
+these two molecules, we will group this state (D2) in with the D1
+states for all the other molecules when performing the statistical
+analyses.
+2.2
+Training
+We train the ExROPPP model on experimental UV-visible data of
+known organic radicals, using a fitness function of the computed
+energies and intensities compared to those obtained from experi-
+ment, which quantifies how well the predictions of the ExROPPP
+model fit with the experimental data. The fitness function takes
+the form
+f =wD1(ED1,calc. −ED1,exp.)2 + wbrt(Ebrt,calc. −Ebrt,exp.)2
++ wI(Irel.
+D1,calc. −Irel.
+D1,exp.)2,
+(1)
+where wD1, wbrt and wI are the weights of the three respective
+terms in Eq. (1). The weights of the first two terms have units
+of eV−2 and wI is dimensionless such that f is a dimensionless
+quantity. While there are many other fitness functions which we
+could use, such as those based on the theory of optimal trans-
+port (between experimental and calculated spectra), we choose
+to use the above function as it encapsulates the essential spectral
+information of organic radicals which we believe is most impor-
+tant to be able to predict and only requires a small amount of raw
+spectral data for each radical. 70
+Training is achieved by finding a set of ExROPPP parameters
+which minimises this fitness function utilising the derivative-free
+Nelder-Mead optimiser in Python as shown in Fig. 3. 71 The algo-
+rithm first reads in the initial parameters, molecular geometries
+and experimental absorption data for all training molecules and
+classifies the molecules into hydrocarbons or heterocycles, which
+are treated slightly differently. For hydrocarbons, the fitness func-
+tion comprises of only energy terms, with wD1 and wbrt set to 1
+and wI set to zero as the D1 state for hydrocarbons gives a very
+weak absorption in experiment and in ExROPPP has zero oscilla-
+tor strength. 57 For heterocycles, all three terms are included with
+weights of 1 (except for a few molecules whose bright state data
+could not be found, see radicals-spreadsheet.xlsx in Data Avail-
+ability). Then the parameters are iteratively varied and the fitness
+calculated on each iteration until convergence.
+We found that pre-training separately on subsets of molecules
+of different heteroatom types to obtain better initial guess pa-
+rameters before training on all molecules for all parameters, an
+approach which we call ‘stratified’ training, lead to lower errors
+than not including these pre-training steps. The results of the
+trained model presented in the next section are obtained using
+this stratified approach. Details of the training process are dis-
+cussed further in SI Section II. These calculations are parallelised
+for maximum efficiency.
+2.3
+Testing on novel radicals
+Four new radicals: M2TTM-4Me, M2TTM-3PCz, M2TTM-3TPA
+and M2TTM-4TPA, shown in Fig. 6 were synthesised, their UV-
+visible absorption spectra were measured, and their minimum
+energy geometries were obtained using DFT. The spectroscopic
+data (ED1, Ebrt and Irel.
+D1) and molecular structures of these new
+molecules form a testing set for the ML ExROPPP model. The
+molecular geometries and extracted UV-visible absorption data
+of all molecules as well as initial and optimised sets of parame-
+ters are available on the UCL Research Data Repository (see Data
+Availability).
+2.4
+Statistical analysis
+We calculate root mean-squared errors (RMSE), mean absolute
+differences (MAD), R2 and Spearman’s rank correlation coeffi-
+cients (SRCC) between the experimental data and the simulated
+data for the training and testing set (see SI Section IV C).
+2.5
+PPP parameterization
+We employ largely the same functional form of PPP theory as in
+previous work. 18,23,25,26 The parameters of this model are the one-
+electron on-site Coulomb ϵµ and hopping t parameters, and two-
+electron Hubbard U and distance scaling r0 parameters. We use
+the Mataga-Nishimoto form for the two-electron integrals
+γµν ≃(µµ|νν)
+=
+Uµν
+1 + rµν/r0,µν ,
+(2)
+expressed in terms of atomic orbitals, where rµν is the scalar dis-
+tance between atoms µ and ν. 23 However unlike Refs. 18,23,25,
+26, but similar to Ref. 72 we elect to use an exponentially decay-
+ing function which is scaled by the cosine of the dihedral angle for
+the hopping term of the form tµν = A exp(−brµν) cos θ. The PPP
+parameters are atom specific, with a different ϵµ for each atom
+type and different tµν for each pair of types of bonded atoms µ
+and ν. There is only one independent Uµµ and r0,µµ for each atom
+type, and an average of the parameters for different atom types
+is taken for two-electron interactions between two different types
+of atoms i.e. Uµν = 1
+2(Uµµ + Uνν) and r0,µν = 1
+2(r0,µµ + r0,νν).
+We use different parameters for pyridine and pyrrole/aniline type
+nitrogen atoms due to their different numbers of π-electrons. Car-
+Journal Name, [year], [vol.],1–12 | 3
+
+
+===== PAGE 4 =====
+Fig.
+1 Structures of the molecules in the training set containing carbon, hydrogen, chlorine and pyrrole-type nitrogen. The central TTM/PTM
+backbone is coloured in grey, and substituents colored in light blue.
+4 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 5 =====
+Fig. 2 Structures of the molecules in the training set containing aniline, pyridine and multiple types of nitrogen. The central TTM/PTM backbone
+is coloured in grey, and substituents colored in light blue.
+Journal Name, [year], [vol.],1–12 | 5
+
+
+===== PAGE 6 =====
+ExROPPP
+Input 
+Parameters
+Geometries
+Converged?
+Fitness
+Function
+Experimental
+Spectra
+Converged
+Parameters
+Update
+Parameters
+Computed
+Spectra
+Database
+No
+Yes
+Fig. 3 A flow diagram illustrating our method for training our ExROPPP
+model on the experimental absorption data of organic radicals.
+bon and pyridine type nitrogen atoms contribute one electron to
+the π-system whereas chlorine and pyrrole/aniline type nitrogen
+atoms contribute two, from lone pairs. We model the atomic cores
+formed of the nuclei and core electrons as point charges at the nu-
+clei with effective charge of e for carbon and pyridine type nitro-
+gen, and 2e for chlorine and pyrrole/aniline type nitrogen, where
+e is the electron charge.
+To show the improvement of the trained model, we compare
+the trained parameters with those initially sourced from the liter-
+ature. Full details of the parameterisation used can be found in
+SI Section V.
+3
+Results
+3.1
+Training and Validation
+The results of training the 81 molecule model are summarized in
+Fig. 4 and Table 1. We find that the accuracy of the simulated ex-
+cited state energies improves significantly on training. The RMSE
+reduces from 0.86 eV with literature parameters to 0.24 eV for the
+trained model and the MAD reduces from 0.80 eV with literature
+parameters to 0.16 eV for the trained model. In terms of corre-
+lation, we find a marked improvement in R2 from −0.71 to 0.87
+and a smaller improvement for SRCC going from 0.79 to 0.88 in
+the trained model compared with the literature parameters.
+The simulated spectra of the training set are more accurately
+reproduced by the trained model than by the model with litera-
+ture parameters. To illustrate this we have included the spectra
+of two emissive radicals in the training set which are relevant to
+Table 1 Total fitness, root mean-squared errors (RMSE), mean abso-
+lute differences (MAD), R2 and Spearman’s rank correlation coefficients
+(SRCC) for the trained ExROPPP model and from K-fold validation
+compared to ExROPPP with parameters obtained from the literature,
+calculated for all states in the training set of 81 organic radicals. For
+further details on K-fold validation see SI section III B.
+Literature
+Trained
+K-fold
+Target
+parameters
+Model
+Model
+Total Fitness
+117.44
+10.00
+15.21
+RMSE
+0.86
+0.24
+0.27
+< 0.3
+(all states)/eV
+MAD
+0.80
+0.16
+0.18
+< 0.3
+(all states)/eV
+R2 (all states)
+−0.71
+0.87
+0.84
+close to 1
+SRCC
+0.79
+0.88
+0.86
+close to 1
+(all states)
+optoelectronics: TTM-1Cz and TTM-1Cz-An (see Fig. 5). TTM-
+1Cz is a prototypical and widely-studied emissive radical which
+has been implemented in functioning OLEDs, and is a good refer-
+ence point for the trained ExROPPP model. 1 On the other hand,
+TTM-1Cz-An is an atypical organic radical which has a complex
+and unusual electronic structure owing to its first excited state be-
+ing a quartet and should be a challenging test case for ExROPPP.
+TTM-1Cz-An has been investigated for potential applications in
+quantum information technology. 9 We find that the trained model
+reproduces the D1 (D2 for Cz-An) energies of these molecules
+significantly more accurately than does the literature parameters.
+The accuracy for the bright states also improves with the trained
+parameters.
+Furthermore, ExROPPP predicts that the quartet
+state of TTM-1Cz-An is lower in energy than the lowest energy
+bright state D2 in both sets of parameters, in line with experimen-
+tal data and higher-level calculations in the literature. 9 Trained
+ExROPPP does produce an extra absorption around 500nm for
+both molecules which is not seen in experiment, and could be an
+artifact of the choice of fitness function. The fitness only depends
+on the energies and relative intensities of the D1 (D2 for Cz-An)
+state and the intense bright state and thus does not take into ac-
+count other states in the spectrum. Nevertheless, the ability of
+the trained ExROPPP model to accurately capture the absorption
+spectra and excited state features of both typical and anomalous
+radicals shows its flexibility and robustness.
+In addition, we employed K-fold cross-validation on the 81-
+radical training set to validate the robustness of the model against
+data noise, using several different choices of folds. The data noise
+is shown to be small for all trials. Artificially (selected by the user)
+and randomly distributed folds gave similar errors proving that
+the distribution of molecules across folds does not significantly
+affect the model. Also, the K-fold results show that the stratified
+model has better robustness than the model without pre-training
+steps. Further details can be found in the SI Section III.
+3.2
+Transferability
+Here we briefly consider the extent to which the trained ExROPPP
+model can reproduce the qualitative orbital structure of radicals.
+This is a particularly challenging test given that ExROPPP was not
+6 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 7 =====
+Literature Parameters
+Trained Model
+Fig. 4 Regression plots of the excited state energies of the 81 molecule training set calculated by ExROPPP compared with experimentally determined
+energies, using parameters obtained from the literature (left) and those of the trained ExROPPP model (right). The trained model predicts the
+energies of UV/Visible absorptions much closer to experiment (red line) than do the literature parameters.
+D1
+Lit.
+D1 ML.
+D2 ML.
+D1 Exp.
+D2 Exp.
+TTM-1Cz
+TTM-1Cz-An
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+D2 Lit.
+Fig.
+5 UV-visible absorption spectra of TTM-1Cz and TTM-1Cz-An measured in 200 µM toluene solution at room temperature (red), simulated
+using ExROPPP with literature parameters (blue) and with the trained 81 molecule model (black). 9 The trained model substantially improves on the
+literature parameters in both cases.
+trained on orbital data.
+A qualitative comparison of the singly occupied (SOMO) and
+highest occupied (HOMO) molecular orbitals from ExROPPP and
+ROHF (B3LYP/6-31G(d,p)) demonstrates good overall agreement
+in both shape and localization, highlighting the transferability of
+the ExROPPP-based parametrisation.
+In TTM-1Cz, TTM-3NCz,
+and M3TTM, the SOMOs remain largely centered on the triaryl-
+methyl carbon, with moderate extension onto the phenyl rings,
+whereas the HOMOs for TTM-1Cz and TTM-3NCz localize more
+strongly on the carbazole substituent. Notably, the local/global
+symmetry (e.g., C2 for TTM-1Cz, C3 for M3TTM) and corre-
+sponding irreps are preserved. These observations underscore the
+physical interpretability and transferability of parameters derived
+via an optimizer-assisted physics-informed model, which can ex-
+trapolate untrained properties. Minor discrepancies occur for the
+M3TTM HOMO, where ExROPPP underestimates the small orbital
+coefficients in the outer ring. Further details and figures illustrat-
+ing these points are provided in SI Section IV E.
+3.3
+Novel organic radicals
+To test our model, we synthesized four novel trityl radicals, specif-
+ically designed to probe various state-of-the-art concepts pre-
+viously identified in mono-radical systems (see Fig. 6).
+Each
+radical was based on a mesitylated TTM framework, which has
+been shown to enhance photoluminescence quantum efficiency
+(PLQE) by augmenting the radiative decay rate. 5 To evaluate the
+ExROPPP model with an asymmetric structure and the absence of
+charge transfer (CT), toluene was appended to the unsubstituted
+site of the mesitylated trityl radical core through its 4-position.
+The three other radicals incorporated CT groups, namely 9-
+phenylcarbazole (PCz) and triphenylamine (TPA), which con-
+tain non-bonding nitrogen lone pairs. These non-bonding elec-
+trons have been shown to enhance photoluminescent efficiency
+through a reduction in excitonic coupling to high-frequency vibra-
+tional modes. 73 Through the inclusion of PCz and TPA moieties,
+we aimed to test the model across electron-donating groups of
+varying strengths, with TPA being the stronger donor due to the
+hybridization of its nitrogen heteroatom which influences lone
+pair availability. Additionally, TPA units were linked to the trityl
+Journal Name, [year], [vol.],1–12 | 7
+
+
+===== PAGE 8 =====
+Fig.
+6 Structures of the four newly synthesised radicals reported in
+this work: M2TTM-4Me, M2TTM-3PCz, M2TTM-3TPA and M2TTM-
+4TPA, which constitute the testing set.
+radical core through both the 3- and 4-positions to assess accuracy
+in predicting spectroscopic outcomes for different stereoisomers.
+The combination of mesitylation and non-bonding CT groups pro-
+vides a promising strategy for developing highly efficient radical
+emitters and it is crucial that the ExROPPP method can predict
+outcomes for these cutting-edge radical designs.
+The synthesis of the radical species commenced with the
+formation of αHM2TTM as previously reported by Murto et.
+al.. 5 Following this, αHM2TTM was reacted with the respec-
+tive 3- and 4- linked boronic acids of PCz and TPA to form
+αHM2TTM-3PCz and αHM2TTM-4TPA. To create the αH pre-
+cursors for the other two radical species, the remaining para-
+chlorine of αHM2TTM was converted to a boronic ester through
+a Miyaura borylation before being coupled with 4-iodotoluene or
+3-bromotriphenylamine. To convert into their respective radicals,
+all four αH species were subjected to tetrabutylammonium hy-
+droxide, to form the monoanion, before being oxidised to the rad-
+ical using para-chloranil. M2TTM-4TPA, M2TTM-3TPA, M2TTM-
+3PCz and M2TTM-4T were formed in a 13%, 56%, 86% and 37%
+yield respectively. UV-vis absorption measurements were carried
+out for the radicals in a 0.1 mM toluene solution. All four radicals
+display an intense absorption feature around 370-400 nm, which
+is characteristic of a local excitation within the TTM radical core.
+For M2TTM-3PCz and M2TTM-4TPA, additional absorption peaks
+can be seen at 590 and 630 nm respectively. These are attributed
+to CT transitions between the electron donating group and the
+Triphenylamine (TPA) HOMO
+Significant amplitude at the para position
+Minor
+amplitude at
+the meta
+position
+Fig. 7 HOMO of TPA calculated by closed-shell PPP (with the optimised
+parameters obtained from training on 81 radicals). There is significant
+HOMO amplitude at the para (4) position but minimal amplitude at the
+meta (3) position, such that the design rules correctly predict M2TTM-
+4TPA to have a significant low-energy visible absorption and M2TTM-
+3TPA not to have one.
+electron-accepting TTM core.
+We find that the four new molecules confirm the structure-
+property predictions made in 2020 6 that, in order for a signifi-
+cant D1 absorption the molecule should not be an alternant hy-
+drocarbon and that the HOMO on the donor (4Me, 3PCz or TPA
+in this case) has orbital amplitude on the atom through which it
+is joined to the acceptor (TTM). M2TTM-4Me is predicted to have
+minimal D1 oscillator strength as it is a de facto alternant hydro-
+carbon, as is observed experimentally. M2TTM-3PCz contains a
+five-membered ring and a nitrogen, both of which break alter-
+nacy symmetry leading to a bright D1 state, as is experimentally
+observed. A simple PPP calculation on TPA alone finds that the
+HOMO has significant amplitude at the para (4) position but min-
+imal amplitude at the meta (3) position, as shown in Fig. 7. This
+therefore predicts that the TPA to TTM charge transfer excitation
+will be dark in M2TTM-3TPA but bright in M2TTM-4TPA, as is
+observed experimentally in Fig. 8. We believe this is the first di-
+rect experimental confirmation of the design rule concerning the
+HOMO amplitude.
+3.4
+Testing
+We tested the trained 81-molecule model on our four new organic
+radicals: M2TTM-4Me, M2TTM-3PCz, M2TTM-3TPA and M2TTM-
+4TPA shown in Fig. 6, which make up the testing set. We find
+that the trained model performs well on the testing set, predict-
+ing both D1 and bright state energies with a significantly higher
+accuracy than the literature parameters, as can be seen in Fig. 9.
+We also calculated the RMSE, MAD, R2 and SRCC for the testing
+data, presented in Table 2. We find similar values for the errors
+and correlation metrics for the testing set as seen previously for
+the training set, again with RMSE and MAD less than 0.3 eV and
+R2 and SRCC of 0.93 and 0.76 respectively. The fact that the
+errors (RMSE and MAD) for the testing set are actually slightly
+lower than for the training set further indicates that overfitting
+did not occur.
+8 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 9 =====
+D1
+lit.
+D1 lit.
+D1 lit.
+D1 
+lit.
+D1 ML
+D1 ML
+D1 ML
+D1 ML
+D1 exp.
+D1 exp.
+D1 exp.
+D1 exp.
+M2TTM-4Me
+M2TTM-3PCz
+M2TTM-4TPA
+M2TTM-3TPA
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+0
+0.2
+0.4
+0.6
+0.8
+1
+200
+300
+400
+500
+600
+700
+Wavelength / nm
+Normalised Absorbance
+ExROPPP - lit. parameters
+ExROPPP - ML parameters
+Experiment
+Fig. 8 UV-visible absorption spectra of the newly-synthesised M2TTM-4Me (top left), M2TTM-3PCz (top right), M2TTM-3TPA (bottom left) and
+M2TTM-4TPA (bottom right) measured in 0.1 mM toluene solution (red), simulated using ExROPPP with literature parameters (blue) and of the
+trained 81 molecule ExROPPP model (black). Trained ExROPPP (black) reproduces the experimental spectra (red) more accurately than untrained
+ExROPPP with literature parameters (blue).
+Table 2 Root mean-squared errors (RMSE), mean absolute differences
+(MAD), R2 and Spearman’s rank correlation coefficients (SRCC) for
+the testing set of four newly synthesised molecules:
+M2TTM-4Me,
+M2TTM-3PCz, M2TTM-3TPA and M2TTM-4TPA, using i) the trained
+81 molecule model and ii) ExROPPP with parameters obtained from the
+literature.
+Literature
+Trained
+Target
+parameters
+Model
+RMSE (all states) / eV
+0.73
+0.15
+< 0.3
+MAD (all states) / eV
+0.71
+0.13
+< 0.3
+R2 (all states)
+-0.83
+0.93
+close to 1
+SRCC (all states)
+0.76
+0.76
+close to 1
+We also compare the ExROPPP simulated UV-visible absorp-
+tion spectra, with both literature and trained parameters, with
+the experimental spectra for these four molecules as shown in
+Fig. 8. The simulated spectra of all four molecules are signifi-
+cantly improved after training. As well as a significant improve-
+ment in accuracy of the D1 and bright state energies, the shape
+of the spectra are overall also better captured by the trained
+ExROPPP model.
+The only slight outlier is M2TTM-3TPA, for
+which ExROPPP predicts a larger D1 intensity and lower D1
+energy than seen in experiment. Overall, however, the trained
+model accurately reproduces the absorption spectra of these four
+unseen molecules.
+4
+Conclusions
+In this article we have presented the first demonstration of learn-
+ing the excited states of radicals from experimental data.
+We
+achieve this by using the spin-pure ExROPPP method as a sur-
+rogate model, both to avoid the spin-contamination problem, and
+to address the limited experimental data in the literature. We find
+that the trained ExROPPP model performs far better at computing
+spectral features of organic radicals than the literature parame-
+ters. Four new radicals are synthesised and we test our model by
+comparing computed spectra against experimental data, finding
+good agreement and demonstrating its wider applicability as a
+predictive model. In future work this model could be further ex-
+tended to predicting the emission spectra of radicals, and also to
+other atoms and groups common in organic radicals such as O, S
+and F, nitrile, nitro, aminoxyl and trifluoromethyl. 60. In summary,
+this work serves as a major step forward for high-throughput
+screening and inverse molecular design of radicals with applica-
+tions in OLEDs and qubits.
+5
+Experimental Methods
+5.1
+Characterization techniques of organic radicals
+NMR spectra were acquired using a 400 MHz Bruker Avance III
+HD spectrometer (1H, 400 MHz; 13C, 100 MHz). Chemical shifts
+are reported in δ (ppm) relative to the solvent peak: chloroform-d
+Journal Name, [year], [vol.],1–12 | 9
+
+
+===== PAGE 10 =====
+Fig. 9 Regression plot of the excited state energies of the radicals in the
+testing set calculated by ExROPPP and compared with experimentally
+determined energies. ‘lit.’ refers to the parameters sourced from the liter-
+ature and ‘ML’ refers to the parameters of the trained 81 molecule model.
+It can be clearly seen that for this testing set the trained ExROPPP model
+more accurately reproduces the experimental values than ExROPPP with
+literature parameters.
+(CDCl3: 1H, 7.26 ppm; 13C, 77.16 ppm) and dichloromethane-d2
+(CD2Cl2: 1H, 5.32 ppm; 13C, 53.84 ppm). Mass spectra were ob-
+tained on a Waters Xevo G2-S benchtop QTOF mass spectrometer
+equipped with a electrospray ionization (ESI) or an atmospheric
+solid analysis probe (ASAP). Flash chromatography was carried
+out using Biotage Isolera Four System and Biotage SNAP/Sfär Sil-
+ica flash cartridges.
+5.2
+Steady-state UV-visible spectroscopy
+UV–visible spectra were measured with a commercially available
+Shimadzu UV-1800 spectrophotometer.
+Author Contributions
+TJHH conceived the research idea with assistance from JDG and
+JS. Computational research for training the ExROPPP model was
+undertaken by JDG, JS and KM, supervised by TJHH. Organic syn-
+thesis, characterization and measurement of UV-Visible absorp-
+tion spectra was performed by LEW, supervised by HB. JS, KM,
+LEW and JDG all contributed to DFT calculations. The orbital vi-
+sualiser was written by KM. KB advised on machine learning. The
+initial draft of the manuscript was written by JDG with assistance
+from TJHH, JS and KM and the organic synthetic parts written by
+LEW. All authors contributed to the revising and reviewing of the
+manuscript.
+Conflicts of interest
+There are no conflicts to declare.
+Data availability statement
+The Extended Data including the molecular geometries and lit-
+erature UV-visible absorption data for all molecules, and initial
+and optimised sets of parameters is available at the UCL Research
+Data Repository at <link to be provided>
+Acknowledgments
+We thank Richard H. Friend for helpful discussions and Emrys
+W. Evans for providing geometries of TTM-3NCz, TTM-3PCz,
+TTM-αPyID,TTM-βPyID, TTM-γPyID and TTM-δPyID. TJHH ac-
+knowledges a Royal Society University Research Fellowship
+URF\R1\201502 and a startup grant from University College Lon-
+don.
+HB acknowledges the grant EP/W017091/1.
+L.E.W. ac-
+knowledges funding from the European Research Council under
+the European Union’s Horizon 2020 research and innovation pro-
+gram grant agreement No. 101020167. KTB acknowledges fund-
+ing from UKRI grants EP/Y000552/1 and EP/Y014405/1.
+We
+thank Feng Li for permission to reuse the structure of CzBTM.
+Notes and references
+1 Q. Peng, A. Obolda, M. Zhang and F. Li, Angew. Chem., Int.
+Ed. 54 (2015), 7091.
+2 X. Ai, E. W. Evans, S. Dong, A. J. Gillett, H. Guo, Y. Chen,
+T. J. H. Hele, R. H. Friend and F. Li, Nature 563 (2018), 536.
+3 Z. Guo, S. Park, J. Yoon and I. Shin, Chemical Society Reviews
+43 (2014), 16.
+4 M. Blanco and I. Villarroya, TrAC Trends in Analytical Chem-
+istry 21 (2002), 240.
+5 P. Murto, R. Chowdhury, S. Gorgon, E. Guo, W. Zeng, B. Li,
+Y. Sun, H. Francis, R. H. Friend and H. Bronstein, Nature Com-
+munications 14 (2023), 4147.
+6 A. Abdurahman, T. J. Hele, Q. Gu, J. Zhang, Q. Peng,
+M. Zhang, R. H. Friend, F. Li and E. W. Evans, Nature ma-
+terials 19 (2020), 1224.
+7 F. Li, A. J. Gillett, Q. Gu, J. Ding, Z. Chen, T. J. Hele, W. K.
+Myers, R. H. Friend and E. W. Evans, Nature Communications
+13 (2022), 2744.
+8 H.-H. Cho, S. Gorgon, G. Londi, S. Giannini, C. Cho, P. Ghosh,
+C. Tonnelé, D. Casanova, Y. Olivier, T. K. Baikie et al., Nature
+Photonics (2024), 1.
+9 S. Gorgon, K. Lv, J. Grüne, B. H. Drummond, W. K. Myers,
+G. Londi, G. Ricci, D. Valverde, C. Tonnelé, P. Murto, A. S.
+Romanov, D. Casanova, V. Dyakonov, A. Sperlich, D. Beljonne,
+Y. Olivier, F. Li, R. H. Friend and E. W. Evans, Nature 620
+(2023), 538.
+10 C. P. Yu, R. Chowdhury, Y. Fu, P. Ghosh, W. Zeng, T. B.
+Mustafa, J. Grüne, L. E. Walker, D. G. Congrave, X. W. Chua
+et al., Science Advances 10 (2024), eado3476.
+11 A.
+Mizuno,
+R.
+Matsuoka,
+S.
+Kimura,
+K.
+Ochiai
+and
+T. Kusamoto, Journal of the American Chemical Society 146
+(2024), 18470, pMID: 38921686.
+12 K. Andersson, P.-Å. Malmqvist and B. O. Roos, The Journal of
+chemical physics 96 (1992), 1218.
+13 H. Nakano, The Journal of Chemical Physics 99 (1993), 7983.
+14 G. D. Purvis III and R. J. Bartlett, The Journal of chemical
+physics 76 (1982), 1910.
+15 C. He, Z. Li, Y. Lei, W. Zou and B. Suo, The Journal of Physical
+Chemistry Letters 10 (2019), 574.
+16 Z. Li and W. Liu, Journal of Chemical Theory and Computation
+12 (2016), 238, pMID: 26672389.
+10 |
+1–12
+Journal Name, [year], [vol.],
+
+
+===== PAGE 11 =====
+17 T. J. H. Hele, B. Monserrat and A. M. Alvertis, The Journal of
+Chemical Physics 154 (2021), 244109.
+18 J. D. Green and T. J. H. Hele, The Journal of Chemical Physics
+160 (2024), 164110.
+19 R. Pariser and R. G. Parr, The Journal of Chemical Physics 21
+(1953), 466.
+20 R. Pariser, The Journal of Chemical Physics 24 (1956), 250.
+21 J. A. Pople, Trans. Faraday Soc. 49 (1953), 1375.
+22 J. A. Pople and R. K. Nesbet, The Journal of Chemical Physics
+22 (1954), 571.
+23 N. Mataga and K. Nishimoto, Zeitschrift für Physikalische
+Chemie 13 (1957), 140.
+24 D. Maurice and M. Head-Gordon, The Journal of Physical
+Chemistry 100 (1996), 6131.
+25 T. J. H. Hele, E. G. Fuemmeler, S. N. Sanders, E. Kumarasamy,
+M. Y. Sfeir, L. M. Campos and N. Ananth, The Journal of Phys-
+ical Chemistry A 123 (2019), 2527, pMID: 30802051.
+26 J. D. Green, E. G. Fuemmeler and T. J. H. Hele, The Journal
+of Chemical Physics 156 (2022), 180901.
+27 M. Bedogni, D. Giavazzi, F. Di Maiolo and A. Painelli, Journal
+of Chemical Theory and Computation 20 (2023), 902.
+28 M. Dubbini, F. Bonvini, L. Savi and F. Di Maiolo, The Journal
+of Physical Chemistry C 128 (2024), 18158.
+29 K. Jorner, R. Pollice, C. Lavigne and A. Aspuru-Guzik, The
+Journal of Physical Chemistry A 128 (2024), 2445, pMID:
+38485448.
+30 J. Hinze and D. L. Beveridge, Journal of the American Chemical
+Society 93 (1971), 3107.
+31 F. Van-Catledge, The Journal of Organic Chemistry 45 (1980),
+4801.
+32 K. T. Butler, D. W. Davies, H. Cartwright, O. Isayev and
+A. Walsh, Nature 559 (2018), 547.
+33 G. Montavon, M. Rupp, V. Gobre, A. Vazquez-Mayagoitia,
+K. Hansen, A. Tkatchenko, K.-R. Müller and O. A. Von Lilien-
+feld, New Journal of Physics 15 (2013), 095003.
+34 B. Sanchez-Lengeling and A. Aspuru-Guzik, Science 361
+(2018), 360.
+35 A. P. Bartók, S. De, C. Poelking, N. Bernstein, J. R. Ker-
+mode, G. Csányi and M. Ceriotti, Science Advances 3 (2017),
+e1701816.
+36 V. L. Deringer, M. A. Caro and G. Csányi, Advanced Materials
+31 (2019), 1902765.
+37 Š. Sršeˇn, O. A. von Lilienfeld and P. Slavíˇcek, Phys. Chem.
+Chem. Phys. 26 (2024), 4306.
+38 W.-K. Chen, X.-Y. Liu, W.-H. Fang, P. O. Dral and G. Cui, The
+Journal of Physical Chemistry Letters 9 (2018), 6702.
+39 R. Ramakrishnan, M. Hartmann, E. Tapavicza and O. A.
+von Lilienfeld, The Journal of Chemical Physics 143 (2015),
+084111.
+40 L. M. Roch, S. K. Saikin, F. Häse, P. Friederich, R. H. Gold-
+smith, S. León and A. Aspuru-Guzik, ACS Nano 14 (2020),
+6589, pMID: 32338888.
+41 Z. Chen, F. C. Bononi, C. A. Sievers, W.-Y. Kong and D. Dona-
+dio, Journal of Chemical Theory and Computation 18 (2022),
+4891, pMID: 35913220.
+42 J. Westermayr and P. Marquetand, Chemical Reviews 121
+(2021), 9873, pMID: 33211478.
+43 P. O. Dral and M. Barbatti, Nature Reviews Chemistry 5 (2021),
+388.
+44 P. O. Dral, M. Barbatti and W. Thiel, The journal of physical
+chemistry letters 9 (2018), 5660.
+45 B.-X. Xue, M. Barbatti and P. O. Dral, The Journal of Physical
+Chemistry A 124 (2020), 7199, pMID: 32786977.
+46 C.-W. Ju, Y. Shen, E. J. French, J. Yi, H. Bi, A. Tian and Z. Lin,
+The Journal of Physical Chemistry A 128 (2024), 2457, pMID:
+38382058.
+47 A. Fabrizio, K. R. Briling and C. Corminboeuf, Digital Discovery
+1 (2022), 286.
+48 K. R. Briling, Y. Calvino Alonso, A. Fabrizio and C. Cormin-
+boeuf, Journal of Chemical Theory and Computation 20
+(2024), 1108, pMID: 38227222.
+49 J. Westermayr, M. Gastegger and P. Marquetand, The Jour-
+nal of Physical Chemistry Letters 11 (2020), 3828, pMID:
+32311258.
+50 R. Hoffmann, The Journal of Chemical Physics 39 (1963),
+1397.
+51 M. J. Dewar and W. Thiel, Journal of the American Chemical
+Society 99 (1977), 4899.
+52 J. J. Stewart, Journal of Molecular modeling 13 (2007), 1173.
+53 M. P. Repasky, J. Chandrasekhar and W. L. Jorgensen, Journal
+of computational chemistry 23 (2002), 1601.
+54 A. S. Christensen, T. Kubaˇr, Q. Cui and M. Elstner, Chemical
+Reviews 116 (2016), 5301, pMID: 27074247.
+55 E. Fabiano, T. Keal and W. Thiel, Chemical Physics 349 (2008),
+334, electron Correlation and Molecular Dynamics for Excited
+States and Photochemistry.
+56 T. J. H. Hele, Physical Chemistry of Semiconductor Materials
+and Interfaces XX, International Society for Optics and Pho-
+tonics, SPIE (2021), volume 11799, 117991A.
+57 T. Li Chu and S. I. Weissman, The Journal of Chemical Physics
+22 (1954), 21.
+58 H. C. Longuet-Higgins and J. A. Pople, Proceedings of the Phys-
+ical Society. Section A 68 (1955), 591.
+59 J. M. Hudson, T. J. H. Hele and E. W. Evans, Journal of Applied
+Physics 129 (2021), 180901.
+60 A. Mizuno, R. Matsuoka, T. Mibu and T. Kusamoto, Chemical
+Reviews 124 (2024), 1034, pMID: 38230673.
+61 X. Ai, Y. Chen, Y. Feng and F. Li, Angewandte Chemie Interna-
+tional Edition 57 (2018), 2869.
+62 S. R. Ruberu and M. A. Fox, The Journal of Physical Chemistry
+97 (1993), 143.
+63 K.
+Matsuda,
+R.
+Xiaotian,
+K.
+Nakamura,
+M.
+Furukori,
+T. Hosokai, K. Anraku, K. Nakao and K. Albrecht, Chem. Com-
+mun. 58 (2022), 13443.
+64 Y. Gao, A. Obolda, M. Zhang and F. Li, Dyes and Pigments 139
+(2017), 644.
+65 S. Dong, A. Obolda, Q. Peng, Y. Zhang, S. Marder and F. Li,
+Mater. Chem. Front. 1 (2017), 2132.
+Journal Name, [year], [vol.],
+1–12 | 11
+
+
+===== PAGE 12 =====
+66 H. Guo, Q. Peng, X.-K. Chen, Q. Gu, S. Dong, E. W. Evans,
+A. J. Gillett, X. Ai, M. Zhang, D. Credgington et al., Nature
+materials 18 (2019), 977.
+67 S. Dong, W. Xu, H. Guo, W. Yan, M. Zhang and F. Li, Phys.
+Chem. Chem. Phys. 20 (2018), 18657.
+68 C. Yan, D. An, W. Chen, N. Zhang, Y. Qiao, J. Fang, X. Lu,
+G. Zhou and Y. Liu, CCS Chemistry 4 (2022), 3190.
+69 G. M. J. Barca, C. Bertoni, L. Carrington, D. Datta, N. De Silva,
+J. E. Deustua, D. G. Fedorov, J. R. Gour, A. O. Gunina,
+E. Guidez, T. Harville, S. Irle, J. Ivanic, K. Kowalski, S. S.
+Leang, H. Li, W. Li, J. J. Lutz, I. Magoulas, J. Mato,
+V. Mironov, H. Nakata, B. Q. Pham, P. Piecuch, D. Poole,
+S. R. Pruitt, A. P. Rendell, L. B. Roskop, K. Ruedenberg,
+T. Sattasathuchana, M. W. Schmidt, J. Shen, L. Slipchenko,
+M. Sosonkina, V. Sundriyal, A. Tiwari, J. L. Galvez Vallejo,
+B. Westheimer, M. Włoch, P. Xu, F. Zahariev and M. S. Gor-
+don, The Journal of Chemical Physics 152 (2020), 154102.
+70 N. A. Seifert, K. Prozument and M. J. Davis, The Journal of
+Chemical Physics 155 (2021).
+71 J. A. Nelder and R. Mead, The Computer Journal 7 (1965),
+308.
+72 S. de Bruijn, Chemical Physics Letters 8 (1971), 19.
+73 P. Ghosh, A. M. Alvertis, R. Chowdhury, P. Murto, A. J. Gillett,
+S. Dong, A. J. Sneyd, H.-H. Cho, E. W. Evans, B. Monserrat
+et al., Nature 629 (2024), 355.
+12 |
+1–12
+Journal Name, [year], [vol.],

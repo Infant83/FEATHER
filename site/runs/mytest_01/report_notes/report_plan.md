@@ -1,0 +1,8 @@
+- [ ] 요구사항 정렬 및 산출물 범위 확정 — `instruction/mytest.txt`를 읽고 “단일 논문 요약(ACS review 톤/구조 적용 여부)”와 포함할 깊이(그림/표/수식 포함)를 확정 | Evidence: ./archive/arxiv/text/2412.10149v2.txt`, /archive/arxiv/text/2412.10149v2.txt`
+- [ ] 소스 커버리지 검증 및 우선순위 고정 — `archive/mytest_01-index.md`, `report_notes/source_index.jsonl`, `report_notes/source_triage.md`로 핵심 소스(2412.10149v2) 누락/버전/경로를 재확인
+- [ ] 본문(텍스트) 정독 및 근거 발췌 — `archive/arxiv/text/2412.10149v2.txt`에서 연구질문, 방법(ExROPPP+XCIS, 최적화), 데이터(81종), 목적함수/지표, 핵심 수치(RMSE 등)를 문단·식 단위로 인용 후보로 추출 | Evidence: ./archive/arxiv/text/2412.10149v2.txt`, /archive/arxiv/text/2412.10149v2.txt`
+- [ ] PDF 교차검증(그림/표/정량값) — `archive/arxiv/pdf/2412.10149v2.pdf`에서 Fig./Table의 축·범례·비교군·테스트셋 4종 결과를 확인해 텍스트 요약의 수치/해석을 정합화 | Evidence: ./archive/arxiv/text/2412.10149v2.txt`, /archive/arxiv/text/2412.10149v2.txt`
+- [ ] 핵심 기여·인사이트 합성 — “희소 실험 데이터로 물리기반 서로게이트(ExROPPP) 파라미터 학습”의 신규성, 전이성 주장, 왜 작동하는지(가정/제약)와 기존 접근(TD-DFT, CASPT2 등) 대비 포지셔닝을 정리
+- [ ] 한계·리스크·재현성 체크리스트 작성 — 피팅 타깃(요약량) 한계, 적용 원소/구조 범위(C/H/N/Cl), 외삽 검증 규모(4종) 제약, 파라미터 수/자유도·과적합 가능성, 필요한 추가 검증을 항목화
+- [ ] 템플릿(acs_review) 구조로 보고서 아웃라인 구성 — Abstract → Current Landscape → Mechanistic Insights → Applications → Challenges → Outlook → Risks & Gaps → Critics 순으로, 논문 1편 근거에 맞게 섹션별 핵심 포인트를 배치
+- [ ] 최종 요약문 작성 및 출처 매핑 — 각 주장/수치에 대해 텍스트/PDF의 위치(섹션, 그림/표) 기반으로 근거를 붙이고, 과장 없이 결론·의의·향후과제를 간결히 정리 | Evidence: ./archive/arxiv/text/2412.10149v2.txt`, /archive/arxiv/text/2412.10149v2.txt`

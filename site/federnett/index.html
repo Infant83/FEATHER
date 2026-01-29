@@ -24,6 +24,7 @@
         </div>
         <div class="top-actions">
           <button id="reload-runs" class="ghost">Reload Runs</button>
+          <button id="help-button" class="ghost">Help</button>
           <label class="theme-select">
             <span>Theme</span>
             <select id="theme-select" aria-label="Theme">
@@ -298,6 +299,14 @@
                     placeholder="Optional: override or extend the prompt."
                   ></textarea>
                 </label>
+                <div class="instruction-inline-actions wide">
+                  <button type="button" id="federlicht-save-prompt" class="ghost">
+                    Save Prompt
+                  </button>
+                  <button type="button" id="federlicht-saveas-prompt" class="ghost">
+                    Save Prompt As
+                  </button>
+                </div>
 
                 <div class="toggles wide">
                   <label class="toggle">
@@ -310,7 +319,7 @@
                   </label>
                   <label class="toggle">
                     <input type="checkbox" id="federlicht-no-tags" />
-                    <span>No Tags</span>
+                    <span>No Tags <span class="muted">(default off)</span></span>
                   </label>
                 </div>
 
@@ -383,7 +392,12 @@
                   </div>
                   <div class="advanced-block">
                     <header class="inline-header">
-                      <h3>Agent Pipeline</h3>
+                      <div class="inline-header-row">
+                        <h3>Agent Pipeline</h3>
+                        <button type="button" id="pipeline-help" class="ghost">
+                          Help
+                        </button>
+                      </div>
                       <p>
                         Toggle stages, drag to reorder, and feed the result into Federlicht.
                       </p>
@@ -408,7 +422,9 @@
                 </details>
 
                 <div class="actions wide">
-                  <button type="submit" class="primary">Run Federlicht</button>
+                  <button type="submit" class="primary" id="federlicht-run">
+                    Run Federlicht
+                  </button>
                 </div>
               </form>
             </div>
@@ -475,13 +491,6 @@
                 <div id="jobs-list" class="jobs-list"></div>
               </div>
             </section>
-
-            <div
-              id="telemetry-splitter"
-              class="splitter splitter-vertical"
-              aria-hidden="true"
-              title="Drag to resize preview"
-            ></div>
 
             <section class="telemetry-block preview-block">
               <div class="panel-head slim">
@@ -614,6 +623,107 @@
             <button type="button" class="ghost" data-modal-close>Close</button>
           </header>
           <div id="template-modal-body" class="modal-list"></div>
+        </div>
+      </div>
+
+      <div class="modal" id="saveas-modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-saveas-close></div>
+        <div class="modal-card" role="document">
+          <header class="modal-header">
+            <div>
+              <h3>Save As</h3>
+              <p>Select a folder, then name the file.</p>
+            </div>
+            <button type="button" class="ghost" data-saveas-close>Close</button>
+          </header>
+          <div class="modal-controls">
+            <input
+              type="text"
+              id="saveas-path"
+              class="ghost-input"
+              placeholder="Current folder"
+            />
+            <button type="button" class="ghost" id="saveas-up">Up</button>
+          </div>
+          <div id="saveas-list" class="modal-list"></div>
+          <div class="modal-footer">
+            <input
+              type="text"
+              id="saveas-filename"
+              class="ghost-input"
+              placeholder="Filename (e.g., notes.md)"
+            />
+            <button type="button" class="ghost" id="saveas-confirm">Save Here</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" id="help-modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-help-close></div>
+        <div class="modal-card" role="document">
+          <header class="modal-header">
+            <div>
+              <h3>Federnett Help</h3>
+              <p>Quick guidance for Feather, Federlicht, and pipeline controls.</p>
+            </div>
+            <button type="button" class="ghost" data-help-close>Close</button>
+          </header>
+          <div class="modal-list help-body">
+            <section class="help-section" id="help-feather">
+              <h4>Feather</h4>
+              <ul>
+                <li>
+                  Choose an instruction file or edit inline, then Save / Save As before
+                  running.
+                </li>
+                <li>
+                  Output folder defaults to <code>site/runs/&lt;run&gt;</code>. Run name
+                  helps auto-fill paths.
+                </li>
+                <li>
+                  Use Advanced for language, days, and max-results tweaks.
+                </li>
+              </ul>
+            </section>
+            <section class="help-section" id="help-federlicht">
+              <h4>Federlicht</h4>
+              <ul>
+                <li>
+                  Pick a run folder, template, and prompt file. The inline prompt mirrors
+                  the file for quick edits.
+                </li>
+                <li>
+                  Save Prompt writes back to the selected file; Save Prompt As creates a
+                  new file and updates the field.
+                </li>
+                <li>
+                  Run is disabled while a job is active. Stop via Live Logs if needed.
+                </li>
+              </ul>
+            </section>
+            <section class="help-section" id="help-pipeline">
+              <h4>Agent Pipeline</h4>
+              <ul>
+                <li>
+                  Toggle stages to include/exclude, then drag to reorder. Results
+                  populate the <code>Stages</code> and <code>Skip</code> fields.
+                </li>
+                <li>
+                  To customize deeper agent settings, edit your agent config and reload
+                  Federlicht. (Future: inline agent editor.)
+                </li>
+              </ul>
+            </section>
+            <section class="help-section" id="help-preview">
+              <h4>File Preview</h4>
+              <ul>
+                <li>
+                  Click a file in Run Studio to preview. Use Open to launch in a new tab,
+                  Save / Save As for editable text.
+                </li>
+              </ul>
+            </section>
+          </div>
         </div>
       </div>
 

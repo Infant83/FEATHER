@@ -1,0 +1,33 @@
+{
+  "date": "2026-01-30",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mytest\\instruction\\mytest.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mytest_01",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mytest_01\\archive",
+  "query_id": "mytest_01",
+  "lang_pref": "ko",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": false,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://arxiv.org/abs/2412.10149"
+  ],
+  "arxiv_ids": [
+    "2412.10149"
+  ],
+  "site_hints": [],
+  "raw_lines": [
+    "https://arxiv.org/abs/2412.10149"
+  ]
+}

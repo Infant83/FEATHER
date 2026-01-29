@@ -1,7 +1,36 @@
 {
-  "revision": "2026-01-27T22:02:50.771588",
-  "generated_at": "2026-01-27T22:02:50.771588",
+  "revision": "2026-01-30T06:38:15.380729",
+  "generated_at": "2026-01-30T06:38:15.380729",
   "items": [
+    {
+      "id": "mytest_01",
+      "run": "mytest_01",
+      "report_stem": "report_full",
+      "title": "희소 실험 UV–vis로 학습한 ExROPPP 유기 라디칼 여기상태 예측",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "희소 실험 UV–vis로 학습한 ExROPPP 유기 라디칼 여기상태 예측 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-01-30 06:37 Abstract 유기 라디칼(organic radical)의 전자 들뜬상태는 스핀 오염(spin contamination)과 다중참조(multirefere…",
+      "lang": "Korean",
+      "template": "acs_review",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [
+        "유기",
+        "라디칼",
+        "vis",
+        "exroppp",
+        "희소"
+      ],
+      "date": "2026-01-30",
+      "timestamp": "2026-01-30T06:38:15.062643",
+      "source_mtime": 1769722695,
+      "source_size": 41305,
+      "paths": {
+        "report": "runs/mytest_01/report_full.html",
+        "overview": "runs/mytest_01/report/run_overview_report_full.md",
+        "workflow": "runs/mytest_01/report_notes/report_workflow.md",
+        "run": "runs/mytest_01"
+      }
+    },
     {
       "id": "20260127_arxiv-molgenRL",
       "run": "20260127_arxiv-molgenRL",

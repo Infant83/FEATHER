@@ -1,0 +1,1 @@
+- [arxiv] Learning Radical Excited States from Sparse Data — http://arxiv.org/abs/2412.10149v2 (score=0.92; year=2024; text=./archive/arxiv/text/2412.10149v2.txt)

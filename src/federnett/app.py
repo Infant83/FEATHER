@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import mimetypes
 import os
 import shlex
 import socket
@@ -18,11 +19,11 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Iterable, Optional
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, unquote
 import traceback
 
 
-DEFAULT_RUN_ROOTS = ("site/runs", "examples/runs", "runs")
+DEFAULT_RUN_ROOTS = ("site/runs",)
 DEFAULT_STATIC_DIR = "site/federnett"
 DEFAULT_SITE_ROOT = "site"
 INSTRUCTION_EXTS = {".txt", ".md", ".text", ".prompt", ".instruct", ".instruction"}
@@ -170,7 +171,6 @@ def _instruction_dirs(root: Path, run_dir: Path) -> list[tuple[str, Path]]:
     dirs: list[tuple[str, Path]] = []
     dirs.append(("run", run_dir / "instruction"))
     dirs.append(("workspace", root / "instruction"))
-    dirs.append(("examples", root / "examples" / "instructions"))
     seen: set[str] = set()
     unique_dirs: list[tuple[str, Path]] = []
     for scope, path in dirs:
@@ -292,6 +292,47 @@ def _write_text_file(root: Path, raw_path: str | None, content: str) -> dict[str
         "size": stat.st_size,
         "updated_at": _iso_ts(stat.st_mtime),
     }
+
+
+def _guess_content_type(path: Path) -> str:
+    if path.suffix.lower() == ".md":
+        return "text/markdown; charset=utf-8"
+    mime, _ = mimetypes.guess_type(str(path))
+    if not mime:
+        return "application/octet-stream"
+    if mime.startswith("text/"):
+        return f"{mime}; charset=utf-8"
+    return mime
+
+
+def _read_binary_file(root: Path, raw_path: str | None) -> tuple[Path, bytes, str]:
+    path = _resolve_under_root(root, raw_path)
+    if not path or not path.exists() or not path.is_file():
+        raise ValueError(f"File not found: {raw_path}")
+    data = path.read_bytes()
+    return path, data, _guess_content_type(path)
+
+
+def _list_dir(root: Path, raw_path: str | None) -> dict[str, Any]:
+    path = _resolve_under_root(root, raw_path) if raw_path else root
+    if not path or not path.exists() or not path.is_dir():
+        raise ValueError(f"Directory not found: {raw_path}")
+    entries: list[dict[str, Any]] = []
+    for child in sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+        try:
+            stat = child.stat()
+        except OSError:
+            continue
+        entries.append(
+            {
+                "name": child.name,
+                "path": _safe_rel(child, root),
+                "is_dir": child.is_dir(),
+                "size": stat.st_size,
+                "updated_at": _iso_ts(stat.st_mtime),
+            }
+        )
+    return {"path": _safe_rel(path, root), "entries": entries}
 
 
 def _parse_template_frontmatter(path: Path) -> dict[str, Any]:
@@ -698,6 +739,13 @@ class FedernettHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _send_bytes(self, data: bytes, content_type: str, status: int = 200) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def _read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0") or "0")
         if length <= 0:
@@ -710,7 +758,7 @@ class FedernettHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         try:
-            if self.path.startswith("/api/"):
+            if self.path.startswith("/api/") or self.path.startswith("/raw/"):
                 self._handle_api_get()
                 return
             self._serve_static()
@@ -793,6 +841,15 @@ class FedernettHandler(BaseHTTPRequestHandler):
                 return
             self._send_json(payload)
             return
+        if path == "/api/fs":
+            raw_path = (qs.get("path") or [None])[0]
+            try:
+                payload = _list_dir(cfg.root, raw_path)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            self._send_json(payload)
+            return
         if path == "/api/files":
             raw_path = (qs.get("path") or [None])[0]
             try:
@@ -801,6 +858,24 @@ class FedernettHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(exc)}, status=404)
                 return
             self._send_json(payload)
+            return
+        if path == "/api/raw":
+            raw_path = (qs.get("path") or [None])[0]
+            try:
+                file_path, data, content_type = _read_binary_file(cfg.root, raw_path)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            self._send_bytes(data, content_type)
+            return
+        if path.startswith("/raw/"):
+            raw_path = unquote(path[len("/raw/"):])
+            try:
+                file_path, data, content_type = _read_binary_file(cfg.root, raw_path)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            self._send_bytes(data, content_type)
             return
         if path.startswith("/api/jobs/") and path.endswith("/status"):
             job_id = path.split("/")[3]

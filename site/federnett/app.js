@@ -12,6 +12,15 @@ const state = {
     content: "",
     dirty: false,
     canEdit: false,
+    mode: "text",
+    objectUrl: "",
+    htmlDoc: "",
+  },
+  saveAs: {
+    open: false,
+    path: "",
+    entries: [],
+    mode: "preview",
   },
   runPicker: {
     items: [],
@@ -26,6 +35,7 @@ const state = {
     mode: "feather",
   },
   activeJobId: null,
+  activeJobKind: null,
   activeSource: null,
   jobs: [],
   logBuffer: [],
@@ -73,6 +83,15 @@ const STAGE_DEFS = [
 ];
 
 const STAGE_INDEX = Object.fromEntries(STAGE_DEFS.map((s, i) => [s.id, i]));
+
+function isFederlichtActive() {
+  return document.body?.dataset?.tab === "federlicht";
+}
+
+function isMissingFileError(err) {
+  const msg = String(err?.message ?? err ?? "").toLowerCase();
+  return msg.includes("404") && msg.includes("not found");
+}
 
 function applyTheme(theme) {
   const root = document.documentElement;
@@ -186,12 +205,99 @@ function toFileUrlFromRel(relPath) {
   return abs ? toFileUrl(abs) : "";
 }
 
+function apiRawUrl(relPath) {
+  if (!relPath) return "";
+  return `/api/raw?path=${encodeURIComponent(relPath)}`;
+}
+
+function rawFileUrl(relPath) {
+  const cleaned = String(relPath || "")
+    .trim()
+    .replaceAll("\\", "/")
+    .replace(/^\//, "");
+  if (!cleaned) return "";
+  const encoded = cleaned
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `/raw/${encoded}`;
+}
+
 function openPath(relPath) {
   const url = toFileUrlFromRel(relPath);
   if (url) {
     window.open(url, "_blank");
   } else if (relPath) {
     appendLog(`[open] unable to resolve ${relPath}\n`);
+  }
+}
+
+function openSaveAsModal(initialPath, mode = "preview") {
+  const modal = $("#saveas-modal");
+  const list = $("#saveas-list");
+  const pathInput = $("#saveas-path");
+  const filenameInput = $("#saveas-filename");
+  if (!modal || !list || !pathInput || !filenameInput) return;
+  state.saveAs.mode = mode || "preview";
+  state.saveAs.open = true;
+  if (initialPath) {
+    state.saveAs.path = initialPath.replace(/\/[^/]*$/, "");
+  } else {
+    state.saveAs.path = "";
+  }
+  modal.classList.add("open");
+  loadSaveAsDir(state.saveAs.path || "");
+  filenameInput.value = "";
+}
+
+function closeSaveAsModal() {
+  const modal = $("#saveas-modal");
+  if (modal) modal.classList.remove("open");
+  state.saveAs.open = false;
+  state.saveAs.mode = "preview";
+}
+
+function openHelpModal() {
+  const modal = $("#help-modal");
+  if (!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeHelpModal() {
+  const modal = $("#help-modal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function loadSaveAsDir(relPath) {
+  const list = $("#saveas-list");
+  const pathInput = $("#saveas-path");
+  if (!list || !pathInput) return;
+  list.innerHTML = `<div class="modal-item muted">Loading...</div>`;
+  try {
+    const data = await fetchJSON(`/api/fs?path=${encodeURIComponent(relPath || "")}`);
+    state.saveAs.path = data.path || "";
+    pathInput.value = data.path || "";
+    list.innerHTML = "";
+    for (const entry of data.entries || []) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "modal-item";
+      item.innerHTML = `<strong>${escapeHtml(entry.name)}</strong><small>${entry.is_dir ? "folder" : "file"}</small>`;
+      item.addEventListener("click", () => {
+        if (entry.is_dir) {
+          loadSaveAsDir(entry.path);
+        } else {
+          const filenameInput = $("#saveas-filename");
+          if (filenameInput) filenameInput.value = entry.name;
+        }
+      });
+      list.appendChild(item);
+    }
+  } catch (err) {
+    list.innerHTML = `<div class="modal-item muted">Failed to load folder: ${escapeHtml(String(err))}</div>`;
   }
 }
 
@@ -308,21 +414,42 @@ function ensureRunSelection(selectEl, fallbackRel) {
 
 function defaultReportPath(runRel) {
   if (!runRel) return "";
-  const base = siteRunsBase();
   const runName = runBaseName(runRel);
-  return `${base}/${runName}/report_full.html`;
+  return `${runName}/report_full.html`;
 }
 
 function defaultPromptPath(runRel) {
   if (!runRel) return "";
-  const base = siteRunsBase();
   const runName = runBaseName(runRel);
-  return `${base}/${runName}/instruction/generated_prompt_${runName}.txt`;
+  return `${runName}/instruction/generated_prompt_${runName}.txt`;
 }
 
 function siteRunsBase() {
   const siteRoot = state.info?.site_root ? String(state.info.site_root) : "site";
   return `${siteRoot.replace(/\/+$/, "")}/runs`;
+}
+
+function siteRunsPrefix() {
+  return siteRunsBase().replace(/\/+$/, "");
+}
+
+function expandSiteRunsPath(value) {
+  const cleaned = normalizePathString(value);
+  if (!cleaned) return "";
+  const base = siteRunsPrefix();
+  if (cleaned.startsWith(`${base}/`)) return cleaned;
+  const blockedPrefixes = ["site/", "examples/", "runs/", "instruction/"];
+  if (blockedPrefixes.some((prefix) => cleaned.startsWith(prefix))) return cleaned;
+  return `${base}/${cleaned}`;
+}
+
+function stripSiteRunsPrefix(value) {
+  const cleaned = normalizePathString(value);
+  if (!cleaned) return "";
+  const base = siteRunsPrefix();
+  if (cleaned === base) return "";
+  if (cleaned.startsWith(`${base}/`)) return cleaned.slice(base.length + 1);
+  return cleaned;
 }
 
 function runBaseName(runRel) {
@@ -343,6 +470,7 @@ let promptOutputTouched = false;
 let featherOutputTouched = false;
 let featherInputTouched = false;
 let promptFileTouched = false;
+let promptInlineTouched = false;
 
 function refreshRunDependentFields() {
   const runRel = $("#run-select")?.value;
@@ -358,6 +486,13 @@ function refreshRunDependentFields() {
   }
   if (promptRunRel && promptOutput && !promptOutputTouched) {
     promptOutput.value = defaultPromptPath(promptRunRel);
+  }
+  if (runRel && isFederlichtActive()) {
+    syncPromptFromFile(false).catch((err) => {
+      if (!isMissingFileError(err)) {
+        appendLog(`[prompt] failed to load: ${err}\n`);
+      }
+    });
   }
 }
 
@@ -417,6 +552,12 @@ function updateFilePreviewState(patch) {
   renderFilePreview();
 }
 
+function revokePreviewObjectUrl() {
+  if (state.filePreview.objectUrl) {
+    URL.revokeObjectURL(state.filePreview.objectUrl);
+  }
+}
+
 function renderFilePreview() {
   const pathEl = $("#file-preview-path");
   const statusEl = $("#file-preview-status");
@@ -446,14 +587,21 @@ function renderFilePreview() {
     markdown.innerHTML = renderMarkdown(state.filePreview.content || "");
     markdown.style.display = "block";
   } else if (mode === "html" || mode === "pdf") {
-    frame.src = toFileUrlFromRel(state.filePreview.path);
+    frame.removeAttribute("srcdoc");
+    if (state.filePreview.htmlDoc && mode === "html") {
+      frame.removeAttribute("src");
+      frame.srcdoc = state.filePreview.htmlDoc;
+    } else {
+      frame.src = rawFileUrl(state.filePreview.path);
+    }
     frame.style.display = "block";
   } else if (mode === "image") {
-    image.src = toFileUrlFromRel(state.filePreview.path);
+    image.src = rawFileUrl(state.filePreview.path);
     image.style.display = "block";
   } else {
     editor.value = state.filePreview.content || "";
     editor.readOnly = !state.filePreview.canEdit;
+    editor.wrap = "soft";
     editor.style.display = "block";
   }
 }
@@ -529,8 +677,32 @@ function previewModeForPath(relPath) {
   return "binary";
 }
 
+async function fetchRawPreviewBlob(relPath) {
+  const res = await fetch(apiRawUrl(relPath));
+  const contentType = res.headers.get("content-type") || "";
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    if (contentType.includes("application/json")) {
+      try {
+        const payload = await res.json();
+        if (payload?.error) detail = payload.error;
+      } catch (err) {
+        // ignore
+      }
+    }
+    throw new Error(detail);
+  }
+  if (contentType.includes("application/json")) {
+    const payload = await res.json();
+    throw new Error(payload?.error || "unknown_endpoint");
+  }
+  const blob = await res.blob();
+  return { blob, contentType };
+}
+
 async function loadFilePreview(relPath) {
   if (!relPath) return;
+  revokePreviewObjectUrl();
   const mode = previewModeForPath(relPath);
   if (mode === "pdf" || mode === "html" || mode === "image") {
     updateFilePreviewState({
@@ -539,6 +711,8 @@ async function loadFilePreview(relPath) {
       canEdit: false,
       dirty: false,
       mode,
+      objectUrl: "",
+      htmlDoc: "",
     });
     return;
   }
@@ -551,6 +725,8 @@ async function loadFilePreview(relPath) {
       canEdit,
       dirty: false,
       mode,
+      objectUrl: "",
+      htmlDoc: "",
     });
   } catch (err) {
     updateFilePreviewState({
@@ -559,6 +735,8 @@ async function loadFilePreview(relPath) {
       canEdit: false,
       dirty: false,
       mode: "text",
+      objectUrl: "",
+      htmlDoc: "",
     });
   }
 }
@@ -766,6 +944,35 @@ async function loadFeatherInstructionContent(pathRel) {
   }
 }
 
+async function loadFederlichtPromptContent(pathRel, opts = {}) {
+  if (!pathRel) return;
+  const force = Boolean(opts.force);
+  if (!force && isPromptDirty()) return;
+  let payload;
+  try {
+    payload = await fetchJSON(`/api/files?path=${encodeURIComponent(pathRel)}`);
+  } catch (err) {
+    if (isMissingFileError(err)) {
+      const editor = $("#federlicht-prompt");
+      if (editor) {
+        editor.value = "";
+        editor.dataset.path = pathRel;
+        editor.dataset.original = "";
+        promptInlineTouched = false;
+      }
+      return;
+    }
+    throw err;
+  }
+  const editor = $("#federlicht-prompt");
+  if (editor) {
+    editor.value = payload.content || "";
+    editor.dataset.path = payload.path || pathRel;
+    editor.dataset.original = payload.content || "";
+    promptInlineTouched = false;
+  }
+}
+
 function isFeatherInstructionDirty() {
   const editor = $("#feather-query");
   if (!editor) return false;
@@ -778,6 +985,51 @@ function setFeatherInstructionSnapshot(pathRel, content) {
   if (!editor) return;
   editor.dataset.path = pathRel || "";
   editor.dataset.original = content || "";
+}
+
+function isPromptDirty() {
+  const editor = $("#federlicht-prompt");
+  if (!editor) return false;
+  const original = editor.dataset.original ?? "";
+  return (editor.value || "") !== original;
+}
+
+function setPromptSnapshot(pathRel, content) {
+  const editor = $("#federlicht-prompt");
+  if (!editor) return;
+  editor.dataset.path = pathRel || "";
+  editor.dataset.original = content || "";
+  promptInlineTouched = false;
+}
+
+function normalizePromptPath(rawPath) {
+  const runRel = $("#run-select")?.value;
+  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath || ""));
+  let cleaned = (rawPath || "").trim().replaceAll("\\", "/");
+  if (!cleaned) cleaned = "instruction/prompt.txt";
+  cleaned = cleaned.replace(/^\/+/, "");
+  if (cleaned.endsWith("/")) cleaned = `${cleaned}prompt.txt`;
+  if (!hasFileExtension(cleaned)) cleaned = `${cleaned}.txt`;
+  return expandSiteRunsPath(cleaned);
+}
+
+async function savePromptContent(pathRel, content) {
+  if (!pathRel) throw new Error("Prompt path is required.");
+  await fetchJSON("/api/files", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: pathRel, content: content || "" }),
+  });
+  appendLog(`[prompt] saved ${pathRel}\n`);
+  setPromptSnapshot(pathRel, content || "");
+}
+
+async function syncPromptFromFile(force = false) {
+  const rawPath = $("#federlicht-prompt-file")?.value?.trim();
+  const pathRel = rawPath ? expandSiteRunsPath(rawPath) : rawPath;
+  if (!pathRel) return;
+  if (!force && promptInlineTouched) return;
+  await loadFederlichtPromptContent(pathRel, { force });
 }
 
 function normalizeInstructionPath(runRel, rawPath) {
@@ -804,13 +1056,13 @@ function pickInstructionRunRel() {
 
 function normalizeFeatherInstructionPath(rawPath) {
   const runRel = pickInstructionRunRel();
-  if (runRel) return normalizeInstructionPath(runRel, rawPath);
+  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath));
   let cleaned = (rawPath || "").trim().replaceAll("\\", "/");
   if (!cleaned) cleaned = "instruction/new_instruction.txt";
   cleaned = cleaned.replace(/^\/+/, "");
   if (cleaned.endsWith("/")) cleaned = `${cleaned}instruction.txt`;
   if (!hasFileExtension(cleaned)) cleaned = `${cleaned}.txt`;
-  return cleaned;
+  return expandSiteRunsPath(cleaned);
 }
 
 function normalizePathString(value) {
@@ -1394,6 +1646,11 @@ function setKillEnabled(enabled) {
   if (kill) kill.disabled = !enabled;
 }
 
+function setFederlichtRunEnabled(enabled) {
+  const runBtn = $("#federlicht-run");
+  if (runBtn) runBtn.disabled = !enabled;
+}
+
 function closeActiveSource() {
   if (state.activeSource) {
     state.activeSource.close();
@@ -1404,6 +1661,10 @@ function closeActiveSource() {
 function attachToJob(jobId, opts = {}) {
   closeActiveSource();
   state.activeJobId = jobId;
+  state.activeJobKind = opts.kind || "job";
+  if (state.activeJobKind === "federlicht") {
+    setFederlichtRunEnabled(false);
+  }
   setKillEnabled(true);
   setJobStatus(`Streaming job ${shortId(jobId)} ...`);
   const source = new EventSource(`/api/jobs/${jobId}/events`);
@@ -1436,12 +1697,20 @@ function attachToJob(jobId, opts = {}) {
       appendLog(`[done] failed to parse event: ${err}\n`);
     } finally {
       setKillEnabled(false);
+      if (state.activeJobKind === "federlicht") {
+        setFederlichtRunEnabled(true);
+      }
+      state.activeJobKind = null;
       closeActiveSource();
     }
   });
   source.onerror = () => {
     appendLog("[error] event stream closed unexpectedly\n");
     setKillEnabled(false);
+    if (state.activeJobKind === "federlicht") {
+      setFederlichtRunEnabled(true);
+    }
+    state.activeJobKind = null;
     closeActiveSource();
   };
 }
@@ -1471,12 +1740,13 @@ function pruneEmpty(obj) {
 }
 
 function buildFeatherPayload() {
-  const inputValue = $("#feather-input")?.value?.trim();
+  const inputValueRaw = $("#feather-input")?.value?.trim();
+  const inputValue = inputValueRaw ? expandSiteRunsPath(inputValueRaw) : inputValueRaw;
   const queryValue = $("#feather-query")?.value;
   const payload = {
     input: inputValue,
     query: inputValue ? undefined : queryValue,
-    output: $("#feather-output")?.value,
+    output: expandSiteRunsPath($("#feather-output")?.value),
     lang: $("#feather-lang")?.value,
     days: Number.parseInt($("#feather-days")?.value || "", 10),
     max_results: Number.parseInt($("#feather-max-results")?.value || "", 10),
@@ -1504,12 +1774,12 @@ function buildFederlichtPayload() {
   const noTags = $("#federlicht-no-tags")?.checked;
   const payload = {
     run: $("#run-select")?.value,
-    output: $("#federlicht-output")?.value,
+    output: expandSiteRunsPath($("#federlicht-output")?.value),
     template: $("#template-select")?.value,
     lang: $("#federlicht-lang")?.value,
     depth: $("#federlicht-depth")?.value,
     prompt: $("#federlicht-prompt")?.value,
-    prompt_file: $("#federlicht-prompt-file")?.value,
+    prompt_file: expandSiteRunsPath($("#federlicht-prompt-file")?.value),
     model: $("#federlicht-model")?.value,
     check_model: $("#federlicht-check-model")?.value,
     model_vision: $("#federlicht-model-vision")?.value,
@@ -1557,7 +1827,7 @@ function buildPromptPayload() {
   }
   const payload = {
     run,
-    output,
+    output: expandSiteRunsPath(output),
     template: $("#prompt-template-select")?.value,
     depth: $("#prompt-depth")?.value,
     model: $("#prompt-model")?.value,
@@ -1578,7 +1848,7 @@ function buildPromptPayloadFromFederlicht() {
   }
   const payload = {
     run,
-    output,
+    output: expandSiteRunsPath(output),
     template: $("#template-select")?.value,
     depth: $("#federlicht-depth")?.value,
     model: $("#federlicht-model")?.value,
@@ -1598,6 +1868,13 @@ function handleTabs() {
     document.body.dataset.tab = resolved;
     if (runStudio) {
       runStudio.classList.toggle("is-hidden", resolved === "feather");
+    }
+    if (resolved === "federlicht") {
+      syncPromptFromFile(true).catch((err) => {
+        if (!isMissingFileError(err)) {
+          appendLog(`[prompt] failed to load: ${err}\n`);
+        }
+      });
     }
   };
   const initial = tabs.find((t) => t.classList.contains("active"))?.dataset.tab;
@@ -1625,10 +1902,9 @@ function handleFeatherRunName() {
     if (featherOutputTouched) return;
     const value = runName.value.trim();
     if (!value) return;
-    const base = siteRunsBase();
-    output.value = `${base}/${value}`;
+    output.value = value;
     if (input && !featherInputTouched) {
-      input.value = `${base}/${value}/instruction/${value}.txt`;
+      input.value = `${value}/instruction/${value}.txt`;
     }
   });
   output.addEventListener("input", () => {
@@ -1653,8 +1929,19 @@ function handleRunOutputTouch() {
   $("#federlicht-prompt-file")?.addEventListener("input", () => {
     promptFileTouched = true;
   });
+  $("#federlicht-prompt-file")?.addEventListener("change", () => {
+    promptFileTouched = true;
+    syncPromptFromFile(true).catch((err) => {
+      if (!isMissingFileError(err)) {
+        appendLog(`[prompt] failed to load: ${err}\n`);
+      }
+    });
+  });
   $("#prompt-output")?.addEventListener("input", () => {
     promptOutputTouched = true;
+  });
+  $("#federlicht-prompt")?.addEventListener("input", () => {
+    promptInlineTouched = true;
   });
 }
 
@@ -1675,6 +1962,7 @@ function handleRunChanges() {
     const newPath = $("#instruction-new-path");
     if (newPath) newPath.value = defaultInstructionPath(runRel);
     promptFileTouched = false;
+    promptInlineTouched = false;
     refreshRunDependentFields();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
@@ -1687,6 +1975,7 @@ function handleRunChanges() {
     const newPath = $("#instruction-new-path");
     if (newPath) newPath.value = defaultInstructionPath(runRel);
     promptFileTouched = false;
+    promptInlineTouched = false;
     refreshRunDependentFields();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
@@ -1699,6 +1988,7 @@ function handleRunChanges() {
     const newPath = $("#instruction-new-path");
     if (newPath) newPath.value = defaultInstructionPath(runRel);
     promptFileTouched = false;
+    promptInlineTouched = false;
     refreshRunDependentFields();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
@@ -1779,37 +2069,60 @@ function handleFilePreviewControls() {
   $("#file-preview-open")?.addEventListener("click", () => {
     const rel = state.filePreview.path;
     if (!rel) return;
-    const url = toFileUrlFromRel(rel);
-    if (url) window.open(url, "_blank");
+    const url = state.filePreview.objectUrl || rawFileUrl(rel);
+    if (url) window.open(url, "_blank", "noopener");
   });
   $("#file-preview-save")?.addEventListener("click", async () => {
     const rel = state.filePreview.path;
     const saveAsPath = saveAsInput?.value?.trim();
-    if (!rel && !saveAsPath) {
-      appendLog("[file] choose a save path first\n");
-      return;
-    }
     try {
+      if (!rel && !saveAsPath) {
+        openSaveAsModal(rel || "", "preview");
+        return;
+      }
       await saveFilePreview(rel || saveAsPath);
       appendLog(`[file] saved ${rel || saveAsPath}\n`);
     } catch (err) {
       appendLog(`[file] save failed: ${err}\n`);
     }
   });
-  $("#file-preview-saveas")?.addEventListener("click", async () => {
-    const saveAsPath = saveAsInput?.value?.trim();
-    if (!saveAsPath) {
-      appendLog("[file] enter a save-as path first\n");
-      return;
-    }
+  $("#file-preview-saveas")?.addEventListener("click", () => {
+    if (!state.filePreview.canEdit) return;
+    openSaveAsModal(state.filePreview.path || "", "preview");
+  });
+  $("#saveas-confirm")?.addEventListener("click", async () => {
+    const filenameInput = $("#saveas-filename");
+    const rel = state.saveAs.path;
+    const filename = filenameInput?.value?.trim();
+    if (!filename) return;
+    const target = rel ? `${rel}/${filename}` : filename;
     try {
-      await saveFilePreview(saveAsPath);
-      if (saveAsInput) saveAsInput.value = saveAsPath;
-      appendLog(`[file] saved as ${saveAsPath}\n`);
+      const mode = state.saveAs.mode || "preview";
+      if (mode === "prompt") {
+        const content = $("#federlicht-prompt")?.value || "";
+        await savePromptContent(target, content);
+        const promptField = $("#federlicht-prompt-file");
+        if (promptField) promptField.value = target;
+        promptFileTouched = true;
+        appendLog(`[prompt] saved as ${target}\n`);
+      } else {
+        await saveFilePreview(target);
+        if (saveAsInput) saveAsInput.value = target;
+        appendLog(`[file] saved as ${target}\n`);
+      }
+      closeSaveAsModal();
     } catch (err) {
       appendLog(`[file] save-as failed: ${err}\n`);
     }
   });
+  $("#saveas-up")?.addEventListener("click", () => {
+    const current = state.saveAs.path || "";
+    const parent = current.replace(/\/[^/]*$/, "");
+    loadSaveAsDir(parent);
+  });
+  document.querySelectorAll("[data-saveas-close]").forEach((btn) =>
+    btn.addEventListener("click", closeSaveAsModal)
+  );
 }
 
 function handleFeatherInstructionPicker() {
@@ -1873,6 +2186,11 @@ function handleFeatherInstructionPicker() {
       const promptField = $("#federlicht-prompt-file");
       if (promptField) promptField.value = pathRel;
       promptFileTouched = true;
+      syncPromptFromFile(true).catch((err) => {
+        if (!isMissingFileError(err)) {
+          appendLog(`[prompt] failed to load: ${err}\n`);
+        }
+      });
       closeInstructionModal();
       return;
     }
@@ -1893,6 +2211,11 @@ function handleFeatherInstructionPicker() {
       const promptField = $("#federlicht-prompt-file");
       if (promptField) promptField.value = normalized;
       promptFileTouched = true;
+      syncPromptFromFile(true).catch((err) => {
+        if (!isMissingFileError(err)) {
+          appendLog(`[prompt] failed to load: ${err}\n`);
+        }
+      });
       closeInstructionModal();
       return;
     }
@@ -2002,12 +2325,83 @@ function handleFederlichtPromptPicker() {
           if (payload.output) {
             const field = $("#federlicht-prompt-file");
             if (field) field.value = payload.output;
+            syncPromptFromFile(true).catch((err) => {
+              if (!isMissingFileError(err)) {
+                appendLog(`[prompt] failed to load: ${err}\n`);
+              }
+            });
             appendLog(`[prompt] ready: ${payload.output}\n`);
           }
         },
       });
     } catch (err) {
       appendLog(`[prompt] ${err}\n`);
+    }
+  });
+}
+
+function handleFederlichtPromptEditor() {
+  const saveBtn = $("#federlicht-save-prompt");
+  const saveAsBtn = $("#federlicht-saveas-prompt");
+  saveBtn?.addEventListener("click", async () => {
+    const editor = $("#federlicht-prompt");
+    const promptField = $("#federlicht-prompt-file");
+    const rawPath = promptField?.value?.trim();
+    const normalized = normalizePromptPath(rawPath);
+    const content = editor?.value || "";
+    const loadedPath = editor?.dataset.path || "";
+    const isDirty = isPromptDirty();
+    if (!rawPath) {
+      openSaveAsModal(normalized, "prompt");
+      const filenameInput = $("#saveas-filename");
+      if (filenameInput && normalized) {
+        filenameInput.value = normalized.split("/").pop() || "";
+      }
+      return;
+    }
+    if (normalized && normalized !== loadedPath) {
+      try {
+        await savePromptContent(normalized, content);
+        if (promptField) promptField.value = normalized;
+        promptFileTouched = true;
+      } catch (err) {
+        appendLog(`[prompt] save failed: ${err}\n`);
+      }
+      return;
+    }
+    if (isDirty) {
+      const ok = window.confirm(
+        "This prompt was loaded from an existing file. Save a new copy to avoid overwriting?",
+      );
+      if (!ok) return;
+      openSaveAsModal(normalized, "prompt");
+      const filenameInput = $("#saveas-filename");
+      if (filenameInput && normalized) {
+        filenameInput.value = normalized.split("/").pop() || "";
+        filenameInput.focus();
+        filenameInput.select();
+      }
+      return;
+    }
+    try {
+      await savePromptContent(normalized, content);
+      if (promptField) promptField.value = normalized;
+      promptFileTouched = true;
+    } catch (err) {
+      appendLog(`[prompt] save failed: ${err}\n`);
+    }
+  });
+
+  saveAsBtn?.addEventListener("click", () => {
+    const promptField = $("#federlicht-prompt-file");
+    const rawPath = promptField?.value?.trim();
+    const normalized = normalizePromptPath(rawPath);
+    openSaveAsModal(normalized, "prompt");
+    const filenameInput = $("#saveas-filename");
+    if (filenameInput && normalized) {
+      filenameInput.value = normalized.split("/").pop() || "";
+      filenameInput.focus();
+      filenameInput.select();
     }
   });
 }
@@ -2060,6 +2454,15 @@ function bindTemplateModalClose() {
   if (!modal) return;
   modal.querySelectorAll("[data-modal-close]").forEach((el) => {
     el.addEventListener("click", () => closeTemplateModal());
+  });
+}
+
+function bindHelpModal() {
+  const modal = $("#help-modal");
+  $("#help-button")?.addEventListener("click", () => openHelpModal());
+  $("#pipeline-help")?.addEventListener("click", () => openHelpModal());
+  modal?.querySelectorAll("[data-help-close]")?.forEach((el) => {
+    el.addEventListener("click", () => closeHelpModal());
   });
 }
 
@@ -2255,6 +2658,11 @@ function bindForms() {
         onSuccess: () => {
           if (outputPath) {
             $("#federlicht-prompt-file").value = outputPath;
+            syncPromptFromFile(true).catch((err) => {
+              if (!isMissingFileError(err)) {
+                appendLog(`[prompt] failed to load: ${err}\n`);
+              }
+            });
             appendLog(`[prompt] ready: ${outputPath}\n`);
           }
         },
@@ -2277,14 +2685,17 @@ async function bootstrap() {
   handleFilePreviewControls();
   handleFeatherInstructionPicker();
   handleFederlichtPromptPicker();
+  handleFederlichtPromptEditor();
   handleRunPicker();
   handleReloadRuns();
   handleLogControls();
   handleTemplateSync();
   bindTemplateModalClose();
+  bindHelpModal();
   handleLayoutSplitter();
   handleTelemetrySplitter();
   bindForms();
+  setFederlichtRunEnabled(true);
 
   try {
     await loadInfo();
