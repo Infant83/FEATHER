@@ -1,4 +1,6 @@
 body.template-review_of_modern_physics {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #171717;
   --muted: #4b4b4b;
   --accent: #111111;

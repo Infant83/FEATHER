@@ -829,6 +829,8 @@ def run_local_ingest(job: Job, logger: JobLogger) -> None:
     raw_dir = job.out_dir / "local" / "raw"
     text_dir = job.out_dir / "local" / "text"
     manifest_path = job.out_dir / "local" / "manifest.jsonl"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    text_dir.mkdir(parents=True, exist_ok=True)
     seen: set[str] = set()
     if job.update_run and manifest_path.exists():
         for entry in load_jsonl_entries(manifest_path):
@@ -2066,7 +2068,8 @@ def build_index_md(job: Job) -> str:
 
 def run_job(job: Job, tavily: TavilyClient, stdout: bool = True) -> None:
     job.out_dir.mkdir(parents=True, exist_ok=True)
-    logger = JobLogger(job.out_dir / "_log.txt", also_stdout=stdout)
+    log_path = job.out_dir / "_log.txt"
+    logger = JobLogger(log_path, also_stdout=stdout)
 
     copy_instruction(job)
     write_job_json(job)
@@ -2086,3 +2089,9 @@ def run_job(job: Job, tavily: TavilyClient, stdout: bool = True) -> None:
     write_text(job.out_dir / f"{job.query_id}-index.md", build_index_md(job))
 
     logger.log("JOB END")
+    feather_log = job.out_dir / "_feather_log.txt"
+    try:
+        if log_path.exists():
+            shutil.copy2(log_path, feather_log)
+    except Exception:
+        pass

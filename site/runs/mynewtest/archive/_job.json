@@ -1,0 +1,36 @@
+{
+  "date": "2026-02-02",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mynewtest\\instruction\\mynewtest.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mynewtest",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\mynewtest\\archive",
+  "query_id": "mynewtest",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": true,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": true,
+  "citations_enabled": true,
+  "queries": [
+    "what is quantum computing"
+  ],
+  "query_specs": [
+    {
+      "text": "what is quantum computing",
+      "hints": []
+    }
+  ],
+  "local_paths": [],
+  "urls": [],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "what is quantum computing"
+  ]
+}

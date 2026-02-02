@@ -265,7 +265,7 @@
 
                 <label>
                   <span>Model</span>
-                  <input id="federlicht-model" placeholder="$OPENAI_MODEL" />
+                  <input id="federlicht-model" placeholder="$OPENAI_MODEL" list="model-options" />
                 </label>
 
                 <label class="wide">
@@ -323,11 +323,11 @@
                   <div class="advanced-grid">
                     <label>
                       <span>Check Model</span>
-                      <input id="federlicht-check-model" placeholder="gpt-4o" />
+                      <input id="federlicht-check-model" placeholder="gpt-4o" list="model-options" />
                     </label>
                     <label>
                       <span>Vision Model</span>
-                      <input id="federlicht-model-vision" placeholder="gpt-4o" />
+                      <input id="federlicht-model-vision" placeholder="gpt-4o" list="model-options" />
                     </label>
                     <label>
                       <span>Stages</span>
@@ -454,6 +454,44 @@
                 <div id="run-summary-reports" class="summary-reports"></div>
                 <div class="file-list" id="run-file-list"></div>
               </section>
+              <section class="studio-card" id="run-update-card">
+                <header>
+                  <h3>Update Report</h3>
+                  <p>Describe what to revise. Generates a new report file for the same run.</p>
+                </header>
+                <label class="field-label" for="run-update-notes">Update instructions</label>
+                <textarea
+                  id="run-update-notes"
+                  class="ghost-input"
+                  rows="6"
+                  placeholder="e.g. Improve abstract clarity, fix citation tone, and add a short limitations section."
+                ></textarea>
+                <label class="field-label" for="run-update-secondary">Second prompt (optional)</label>
+                <textarea
+                  id="run-update-secondary"
+                  class="ghost-input"
+                  rows="4"
+                  placeholder="Optional extra guidance to append (e.g. tighten tone, add bullet summary)."
+                ></textarea>
+                <div class="field-row">
+                  <label class="toggle">
+                    <input type="checkbox" id="run-update-fast" checked />
+                    <span>Fast update (writer + quality only)</span>
+                  </label>
+                </div>
+                <label class="field-label" for="run-update-output">Next report output</label>
+                <input
+                  id="run-update-output"
+                  class="ghost-input"
+                  placeholder="report_full_1.html"
+                  readonly
+                />
+                <div class="field-actions">
+                  <button type="button" id="run-update-go" class="primary">
+                    Update Report
+                  </button>
+                </div>
+              </section>
             </div>
           </section>
         </section>
@@ -484,6 +522,9 @@
               <div class="jobs">
                 <h3>Recent Jobs</h3>
                 <div id="jobs-list" class="jobs-list"></div>
+                <div class="jobs-actions">
+                  <button type="button" id="jobs-toggle" class="ghost">Show more</button>
+                </div>
               </div>
             </section>
 
@@ -537,6 +578,7 @@
             <p>Template sections + guidance parsed from frontmatter.</p>
           </div>
           <div class="panel-pills">
+            <button type="button" class="ghost" id="templates-toggle">Hide cards</button>
             <span class="meta-pill">bottom dock</span>
           </div>
         </div>
@@ -570,10 +612,70 @@
               <input
                 id="template-editor-path"
                 class="ghost-input"
-                placeholder="src/federlicht/templates/custom_my_template.md"
+                placeholder="site/custom_templates/custom_my_template.md"
                 disabled
               />
             </label>
+          </div>
+          <div class="template-builder" id="template-builder">
+            <div class="template-builder-row">
+              <label>
+                CSS style
+                <select id="template-style-select"></select>
+              </label>
+              <div class="template-builder-actions">
+                <button type="button" id="template-preview-refresh" class="ghost">Refresh Preview</button>
+                <button type="button" id="template-apply-frontmatter" class="ghost">Apply to Editor</button>
+              </div>
+            </div>
+            <div class="template-generator">
+              <label>
+                Generate base prompt
+                <textarea
+                  id="template-gen-prompt"
+                  class="ghost-input"
+                  placeholder="예: 월간 매거진 스타일의 기술동향 보고서 템플릿을 만들어줘..."
+                ></textarea>
+              </label>
+              <div class="template-generator-row">
+                <label>
+                  Model
+                  <input id="template-gen-model" list="model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label class="template-inline-check">
+                  <input type="checkbox" id="template-store-site" />
+                  Store in site (shared)
+                </label>
+                <button type="button" id="template-generate" class="primary">Generate Base</button>
+              </div>
+              <pre id="template-gen-log" class="template-gen-log">Ready.</pre>
+            </div>
+            <div class="template-builder-grid">
+              <div class="template-sections-editor">
+                <div class="template-section-head">
+                  <h4>Sections</h4>
+                  <button type="button" id="template-section-add" class="ghost">Add Section</button>
+                </div>
+                <div id="template-sections-list" class="template-sections-list"></div>
+              </div>
+              <div class="template-guidance-editor">
+                <label>
+                  Writer guidance (one per line)
+                  <textarea
+                    id="template-writer-guidance"
+                    class="ghost-input template-writer-guidance"
+                    placeholder="Use clear terminology and define acronyms."
+                  ></textarea>
+                </label>
+              </div>
+            </div>
+            <div class="template-preview">
+              <div class="template-preview-head">
+                <h4>Preview</h4>
+                <span class="muted">Uses the selected CSS and section order.</span>
+              </div>
+              <iframe id="template-preview-frame" class="template-preview-frame" title="Template preview"></iframe>
+            </div>
           </div>
           <textarea
             id="template-editor-body"
@@ -854,6 +956,7 @@
       </footer>
     </div>
 
+    <datalist id="model-options"></datalist>
     <script src="./app.js" type="module"></script>
   </body>
 </html>

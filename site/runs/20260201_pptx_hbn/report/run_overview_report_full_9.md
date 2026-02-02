@@ -1,0 +1,25 @@
+# Report Overview
+
+## Report Output
+Output: ./report_full_9.html
+Template: custom_acs_review
+Format: html
+Language: Korean
+Quality iterations: 0
+Quality strategy: pairwise
+Figures: enabled (auto)
+
+## Report Prompt (Saved)
+Source: ./instruction/report_prompt_report_full_9.txt
+
+```
+Update request:
+본문을 충실히 작성해줘. A4 3페이지 분량으로. 주제에 대한 심도있는 배경설명과 pptx에 담긴 결과를 심도있게 고찰해줘.
+
+Base report: site/runs/20260201_pptx_hbn/report_full_8.html
+
+Instructions:
+- Read the base report file and keep its structure unless the update requests a change.
+- Apply only the requested edits; avoid rewriting everything from scratch.
+- Preserve citations and update them only if you change the referenced content.
+```

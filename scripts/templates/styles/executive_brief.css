@@ -1,4 +1,6 @@
 body.template-executive_brief {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b2224;
   --muted: #4a555c;
   --accent: #0f4c5c;

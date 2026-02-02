@@ -1,4 +1,6 @@
 body.template-mit_tech_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1f1d1a;
   --muted: #5b5550;
   --accent: #cc3b2b;

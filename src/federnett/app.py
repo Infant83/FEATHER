@@ -14,7 +14,12 @@ from pathlib import Path
 from typing import Any, Iterable, Optional
 from urllib.parse import parse_qs, urlparse, unquote
 
-from .commands import _build_feather_cmd, _build_federlicht_cmd, _build_generate_prompt_cmd
+from .commands import (
+    _build_feather_cmd,
+    _build_federlicht_cmd,
+    _build_generate_prompt_cmd,
+    _build_generate_template_cmd,
+)
 from .config import FedernettConfig
 from .constants import DEFAULT_RUN_ROOTS, DEFAULT_STATIC_DIR, DEFAULT_SITE_ROOT
 from .filesystem import (
@@ -28,7 +33,7 @@ from .filesystem import (
     resolve_run_dir as _resolve_run_dir,
 )
 from .jobs import Job, JobRegistry
-from .templates import list_templates, template_details
+from .templates import list_template_styles, list_templates, read_template_style, template_details
 from .utils import json_bytes as _json_bytes, safe_rel as _safe_rel
 
 
@@ -125,15 +130,88 @@ class FedernettHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/templates":
             # Return a plain list for UI compatibility.
-            self._send_json(list_templates(cfg.root))
+            run_rel = (qs.get("run") or [None])[0]
+            self._send_json(list_templates(cfg.root, run=run_rel))
+            return
+        if path == "/api/template-styles":
+            run_rel = (qs.get("run") or [None])[0]
+            self._send_json(list_template_styles(cfg.root, run=run_rel))
+            return
+        if path.startswith("/api/template-styles/"):
+            name = unquote(path.split("/", 3)[3])
+            try:
+                payload = read_template_style(cfg.root, name)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            self._send_json(payload)
             return
         if path.startswith("/api/templates/"):
-            name = path.split("/", 3)[3]
+            name = unquote(path.split("/", 3)[3])
             try:
                 payload = template_details(cfg.root, name)
             except ValueError as exc:
                 self._send_json({"error": str(exc)}, status=404)
                 return
+            self._send_json(payload)
+            return
+        if path == "/api/template-preview":
+            name = (qs.get("name") or [None])[0]
+            if not name:
+                self._send_json({"error": "name is required"}, status=400)
+                return
+            try:
+                detail = template_details(cfg.root, unquote(name))
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            css_name = detail.get("meta", {}).get("css")
+            css_content = None
+            extra_body_class = None
+            if css_name:
+                try:
+                    css_content = read_template_style(cfg.root, css_name).get("content")
+                    css_base = Path(css_name).stem
+                    if css_base:
+                        extra_body_class = f"template-{css_base.lower()}"
+                except Exception:
+                    css_content = None
+            lines = [f"# Template Preview: {detail.get('name', name)}", ""]
+            if detail.get("meta", {}).get("description"):
+                lines.append(detail["meta"]["description"])
+                lines.append("")
+            if detail.get("writer_guidance"):
+                lines.append("## Writer Notes")
+                lines.extend([f"- {note}" for note in detail["writer_guidance"]])
+                lines.append("")
+            for section in detail.get("sections", []):
+                lines.append(f"## {section}")
+                guide = detail.get("guides", {}).get(section)
+                if guide:
+                    lines.append(f"*Guidance:* {guide}")
+                lines.append(
+                    "Sample paragraph to preview layout, spacing, and typography. "
+                    "Replace with real content when generating the report."
+                )
+                lines.append("")
+            markdown = "\n".join(lines).strip() + "\n"
+            try:
+                from federlicht.render.html import markdown_to_html, wrap_html  # type: ignore
+            except Exception:
+                self._send_json({"error": "preview renderer unavailable"}, status=500)
+                return
+            body_html = markdown_to_html(markdown)
+            rendered = wrap_html(
+                detail.get("name", name),
+                body_html,
+                template_name=detail.get("name", name),
+                theme_css=css_content,
+                extra_body_class=extra_body_class,
+            )
+            self._send_json({"html": rendered})
+            return
+        if path == "/api/models":
+            payload = _list_models()
             self._send_json(payload)
             return
         if path == "/api/run-summary":
@@ -222,11 +300,17 @@ class FedernettHandler(BaseHTTPRequestHandler):
         cfg = self._cfg()
         parsed = urlparse(self.path)
         path = parsed.path
+        qs = parse_qs(parsed.query)
         payload = self._read_json()
         try:
             if path == "/api/feather/start":
                 cmd = _build_feather_cmd(cfg, payload)
                 job = self._jobs().start("feather", cmd, cfg.root)
+                self._send_json({"job_id": job.job_id})
+                return
+            if path == "/api/templates/generate":
+                cmd = _build_generate_template_cmd(cfg, payload)
+                job = self._jobs().start("template", cmd, cfg.root)
                 self._send_json({"job_id": job.job_id})
                 return
             if path == "/api/federlicht/start":
@@ -246,6 +330,30 @@ class FedernettHandler(BaseHTTPRequestHandler):
                     raise ValueError("content must be a string")
                 result = _write_text_file(cfg.root, raw_path, content)
                 self._send_json(result)
+                return
+            if path == "/api/template-preview":
+                html = _render_template_preview(cfg.root, payload)
+                self._send_json({"html": html})
+                return
+            if path == "/api/upload":
+                name = (qs.get("name") or ["upload.bin"])[0]
+                safe_name = Path(name).name or "upload.bin"
+                target_dir = cfg.root / "site" / "uploads"
+                target_dir.mkdir(parents=True, exist_ok=True)
+                target_path = target_dir / safe_name
+                length = int(self.headers.get("Content-Length", "0") or "0")
+                if length <= 0:
+                    raise ValueError("empty upload")
+                data = self.rfile.read(length)
+                target_path.write_bytes(data)
+                self._send_json(
+                    {
+                        "name": safe_name,
+                        "path": _safe_rel(target_path, cfg.root),
+                        "abs_path": str(target_path.resolve()),
+                        "size": target_path.stat().st_size,
+                    }
+                )
                 return
             if path.startswith("/api/jobs/") and path.endswith("/kill"):
                 job_id = path.split("/")[3]
@@ -337,6 +445,87 @@ class FedernettHTTPServer(ThreadingHTTPServer):
         except Exception:
             pass
         super().server_bind()
+
+
+def _list_models() -> list[str]:
+    api_key = os.getenv("OPENAI_API_KEY")
+    base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
+    if not api_key:
+        return []
+    if not base_url:
+        base_url = "https://api.openai.com"
+    url = base_url.rstrip("/") + "/v1/models"
+    try:
+        import requests  # type: ignore
+    except Exception:
+        return []
+    try:
+        resp = requests.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=6)
+    except Exception:
+        return []
+    if resp.status_code != 200:
+        return []
+    try:
+        payload = resp.json()
+    except Exception:
+        return []
+    data = payload.get("data") or []
+    models = []
+    for entry in data:
+        if isinstance(entry, dict) and entry.get("id"):
+            models.append(str(entry["id"]))
+    return sorted(set(models))
+
+
+def _render_template_preview(root: Path, payload: dict[str, Any]) -> str:
+    try:
+        from federlicht.render.html import markdown_to_html, wrap_html  # type: ignore
+    except Exception:
+        return "<p>Preview renderer unavailable.</p>"
+    name = str(payload.get("name") or "template")
+    title = str(payload.get("title") or f"{name} preview")
+    sections = payload.get("sections") or []
+    guides = payload.get("guides") or {}
+    writer_guidance = payload.get("writer_guidance") or []
+    css_name = str(payload.get("css") or "").strip()
+    css_content = None
+    extra_body_class = None
+    if css_name:
+        try:
+            css_content = read_template_style(root, css_name).get("content")
+            css_base = Path(css_name).stem
+            if css_base:
+                extra_body_class = f"template-{css_base.lower()}"
+        except Exception:
+            css_content = None
+    lines: list[str] = [f"# {title}", ""]
+    if writer_guidance:
+        lines.append("## Writer Notes")
+        for note in writer_guidance:
+            if note:
+                lines.append(f"- {note}")
+        lines.append("")
+    for section in sections:
+        if not section:
+            continue
+        lines.append(f"## {section}")
+        guide = guides.get(section) if isinstance(guides, dict) else None
+        if guide:
+            lines.append(f"*Guidance:* {guide}")
+        lines.append(
+            "Sample paragraph to preview layout, spacing, and typography. "
+            "Replace with real content when generating the report."
+        )
+        lines.append("")
+    markdown = "\n".join(lines).strip() + "\n"
+    body_html = markdown_to_html(markdown)
+    return wrap_html(
+        title,
+        body_html,
+        template_name=name,
+        theme_css=css_content,
+        extra_body_class=extra_body_class,
+    )
 
 
 def _parse_run_roots(root: Path, raw: str) -> list[Path]:

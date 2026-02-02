@@ -1,4 +1,6 @@
 body.template-technical_deep_dive {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1d22;
   --muted: #4d545f;
   --accent: #3b5b77;
@@ -19,4 +21,14 @@ body.template-technical_deep_dive .article h2 {
 
 body.template-technical_deep_dive .article pre {
   background: #eef2f6;
+}
+body.template-technical_deep_dive {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

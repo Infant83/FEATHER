@@ -1,0 +1,1364 @@
+
+
+===== PAGE 1 =====
+Full Characterization of the Depth Overhead for
+Quantum Circuit Compilation with Arbitrary Qubit
+Connectivity Constraint
+Pei Yuan and Shengyu Zhang
+Tencent Quantum Laboratory, Tencent, Shenzhen, Guangdong 518057, China
+In some physical implementations of quantum computers, 2-qubit operations can
+be applied only on certain pairs of qubits. Compilation of a quantum circuit into
+one compliant to such qubit connectivity constraint results in an increase of circuit
+depth. Various compilation algorithms were studied, yet what this depth overhead is
+remains elusive. In this paper, we fully characterize the depth overhead by the routing
+number of the underlying constraint graph, a graph-theoretic measure which has been
+studied for 3 decades. We also give reduction algorithms between different graphs,
+which allow compilation for one graph to be transferred to one for another. These
+results, when combined with existing routing algorithms, give asymptotically optimal
+compilation for all commonly seen connectivity graphs in quantum computing.
+1
+Introduction
+Quantum computation has demonstrated a substantial advantage over its classical counterpart in
+solving significant problems such as integer factorization [1], search [2] and a wide variety of
+others, by structurally designed algorithms [3] as well as variational algorithms [4]. Quantum
+hardware technologies have seen considerable advancements in recent years [5–14], enabling the
+execution of quantum algorithms. A crucial aspect of this execution involves the compilation of
+quantum algorithms into quantum circuits, typically composed of 1- and 2-qubit gates.
+Despite the theoretically proven advantages, the practical implementation of quantum algo-
+rithms and quantum circuits faces numerous challenges, one of which is the qubit connectivity
+constraint. On certain hardware platforms such as superconducting [5,7,8], quantum dots [9–13]
+and cold atoms [15–17], 2-qubit gates can only act on certain pairs of qubits, while operations on
+two distant qubits are usually achieved by a sequence of SWAP operations [18–25]. This qubit
+connectivity constraint can be naturally modeled by a connected constraint graph G = (V, E),
+where the vertex set V represents the qubits, and the edge set E specifies the pairs of qubits on
+which 2-qubit gates can act. A circuit respecting the G constraint is termed G-compliant in this
+paper.
+Various constraint graphs exist on real hardware, including path [5,26], bilinear chains [5,6],
+2D-grids [7, 8], brick walls [5], cycle-grids [27] and trees [5]. Future connectivity patterns may
+even broaden this variety. The wide diversity of the constraint graphs calls for systematic studies
+on the compilation overhead due to the connectivity constraint. In this paper, we focus on circuit
+depth, which typically corresponds to the circuit’s execution time. In the NISQ era [28], the
+Pei Yuan: peiyuan@tencent.com
+Shengyu Zhang: shengyzhang@tencent.com
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+1
+arXiv:2402.02403v2  [quant-ph]  26 May 2025
+
+
+===== PAGE 2 =====
+execution time is particularly relevant as most variational quantum algorithms require executing
+the same circuit thousands of times and use the sample average to estimate the expectation of an
+observable on the circuit’s final state.
+Several questions arise about the depth overhead. On a given constraint graph G, what is the
+smallest depth overhead, as a measure of the graph, that a compiler can possibly achieve? How do
+we actually compile a circuit achieving this minimal depth increase? When designing a quantum
+chip, how should we lay out the qubits to ensure their connectivity facilitates a small circuit depth
+overhead? In this paper, we address these questions by fully characterizing the depth overhead for
+any given graph, with an explicit compilation algorithm given and the optimality shown.
+A widely adopted generic method compiling a quantum circuit under qubit connectivity con-
+straint is to insert SWAP gates into the original circuit to bring (the states in) two distant qubits
+together, apply the two-qubit operations, and then move them back [18–25]. This method is also
+the focus of this paper.
+Before diving into details, let us specify the measure for depth overhead. Take a common
+universal set of 1-qubit and 2-qubit gates 1. Given an n-qubit circuit C with depth d(C) assuming
+all-to-all qubit connectivity, we need to compile it to a circuit C′ with depth d(C′) that respects the
+constraint graph G. We use the ratio of d(C′)/d(C) as the overhead measure for circuit instance
+C, aiming to compile any C with a small overhead. Formally, we study the following measure
+doh (standing for depth overhead)
+doh(G) := max
+C
+min
+C′∼C:
+G-compliant
+d(C′)
+d(C) .
+(1)
+Here the minimum is over all G-compliant circuits C′ equivalent to C and obtained from C by
+inserting SWAP gates, and the maximum is over all n-qubit circuits C. Namely, we hope to find
+a good compiling algorithm C →C′ such that the depth increase ratio d(C′)/d(C) is controlled
+for any possible input circuit C 2.
+While there are a few compilation algorithms working for a few specific graph constraints
+[18–25], the studies fall short in two aspects. Firstly, the proposed routing algorithms for the
+specific graphs were not always optimal. For instance, Ref. [29] proposed a QAOA circuit that is
+hardware-compliant under a grid constraint. The method was to first find a long path in the grid
+and then to use the known SWAP routing algorithm on the path. For a grid of size √n × √n, this
+results in a O(n) depth overhead. Later we will show a superior routing algorithm with O( √n)
+depth overhead, and show that it is optimal. Secondly, the compilation algorithms so far are ad
+hoc for different specific graphs, and no systematic studies on general graphs have been conducted.
+This paper is the first to provide a unified, provably optimal algorithm for all graphs.
+Main results.
+In this work, we present a unified algorithm for qubit routing for any given con-
+straint graph G, with the depth overhead fully characterized by the routing number rt(G), a well-
+studied graph theoretic measure with a long history. We demonstrate that for all connected graphs
+G,
+doh(G) = Θ(rt(G)).
+(2)
+1The 1-qubit gates are not restricted by the qubit connectivity. Common choices for the 2-qubit gates
+include CNOT, CZ, iSWAP, etc. Note that a SWAP gate can be easily realized by three CNOT gates.
+2Here we use ratio d(C′)/d(C) rather than difference d(C′)−d(C) because d(C′) increases linearly with
+d(C) for a generic circuit C, while the difference d(C′) −d(C) can be arbitrarily large. (Though it is also
+possible to consider multiple layers of C together in compression, this semantic compression does not have
+much advantage for a generic depth-d circuit C, as each layer can be arbitrary and different layers do
+not admit a good compression. Even for the rare cases admitting significant semantic compression, the
+computational complexity of finding such a good compression is high.)
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+2
+
+
+===== PAGE 3 =====
+Specifically, on any graph G, we provide an algorithm to compile an arbitrarily given circuit C
+(with no connectivity constraint) into another circuit C′ with the depth increase ratio bounded by
+O(rt(G)) from above. Furthermore, we show that this is the best possible outcome—one cannot
+compile a generic C with a depth increase factor asymptotically better than O(rt(G)).
+As a graph theoretic measure that has been studied for about three decades, the routing number
+rt(G) has been pinned down for many specific graphs G such as paths, grids, trees, complete
+bipartite graphs, hypercubes, etc. [30–35]. By combining our algorithm with these known routing
+methods, we immediately obtain compilation algorithms for quantum circuits under these graph
+constraints.
+Additionally, we introduce a reduction algorithm between different graphs, enabling us to
+derive efficient routing algorithms for new constraint graphs from existing algorithms on some
+basic graphs. To demonstrate this, we construct compilers for IBM’s brick-wall graphs [5] and
+Rigetti’s cycle-grid graphs [27] by reducing SWAP networks on those graphs to the ones on the
+2D-grid.
+Previous work.
+The result in Eq. (2) bears resemblance to the canonical work on lower bound-
+ing quantum circuit size complexity by the geodesic distance on the unitaries manifold [36, 37].
+However, our work diverges in two significant ways: (1) we provide matching upper and lower
+bounds, and (2) our approach is more operational as it presents an explicit algorithm to compile a
+given arbitrary circuit C to a G-compliant circuit C′ with depth d(C′) = O(d(C) · rt(G)).
+Ref. [38] explores the qubit connectivity constraint for general and special classes of unitaries,
+such as those for quantum state preparation (QSP), by exploiting techniques in earlier work [39]
+and carefully arranging qubits such that most two-qubit gates act on nearby qubits. The paper
+shows that, somewhat surprisingly, the qubit connectivity constraint does not significantly increase
+circuit complexity for these classes of unitaries either in the worst or a generic case. For example, it
+gives a parametrized QSP circuit of depth O(2n/n) to generate a given arbitrary n-qubit quantum
+state, while even circuits without the qubit connectivity constraint require the depth of the same
+order of depth [40]. Though this might suggest that the qubit connectivity constraint does not
+increase circuit complexity, it is important to note that the worst-case or generic unitary matrices
+have exponentially high complexity. Thus Ref. [38] merely demonstrates that the connectivity
+constraint does not exacerbate these already complex cases. However, our primary concern in
+practice lies with efficient (e.g. polynomial depth) circuits—After all, these are the ones to be
+used in the future. Results in Ref. [38] do not provide insight into how the connectivity constraint
+affects these efficient circuits, and particularly do not rule out the possibility that shallow circuits
+significantly suffer from the constraint. This work shows that, fortunately, this is not the case: If a
+circuit C with all-to-all connections has depth d, then it can always be compiled to a G-compliant
+circuit C′ with depth at most O(d·rt(G)) = O(dn). In particular, if d(C) is a polynomial function
+of n, so is the depth of C′.
+Ref. [14] considered routing for partial permutations, in which one only needs to map k < n
+vertices xi to k other vertices yi, and the rest n −k vertices can be mapped arbitrarily. When
+the circuit depth is concerned with, the paper gave a reduction (“Greedy Depth Mapper”) from a
+partial routing protocol to circuit compilation. Their algorithm is essentially the same as ours in
+Lemma 2. However, this compilation can be very loose as explained after Lemma 2. They also
+gave a number of partial routing protocols, which may complement our result: They gave efficient
+routing methods, which may be utilized by our reduction to obtain efficient compilation methods
+(though one should also be careful about the difference between partial and full permutation).
+Organization.
+The rest of this paper is organized as follows. In Section 2, we introduce no-
+tations and review some previous results. In Section 3, we show the full characterization of the
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+3
+
+
+===== PAGE 4 =====
+depth overhead. Then we demonstrate a reduction of routing numbers between different graphs
+and construct routing algorithms for practice qubit connectivity constraints in Section 4. Finally,
+we discuss our results in Section 5.
+2
+Preliminaries
+Notation.
+Let [n] := {1, 2, . . . , n}. Let |S| denote the size of set S. In this paper we study
+general undirected graphs G = (V, E), where V is the set of vertices and E is the set of edges. We
+denote the number of vertices by n, and sometimes identify the vertex set V with the set [n]. For a
+vertex u ∈V and a subset S ⊆V , the neighbor of u inside S is NS(u) = {v ∈S : (u, v) ∈E}.
+We drop the subscript S and just write N(u) if S = V . For a subset S ⊆V , the induced subgraph
+of G on S is
+G|S = (S, E′) with E′ = {(u, v) ∈E : u ∈S, v ∈S}.
+(3)
+The diameter of a graph G is the largest distance of two vertices, denoted by
+diam(G) := max
+u,v∈V d(u, v),
+(4)
+where d(u, v) is the distance of vertices u and v on graph G (i.e. the number of edges on the
+shortest path between u and v). A matching in an undirected graph G = (V, E) is a vertex-disjoint
+subset of edges M ⊆E.
+Quantum circuit compilation and depth overhead.
+The qubit connectivity constraint can be
+modeled by a connected graph G = (V, E). A two-qubit gate can be applied to a pair of qubits
+i, j ∈V if and only if (i, j) ∈E. We refer to G as the constraint graph and a circuit satisfying
+the above constraint as a G-compliant circuit. When G is the complete graph Kn, we say that the
+circuit has all-to-all connectivity.
+The quantum circuit compilation problem studied in this paper is as follows: Given an n-
+qubit input quantum circuit C consisting of 1- and 2-qubit gates with all-to-all connectivity, and a
+constraint graph G with n vertices (identified with the n qubits), construct a G-compliant circuit
+C′ equivalent to C by adding SWAP gates. Here two circuits are equivalent if they implement the
+same unitary operation. To measure the quality of the hardware-compliant circuit, we introduce
+the following concept of depth overhead:
+doh(G, C) := min
+C′ d(C′)/d(C),
+(5)
+where d(C) and d(C′) denote the depth of circuits C and C′, respectively, and the minimum is
+over all C′ that satisfy the above compilation requirement. The depth overhead of a constraint
+graph G is then defined as
+doh(G) := max
+C
+doh(C, G).
+(6)
+where the maximum is taken over all n-qubit circuits C with all-to-all qubit connectivity.
+Permutations.
+The set of all permutations on set [n] is denoted by Sn. A permutation π ∈
+Sn is a transposition if π = (a1, a2)(a3, a4) · · · (a2k−1, a2k) with distinct a1, a2, . . . , a2k, where
+(a2i−1, a2i) means to exchange a2i−1 and a2i. A permutation π is a transposition if and only if it
+satisfies π2 = id, the identity permutation. It is well known that any permutation can be written
+as the composition of two transpositions.
+Lemma 1 ( [41]). Any π ∈Sn can be decomposed as π = σ1 ◦σ2, where σ1, σ2 ∈Sn are
+transpositions.
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+4
+
+
+===== PAGE 5 =====
+Routing number rt(G).
+The routing number is defined by the following game [30]. Given a
+connected graph G = (V, E) with n vertices, we place one pebble at each vertex v ∈V , and move
+the pebbles in rounds. In each round i, we are allowed to select a matching Mi ⊆E and swap the
+two pebbles at u and v for all edges (u, v) ∈Mi. For any permutation π ∈Sn, rt(G, π) is the
+minimum number of rounds in which one can move all pebbles from their initial positions v to the
+destinations π(v). For any graph G, the routing number is defined as
+rt(G) = max
+π∈Sn rt(G, π).
+(7)
+3
+Full characterization of depth overhead
+In this section, we present a protocol for constructing a G-compliant circuit with the depth over-
+head of at most O(rt(G)) for any given circuit C in Section 3.1. Then we demonstrate that for any
+G, there exists a circuit C with depth overhead at least Ω(rt(G)) in Section 3.2, thereby offering a
+complete characterization of the depth overhead of G.
+Computing the depth overhead for a given C and G turns out to be NP-hard; see Appendix A
+for the proof. However, the asymptotic behavior of doh(G) can be fully characterized by a graph
+measure called the routing number, denoted by rt(G), of a graph G, as defined in Eq. (7).
+3.1
+Hardware-compliant circuit construction and depth overhead upper bound
+In this section, we first present a compiling algorithm by the maximum matching. Second, we give
+a graph partition algorithm. Third, based on the graph partition algorithm, we present the general
+compiling algorithm and the depth overhead upper bound.
+Before diving into detailed constructions, let us first compare the measures doh(G) and rt(G),
+and explain why the upper bound doh(G) = O(rt(G)) does not immediately follow from their
+definitions, despite the apparent similarities. For easier comparison, let us formulate doh(G) in a
+language of games similar to that for the routing number rt(G) (Eq. (7)): we compile circuit C
+layer by layer, and for each layer, suppose the two-qubit gates are on pairs (u1, v1), . . ., (uk, vk),
+then we need to use SWAP gates to move ui and vi next to each other, apply the gate, and move
+them back. This formulation highlights immediate similarities between doh(G) and rt(G): (1)
+Both can be viewed as games in rounds, with each round consisting of SWAP operations. (2) Both
+measures represent the minimum number of rounds.
+However, also note that there are some key differences between the two measures: (1) In circuit
+compilation, ui and vi need to be moved to next to each other, while in graph routing, i needs to
+be moved to π(i). Note that given a routing algorithm to move each i to π(i) for any permutation
+π, it is still hard to move ui and vi next to each other because we cannot simply find a neighbor v′
+i
+of vi and let π(ui) = v′
+i; for example, if all vi’s have degree 1 and are all connected to a common
+“port” node v to reach the rest of the graph, then all v′
+i equal to v, making the map π(ui) = v not
+a permutation. We will need to handle this type of bottleneck issue in designing the protocol for
+doh(G). (2) In circuit compilation, it suffices that ui and vi are next to each other at some time
+step ti ≤doh(G) (different pairs (ui, vi) may have different ti), while in graph routing, all i need
+to be moved to π(i) exactly at time rt(G, π). This gives us some freedom to design the doh(G)
+protocol.
+One basic property that will be used later is a linear upper bound of rt(G) [30]:
+rt(G) ≤3n.
+(8)
+A routing protocol induces a SWAP circuit in a natural way: For any permutation π on vertices
+in graph G and any routing protocol in the definition of rt(G, π), if two pebbles at two vertices i
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+5
+
+
+===== PAGE 6 =====
+and j are swapped, then we apply a swap operation on qubits i and j in the SWAP circuit. Then
+the following unitary transformation Uπ
+|x1 · · · xn⟩Uπ
+−−→|xπ(1) · · · xπ(n)⟩,
+∀xi ∈{0, 1}, i ∈[n],
+(9)
+can be realized by a rt(G, π)-depth circuit consisting of swap operations.
+Before we give the general compiling algorithm, we first give a lemma which can compile
+circuits for graphs with a large matching.
+Lemma 2. For any connected graph G with the maximum matching size ν, we can construct
+G-compliant circuits with the depth overhead at most O(rt(G) · n/ν). That is, doh(G) =
+O(rt(G) · n/ν).
+Proof. Fix a given n-qubit circuit C. For each layer Ci with at least one two-qubit gate,
+suppose that the 2-qubit gates are Ci1, . . . , Cik on pairs {(u1, v1), . . . , (uk, vk)} of qubits,
+respectively, where 1 ≤k ≤n/2 and the 2k vertices u1, v1, . . . , uk, vk are all distinct. Let
+{(x1, y1), . . . , (xν, yν)} be a maximum matching of G. We can compile this layer of Ci to
+a G-compliant circuit in depth O(rt(G)) as follows:
+1. Apply all single-qubit gates in Ci.
+2. Pick any permutation π that permutes uj to xj and vj to yj, for all j ∈[ν]. Run the
+circuit Uπ (in Eq. (9)) of depth at most rt(G).
+3. Apply the 2-qubit gates Cij on (xj, yj), for all j ∈[ν];
+4. Run U†
+π, the reverse process of Step 2.
+If k ≤ν, then this implements Ci already in depth 2 · rt(G) + 2. If k > ν, then this
+implements the first ν two-qubit gates among k ones. Repeat the last three steps in the
+above procedure until all 2-qubit gates are handled, which needs ⌈k/ν⌉iterations. Each
+iteration needs at most 2·rt(G)+1 depth, thus the overall depth overhead is 1+(2rt(G)+
+1) · ⌈k/ν⌉= O(rt(G) · n/ν).
+□
+Note that Lemma 2 can already give compiling algorithms with depth overhead at most O(rt(G))
+for some specific graphs G, including 1D-chain, 2D-grid, IBM’s brick wall or Rigetti’s bilinear cy-
+cle, binary tree, etc, all of which have a matching of size Θ(n). But for graphs with a small match-
+ing size (an extreme example is the star graph which has the maximum matching size ν = 1), the
+bound of O(rt(G) · n/ν) is very loose.
+Lemma 2 has a clear intuition that the existence of a large matching facilitates moving the
+pebble around. Actually, it is even tempting to conjecture that this dependence of O(n/ν) is
+inevitable since a bottleneck in a graph does make simultaneous pebble moving inefficient due to
+traffic congestion. However, this bottleneck also affects rt(G) protocols and should be inherently
+characterized in the rt(G) measure. What we need to do is to technically relate the difficulty in
+the two measures and construct a reduction from one to the other. Next, we give details on how to
+remove the O(n/ν) factor in Lemma 2.
+To improve it to the optimal bound of O(rt(G)), one idea is to partition the constraint graph
+into vertex-disjoint connected subgraphs, each having O(1) diameter and containing at most
+O(rt(G)) vertices. We aim to move each pair of qubits (ui, vi) on which a two-qubit gate acts
+to one of these subgraphs (different pairs may go to different subgraphs). If this can be achieved,
+then we can implement two-qubit gates within one subgraph efficiently. Indeed, since each sub-
+graph has diameter O(1), it takes O(1) SWAP gates to implement one gate and since the subgraph
+has size rt(G), all the gates inside this subgraph can be done by O(rt(G)) SWAP gates, which
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+6
+
+
+===== PAGE 7 =====
+takes at most O(rt(G)) rounds. Also note that the routings in different subgraphs can be carried
+out in parallel. Thus the overall overhead is O(rt(G)).
+The challenge is that it is not always possible to achieve such a good partition of the constraint
+graph. We present a good graph partition algorithm in Lemma 4, for which we will first show the
+following bottleneck lemma.
+Lemma 3 (bottleneck). For a connected graph G = (V, E), suppose that there exist vertex
+sets V1, V2 ⊆V such that
+1. V1 ∩V2 = ∅;
+2. for any u ∈V1, N(u) ⊆V2, where N(u) := {w ∈V : (w, u) ∈E}.
+Then the routing number of G satisfies
+rt(G) = Ω
+ 
+|V1|
+|V2|
+!
+.
+(10)
+Proof. Let us label the pebbles in V1 as 1, 2, . . . , |V1|. Let s := ⌊|V1|/2⌋. Define a permu-
+tation π := (1, 1 + s)(2, 2 + s) · · · (s, 2s). Note that if we move the pebble at vertex i to
+the vertex i + s, the pebble must go through V2 since N(i) ⊆V2 by assumption. Since at
+most |V2| pebbles in V1 can go through V2 in one round, moving s pebbles needs at least
+s/|V2| rounds. Therefore,
+rt(G) ≥rt(G, π) ≥s/|V2| = Ω(|V1|/|V2|).
+□
+Next, we present the graph partition algorithm in Lemma 4, which outputs two families of
+vertex sets W and W′.
+Lemma 4. There exists an algorithm which, on any n-vertex connected graph G = (V, E),
+outputs two families of vertex sets
+W = {W1, . . . , Ws : Wi ⊆V, ∀i ∈[s]},
+(11)
+W′ = {W ′
+1, . . . , W ′
+t : W ′
+j ⊆V, ∀j ∈[t]},
+(12)
+for some s, t ∈[n], satisfying the following properties.
+1. (disjointness) For any distinct i, i′ ∈[s] and distinct j, j′ ∈[t], we have Wi ∩Wi′ = ∅
+and W ′
+j ∩W ′
+j′ = ∅;
+2. (coverage) | S
+i∈[s] Wi| + | S
+j∈[t] W ′
+j| ≥n/2;
+3. (size bound) For any i ∈[s] and j ∈[t], we have 2 ≤|Wi| = O(rt(G)) and 2 ≤
+|W ′
+j| = O(rt(G));
+4. (diameter bound) For all i ∈[s] and j ∈[t], the induced subgraphs Gi = G|Wi and
+G′
+j = G|W ′
+j all have diameter at most 2.
+The algorithm runs in time O(n3).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+7
+
+
+===== PAGE 8 =====
+Proof. The family W is constructed as follows. First find a maximal matching
+M = {(w1, w2), (w3, w4), . . . , (w2s−1, w2s)}
+(13)
+of G. Put
+W = {Wi : i ∈[s]}, where Wi = {w2i−1, w2i} ⊆V, ∀i ∈[s].
+(14)
+Then W satisfies the properties 1, 4 and 3. Indeed, each G|Wi is essentially an edge and
+thus the two nodes are connected, different G|Wi’s are disjoint as M is a matching, and
+|Wi| = 2 = O(rt(G)).
+The family W′ is constructed as follows. Define vertex set T = V −∪i∈[s]Wi, the
+vertices not in the maximal matching M. Note that T is an independent set, i.e. any two
+vertices a, b ∈T are not connected; otherwise, we could have added the edge (a, b) in M
+to form a larger matching, contradicting M being maximal. Define set
+S :=
+n
+w ∈
+[
+i∈[s]
+Wi : NT (w) , ∅
+o
+(15)
+to contain those vertices with a connection to T. The family W′ is constructed by Algo-
+rithm 1.
+Algorithm 1: Construction of W′
+1 Input: Connected graph G = (V, E), vertex sets T, S ⊆V .
+2 Output: A family W′ of sets.
+1: Initialize N0
+w := ∅, ∀w ∈S.
+2: Initialize A0,p := ∅, ∀p ∈[|T|].
+3: T1 := T, S1 := S, k1 := |S1|.
+4: for p = 1 to |T| do
+5:
+for i = 1 to |S| do
+6:
+Ai,p := ∅.
+7:
+if there are at least 1 and at most ⌈|Tp|/kp⌉neighbors of wi in Tp −Si−1
+r=1 Ar,p
+then
+8:
+Let Ai,p contain all these neighbors.
+9:
+else if there are more than ⌈|Tp|/kp⌉neighbors of wi in Tp −Si−1
+r=1 Ar,p then
+10:
+Let Ai,p contain arbitrary ⌈|Tp|/kp⌉many of these neighbors.
+11:
+end if
+12:
+Let Np
+wi := Np−1
+wi
+∪Ai,p.
+13:
+end for
+14:
+if | S|S|
+i=1 Np
+wi|≥|T|/2 then
+15:
+return W′ := {Np
+wi ∪{wi} : |Np
+wi| ≥1, i ∈[|S|]} and end the whole program.
+16:
+end if
+17:
+Set Tp+1 := Tp\ S|S|
+r=1 Ar,p.
+18:
+Set Sp+1 := {wi : |Ai,p| = ⌈|Tp|/kp⌉, i ∈[|S|]}.
+19:
+Set kp+1 := |Sp+1|.
+20: end for
+In the algorithm, Tp, Ai,p, Sp, kp and Np
+wi are defined as follows. The set Tp contains
+those vertices in T not selected in the first p−1 iterations. In the p-th iteration, the set Ai,p
+denotes the neighbor set within Tp −Si−1
+r=1 Ar,p of vertex wi ∈S with cardinality bounded
+by ⌈|Tp|/kp⌉. The set Sp contains all vertices wi ∈S that have exactly ⌈|Tp−1|/kp−1⌉
+neighbors being chosen in the (p −1)-th iteration. The number kp denotes the size of
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+8
+
+
+===== PAGE 9 =====
+vertex set Sp.
+The set Np
+wi contains all neighbors of vertex wi chosen in the first p
+iterations.
+We will first show that W′ satisfies its corresponding properties in 1 (disjointness) and
+4 (diameter). For the disjointness property, we note that actually all Ai,p’s, for different
+i and different p, are pairwise disjoint. Indeed, in each outer iteration p + 1, the new set
+Tp+1 removes all sets Ar,p in iteration p (line 17), thus any set Ar′,p+1 selected from Tp+1
+is disjoint from all sets Ar,p′ from previous iterations p′ ≤p. Now we check the sets Ai,p
+for different i in the same iteration p. Note that when we consider neighbors of wi, we
+ignore those in previous inner iterations by only considering Tp −Si−1
+r=1 Ar,p (line 7 and
+9), thus the new Ai,p are disjoint from Ar,p for all r < i. Now that all Ai,p’s are pairwise
+disjoint, and all wi’s are distinct, the sets Np
+wi ∪{wi} in the definition of W′ are pairwise
+disjoint as well. This shows the property of disjointness.
+As shown in lines 8 and 10, all vertices in Ai,p are connected with vertices wi, which
+implies that all vertices in Np
+wi (line 12) are connected with wi. Therefore, the subgraph
+induced by Np
+wi ∪{wi} has diameter at most 2.
+With the above, we can next show that the algorithm ends and returns W′ in line 15,
+i.e. the condition in line 14 is satisfied at some iteration p = ℓ, in at most |T|/2 ≤n/2
+iterations. We will show this by arguing that in each outer iteration p, each vertex v ∈Tp
+has at least one neighbor in Sp. Once we show this, we know that at least one Ai,p is
+nonempty, for which Np
+wi has size strictly larger than that of Np−1
+wi
+(line 12): All Ai,p’s are
+disjoint as shown above, thus Ai,p ∩Np−1
+wi
+= ∅and thus |Np
+wi| = |Np−1
+wi | + |Ai,p| > |Np−1
+wi |.
+Therefore the set S|S|
+i=1 Np
+wi strictly increases its size as p grows. Thus the condition in line
+14 is met and the algorithm ends after at most |T|/2 outer iterations.
+Now we argue by induction that in each outer iteration p, any vertex v ∈Tp has at
+least one neighbor in Sp, and all neighbors of v are in Sp. Namely, we have
+∅, N(v) ⊆Sp,
+(16)
+for all p ∈[|T|] and all v ∈Tp. This is true for p = 1 as v does not have neighbors
+in T1 = T, thus all its neighbors are in W = {w1, w2, . . . , w2s}. Furthermore, all its
+neighbors are actually in S ⊆W, as S exactly contains those u ∈W that have neighbors
+in T, i.e. W −S does not have any edge to T. Therefore, v has at least one neighbor and
+all v’s neighbors are in S1 = S. For the induction step, let us assume ∅, NSp(v) for each
+v ∈Tp, and consider iteration p + 1. For each v ∈Tp+1 ⊆Tp, its neighbors wi1, . . . , wik
+are all in Sp and k ≥1 by inductive hypothesis. But this v is selected in line 17 to be in
+Tp+1. This happens must because it is not in Ar,p for any r ∈|S|, including Aij,p. As each
+wij has at least one neighbor v ∈Tp, we know that the condition in line 9 is satisfied, i.e.
+wij has more than ⌈|Tp|/kp⌉neighbors in Tp −Sij−1
+r=0 Ar,p, but it then happens in line 10
+that v is not chosen into Aij,p. This means that |Aij,p| = ⌈|Tp|/kp⌉and thus wij ∈Sp+1
+(line 18). Therefore, v’s neighbors wij are all in Sp+1, completing the inductive step.
+We can also show that the algorithm never runs into the situation of Sp+1 = ∅in line
+18 (and kp+1 is always nonzero in the next line, justifying it being denominator in lines
+7-10). Indeed, if Sp+1 = ∅, it means that all wi ∈Sp has |Ai,p| ≤⌈|Tp|/kp⌉−1 and line 8 is
+executed. But then S|S|
+i=1 Np
+wi is the entire T, and thus the condition in line 14 is satisfied
+and algorithm returns W′ in line 15 before line 18.
+Next we show that W′ satisfies property 3, namely 2 ≤|W ′
+j| = O(rt(G)). Assume that
+Algorithm 1 stops in the ℓ-th iteration of the outer loop. Since Nℓ
+wi ∪{wi} in W′ satisfies
+|Nℓ
+wi| ≥1 (line 7 and 9), each set in W′ has size at least 2. We next prove that it has size
+at most O(rt(G)).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+9
+
+
+===== PAGE 10 =====
+Suppose Sℓ:= {wi1, . . . , wikℓ}.
+Consider the process of obtaining S1, . . . , Sℓin the
+algorithm. In each outer iteration p, the algorithm checks each w ∈Sp and selects as
+many neighbors as possible, but up to ⌈|Tp|/kp⌉, to form Ai,p. If there are more than
+⌈|Tp|/kp⌉neighbors, then it continues to collect these neighbors in the next outer iteration.
+Sp contains those wi ∈Sp−1 with |Ai,p−1| = ⌈|Tp−1|/kp−1⌉. So for any wi ∈Sℓ, the size of
+Ai,p, for p = 1, 2, . . . , ℓ−1, is ⌈|T1|/k1⌉, ⌈|T2|/k2⌉, . . . , ⌈|Tℓ−1|/kℓ−1⌉, respectively. And the
+size of the corresponding set Nℓ−1
+wi
+has
+|Nℓ−1
+wi | =
+
+[
+r∈[ℓ−1]
+Ai,r
+ =
+ℓ−1
+X
+r=1
+|Ai,r| =
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉.
+(17)
+where the second equality uses the fact that all Ai,r’s are disjoint.
+Define C := S
+w∈SℓNℓ−1
+w
+, the union of the corresponding sets of vertices in Sℓ. Based
+on Eq. (17) and the fact that all these Nℓ−1
+w
+’s are disjoint, we have
+|C| =
+X
+w∈Sℓ
+|Nℓ−1
+w
+| = kℓ·
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉.
+(18)
+Since Algorithm 1 did not stop in the (ℓ−1)-th step, we have
+
+S
+w∈S Nℓ−1
+w
+ < |T|/2. Then
+|C| =
+
+[
+w∈Sℓ
+Nℓ−1
+w
+ ≤
+
+[
+w∈S
+Nℓ−1
+w
+ < |T|/2,
+|Tℓ| =
+Tℓ−1 −
+|S|
+[
+r=0
+Ar,ℓ−1
+ = · · · =
+T −
+ℓ−1
+[
+p=1
+|S|
+[
+r=0
+Ar,p
+ =
+T −
+|S|
+[
+r=0
+Nℓ−1
+wr
+
+≥|T| −|T|/2 = |T|/2,
+Therefore |Tℓ| ≥|T|/2 > |C|. Since Tℓ⊆T, Sℓ⊆S, it follows that Tℓ∩Sℓ= ∅. We have
+showed that N(u) ⊆Sℓfor all u ∈Tℓby Eq. (16), and thus can apply Lemma 3 to obtain
+that rt(G) = Ω(⌈|Tℓ|/|Sℓ|⌉) = Ω(⌈|Tℓ|/kℓ⌉). Combined with Eq. (18), we have
+rt(G) =Ω(⌈|Tℓ|/kℓ⌉) ≥Ω(⌈|C|/kℓ⌉) = Ω
+
+kℓ·
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉/kℓ
+
+= Ω
+
+
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉
+
+.
+Therefore, the routing number rt(G) satisfies
+rt(G) = max
+
+
+Ω
+
+
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉
+
+, Ω
+ ⌈|Tℓ|/kℓ⌉
+
+
+
+
+=Ω
+
+
+ℓ−1
+X
+r=1
+⌈|Tr|/kr⌉+ ⌈|Tℓ|/kℓ⌉
+
+
+=Ω
+
+
+ℓ
+X
+r=1
+⌈|Tr|/kr⌉
+
+.
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+10
+
+
+===== PAGE 11 =====
+For arbitrary set Nℓ
+wi ∪{wi} in W′,
+|Nℓ
+wi ∪{wi}|
+=|Nℓ−1
+wi
+∪Ai,ℓ| + |{wi}| = |Nℓ−1
+wi | + |Ai,ℓ| + |{wi}|,
+≤
+ℓ
+X
+r=1
+⌈|Tr|/kr⌉+ 1,
+(Eq. (17))
+=O(rt(G)).
+(rt(G) = Ω(
+ℓ
+X
+r=1
+⌈|Tr|/kr⌉))
+Therefore, W′ satisfies property 3.
+Recall that T = V \ S
+i∈[s] Wi and W = {Wi : i ∈[s]}. In the definition of W′ :=
+{Np
+wi ∪{wi} : |Np
+wi| ≥1, i ∈[|S|]} (line 15), suppose there are t many i ∈[|S|] satisfying
+|Np
+wi| ≥1, and denote the sets Np
+wi ∪{wi} as W ′
+1, . . . , W ′
+t. The condition in line 14 of
+Algorithm 1 implies that
+|
+[
+i∈[s]
+Wi| + |
+[
+j∈[t]
+W ′
+j| ≥n −|T| + |T|/2 = n −|T|/2 ≥n/2,
+(19)
+showing property 2 in the theorem.
+Finally, we analyze the complexity. Finding a maximal matching can be easily done in
+time O(n3) by repeatedly adding an edge (u, v) into the matching set M and removing u
+and v from the vertex set. In the i-th inner loop, lines 7-12 can be realized in time O(|T|).
+Since there are |S| inner loops, then lines 5-13 can be realized in time O(|S| · |T|). In the
+p-th outer loop, the updates in lines 17-19 can be completed in O(|T| + |S|) time. Since
+there are |T| outer loops, the total time of Algorithm 1 is
+|T| · (O(|S| · |T|) + O(|S| + |T|)) = O(|T|2|S|) = O(n3).
+The total time for constructing W and W′ is O(n3) + O(n3) = O(n3).
+□
+With this result, we can state and prove the main compilation algorithm next, from which it
+will also be clear why we need those properties of the two families.
+Theorem 5. For any connected graph G, we have doh(G) = O(rt(G)).
+Proof. For any graph G = (V, E), we use Lemma 4 to find two families of sets W =
+{Wi : ∀i ∈[s]} and W′ = {W ′
+j : ∀j ∈[t]} satisfying the properties in the lemma. Since
+| S
+i∈[s] Wi| + | S
+j∈[t] W ′
+j| ≥n/2, at least one of | S
+i∈[s] Wi| and | S
+j∈[t] W ′
+j| is of size at least
+n/4. Without loss of generality, we assume that | S
+i∈[s] Wi| ≥n/4. Consider any one
+layer of a given circuit. Suppose it has k (k ≤⌊n/2⌋) 2-qubit gates, which act on pairs
+(i1, j1), (i2, j2), . . . , (ik, jk) of qubits. Note that qubits ir and jr are generally not adjacent
+on G. We call these the original gates, to distinguish from the compiled ones that are
+G-compliant, which will be referred to as G-gates.
+We now show how to compile one layer of 2-qubit original gates to a G-compliant
+circuit of depth at most O(rt(G)).
+1. Take a permutation π that moves the first γ1 = ⌊|W1|/2⌋pairs (i1, j1), . . . , (iγ1, jγ1)
+to inside W1, and the next γ2 = ⌊|W2|/2⌋pairs (iγ1+1, jγ1+1), . . . , (iγ1+γ2, jγ1+γ2) to
+inside W2, and so on, until we move γs = ⌊|Ws|/2⌋pairs to Ws. Implementing this
+permutation needs at most rt(G) rounds (see Eq. (9)). Now the problem of imple-
+menting the P
+s γs original gates Uir,jr is reduced to implementing the corresponding
+gates Up,q with p and q in some Wi.
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+11
+
+
+===== PAGE 12 =====
+2. Inside Wi for each i ∈[s], we can implement all γi 2-qubit gates Up,q in depth at
+most 3γi. Indeed, for each gate Up,q on qubits (p, q) in Wi, since diam(Gi) ≤2,
+either (p, q) ∈E or there is another vertex r ∈Wi connecting p and q. In the former
+case, we can apply the gate directly. In the latter case, we can swap p and r, apply
+the gate on (r, q), and swap p and r back. In any case, we can implement one gate
+by at most three G-gates, thus 3γi G-gates suffice to implement all γi 2-qubit gates
+in Wi. Note that each |Wi| = O(rt(G)) by Lemma 4, thus the depth is O(rt(G)) by
+Eq. (8).
+3. By repeating the above two steps ⌈k/(Ps
+i=1 γi)⌉iterations, we can implement all of
+the original 2-qubit gates. Since k ≤n/2, γi = ⌊|Wi|/2⌋, and P
+i |Wi| ≥n/4, the
+number of iterations is at most O(1).
+4. Move all qubits to their original positions, which takes at most rt(G) rounds.
+Putting everything together, the depth overhead for compiling one layer of the original
+circuit is at most O(rt(G)). Applying this to all layers completes the proof.
+□
+Remark.
+Though the above theorem is only on the depth overhead, from the proof we can see
+that actually our construction from an rt(G) protocol to a doh(G) protocol can be done very
+efficiently. Since there are efficient routing protocols for many commonly seen specific graphs
+G, our construction enables us to obtain efficient compilation for quantum circuits. To be more
+specific, given any qubit connectivity graph G, we only need O(n3) classical pre-processing time
+for finding W and W′ in Lemma 4, which needs to be computed only once and can be used for
+compiling any circuit. For each quantum circuit, the compilation time is merely O(n), because it
+is easily verified that all steps in the above proof just need to identify some permutation π and run
+the given routing algorithms in rt(G).
+3.2
+Depth overhead lower bound
+The following theorem gives a lower bound of the depth overhead, which matches the upper bound
+in Theorem 5.
+Theorem 6. For any connected graph G, we have doh(G) = Ω(rt(G)).
+Proof. Suppose rt(G) = rt(G, π∗), namely π∗is the hardest permutation in the definition
+of rt(G). By Lemma 1, π∗can be decomposed into two compositions. Thus there is an
+unconstrained SWAP circuit C∗of depth 2 realizing π∗. By definition of doh(G), we have
+doh(G) = max
+C
+min
+C′∼C:
+G-compliant
+d(C′)
+d(C) ≥
+min
+C′∼C:
+G-compliant
+d(C′)
+d(C∗) =
+min
+C′∼C:
+G-compliant
+d(C′)
+2
+.
+Take a C′ achieving the minimum in the above ratio. Since C∗is a SWAP circuit and C′
+is obtained from C by inserting SWAP gates, C′ is also a SWAP circuit. Therefore by the
+correspondence in Eq. (24), we obtain a routing algorithm A∗of d(C′) rounds which can
+realize π∗. Since this is one particular routing algorithm realizing π∗, we have
+rt(G) = rt(G, π∗) ≤the number of rounds in A∗= d(C′) = 2 · doh(G).
+Therefore doh(G) ≥rt(G)/2 = Ω(rt(G)).
+□
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+12
+
+
+===== PAGE 13 =====
+Table 1: A summary for the routing numbers of different graphs.
+Graph G
+Number of vertices
+Upper bound of rt(G)
+Reference
+Tree Tn
+n
+3n
+[30]
+⌊3n/2⌋+ O(log(n))
+[42]
+Complete d-ary tree T d
+n
+n
+n + o(n)
+[42]
+Complete bipartite graph Ks,t (s > t)
+s + t
+⌊3s/2t⌋+ 7
+[33]
+2-dimensional grid Gridn1,n2 (n1 ≤n2)
+n1n2
+2n1 + n2
+[30]
+Path Pn
+n
+n
+[30]
+Hypercube Qn
+2n
+2n −2
+[30]
+Combining Theorems 5 and 6, we see that the depth overhead of a connectivity graph G is
+fully characterized by its routing number, i.e., doh(G) = Θ(rt(G)). This result shows that our
+algorithm in Theorem 5 is asymptotically optimal. The characterization also gives quantitative
+guidance for the qubit layout and connectivity design of quantum processors when the depth over-
+head is considered.
+4
+Routing number for many common graphs and reduction between
+graphs
+In this section, we demonstrate a reduction of routing numbers between different graphs and con-
+struct routing algorithms for cycle-grids and brick walls.
+Many routing algorithms for different specific graphs have been widely investigated, see Table
+1 for a summary. These algorithms, combined with our general algorithm in Theorem 5, give
+optimal routing algorithms for many existing connectivity graphs such as paths, bilinear chains [5,
+6], 2-dimensional grids [7, 8], and trees [5]. This improves some of previous SWAP algorithms.
+For example, Ref. [29] proposed a circuit ansatz for QAOA, but to make it hardware-compliant
+for grid constraints, their algorithm has a depth overhead of O(n) on a √n × √n 2D-grid. Using
+Theorem 5 and the result for 2D-grids in [30], we easily achieve a depth overhead of O( √n),
+quadratically improving the previous one and being the best possible.
+While the routing number for the above graphs has been well studied, it has not been studied
+for graphs that are less commonly seen in graph theory but typical in quantum computing, such as
+IBM’s brick walls and Rigetti’s cycle-grids. Lemma 2 can be used to solve some graphs, and here
+we provide another method based on reduction, which can give good routing algorithms for more
+graphs.
+We will in particular need one result for the Path graph (i.e. 1D-chain).
+Lemma 7 ( [30]). Let Pn denote a path with n vertices, then rt(Pn) = n.
+Now we prove Theorem 8, which gives a reduction between routing numbers of two graphs.
+Theorem 8. Let G = (V, E) and G′ = (V, E′) be two connected graphs with the same vertex
+set V . Suppose that E′ −E := {e : e ∈E′ and e < E} can be partitioned into Sc
+i=1 E′
+i such
+that the following two conditions hold.
+1. E′
+i ∩E′
+j = ∅for arbitrary distinct i, j ∈[c].
+2. rt(G, πi) ≤c′ for each i ∈[c], where πi = ◦(u,v)∈E′
+i(u, v) exchanges the two ends of
+each edge in E′
+i.
+Then rt(G) ≤(1 + cc′) · rt(G′).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+13
+
+
+===== PAGE 14 =====
+Figure 1: Left: The layout of 80 qubits in Rigetti’s Aspen-M chip series. Right: A cycle-grid graph
+and a grid constructed from it. The cycle-grid graph consists of vertices and solid edges. A grid of size
+4 × 20 is constructed by adding dotted and dashed edges.
+Proof. Any permutation π on graph G′ can be realized by a routing algorithm of at most
+rt(G′) rounds. In one round, we swap two pebbles at vertices u, v if (u, v) ∈M for some
+matching M ⊆E′ of G′. Now we demonstrate how to implement this round on the graph
+G. We partition edges in M into at most c + 1 sets:
+M′
+0 := {(u, v) : ∀(u, v) ∈M ∩E},
+(20)
+M′
+i := {(s, t) : ∀(s, t) ∈M ∩E′
+i},
+i = 1, 2, . . . , c.
+(21)
+It takes one round to swap pebbles on u and v for all (u, v) ∈M′
+0 as all these (u, v) are
+also edges in G. For each i ∈[c], the edges in M′
+i form a permutation πi, which can be
+realized by a routing algorithm of c′ rounds by the second condition. Therefore, one round
+of routing on graph G′ can be implemented by a routing of (1 + cc′) rounds on graph G.
+Repeating this for all rt(G′) rounds gives rt(G) ≤(1 + cc′) · rt(G′).
+□
+One simple scenario in which the second condition in Theorem 8 holds is that there are vertex-
+disjoint paths Puv connecting u and v in G of length at most c′ for all (u, v) ∈E′
+i, for each i ∈[c].
+Indeed, in this case, the routing algorithm in rt(G, πi) can be done by simply following these
+paths Puv, which are vertex-disjoint and thus enable parallel routing. Next, we utilize this fact to
+design routing algorithms for the cycle-grids and brick walls.
+Rigetti’s Aspen-M chip series has the qubit connectivity graph as in Fig. 1, which is a 2 × 5
+grid with each (super)node being a cycle of length 8, and adjacent (super)nodes connected by two
+edges. The grid sizes and the cycle length can vary. The routing and circuit compilation for such
+graphs can be reduced to those for grids by inserting edges. Specifically, we add two vertical edges
+to each cycle, which results in a grid of size 4 × 20, as shown in Fig. 1 (right). The newly added
+edge set is partitioned into two disjoint edge sets, the dotted edge set E1 and the dashed edge set
+E2. For each i ∈[2], all edges (u, v) ∈Ei have paths of length 3 between u and v in the cycle-grid
+graph, and all paths are vertex-disjoint. Thus, we can apply Theorem 8 with parameters c = 2
+and c′ = 3, obtaining routing algorithms and circuit compilation from those on the 2D grid of size
+4 × 20.
+We can also apply this reduction result on brick walls. For integers n1, n2 ≥1, b1 ≥2, b2 ≥3,
+b1 < b2 and b2 odd, the (n1, n2, b1, b2)-brick wall graph contains n1 layers of n2 “bricks”, with
+each brick being a rectangle containing b1 vertices on each “vertical” edge and b2 vertices on each
+“horizontal” edge. In IBM’s brick wall chips [5], b1 = 3 and b2 = 5.
+The reduction of brick walls to grids is more complicated because the reduction changes the
+vertex set. Yet a reduction in the same spirit can still be achieved as follows.
+Theorem 9. For an (n1, n2, b1, b2)-brick wall Brickwallb1,b2
+n1,n2, we have
+rt(Brickwallb1,b2
+n1,n2) = O((b1 + b2)(n1 + b2n2)).
+(22)
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+14
+
+
+===== PAGE 15 =====
+n2 bricks in each layer
+n1 layers
+b2 vertices
+b1 vertices
+Figure 2: An (n1, n2, b1, b2)-brick wall graph and a grid constructed from it. The (n1, n2, b1, b2)-brick
+wall graph consists of black and red vertices and solid edges. A grid is constructed by (i) removing the
+vertices in the middle of each vertical edge (the red vertices), and (ii) adding dotted edges. Bricks are
+divided into 4 groups, indicated by the green, white, yellow and blue colors, where the bricks of the
+same color are vertex-disjoint.
+Proof. For ease of presentation, we color the vertices in Brickwallb1,b2
+n1,n2 black and red
+as follows. Recall that each brick is a rectangle containing b1 vertices on each vertical
+edge and b2 vertices on each horizontal edge. Color the 2b2 vertices on the horizontal
+edges black, and the rest 2(b1 −2) vertices red; see Fig. 2. We will first show that any
+permutation σ on black vertices has
+rt(Brickwallb1,b2
+n1,n2, σ) = O((b1 + b2)(n1 + b2n2)).
+(23)
+We will do this by reducing the routing problem to that on a 2D-grid. To do so, we first
+remove the b1 −2 red vertices in each vertical edge, and then add edges to connect the
+vertically aligned two vertices in each brick—the curved and straight dotted edges in Fig.
+2. In this way, the graph Brickwallb1,b2
+n1,n2 is transformed to Gridn1+1,n2b2−n2+1, a grid of
+size (n1+1)×(n2b2−n2+1). And note that all black vertices are in this grid, thus σ is also
+a permutation on vertices of Gridn1+1,n2b2−n2+1. Now to implement σ in Brickwallb1,b2
+n1,n2,
+we simulate the routing protocol P in rt(Gridn1+1,n2b2−n2+1, σ). In each round of P, there
+are swaps of pebbles on two vertices (i, j) for some disjoint edges (i, j) in the grid graph.
+If (i, j) is an horizontal edge, it can be directly carried out in the brick wall graph as well,
+because (i, j) is also an edge in the brick wall graph. Therefore it suffices to efficiently
+swap pebbles on (i, j) for dotted edges (i, j).
+For better parallelization, we partition the bricks into four disjoint groups, indicated
+by the four colors in Fig. 2: Use two colors for the odd layers and the other two colors
+for the even layers; inside each layer, use the two colors alternately. Note that the bricks
+in the same color do not overlap on vertices or edges, thus the routing can be made
+parallel for different bricks of the same color. Swapping pebbles on (i, j) for any number
+of dotted edges inside each brick in Brickwallb1,b2
+n1,n2 is a routing problem inside the brick,
+which is C2b2+2b1−4, a cycle of length 2b2 + 2b1 −4. The routing number for this cycle
+is rt(C2b2+2b1−4) = O(b1 + b2) by path result in Lemma 7, and note that routing for all
+the bricks of the same color can be done in parallel. Thus overall one round of the pebble
+swapping on Gridn1+1,n2b2−n2+1 can be implemented in O((b1 + b2)(n1 + b2n2)) rounds on
+Brickwallb1,b2
+n1,n2, proving Eq. (23).
+Now let us consider a general permutation on vertices of Brickwallb1,b2
+n1,n2. First, accord-
+ing to Lemma 1, any permutation can be decomposed as two transpositions, and we can im-
+plement them one by one. Now consider a transposition π = (a1, a2)(a3, a4) · · · (a2k−1, a2k)
+on Brickwallb1,b2
+n1,n2, where a1, a2, . . . , a2k are all distinct.
+This transposition has three
+parts, according to the color of the two vertices in each pair. More precisely, we decom-
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+15
+
+
+===== PAGE 16 =====
+pose π = π1 ◦π2 ◦π3, where π1, π2 and π3 consist of all the transpositions (a2i−1, a2i) in
+π where a2i−1 and a2i are both black, both red, and one black and one red, respectively.
+We discuss the implementation of them one by one.
+• Permutation π1: Since π1 are on black vertices only, we can use the protocol as
+discussed above to achieve rt(Brickwallb1,b2
+n1,n2, π1) = O((b1 + b2)(n1 + b2n2)).
+• Permutation π2: Consider all bricks of the green color, and perform the following in
+parallel. For each brick b, collect all vertices ab1, . . . , abj that are both in the left side
+of this brick and appear in π2. Swap (pebbles on) all these j vertices with j distinct
+black vertices cb1, . . . , cbj in the upper side in the same brick—this can be conducted
+because of the assumption that b2 ≥b1. We also do this for the other three colors
+one by one, then all red vertices are moved to black ones (except for the ones on
+the right boundary of the green and blue bricks, which can be easily handled later).
+This moving takes O(b1 + b2) rounds. The problem reduces to the first case π1,
+which can be solved by O((b1 +b2)(n1 +b2n2)) rounds. Note that in this process, the
+pebbles originally on cb1, . . . , cbj remain still in ab1, . . . , abj (because these pebbles
+are now on red vertices but π1 only swaps black vertices). We then swap pebbles on
+ab1, . . . , abj and cb1, . . . , cbj back. The overall cost is O((b1 + b2)(n1 + b2n2)) rounds.
+(The red ones on the right boundary of the green and blue bricks can then be handled
+similarly with at most the same cost.)
+• Permutation π3: For transpositions (a2i−1, a2i), assume without loss of generality
+that a2i−1 is black and a2i is red. Let p2i−1 and p2i denote the pebbles at vertices
+a2i−1 and a2i respectively. First, we permute each pebble p2i−1 from a2i−1 to a black
+vertex b2i−1 within the same brick of red vertices a2i. (If a2i−1 and a2i are already in
+the same brick then we do not need to move it). This is possible because b2 ≥b1. This
+permutation among black vertices only can be implemented in O((b1+b2)(n1+b2n2))
+rounds. Second, we exchange pebbles p2i at red vertices a2i and pebbles p2i−1 at black
+vertices in the same brick. This can be implemented in O(b1 +b2) rounds. Third, we
+apply the inverse permutation of the first step in O((b1+b2)(n1+b2n2)) rounds. The
+total rounds of π3 is 2·O((b1 +b2)(n1 +b2n2))+O(b1 +b2) = O((b1 +b2)(n1 +b2n2)).
+Putting all steps together, the permutation π = π1 ◦π2 ◦π3 on brick wall Brickwallb1,b2
+n1,n2
+can be implemented in O((b1 + b2)(n1 + b2n2)) rounds.
+□
+5
+Discussion
+We have fully characterized the depth overhead when compiling a quantum circuit with all-to-all
+qubit connections to one under a connectivity graph constraint for any graph, by a well-studied
+graph measure called routing number. We also developed compiling algorithms to achieve the
+asymptotically optimal depth overhead. This enables us to utilize existing routing algorithms for
+various specific graphs such as paths, grids and trees, to construct hardware-compliant compilers.
+Constraint graphs like IBM’s brick walls and Rigetti’s cycle-grids can also be handled via some
+simple reductions. The characterization of the depth overhead can also be utilized in the design of
+quantum processors when a small depth overhead is crucially needed.
+References
+[1] Peter W Shor. “Polynomial-time algorithms for prime factorization and discrete logarithms
+on a quantum computer”. SIAM review 41, 303–332 (1999).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+16
+
+
+===== PAGE 17 =====
+[2] Lov K Grover. “A fast quantum mechanical algorithm for database search”. In Proceedings
+of the twenty-eighth annual ACM symposium on Theory of computing. Pages 212–219.
+(1996).
+[3] Stephen Jordan. “Quantum algorithm zoo”. https://quantumalgorithmzoo. org/.
+[4] Marco Cerezo, Andrew Arrasmith, Ryan Babbush, Simon C Benjamin, Suguru Endo,
+Keisuke Fujii, et al. “Variational quantum algorithms”. Nature Reviews Physics 3, 625–
+644 (2021).
+[5] IBM Quantum. “IBM Quantum”. https://quantumexperience.ng.bluemix.net /qx/devices.
+[6] Yangsen Ye, Zi-Yong Ge, Yulin Wu, Shiyu Wang, Ming Gong, Yu-Ran Zhang, et al. “Prop-
+agation and localization of collective excitations on a 24-qubit superconducting processor”.
+Physical Review Letters 123, 050502 (2019).
+[7] Frank Arute, Kunal Arya, Ryan Babbush, Dave Bacon, Joseph C Bardin, Rami Barends,
+et al. “Quantum supremacy using a programmable superconducting processor”. Nature 574,
+505–510 (2019).
+[8] Ming Gong, Shiyu Wang, Chen Zha, Ming-Cheng Chen, He-Liang Huang, Yulin Wu, et al.
+“Quantum walks on a programmable two-dimensional 62-qubit superconducting processor”.
+Science 372, 948–952 (2021).
+[9] M Ciorga, AS Sachrajda, Pawel Hawrylak, C Gould, Piotr Zawadzki, S Jullian, Y Feng, and
+Zbigniew Wasilewski. “Addition spectrum of a lateral dot from coulomb and spin-blockade
+spectroscopy”. Physical Review B 61, R16315 (2000).
+[10] JM Elzerman, R Hanson, JS Greidanus, LH Willems Van Beveren, S De Franceschi, LMK
+Vandersypen, S Tarucha, and LP Kouwenhoven. “Few-electron quantum dot circuit with
+integrated charge read out”. Physical Review B 67, 161308 (2003).
+[11] JR Petta, AC Johnson, CM Marcus, MP Hanson, and AC Gossard. “Manipulation of a single
+charge in a double quantum dot”. Physical Review Letters 93, 186802 (2004).
+[12] D Schröer, AD Greentree, L Gaudreau, K Eberl, LCL Hollenberg, JP Kotthaus, and S Lud-
+wig. “Electrostatically defined serial triple quantum dot charged with few electrons”. Physi-
+cal Review B 76, 075306 (2007).
+[13] DM Zajac, TM Hazard, Xiao Mi, E Nielsen, and Jason R Petta. “Scalable gate architecture
+for a one-dimensional array of semiconductor spin qubits”. Physical Review Applied 6,
+054013 (2016).
+[14] Andrew M Childs, Eddie Schoute, and Cem M Unsal. “Circuit transformations for quantum
+architectures”. In 14th Conference on the Theory of Quantum Computation, Communication
+and Cryptography. Pages 3:1–3:24. (2019).
+[15] Immanuel Bloch. “Quantum coherence and entanglement with ultracold atoms in optical
+lattices”. Nature 453, 1016–1022 (2008).
+[16] Iulia Buluta, Sahel Ashhab, and Franco Nori. “Natural and artificial atoms for quantum
+computation”. Reports on Progress in Physics 74, 104401 (2011).
+[17] Hannes Bernien, Sylvain Schwartz, Alexander Keesling, Harry Levine, Ahmed Omran,
+Hannes Pichler, et al. “Probing many-body dynamics on a 51-atom quantum simulator”.
+Nature 551, 579–584 (2017).
+[18] Kyle Booth, Minh Do, J Beck, Eleanor Rieffel, Davide Venturelli, and Jeremy Frank. “Com-
+paring and integrating constraint programming and temporal planning for quantum circuit
+compilation”. In Proceedings of the International Conference on Automated Planning and
+Scheduling. Pages 366–374. (2018).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+17
+
+
+===== PAGE 18 =====
+[19] Dmitri Maslov, Sean M. Falconer, and Michele Mosca.
+“Quantum circuit placement”.
+IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems 27, 752–
+763 (2008).
+[20] Alireza Shafaei, Mehdi Saeedi, and Massoud Pedram. “Optimization of quantum circuits
+for interaction distance in linear nearest neighbor architectures”. In Proceedings of the 50th
+annual design automation conference. Pages 1–6. (2013).
+[21] Alireza Shafaei, Mehdi Saeedi, and Massoud Pedram. “Qubit placement to minimize com-
+munication overhead in 2d quantum architectures”. In 2014 19th Asia and South Pacific
+Design Automation Conference. Pages 495–500. (2014).
+[22] Abhoy Kole, Kamalika Datta, and Indranil Sengupta. “A heuristic for linear nearest neighbor
+realization of quantum circuits by swap gate insertion using n-gate lookahead”. IEEE journal
+on emerging and selected topics in circuits and systems 6, 62–72 (2016).
+[23] Chia-Chun Lin, Susmita Sur-Kolay, and Niraj K. Jha. “Paqcs: Physical design-aware fault-
+tolerant quantum circuit synthesis”.
+IEEE Transactions on Very Large Scale Integration
+(VLSI) Systems 23, 1221–1234 (2015).
+[24] Ritu Ranjan Shrivastwa, Kamalika Datta, and Indranil Sengupta. “Fast qubit placement in
+2d architecture using nearest neighbor realization”. In 2015 IEEE International Symposium
+on Nanoelectronic and Information Systems. Pages 95–100. (2015).
+[25] Gushu Li, Yufei Ding, and Yuan Xie. “Tackling the qubit mapping problem for nisq-era
+quantum devices”. In Proceedings of the Twenty-Fourth International Conference on Ar-
+chitectural Support for Programming Languages and Operating Systems. Pages 1001–1014.
+(2019).
+[26] Julian Kelly, Rami Barends, Austin G Fowler, Anthony Megrant, Evan Jeffrey, Theodore C
+White, et al. “State preservation by repetitive error detection in a superconducting quantum
+circuit”. Nature 519, 66–69 (2015).
+[27] Rigetti. “Rigetti”. http://docs.rigetti.com/en/latest/qpu.html.
+[28] John Preskill. “Quantum computing in the NISQ era and beyond”. Quantum 2, 79 (2018).
+[29] Matthew P Harrigan, Kevin J Sung, Matthew Neeley, et al. “Quantum approximate optimiza-
+tion of non-planar graph problems on a planar superconducting processor”. Nature Physics
+17, 332–336 (2021).
+[30] Noga Alon, F. R. K. Chung, and R. L. Graham. “Routing permutations on graphs via match-
+ings”. SIAM Journal on Discrete Mathematics 7, 513–530 (1994).
+[31] Louxin Zhang. “Optimal bounds for matching routing on trees”. SIAM Journal on Discrete
+Mathematics 12, 64–77 (1999).
+[32] Indranil Banerjee and Dana Richards. “New results on routing via matchings on graphs”. In
+Fundamentals of Computation Theory. Pages 69–81. (2017).
+[33] Wei-Tian Li, Linyuan Lu, and Yiting Yang. “Routing numbers of cycles, complete bipartite
+graphs, and hypercubes”. SIAM Journal on Discrete Mathematics 24, 1482–1494 (2010).
+[34] Rajko Nenadov. “Routing permutations on spectral expanders via matchings”. Combinator-
+ica Pages 1–6 (2023).
+[35] Indranil Banerjee, Dana Richards, and Igor Shinkar. “Sorting networks on restricted topolo-
+gies”. In SOFSEM 2019: Theory and Practice of Computer Science. Pages 54–66. (2019).
+[36] MA Nielsen. “A geometric approach to quantum circuit lower bounds”. Quantum Informa-
+tion & Computation 6, 213–262 (2006).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+18
+
+
+===== PAGE 19 =====
+[37] M.A. Nielsen, M.R. Dowling, M. Gu, and A.C. Doherty. “Quantum computation as geome-
+try”. Science 311, 1133 (2006).
+[38] Pei Yuan, Jonathan Allcock, and Shengyu Zhang. “Does qubit connectivity impact quantum
+circuit complexity?”. IEEE Transactions on Computer-Aided Design of Integrated Circuits
+and Systems 43, 520–533 (2024).
+[39] Xiaoming Sun, Guojing Tian, Shuai Yang, Pei Yuan, and Shengyu Zhang.
+“Asymptoti-
+cally optimal circuit depth for quantum state preparation and general unitary synthesis”.
+IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems 42, 3301–
+3314 (2023).
+[40] Martin Plesch and Caslav Brukner. “Quantum-state preparation with universal gate decom-
+positions”. Physical Review A 83, 032302 (2011).
+[41] Charles C Pinter. “A book of abstract algebra: second edition”. Courier Corporation. (2019).
+[42] Alan Roberts, Antonis Symvonis, and Louxin Zhang. “Routing on trees via matchings”. In
+Algorithms and Data Structures. Pages 251–262. (1995).
+[43] Sanjeev Arora and Boaz Barak. “Computational complexity: a modern approach”. Cam-
+bridge University Press. (2009).
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+19
+
+
+===== PAGE 20 =====
+A
+Hardness of computing depth overhead
+In this section, we show the hardness of computing the depth overhead of a given circuit C and a
+constraint graph G.
+First, we present a few initial concepts that will be utilized in the subsequent proof.
+Quantum gates and circuits.
+A SWAP gate implements the unitary which swaps the basis |01⟩
+and |10⟩and keeps |00⟩and |11⟩unchanged. A SWAP gate can be implemented by three CNOT
+gates.
+Throughout this paper, we consider quantum circuits on n qubits. Qubit connectivity con-
+straint is specified by an undirected graph G = (V, E), where V is the set of n vertices, often
+identified with the n qubits, and E is the set of edges, specifying pairs of qubits that two-qubit
+gates can act on. A circuit without any qubit connectivity constraint is called an unconstrained
+circuit. A circuit made of SWAP gates only is called a SWAP circuit. A SWAP circuit C imple-
+ments a permutation on qubits in the sense that C |x1x2 . . . xn⟩= |xπ(1)xπ(2) . . . xπ(n)⟩for some
+qubit permutation π ∈Sn.
+For any qubit connectivity graph G and any permutation π of vertices, there is a natural one-
+one correspondence between the following two sets:
+{G-compliant SWAP circuits C of depth d realizing π}
+↔{routing algorithm A of d rounds on G realizing π}.
+(24)
+Indeed, each layer of a SWAP circuit C consists of SWAP gates on distinct qubits, which 1-1
+correspond to one round of a routing algorithm consisting of swapping pebbles. Note that C and
+A implement the same permutation, and are compliant with the same graph G.
+Two quantum circuits C and C′ are equivalent if they realize the same unitary operation. In
+this paper, we are interested in a special SWAP equivalence, denoted by C′ ∼C, in which C′
+is obtained from C by inserting SWAP gates and applying C’s gates on permuted qubits. More
+specifically, suppose that C = Qd
+i=1 Li where Li is the i-th layer, made of one- and two-qubit
+gates on distinct qubits. A circuit C′ satisfies C′ ∼C if C′ = P(π)† Qd
+i=1 L′
+i, where L′
+i is
+a circuit similar to Li, but possibly with SWAP circuits inserted between the gates in Li: If a
+gate U in Li is on qubits p and q, then in L′
+i it should be U applied to qubits σ(p) and σ(q),
+where σ is the permutation on qubits realized by the inserted SWAP gates in circuit C′ from
+beginning to right before U; π is the permutation of qubits by all SWAP gates in circuit Qd
+i=1 L′
+i,
+and P †
+π : |xπ(1)xπ(2) . . . xπ(n)⟩7→|x1x2 . . . xn⟩is just to permute the qubits back to their original
+positions.
+Languages and decision problems.
+A language L is a set of strings of finite lengths over a
+finite alphabet Σ. The corresponding decision problem DL is to decide whether an input instance
+x belongs to the language L. A language L (or its decision problem DL) is in NP if there is a
+polynomial-time Turing machine M such that the following two statements are equivalent for any
+input x: (1) x ∈L, and (2) there is a certificate string y of length polynomial in that of x such
+that M accepts (x, y) [43]. A language L or its decision problem DL is NP-complete if L is in NP
+and any other NP problem can be reduced to L in polynomial time. If an NP-complete language
+L reduces to an NP language L′ in polynomial time, then L′ is also NP-complete.
+It is known that computing the routing number rt(G, π) of a given connected graph G and a
+permutation π is hard, as the following lemma states.
+Lemma 10 (Routing deciding problem, [32]). Deciding whether rt(G, π) ≤k on a given
+graph G, vertex permutation π, and any integer k ≥3 is NP-complete.
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+20
+
+
+===== PAGE 21 =====
+Second, using this result, we can show the hardness of computing the depth overhead.
+Theorem 11 (Depth overhead deciding problem). Deciding whether doh(G, C) ≤α on a
+given n-node graph G, a quantum circuit C, and a rational number α (with description
+length polynomial in n) is NP-complete.
+Proof. We first show that the hardness of deciding whether doh(G, C) ≤α is no more
+than that of NP, or more precisely, the language {(G, C, α) : doh(G, C) ≤α} belongs to
+NP. Given a Yes input instance, i.e. a tuple (G, C, α) where doh(G, C) ≤α, we can use
+as a certificate a minimum-depth G-compliant circuit C′ which is equivalent to C and
+obtained from C by inserting SWAP gates only. By definition of doh(G, C), the depth of
+C′ is d(C′) = doh(G, C) · d(C), where d(C) is the depth of C. The verification algorithm
+needs to check that (1) d(C′)/d(C) ≤α, and (2) C′ ∼C. The first is trivially done in
+polynomial time, and the second is also easy as one can keep track of all permutations
+and check whether for each gate U in C and the corresponding gate U in C′, whether
+the latter applies on the π-permuted qubits with π being the qubit permutation from the
+beginning of C′ up to gate U.
+Next, for any given graph G = (V, E), permutation π and integer k ≥3 of the rout-
+ing deciding problem rt(G, π) ≤k, we will efficiently construct a circuit Cπ under no
+graph constraint, and define a rational number α, such that rt(G, π) ≤k if and only if
+doh(G, Cπ) ≤α.
+Circuit Cπ and rational number α are determined as follows.
+• For any permutation π of routing deciding problem rt(G, π) ≤k, compute π2.
+• If π2 = id, then π is a transposition and can be written as
+π = (a1, a2)(a3, a4) · · · (a2m−1, a2m)
+for some m ≤n/2 and distinct a1, a2, · · · , a2m ∈V .
+– Define an unconstricted circuit Cπ = Qm
+i=1 SWAP(a2i−1, a2i), which consists of
+m SWAP gates. Since all ai’s are distinct, the depth of Cπ is clearly d(Cπ) = 1.
+– Let α = k.
+• If π2 , id, then π is not a transposition. According to Lemma 1, π can be decomposed
+as two transpositions π = σ1 ◦σ2. As discussed above, we can construct two SWAP
+circuits of depth 1 for σ1 and σ2.
+– Combining these SWAP circuits gives an unconstrained SWAP circuit Cπ with
+depth d(Cπ) = 2.
+– Let α = k/2.
+Observe that in either case, the circuit Cπ realizes permutation π in the natural sense that
+Cπ |x1x2 . . . xn⟩= |xπ(1)xπ(2) . . . xπ(n)⟩, and that α · d(Cπ) = k. Furthermore, the above
+algorithm mapping (G, π, k) to (G, Cπ, α) can clearly be implemented in polynomial time.
+Now we will show that
+rt(G, π) ≤k if and only if doh(G, Cπ) ≤α.
+First, we claim that the following equality holds for this particular Cπ.
+min
+n
+d(C′
+π) : C′
+π ∼Cπ, and C′
+π is G-compliant
+o
+= rt(G, π).
+(25)
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+21
+
+
+===== PAGE 22 =====
+• “≥”: Take any C′
+π that achieves the minimum of the left-hand side. Since Cπ realizes
+π and C′
+π ∼Cπ, we have that C′
+π realizes π as well. Also note that Cπ is a SWAP
+circuit, and C′
+π is obtained from Cπ by inserting SWAP gates, therefore C′
+π is also
+a SWAP circuit. By the correspondence in Eq. (24), C′
+π induces a d(C′
+π)-round
+routing algorithm realizing π, thus rt(G, π) as the minimum number of rounds of
+such protocols is at most d(C′
+π).
+• “≤”: Take any routing algorithm A with rt(G, π) rounds. Again by the correspon-
+dence in Eq. (24), A induces a rt(G, π)-depth SWAP circuit C(A) realizing π. Any
+C′
+π ∼Cπ only inserts SWAP gates to Cπ, thus is also a SWAP circuit. Therefore,
+the set in the left-hand side contains all G-compliant SWAP circuits realizing π, in-
+cluding C(A). Thus the minimum depth d(C′
+π) is at most the depth of C(A), which
+is rt(G, π).
+Now with Eq. (25), we can see that
+doh(G, C) ≤α
+⇔min
+n
+d(C′
+π) : C′
+π ∼Cπ, and C′
+π is G-compliant
+o
+/d(Cπ) ≤α
+(by definition of doh(G, C))
+⇔rt(G, π)
+d(Cπ) ≤α
+(by Eq. (25))
+⇔rt(G, π) ≤k
+(by definition of α)
+This completes the proof.
+□
+Accepted in Quantum 2025-05-25, click title to verify. Published under CC-BY 4.0.
+22

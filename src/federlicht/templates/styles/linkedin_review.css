@@ -1,4 +1,6 @@
 body.template-linkedin_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #141414;
   --muted: #5f5f5f;
   --accent: #0a66c2;
@@ -41,4 +43,14 @@ body.template-linkedin_review .article h3 {
 body.template-linkedin_review .meta {
   background: #ffffff;
   border: 1px solid #e6e9ef;
+}
+body.template-linkedin_review {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

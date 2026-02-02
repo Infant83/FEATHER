@@ -1,4 +1,6 @@
 body.template-annual_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1c1d1c;
   --muted: #4f5858;
   --accent: #0f6973;
@@ -19,4 +21,14 @@ body.template-annual_review .article {
 
 body.template-annual_review .article h2 {
   border-top: 2px solid rgba(15, 105, 115, 0.25);
+}
+body.template-annual_review {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

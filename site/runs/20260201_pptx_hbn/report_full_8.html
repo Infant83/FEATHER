@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>hBN 캡슐화 어닐링의 WSe₂에 미치는 영향</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-custom_acs_review{--bg:#ffffff;--text:#121314;--muted:#5b616e;--panel:#f6f7f9;--panel-2:#eef0f4;--accent:#2148ff;--border:rgba(18,19,20,.12);--shadow:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);color:var(--text);background:var(--bg);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,Arial,sans-serif;line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}body.template-custom_acs_review *{box-sizing:border-box}body.template-custom_acs_review .container{width:min(1100px,92%);margin:0 auto}body.template-custom_acs_review a{color:var(--accent);text-decoration-color:color-mix(in srgb,var(--accent) 50%,transparent);text-underline-offset:2px;text-decoration-thickness:1.5px}body.template-custom_acs_review a:hover{text-decoration-color:var(--accent)}body.template-custom_acs_review .masthead{background:linear-gradient(180deg,#0b0f1a 0%,#131826 100%);color:#ecf1ff;border-radius:16px;padding:clamp(20px,4vw,48px);margin:32px auto;box-shadow:var(--shadow);position:relative;overflow:hidden}body.template-custom_acs_review .masthead::before{content:"";position:absolute;inset:0;background:radial-gradient(1200px 400px at -10% -20%,rgba(255,255,255,.06),transparent 60%),radial-gradient(800px 300px at 110% 10%,rgba(255,255,255,.05),transparent 60%);pointer-events:none}body.template-custom_acs_review .masthead .kicker{display:inline-block;padding:6px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#b8c6ff;border-radius:999px;font-weight:600;letter-spacing:.02em;font-size:.78rem;text-transform:uppercase}body.template-custom_acs_review .masthead .title{font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-weight:700;line-height:1.12;font-size:clamp(2rem,4.6vw,3.4rem);margin:14px 0 10px;letter-spacing:-.01em}body.template-custom_acs_review .masthead .deck{border-top:1px solid rgba(255,255,255,.18);margin-top:14px;padding-top:12px;color:#d6ddff;font-size:clamp(1rem,1.6vw,1.25rem);max-width:80ch}body.template-custom_acs_review .masthead .byline{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px;color:#c8d1ff;font-size:.92rem}body.template-custom_acs_review .masthead .meta .dot{width:3px;height:3px;background:currentColor;border-radius:50%;display:inline-block;margin:0 8px;opacity:.6}body.template-custom_acs_review .hero{margin-top:18px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}body.template-custom_acs_review .hero img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}body.template-custom_acs_review article.article{margin:32px auto 96px}body.template-custom_acs_review article.article .prose{width:min(760px,92%);margin:0 auto}body.template-custom_acs_review .prose p{margin:1em 0;font-size:1.02rem;color:var(--text)}body.template-custom_acs_review .prose p.lead,body.template-custom_acs_review .prose>p:first-of-type{font-size:1.12rem;color:#222630}body.template-custom_acs_review .prose>p:first-of-type::first-letter{float:left;font-family:"Noto Serif KR",serif;font-size:3.2rem;line-height:.9;padding-right:.2rem;padding-top:.1rem;color:var(--accent);font-weight:700}body.template-custom_acs_review .prose h2{font-family:"Noto Serif KR",serif;font-weight:700;margin:2.2em 0 .6em;line-height:1.26;font-size:clamp(1.4rem,2.1vw,1.9rem);letter-spacing:-.01em}body.template-custom_acs_review .prose h3{font-weight:700;margin:1.8em 0 .6em;font-size:clamp(1.18rem,1.6vw,1.35rem);color:#1c2230}body.template-custom_acs_review .prose h2+p,body.template-custom_acs_review .prose h3+p{margin-top:.4em}body.template-custom_acs_review .prose ul,body.template-custom_acs_review .prose ol{margin:1em 0 1em 1.2em}body.template-custom_acs_review .prose li{margin:.4em 0}body.template-custom_acs_review .prose blockquote{margin:1.6em auto;padding:1.2em 1.4em;background:var(--panel);border-left:4px solid var(--accent);color:#2a2f3a;border-radius:10px}body.template-custom_acs_review .prose blockquote.pullquote{font-family:"Noto Serif KR",serif;font-size:clamp(1.25rem,2.2vw,1.7rem);line-height:1.45;background:linear-gradient(180deg,#f6f8ff,#eef3ff);border:1px solid #dbe3ff;border-left:6px solid var(--accent);color:#15203b;box-shadow:0 6px 20px rgba(33,72,255,.08)}body.template-custom_acs_review .prose blockquote footer{margin-top:.6em;font-size:.9rem;color:var(--muted)}body.template-custom_acs_review .prose code{background:#f2f4f8;border:1px solid #e5e9f2;border-radius:4px;padding:.1em .35em;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.95em}body.template-custom_acs_review .prose figure{margin:1.6em auto;text-align:center}body.template-custom_acs_review .prose figure img{max-width:100%;height:auto;border-radius:12px;box-shadow:var(--shadow)}body.template-custom_acs_review .prose figcaption{margin-top:.6em;font-size:.9rem;color:var(--muted)}body.template-custom_acs_review .prose table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}body.template-custom_acs_review .prose thead th{text-align:left;background:#f3f6ff;color:#1f2a44;font-weight:700;letter-spacing:.01em;font-size:.95rem;border-bottom:1px solid #dbe3ff;padding:12px 14px}body.template-custom_acs_review .prose tbody td{padding:12px 14px;border-bottom:1px solid #edf0f5}body.template-custom_acs_review .prose tbody tr:nth-child(even){background:#fafbfe}body.template-custom_acs_review .prose tbody tr:hover{background:#f1f6ff}body.template-custom_acs_review .prose caption{caption-side:bottom;padding:10px;color:var(--muted);font-size:.9rem;text-align:left}body.template-custom_acs_review .sidebar{width:min(320px,100%);background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}body.template-custom_acs_review .sidebar .title{font-weight:700;margin:0 0 .6em;font-size:1rem}body.template-custom_acs_review .sidebar .item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px dashed #d7dae1}body.template-custom_acs_review .sidebar .item:first-child{border-top:0}body.template-custom_acs_review .hr{height:1px;background:var(--border);margin:28px 0}body.template-custom_acs_review .article .footnotes,body.template-custom_acs_review .references{border-top:1px solid var(--border);margin-top:40px;padding-top:12px;color:var(--muted);font-size:.95rem}body.template-custom_acs_review .tag{display:inline-block;padding:6px 10px;background:#eef2ff;color:#26327a;border-radius:999px;font-weight:600;font-size:.78rem;border:1px solid #dbe3ff}body.template-custom_acs_review a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}body.template-custom_acs_review .prose .callout{background:linear-gradient(180deg,#fff,#f6f7fb);border:1px solid #e7ebf3;border-radius:12px;padding:14px 16px}body.template-custom_acs_review .layout{display:block}@media (min-width:1000px){body.template-custom_acs_review .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:start}body.template-custom_acs_review .layout .prose{width:100%}}@media (max-width:640px){body.template-custom_acs_review .masthead{border-radius:12px}body.template-custom_acs_review .masthead .title{font-size:clamp(1.8rem,7vw,2.4rem)}body.template-custom_acs_review .masthead .byline{font-size:.88rem}body.template-custom_acs_review .prose table{font-size:.95rem}}
+
+  </style>
+</head>
+<body class="theme-coral template-custom_acs_review">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">hBN 캡슐화 어닐링의 WSe₂에 미치는 영향</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>hBN 캡슐화 어닐링의 WSe₂에 미치는 영향</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 03:38</p>
+<h2>마스트헤드</h2>
+<p>카테고리: 소재 과학 및 기술<br />
+기사 제목: hBN 캡슐화 어닐링이 WSe₂ 광학·화학적 거동에 미치는 영향<br />
+작성자/일시: 연구팀 / 2024년 2월 6일  </p>
+<h2>데크</h2>
+<p>hBN 캡슐화 어닐링은 WSe₂의 광학적 특성과 화학적 안정성을 개선하는데 기여할 수 있다. 주요 메커니즘을 분석하고 향후 연구 방향을 제시한다.</p>
+<h2>키 비주얼</h2>
+<p><img alt="hBN encapsulation and annealing process" src="#" /><br />
+<em>이미지 설명: WSe₂와 hBN의 캡슐화 및 어닐링 과정</em> (대체 텍스트: WSe₂와 hBN의 2차원 층 구조)  </p>
+<h2>핵심 요약</h2>
+<ul>
+<li>hBN 캡슐화는 WSe₂의 광발광 성능을 향상시키며, 불순물 및 결함을 줄이는 데 효과적임 (슬라이드 2).  </li>
+<li>어닐링 온도는 산화 초기 및 광발광 증가의 주요 인자이며, 약 400°C에서 변화를 관찰할 수 있음 (슬라이드 6).  </li>
+<li>O₂ 분해 장벽은 0.52 eV로, Se 결함에 O 치환이 발생하는 주요 에너지 경로임 (슬라이드 8).  </li>
+<li>TEM 및 STEM을 통해 미세한 결함 분석 및 지속적인 전자빔 손상 문제를 극복하기 위해 고차원의 분석이 요구됨 (슬라이드 10).  </li>
+<li>산소 결합을 통한 결함 상태 변화와 새로운 광학적 특성을 도출하는 데 성공함 (슬라이드 9).  </li>
+</ul>
+<h2>본문</h2>
+<p>현대 전자 및 광학 소자는 고품질의 발광 효율을 요구하고 있으며, hBN(육방정계 질화 보론)을 이용한 캡슐화는 이를 개선할 수 있는 유망한 방법 중 하나로 여겨진다. 최근 연구에서는 WSe₂(텅스텐 디셀레나이드)을 hBN으로 캡슐화한 후 어닐링 과정을 통해 PL(광발광) 특성을 크게 개선한 사례가 보고되었다. 이러한 접근은 TMD(전이 금속 디칼코게나이드) 기반 소자에서 광발광 특성을 저하시킬 수 있는 트랩, 오염, 결함, 도핑 문제를 해결하는 데 도움을 준다(슬라이드 1).  </p>
+<p>캡슐화 후의 어닐링 과정은 고온에서 산화와 PL 증가를 조율하는 중요한 단계를 포함한다. 특히, 400°C 이상에서 산화가 시작되며 PL 성능이 향상되는 것이 관찰되었다. 이는 산소의 확산 및 결합이 광학적 특성에 미치는 영향을 잘 보여준다(슬라이드 6). O₂가 Sevac(Se 결함)에 흡착됨에 따라, O 치환 결함이 형성되며, 이는 이후의 광학적 반응과 밀접하게 연관되어 있다(슬라이드 8).</p>
+<p>한편, TEM(투과 전자 현미경)은 hBN 및 TMD 구조의 세밀한 결함 구조를 파악하는 데 있어 문제가 될 수 있으며, 특히 전자빔을 통한 손상 문제가 시급한 과제로 남아 있다(슬라이드 10). 이와 같은 기술적 과제를 극복하기 위해서는 더 높은 신호 대 잡음 비율의 그림을 확보하는 것이 중요하다(슬라이드 9).  </p>
+<p>hBN 캡슐화와 어닐링 기법의 응용은 고품질의 발광 및 양자 광원에 대한 발전을 가속화하며, 향후 대규모 생산 및 재현 가능성의 확장을 필요로 한다. 특히, 산소 결합에 따른 새로운 E-K 다이어그램을 계산하는 것이 향후 연구의 중요한 방향이 될 것이다(슬라이드 11).</p>
+<h2>사이드바 케이스</h2>
+<p><strong>용어 정의</strong><br />
+- <strong>PL(광발광):</strong> 전자가 에너지 레벨을 이동하며 빛을 방출하는 과정.<br />
+- <strong>TMD(전이 금속 디칼코게나이드):</strong> 2차원 반도체 물질로 주로 광전자 소자에 사용됨.<br />
+- <strong>hBN(육방정계 질화 보론):</strong> 이층 구조의 전기 절연체로, 고온 안정성 및 화학적 인관성을 가짐.<br />
+- <strong>Se vacancy:</strong> 셀레늄 결함으로, 물질의 결함 상태를 의미함.  </p>
+<h2>결론/시사점</h2>
+<p>hBN 캡슐화 어닐링 기술은 WSe₂의 광학적 성능과 화학적 안정성을 향상시키는 데 유효한 방법으로 입증되었다. 검증 실험에서, 분위기별 어닐 매트릭스, isotopic O2, in situ 분석 기법(TEM/EELS)이 향후 연구의 초점이 되어야 한다. 여전히 TEM 기술의 해상도 및 전자빔 손상 문제를 해결할 필요가 있으며, 새로운 재료 과학적 도전 과제를 해결하기 위해서는 고도의 실험적 및 이론적 접근이 필요하다.  </p>
+<h2>참고자료</h2>
+<ol>
+<li><em>Nanotechnology</em> 28 (2017) 395702  </li>
+<li><em>Nat. Commun.</em> (2019) 10:2330  </li>
+<li>인덱스 참고: <a href="https://openaix.com/research/tavily" target="_blank" rel="noopener">\[1\]</a>  </li>
+<li><a href="#">201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</a>  </li>
+</ol>
+<p>이 보고서는 PPTX 텍스트와 도표에서 확인 가능한 내용을 기반으로 작성되었으며, 추가 인용 및 검증 연구가 요구될 수 있습니다.</p>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>목표/범위: 로컬 PPTX “NCML hBN encapsulation annealing”을 1차 근거로 삼아, hBN 캡슐화 어닐링이 WSe2(및 일반 TMD) 광발광(PL)·결함·도핑·산화 거동에 미치는 영향을 ACS 스타일 리뷰로 정리하라. 공정 조건(온도/시간/분위기)–구조/계면 변화–광학/전기 특성의 인과를 중심으로, 합의된 결론과 가설적 신호를 분리한다.<br />
+pptx 파일의 주요 내용에 대해 심도있게 설명하고 정리하라.</p>
+<p>핵심 포함 항목(필수 섹션 모두 포함):<br />
+- Abstract(5–7문장): 다루는 시스템(WSe2/TMD, hBN encapsulation, annealing), 핵심 메커니즘(오염/버블 제거, 디도핑, 결함 패시베이션/산화 억제 또는 유발), 결론·검증 필요점 요약.<br />
+- Introduction: TMD PL 저하 원인(트랩/오염/결함/도핑)과 hBN 캡슐화+어닐링 접근의 위치. 약어(PL, TMD, hBN, Se vacancy 등) 정의.<br />
+- Current Landscape: (i) hBN 캡슐화 후 저/중/고온 어닐 레시피, (ii) 캡슐화 없는 어닐 대비, (iii) 그래핀/hBN 캡슐화 디바이스 사례로 범주화. 각 범주별 “관측 지표(PLQY, linewidth, lifetime, peak shift 등)” 정리.<br />
+- Mechanistic Insights: PPTX의 수치/키워드(예: 산화 시작 ~400°C, O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)를 중심으로 Se vacancy–O 결합, 산소 확산/해리, 계면 오염 제거와 PL 변화의 연결을 단계적(원인→중간상→결과)으로 설명.<br />
+- Applications: 고품질 발광/양자광원/소자 신뢰성 관점의 적용과, 재현성·스케일업 공백 명시.<br />
+- Challenges: 분위기 제어, 열이력, 계면 버블/오염 정량, in situ 분석 부재 등 “데이터 한계”를 구체화.<br />
+- Outlook: 검증 실험(분위기별 어닐 매트릭스, isotopic O2, in situ Raman/XPS, TEM/EELS, time-resolved PL) 제안.<br />
+- Risks &amp; Gaps: 현재 아카이브에 OpenAlex/arXiv/논문 PDF가 없어 PPTX 외 주장 일반화에는 공개정보 한계가 있음을 명시하고, 특히 PPTX 내 인용으로 보이는 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 “원문 미확보”로 표시.<br />
+- Critics: “hBN 캡슐화 어닐링의 보편성 과장” 등 반론(열 손상/산화 촉진 가능, 샘플 의존성, 측정 아티팩트)을 헤드라인+불릿으로 제시.<br />
+- Appendix: PPTX 슬라이드 기반 핵심 파라미터/수치 표, 용어집, 조건-결과 매핑 테이블.  </p>
+<p>증거/인용 정책: PPTX 텍스트/도표에서 확인 가능한 문장은 (슬라이드 번호/그림) 형태로 내부 인용. tavily_search.jsonl은 “인덱스 참고”로만 쓰고, 원문 PDF 미확보 항목은 추정·일반론으로 단정하지 말 것(공개정보 한계 라벨).  </p>
+<p>언어 지시: 본문은 한국어, 고유명사/저널/논문 제목은 원문 유지. 학술적·재료/화학 중심 톤 유지, 합의(Consensus) vs 가설(Speculative) 명확히 구분.</p>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>목표/범위: 로컬 PPTX “NCML hBN encapsulation annealing”을 1차 근거로 삼아, hBN 캡슐화 어닐링이 WSe2(및 일반 TMD) 광발광(PL)·결함·도핑·산화 거동에 미치는 영향을 ACS 스타일 리뷰로 정리하라. 공정 조건(온도/시간/분위기)–구조/계면 변화–광학/전기 특성의 인과를 중심으로, 합의된 결론과 가설적 신호를 분리한다.<br />
+pptx 파일의 주요 내용에 대해 심도있게 설명하고 정리하라.</p>
+<p>핵심 포함 항목(필수 섹션 모두 포함):<br />
+- Abstract(5–7문장): 다루는 시스템(WSe2/TMD, hBN encapsulation, annealing), 핵심 메커니즘(오염/버블 제거, 디도핑, 결함 패시베이션/산화 억제 또는 유발), 결론·검증 필요점 요약.<br />
+- Introduction: TMD PL 저하 원인(트랩/오염/결함/도핑)과 hBN 캡슐화+어닐링 접근의 위치. 약어(PL, TMD, hBN, Se vacancy 등) 정의.<br />
+- Current Landscape: (i) hBN 캡슐화 후 저/중/고온 어닐 레시피, (ii) 캡슐화 없는 어닐 대비, (iii) 그래핀/hBN 캡슐화 디바이스 사례로 범주화. 각 범주별 “관측 지표(PLQY, linewidth, lifetime, peak shift 등)” 정리.<br />
+- Mechanistic Insights: PPTX의 수치/키워드(예: 산화 시작 ~400°C, O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)를 중심으로 Se vacancy–O 결합, 산소 확산/해리, 계면 오염 제거와 PL 변화의 연결을 단계적(원인→중간상→결과)으로 설명.<br />
+- Applications: 고품질 발광/양자광원/소자 신뢰성 관점의 적용과, 재현성·스케일업 공백 명시.<br />
+- Challenges: 분위기 제어, 열이력, 계면 버블/오염 정량, in situ 분석 부재 등 “데이터 한계”를 구체화.<br />
+- Outlook: 검증 실험(분위기별 어닐 매트릭스, isotopic O2, in situ Raman/XPS, TEM/EELS, time-resolved PL) 제안.<br />
+- Risks &amp; Gaps: 현재 아카이브에 OpenAlex/arXiv/논문 PDF가 없어 PPTX 외 주장 일반화에는 공개정보 한계가 있음을 명시하고, 특히 PPTX 내 인용으로 보이는 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 “원문 미확보”로 표시.<br />
+- Critics: “hBN 캡슐화 어닐링의 보편성 과장” 등 반론(열 손상/산화 촉진 가능, 샘플 의존성, 측정 아티팩트)을 헤드라인+불릿으로 제시.<br />
+- Appendix: PPTX 슬라이드 기반 핵심 파라미터/수치 표, 용어집, 조건-결과 매핑 테이블.  </p>
+<p>증거/인용 정책: PPTX 텍스트/도표에서 확인 가능한 문장은 (슬라이드 번호/그림) 형태로 내부 인용. tavily_search.jsonl은 “인덱스 참고”로만 쓰고, 원문 PDF 미확보 항목은 추정·일반론으로 단정하지 말 것(공개정보 한계 라벨).  </p>
+<p>언어 지시: 본문은 한국어, 고유명사/저널/논문 제목은 원문 유지. 학술적·재료/화학 중심 톤 유지, 합의(Consensus) vs 가설(Speculative) 명확히 구분.</p>
+<h2>References</h2>
+<ol>
+<li>openaix.com/research/tavily — <a href="https://openaix.com/research/tavily" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-03 03:38:54</li>
+<li>Duration: 00:01:40 (100.34s)</li>
+<li>Model: gpt-4o</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: custom_acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: hbn, 캡슐화, PPTX, TMD, 산화</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_8.md-bea50de1.html" data-viewer="report_views/report_run_overview_report_full_8.md-bea50de1.html" data-raw="report/run_overview_report_full_8.md" class="viewer-link">./report/run_overview_report_full_8.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">./archive/20260201_pptx_hbn-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-viewer="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-raw="instruction/20260201_pptx_hbn.txt" class="viewer-link">./instruction/20260201_pptx_hbn.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_8.txt-19ee3274.html" data-viewer="report_views/instruction_report_prompt_report_full_8.txt-19ee3274.html" data-raw="instruction/report_prompt_report_full_8.txt" class="viewer-link">./instruction/report_prompt_report_full_8.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 body.template-prl_perspective,
 body.template-prl_manuscript {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1b1b;
   --muted: #4f4f52;
   --accent: #8b1e2d;

@@ -1,4 +1,6 @@
 body.template-annual_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1c1d1c;
   --muted: #4f5858;
   --accent: #0f6973;

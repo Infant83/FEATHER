@@ -15,11 +15,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import base64
 import datetime as dt
-import io
 import html as html_lib
-import hashlib
 import os
 import re
 import shutil
@@ -43,6 +40,23 @@ from .orchestrator import (
     STAGE_INFO,
     STAGE_ORDER,
 )
+from feather.web_research import run_supporting_web_research
+from .render.html import html_to_text, markdown_to_html, render_viewer_html, wrap_html
+from .utils.json_tools import extract_json_object
+from .utils.strings import slugify_label, slugify_url
+from .readers.pdf import (
+    analyze_figure_with_vision,
+    encode_image_for_vision,
+    extract_image_crops,
+    extract_pdf_images,
+    read_pdf_with_fitz,
+    render_pdf_pages,
+    render_pdf_pages_mupdf,
+    render_pdf_pages_pdfium,
+    render_pdf_pages_poppler,
+    select_figure_renderer,
+)
+from .readers.pptx import extract_pptx_images, read_pptx_text
 
 
 DEFAULT_MODEL = "gpt-5.2"
@@ -50,6 +64,7 @@ DEFAULT_CHECK_MODEL = "gpt-4o"
 STREAMING_ENABLED = False
 DEFAULT_AUTHOR = "Hyun-Jung Kim / AI Governance Team"
 DEFAULT_TEMPLATE_NAME = "default"
+FEDERLICHT_LOG_PATH: Optional[Path] = None
 DEFAULT_SECTIONS = [
     "Executive Summary",
     "Scope & Methodology",
@@ -296,6 +311,30 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Preview output path or directory (default: templates/ or scripts/templates/).",
     )
     ap.add_argument(
+        "--generate-template",
+        action="store_true",
+        default=False,
+        help="Generate a custom template (md + css) from a prompt and exit.",
+    )
+    ap.add_argument(
+        "--template-prompt",
+        help="Prompt describing the desired template style/sections.",
+    )
+    ap.add_argument(
+        "--template-name",
+        help="Template name used for output files and frontmatter.",
+    )
+    ap.add_argument(
+        "--template-store",
+        default="run",
+        choices=["run", "site"],
+        help="Where to store generated templates (run/custom_templates or site/custom_templates).",
+    )
+    ap.add_argument(
+        "--template-output-dir",
+        help="Explicit output directory for generated templates (overrides --template-store).",
+    )
+    ap.add_argument(
         "--interactive",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -339,11 +378,14 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
             "Federlicht uses ChatOpenAI for OpenAI-compatible endpoints."
         ),
     )
+    env_model_vision = os.getenv("OPENAI_MODEL_VISION") or None
     ap.add_argument(
         "--model-vision",
+        default=env_model_vision,
         help=(
             "Optional vision model name for analyzing extracted figures. "
-            "Uses OPENAI_BASE_URL_VISION/OPENAI_API_KEY_VISION when available."
+            "Uses OPENAI_BASE_URL_VISION/OPENAI_API_KEY_VISION when available. "
+            f"(default: {env_model_vision or 'unset'}; env: OPENAI_MODEL_VISION)"
         ),
     )
     ap.add_argument(
@@ -427,6 +469,15 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help=(
             "Max PDF pages to extract when needed (default: 6). "
             "Use 0 to attempt reading all pages."
+        ),
+    )
+    ap.add_argument(
+        "--max-pptx-slides",
+        type=int,
+        default=20,
+        help=(
+            "Max PPTX slides to extract when needed (default: 20). "
+            "Use 0 to attempt reading all slides."
         ),
     )
     ap.add_argument(
@@ -845,6 +896,141 @@ def fallback_template_guidance(sections: list[str]) -> tuple[dict[str, str], lis
     return guidance, ["Maintain a critical, evidence-based review tone."]
 
 
+def _normalize_template_name(value: Optional[str]) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return "custom_template"
+    return raw
+
+
+def generate_template_from_prompt(
+    template_prompt: str,
+    template_name: str,
+    language: str,
+    model_name: str,
+    create_deep_agent,
+    backend,
+) -> tuple[TemplateSpec, str]:
+    prompt = prompts.build_template_generator_prompt(language)
+    user_parts = [
+        f"Template name: {template_name}",
+        "User request:",
+        template_prompt,
+        "",
+        "JSON only.",
+    ]
+    agent = create_agent_with_fallback(create_deep_agent, model_name, [], prompt, backend)
+    result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
+    text = extract_agent_text(result)
+    parsed = extract_json_object(text) or {}
+    if not isinstance(parsed, dict):
+        parsed = {}
+    sections = parsed.get("sections") if isinstance(parsed.get("sections"), list) else []
+    section_guidance = parsed.get("section_guidance") if isinstance(parsed.get("section_guidance"), dict) else {}
+    writer_guidance = parsed.get("writer_guidance") if isinstance(parsed.get("writer_guidance"), list) else []
+    description = parsed.get("description") if isinstance(parsed.get("description"), str) else ""
+    tone = parsed.get("tone") if isinstance(parsed.get("tone"), str) else ""
+    audience = parsed.get("audience") if isinstance(parsed.get("audience"), str) else ""
+    css_text = parsed.get("css") if isinstance(parsed.get("css"), str) else ""
+
+    clean_sections = [s.strip() for s in sections if isinstance(s, str) and s.strip()]
+    if not clean_sections:
+        clean_sections = list(DEFAULT_SECTIONS)
+    clean_guidance: dict[str, str] = {}
+    for key, value in section_guidance.items():
+        if not key or not isinstance(value, str):
+            continue
+        clean_guidance[str(key)] = " ".join(value.split())
+    clean_writer = [" ".join(str(item).split()) for item in writer_guidance if item]
+    slug = slugify_label(template_name or "custom")
+    if not css_text or "body.template-" not in css_text:
+        css_text = (
+            f"body.template-{slug} {{\n"
+            "  --site-ink: var(--ink);\n"
+            "  --site-muted: var(--muted);\n"
+            "  --ink: #1d1b17;\n"
+            "  --muted: #59524a;\n"
+            "  --accent: #2563eb;\n"
+            "  --page-bg: linear-gradient(135deg, #f3f4f6 0%, #f8fafc 60%, #ffffff 100%);\n"
+            "  --masthead-bg: #6f7377;\n"
+            "  --masthead-border: rgba(255, 255, 255, 0.35);\n"
+            "  --masthead-title: #f8fafc;\n"
+            "  --masthead-deck: rgba(248, 250, 252, 0.85);\n"
+            "  --masthead-kicker: rgba(248, 250, 252, 0.72);\n"
+            "  --masthead-link: rgba(248, 250, 252, 0.88);\n"
+            "  --masthead-link-border: rgba(248, 250, 252, 0.3);\n"
+            "  --masthead-link-bg: rgba(15, 23, 42, 0.2);\n"
+            "  --paper: #ffffff;\n"
+            "  --paper-alt: #f3f4f6;\n"
+            "  --rule: rgba(15, 23, 42, 0.16);\n"
+            "  --shadow: 0 28px 70px rgba(15, 23, 42, 0.18);\n"
+            "  --body-font: \"Iowan Old Style\", \"Charter\", \"Palatino Linotype\", Georgia, serif;\n"
+            "  --heading-font: \"Avenir Next\", \"Gill Sans\", \"Trebuchet MS\", sans-serif;\n"
+            "  --ui-font: \"Avenir Next\", \"Gill Sans\", \"Trebuchet MS\", sans-serif;\n"
+            "}\n"
+        )
+    css_text = css_text.strip() + "\n"
+    spec = TemplateSpec(
+        name=template_name,
+        description=description,
+        tone=tone,
+        audience=audience,
+        sections=clean_sections,
+        section_guidance=clean_guidance,
+        writer_guidance=clean_writer,
+        css=f"{slug}.css",
+        latex="default.tex",
+        source=None,
+    )
+    return spec, css_text
+
+
+def write_generated_template(
+    spec: TemplateSpec,
+    css_text: str,
+    output_dir: Path,
+) -> tuple[Path, Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    slug = slugify_label(spec.name or "custom")
+    css_path = output_dir / f"{slug}.css"
+    md_path = output_dir / f"{slug}.md"
+    css_path.write_text(css_text, encoding="utf-8")
+    header: list[str] = ["---"]
+    header.append(f"name: {spec.name}")
+    if spec.description:
+        header.append(f"description: {spec.description}")
+    if spec.tone:
+        header.append(f"tone: {spec.tone}")
+    if spec.audience:
+        header.append(f"audience: {spec.audience}")
+    header.append(f"css: {css_path.name}")
+    header.append(f"latex: {spec.latex or 'default.tex'}")
+    for section in spec.sections:
+        header.append(f"section: {section}")
+    for section, guide in spec.section_guidance.items():
+        header.append(f"guide {section}: {guide}")
+    for note in spec.writer_guidance:
+        header.append(f"writer_guidance: {note}")
+    header.append("---\n")
+    md_path.write_text("\n".join(header), encoding="utf-8")
+    return md_path, css_path
+
+
+def resolve_generated_template_dir(args: argparse.Namespace) -> Path:
+    if getattr(args, "template_output_dir", None):
+        return Path(args.template_output_dir).resolve()
+    store = getattr(args, "template_store", "run")
+    if store == "site":
+        site_root = resolve_site_output(args.site_output)
+        if not site_root:
+            raise ValueError("--template-store site requires --site-output.")
+        return site_root / "custom_templates"
+    if not args.run:
+        raise ValueError("--template-store run requires --run.")
+    _, run_dir, _ = resolve_archive(Path(args.run))
+    return run_dir / "custom_templates"
+
+
 def generate_template_from_arxiv_src(
     src_dir: Path,
     run_dir: Path,
@@ -1120,7 +1306,7 @@ def relpath_if_within(path: Optional[Path], root: Path) -> Optional[str]:
 def derive_report_summary(report: str, output_format: str, limit: int = 220) -> str:
     summary = extract_section_summary(report, output_format)
     if summary:
-        return truncate_text(summary, limit)
+        return truncate_text_head(summary, limit)
     text = report
     if output_format in {"html", "md"}:
         text = html_to_text(markdown_to_html(report))
@@ -1130,7 +1316,7 @@ def derive_report_summary(report: str, output_format: str, limit: int = 220) -> 
     text = re.sub(r"\s+", " ", text).strip()
     if not text:
         return ""
-    return truncate_text(text, limit)
+    return truncate_text_head(text, limit)
 
 
 def extract_section_summary(report: str, output_format: str) -> Optional[str]:
@@ -2523,7 +2709,7 @@ def read_user_answers() -> str:
     return "\n".join(lines).strip()
 
 
-def truncate_text(text: str, max_chars: int) -> str:
+def truncate_text_middle(text: str, max_chars: int) -> str:
     if max_chars <= 0 or len(text) <= max_chars:
         return text
     head = text[: max_chars // 2]
@@ -2846,13 +3032,13 @@ def build_prompt_generator_input(
         lines.extend([f"- {section}" for section in required_sections])
         lines.append("")
     if template_guidance_text:
-        lines.extend(["Template guidance (summary):", truncate_text(template_guidance_text, 2000), ""])
+        lines.extend(["Template guidance (summary):", truncate_text_middle(template_guidance_text, 2000), ""])
     if instruction_text:
-        lines.extend(["Instruction snippet:", truncate_text(instruction_text, 2000), ""])
+        lines.extend(["Instruction snippet:", truncate_text_middle(instruction_text, 2000), ""])
     if seed_prompt:
-        lines.extend(["Seed prompt (if any):", truncate_text(seed_prompt, 2000), ""])
+        lines.extend(["Seed prompt (if any):", truncate_text_middle(seed_prompt, 2000), ""])
     if scout_notes:
-        lines.extend(["Scout notes:", truncate_text(scout_notes, 6000), ""])
+        lines.extend(["Scout notes:", truncate_text_middle(scout_notes, 6000), ""])
     return "\n".join(lines).strip()
 
 
@@ -3048,18 +3234,6 @@ QUALITY_WEIGHTS = {
 }
 
 
-def extract_json_object(text: str) -> Optional[dict]:
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        return None
-    snippet = text[start : end + 1]
-    try:
-        return json.loads(snippet)
-    except json.JSONDecodeError:
-        return None
-
-
 def normalize_score(value: object) -> float:
     try:
         score = float(value)  # type: ignore[arg-type]
@@ -3226,10 +3400,10 @@ def evaluate_report(
             report_prompt or "(none)",
             "",
             "Evidence notes:",
-            truncate_text(evidence_notes, max_chars),
+            truncate_text_middle(evidence_notes, max_chars),
             "",
             "Report:",
-            truncate_text(report_text, max_chars),
+            truncate_text_middle(report_text, max_chars),
             "",
             f"Write in {language}. Return JSON only.",
         ]
@@ -3293,19 +3467,19 @@ def compare_reports_pairwise(
             report_prompt or "(none)",
             "",
             "Evidence notes:",
-            truncate_text(evidence_notes, max_chars),
+            truncate_text_middle(evidence_notes, max_chars),
             "",
             "Report A evaluation summary:",
             summarize_evaluation(eval_a),
             "",
             "Report A:",
-            truncate_text(report_a, max_chars),
+            truncate_text_middle(report_a, max_chars),
             "",
             "Report B evaluation summary:",
             summarize_evaluation(eval_b),
             "",
             "Report B:",
-            truncate_text(report_b, max_chars),
+            truncate_text_middle(report_b, max_chars),
             "",
             f"Write in {language}. Return JSON only.",
         ]
@@ -3374,7 +3548,7 @@ def synthesize_reports(
             report_prompt or "(none)",
             "",
             "Evidence notes:",
-            truncate_text(evidence_notes, max_chars),
+            truncate_text_middle(evidence_notes, max_chars),
             "",
             "Report A evaluation summary:",
             summarize_evaluation(eval_a),
@@ -3386,10 +3560,10 @@ def synthesize_reports(
             notes or "(none)",
             "",
             "Report A:",
-            truncate_text(report_a, max_chars),
+            truncate_text_middle(report_a, max_chars),
             "",
             "Report B:",
-            truncate_text(report_b, max_chars),
+            truncate_text_middle(report_b, max_chars),
         ]
     )
     result = synthesis_agent.invoke({"messages": [{"role": "user", "content": synthesis_input}]})
@@ -3519,30 +3693,6 @@ def cleanup_latex_artifacts(tex_path: Path) -> None:
                 candidate.unlink()
         except Exception:
             pass
-
-
-def request_headers() -> dict[str, str]:
-    return {"User-Agent": "Federlicht/1.0 (+https://example.local)"}
-
-
-def slugify_url(url: str, max_len: int = 80) -> str:
-    parsed = urllib.parse.urlparse(url)
-    host = parsed.netloc.replace("www.", "")
-    path = parsed.path.strip("/").replace("/", "_")
-    base = "_".join([part for part in (host, path) if part])
-    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", base).strip("_")
-    if not cleaned:
-        cleaned = "resource"
-    digest = hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
-    trimmed = cleaned[:max_len]
-    return f"{trimmed}-{digest}"
-
-
-def slugify_label(label: str, max_len: int = 48) -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", label.strip().lower()).strip("_")
-    if not cleaned:
-        cleaned = "stage"
-    return cleaned[:max_len]
 
 
 def coerce_rel_path(value: Optional[str], run_dir: Path) -> Optional[str]:
@@ -3745,12 +3895,12 @@ def adjust_template_spec(
         report_prompt or "(none)",
         "",
         "Scout notes:",
-        truncate_text(scout_notes, 4000),
+        truncate_text_middle(scout_notes, 4000),
     ]
     if align_scout:
-        user_parts.extend(["", "Alignment notes (scout):", truncate_text(align_scout, 2000)])
+        user_parts.extend(["", "Alignment notes (scout):", truncate_text_middle(align_scout, 2000)])
     if clarification_answers:
-        user_parts.extend(["", "User clarifications:", truncate_text(clarification_answers, 1200)])
+        user_parts.extend(["", "User clarifications:", truncate_text_middle(clarification_answers, 1200)])
     agent_model = model_override or model_name
     agent = create_agent_with_fallback(
         create_deep_agent,
@@ -4904,16 +5054,59 @@ def build_template_preview_markdown(template_spec: TemplateSpec) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def _css_href_for_output(css_path: Path, output_path: Path) -> str:
+    rel = os.path.relpath(css_path, output_path.parent).replace("\\", "/")
+    return rel
+
+
+def materialize_template_css(spec: TemplateSpec, output_path: Path) -> Optional[str]:
+    css_path = resolve_template_css_path(spec)
+    if not css_path or not css_path.exists():
+        return None
+    report_dir = output_path.parent
+    report_styles = report_dir / "report_styles"
+    report_styles.mkdir(parents=True, exist_ok=True)
+    name = slugify_label(spec.name or "template")
+    target = report_styles / f"{name}.css"
+    target.write_text(css_path.read_text(encoding="utf-8", errors="replace"), encoding="utf-8")
+    return _css_href_for_output(target, output_path)
+
+
+def load_template_css_content(spec: TemplateSpec) -> Optional[str]:
+    css_path = resolve_template_css_path(spec)
+    if not css_path or not css_path.exists():
+        return None
+    return css_path.read_text(encoding="utf-8", errors="replace")
+
+
 def write_template_preview(template_spec: TemplateSpec, output_path: Path) -> None:
     markdown = build_template_preview_markdown(template_spec)
     body_html = markdown_to_html(markdown)
     body_html = linkify_html(body_html)
-    theme_css = load_template_css(template_spec)
+    theme_href = None
+    extra_body_class = None
+    css_path = resolve_template_css_path(template_spec)
+    if css_path and css_path.exists():
+        preview_dir = output_path.parent
+        preview_styles = preview_dir / "styles"
+        preview_styles.mkdir(parents=True, exist_ok=True)
+        source_path = css_path
+        canonical = Path(__file__).resolve().parent / "templates" / "styles" / css_path.name
+        if canonical.exists():
+            source_path = canonical
+        target = preview_styles / css_path.name
+        target.write_text(source_path.read_text(encoding="utf-8", errors="replace"), encoding="utf-8")
+        theme_href = _css_href_for_output(target, output_path)
+        css_slug = slugify_label(css_path.stem)
+        template_slug = slugify_label(template_spec.name or "")
+        if css_slug and css_slug != template_slug:
+            extra_body_class = f"template-{css_slug}"
     rendered = wrap_html(
         f"Template Preview - {template_spec.name}",
         body_html,
         template_name=template_spec.name,
-        theme_css=theme_css,
+        theme_href=theme_href,
+        extra_body_class=extra_body_class,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(rendered, encoding="utf-8")
@@ -4940,24 +5133,6 @@ def truncate_for_view(text: str, max_chars: int) -> tuple[str, bool]:
     if max_chars <= 0 or len(text) <= max_chars:
         return text, False
     return text[:max_chars], True
-
-
-def html_to_text(html_text: str) -> str:
-    try:
-        from bs4 import BeautifulSoup  # type: ignore
-    except Exception:
-        BeautifulSoup = None
-
-    if BeautifulSoup is not None:
-        soup = BeautifulSoup(html_text, "html.parser")
-        for tag in soup(["script", "style", "noscript"]):
-            tag.decompose()
-        return soup.get_text("\n", strip=True)
-    cleaned = re.sub(r"(?is)<(script|style|noscript).*?>.*?</\\1>", "", html_text)
-    cleaned = re.sub(r"(?is)<br\\s*/?>", "\n", cleaned)
-    cleaned = re.sub(r"(?is)</p>", "\n\n", cleaned)
-    cleaned = re.sub(r"(?is)<[^>]+>", "", cleaned)
-    return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
 
 _FENCED_BLOCK_RE = re.compile(
@@ -5003,747 +5178,6 @@ def normalize_report_for_format(report_text: str, output_format: str) -> str:
         else:
             cleaned = re.sub(r"(?is)^.*?\\begin\{document\}", "", cleaned).strip()
     return cleaned
-
-
-def read_pdf_with_fitz(
-    pdf_path: Path,
-    max_pages: int,
-    max_chars: int,
-    start_page: int = 0,
-    auto_extend_pages: int = 0,
-    extend_min_chars: int = 0,
-) -> str:
-    try:
-        import fitz  # type: ignore
-    except Exception:
-        return "PyMuPDF (pymupdf) is not installed. Cannot read PDF."
-    doc = fitz.open(str(pdf_path))
-    total_pages = doc.page_count
-    start_page = max(0, min(start_page, max(0, total_pages - 1)))
-    if max_pages <= 0:
-        pages = max(0, total_pages - start_page)
-    else:
-        pages = min(max_pages, total_pages - start_page)
-    chunks: list[str] = []
-    for page in range(start_page, start_page + pages):
-        chunks.append(doc.load_page(page).get_text())
-    pages_read = pages
-    text = "\n".join(chunks)
-    if (
-        auto_extend_pages
-        and extend_min_chars
-        and len(text) < extend_min_chars
-        and start_page + pages_read < total_pages
-    ):
-        remaining_pages = total_pages - (start_page + pages_read)
-        extra = min(auto_extend_pages, remaining_pages)
-        for page in range(start_page + pages_read, start_page + pages_read + extra):
-            chunks.append(doc.load_page(page).get_text())
-        pages_read += extra
-        text = "\n".join(chunks)
-    note = ""
-    if start_page + pages_read < total_pages:
-        first_page = start_page + 1
-        last_page = start_page + pages_read
-        note = (
-            f"\n\n[note] PDF scan truncated: pages {first_page}-{last_page} of {total_pages}. "
-            "Increase --max-pdf-pages or use start_page to read more."
-        )
-    if max_chars > 0:
-        if note:
-            remaining = max_chars - len(note)
-            if remaining <= 0:
-                return note[:max_chars]
-            return f"{text[:remaining]}{note}"
-        return text[:max_chars]
-    return f"{text}{note}"
-
-
-def extract_pdf_images(
-    pdf_path: Path,
-    output_dir: Path,
-    run_dir: Path,
-    max_per_pdf: int,
-    min_area: int,
-) -> list[dict]:
-    try:
-        import fitz  # type: ignore
-    except Exception:
-        return []
-    output_dir.mkdir(parents=True, exist_ok=True)
-    records: list[dict] = []
-    candidates: list[dict] = []
-    pdf_rel = f"./{pdf_path.relative_to(run_dir).as_posix()}"
-    try:
-        doc = fitz.open(str(pdf_path))
-    except Exception:
-        return records
-    seen: set[int] = set()
-    for page_index in range(len(doc)):
-        page = doc[page_index]
-        images = page.get_images(full=True)
-        for img_index, img in enumerate(images):
-            xref = img[0]
-            if xref in seen:
-                continue
-            seen.add(xref)
-            try:
-                base = doc.extract_image(xref)
-            except Exception:
-                continue
-            width = int(base.get("width") or 0)
-            height = int(base.get("height") or 0)
-            if width and height and width * height < min_area:
-                continue
-            ext = (base.get("ext") or "png").lower()
-            image_bytes = base.get("image", b"")
-            if not image_bytes:
-                continue
-            pil = _pillow_image()
-            if pil is not None:
-                try:
-                    image = pil.open(io.BytesIO(image_bytes))
-                except Exception:
-                    continue
-                if not _image_is_probably_figure(image, min_area):
-                    continue
-            tag = f"{pdf_rel}#p{page_index + 1}-{img_index + 1}"
-            candidates.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "page": page_index + 1,
-                    "width": width,
-                    "height": height,
-                    "area": width * height,
-                    "tag": tag,
-                    "ext": ext,
-                    "image": image_bytes,
-                }
-            )
-    if candidates:
-        candidates.sort(key=lambda item: item["area"], reverse=True)
-        for candidate in candidates[:max_per_pdf]:
-            name = f"{slugify_url(candidate['tag'])}.{candidate['ext']}"
-            img_path = output_dir / name
-            if not img_path.exists():
-                try:
-                    with img_path.open("wb") as handle:
-                        handle.write(candidate["image"])
-                except Exception:
-                    continue
-            img_rel = f"./{img_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": candidate["pdf_path"],
-                    "image_path": img_rel,
-                    "page": candidate["page"],
-                    "width": candidate["width"],
-                    "height": candidate["height"],
-                    "method": "embedded",
-                }
-            )
-    doc.close()
-    return records
-
-
-def _pillow_image() -> Optional[object]:
-    try:
-        from PIL import Image  # type: ignore
-    except Exception:
-        return None
-    return Image
-
-
-def encode_image_for_vision(image_path: Path, max_side: int = 1024) -> tuple[str, str]:
-    Image = _pillow_image()
-    if Image:
-        try:
-            with Image.open(image_path) as img:
-                if max(img.size) > max_side:
-                    scale = max_side / max(img.size)
-                    new_size = (max(1, int(img.width * scale)), max(1, int(img.height * scale)))
-                    img = img.resize(new_size)
-                buffer = io.BytesIO()
-                img.save(buffer, format="PNG")
-                data = buffer.getvalue()
-                return base64.b64encode(data).decode("utf-8"), "image/png"
-        except Exception:
-            pass
-    data = image_path.read_bytes()
-    mime = "image/png"
-    if image_path.suffix.lower() in {".jpg", ".jpeg"}:
-        mime = "image/jpeg"
-    return base64.b64encode(data).decode("utf-8"), mime
-
-
-def analyze_figure_with_vision(model, image_path: Path) -> Optional[dict]:
-    payload_b64, mime = encode_image_for_vision(image_path)
-    system_prompt = (
-        "You are an image analyst. Describe the figure strictly based on what is visible. "
-        "Return JSON only with keys: summary (1-2 sentences), type (chart/diagram/table/screenshot/photo/other), "
-        "relevance (0-100), recommended (yes/no). If unclear, use summary='unclear'."
-    )
-    user_content = [
-        {"type": "text", "text": "Analyze this figure for a technical report."},
-        {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{payload_b64}"}},
-    ]
-    try:
-        result = model.invoke(
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ]
-        )
-    except Exception as exc:
-        return {"summary": "vision_error", "error": str(exc)}
-    content = getattr(result, "content", None)
-    text = content if isinstance(content, str) else str(content)
-    parsed = extract_json_object(text)
-    if isinstance(parsed, dict):
-        return parsed
-    return {"summary": text.strip()[:400]}
-
-
-def _image_is_probably_figure(image, min_area: int) -> bool:
-    width, height = image.size
-    if width <= 0 or height <= 0:
-        return False
-    area = width * height
-    if area < min_area:
-        return False
-    aspect = width / height
-    if aspect > 6.0 or aspect < (1 / 6.0):
-        return False
-    if width < 80 or height < 80:
-        return False
-    try:
-        from PIL import ImageStat  # type: ignore
-    except Exception:
-        return True
-    try:
-        thumb = image.resize((128, 128))
-        gray = thumb.convert("L")
-        hist = gray.histogram()
-        total = max(sum(hist), 1)
-        white = sum(hist[246:]) / total
-        if white > 0.96:
-            return False
-        stats = ImageStat.Stat(gray)
-        if stats.var and stats.var[0] < 30:
-            return False
-    except Exception:
-        return True
-    return True
-
-
-def _crop_whitespace(image, min_area: int) -> Optional[object]:
-    try:
-        gray = image.convert("L")
-        mask = gray.point(lambda x: 0 if x > 245 else 255, "1")
-        bbox = mask.getbbox()
-    except Exception:
-        return image
-    if not bbox:
-        return None
-    left, top, right, bottom = bbox
-    margin = 6
-    left = max(0, left - margin)
-    top = max(0, top - margin)
-    right = min(image.width, right + margin)
-    bottom = min(image.height, bottom + margin)
-    cropped = image.crop((left, top, right, bottom))
-    if cropped.width * cropped.height < min_area:
-        return None
-    return cropped
-
-
-def _opencv_backend():
-    try:
-        import cv2  # type: ignore
-        import numpy as np  # type: ignore
-    except Exception:
-        return None, None
-    return cv2, np
-
-
-def _detect_figure_regions(image, min_area: int) -> list[tuple[int, int, int, int]]:
-    cv2, np = _opencv_backend()
-    if cv2 is None or np is None:
-        return []
-    if image is None:
-        return []
-    try:
-        rgb = np.array(image.convert("RGB"))
-    except Exception:
-        return []
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-    _, mask = cv2.threshold(gray, 245, 255, cv2.THRESH_BINARY_INV)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours:
-        return []
-    height, width = gray.shape[:2]
-    page_area = max(width * height, 1)
-    boxes: list[tuple[int, int, int, int]] = []
-    min_w = max(int(width * 0.1), 80)
-    min_h = max(int(height * 0.08), 80)
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        area = w * h
-        if area < min_area:
-            continue
-        if w < min_w or h < min_h:
-            continue
-        aspect = w / h if h else 0.0
-        if aspect > 6.0 or aspect < (1 / 6.0):
-            continue
-        boxes.append((x, y, w, h))
-    boxes.sort(key=lambda box: box[2] * box[3], reverse=True)
-    if len(boxes) > 1:
-        x, y, w, h = boxes[0]
-        if (w * h) / page_area > 0.85:
-            boxes = boxes[1:]
-    return boxes
-
-
-def extract_image_crops(image, min_area: int, max_regions: int) -> list[object]:
-    if image is None:
-        return []
-    crops: list[object] = []
-    regions = _detect_figure_regions(image, min_area)
-    if regions:
-        margin = 8
-        for x, y, w, h in regions:
-            left = max(0, x - margin)
-            top = max(0, y - margin)
-            right = min(image.width, x + w + margin)
-            bottom = min(image.height, y + h + margin)
-            cropped = image.crop((left, top, right, bottom))
-            if cropped.width * cropped.height < min_area:
-                continue
-            crops.append(cropped)
-            if max_regions and len(crops) >= max_regions:
-                break
-    if not crops:
-        cropped = _crop_whitespace(image, min_area)
-        if cropped is not None:
-            crops.append(cropped)
-    return crops
-
-
-def _pdfium_available() -> bool:
-    try:
-        import pypdfium2  # type: ignore
-    except Exception:
-        return False
-    return _pillow_image() is not None
-
-
-def _poppler_available() -> bool:
-    return shutil.which("pdftocairo") is not None
-
-
-def _mupdf_available() -> bool:
-    return shutil.which("mutool") is not None
-
-
-def select_figure_renderer(choice: str) -> str:
-    value = (choice or "auto").strip().lower()
-    if value in {"none", "off"}:
-        return "none"
-    if value == "pdfium":
-        return "pdfium" if _pdfium_available() else "none"
-    if value == "poppler":
-        return "poppler" if _poppler_available() else "none"
-    if value == "mupdf":
-        return "mupdf" if _mupdf_available() else "none"
-    if _pdfium_available():
-        return "pdfium"
-    if _poppler_available():
-        return "poppler"
-    if _mupdf_available():
-        return "mupdf"
-    return "none"
-
-
-def render_pdf_pages(
-    pdf_path: Path,
-    output_dir: Path,
-    run_dir: Path,
-    renderer: str,
-    dpi: int,
-    max_pages: int,
-    min_area: int,
-) -> list[dict]:
-    choice = select_figure_renderer(renderer)
-    if choice == "none":
-        return []
-    if choice == "pdfium":
-        return render_pdf_pages_pdfium(pdf_path, output_dir, run_dir, dpi, max_pages, min_area)
-    if choice == "poppler":
-        return render_pdf_pages_poppler(pdf_path, output_dir, run_dir, dpi, max_pages, min_area)
-    if choice == "mupdf":
-        return render_pdf_pages_mupdf(pdf_path, output_dir, run_dir, dpi, max_pages, min_area)
-    return []
-
-
-def render_pdf_pages_pdfium(
-    pdf_path: Path,
-    output_dir: Path,
-    run_dir: Path,
-    dpi: int,
-    max_pages: int,
-    min_area: int,
-) -> list[dict]:
-    try:
-        import pypdfium2 as pdfium  # type: ignore
-    except Exception:
-        return []
-    pillow = _pillow_image()
-    if pillow is None:
-        return []
-    output_dir.mkdir(parents=True, exist_ok=True)
-    records: list[dict] = []
-    pdf_rel = f"./{pdf_path.relative_to(run_dir).as_posix()}"
-    doc = pdfium.PdfDocument(str(pdf_path))
-    pages = len(doc)
-    scale = max(dpi / 72.0, 0.1)
-    for page_index in range(pages):
-        if len(records) >= max_pages:
-            break
-        page = doc.get_page(page_index)
-        try:
-            bitmap = page.render(scale=scale)
-            image = bitmap.to_pil()
-        finally:
-            try:
-                page.close()
-            except Exception:
-                pass
-        crops = extract_image_crops(image, min_area, max_pages - len(records)) if image else []
-        if not crops:
-            continue
-        for crop_index, cropped in enumerate(crops, start=1):
-            tag = f"{pdf_rel}#render-p{page_index + 1}"
-            if len(crops) > 1:
-                tag = f"{tag}-f{crop_index}"
-            name = f"{slugify_url(tag)}.png"
-            img_path = output_dir / name
-            try:
-                cropped.save(img_path, format="PNG")
-            except Exception:
-                continue
-            img_rel = f"./{img_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": int(cropped.width),
-                    "height": int(cropped.height),
-                    "method": "rendered",
-                }
-            )
-            if len(records) >= max_pages:
-                break
-    return records
-
-
-def _crop_image_path(image_path: Path, min_area: int) -> Optional[tuple[int, int]]:
-    pillow = _pillow_image()
-    if pillow is None:
-        return None
-    Image = pillow
-    try:
-        image = Image.open(image_path)
-    except Exception:
-        return None
-    cropped = _crop_whitespace(image, min_area)
-    if cropped is None:
-        return None
-    if cropped is not image:
-        try:
-            cropped.save(image_path, format="PNG")
-        except Exception:
-            return None
-    return int(cropped.width), int(cropped.height)
-
-
-def render_pdf_pages_poppler(
-    pdf_path: Path,
-    output_dir: Path,
-    run_dir: Path,
-    dpi: int,
-    max_pages: int,
-    min_area: int,
-) -> list[dict]:
-    if not _poppler_available():
-        return []
-    output_dir.mkdir(parents=True, exist_ok=True)
-    records: list[dict] = []
-    pdf_rel = f"./{pdf_path.relative_to(run_dir).as_posix()}"
-    for page_index in range(max_pages):
-        if len(records) >= max_pages:
-            break
-        tag = f"{pdf_rel}#render-p{page_index + 1}"
-        name = f"{slugify_url(tag)}.png"
-        img_path = output_dir / name
-        prefix = img_path.with_suffix("")
-        cmd = [
-            "pdftocairo",
-            "-f",
-            str(page_index + 1),
-            "-l",
-            str(page_index + 1),
-            "-png",
-            "-singlefile",
-            "-r",
-            str(dpi),
-            str(pdf_path),
-            str(prefix),
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0 or not img_path.exists():
-            if page_index == 0:
-                break
-            continue
-        pillow = _pillow_image()
-        if pillow is None:
-            size = _crop_image_path(img_path, min_area)
-            if size is None:
-                continue
-            width, height = size
-            img_rel = f"./{img_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": width,
-                    "height": height,
-                    "method": "rendered",
-                }
-            )
-            continue
-        try:
-            image = pillow.open(img_path)
-        except Exception:
-            continue
-        crops = extract_image_crops(image, min_area, max_pages - len(records))
-        if not crops:
-            continue
-        if len(crops) > 1 and img_path.exists():
-            try:
-                img_path.unlink()
-            except Exception:
-                pass
-        for crop_index, cropped in enumerate(crops, start=1):
-            tag = f"{pdf_rel}#render-p{page_index + 1}"
-            if len(crops) > 1:
-                tag = f"{tag}-f{crop_index}"
-            name = f"{slugify_url(tag)}.png"
-            crop_path = output_dir / name
-            try:
-                cropped.save(crop_path, format="PNG")
-            except Exception:
-                continue
-            img_rel = f"./{crop_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": int(cropped.width),
-                    "height": int(cropped.height),
-                    "method": "rendered",
-                }
-            )
-            if len(records) >= max_pages:
-                break
-    return records
-
-
-def render_pdf_pages_mupdf(
-    pdf_path: Path,
-    output_dir: Path,
-    run_dir: Path,
-    dpi: int,
-    max_pages: int,
-    min_area: int,
-) -> list[dict]:
-    if not _mupdf_available():
-        return []
-    output_dir.mkdir(parents=True, exist_ok=True)
-    records: list[dict] = []
-    pdf_rel = f"./{pdf_path.relative_to(run_dir).as_posix()}"
-    for page_index in range(max_pages):
-        if len(records) >= max_pages:
-            break
-        tag = f"{pdf_rel}#render-p{page_index + 1}"
-        name = f"{slugify_url(tag)}.png"
-        img_path = output_dir / name
-        cmd = [
-            "mutool",
-            "draw",
-            "-r",
-            str(dpi),
-            "-o",
-            str(img_path),
-            str(pdf_path),
-            str(page_index + 1),
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0 or not img_path.exists():
-            if page_index == 0:
-                break
-            continue
-        pillow = _pillow_image()
-        if pillow is None:
-            size = _crop_image_path(img_path, min_area)
-            if size is None:
-                continue
-            width, height = size
-            img_rel = f"./{img_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": width,
-                    "height": height,
-                    "method": "rendered",
-                }
-            )
-            continue
-        try:
-            image = pillow.open(img_path)
-        except Exception:
-            continue
-        crops = extract_image_crops(image, min_area, max_pages - len(records))
-        if not crops:
-            continue
-        if len(crops) > 1 and img_path.exists():
-            try:
-                img_path.unlink()
-            except Exception:
-                pass
-        for crop_index, cropped in enumerate(crops, start=1):
-            tag = f"{pdf_rel}#render-p{page_index + 1}"
-            if len(crops) > 1:
-                tag = f"{tag}-f{crop_index}"
-            name = f"{slugify_url(tag)}.png"
-            crop_path = output_dir / name
-            try:
-                cropped.save(crop_path, format="PNG")
-            except Exception:
-                continue
-            img_rel = f"./{crop_path.relative_to(run_dir).as_posix()}"
-            records.append(
-                {
-                    "pdf_path": pdf_rel,
-                    "image_path": img_rel,
-                    "page": page_index + 1,
-                    "width": int(cropped.width),
-                    "height": int(cropped.height),
-                    "method": "rendered",
-                }
-            )
-            if len(records) >= max_pages:
-                break
-    return records
-
-
-# Math blocks: $$...$$ or \[...\]
-_MATH_BLOCK_RE = re.compile(r"(?s)(\$\$.*?\$\$|\\\[.*?\\\])")
-# Bracketed inline math: \( ... \)
-_MATH_BRACKET_RE = re.compile(r"(?s)(\\\(.*?\\\))")
-
-
-def _mask_math_segments(text: str) -> tuple[str, list[str]]:
-    placeholders: list[str] = []
-
-    def replace(match: re.Match[str]) -> str:
-        placeholders.append(match.group(0))
-        return f"@@MATH{len(placeholders) - 1}@@"
-
-    def looks_like_math(payload: str) -> bool:
-        return bool(re.search(r"\\[A-Za-z]+|[_^{}]", payload))
-
-    masked = _MATH_BLOCK_RE.sub(replace, text)
-    masked = _MATH_BRACKET_RE.sub(replace, masked)
-
-    out: list[str] = []
-    i = 0
-    length = len(masked)
-    while i < length:
-        ch = masked[i]
-        if ch == "$":
-            if i > 0 and masked[i - 1] == "\\":
-                out.append(ch)
-                i += 1
-                continue
-            if i + 1 < length and masked[i + 1] == "$":
-                j = i + 2
-                while j + 1 < length:
-                    if masked[j] == "$" and masked[j + 1] == "$":
-                        segment = masked[i : j + 2]
-                        placeholders.append(segment)
-                        out.append(f"@@MATH{len(placeholders) - 1}@@")
-                        i = j + 2
-                        break
-                    j += 1
-                else:
-                    out.append(ch)
-                    i += 1
-                continue
-            j = i + 1
-            while j < length:
-                if masked[j] == "$":
-                    if masked[j - 1] == "\\":
-                        j += 1
-                        continue
-                    segment = masked[i : j + 1]
-                    payload = segment[1:-1].strip()
-                    if payload and (not segment[1].isspace() or looks_like_math(payload)):
-                        placeholders.append(segment)
-                        out.append(f"@@MATH{len(placeholders) - 1}@@")
-                        i = j + 1
-                        break
-                    out.append(ch)
-                    i += 1
-                    break
-                j += 1
-            else:
-                out.append(ch)
-                i += 1
-            continue
-        out.append(ch)
-        i += 1
-
-    return "".join(out), placeholders
-
-
-def _unmask_math_segments(html_text: str, placeholders: list[str]) -> str:
-    if not placeholders:
-        return html_text
-    restored = html_text
-    for idx, segment in enumerate(placeholders):
-        safe_segment = re.sub(r"(?<!\\\\)#", r"\\#", segment)
-        safe = html_lib.escape(safe_segment)
-        restored = restored.replace(f"@@MATH{idx}@@", safe)
-    return restored
-
-
-def markdown_to_html(markdown_text: str) -> str:
-    try:
-        import markdown  # type: ignore
-    except Exception:
-        escaped = html_lib.escape(markdown_text)
-        return f"<pre>{escaped}</pre>"
-    masked, placeholders = _mask_math_segments(markdown_text)
-    html_text = markdown.markdown(masked, extensions=["extra", "tables", "fenced_code"])
-    return _unmask_math_segments(html_text, placeholders)
 
 
 _URL_RE = re.compile(r"(https?://[^\s<]+)")
@@ -5988,50 +5422,6 @@ def clean_citation_labels(html_text: str) -> str:
     return re.sub(r'(<a [^>]*>)\\\[(\d+)\]\\\s*(</a>)', r'\1[\2]\3', html_text)
 
 
-def render_viewer_html(title: str, body_html: str) -> str:
-    safe_title = html_lib.escape(title)
-    return (
-        "<!doctype html>\n"
-        "<html lang=\"en\">\n"
-        "<head>\n"
-        "  <meta charset=\"utf-8\" />\n"
-        f"  <title>{safe_title}</title>\n"
-        "  <script>\n"
-        "    window.MathJax = {\n"
-        "      tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']] },\n"
-        "      svg: { fontCache: 'global' }\n"
-        "    };\n"
-        "  </script>\n"
-        "  <script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>\n"
-        "  <style>\n"
-        "    body { font-family: \"Iowan Old Style\", Georgia, serif; margin: 0; color: #1d1c1a; }\n"
-        "    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }\n"
-        "    header h1 { margin: 0; font-size: 1.1rem; }\n"
-        "    main { padding: 20px; }\n"
-        "    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }\n"
-        "    .meta-block p { margin: 0 0 6px 0; }\n"
-        "    .meta-block p:last-child { margin-bottom: 0; }\n"
-        "    pre { white-space: pre-wrap; font-family: \"SFMono-Regular\", Consolas, monospace; font-size: 0.95rem; }\n"
-        "    code { font-family: \"SFMono-Regular\", Consolas, monospace; }\n"
-        "    table { border-collapse: collapse; width: 100%; }\n"
-        "    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }\n"
-        "    th { background: #f6f1e8; }\n"
-        "  </style>\n"
-        "</head>\n"
-        "<body>\n"
-        f"  <header><h1>{safe_title}</h1></header>\n"
-        f"  <main>{body_html}</main>\n"
-        "  <script>\n"
-        "    document.querySelectorAll('a').forEach((link) => {\n"
-        "      link.setAttribute('target', '_blank');\n"
-        "      link.setAttribute('rel', 'noopener');\n"
-        "    });\n"
-        "  </script>\n"
-        "</body>\n"
-        "</html>\n"
-    )
-
-
 def build_text_meta_index(
     run_dir: Path,
     archive_dir: Path,
@@ -6162,6 +5552,7 @@ def build_text_meta_index(
             if not rel_text:
                 continue
             title = entry.get("title") or entry.get("file_name") or Path(entry.get("source_path") or "").name
+            file_ext = str(entry.get("file_ext") or "").lower()
             payload = {
                 "title": title,
                 "source_url": entry.get("source_path"),
@@ -6169,6 +5560,8 @@ def build_text_meta_index(
                 "source": "local",
                 "extra": entry.get("file_ext"),
             }
+            if file_ext == ".pptx":
+                payload["pptx_path"] = coerce_rel_path(entry.get("raw_path"), run_dir)
             add_meta(rel_text, payload)
 
     return meta_map
@@ -6317,54 +5710,6 @@ def parse_query_lines(text: str, max_queries: int) -> list[str]:
     return queries[:max_queries]
 
 
-def tavily_search(api_key: str, query: str, max_results: int) -> dict:
-    import requests
-
-    payload = {
-        "api_key": api_key,
-        "query": query,
-        "max_results": max_results,
-        "search_depth": "advanced",
-        "include_raw_content": False,
-    }
-    resp = requests.post("https://api.tavily.com/search", json=payload, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def tavily_extract(api_key: str, url: str) -> dict:
-    import requests
-
-    payload = {"api_key": api_key, "urls": [url], "include_images": False, "extract_depth": "advanced"}
-    resp = requests.post("https://api.tavily.com/extract", json=payload, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def select_top_urls(search_entries: list[dict], max_fetch: int) -> list[dict]:
-    scored: list[tuple[float, dict]] = []
-    for entry in search_entries:
-        results = entry.get("result", {}).get("results") or entry.get("results") or []
-        for item in results:
-            url = item.get("url")
-            if not url:
-                continue
-            score = item.get("score") or 0.0
-            scored.append((float(score), item))
-    scored.sort(key=lambda pair: pair[0], reverse=True)
-    selected = []
-    seen: set[str] = set()
-    for _, item in scored:
-        url = item.get("url")
-        if not url or url in seen:
-            continue
-        seen.add(url)
-        selected.append(item)
-        if len(selected) >= max_fetch:
-            break
-    return selected
-
-
 def run_web_research(
     supporting_dir: Path,
     queries: list[str],
@@ -6373,99 +5718,15 @@ def run_web_research(
     max_chars: int,
     max_pdf_pages: int,
 ) -> tuple[str, list[dict]]:
-    api_key = os.getenv("TAVILY_API_KEY")
-    if not api_key:
-        return "Web research skipped: missing TAVILY_API_KEY.", []
-    search_path = supporting_dir / "web_search.jsonl"
-    fetch_path = supporting_dir / "web_fetch.jsonl"
-    extract_dir = supporting_dir / "web_extract"
-    pdf_dir = supporting_dir / "web_pdf"
-    text_dir = supporting_dir / "web_text"
-    extract_dir.mkdir(parents=True, exist_ok=True)
-    pdf_dir.mkdir(parents=True, exist_ok=True)
-    text_dir.mkdir(parents=True, exist_ok=True)
-    search_entries: list[dict] = []
-
-    def append_jsonl(path: Path, payload: dict) -> None:
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
-
-    for query in queries:
-        try:
-            result = tavily_search(api_key, query, max_results)
-            entry = {"query": query, "result": result, "timestamp": time.time()}
-            append_jsonl(search_path, entry)
-            search_entries.append(entry)
-        except Exception as exc:
-            append_jsonl(search_path, {"query": query, "error": str(exc), "timestamp": time.time()})
-
-    selected = select_top_urls(search_entries, max_fetch)
-    for idx, item in enumerate(selected, start=1):
-        url = item.get("url")
-        if not url:
-            continue
-        slug = slugify_url(url)
-        record = {
-            "url": url,
-            "title": item.get("title"),
-            "score": item.get("score"),
-            "timestamp": time.time(),
-        }
-        try:
-            import requests
-
-            is_pdf = url.lower().endswith(".pdf")
-            if not is_pdf:
-                try:
-                    head = requests.head(url, timeout=20, headers=request_headers(), allow_redirects=True)
-                    ctype = head.headers.get("content-type", "").lower()
-                    if "pdf" in ctype:
-                        is_pdf = True
-                except Exception:
-                    pass
-            if is_pdf:
-                pdf_path = pdf_dir / f"{idx:03d}_{slug}.pdf"
-                text_path = text_dir / f"{idx:03d}_{slug}.txt"
-                with requests.get(url, stream=True, timeout=60, headers=request_headers()) as resp:
-                    resp.raise_for_status()
-                    with pdf_path.open("wb") as handle:
-                        for chunk in resp.iter_content(chunk_size=8192):
-                            if chunk:
-                                handle.write(chunk)
-                pdf_text = read_pdf_with_fitz(pdf_path, max_pdf_pages, max_chars, start_page=0)
-                text_path.write_text(pdf_text, encoding="utf-8")
-                record.update({"pdf_path": pdf_path.as_posix(), "text_path": text_path.as_posix()})
-            else:
-                extract_path = extract_dir / f"{idx:03d}_{slug}.txt"
-                try:
-                    extract_res = tavily_extract(api_key, url)
-                    content = ""
-                    results = extract_res.get("results") or extract_res.get("data") or []
-                    if results and isinstance(results, list):
-                        content = results[0].get("content") or results[0].get("raw_content") or ""
-                    if not content:
-                        content = json.dumps(extract_res, ensure_ascii=False)
-                except Exception:
-                    import requests
-
-                    resp = requests.get(url, timeout=60, headers=request_headers())
-                    resp.raise_for_status()
-                    content = html_to_text(resp.text)
-                content, truncated = truncate_for_view(content, max_chars)
-                if truncated:
-                    content = f"[truncated]\n{content}"
-                extract_path.write_text(content, encoding="utf-8")
-                record.update({"extract_path": extract_path.as_posix()})
-        except Exception as exc:
-            record.update({"error": str(exc)})
-        append_jsonl(fetch_path, record)
-
-    summary_lines = [
-        f"Web research queries: {len(queries)}",
-        f"Web search results stored: {search_path.relative_to(supporting_dir).as_posix()}",
-        f"Web extracts stored: {extract_dir.relative_to(supporting_dir).as_posix()}",
-    ]
-    return "\n".join(summary_lines), search_entries
+    return run_supporting_web_research(
+        supporting_dir,
+        queries,
+        max_results,
+        max_fetch,
+        max_chars,
+        max_pdf_pages,
+        pdf_text_reader=read_pdf_with_fitz,
+    )
 
 
 class SafeFilesystemBackend:
@@ -6502,457 +5763,6 @@ class SafeFilesystemBackend:
 
     def __getattr__(self, name: str):
         return getattr(self._backend, name)
-
-
-def wrap_html(title: str, body_html: str, template_name: Optional[str] = None, theme_css: Optional[str] = None) -> str:
-    safe_title = html_lib.escape(title)
-    template_class = ""
-    if template_name:
-        template_class = f" template-{slugify_label(template_name)}"
-    return (
-        "<!doctype html>\n"
-        "<html lang=\"en\">\n"
-        "<head>\n"
-        "  <meta charset=\"utf-8\" />\n"
-        f"  <title>{safe_title}</title>\n"
-        "  <script>\n"
-        "    window.MathJax = {\n"
-        "      tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']], displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']] },\n"
-        "      svg: { fontCache: 'global' }\n"
-        "    };\n"
-        "  </script>\n"
-        "  <script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>\n"
-        "  <style>\n"
-        "    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');\n"
-        "    :root {\n"
-        "      --bg: #0b0f14;\n"
-        "      --bg-2: #121821;\n"
-        "      --card: rgba(255, 255, 255, 0.06);\n"
-        "      --site-ink: #f5f7fb;\n"
-        "      --site-muted: rgba(245, 247, 251, 0.65);\n"
-        "      --accent: #4ee0b5;\n"
-        "      --accent-2: #6bd3ff;\n"
-        "      --edge: rgba(255, 255, 255, 0.15);\n"
-        "      --glow: rgba(78, 224, 181, 0.25);\n"
-        "      --ink: #0b1220;\n"
-        "      --muted: #425066;\n"
-        "      --accent-strong: #2fb892;\n"
-        "      --paper: rgba(255, 255, 255, 0.94);\n"
-        "      --paper-strong: #ffffff;\n"
-        "      --paper-alt: rgba(240, 245, 255, 0.6);\n"
-        "      --rule: rgba(15, 23, 42, 0.12);\n"
-        "      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);\n"
-        "      --link: var(--accent-2);\n"
-        "      --link-hover: var(--accent);\n"
-        "      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),\n"
-        "        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),\n"
-        "        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);\n"
-        "      --body-font: \"Fraunces\", \"Charter\", Georgia, serif;\n"
-        "      --heading-font: \"Space Grotesk\", \"Segoe UI\", sans-serif;\n"
-        "      --ui-font: \"Space Grotesk\", \"Segoe UI\", sans-serif;\n"
-        "      --mono-font: \"JetBrains Mono\", \"Consolas\", monospace;\n"
-        "    }\n"
-        "    :root[data-theme=\"sky\"] {\n"
-        "      --bg: #0b1220;\n"
-        "      --bg-2: #0f1b2e;\n"
-        "      --card: rgba(255, 255, 255, 0.06);\n"
-        "      --site-ink: #f4f7ff;\n"
-        "      --site-muted: rgba(244, 247, 255, 0.62);\n"
-        "      --accent: #64b5ff;\n"
-        "      --accent-2: #8fd1ff;\n"
-        "      --edge: rgba(255, 255, 255, 0.18);\n"
-        "      --glow: rgba(100, 181, 255, 0.28);\n"
-        "      --accent-strong: #3f8ed1;\n"
-        "    }\n"
-        "    :root[data-theme=\"crimson\"] {\n"
-        "      --bg: #120a0d;\n"
-        "      --bg-2: #1c0f16;\n"
-        "      --card: rgba(255, 255, 255, 0.06);\n"
-        "      --site-ink: #fff5f7;\n"
-        "      --site-muted: rgba(255, 245, 247, 0.62);\n"
-        "      --accent: #ff6b81;\n"
-        "      --accent-2: #ff9aa9;\n"
-        "      --edge: rgba(255, 255, 255, 0.15);\n"
-        "      --glow: rgba(255, 107, 129, 0.25);\n"
-        "      --accent-strong: #e3546d;\n"
-        "    }\n"
-        "    * { box-sizing: border-box; }\n"
-        "    body {\n"
-        "      margin: 0;\n"
-        "      min-height: 100vh;\n"
-        "      color: #e2e8f0;\n"
-        "      background: var(--page-bg);\n"
-        "      font-family: var(--body-font);\n"
-        "      line-height: 1.7;\n"
-        "      letter-spacing: -0.01em;\n"
-        "      overflow-x: hidden;\n"
-        "    }\n"
-        "    .backdrop {\n"
-        "      position: fixed;\n"
-        "      inset: 0;\n"
-        "      pointer-events: none;\n"
-        "      z-index: 0;\n"
-        "      overflow: hidden;\n"
-        "    }\n"
-        "    .orb {\n"
-        "      position: absolute;\n"
-        "      border-radius: 999px;\n"
-        "      opacity: 0.6;\n"
-        "      mix-blend-mode: screen;\n"
-        "      filter: blur(0px);\n"
-        "      animation: float 16s ease-in-out infinite;\n"
-        "    }\n"
-        "    .orb-1 {\n"
-        "      width: 520px;\n"
-        "      height: 520px;\n"
-        "      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);\n"
-        "      top: -220px;\n"
-        "      left: -160px;\n"
-        "    }\n"
-        "    .orb-2 {\n"
-        "      width: 440px;\n"
-        "      height: 440px;\n"
-        "      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);\n"
-        "      top: 80px;\n"
-        "      right: -120px;\n"
-        "      animation-delay: -4s;\n"
-        "    }\n"
-        "    .orb-3 {\n"
-        "      width: 340px;\n"
-        "      height: 340px;\n"
-        "      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);\n"
-        "      bottom: -180px;\n"
-        "      left: 22%;\n"
-        "      animation-delay: -8s;\n"
-        "    }\n"
-        "    .page {\n"
-        "      position: relative;\n"
-        "      z-index: 1;\n"
-        "      max-width: 1040px;\n"
-        "      margin: 56px auto 96px;\n"
-        "      padding: 0 28px;\n"
-        "    }\n"
-        "    .masthead {\n"
-        "      display: flex;\n"
-        "      flex-direction: column;\n"
-        "      gap: 12px;\n"
-        "      padding: 18px 22px 22px;\n"
-        "      border: 1px solid rgba(226, 232, 240, 0.18);\n"
-        "      border-radius: 18px;\n"
-        "      background: rgba(10, 14, 20, 0.55);\n"
-        "      backdrop-filter: blur(8px);\n"
-        "      margin-bottom: 36px;\n"
-        "      animation: fadeIn 0.7s ease-out both;\n"
-        "    }\n"
-        "    .masthead-top {\n"
-        "      display: flex;\n"
-        "      align-items: center;\n"
-        "      justify-content: space-between;\n"
-        "      gap: 16px;\n"
-        "    }\n"
-        "    .kicker {\n"
-        "      font-family: var(--ui-font);\n"
-        "      font-size: 0.82rem;\n"
-        "      letter-spacing: 0.28em;\n"
-        "      text-transform: uppercase;\n"
-        "      color: rgba(255, 255, 255, 0.68);\n"
-        "    }\n"
-        "    .back-link {\n"
-        "      display: none;\n"
-        "      align-items: center;\n"
-        "      gap: 8px;\n"
-        "      font-family: var(--ui-font);\n"
-        "      font-size: 0.78rem;\n"
-        "      text-decoration: none;\n"
-        "      padding: 6px 12px;\n"
-        "      border-radius: 999px;\n"
-        "      border: 1px solid rgba(255, 255, 255, 0.2);\n"
-        "      color: rgba(255, 255, 255, 0.78);\n"
-        "      background: rgba(15, 23, 42, 0.35);\n"
-        "      transition: all 0.2s ease;\n"
-        "    }\n"
-        "    .back-link:hover {\n"
-        "      color: #fff;\n"
-        "      border-color: rgba(255, 255, 255, 0.45);\n"
-        "      transform: translateY(-1px);\n"
-        "    }\n"
-        "    .report-title {\n"
-        "      font-family: var(--heading-font);\n"
-        "      font-size: clamp(2.2rem, 3.6vw, 3.6rem);\n"
-        "      margin: 0;\n"
-        "      line-height: 1.08;\n"
-        "      letter-spacing: -0.03em;\n"
-        "      color: #f8fafc;\n"
-        "    }\n"
-        "    .report-deck {\n"
-        "      color: rgba(226, 232, 240, 0.8);\n"
-        "      font-size: 1.05rem;\n"
-        "      max-width: 720px;\n"
-        "    }\n"
-        "    .article {\n"
-        "      background: var(--paper);\n"
-        "      color: var(--ink);\n"
-        "      border: 1px solid rgba(255, 255, 255, 0.6);\n"
-        "      border-radius: 22px;\n"
-        "      padding: 40px 44px;\n"
-        "      box-shadow: var(--shadow);\n"
-        "      backdrop-filter: blur(8px);\n"
-        "      animation: rise 0.8s ease-out both;\n"
-        "    }\n"
-        "    .article > * { animation: rise 0.6s ease-out both; }\n"
-        "    .article > *:nth-child(1) { animation-delay: 0.05s; }\n"
-        "    .article > *:nth-child(2) { animation-delay: 0.1s; }\n"
-        "    .article > *:nth-child(3) { animation-delay: 0.15s; }\n"
-        "    .article > *:nth-child(4) { animation-delay: 0.2s; }\n"
-        "    .article > *:nth-child(5) { animation-delay: 0.25s; }\n"
-        "    .article h1, .article h2, .article h3, .article h4 {\n"
-        "      font-family: var(--heading-font);\n"
-        "      color: var(--ink);\n"
-        "    }\n"
-        "    .article h1 { font-size: 2rem; margin-top: 0; }\n"
-        "    .article h2 {\n"
-        "      font-size: 1.55rem;\n"
-        "      margin-top: 2.6rem;\n"
-        "      padding-top: 1rem;\n"
-        "      border-top: 1px solid var(--rule);\n"
-        "      position: relative;\n"
-        "      padding-left: 18px;\n"
-        "    }\n"
-        "    .article h2::before {\n"
-        "      content: '';\n"
-        "      position: absolute;\n"
-        "      left: 0;\n"
-        "      top: 1.45rem;\n"
-        "      width: 8px;\n"
-        "      height: 8px;\n"
-        "      border-radius: 999px;\n"
-        "      background: var(--accent-strong);\n"
-        "    }\n"
-        "    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }\n"
-        "    .article p { font-size: 1.05rem; }\n"
-        "    .article ul, .article ol { padding-left: 1.4rem; }\n"
-        "    .article blockquote {\n"
-        "      border-left: 3px solid var(--accent-strong);\n"
-        "      margin: 1.6rem 0;\n"
-        "      padding: 0.7rem 1.4rem;\n"
-        "      background: var(--paper-alt);\n"
-        "      color: var(--muted);\n"
-        "      font-style: italic;\n"
-        "    }\n"
-        "    .article a {\n"
-        "      color: var(--link);\n"
-        "      text-decoration: none;\n"
-        "      border-bottom: 1px solid rgba(14, 165, 164, 0.4);\n"
-        "    }\n"
-        "    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }\n"
-        "    .article code {\n"
-        "      background: rgba(15, 23, 42, 0.06);\n"
-        "      padding: 2px 6px;\n"
-        "      border-radius: 8px;\n"
-        "      font-family: var(--mono-font);\n"
-        "      font-size: 0.92em;\n"
-        "    }\n"
-        "    .article pre {\n"
-        "      background: rgba(15, 23, 42, 0.06);\n"
-        "      border: 1px solid rgba(15, 23, 42, 0.12);\n"
-        "      border-radius: 14px;\n"
-        "      padding: 16px;\n"
-        "      overflow-x: auto;\n"
-        "      white-space: pre-wrap;\n"
-        "      font-family: var(--mono-font);\n"
-        "    }\n"
-        "    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }\n"
-        "    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }\n"
-        "    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }\n"
-        "    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }\n"
-        "    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }\n"
-        "    .misc-block {\n"
-        "      font-size: 0.85rem;\n"
-        "      color: var(--muted);\n"
-        "      margin-top: 0.6rem;\n"
-        "    }\n"
-        "    .misc-block ul { margin: 0.6rem 0 0.8rem 1.2rem; }\n"
-        "    .misc-block li { margin: 0.2rem 0; }\n"
-        "    .report-figure {\n"
-        "      margin: 1.4rem 0;\n"
-        "      padding: 0.9rem 1.1rem;\n"
-        "      border: 1px solid var(--rule);\n"
-        "      border-radius: 14px;\n"
-        "      background: rgba(248, 250, 252, 0.8);\n"
-        "      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);\n"
-        "    }\n"
-        "    .report-figure img { max-width: 100%; height: auto; display: block; margin: 0 auto; }\n"
-        "    .report-figure figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.4rem; }\n"
-        "    .figure-callout { font-size: 0.95rem; color: var(--muted); margin: 0.8rem 0 1rem; font-style: italic; }\n"
-        "    .viewer-overlay {\n"
-        "      position: fixed;\n"
-        "      inset: 0;\n"
-        "      background: rgba(6, 10, 17, 0.45);\n"
-        "      opacity: 0;\n"
-        "      pointer-events: none;\n"
-        "      transition: opacity 0.2s ease;\n"
-        "    }\n"
-        "    .viewer-overlay.open { opacity: 1; pointer-events: auto; }\n"
-        "    .viewer-panel {\n"
-        "      position: fixed;\n"
-        "      top: 20px;\n"
-        "      right: 20px;\n"
-        "      width: min(560px, 92vw);\n"
-        "      height: calc(100% - 40px);\n"
-        "      background: var(--paper-strong);\n"
-        "      border: 1px solid rgba(15, 23, 42, 0.12);\n"
-        "      border-radius: 18px;\n"
-        "      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);\n"
-        "      transform: translateX(120%);\n"
-        "      transition: transform 0.25s ease;\n"
-        "      display: flex;\n"
-        "      flex-direction: column;\n"
-        "      z-index: 30;\n"
-        "    }\n"
-        "    .viewer-panel.open { transform: translateX(0); }\n"
-        "    .viewer-header {\n"
-        "      display: flex;\n"
-        "      align-items: center;\n"
-        "      justify-content: space-between;\n"
-        "      padding: 12px 16px;\n"
-        "      border-bottom: 1px solid var(--rule);\n"
-        "      font-family: var(--ui-font);\n"
-        "      gap: 12px;\n"
-        "    }\n"
-        "    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }\n"
-        "    .viewer-actions { display: flex; gap: 8px; align-items: center; }\n"
-        "    .viewer-actions a {\n"
-        "      font-size: 0.85rem;\n"
-        "      color: var(--link);\n"
-        "      text-decoration: none;\n"
-        "    }\n"
-        "    .viewer-close {\n"
-        "      border: none;\n"
-        "      background: rgba(15, 23, 42, 0.08);\n"
-        "      color: #0f172a;\n"
-        "      border-radius: 999px;\n"
-        "      width: 28px;\n"
-        "      height: 28px;\n"
-        "      cursor: pointer;\n"
-        "    }\n"
-        "    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }\n"
-        "    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }\n"
-        "    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }\n"
-        "    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }\n"
-        "    @media (max-width: 860px) {\n"
-        "      .page { margin: 40px auto 64px; padding: 0 20px; }\n"
-        "      .article { padding: 28px; }\n"
-        "      .report-deck { font-size: 1rem; }\n"
-        "    }\n"
-        "    @media (max-width: 600px) {\n"
-        "      .report-title { font-size: 2rem; }\n"
-        "      .article { padding: 22px; }\n"
-        "      .article h2 { font-size: 1.35rem; }\n"
-        "    }\n"
-        "    @media (prefers-reduced-motion: reduce) {\n"
-        "      * { animation: none !important; transition: none !important; }\n"
-        "    }\n"
-        f"{theme_css or ''}\n"
-        "    body { background: var(--page-bg) !important; color: var(--site-ink); }\n"
-        "    .masthead { color: #f8fafc; }\n"
-        "    .report-deck { color: rgba(226, 232, 240, 0.82); }\n"
-        "    .kicker { color: rgba(255, 255, 255, 0.7); }\n"
-        "  </style>\n"
-        "</head>\n"
-        f"<body class=\"{template_class.strip()}\">\n"
-        "  <div class=\"backdrop\">\n"
-        "    <span class=\"orb orb-1\"></span>\n"
-        "    <span class=\"orb orb-2\"></span>\n"
-        "    <span class=\"orb orb-3\"></span>\n"
-        "  </div>\n"
-        "  <div class=\"page\">\n"
-        "    <header class=\"masthead\">\n"
-        "      <div class=\"masthead-top\">\n"
-        "        <div class=\"kicker\">Federlicht</div>\n"
-        "        <a class=\"back-link\" id=\"back-link\" href=\"#\">목록으로</a>\n"
-        "      </div>\n"
-        f"      <div class=\"report-title\">{safe_title}</div>\n"
-        "      <div class=\"report-deck\">Research review and tech survey</div>\n"
-        "    </header>\n"
-        "    <main class=\"article\">\n"
-        f"{body_html}\n"
-        "    </main>\n"
-        "  </div>\n"
-        "  <div id=\"viewer-overlay\" class=\"viewer-overlay\"></div>\n"
-        "  <aside id=\"viewer-panel\" class=\"viewer-panel\" aria-hidden=\"true\">\n"
-        "    <div class=\"viewer-header\">\n"
-        "      <div class=\"viewer-title\" id=\"viewer-title\">Source preview</div>\n"
-        "      <div class=\"viewer-actions\">\n"
-        "        <a id=\"viewer-raw\" href=\"#\" target=\"_blank\" rel=\"noopener\">Open raw</a>\n"
-        "        <button class=\"viewer-close\" id=\"viewer-close\" aria-label=\"Close\">x</button>\n"
-        "      </div>\n"
-        "    </div>\n"
-        "    <iframe id=\"viewer-frame\" class=\"viewer-frame\" title=\"Source preview\"></iframe>\n"
-        "  </aside>\n"
-        "  <script>\n"
-        "    (function() {\n"
-        "      const params = new URLSearchParams(window.location.search);\n"
-        "      const themeParam = params.get('theme');\n"
-        "      const storedTheme = localStorage.getItem('federlicht.theme');\n"
-        "      const theme = themeParam || storedTheme;\n"
-        "      if (theme) {\n"
-        "        document.documentElement.dataset.theme = theme;\n"
-        "        localStorage.setItem('federlicht.theme', theme);\n"
-        "      }\n"
-        "      const backLink = document.getElementById('back-link');\n"
-        "      if (backLink) {\n"
-        "        const path = window.location.pathname.replace(/\\\\/g, '/');\n"
-        "        const idx = path.lastIndexOf('/runs/');\n"
-        "        if (idx !== -1) {\n"
-        "          backLink.href = `${path.slice(0, idx)}/index.html`;\n"
-        "          backLink.style.display = 'inline-flex';\n"
-        "        }\n"
-        "      }\n"
-        "      const panel = document.getElementById('viewer-panel');\n"
-        "      const overlay = document.getElementById('viewer-overlay');\n"
-        "      const frame = document.getElementById('viewer-frame');\n"
-        "      const rawLink = document.getElementById('viewer-raw');\n"
-        "      const title = document.getElementById('viewer-title');\n"
-        "      const closeBtn = document.getElementById('viewer-close');\n"
-        "      function closeViewer() {\n"
-        "        panel.classList.remove('open');\n"
-        "        overlay.classList.remove('open');\n"
-        "        panel.setAttribute('aria-hidden', 'true');\n"
-        "        frame.src = 'about:blank';\n"
-        "      }\n"
-        "      function openViewer(viewer, raw, label) {\n"
-        "        frame.src = viewer;\n"
-        "        rawLink.href = raw || viewer;\n"
-        "        title.textContent = label || 'Source preview';\n"
-        "        panel.classList.add('open');\n"
-        "        overlay.classList.add('open');\n"
-        "        panel.setAttribute('aria-hidden', 'false');\n"
-        "      }\n"
-        "      document.querySelectorAll('a').forEach((link) => {\n"
-        "        const href = link.getAttribute('href') || '';\n"
-        "        if (href.startsWith('http://') || href.startsWith('https://')) {\n"
-        "          link.setAttribute('target', '_blank');\n"
-        "          link.setAttribute('rel', 'noopener');\n"
-        "        }\n"
-        "        const viewer = link.getAttribute('data-viewer');\n"
-        "        if (viewer) {\n"
-        "          link.addEventListener('click', (event) => {\n"
-        "            if (event.metaKey || event.ctrlKey) { return; }\n"
-        "            event.preventDefault();\n"
-        "            openViewer(viewer, link.getAttribute('data-raw'), link.textContent.trim());\n"
-        "          });\n"
-        "        }\n"
-        "      });\n"
-        "      overlay.addEventListener('click', closeViewer);\n"
-        "      closeBtn.addEventListener('click', closeViewer);\n"
-        "      document.addEventListener('keydown', (event) => {\n"
-        "        if (event.key === 'Escape') { closeViewer(); }\n"
-        "      });\n"
-        "    })();\n"
-        "  </script>\n"
-        "</body>\n"
-        "</html>\n"
-    )
 
 
 def iter_jsonl(path: Path):
@@ -7253,6 +6063,27 @@ def resolve_related_pdf_path(
     return None
 
 
+def resolve_related_pptx_path(
+    rel_path: str,
+    run_dir: Path,
+    meta_index: dict[str, dict],
+) -> Optional[str]:
+    rel_clean = rel_path.lstrip("./")
+    if rel_clean.lower().endswith(".pptx"):
+        pptx_abs = (run_dir / rel_clean).resolve()
+        if pptx_abs.exists():
+            return f"./{pptx_abs.relative_to(run_dir).as_posix()}"
+        return None
+    meta = meta_index.get(rel_path) or meta_index.get(rel_clean) or meta_index.get(f"./{rel_clean}")
+    if meta:
+        pptx_path = meta.get("pptx_path")
+        if pptx_path:
+            pptx_abs = (run_dir / pptx_path.lstrip("./")).resolve()
+            if pptx_abs.exists():
+                return f"./{pptx_abs.relative_to(run_dir).as_posix()}"
+    return None
+
+
 def find_section_spans(text: str, output_format: str) -> list[tuple[str, int, int]]:
     if output_format == "tex":
         pattern = re.compile(r"^\\section\\*?\\{([^}]+)\\}", re.MULTILINE)
@@ -7459,15 +6290,21 @@ def build_figure_plan(
 
     ordered = sorted(positions.items(), key=lambda item: item[1])
     pdf_targets: dict[str, dict] = {}
+    pptx_targets: dict[str, dict] = {}
     for rel_path, pos in ordered:
         pdf_path = resolve_related_pdf_path(rel_path, run_dir, meta_index)
         if not pdf_path:
+            pdf_path = None
+        if pdf_path and pdf_path not in pdf_targets:
+            pdf_targets[pdf_path] = {"source_path": rel_path, "section": find_section_title(pos), "position": pos}
+        pptx_path = resolve_related_pptx_path(rel_path, run_dir, meta_index)
+        if not pptx_path:
             continue
-        if pdf_path in pdf_targets:
+        if pptx_path in pptx_targets:
             continue
-        pdf_targets[pdf_path] = {"source_path": rel_path, "section": find_section_title(pos), "position": pos}
+        pptx_targets[pptx_path] = {"source_path": rel_path, "section": find_section_title(pos), "position": pos}
 
-    if not pdf_targets:
+    if not pdf_targets and not pptx_targets:
         return []
 
     figures_dir = run_dir / "report_assets" / "figures"
@@ -7504,6 +6341,35 @@ def build_figure_plan(
                 "area": int(image["width"]) * int(image["height"]),
                 "method": image.get("method"),
                 "caption": caption,
+                "source_kind": "pdf",
+                "source_file": image["pdf_path"],
+                "source_path": info["source_path"],
+                "section": info["section"],
+                "position": info["position"],
+            }
+            entries.append(entry)
+
+    for pptx_path, info in pptx_targets.items():
+        pptx_abs = (run_dir / pptx_path.lstrip("./")).resolve()
+        if not pptx_abs.exists():
+            continue
+        images = extract_pptx_images(pptx_abs, figures_dir, run_dir, max_per_pdf, min_area)
+        if not images:
+            continue
+        for image in images:
+            caption = image.get("slide_title") or None
+            entry = {
+                "pptx_path": image["pptx_path"],
+                "image_path": image["image_path"],
+                "slide": image["slide"],
+                "page": image["slide"],
+                "width": image["width"],
+                "height": image["height"],
+                "area": int(image["width"]) * int(image["height"]),
+                "method": image.get("method"),
+                "caption": caption,
+                "source_kind": "pptx",
+                "source_file": image["pptx_path"],
                 "source_path": info["source_path"],
                 "section": info["section"],
                 "position": info["position"],
@@ -7541,7 +6407,7 @@ def build_figure_plan(
     return entries
 
 
-def truncate_text(text: str, limit: int = 140) -> str:
+def truncate_text_head(text: str, limit: int = 140) -> str:
     if len(text) <= limit:
         return text
     return text[: limit - 1].rstrip() + "…"
@@ -7560,9 +6426,12 @@ def render_figure_callouts(
             continue
         caption = entry.get("caption")
         if not caption:
-            pdf_name = Path(entry.get("pdf_path") or "").name
-            caption = f"Source PDF: {pdf_name}" if pdf_name else "Source PDF figure"
-        caption = truncate_text(caption, 120)
+            source_file = entry.get("source_file") or entry.get("pdf_path") or entry.get("pptx_path") or ""
+            source_kind = entry.get("source_kind") or ("pptx" if str(source_file).lower().endswith(".pptx") else "pdf")
+            source_name = Path(source_file).name if source_file else ""
+            source_label = "PPTX" if source_kind == "pptx" else "PDF"
+            caption = f"Source {source_label}: {source_name}" if source_name else f"Source {source_label} figure"
+        caption = truncate_text_head(caption, 120)
         if output_format == "tex":
             items.append(f"Figure~\\ref{{fig:{number}}}: {latex_escape(caption)}")
         else:
@@ -7609,12 +6478,16 @@ def write_figure_candidates(
     for entry in entries[:max_preview]:
         candidate_id = entry.get("candidate_id") or "fig"
         img_abs = (run_dir / entry["image_path"].lstrip("./")).resolve()
-        pdf_abs = (run_dir / entry["pdf_path"].lstrip("./")).resolve()
+        source_file = entry.get("source_file") or entry.get("pdf_path") or entry.get("pptx_path") or ""
+        source_kind = entry.get("source_kind") or ("pptx" if str(source_file).lower().endswith(".pptx") else "pdf")
+        source_abs = (run_dir / str(source_file).lstrip("./")).resolve()
         img_href = os.path.relpath(img_abs, viewer_dir).replace("\\", "/")
-        pdf_href = os.path.relpath(pdf_abs, viewer_dir).replace("\\", "/")
+        source_href = os.path.relpath(source_abs, viewer_dir).replace("\\", "/")
+        page_label = "slide" if source_kind == "pptx" else "p."
+        page_value = entry.get("slide") or entry.get("page")
         caption = html_lib.escape(entry.get("caption") or "")
         vision_summary_raw = entry.get("vision_summary") or ""
-        vision_summary = html_lib.escape(truncate_text(str(vision_summary_raw), 200)) if vision_summary_raw else ""
+        vision_summary = html_lib.escape(truncate_text_head(str(vision_summary_raw), 200)) if vision_summary_raw else ""
         vision_type = html_lib.escape(str(entry.get("vision_type") or "")).strip()
         vision_relevance = entry.get("vision_relevance")
         vision_recommended = str(entry.get("vision_recommended") or "").strip().lower()
@@ -7632,11 +6505,11 @@ def write_figure_candidates(
             "\n".join(
                 [
                     "<div class=\"report-figure\">",
-                    f"<p><strong>{candidate_id}</strong> — {html_lib.escape(entry['pdf_path'])} (p.{entry.get('page')})</p>",
+                    f"<p><strong>{candidate_id}</strong> — {html_lib.escape(str(source_file))} ({page_label}{page_value})</p>",
                     f"<img src=\"{html_lib.escape(img_href)}\" alt=\"{candidate_id}\" />",
                     f"<p>{caption}</p>" if caption else "",
                     f"<p><em>Vision:</em> {vision_line}</p>" if vision_line else "",
-                    f"<p>Source: <a href=\"{html_lib.escape(pdf_href)}\">{html_lib.escape(entry['pdf_path'])}</a></p>",
+                    f"<p>Source: <a href=\"{html_lib.escape(source_href)}\">{html_lib.escape(str(source_file))}</a></p>",
                     "</div>",
                 ]
             )
@@ -7710,21 +6583,24 @@ def render_figure_block(
 ) -> str:
     blocks: list[str] = []
     for entry in entries:
-        pdf_abs = (run_dir / entry["pdf_path"].lstrip("./")).resolve()
+        source_file = entry.get("source_file") or entry.get("pdf_path") or entry.get("pptx_path") or ""
+        source_kind = entry.get("source_kind") or ("pptx" if str(source_file).lower().endswith(".pptx") else "pdf")
+        page_label = "slide" if source_kind == "pptx" else "page"
+        page = entry.get("slide") or entry.get("page")
+        pdf_abs = (run_dir / str(source_file).lstrip("./")).resolve()
         img_abs = (run_dir / entry["image_path"].lstrip("./")).resolve()
         pdf_href = os.path.relpath(pdf_abs, report_dir).replace("\\", "/")
         img_href = os.path.relpath(img_abs, report_dir).replace("\\", "/")
-        page = entry.get("page")
         caption = entry.get("caption")
         number = entry.get("figure_number")
         figure_label = f"{number}" if number else ""
         if output_format == "tex":
             if caption:
                 caption_text = (
-                    f"{latex_escape(caption)}. Source: \\\\texttt{{{latex_escape(entry['pdf_path'])}}}, page {page}."
+                    f"{latex_escape(caption)}. Source: \\\\texttt{{{latex_escape(str(source_file))}}}, {page_label} {page}."
                 )
             else:
-                caption_text = f"Source: \\\\texttt{{{latex_escape(entry['pdf_path'])}}}, page {page}."
+                caption_text = f"Source: \\\\texttt{{{latex_escape(str(source_file))}}}, {page_label} {page}."
             blocks.append(
                 "\n".join(
                     [
@@ -7740,15 +6616,18 @@ def render_figure_block(
         else:
             safe_img = html_lib.escape(img_href)
             safe_pdf = html_lib.escape(pdf_href)
-            safe_label = html_lib.escape(entry["pdf_path"])
-            safe_alt = html_lib.escape(f"Figure from {entry['pdf_path']} (page {page})")
+            safe_label = html_lib.escape(str(source_file))
+            safe_alt = html_lib.escape(f"Figure from {source_file} ({page_label} {page})")
             safe_caption = html_lib.escape(caption) if caption else ""
             fig_id = f' id="fig-{figure_label}"' if figure_label else ""
             figure_prefix = f"Figure {figure_label}" if figure_label else "Figure"
             if safe_caption:
-                fig_caption = f"{figure_prefix}: {safe_caption} (Source: <a href=\"{safe_pdf}\">{safe_label}</a>, page {page})"
+                fig_caption = (
+                    f"{figure_prefix}: {safe_caption} (Source: <a href=\"{safe_pdf}\">{safe_label}</a>, "
+                    f"{page_label} {page})"
+                )
             else:
-                fig_caption = f"{figure_prefix}: <a href=\"{safe_pdf}\">{safe_label}</a> (page {page})"
+                fig_caption = f"{figure_prefix}: <a href=\"{safe_pdf}\">{safe_label}</a> ({page_label} {page})"
             blocks.append(
                 "\n".join(
                     [
@@ -8302,6 +7181,85 @@ def build_byline(author: str) -> str:
     stamp = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
     return f'Federlicht assisted and prompted by "{author}" — {stamp}'
 
+def set_federlicht_log_path(run_dir: Path) -> None:
+    global FEDERLICHT_LOG_PATH
+    FEDERLICHT_LOG_PATH = run_dir / "_federlicht_log.txt"
+    _append_federlicht_log("JOB START")
+
+
+def _append_federlicht_log(message: str) -> None:
+    if FEDERLICHT_LOG_PATH is None:
+        return
+    try:
+        stamp = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        line = f"[{stamp}] {message}"
+        FEDERLICHT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with FEDERLICHT_LOG_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
+    except Exception:
+        return
+
+def finish_federlicht_log(status: str = "JOB END") -> None:
+    _append_federlicht_log(status)
+
+
+def parse_update_prompt(report_prompt: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    if not report_prompt:
+        return None, None
+    base = None
+    notes_lines: list[str] = []
+    in_update = False
+    for line in report_prompt.splitlines():
+        stripped = line.strip()
+        if stripped.lower().startswith("base report:"):
+            base = stripped.split(":", 1)[-1].strip()
+            continue
+        if stripped.lower().startswith("update request"):
+            in_update = True
+            continue
+        if in_update:
+            if stripped.lower().startswith("second prompt") or stripped.lower().startswith("instructions"):
+                in_update = False
+                continue
+            if stripped:
+                notes_lines.append(stripped)
+    notes = "\n".join(notes_lines).strip() if notes_lines else None
+    return base, notes
+
+
+def expand_update_prompt_with_base(
+    report_prompt: Optional[str],
+    run_dir: Path,
+    max_chars: int = 12000,
+) -> Optional[str]:
+    if not report_prompt:
+        return report_prompt
+    base_path, _ = parse_update_prompt(report_prompt)
+    if not base_path:
+        return report_prompt
+    rel = base_path.lstrip("./")
+    candidate = (run_dir / rel).resolve()
+    if not candidate.exists():
+        return report_prompt
+    try:
+        raw = candidate.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return report_prompt
+    if candidate.suffix.lower() in {".html", ".htm"}:
+        raw = html_to_text(raw)
+    raw = raw.strip()
+    if max_chars > 0 and len(raw) > max_chars:
+        raw = raw[: max_chars - 1].rstrip() + "…"
+    if not raw:
+        return report_prompt
+    return "\n\n".join(
+        [
+            report_prompt,
+            "Base report content (truncated for context):",
+            raw,
+        ]
+    )
+
 
 def print_progress(label: str, content: str, enabled: bool, max_chars: int) -> None:
     if not enabled:
@@ -8309,6 +7267,7 @@ def print_progress(label: str, content: str, enabled: bool, max_chars: int) -> N
     snippet = content.strip()
     if max_chars > 0 and len(snippet) > max_chars:
         snippet = f"{snippet[:max_chars]}\n... [truncated]"
+    _append_federlicht_log(f"{label}: {snippet}")
     print(f"\n[{label}]\n{snippet}\n")
 
 
@@ -8465,6 +7424,16 @@ def run_pipeline(
 ) -> ReportOutput:
     if not args.run:
         raise ValueError("--run is required.")
+    try:
+        _, pre_run_dir, _ = resolve_archive(Path(args.run))
+    except Exception:
+        pre_run_dir = None
+    if pre_run_dir:
+        raw_prompt = load_report_prompt(args.prompt, args.prompt_file)
+        expanded_prompt = expand_update_prompt_with_base(raw_prompt, pre_run_dir)
+        if expanded_prompt:
+            args.prompt = expanded_prompt
+            args.prompt_file = None
     if config_overrides is None:
         agent_from_config, config_overrides = resolve_agent_overrides_from_config(
             args, explicit_overrides=agent_overrides
@@ -8520,6 +7489,8 @@ def run_pipeline(
     instruction_file = result.instruction_file
     quality_model = result.quality_model
     query_id = result.query_id
+    update_base, update_notes = parse_update_prompt(report_prompt)
+    update_prompt_path = args.prompt_file if getattr(args, "prompt_file", None) else None
 
     report = normalize_report_for_format(report, output_format)
     author_name = resolve_author_name(args.author, report_prompt)
@@ -8742,7 +7713,16 @@ def run_pipeline(
         (notes_dir / "clarification_answers.txt").write_text(clarification_answers, encoding="utf-8")
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    theme_css = load_template_css(template_spec)
+    theme_css = None
+    extra_body_class = None
+    if output_format == "html":
+        css_path = resolve_template_css_path(template_spec)
+        if css_path and css_path.exists():
+            theme_css = css_path.read_text(encoding="utf-8", errors="replace")
+            css_slug = slugify_label(css_path.stem)
+            template_slug = slugify_label(template_spec.name or "")
+            if css_slug and css_slug != template_slug:
+                extra_body_class = f"template-{css_slug}"
     rendered = report
     if output_format == "html":
         viewer_dir = run_dir / "report_views"
@@ -8756,6 +7736,7 @@ def run_pipeline(
             body_html,
             template_name=template_spec.name,
             theme_css=theme_css,
+            extra_body_class=extra_body_class,
         )
     elif output_format == "tex":
         latex_template = load_template_latex(template_spec)
@@ -8809,11 +7790,26 @@ def run_pipeline(
                 print(f"Wrote PDF: {pdf_path}")
                 meta["pdf_status"] = "success"
             elif not ok:
-                print(f"PDF compile failed: {truncate_text(message, 800)}", file=sys.stderr)
+                print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
                 meta["pdf_status"] = "failed"
             meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         print(rendered)
+
+    if update_base or update_notes:
+        try:
+            notes_dir.mkdir(parents=True, exist_ok=True)
+            history_path = notes_dir / "update_history.jsonl"
+            entry = {
+                "timestamp": dt.datetime.now().isoformat(),
+                "base_report": update_base,
+                "update_notes": update_notes,
+                "prompt_file": update_prompt_path,
+                "output_path": f"./{final_path.relative_to(run_dir).as_posix()}" if final_path else None,
+            }
+            append_jsonl(history_path, entry)
+        except Exception:
+            pass
 
     return ReportOutput(
         result=result,
@@ -8826,167 +7822,9 @@ def run_pipeline(
     )
 
 def main() -> int:
-    args = parse_args()
-    try:
-        agent_overrides, config_overrides = resolve_agent_overrides_from_config(args)
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        print(f"ERROR: failed to load agent config: {exc}", file=sys.stderr)
-        return 2
-    output_format, check_model = prepare_runtime(args, config_overrides)
-    if args.preview_template:
-        value = args.preview_template.strip()
-        if value.lower() == "all":
-            out_dir = Path(args.preview_output) if args.preview_output else templates_dir()
-            out_dir.mkdir(parents=True, exist_ok=True)
-            for name in list_builtin_templates():
-                spec = load_template_spec(name, None)
-                output_path = out_dir / f"preview_{spec.name}.html"
-                write_template_preview(spec, output_path)
-                print(f"Wrote preview: {output_path}")
-            return 0
-        spec = load_template_spec(value, None)
-        output_path = resolve_preview_output(spec, value, args.preview_output)
-        write_template_preview(spec, output_path)
-        print(f"Wrote preview: {output_path}")
-        return 0
-    if args.agent_info:
-        language = normalize_lang(args.lang)
-        report_prompt = load_report_prompt(args.prompt, args.prompt_file)
-        if args.template and str(args.template).strip().lower() != "auto":
-            style_choice = args.template
-        else:
-            style_choice = template_from_prompt(report_prompt) or DEFAULT_TEMPLATE_NAME
-        template_spec = load_template_spec(style_choice, report_prompt)
-        if not template_spec.sections:
-            template_spec.sections = list(DEFAULT_SECTIONS)
-        required_sections = (
-            list(FREE_FORMAT_REQUIRED_SECTIONS) if args.free_format else list(template_spec.sections)
-        )
-        template_guidance_text = build_template_guidance_text(template_spec)
-        payload = build_agent_info(
-            args,
-            output_format,
-            language,
-            report_prompt,
-            template_spec,
-            template_guidance_text,
-            required_sections,
-            args.free_format,
-            agent_overrides,
-        )
-        write_agent_info(payload, args.agent_info)
-        return 0
-    if args.stage_info:
-        names, target = parse_stage_info_arg(args.stage_info)
-        payload = get_stage_info(names)
-        write_stage_info(payload, target)
-        return 0
-    if args.site_refresh:
-        site_root = resolve_site_output(args.site_refresh)
-        if not site_root:
-            print("ERROR: --site-refresh requires a valid site directory.", file=sys.stderr)
-            return 2
-        from . import site_refresh
+    from .cli import main as cli_main
 
-        manifest, index_path = site_refresh.refresh_site_from_runs(
-            site_root,
-            None,
-            build_site_manifest_entry,
-            write_site_manifest,
-            write_site_index,
-            refresh_minutes=10,
-            default_author=DEFAULT_AUTHOR,
-        )
-        print(f"Wrote site manifest: {site_root / 'manifest.json'}")
-        print(f"Wrote site index: {index_path}")
-        return 0
-    if args.generate_prompt:
-        if not args.run:
-            print("ERROR: --generate-prompt requires --run.", file=sys.stderr)
-            return 2
-        output_format, check_model = prepare_runtime(args, config_overrides)
-        create_deep_agent = resolve_create_deep_agent(None)
-        prompt_args = argparse.Namespace(**vars(args))
-        prompt_args.stages = "scout"
-        prompt_args.skip_stages = None
-        prompt_args.alignment_check = False
-        prompt_args.web_search = False
-        prompt_args.template_adjust = False
-        prompt_args.quality_iterations = 0
-        pipeline_context = PipelineContext(args=prompt_args, output_format=output_format, check_model=check_model)
-        orchestrator = ReportOrchestrator(pipeline_context, sys.modules[__name__], agent_overrides, create_deep_agent)
-        try:
-            result = orchestrator.run(allow_partial=True)
-        except Exception as exc:
-            print(f"ERROR: failed to run scout for prompt generation: {exc}", file=sys.stderr)
-            return 2
-        prompt_text = generate_prompt_from_scout(result, args, agent_overrides or {}, create_deep_agent)
-        output_path = resolve_prompt_output_path(args, result.run_dir, result.query_id)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(prompt_text, encoding="utf-8")
-        print(f"Wrote prompt: {output_path}")
-        return 0
-    if args.figures_preview:
-        if not args.run:
-            print("ERROR: --figures-preview requires --run.", file=sys.stderr)
-            return 2
-        if not args.output:
-            print("ERROR: --figures-preview requires --output pointing to an existing report.", file=sys.stderr)
-            return 2
-        report_path = Path(args.output)
-        if not report_path.exists():
-            print(f"ERROR: report not found for --figures-preview: {report_path}", file=sys.stderr)
-            return 2
-        try:
-            archive_dir, run_dir, _ = resolve_archive(Path(args.run))
-        except FileNotFoundError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
-            return 2
-        supporting_dir = None
-        if args.supporting_dir:
-            candidate = Path(args.supporting_dir)
-            if not candidate.is_absolute():
-                candidate = run_dir / candidate
-            if candidate.exists():
-                supporting_dir = candidate
-            else:
-                print(
-                    f"Warning: supporting dir not found, ignoring: {candidate}",
-                    file=sys.stderr,
-                )
-        notes_dir = resolve_notes_dir(run_dir, args.notes_dir)
-        output_format = choose_format(str(report_path))
-        preview_path = generate_figures_preview(
-            report_path,
-            run_dir,
-            archive_dir,
-            supporting_dir,
-            notes_dir,
-            output_format,
-            args.figures_max_per_pdf,
-            args.figures_min_area,
-            args.figures_renderer,
-            args.figures_dpi,
-            args.model_vision,
-        )
-        if preview_path:
-            print(f"Wrote figure preview: {preview_path}")
-        else:
-            print("No figure candidates found.", file=sys.stderr)
-        return 0
-    if not args.run:
-        print("ERROR: --run is required unless --preview-template is used.", file=sys.stderr)
-        return 2
-    try:
-        run_pipeline(
-            args,
-            agent_overrides=agent_overrides,
-            config_overrides=config_overrides,
-        )
-    except RuntimeError as exc:
-        print(str(exc), file=sys.stderr)
-        return 1
-    return 0
+    return cli_main()
 
 
 if __name__ == "__main__":

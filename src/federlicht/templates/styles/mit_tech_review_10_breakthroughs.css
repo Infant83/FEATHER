@@ -1,4 +1,6 @@
 body.template-mit_tech_review_10_breakthroughs {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1f1d1a;
   --muted: #5b5550;
   --accent: #e04f3a;
@@ -23,4 +25,14 @@ body.template-mit_tech_review_10_breakthroughs .article h3 {
 
 body.template-mit_tech_review_10_breakthroughs .article ul {
   list-style: square;
+}
+body.template-mit_tech_review_10_breakthroughs {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

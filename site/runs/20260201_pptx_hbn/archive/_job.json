@@ -1,0 +1,48 @@
+{
+  "date": "2026-02-01",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\20260201_pptx_hbn\\instruction\\20260201_pptx_hbn.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\20260201_pptx_hbn",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\20260201_pptx_hbn\\archive",
+  "query_id": "20260201_pptx_hbn",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": false,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": true,
+  "citations_enabled": true,
+  "queries": [
+    "hBN encapsulation annealing (PPTX)"
+  ],
+  "query_specs": [
+    {
+      "text": "hBN encapsulation annealing (PPTX)",
+      "hints": []
+    }
+  ],
+  "local_paths": [
+    {
+      "kind": "file",
+      "value": "C:\\Users\\angpa\\Downloads\\201112 NCML hBN encapsulation annealing_RHJ.pptx",
+      "title": "NCML hBN encapsulation annealing",
+      "tags": [
+        "pptx",
+        "local"
+      ],
+      "lang": "ko"
+    }
+  ],
+  "urls": [],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "hBN encapsulation annealing (PPTX)",
+    "file: \"C:\\Users\\angpa\\Downloads\\201112 NCML hBN encapsulation annealing_RHJ.pptx\" | title=\"NCML hBN encapsulation annealing\" | tags=pptx,local | lang=ko"
+  ]
+}

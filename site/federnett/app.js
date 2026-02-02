@@ -5,6 +5,15 @@ const state = {
   runs: [],
   templates: [],
   templateDetails: {},
+  templateStyles: [],
+  templateStyleContent: {},
+  templateBuilder: {
+    meta: {},
+    sections: [],
+    guides: {},
+    writerGuidance: [],
+    css: "",
+  },
   runSummary: null,
   instructionFiles: {},
   filePreview: {
@@ -38,12 +47,17 @@ const state = {
   activeJobKind: null,
   activeSource: null,
   jobs: [],
+  jobsExpanded: false,
   logBuffer: [],
   pipeline: {
     order: [],
     selected: new Set(),
     draggingId: null,
     activeStageId: null,
+  },
+  templateGen: {
+    log: "",
+    active: false,
   },
 };
 
@@ -599,12 +613,25 @@ function renderFilePreview() {
   } else if (mode === "image") {
     image.src = rawFileUrl(state.filePreview.path);
     image.style.display = "block";
+  } else if (mode === "binary") {
+    markdown.innerHTML =
+      "<p><strong>Unsupported preview format.</strong> Use Open to download or open the file in another app.</p>";
+    markdown.style.display = "block";
   } else {
     editor.value = state.filePreview.content || "";
     editor.readOnly = !state.filePreview.canEdit;
     editor.wrap = "soft";
     editor.style.display = "block";
   }
+}
+
+function appendTemplateGenLog(text) {
+  const el = $("#template-gen-log");
+  if (!el) return;
+  const line = String(text || "");
+  state.templateGen.log = (state.templateGen.log + line).slice(-4000);
+  el.textContent = state.templateGen.log || "Ready.";
+  el.scrollTop = el.scrollHeight;
 }
 
 function renderMarkdown(text) {
@@ -717,6 +744,18 @@ async function loadFilePreview(relPath) {
     });
     return;
   }
+  if (mode === "binary") {
+    updateFilePreviewState({
+      path: relPath,
+      content: "",
+      canEdit: false,
+      dirty: false,
+      mode,
+      objectUrl: "",
+      htmlDoc: "",
+    });
+    return;
+  }
   try {
     const data = await fetchJSON(`/api/files?path=${encodeURIComponent(relPath)}`);
     const canEdit = mode === "text";
@@ -763,8 +802,10 @@ function renderRunFiles(summary) {
     { title: "Reports", files: summary?.report_files || [] },
     { title: "Index Files", files: summary?.index_files || [] },
     { title: "Archive PDFs", files: summary?.pdf_files || [] },
+    { title: "Archive PPTX", files: summary?.pptx_files || [] },
+    { title: "Web Extracts", files: summary?.extract_files || [] },
     { title: "Archive Texts", files: summary?.text_files || [] },
-    { title: "Archive JSONL", files: summary?.jsonl_files || [] },
+    { title: "Logs", files: summary?.log_files || [] },
     {
       title: "Instructions",
       files: (summary?.instruction_files || []).map((f) => f.path),
@@ -854,6 +895,40 @@ function renderRunSummary(summary) {
     reportsHost.innerHTML = parts.join("");
   }
   renderRunFiles(summary);
+  updateRunUpdateOutput(summary);
+}
+
+function nextReportPath(summary) {
+  const runRel = summary?.run_rel;
+  if (!runRel) return "";
+  const files = summary?.report_files || [];
+  let maxIndex = -1;
+  let hasBase = false;
+  files.forEach((rel) => {
+    const name = rel.split("/").pop() || "";
+    if (name === "report_full.html") {
+      hasBase = true;
+      maxIndex = Math.max(maxIndex, 0);
+      return;
+    }
+    const match = name.match(/^report_full_(\d+)\.html$/);
+    if (match) {
+      const idx = Number.parseInt(match[1], 10);
+      if (Number.isFinite(idx)) maxIndex = Math.max(maxIndex, idx);
+    }
+  });
+  if (!hasBase && maxIndex < 0) {
+    return `${runRel}/report_full.html`;
+  }
+  const next = maxIndex + 1;
+  return `${runRel}/report_full_${next}.html`;
+}
+
+function updateRunUpdateOutput(summary) {
+  const field = $("#run-update-output");
+  if (!field) return;
+  const value = nextReportPath(summary);
+  field.value = value || "";
 }
 
 async function loadRunSummary(runRel) {
@@ -1243,6 +1318,126 @@ async function updateRunStudio(runRel) {
   await Promise.all([loadRunSummary(runRel), loadInstructionFiles(runRel)]);
 }
 
+async function resolveUpdatePromptPath(runRel) {
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const baseName = `update_request_${today}.txt`;
+  const basePath = `${runRel}/report_notes/${baseName}`;
+  try {
+    const listing = await fetchJSON(
+      `/api/fs?path=${encodeURIComponent(`${runRel}/report_notes`)}`,
+    );
+    const entries = listing?.entries || [];
+    const matches = entries
+      .filter((entry) => entry.type === "file")
+      .map((entry) => entry.name || "")
+      .filter((name) => name.startsWith(`update_request_${today}`));
+    if (!matches.length) return basePath;
+    let maxSuffix = 0;
+    matches.forEach((name) => {
+      if (name === baseName) {
+        maxSuffix = Math.max(maxSuffix, 0);
+        return;
+      }
+      const match = name.match(new RegExp(`^update_request_${today}_(\\d+)\\.txt$`));
+      if (match) {
+        const idx = Number.parseInt(match[1], 10);
+        if (Number.isFinite(idx)) maxSuffix = Math.max(maxSuffix, idx);
+      }
+    });
+    const next = maxSuffix + 1;
+    return `${runRel}/report_notes/update_request_${today}_${next}.txt`;
+  } catch (err) {
+    return basePath;
+  }
+}
+
+async function buildUpdateReportPayload() {
+  const run = $("#run-select")?.value;
+  if (!run) throw new Error("Run folder is required.");
+  const outputRaw = $("#run-update-output")?.value || "";
+  const output = expandSiteRunsPath(outputRaw);
+  if (!output) throw new Error("Output report path is required.");
+  const notes = $("#run-update-notes")?.value || "";
+  if (!notes.trim()) throw new Error("Update instructions are required.");
+  const secondary = $("#run-update-secondary")?.value || "";
+  const fastUpdate = $("#run-update-fast")?.checked;
+  const figuresEnabled = $("#federlicht-figures")?.checked;
+  const baseReport =
+    state.runSummary?.latest_report_rel ||
+    (state.runSummary?.report_files || []).slice(-1)[0] ||
+    "";
+  const promptParts = [
+    "Update request:",
+    notes.trim(),
+    secondary.trim() ? "\nSecond prompt:\n" + secondary.trim() : "",
+    baseReport ? `\nBase report: ${baseReport}` : "",
+    "\nInstructions:",
+    "- Read the base report file and keep its structure unless the update requests a change.",
+    "- Apply only the requested edits; avoid rewriting everything from scratch.",
+    "- Preserve citations and update them only if you change the referenced content.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const promptPath = await resolveUpdatePromptPath(run);
+  const payload = {
+    run,
+    output,
+    template: $("#template-select")?.value,
+    lang: $("#federlicht-lang")?.value,
+    depth: $("#federlicht-depth")?.value,
+    prompt_file: promptPath,
+    model: $("#federlicht-model")?.value,
+    check_model: $("#federlicht-check-model")?.value,
+    model_vision: $("#federlicht-model-vision")?.value,
+    figures: figuresEnabled ? true : undefined,
+    no_figures: figuresEnabled ? undefined : true,
+    figures_mode: $("#federlicht-figures-mode")?.value,
+    figures_select: $("#federlicht-figures-select")?.value,
+    web_search: $("#federlicht-web-search")?.checked,
+    site_output: $("#federlicht-site-output")?.value,
+    extra_args: $("#federlicht-extra-args")?.value,
+  };
+  if (fastUpdate) {
+    payload.stages = "writer,quality";
+  }
+  payload._update_prompt_content = promptParts;
+  return pruneEmpty(payload);
+}
+
+function handleRunUpdate() {
+  const button = $("#run-update-go");
+  if (!button) return;
+  button.addEventListener("click", async () => {
+    try {
+      const payload = await buildUpdateReportPayload();
+      const runRel = payload.run;
+      const promptContent = payload._update_prompt_content;
+      delete payload._update_prompt_content;
+      if (promptContent) {
+        await fetchJSON("/api/files", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: payload.prompt_file, content: promptContent }),
+        });
+      }
+      await startJob("/api/federlicht/start", payload, {
+        kind: "federlicht",
+        onSuccess: async () => {
+          await loadRuns().catch(() => {});
+          if (runRel && $("#run-select")) {
+            $("#run-select").value = runRel;
+            if ($("#instruction-run-select")) $("#instruction-run-select").value = runRel;
+            refreshRunDependentFields();
+            await updateRunStudio(runRel).catch(() => {});
+          }
+        },
+      });
+    } catch (err) {
+      appendLog(`[update] ${err}\n`);
+    }
+  });
+}
+
 function refreshTemplateSelectors() {
   const templateSelect = $("#template-select");
   const promptTemplateSelect = $("#prompt-template-select");
@@ -1250,7 +1445,10 @@ function refreshTemplateSelectors() {
   const currentTemplate = templateSelect?.value;
   const currentPromptTemplate = promptTemplateSelect?.value;
   const options = state.templates
-    .map((t) => `<option value="${t}">${t}</option>`)
+    .map((t) => {
+      const label = t.includes("/custom_templates/") ? `custom:${t.split("/").pop()?.replace(/\\.md$/, "")}` : t;
+      return `<option value="${escapeHtml(t)}">${escapeHtml(label || t)}</option>`;
+    })
     .join("");
   if (templateSelect) templateSelect.innerHTML = options;
   if (promptTemplateSelect) promptTemplateSelect.innerHTML = options;
@@ -1279,6 +1477,9 @@ function renderTemplatesPanel() {
   host.innerHTML = state.templates
     .map((name) => {
       const detail = state.templateDetails[name];
+      const displayName = name.includes("/custom_templates/")
+        ? `custom:${name.split("/").pop()?.replace(/\\.md$/, "")}`
+        : name;
       const meta = detail?.meta || {};
       const pills = [meta.tone, meta.audience, meta.description]
         .filter(Boolean)
@@ -1292,7 +1493,7 @@ function renderTemplatesPanel() {
       const active = currentTemplate === name ? "active" : "";
       return `
         <article class="template-card ${active}" data-template="${escapeHtml(name)}">
-          <h3>${escapeHtml(name)}</h3>
+          <h3>${escapeHtml(displayName)}</h3>
           <div class="template-meta">${pills || "<span class=\"template-pill\">template</span>"}</div>
           <div class="template-sections">${sections || "<span class=\"template-section\">No sections parsed</span>"}</div>
           <div class="template-actions">
@@ -1306,7 +1507,7 @@ function renderTemplatesPanel() {
   host.querySelectorAll("[data-template-use]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const name = btn.getAttribute("data-template-use");
-      if (name) applyTemplateSelection(name);
+      if (name) applyTemplateSelection(name, { loadBase: true });
     });
   });
   host.querySelectorAll("[data-template-preview]").forEach((btn) => {
@@ -1326,9 +1527,185 @@ function normalizeTemplateName(raw) {
   return cleaned.startsWith("custom_") ? cleaned : `custom_${cleaned}`;
 }
 
+function templateStoreChoice() {
+  return $("#template-store-site")?.checked ? "site" : "run";
+}
+
 function templateEditorTargetPath(name) {
   if (!name) return "";
-  return `src/federlicht/templates/${name}.md`;
+  const useSite = $("#template-store-site")?.checked;
+  const runRel = $("#run-select")?.value;
+  if (useSite || !runRel) {
+    return `site/custom_templates/${name}.md`;
+  }
+  return `${runRel}/custom_templates/${name}.md`;
+}
+
+function slugifyLabel(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function stripFrontmatter(text) {
+  const raw = String(text || "");
+  if (!raw.startsWith("---")) {
+    return { frontmatter: "", body: raw };
+  }
+  const parts = raw.split("\n");
+  let endIndex = -1;
+  for (let i = 1; i < parts.length; i += 1) {
+    if (parts[i].trim() === "---") {
+      endIndex = i;
+      break;
+    }
+  }
+  if (endIndex === -1) {
+    return { frontmatter: "", body: raw };
+  }
+  const body = parts.slice(endIndex + 1).join("\n").trimStart();
+  return { frontmatter: parts.slice(0, endIndex + 1).join("\n"), body };
+}
+
+function buildFrontmatter(meta, sections, guides, writerGuidance) {
+  const lines = ["---"];
+  const metaEntries = Object.entries(meta || {}).filter(([, v]) => v !== undefined && v !== "");
+  metaEntries.forEach(([key, value]) => {
+    lines.push(`${key}: ${value}`);
+  });
+  (sections || []).forEach((section) => {
+    if (section) lines.push(`section: ${section}`);
+  });
+  Object.entries(guides || {}).forEach(([section, guide]) => {
+    if (section && guide) lines.push(`guide ${section}: ${guide}`);
+  });
+  (writerGuidance || []).forEach((note) => {
+    if (note) lines.push(`writer_guidance: ${note}`);
+  });
+  lines.push("---", "");
+  return lines.join("\n");
+}
+
+function collectTemplateBuilderData() {
+  const cssSelect = $("#template-style-select");
+  const writerBox = $("#template-writer-guidance");
+  const rows = [...document.querySelectorAll(".template-section-row")];
+  const sections = [];
+  const guides = {};
+  rows.forEach((row) => {
+    const nameInput = row.querySelector("[data-section-name]");
+    const guideInput = row.querySelector("[data-section-guide]");
+    const name = String(nameInput?.value || "").trim();
+    const guide = String(guideInput?.value || "").trim();
+    if (name) {
+      sections.push(name);
+      if (guide) guides[name] = guide;
+    }
+  });
+  const writerGuidance = String(writerBox?.value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return {
+    css: cssSelect?.value || "",
+    sections,
+    guides,
+    writerGuidance,
+  };
+}
+
+function resolveStyleOption(cssName) {
+  if (!cssName) return "";
+  if (state.templateStyles.includes(cssName)) return cssName;
+  const match = state.templateStyles.find((entry) => entry.endsWith(`/${cssName}`) || entry === cssName);
+  return match || cssName;
+}
+
+function renderTemplateSections(rows) {
+  const host = $("#template-sections-list");
+  if (!host) return;
+  host.innerHTML = rows
+    .map(
+      (row, idx) => `
+      <div class="template-section-row" data-section-index="${idx}">
+        <input class="ghost-input" data-section-name value="${escapeHtml(row.name || "")}" placeholder="Section name" />
+        <input class="ghost-input" data-section-guide value="${escapeHtml(row.guide || "")}" placeholder="Guidance (optional)" />
+        <div class="template-section-actions">
+          <button type="button" class="ghost" data-section-move="up">↑</button>
+          <button type="button" class="ghost" data-section-move="down">↓</button>
+          <button type="button" class="ghost" data-section-move="remove">✕</button>
+        </div>
+      </div>
+    `,
+    )
+    .join("");
+  host.querySelectorAll("[data-section-move]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const row = btn.closest(".template-section-row");
+      if (!row) return;
+      const index = Number(row.dataset.sectionIndex || "0");
+      const action = btn.getAttribute("data-section-move");
+      const list = [...host.querySelectorAll(".template-section-row")].map((el) => ({
+        name: el.querySelector("[data-section-name]")?.value || "",
+        guide: el.querySelector("[data-section-guide]")?.value || "",
+      }));
+      if (action === "remove") {
+        list.splice(index, 1);
+      } else if (action === "up" && index > 0) {
+        [list[index - 1], list[index]] = [list[index], list[index - 1]];
+      } else if (action === "down" && index < list.length - 1) {
+        [list[index + 1], list[index]] = [list[index], list[index + 1]];
+      }
+      renderTemplateSections(list);
+    });
+  });
+}
+
+function applyBuilderToEditor() {
+  const body = $("#template-editor-body");
+  if (!body) return;
+  const { css, sections, guides, writerGuidance } = collectTemplateBuilderData();
+  const { body: rawBody } = stripFrontmatter(body.value || "");
+  const meta = { ...(state.templateBuilder.meta || {}) };
+  const nameInput = $("#template-editor-name");
+  const nameValue = String(nameInput?.value || "").trim();
+  if (nameValue) {
+    meta.name = nameValue;
+  }
+  if (css) {
+    const cssValue = css.includes("/custom_templates/") ? css.split("/").pop() : css;
+    meta.css = cssValue || css;
+  }
+  const frontmatter = buildFrontmatter(meta, sections, guides, writerGuidance);
+  body.value = frontmatter + rawBody;
+}
+
+async function refreshTemplatePreview() {
+  const frame = $("#template-preview-frame");
+  if (!frame) return;
+  const nameInput = $("#template-editor-name");
+  const title = String(nameInput?.value || state.templateBuilder.meta?.name || "Template Preview").trim();
+  const data = collectTemplateBuilderData();
+  try {
+    const payload = await fetchJSON("/api/template-preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: slugifyLabel(title || "template"),
+        title,
+        css: data.css,
+        sections: data.sections,
+        guides: data.guides,
+        writer_guidance: data.writerGuidance,
+      }),
+    });
+    frame.srcdoc = payload.html || "<p>Preview unavailable.</p>";
+  } catch (err) {
+    appendLog(`[templates] preview failed: ${err}\n`);
+  }
 }
 
 function refreshTemplateEditorOptions() {
@@ -1365,11 +1742,28 @@ async function loadTemplateEditorBase() {
     const file = await fetchJSON(`/api/files?path=${encodeURIComponent(detail.path)}`);
     body.value = file.content || "";
     if (meta) meta.textContent = `Loaded base template: ${detail.path}`;
+    const builderMeta = detail?.meta || {};
+    state.templateBuilder.meta = { ...builderMeta };
+    state.templateBuilder.css = resolveStyleOption(builderMeta.css || "");
+    const sections = (detail?.sections || []).map((section) => ({
+      name: section,
+      guide: (detail?.guides || {})[section] || "",
+    }));
+    renderTemplateSections(sections);
+    const writerBox = $("#template-writer-guidance");
+    if (writerBox) writerBox.value = (detail?.writer_guidance || []).join("\n");
+    refreshTemplateStyleSelect();
+    const cssSelect = $("#template-style-select");
+    if (cssSelect && state.templateBuilder.css) {
+      cssSelect.value = resolveStyleOption(state.templateBuilder.css);
+    }
     const nameInput = $("#template-editor-name");
     if (nameInput && !nameInput.value) {
-      nameInput.value = normalizeTemplateName(name);
+      const baseName = name.includes("/") ? name.split("/").pop()?.replace(/\\.md$/, "") : name;
+      nameInput.value = normalizeTemplateName(baseName || name);
       updateTemplateEditorPath();
     }
+    refreshTemplatePreview();
   } catch (err) {
     appendLog(`[template-editor] failed to load base: ${err}\n`);
   }
@@ -1385,6 +1779,7 @@ async function saveTemplateEditor() {
     appendLog("[template-editor] template name is required.\n");
     return;
   }
+  applyBuilderToEditor();
   const path = templateEditorTargetPath(name);
   try {
     await fetchJSON("/api/files", {
@@ -1402,11 +1797,16 @@ async function saveTemplateEditor() {
   }
 }
 
-function applyTemplateSelection(name) {
+function applyTemplateSelection(name, opts = {}) {
   const templateSelect = $("#template-select");
   const promptTemplateSelect = $("#prompt-template-select");
   if (templateSelect) templateSelect.value = name;
   if (promptTemplateSelect) promptTemplateSelect.value = name;
+  if (opts.loadBase) {
+    const baseSelect = $("#template-editor-base");
+    if (baseSelect) baseSelect.value = name;
+    loadTemplateEditorBase();
+  }
   renderTemplatesPanel();
 }
 
@@ -1471,7 +1871,18 @@ function openTemplateModal(name) {
         <h4>Writer Guidance</h4>
         <ul>${guidance || "<li>No writer guidance.</li>"}</ul>
       </div>
+      <div class="template-modal-preview">
+        <iframe title="Template preview"></iframe>
+      </div>
     `;
+    const frame = body.querySelector("iframe");
+    fetchJSON(`/api/template-preview?name=${encodeURIComponent(name)}`)
+      .then((payload) => {
+        if (frame && payload?.html) frame.srcdoc = payload.html;
+      })
+      .catch((err) => {
+        appendLog(`[templates] preview failed: ${err}\n`);
+      });
   }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
@@ -1499,9 +1910,42 @@ async function loadTemplateDetails(names) {
   state.templateDetails = Object.fromEntries(entries.filter(([, v]) => v));
 }
 
+function refreshTemplateStyleSelect() {
+  const select = $("#template-style-select");
+  if (!select) return;
+  const current = select.value || state.templateBuilder.css || "";
+  select.innerHTML = state.templateStyles
+    .map((name) => {
+      const label = name.includes("/custom_templates/")
+        ? `custom:${name.split("/").pop()?.replace(/\\.css$/, "")}`
+        : name;
+      return `<option value="${escapeHtml(name)}">${escapeHtml(label || name)}</option>`;
+    })
+    .join("");
+  if (current && state.templateStyles.includes(current)) {
+    select.value = current;
+  } else if (state.templateStyles[0]) {
+    select.value = state.templateStyles[0];
+  }
+}
+
+async function loadTemplateStyles(runRel) {
+  try {
+    const query = runRel ? `?run=${encodeURIComponent(runRel)}` : "";
+    state.templateStyles = await fetchJSON(`/api/template-styles${query}`);
+  } catch (err) {
+    appendLog(`[templates] failed to load styles: ${err}\n`);
+    state.templateStyles = [];
+  }
+  refreshTemplateStyleSelect();
+}
+
 async function loadTemplates() {
-  state.templates = await fetchJSON("/api/templates");
+  const runRel = $("#run-select")?.value;
+  const query = runRel ? `?run=${encodeURIComponent(runRel)}` : "";
+  state.templates = await fetchJSON(`/api/templates${query}`);
   await loadTemplateDetails(state.templates);
+  await loadTemplateStyles(runRel);
   refreshTemplateSelectors();
   refreshTemplateEditorOptions();
   updateHeroStats();
@@ -1706,7 +2150,10 @@ function upsertJob(jobPatch) {
 function renderJobs() {
   const host = $("#jobs-list");
   if (!host) return;
-  host.innerHTML = state.jobs
+  const collapsed = !state.jobsExpanded;
+  const jobs = collapsed ? state.jobs.slice(0, 3) : state.jobs;
+  host.classList.toggle("is-collapsed", collapsed);
+  host.innerHTML = jobs
     .map((job) => {
       const status = job.status || "unknown";
       const code =
@@ -1726,6 +2173,15 @@ function renderJobs() {
       `;
     })
     .join("");
+  const toggle = $("#jobs-toggle");
+  if (toggle) {
+    toggle.style.display = state.jobs.length > 3 ? "inline-flex" : "none";
+    toggle.textContent = state.jobsExpanded ? "Show less" : "Show more";
+    toggle.onclick = () => {
+      state.jobsExpanded = !state.jobsExpanded;
+      renderJobs();
+    };
+  }
   host.querySelectorAll("[data-job-open]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const jobId = btn.getAttribute("data-job-open");
@@ -1771,6 +2227,9 @@ function attachToJob(jobId, opts = {}) {
     try {
       const payload = JSON.parse(ev.data);
       appendLog(payload.text || "");
+      if (state.activeJobKind === "template") {
+        appendTemplateGenLog(payload.text || "");
+      }
     } catch (err) {
       appendLog(`[log] failed to parse event: ${err}\n`);
     }
@@ -2058,6 +2517,10 @@ function handleRunChanges() {
     promptFileTouched = false;
     promptInlineTouched = false;
     refreshRunDependentFields();
+    updateTemplateEditorPath();
+    loadTemplates().catch((err) => {
+      appendLog(`[templates] failed to refresh: ${err}\n`);
+    });
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2071,6 +2534,10 @@ function handleRunChanges() {
     promptFileTouched = false;
     promptInlineTouched = false;
     refreshRunDependentFields();
+    updateTemplateEditorPath();
+    loadTemplates().catch((err) => {
+      appendLog(`[templates] failed to refresh: ${err}\n`);
+    });
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2084,6 +2551,10 @@ function handleRunChanges() {
     promptFileTouched = false;
     promptInlineTouched = false;
     refreshRunDependentFields();
+    updateTemplateEditorPath();
+    loadTemplates().catch((err) => {
+      appendLog(`[templates] failed to refresh: ${err}\n`);
+    });
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2164,7 +2635,19 @@ function handleFilePreviewControls() {
     const rel = state.filePreview.path;
     if (!rel) return;
     const url = state.filePreview.objectUrl || rawFileUrl(rel);
-    if (url) window.open(url, "_blank", "noopener");
+    if (!url) return;
+    const lower = String(rel).toLowerCase();
+    if (lower.endsWith(".pptx")) {
+      const name = rel.split("/").pop() || "download.pptx";
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return;
+    }
+    window.open(url, "_blank", "noopener");
   });
   $("#file-preview-save")?.addEventListener("click", async () => {
     const rel = state.filePreview.path;
@@ -2402,6 +2885,46 @@ function handleFeatherInstructionPicker() {
   });
 }
 
+function handleUploadDrop() {
+  const target = document.body;
+  if (!target) return;
+  const onDragOver = (ev) => {
+    if (!isFeatherTab()) return;
+    ev.preventDefault();
+  };
+  const onDrop = async (ev) => {
+    if (!isFeatherTab()) return;
+    ev.preventDefault();
+    const file = ev.dataTransfer?.files?.[0];
+    if (!file) return;
+    try {
+      const res = await fetch(`/api/upload?name=${encodeURIComponent(file.name)}`, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      const payload = await res.json();
+      if (!res.ok || payload?.error) {
+        throw new Error(payload?.error || res.statusText);
+      }
+      const absPath = payload.abs_path || payload.path;
+      const line = `file: "${absPath}" | title="${file.name}"`;
+      const query = $("#feather-query");
+      if (query) {
+        const current = query.value || "";
+        query.value = current ? `${current.trim()}\n${line}\n` : `${line}\n`;
+      }
+      const featherInput = $("#feather-input");
+      if (featherInput) featherInput.value = "";
+      appendLog(`[upload] added ${file.name} -> ${absPath}\n`);
+    } catch (err) {
+      appendLog(`[upload] failed: ${err}\n`);
+    }
+  };
+  target.addEventListener("dragover", onDragOver);
+  target.addEventListener("drop", onDrop);
+}
+
 function handleFederlichtPromptPicker() {
   const pickBtn = $("#federlicht-prompt-pick");
   const genBtn = $("#federlicht-prompt-generate");
@@ -2592,18 +3115,104 @@ function handleTemplateSync() {
 
 function handleTemplateEditor() {
   $("#template-editor-name")?.addEventListener("input", updateTemplateEditorPath);
+  $("#template-store-site")?.addEventListener("change", () => {
+    updateTemplateEditorPath();
+  });
   $("#template-editor-base")?.addEventListener("change", () => {
     const nameInput = $("#template-editor-name");
     if (nameInput && !nameInput.value) {
-      nameInput.value = normalizeTemplateName($("#template-editor-base").value);
+      const raw = $("#template-editor-base").value;
+      const baseName = raw.includes("/") ? raw.split("/").pop()?.replace(/\\.md$/, "") : raw;
+      nameInput.value = normalizeTemplateName(baseName || raw);
     }
     updateTemplateEditorPath();
+  });
+  $("#template-style-select")?.addEventListener("change", () => {
+    const select = $("#template-style-select");
+    if (select) state.templateBuilder.css = select.value || "";
+    refreshTemplatePreview();
+  });
+  $("#template-section-add")?.addEventListener("click", () => {
+    const rows = [...document.querySelectorAll(".template-section-row")].map((el) => ({
+      name: el.querySelector("[data-section-name]")?.value || "",
+      guide: el.querySelector("[data-section-guide]")?.value || "",
+    }));
+    rows.push({ name: "", guide: "" });
+    renderTemplateSections(rows);
+  });
+  $("#template-apply-frontmatter")?.addEventListener("click", () => {
+    applyBuilderToEditor();
+  });
+  $("#template-preview-refresh")?.addEventListener("click", () => {
+    refreshTemplatePreview();
   });
   $("#template-editor-load")?.addEventListener("click", () => {
     loadTemplateEditorBase();
   });
   $("#template-editor-save")?.addEventListener("click", () => {
     saveTemplateEditor();
+  });
+}
+
+function handleTemplateGenerator() {
+  $("#template-generate")?.addEventListener("click", async () => {
+    const button = $("#template-generate");
+    const prompt = $("#template-gen-prompt")?.value?.trim();
+    if (!prompt) {
+      appendLog("[template-generator] prompt is required.\n");
+      return;
+    }
+    const nameInput = $("#template-editor-name");
+    let normalized = normalizeTemplateName(nameInput?.value || "");
+    if (!normalized) {
+      const fallback = slugifyLabel(prompt).slice(0, 24) || "custom_template";
+      normalized = normalizeTemplateName(fallback);
+      if (nameInput) nameInput.value = normalized;
+    }
+    if (nameInput) nameInput.value = normalized;
+    updateTemplateEditorPath();
+    const runRel = $("#run-select")?.value;
+    const store = templateStoreChoice();
+    if (store === "run" && !runRel) {
+      appendLog("[template-generator] run folder is required for run storage.\n");
+      return;
+    }
+    state.templateGen.log = "";
+    appendTemplateGenLog("Generating template...\n");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating...";
+    }
+    const payload = {
+      prompt,
+      name: normalized,
+      run: runRel,
+      store,
+      model: $("#template-gen-model")?.value,
+      lang: $("#federlicht-lang")?.value || "ko",
+      site_output: state.info?.site_root || "site",
+    };
+    const targetPath = templateEditorTargetPath(normalized);
+    await startJob("/api/templates/generate", payload, {
+      kind: "template",
+      onSuccess: async () => {
+        await loadTemplates();
+        const baseSelect = $("#template-editor-base");
+        if (baseSelect) baseSelect.value = targetPath;
+        await loadTemplateEditorBase();
+        appendTemplateGenLog("\nDone.\n");
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Generate Base";
+        }
+      },
+      onDone: () => {
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Generate Base";
+        }
+      },
+    });
   });
 }
 
@@ -2785,6 +3394,35 @@ function bindForms() {
   });
 }
 
+function handleTemplatesPanelToggle() {
+  const panel = $("#templates-panel");
+  const button = $("#templates-toggle");
+  if (!panel || !button) return;
+  const stored = localStorage.getItem("federnett-templates-collapsed");
+  if (stored === "true") {
+    panel.classList.add("collapsed");
+    button.textContent = "Show cards";
+  }
+  button.addEventListener("click", () => {
+    const collapsed = panel.classList.toggle("collapsed");
+    button.textContent = collapsed ? "Show cards" : "Hide cards";
+    localStorage.setItem("federnett-templates-collapsed", collapsed ? "true" : "false");
+  });
+}
+
+async function loadModelOptions() {
+  const datalist = $("#model-options");
+  if (!datalist) return;
+  try {
+    const models = await fetchJSON("/api/models");
+    if (Array.isArray(models)) {
+      datalist.innerHTML = models.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    }
+  } catch (err) {
+    appendLog(`[models] ${err}\n`);
+  }
+}
+
 async function bootstrap() {
   initTheme();
   handleTabs();
@@ -2796,13 +3434,17 @@ async function bootstrap() {
   handleInstructionEditor();
   handleFilePreviewControls();
   handleFeatherInstructionPicker();
+  handleUploadDrop();
   handleFederlichtPromptPicker();
   handleFederlichtPromptEditor();
   handleRunPicker();
+  handleRunUpdate();
   handleReloadRuns();
   handleLogControls();
   handleTemplateSync();
   handleTemplateEditor();
+  handleTemplateGenerator();
+  handleTemplatesPanelToggle();
   bindTemplateModalClose();
   bindHelpModal();
   handleLayoutSplitter();
@@ -2814,7 +3456,7 @@ async function bootstrap() {
     await loadInfo();
     bindHeroCards();
     initPipelineFromInputs();
-    await Promise.all([loadTemplates(), loadRuns()]);
+    await Promise.all([loadTemplates(), loadRuns(), loadModelOptions()]);
   } catch (err) {
     appendLog(`[init] ${err}\n`);
   }

@@ -1,0 +1,16 @@
+[2026-02-02 00:25:12] JOB START: mynewtest.txt date=2026-02-02 days=365 max_results=8
+[2026-02-02 00:25:12] TAVILY SEARCH: what is quantum computing (English)
+[2026-02-02 00:25:15] YOUTUBE SEARCH SKIP: no youtube hint or explicit site:youtube.com queries
+[2026-02-02 00:25:15] OPENALEX SEARCH: what is quantum computing
+[2026-02-02 00:25:17] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1996-1073/18/7/1618/pdf?version=1742818962 -> W4408778024.pdf
+[2026-02-02 00:25:17] WARN openalex pdf download failed url=https://www.mdpi.com/1996-1073/18/7/1618/pdf?version=1742818962 err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1996-1073/18/7/1618/pdf?version=1742818962')
+[2026-02-02 00:25:17] ERROR openalex pdf download failed query=what is quantum computing err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1996-1073/18/7/1618/pdf?version=1742818962') urls=['https://www.mdpi.com/1996-1073/18/7/1618/pdf?version=1742818962']
+[2026-02-02 00:25:17] OPENALEX PDF DOWNLOAD: https://www.scholarlyreview.org/article/143824.pdf -> W4413877234.pdf
+[2026-02-02 00:25:19] PDF->TEXT: W4413877234.pdf
+[2026-02-02 00:25:19] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2503.00519 -> W4409149714.pdf
+[2026-02-02 00:25:22] PDF->TEXT: W4409149714.pdf
+[2026-02-02 00:25:23] OPENALEX PDF DOWNLOAD: https://ijircst.org/DOC/1417_pdf.pdf -> W7116737831.pdf
+[2026-02-02 00:25:24] PDF->TEXT: W7116737831.pdf
+[2026-02-02 00:25:24] OPENALEX PDF DOWNLOAD: https://quantum-journal.org/papers/q-2025-05-28-1757/pdf/ -> W4391590997.pdf
+[2026-02-02 00:25:29] PDF->TEXT: W4391590997.pdf
+[2026-02-02 00:25:30] JOB END

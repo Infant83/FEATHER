@@ -171,3 +171,34 @@ def _build_generate_prompt_cmd(cfg: FedernettConfig, payload: dict[str, Any]) ->
         cmd.extend(["--lang", str(lang)])
     cmd.extend(extra_args(payload.get("extra_args")))
     return cmd
+
+
+def _build_generate_template_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list[str]:
+    prompt = payload.get("prompt")
+    name = payload.get("name")
+    if not prompt:
+        raise ValueError("Template generation requires a prompt.")
+    if not name:
+        raise ValueError("Template generation requires a template name.")
+    store = payload.get("store") or "run"
+    cmd: list[str] = [sys.executable, "-m", "federlicht.report", "--generate-template"]
+    if payload.get("run"):
+        resolved_run = resolve_under_root(cfg.root, str(payload.get("run")))
+        if resolved_run:
+            cmd.extend(["--run", str(resolved_run)])
+    cmd.extend(["--template-name", str(name)])
+    cmd.extend(["--template-prompt", str(prompt)])
+    cmd.extend(["--template-store", str(store)])
+    model = expand_env_reference(payload.get("model"))
+    if model:
+        cmd.extend(["--model", str(model)])
+    lang = payload.get("lang")
+    if lang:
+        cmd.extend(["--lang", str(lang)])
+    site_output = payload.get("site_output")
+    if site_output:
+        resolved_site = resolve_under_root(cfg.root, str(site_output))
+        if resolved_site:
+            cmd.extend(["--site-output", str(resolved_site)])
+    cmd.extend(extra_args(payload.get("extra_args")))
+    return cmd

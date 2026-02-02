@@ -1,5 +1,7 @@
 body.template-nature_reviews,
 body.template-nature_journal {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1a18;
   --muted: #5a5a5a;
   --accent: #c4232e;
@@ -21,4 +23,14 @@ body.template-nature_journal .article h2 {
   letter-spacing: 0.08em;
   font-size: 1.05rem;
   border-top: 2px solid rgba(196, 35, 46, 0.3);
+}
+body.template-nature_reviews {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

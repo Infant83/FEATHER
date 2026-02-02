@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>hBN 캡슐화 어닐링의 TMD 특성 영향 분석</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-acs_review template-default">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <article class="article">
+<h1>hBN 캡슐화 어닐링의 TMD 특성 영향 분석</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 00:54</p>
+<h2>Abstract</h2>
+<p>본 리뷰는 hBN(acoustic boron nitride) 캡슐화 어닐링이 전이 금속 디칼코게나이드(TMD)인 WSe2의 광발광(PL) 및 전기적 특성에 미치는 영향을 분석합니다. 이 과정에서 어닐링이 결함 패시베이션, 도핑 조절, 및 산화에 미치는 영향을 논의합니다. 특히, 어닐링 온도와 시간, 그리고 분위기가 물질의 성질에 미치는 영향을 강조합니다. 검증이 필요한 현재의 머신러닝 방법론과 자료 부족 이슈 또한 언급됩니다.</p>
+<h2>Introduction</h2>
+<p>전이 금속 디칼코게나이드(TMD)는 반도체 소자로서 주목받고 있으며, 그 광발광(PL) 특성을 최적화하기 위한 다양한 접근 방법이 연구되고 있습니다. 이러한 PL 저하의 주요 원인은 결함, 도핑 및 산화 문제 등으로 요약될 수 있습니다. hBN 캡슐화 및 어닐링은 이러한 문제를 해결할 수 있는 방법으로 많은 연구에서 제안되었습니다. 본 섹션에서는 TMD, hBN, 및 관련 약어를 정의하고, hBN 캡슐화의 필요성과 어닐링 절차의 역할을 밝힙니다.</p>
+<h2>Current Landscape</h2>
+<p>현재 hBN 캡슐화 어닐링은 낮은 온도(예: 200°C)에서 중간 온도(예: 400°C) 및 고온(예: 800°C)으로 진행되는 여러 가지 레시피로 분류됩니다. 
+- <strong>저온 어닐링</strong>: PL 특성이 개선되지만, 결함 제거 효과는 제한적입니다.
+- <strong>중온 어닐링</strong>: 결함 제거와 산화 방지 효과가 나타나며, PL 수율이 개선됩니다.
+- <strong>고온 어닐링</strong>: 구조적 개선은 돋보이나 열 손상 문제도 발생할 수 있습니다.</p>
+<p>hBN과 그래핀을 캡슐화한 디바이스의 사례를 통해, 각 경우에서 관측된 플라스틱적 품질 지표(PLQY, linewidth 등)를 정리합니다.</p>
+<h2>Mechanistic Insights</h2>
+<p>hBN 캡슐화 어닐링의 메커니즘을 분석하기 위해, 다음의 수치와 키워드를 중심으로 설명합니다.
+- 산화 시작 온도는 약 400°C이며, 이때 O2의 해리 에너지는 0.52 eV입니다.
+- Se vacancy와 산소 결합 간의 수소화가 PL 변화에 미치는 영향을 자세히 단계별로 설명합니다. 
+- 이러한 메커니즘을 통해 결함의 제거와 산화의 관계를 연결짓습니다.</p>
+<h2>Applications</h2>
+<p>hBN 캡슐화 어닐링은 고품질 발광 소자에서 요구되는 신뢰성을 향상시키는 데 필수적입니다. 하지만, 이 기술을 실제 적용하는 데 있어 재현성과 스케일업 문제가 존재합니다. hBN 캡슐화가 필요한 적용 사례와 함께, 각 사례에서의 성능 개선 효과를 논의합니다.</p>
+<h2>Challenges</h2>
+<p>어닐링 과정에서는 분위기 제어, 열 이력, 그리고 계면에서의 버블/오염 정량화가 필수적입니다. 데이터의 한계 및 in situ 분석의 부재가 현재 연구의 걸림돌로 작용하고 있습니다. 이러한 문제를 제대로 해결하지 않는다면 hBN 캡슐화 어닐링의 발전이 어려울 것입니다.</p>
+<h2>Outlook</h2>
+<p>향후 연구를 통해 다양한 분위기에서의 어닐링 매트릭스를 설정하고, isotopic O2, in situ Raman/XPS, TEM/EELS, 시간 분해 PL 분석 등이 필요함을 제안합니다. 이를 통해 hBN 캡슐화의 효과를 체계적으로 검증할 수 있을 것입니다.</p>
+<h2>Risks &amp; Gaps</h2>
+<p>현재 hBN 캡슐화 어닐링 기법에 대한 일반화는 공개된 데이터가 부족해 한계가 있습니다. 특히 Nanotechnology 28(2017) 395702나 Nat. Commun.(2019) 10:2330과 같은 자료에 대한 원문의 확보가 필요합니다.</p>
+<h2>Critics</h2>
+<h3>hBN 캡슐화 어닐링의 보편성 과장</h3>
+<ul>
+<li>열 손상이나 산화 촉진 가능성.</li>
+<li>샘플 의존성 문제.</li>
+<li>측정 아티팩트 발생 가능성.</li>
+</ul>
+<h2>Appendix</h2>
+<h3>주요 슬라이드 요약</h3>
+<ul>
+<li>hBN 캡슐화에 의한 PL 증대 효과와 결함 감소 데이터 정리.</li>
+</ul>
+<h3>용어집</h3>
+<ul>
+<li><strong>TMD</strong>: Transition Metal Dichalcogenides</li>
+<li><strong>hBN</strong>: Hexagonal Boron Nitride</li>
+<li><strong>PL</strong>: Photoluminescence</li>
+</ul>
+<h3>조건-결과 매핑 테이블</h3>
+<ul>
+<li>어닐링 온도 및 시간에 따른 PL 특성 변화 정리.</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>목표/범위: 로컬 PPTX “NCML hBN encapsulation annealing”을 1차 근거로 삼아, hBN 캡슐화 어닐링이 WSe2(및 일반 TMD) 광발광(PL)·결함·도핑·산화 거동에 미치는 영향을 ACS 스타일 리뷰로 정리하라. 공정 조건(온도/시간/분위기)–구조/계면 변화–광학/전기 특성의 인과를 중심으로, 합의된 결론과 가설적 신호를 분리한다.<br />
+pptx 파일의 주요 내용에 대해 심도있게 설명하고 정리하라.</p>
+<p>핵심 포함 항목(필수 섹션 모두 포함):<br />
+- Abstract(5–7문장): 다루는 시스템(WSe2/TMD, hBN encapsulation, annealing), 핵심 메커니즘(오염/버블 제거, 디도핑, 결함 패시베이션/산화 억제 또는 유발), 결론·검증 필요점 요약.<br />
+- Introduction: TMD PL 저하 원인(트랩/오염/결함/도핑)과 hBN 캡슐화+어닐링 접근의 위치. 약어(PL, TMD, hBN, Se vacancy 등) 정의.<br />
+- Current Landscape: (i) hBN 캡슐화 후 저/중/고온 어닐 레시피, (ii) 캡슐화 없는 어닐 대비, (iii) 그래핀/hBN 캡슐화 디바이스 사례로 범주화. 각 범주별 “관측 지표(PLQY, linewidth, lifetime, peak shift 등)” 정리.<br />
+- Mechanistic Insights: PPTX의 수치/키워드(예: 산화 시작 ~400°C, O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)를 중심으로 Se vacancy–O 결합, 산소 확산/해리, 계면 오염 제거와 PL 변화의 연결을 단계적(원인→중간상→결과)으로 설명.<br />
+- Applications: 고품질 발광/양자광원/소자 신뢰성 관점의 적용과, 재현성·스케일업 공백 명시.<br />
+- Challenges: 분위기 제어, 열이력, 계면 버블/오염 정량, in situ 분석 부재 등 “데이터 한계”를 구체화.<br />
+- Outlook: 검증 실험(분위기별 어닐 매트릭스, isotopic O2, in situ Raman/XPS, TEM/EELS, time-resolved PL) 제안.<br />
+- Risks &amp; Gaps: 현재 아카이브에 OpenAlex/arXiv/논문 PDF가 없어 PPTX 외 주장 일반화에는 공개정보 한계가 있음을 명시하고, 특히 PPTX 내 인용으로 보이는 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 “원문 미확보”로 표시.<br />
+- Critics: “hBN 캡슐화 어닐링의 보편성 과장” 등 반론(열 손상/산화 촉진 가능, 샘플 의존성, 측정 아티팩트)을 헤드라인+불릿으로 제시.<br />
+- Appendix: PPTX 슬라이드 기반 핵심 파라미터/수치 표, 용어집, 조건-결과 매핑 테이블.  </p>
+<p>증거/인용 정책: PPTX 텍스트/도표에서 확인 가능한 문장은 (슬라이드 번호/그림) 형태로 내부 인용. tavily_search.jsonl은 “인덱스 참고”로만 쓰고, 원문 PDF 미확보 항목은 추정·일반론으로 단정하지 말 것(공개정보 한계 라벨).  </p>
+<p>언어 지시: 본문은 한국어, 고유명사/저널/논문 제목은 원문 유지. 학술적·재료/화학 중심 톤 유지, 합의(Consensus) vs 가설(Speculative) 명확히 구분.</p>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-03 00:54:29</li>
+<li>Duration: 00:02:35 (155.16s)</li>
+<li>Model: gpt-4o-mini</li>
+<li>Quality model: gpt-4o-mini</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: hbn, 캡슐화, TMD, PPTX, 산화</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_5.md-51e57bb1.html" data-viewer="report_views/report_run_overview_report_full_5.md-51e57bb1.html" data-raw="report/run_overview_report_full_5.md" class="viewer-link">./report/run_overview_report_full_5.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">./archive/20260201_pptx_hbn-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-viewer="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-raw="instruction/20260201_pptx_hbn.txt" class="viewer-link">./instruction/20260201_pptx_hbn.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_5.txt-a49bdb0e.html" data-viewer="report_views/instruction_report_prompt_report_full_5.txt-a49bdb0e.html" data-raw="instruction/report_prompt_report_full_5.txt" class="viewer-link">./instruction/report_prompt_report_full_5.txt</a></li>
+</ul>
+</div>
+    </article>
+  </div>
+</body>
+</html>

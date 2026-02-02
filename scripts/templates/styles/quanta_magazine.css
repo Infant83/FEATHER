@@ -1,4 +1,6 @@
 body.template-quanta_magazine {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1c22;
   --muted: #4c5566;
   --accent: #2f4b8f;

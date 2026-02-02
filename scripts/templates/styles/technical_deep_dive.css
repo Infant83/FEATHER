@@ -1,4 +1,6 @@
 body.template-technical_deep_dive {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1d22;
   --muted: #4d545f;
   --accent: #3b5b77;

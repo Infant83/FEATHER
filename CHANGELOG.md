@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.1
+## 0.9.0
 - Add shared input trimming across scout/plan/web/evidence/clarifier/writer payloads with priority caps to reduce context overflows.
 - Add `--max-tool-chars` to cap cumulative `read_document` output across a run (CLI/API/Federnett).
 - Add reducer-backed tool output summarization with chunk artifacts under `report_notes/tool_cache/` and NEEDS_VERIFICATION guidance for citation safety.
@@ -10,9 +10,20 @@
 - Merge orphaned citation-only lines into the preceding sentence to keep inline references readable.
 - Enrich references with authors/year/venue metadata using text indices (OpenAlex/arXiv/local) and clearer source labels.
 - Soften default template tone and add readability guidance while keeping professional structure.
+- Resolve the duplicate truncate helper by splitting it into explicit middle/head variants for safer payload trimming.
+- Move supporting web research execution into Feather utilities and keep Federlicht as a thin wrapper.
+- Split HTML/Markdown rendering helpers into `federlicht.render.html` for cleaner modular boundaries.
 - Add a Federnett custom template editor panel and refactor server helpers into smaller modules for maintainability.
+- Add a Federlicht PPTX reader (structured slide text + embedded image extraction) with vision-ready figure candidates.
+- Fix Feather local ingest to create `local/raw` and `local/text` folders before copying/extracting files.
+- Add Federlicht logging to `_federlicht_log.txt` and mirror Feather logs to `_feather_log.txt`.
+- Improve report HTML theme contrast for light templates and show PPTX/extract/log groups in Federnett Run Studio.
+- Add Run Studio “Update Report” action to regenerate reports with a user-provided revision prompt.
+- Record report update requests in `report_notes/update_history.jsonl` for traceability.
+- Add Drag & Drop uploads in Federnett (stored under `site/uploads`) with auto `file:` line insertion.
+- Update report prompts now include base report content for edit-only revisions and use date-based update_request filenames.
 
-## 0.8.0
+## 0.8.1
 - Add **Federnett**: a web studio wrapper around Feather and Federlicht with an HTTP server, SSE log streaming, background jobs, and kill control.
 - Add a static Federnett UI under `site/federnett/` with Feather/Federlicht/Prompt tabs, theme switching, run discovery, and live logs.
 - Move the Federnett implementation into a dedicated package at `src/federnett/app.py` and keep `federlicht.federnett` as a compatibility shim.

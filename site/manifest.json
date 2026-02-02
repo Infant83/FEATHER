@@ -1,7 +1,65 @@
 {
-  "revision": "2026-02-01T15:49:17.532464",
-  "generated_at": "2026-02-01T15:49:17.532464",
+  "revision": "2026-02-03T03:45:57.665251",
+  "generated_at": "2026-02-03T03:45:57.665251",
   "items": [
+    {
+      "id": "20260201_pptx_hbn",
+      "run": "20260201_pptx_hbn",
+      "report_stem": "report_full_9",
+      "title": "헥사고날 보론 나이트라이드의 혁신적 잠재력",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "헥사고날 보론 나이트라이드의 혁신적 잠재력 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-03 03:45 마스트헤드 과학기술 하나의 소재로 열리는 신세계: 헥사고날 보론 나이트라이드(hBN)의 잠재력 작성자: 2026년 2월 1일 데크 헥사고날 보론 나이트라이드(hBN)는 새로운 전자 기기…",
+      "lang": "Korean",
+      "template": "custom_acs_review",
+      "format": "html",
+      "model": "gpt-4o",
+      "tags": [
+        "the",
+        "헥사고날",
+        "보론",
+        "update",
+        "and"
+      ],
+      "date": "2026-02-03",
+      "timestamp": "2026-02-03T03:45:57.400072",
+      "source_mtime": 1770057957,
+      "source_size": 29148,
+      "paths": {
+        "report": "runs/20260201_pptx_hbn/report_full_9.html",
+        "overview": "runs/20260201_pptx_hbn/report/run_overview_report_full_9.md",
+        "workflow": "runs/20260201_pptx_hbn/report_notes/report_workflow.md",
+        "run": "runs/20260201_pptx_hbn"
+      }
+    },
+    {
+      "id": "mynewtest",
+      "run": "mynewtest",
+      "report_stem": "report_full",
+      "title": "양자 컴퓨팅 보고서 요약",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "양자 컴퓨팅 보고서 요약 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-02 00:33 Abstract 양자 컴퓨팅은 고전 컴퓨팅의 한계를 극복하고 인공지능, 암호화, 물질 과학 등의 분야에서 혁신적인 접근법을 제공하는 새로운 계산 모델이다. 이 보고서는 양자 컴퓨터의 정의, 핵심 물리 개…",
+      "lang": "Korean",
+      "template": "acs_review",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [
+        "quantum",
+        "computing",
+        "개념",
+        "인용",
+        "and"
+      ],
+      "date": "2026-02-02",
+      "timestamp": "2026-02-02T00:33:45.948816",
+      "source_mtime": 1769960026,
+      "source_size": 17877,
+      "paths": {
+        "report": "runs/mynewtest/report_full.html",
+        "overview": "runs/mynewtest/report/run_overview_report_full.md",
+        "workflow": "runs/mynewtest/report_notes/report_workflow.md",
+        "run": "runs/mynewtest"
+      }
+    },
     {
       "id": "배당주투자법",
       "run": "배당주투자법",

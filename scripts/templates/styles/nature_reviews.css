@@ -1,5 +1,7 @@
 body.template-nature_reviews,
 body.template-nature_journal {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1a18;
   --muted: #5a5a5a;
   --accent: #c4232e;

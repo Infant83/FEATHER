@@ -1,4 +1,6 @@
 body.template-quanta_magazine {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1c22;
   --muted: #4c5566;
   --accent: #2f4b8f;
@@ -29,4 +31,14 @@ body.template-quanta_magazine .article p:first-of-type::first-letter {
 
 body.template-quanta_magazine .article h2 {
   border-top: 1px solid rgba(47, 75, 143, 0.3);
+}
+body.template-quanta_magazine {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

@@ -1,0 +1,22 @@
+Language: Korean
+
+Template: acs_review  
+Depth: deep  
+
+목표/범위: 로컬 자료(“NCML hBN encapsulation annealing” PPTX 및 텍스트 추출본)를 1차 근거로 하여, hBN 캡슐화-어닐링이 단층 WSe2(및 TMD)의 PL/결함/디도핑/산화 거동에 미치는 영향을 ACS 스타일 리뷰 형식으로 정리하라. 공정 변수(온도, 분위기, 시간, 캡슐화 상태)와 관측 지표(PL 피크, linewidth, lifetime/PLQY, 도핑 신호, 결함 관련 피처)의 인과 연결을 “합의된 사실 vs 가설/추정”으로 분리해 서술하라.  
+
+핵심 포함 항목(섹션별):  
+- Abstract(5–7문장): 리뷰 범위, 주요 결론(PL 개선 경향, 산화/결함 패시베이션 메커니즘 후보), 검증 필요 지점 요약.  
+- Introduction: hBN encapsulation의 역할(환경 차단, 인터페이스 정제)과 annealing의 목적(오염/버블 제거, 결함 재구성)을 정의하고 약어(hBN, TMD, PL, PLQY 등)를 최초 1회 명확히 정의.  
+- Current Landscape: (i) hBN 캡슐화+고온 어닐 기반 “optical grade” 접근, (ii) 전사/캡슐화 후 저·중온 어닐로 인터페이스 정제, (iii) 산소 관련 결함/산화 제어 관점으로 범주화. 각 범주별 대표 증거를 PPTX 수치/도표 중심으로 정리.  
+- Mechanistic Insights: PPTX에 등장하는 Se vacancy–O 결합, O2 dissociation barrier(예: notice된 0.52 eV), adsorption energy, vacancy migration barrier 등 “장벽/에너지” 기반 논리를 단계적 메커니즘(흡착→해리→결합/확산→광학특성 변화)으로 설명.  
+- Applications: 고신뢰 PL 소자/양자광원/센서 등 적용 시나리오와 공정 윈도우(산화 시작 온도 등) 제시.  
+- Challenges: 재현성, 공정-측정 조건 편향, 캡슐 내부 잔류 오염, 과열/etching 등.  
+- Outlook: 필요한 검증(분위기별 in-situ, 결함 정량, 통계 샘플 수), 표준화 제안.  
+- Risks & Gaps: 공개정보 한계(이번 런에는 OpenAlex/arXiv/PDF 미수집, PPTX 내 인용 논문 원문 부재)로 인해 문헌 합의 수준을 정량 비교하기 어렵다고 명시하고, 후속 수집/검증 항목을 우선순위로 제시.  
+- Critics: “PL 개선이 결함 패시베이션이 아닌 단순 디도핑/오염 제거 효과일 수 있음”, “고온 어닐이 새로운 결함/응력 유발 가능” 등 반대 해석을 헤드라인+짧은 단락+불릿으로 제시.  
+- Appendix: 슬라이드별 핵심 수치/조건/관측치 표, 용어집, 사용한 파일 경로 및 Run ID(20260201_pptx_hbn).  
+
+증거/인용 정책: PPTX/텍스트에서 확인 가능한 수치·문장만 “확정 근거”로 인용하고, PPTX에 간접 언급된 논문(예: Nanotechnology 28 (2017) 395702, Nat. commun. (2019) 10:2330, RSC 2024 등)은 원문 미확보 시 ‘2차 인용/추정’으로 표시(공개정보 한계). 모든 주장 문장 끝에 (Slide #/파일명) 또는 (검색 인덱스: tavily_search.jsonl) 형태로 출처 태깅.  
+
+언어/문체: 한국어로 학술적·간결한 문장 사용, 화학/재료 용어는 표준 표기, 고유명사/논문 제목은 원문 유지.

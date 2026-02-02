@@ -1,5 +1,7 @@
 body.template-prl_perspective,
 body.template-prl_manuscript {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1b1b1b;
   --muted: #4f4f52;
   --accent: #8b1e2d;
@@ -18,4 +20,14 @@ body.template-prl_manuscript .article h2 {
 body.template-prl_perspective .article h3,
 body.template-prl_manuscript .article h3 {
   color: #2a2a2a;
+}
+body.template-prl_perspective {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
 }

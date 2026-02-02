@@ -150,6 +150,16 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
     pdfs = sorted(run_dir.glob("archive/**/*.pdf"))
     texts = sorted(run_dir.glob("archive/**/*.txt"))
     jsonls = sorted(run_dir.glob("archive/**/*.jsonl"))
+    pptxs = sorted(run_dir.glob("archive/**/*.pptx"))
+    extracts = sorted((run_dir / "archive" / "tavily_extract").glob("*.txt"))
+    log_paths = sorted(
+        set(
+            list(run_dir.glob("_log*.txt"))
+            + list((run_dir / "archive").glob("_log*.txt"))
+            + list(run_dir.glob("_feather_log*.txt"))
+            + list(run_dir.glob("_federlicht_log*.txt"))
+        )
+    )
     index_mds = sorted(run_dir.glob("archive/*-index.md"))
     reports = sorted(run_dir.glob("report_full*.html"))
     latest_report = max(reports, key=lambda p: p.stat().st_mtime) if reports else None
@@ -162,14 +172,23 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
     instructions = _list_run_instruction_files(root, run_dir)
     summary_lines = [
         f"Archive PDFs: {len(pdfs)}",
+        f"Archive PPTX: {len(pptxs)}",
         f"Archive texts: {len(texts)}",
-        f"Archive indices (jsonl): {len(jsonls)}",
+        f"Web extracts: {len(extracts)}",
+        f"Logs: {len(log_paths)}",
         f"Reports: {len(reports)}",
         f"Instructions: {len(instructions)}",
     ]
     pdf_files = [safe_rel(p, root) for p in pdfs[:SUMMARY_FILE_LIMIT]]
-    text_files = [safe_rel(p, root) for p in texts[:SUMMARY_FILE_LIMIT]]
+    text_files = [
+        safe_rel(p, root)
+        for p in texts[:SUMMARY_FILE_LIMIT]
+        if not p.name.startswith("_log")
+    ]
     jsonl_files = [safe_rel(p, root) for p in jsonls[:SUMMARY_FILE_LIMIT]]
+    pptx_files = [safe_rel(p, root) for p in pptxs[:SUMMARY_FILE_LIMIT]]
+    extract_files = [safe_rel(p, root) for p in extracts[:SUMMARY_FILE_LIMIT]]
+    log_files = [safe_rel(p, root) for p in log_paths[:SUMMARY_FILE_LIMIT]]
     return {
         "run_name": run_dir.name,
         "run_rel": safe_rel(run_dir, root),
@@ -178,6 +197,9 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
             "pdf": len(pdfs),
             "text": len(texts),
             "jsonl": len(jsonls),
+            "pptx": len(pptxs),
+            "extracts": len(extracts),
+            "logs": len(log_paths),
             "index_md": len(index_mds),
             "report": len(reports),
             "instruction": len(instructions),
@@ -188,6 +210,9 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
         "index_files": [safe_rel(p, root) for p in index_mds],
         "instruction_files": instructions,
         "pdf_files": pdf_files,
+        "pptx_files": pptx_files,
+        "extract_files": extract_files,
+        "log_files": log_files,
         "text_files": text_files,
         "jsonl_files": jsonl_files,
         "updated_at": iso_ts(updated_ts),

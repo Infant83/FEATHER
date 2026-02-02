@@ -4,7 +4,16 @@ from dataclasses import dataclass
 from typing import Optional
 import copy
 
-from . import report as report_mod
+_REPORT_MOD = None
+
+
+def _get_report_mod():
+    global _REPORT_MOD
+    if _REPORT_MOD is None:
+        from . import report as report_mod
+
+        _REPORT_MOD = report_mod
+    return _REPORT_MOD
 
 
 REPORTER_INPUT_SCHEMA = {
@@ -94,6 +103,7 @@ class Reporter:
     create_deep_agent: Optional[object] = None
 
     def run(self, return_state: bool = False, **overrides):
+        report_mod = _get_report_mod()
         args = copy.deepcopy(self.args)
         if overrides:
             _apply_arg_overrides(args, overrides)
@@ -122,6 +132,7 @@ class Reporter:
         return output
 
     def invoke(self, payload: dict) -> str:
+        report_mod = _get_report_mod()
         output = self.run(**payload)
         if isinstance(output, report_mod.ReportOutput):
             if output.output_path:
@@ -130,6 +141,7 @@ class Reporter:
         return str(output)
 
     def run_state(self, **overrides) -> report_mod.PipelineState:
+        report_mod = _get_report_mod()
         output = self.run(return_state=True, **overrides)
         if isinstance(output, report_mod.ReportOutput):
             if not output.state:
@@ -140,9 +152,11 @@ class Reporter:
         raise RuntimeError("Unexpected reporter output type.")
 
     def stage_info(self, stages: Optional[object] = None) -> dict:
+        report_mod = _get_report_mod()
         return report_mod.get_stage_info(stages if stages is not None else ["all"])
 
     def write(self, state: object, **overrides) -> report_mod.ReportOutput:
+        report_mod = _get_report_mod()
         args = copy.deepcopy(self.args)
         if overrides:
             _apply_arg_overrides(args, overrides)
@@ -205,6 +219,7 @@ def create_reporter(
     create_deep_agent: Optional[object] = None,
     **kwargs,
 ) -> Reporter:
+    report_mod = _get_report_mod()
     args = report_mod.parse_args([])
     args._cli_argv = ["federlicht"]
     if run is not None:

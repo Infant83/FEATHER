@@ -16,6 +16,11 @@ FORMAL_TEMPLATES = {
 }
 
 
+def _is_custom_template(template_spec: "TemplateSpec") -> bool:
+    source = str(getattr(template_spec, "source", "") or "").lower()
+    return "custom_templates" in source
+
+
 def _is_korean(language: str) -> bool:
     return language.strip().lower() in {"korean", "ko", "kor", "kr"}
 
@@ -185,6 +190,12 @@ def build_writer_prompt(
         depth_guidance = (
             "Depth=normal: 핵심 섹션은 보통 2~3문단을 목표로 하고, 필요 시 근거 수준에 맞춰 조정하세요. "
         )
+    custom_priority = ""
+    if _is_custom_template(template_spec):
+        custom_priority = (
+            "Custom 템플릿 가이드는 depth 지시보다 우선합니다. "
+            "충돌하는 경우 템플릿 가이드에 맞추고, depth는 보조 기준으로만 사용하세요. "
+        )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -218,6 +229,7 @@ def build_writer_prompt(
         "파일 경로 인용 시 ./archive/... 또는 ./instruction/... 같은 상대 경로를 사용하세요(절대 경로 금지). "
         f"{format_instructions.citation_instruction}"
         "수식이 중요할 때는 LaTeX($...$ 또는 $$...$$)로 렌더링되게 작성하세요. "
+        f"{custom_priority}"
         f"{depth_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
@@ -400,6 +412,26 @@ def build_template_designer_prompt() -> str:
         "- writer_guidance: 전체 톤/엄밀성을 위한 짧은 불릿 리스트\n"
         "가이드는 간결하고, 근거 중심이며, 보고서 포커스 프롬프트와 정렬되게 작성하세요.\n"
         "요청된 언어로 작성하세요."
+    )
+
+
+def build_template_generator_prompt(language: str) -> str:
+    return (
+        "당신은 보고서 템플릿 디자이너이자 CSS 스타일리스트입니다. "
+        "사용자 요청에 맞춰 템플릿 구성과 스타일을 설계하세요. "
+        "다음 JSON만 반환하세요:\n"
+        "- name: 템플릿 이름\n"
+        "- description: 1-2문장 설명\n"
+        "- tone: 톤/보이스\n"
+        "- audience: 대상 독자\n"
+        "- sections: 섹션 제목 리스트(순서 유지)\n"
+        "- section_guidance: 섹션 제목 -> 1-2문장 가이드\n"
+        "- writer_guidance: 전체 작성 규칙(짧은 불릿 리스트)\n"
+        "- css: 완전한 CSS 문자열\n"
+        "CSS는 body.template-<slug> 셀렉터로 시작하고, masthead/article/typography/표 스타일을 "
+        "세련된 웹진 느낌으로 정의하세요. "
+        "헤더에는 짙은 박스 배경, 큰 타이틀, 얕은 데크 라인을 반영하세요. "
+        f"모든 텍스트는 {language}로 작성하세요."
     )
 
 

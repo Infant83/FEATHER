@@ -756,6 +756,20 @@ body[data-tab="feather"] #run-studio-wrap {
   padding: 10px 12px;
 }
 
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+
+.field-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .pipeline-chips {
   display: flex;
   flex-wrap: wrap;
@@ -946,6 +960,170 @@ body[data-tab="feather"] #run-studio-wrap {
   width: 100%;
 }
 
+.template-builder {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px dashed var(--edge);
+  border-radius: 16px;
+  background: rgba(10, 15, 23, 0.5);
+}
+
+.template-builder-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.template-builder-row label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 220px;
+}
+
+.template-builder-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.template-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.template-generator {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px dashed var(--edge);
+  border-radius: 14px;
+  background: rgba(8, 12, 20, 0.55);
+}
+
+.template-generator textarea {
+  min-height: 90px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.template-generator-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.template-gen-log {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--edge);
+  background: rgba(7, 12, 18, 0.7);
+  color: #e7fff7;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.templates-panel.collapsed #templates-grid {
+  display: none;
+}
+
+.template-sections-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.template-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.template-section-head h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.template-sections-list {
+  display: grid;
+  gap: 8px;
+}
+
+.template-section-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.template-section-row input {
+  width: 100%;
+}
+
+.template-section-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.template-guidance-editor label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.template-writer-guidance {
+  min-height: 140px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.template-preview {
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(5, 9, 15, 0.65);
+}
+
+.template-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--edge);
+}
+
+.template-preview-head h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.template-preview-frame {
+  width: 100%;
+  min-height: 280px;
+  border: 0;
+  background: #fff;
+}
+
 .template-editor-body {
   min-height: 220px;
   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1007,6 +1185,21 @@ body[data-tab="feather"] #run-studio-wrap {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.template-modal-preview {
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(5, 9, 15, 0.65);
+  margin-top: 12px;
+}
+
+.template-modal-preview iframe {
+  width: 100%;
+  min-height: 420px;
+  border: 0;
+  background: #fff;
 }
 
 .hero-grid {
@@ -1553,6 +1746,17 @@ button.danger:disabled {
 .jobs-list {
   display: grid;
   gap: 6px;
+}
+
+.jobs-list.is-collapsed {
+  max-height: 220px;
+  overflow: hidden;
+}
+
+.jobs-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
 }
 
 .job-item {

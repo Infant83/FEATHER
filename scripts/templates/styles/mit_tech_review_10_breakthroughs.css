@@ -1,4 +1,6 @@
 body.template-mit_tech_review_10_breakthroughs {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
   --ink: #1f1d1a;
   --muted: #5b5550;
   --accent: #e04f3a;

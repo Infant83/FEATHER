@@ -1,0 +1,107 @@
+Slide 1
+Figure 1
+5 μm
+5 μm
+(b)
+(c)
+(d)
+(e)
+300 K
+(f)
+PL intensity (cts)
+(a)
+1L WSe2
+Encapsulation annealing scheme
+AFM raw data 처리하기
+
+Slide 2
+Figure 2
+Before annealing
+After annealing
+10K
+1.715
+1.718
+1.706
+1.698
+1.691
+1.676
+1.672
+1.659
+1.642
+1.737
+31meV
+39meV
+19meV
+22meV
+46meV
+61meV
+65meV
+78meV
+95meV
+Intervalley trion
+Biexciton
+Localized excitons
+[Nanotechnology 28 (2017) 395702]
+1.685
+52meV
+It is needed to measure power dependent PL for peak assigning.
+10K
+Negatively charged biexicon 
+[Nat. commun. (2019) 10:2330]
+어닐 후
+L1 감소
+L2 감소
+L3 증가
+L4 증가
+L5 증가
+W annealing
+WO annealing
+Vacancy diffusion barrier 찾기
+Oxygen 붙는 thermal barrier 찾기 (o)
+WSe2 oxidation 되는 barrier 찾기 (o)
+이 테크닉으로 다른 기체를 defect에 넣을 수 없을까??
+
+Slide 3
+Mechanism proposal
+
+Slide 5
+1. Chalcogen vacancy가 migration하는데 필요한 에너지 장벽
+This is also supported by the calculated migration barrier of 2.3 eV. This barrier is too high for significant diffusion at room temperature under thermal equilibrium. However, the sample is under continuous bombardment by energetic electrons.
+KBT ~ 0.06 eV (~773K)
+
+Slide 6
+2. Oxidation이 시작되는 온도와 동일한 지점에서 PL 증가 시작
+
+Slide 7
+The WSe2 nanosheets in this study with typical thicknesses of 2−100 nm and lateral dimensions of 2−100 μm were mechanically exfoliated onto 285 nm thick SiO2 on heavily doped Si substrates. The samples were placed in a quartz tube furnace, heated up to T = 400 °C with a ramp time of 6 min, and annealed at 400 °C for a holding time of th under ambient atmosphere. The temperature was chosen such that SeO2, which sublimes above 350 °C, does not stay in the solid phase and complicate the elemental analysis shown below.
+Oxidation temperature ~ 400 °C
+2. Oxidation이 시작되는 온도와 동일한 지점에서 PL 증가 시작
+
+Slide 8
+The adsorption energy Eads of O on Sevac, referenced to atomic O, is ∼−7.1 eV, while that for Oins and Oad are −2.9 and −2.4 eV, respectively. The corresponding adsorption energies relative to molecular O2 are −1.6, −0.3, and 0.2 eV, respectively. Here, the adsorption energy relative to molecular O2 tells us about the thermodynamic stability of the O-related defect relative to gas phase O2 in ambient conditions and is an indication of the thermodynamic driving force of an O2 dissociation reaction.
+we compute an O2 dissociation barrier of 0.52 eV at Sevac.
+3. O2가 Sevac에서 O로 분해되며 O-substituted Se vacancies 가 형성되는 에너지
+KBT ~ 0.06 eV (~773K)
+
+Slide 9
+4. O-substituted Se vacancies 로 인한 defect state 변화
+Our data
+
+Slide 10
+In the case of TEM, the low threshold for electron beam-induced damage in TMDs23 makes it difficult to identify intrinsic vacancies from new vacancies created by electron beam irradiation3. Furthermore, light elements such as C and O contribute only weakly to TEM image contrast. While there is a clear difference between an extant chalcogen and a top or bottom vacancy, the difference between a chalcogen vacancy and an oxygen substitution is quite subtle51 and could only be resolved in high signal to noise images, which require correspondingly high radiation doses that introduce many new defects.
+5. STEM으로 OSe를 확인하기 힘듦
+
+Slide 11
+결론: Interface에 trap된 O2가 이동하여 defect site에 O로 결합됨.
+O2
+O2
+O2
+O2
+O
+O
+O
+O
+annealing
+Defect site에 다른 원자를 결합시킬 수 있는 테크닉으로서의 가능성?
+O의 결합에 따른 E-K diagram 계산?
+O2가 interface에서 이동할 수 있는 에너지 계산?

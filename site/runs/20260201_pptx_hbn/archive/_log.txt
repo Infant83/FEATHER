@@ -1,0 +1,18 @@
+[2026-02-01 20:43:54] JOB START: 20260201_pptx_hbn.txt date=2026-02-01 days=30 max_results=8
+[2026-02-01 20:43:54] ERROR local ingest file=201112 NCML hBN encapsulation annealing_RHJ.pptx err=FileNotFoundError(2, '지정된 경로를 찾을 수 없습니다', None, 3, None)
+[2026-02-01 20:43:54] TAVILY SEARCH: hBN encapsulation annealing (PPTX)
+[2026-02-01 20:43:59] JOB END
+[2026-02-01 20:45:58] JOB START: 20260201_pptx_hbn.txt date=2026-02-01 days=30 max_results=8
+[2026-02-01 20:45:58] ERROR local ingest file=201112 NCML hBN encapsulation annealing_RHJ.pptx err=FileNotFoundError(2, '지정된 경로를 찾을 수 없습니다', None, 3, None)
+[2026-02-01 20:45:58] TAVILY SEARCH UPDATE: 1 cached queries
+[2026-02-01 20:45:58] TAVILY SEARCH SKIP (exists): hBN encapsulation annealing (PPTX)
+[2026-02-01 20:45:58] JOB END
+[2026-02-01 20:49:29] JOB START: 20260201_pptx_hbn.txt date=2026-02-01 days=30 max_results=8
+[2026-02-01 20:49:29] TAVILY SEARCH UPDATE: 1 cached queries
+[2026-02-01 20:49:29] TAVILY SEARCH SKIP (exists): hBN encapsulation annealing (PPTX)
+[2026-02-01 20:49:29] JOB END
+[2026-02-01 20:54:38] JOB START: 20260201_pptx_hbn.txt date=2026-02-01 days=365 max_results=8
+[2026-02-01 20:54:38] TAVILY SEARCH UPDATE: 1 cached queries
+[2026-02-01 20:54:38] TAVILY SEARCH: hBN encapsulation annealing (PPTX) (English)
+[2026-02-01 20:54:43] OPENALEX SEARCH: hBN encapsulation annealing (PPTX)
+[2026-02-01 20:54:45] JOB END

@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>헥사고날 보론 나이트라이드의 혁신적 잠재력</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-custom_acs_review{--bg:#ffffff;--text:#121314;--muted:#5b616e;--panel:#f6f7f9;--panel-2:#eef0f4;--accent:#2148ff;--border:rgba(18,19,20,.12);--shadow:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);color:var(--text);background:var(--bg);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,Arial,sans-serif;line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}body.template-custom_acs_review *{box-sizing:border-box}body.template-custom_acs_review .container{width:min(1100px,92%);margin:0 auto}body.template-custom_acs_review a{color:var(--accent);text-decoration-color:color-mix(in srgb,var(--accent) 50%,transparent);text-underline-offset:2px;text-decoration-thickness:1.5px}body.template-custom_acs_review a:hover{text-decoration-color:var(--accent)}body.template-custom_acs_review .masthead{background:linear-gradient(180deg,#0b0f1a 0%,#131826 100%);color:#ecf1ff;border-radius:16px;padding:clamp(20px,4vw,48px);margin:32px auto;box-shadow:var(--shadow);position:relative;overflow:hidden}body.template-custom_acs_review .masthead::before{content:"";position:absolute;inset:0;background:radial-gradient(1200px 400px at -10% -20%,rgba(255,255,255,.06),transparent 60%),radial-gradient(800px 300px at 110% 10%,rgba(255,255,255,.05),transparent 60%);pointer-events:none}body.template-custom_acs_review .masthead .kicker{display:inline-block;padding:6px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#b8c6ff;border-radius:999px;font-weight:600;letter-spacing:.02em;font-size:.78rem;text-transform:uppercase}body.template-custom_acs_review .masthead .title{font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-weight:700;line-height:1.12;font-size:clamp(2rem,4.6vw,3.4rem);margin:14px 0 10px;letter-spacing:-.01em}body.template-custom_acs_review .masthead .deck{border-top:1px solid rgba(255,255,255,.18);margin-top:14px;padding-top:12px;color:#d6ddff;font-size:clamp(1rem,1.6vw,1.25rem);max-width:80ch}body.template-custom_acs_review .masthead .byline{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px;color:#c8d1ff;font-size:.92rem}body.template-custom_acs_review .masthead .meta .dot{width:3px;height:3px;background:currentColor;border-radius:50%;display:inline-block;margin:0 8px;opacity:.6}body.template-custom_acs_review .hero{margin-top:18px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}body.template-custom_acs_review .hero img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}body.template-custom_acs_review article.article{margin:32px auto 96px}body.template-custom_acs_review article.article .prose{width:min(760px,92%);margin:0 auto}body.template-custom_acs_review .prose p{margin:1em 0;font-size:1.02rem;color:var(--text)}body.template-custom_acs_review .prose p.lead,body.template-custom_acs_review .prose>p:first-of-type{font-size:1.12rem;color:#222630}body.template-custom_acs_review .prose>p:first-of-type::first-letter{float:left;font-family:"Noto Serif KR",serif;font-size:3.2rem;line-height:.9;padding-right:.2rem;padding-top:.1rem;color:var(--accent);font-weight:700}body.template-custom_acs_review .prose h2{font-family:"Noto Serif KR",serif;font-weight:700;margin:2.2em 0 .6em;line-height:1.26;font-size:clamp(1.4rem,2.1vw,1.9rem);letter-spacing:-.01em}body.template-custom_acs_review .prose h3{font-weight:700;margin:1.8em 0 .6em;font-size:clamp(1.18rem,1.6vw,1.35rem);color:#1c2230}body.template-custom_acs_review .prose h2+p,body.template-custom_acs_review .prose h3+p{margin-top:.4em}body.template-custom_acs_review .prose ul,body.template-custom_acs_review .prose ol{margin:1em 0 1em 1.2em}body.template-custom_acs_review .prose li{margin:.4em 0}body.template-custom_acs_review .prose blockquote{margin:1.6em auto;padding:1.2em 1.4em;background:var(--panel);border-left:4px solid var(--accent);color:#2a2f3a;border-radius:10px}body.template-custom_acs_review .prose blockquote.pullquote{font-family:"Noto Serif KR",serif;font-size:clamp(1.25rem,2.2vw,1.7rem);line-height:1.45;background:linear-gradient(180deg,#f6f8ff,#eef3ff);border:1px solid #dbe3ff;border-left:6px solid var(--accent);color:#15203b;box-shadow:0 6px 20px rgba(33,72,255,.08)}body.template-custom_acs_review .prose blockquote footer{margin-top:.6em;font-size:.9rem;color:var(--muted)}body.template-custom_acs_review .prose code{background:#f2f4f8;border:1px solid #e5e9f2;border-radius:4px;padding:.1em .35em;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.95em}body.template-custom_acs_review .prose figure{margin:1.6em auto;text-align:center}body.template-custom_acs_review .prose figure img{max-width:100%;height:auto;border-radius:12px;box-shadow:var(--shadow)}body.template-custom_acs_review .prose figcaption{margin-top:.6em;font-size:.9rem;color:var(--muted)}body.template-custom_acs_review .prose table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}body.template-custom_acs_review .prose thead th{text-align:left;background:#f3f6ff;color:#1f2a44;font-weight:700;letter-spacing:.01em;font-size:.95rem;border-bottom:1px solid #dbe3ff;padding:12px 14px}body.template-custom_acs_review .prose tbody td{padding:12px 14px;border-bottom:1px solid #edf0f5}body.template-custom_acs_review .prose tbody tr:nth-child(even){background:#fafbfe}body.template-custom_acs_review .prose tbody tr:hover{background:#f1f6ff}body.template-custom_acs_review .prose caption{caption-side:bottom;padding:10px;color:var(--muted);font-size:.9rem;text-align:left}body.template-custom_acs_review .sidebar{width:min(320px,100%);background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}body.template-custom_acs_review .sidebar .title{font-weight:700;margin:0 0 .6em;font-size:1rem}body.template-custom_acs_review .sidebar .item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px dashed #d7dae1}body.template-custom_acs_review .sidebar .item:first-child{border-top:0}body.template-custom_acs_review .hr{height:1px;background:var(--border);margin:28px 0}body.template-custom_acs_review .article .footnotes,body.template-custom_acs_review .references{border-top:1px solid var(--border);margin-top:40px;padding-top:12px;color:var(--muted);font-size:.95rem}body.template-custom_acs_review .tag{display:inline-block;padding:6px 10px;background:#eef2ff;color:#26327a;border-radius:999px;font-weight:600;font-size:.78rem;border:1px solid #dbe3ff}body.template-custom_acs_review a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}body.template-custom_acs_review .prose .callout{background:linear-gradient(180deg,#fff,#f6f7fb);border:1px solid #e7ebf3;border-radius:12px;padding:14px 16px}body.template-custom_acs_review .layout{display:block}@media (min-width:1000px){body.template-custom_acs_review .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:start}body.template-custom_acs_review .layout .prose{width:100%}}@media (max-width:640px){body.template-custom_acs_review .masthead{border-radius:12px}body.template-custom_acs_review .masthead .title{font-size:clamp(1.8rem,7vw,2.4rem)}body.template-custom_acs_review .masthead .byline{font-size:.88rem}body.template-custom_acs_review .prose table{font-size:.95rem}}
+
+  </style>
+</head>
+<body class="theme-coral template-custom_acs_review">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">헥사고날 보론 나이트라이드의 혁신적 잠재력</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>헥사고날 보론 나이트라이드의 혁신적 잠재력</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 03:45</p>
+<h2>마스트헤드</h2>
+<p><strong>과학기술</strong><br />
+<strong>하나의 소재로 열리는 신세계: 헥사고날 보론 나이트라이드(hBN)의 잠재력</strong><br />
+작성자: 2026년 2월 1일  </p>
+<h2>데크</h2>
+<p>헥사고날 보론 나이트라이드(hBN)는 새로운 전자 기기 기술의 가능성을 열며, 고온 공정에서의 특히 주목받는 소재입니다.</p>
+<h2>키 비주얼</h2>
+<p><img alt="hBN Structure" src="./images/hBN_structure.jpeg" />
+<em>헥사고날 보론 나이트라이드의 구조를 보여주는 모식도입니다.</em> [대체 텍스트: hBN의 층상 구조]</p>
+<h2>핵심 요약</h2>
+<ul>
+<li>헥사고날 보론 나이트라이드는 전자 기기의 절연체로 주목받고 있습니다.</li>
+<li>고온 공정에서의 안정성 덕분에 다양한 응용 분야에 사용될 수 있습니다.</li>
+<li>최근 연구 결과는 hBN을 활용하여 더 나은 열 및 전기적 성능을 제공하는 기기를 개발할 수 있음을 시사합니다.</li>
+<li>hBN의 구조적 특성은 고온에서도 우수한 성능을 유지하게 합니다.</li>
+<li>다양한 연구가 진행 중이며, 적용 가능성은 점점 넓어지고 있습니다.</li>
+</ul>
+<h2>본문</h2>
+<p>헥사고날 보론 나이트라이드(hBN)는 전자기기와 나노기술에서 핵심적인 소재로 자리 잡고 있습니다. 이는 주로 그래핀(graphene)과 같은 2차원 물질과의 상호작용에 기여하는 이중층 구조 덕분입니다. 최근 연구에 따르면, hBN은 우수한 절연성을 제공하며 고온에서도 안정성을 유지합니다. 이러한 특성은 나노전자소자, 광전자기기 및 고성능 전자기기의 개발에 대한 새로운 가능성을 열어 줍니다.</p>
+<p>hBN이 가진 또 다른 이점은 고온에서도 변형되지 않는다는 점입니다. 이는 열적 안정성을 요구하는 다양한 응용 분야에서 중요합니다. 특히 반도체 소자에서는 열적 및 전기적 이점을 최대한으로 활용할 수 있습니다. 예를 들어, hBN을 이용한 다양한 전자 장치들이 고열에도 불구하고 전기적 성능을 유지한다는 결과가 보고된 바 있습니다 [source].</p>
+<p>최근에는 hBN의 전자 방사와 관련된 실험이 활발하게 진행되고 있습니다. 이 소재는 특정 조건 하에서는 고효율 가시광 방사를 나타내며, 이는 잠재적인 광학 및 통신 장치의 발전에 기여할 수 있습니다. 여기에 더해, hBN의 독특한 변형 저항성과 높은 열 안정을 응용하여 초고속 및 초고밀도 데이터 저장 장치의 소재로서도 유망하다는 평가를 받고 있습니다.</p>
+<p>정리하자면, hBN은 고온 공정에 유리한 전자 기기 소재로서 그 잠재력을 계속해서 증명하고 있으며, 다양한 첨단 기술 분야에서 적용 가능성이 확대되고 있습니다. 특히 hBN은 열과 전기의 절연성, 기계적 강도 및 화학적 안정성을 가지고 있어 미래의 기술 발전에 있어 이바지할 것입니다.</p>
+<h2>사이드바 케이스</h2>
+<h3>용어 설명: 헥사고날 보론 나이트라이드(hBN)</h3>
+<ul>
+<li><strong>구조</strong>: hBN은 벌집 형태의 육방망상 구조로 구성되어 있으며, 각 층은 강한 공유 결합으로 붙어 있습니다.</li>
+<li><strong>특성</strong>: 높은 절연성, 고온 안정성, 우수한 화학적 및 열적 안정성을 가집니다.</li>
+<li><strong>응용 분야</strong>: 나노전자소자, 광전자 기기 및 고성능 전자기기 등에 활용됩니다.</li>
+</ul>
+<h2>결론/시사점</h2>
+<p>헥사고날 보론 나이트라이드(hBN)의 연구는 시작에 불과합니다. hBN은 다양한 기술 분야에서 엄청난 잠재력을 가지고 있으며, 특히 반도체와 관련한 응용 범위가 확대되고 있습니다. 향후 연구와 개발은 이를 기반으로 새로운 기술 혁신을 이끌어 낼 것입니다. 현재의 실험적 성과가 산업적 사례로 적용되기 위해서는 더욱 정밀한 연구와 검증이 필요합니다.(시사점)</p>
+<h2>참고자료</h2>
+<ol>
+<li><a href="https://www.nature.com/articles/srep30210" target="_blank" rel="noopener">\[1\]</a></li>
+<li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0169433223018664" target="_blank" rel="noopener">\[2\]</a></li>
+<li><a href="https://example.com" target="_blank" rel="noopener">\[3\]</a></li>
+</ol>
+<h2>Report Prompt</h2>
+<p>Update request:
+본문을 충실히 작성해줘. A4 3페이지 분량으로. 주제에 대한 심도있는 배경설명과 pptx에 담긴 결과를 심도있게 고찰해줘.</p>
+<p>Base report: site/runs/20260201_pptx_hbn/report_full_8.html</p>
+<p>Instructions:
+- Read the base report file and keep its structure unless the update requests a change.
+- Apply only the requested edits; avoid rewriting everything from scratch.
+- Preserve citations and update them only if you change the referenced content.</p>
+<h2>References</h2>
+<ol>
+<li>Hexagonal Boron Nitride assisted transfer and encapsulation of ... — <a href="https://www.nature.com/articles/srep30210" target="_blank" rel="noopener">link</a></li>
+<li>www.sciencedirect.com/science/article/abs/pii/S0169433223018664 — <a href="https://www.sciencedirect.com/science/article/abs/pii/S0169433223018664" target="_blank" rel="noopener">link</a></li>
+<li>example.com — <a href="https://example.com" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-03 03:45:57</li>
+<li>Duration: 00:01:09 (69.44s)</li>
+<li>Model: gpt-4o</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: custom_acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: the, 헥사고날, 보론, update, and</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_9.md-d72f66e4.html" data-viewer="report_views/report_run_overview_report_full_9.md-d72f66e4.html" data-raw="report/run_overview_report_full_9.md" class="viewer-link">./report/run_overview_report_full_9.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">./archive/20260201_pptx_hbn-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-viewer="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-raw="instruction/20260201_pptx_hbn.txt" class="viewer-link">./instruction/20260201_pptx_hbn.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_9.txt-c97156a8.html" data-viewer="report_views/instruction_report_prompt_report_full_9.txt-c97156a8.html" data-raw="instruction/report_prompt_report_full_9.txt" class="viewer-link">./instruction/report_prompt_report_full_9.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

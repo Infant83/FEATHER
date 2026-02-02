@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>양자 컴퓨팅 보고서 요약</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-acs_review">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <article class="article">
+<h1>양자 컴퓨팅 보고서 요약</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-02 00:33</p>
+<h2>Abstract</h2>
+<p>양자 컴퓨팅은 고전 컴퓨팅의 한계를 극복하고 인공지능, 암호화, 물질 과학 등의 분야에서 혁신적인 접근법을 제공하는 새로운 계산 모델이다. 이 보고서는 양자 컴퓨터의 정의, 핵심 물리 개념, 계산 모델과 하드웨어-소재 관점을 통합적으로 설명하며, 현재의 응용 분야, 도전 과제 및 미래 전망을 다룬다. 특히, 큐비트의 특성과 게이트 기반 및 어닐링 같은 계산 모델의 중요성을 강조하며, 실제 격차와 검증 필요성을 조명한다. 본 연구는 기존 기술과의 비교를 통해 양자 컴퓨팅의 과학적 및 실용적 가치를 명확히 하고, 향후 연구 방향을 제시한다.</p>
+<h2>Introduction</h2>
+<p>양자 컴퓨팅은 고전 컴퓨터가 처리하지 못하는 복잡한 문제를 해결하기 위한 혁신적인 접근법으로, 제푸 란다우(Quantum Mechanics) 원리를 기반으로 한다. 고전 컴퓨터는 비트로 정보를 처리하는 반면, 양자 컴퓨터는 큐비트(qubit)를 활용하여 훨씬 강력한 처리 능력을 발휘한다. 큐비트는 중첩(superposition)과 얽힘(entanglement) 등의 양자 특성을 통해 동시에 여러 상태를 가질 수 있어, 정보 전송과 처리의 효율성을 향상시킨다. 이 보고서는 양자 컴퓨팅의 정의와 주요 개념을 밝히고, 이를 바탕으로 최근의 발전과 응용 가능성을 탐구한다.</p>
+<h2>Current Landscape</h2>
+<p>현재 양자 컴퓨팅 연구는 크게 두 가지 접근 방식으로 나뉜다: 고전적인 큐비트 물리계와 현대적인 큐비트 구현 방식이다. 고전적인 큐비트 구현 방식에서는 초전도체(superconductors)와 이온 트랩(ion trap) 방법이 주로 활용된다. 반면, 현대적인 큐비트는 포토닉(photonic) 기술을 통해 구현된다. 각 접근 방식의 장단점은 연구자들 간의 논의적 요소로 남아 있으며, 표준화와 벤치마킹의 필요성이 강조되고 있다.</p>
+<h2>Mechanistic Insights</h2>
+<p>양자 컴퓨터는 큐비트 상태에 기반하여 작동하며, 큐비트의 상태 변화는 양자 게이트(quantum gate)와 측정(measurement) 과정을 통해 이루어진다. 오류 수정과 디코히런스 문제는 양자 컴퓨터의 성능에 중요한 영향을 미치며, 이를 극복하기 위한 연구가 활발히 진행되고 있다. 오랜 시간 동안 양자 정보가 유지되기 위해서는 안정한 큐비트 및 강력한 오류 수정 메커니즘이 필수적이다.</p>
+<h2>Applications</h2>
+<p>양자 컴퓨팅의 응용 분야는 암호 해독, 신약 개발, 복잡한 시스템의 시뮬레이션 등에 이르며 이는 고전 컴퓨터로는 불가능한 역량을 제공한다. 그러나, 현재의 양자 컴퓨터는 여전히 제한된 환경에서만 운영되며, 이러한 격차를 줄이기 위한 기술과 방법론이 추가적으로 연구되어야 한다.</p>
+<h2>Challenges</h2>
+<p>양자 컴퓨팅의 도전 과제는 크게 네 가지로 요약된다: 
+1. 스케일링: 대규모 양자 컴퓨터 구현의 어려움.
+2. 결함 및 소자 변동성: 큐비트의 안정성을 유지하기 어려움.
+3. 저온 환경에서의 통합: 기술적 요구사항이 복잡함.
+4. 컴파일 및 연결성 제약: 큐비트를 효과적으로 연결하고 통합하는 문제.</p>
+<h2>Outlook</h2>
+<p>향후 양자 컴퓨팅의 발전을 위해서는 검증이 필요한 실험과 표준화된 프로세스가 요구된다. 이를 통해 연구자들은 양자 컴퓨터의 성능을 더욱 향상시킬 수 있을 것이다. 또한, 특정 응용 분야에 대한 실증적 연구가 중요하다.</p>
+<h2>Risks &amp; Gaps</h2>
+<p>현재 양자 컴퓨팅 연구의 위험 요소로는:
+- 누락된 증거: 이전 연구에서 제시된 한계가 너무 모호하거나 불확실한 경우.
+- 제약: 고전 컴퓨터와의 비교에서 생기는 오류와 성능 격차.
+- 불확실성: 기술적 진보에 대한 신뢰도의 부족.
+이와 같은 주제들이 향후 연구에서 명확히 정리되어야 한다.</p>
+<h2>Critics</h2>
+<h3>양자 컴퓨팅의 과장된 주장</h3>
+<p>양자 컴퓨팅의 세밀한 분석에 따라 여러 분야에서의 잠재력을 강조하는 주장에 대해 회의적인 시각이 존재한다. 이들은 기술이 실제로 제공할 수 있는 성과와 그 과대 포장을 비판한다.
+- 양자 컴퓨팅이 모든 문제를 해결할 수 있다는 전망은 과장이다.
+- 기술의 발전 속도가 우리 예상을 초과하지 않을 것이라는 우려가 있다.
+- 현실적인 한계가 아직 존재하며, 이는 더욱 철저한 연구가 필요함을 나타낸다.</p>
+<h2>Appendix</h2>
+<h3>용어집</h3>
+<ul>
+<li>큐비트 (Qubit): 양자 컴퓨터의 기본 정보 단위.</li>
+<li>중첩 (Superposition): 큐비트가 동시에 여러 상태를 가질 수 있는 성질.</li>
+<li>얽힘 (Entanglement): 두 큐비트 간의 변수가 서로 연결되어 있는 상태.</li>
+</ul>
+<h3>비교표</h3>
+<table>
+<thead>
+<tr>
+<th>하드웨어</th>
+<th>장점</th>
+<th>단점</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>초전도체</td>
+<td>빠른 속도</td>
+<td>열에 민감</td>
+</tr>
+<tr>
+<td>이온 트랩</td>
+<td>높은 정확도</td>
+<td>스케일링 한계</td>
+</tr>
+<tr>
+<td>포토닉</td>
+<td>쉬운 통합</td>
+<td>낮은 처리 속도</td>
+</tr>
+</tbody>
+</table>
+<h3>참고문헌 목록</h3>
+<ol>
+<li>Bhuvaneswari R et al. "Quantum Leap: A Look at Google’s and China’s Quantum Computing Efforts" (2025). DOI: 10.55524/ijircst.2025.13.6.8</li>
+<li>Mohan K. "Cryptography &amp; Quantum Computing: Why it matters and what comes next?" (2025). DOI: 10.70121/001c.143824</li>
+<li>Yuan P, Zhang S. "Full Characterization of the Depth Overhead for Quantum Circuit Compilation" (2025). DOI: 10.22331/q-2025-05-28-1757</li>
+</ol>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: acs_review
+Depth: deep</p>
+<p>목적/범위: “what is quantum computing” 질문에 답하는 ACS 스타일 리뷰 프롬프트를 작성하라. 재료·화학 연구자 독자를 대상으로, 양자컴퓨팅의 정의(고전 대비), 핵심 물리 개념(큐비트, 중첩, 얽힘, 간섭), 계산 모델(게이트형/어닐링 등)과 하드웨어-소재 관점(초전도·이온트랩·포토닉 등)을 연결해 설명하고, 응용·한계·검증 과제를 균형 있게 정리하라. 합의된 내용과 추정/전망을 명확히 분리하고, 모든 약어는 최초 1회 정의하라.</p>
+<p>필수 섹션 산출물(섹션명 유지): Abstract(5–7문장), Introduction, Current Landscape(접근법/플랫폼을 범주화하고 근거 수준을 비교), Mechanistic Insights(큐비트 상태, 게이트/측정, 오류·디코히런스, 오류정정 개념), Applications(암호/소재과학·화학 시뮬레이션/최적화 등과 현실적 격차), Challenges(스케일링, 결함/소자 변동성, cryo/통합, 컴파일·연결성 제약), Outlook(검증 필요 실험·표준화·벤치마크), Risks &amp; Gaps(누락된 증거·제약·불확실성 명시), Critics(반대 견해/과장 비판: “short headline” + 짧은 문단 + 불릿), Appendix(용어집, 비교표, 참고문헌 목록).</p>
+<p>증거/인용 정책: 로컬 전문 텍스트/PDF(특히 “Cryptography &amp; Quantum Computing: Why it matters and what comes next?”, “Quantum Leap: A Look at Google’s and China’s Quantum Computing Efforts…”, 필요 시 “Full Characterization of the Depth Overhead…”)에서 핵심 주장에는 문장 단위 인용(저자/연도/제목) 또는 파일ID를 붙여라. Tavily 웹 검색 결과는 현재 본문 추출이 없어 직접 인용 대신 “개념 정합성 점검/정의 프레이밍” 참고로만 사용하라. 하드웨어/소재별 성능 수치, 최신 로드맵 등 추가 근거가 없으면 “공개정보 한계”로 표시하고 단정적 수치를 피하라.</p>
+<p>언어/문체: 한국어로 학술적으로 작성하되, 고유명사·논문 제목은 원문 유지. 단락 중심, 표/불릿은 최소화(Challenges, Risks &amp; Gaps, Critics, Appendix에서만 적극 활용).</p>
+<p>Language: Korean</p>
+<p>Template: acs_review
+Depth: deep</p>
+<p>목적/범위: “what is quantum computing” 질문에 답하는 ACS 스타일 리뷰 프롬프트를 작성하라. 재료·화학 연구자 독자를 대상으로, 양자컴퓨팅의 정의(고전 대비), 핵심 물리 개념(큐비트, 중첩, 얽힘, 간섭), 계산 모델(게이트형/어닐링 등)과 하드웨어-소재 관점(초전도·이온트랩·포토닉 등)을 연결해 설명하고, 응용·한계·검증 과제를 균형 있게 정리하라. 합의된 내용과 추정/전망을 명확히 분리하고, 모든 약어는 최초 1회 정의하라.</p>
+<p>필수 섹션 산출물(섹션명 유지): Abstract(5–7문장), Introduction, Current Landscape(접근법/플랫폼을 범주화하고 근거 수준을 비교), Mechanistic Insights(큐비트 상태, 게이트/측정, 오류·디코히런스, 오류정정 개념), Applications(암호/소재과학·화학 시뮬레이션/최적화 등과 현실적 격차), Challenges(스케일링, 결함/소자 변동성, cryo/통합, 컴파일·연결성 제약), Outlook(검증 필요 실험·표준화·벤치마크), Risks &amp; Gaps(누락된 증거·제약·불확실성 명시), Critics(반대 견해/과장 비판: “short headline” + 짧은 문단 + 불릿), Appendix(용어집, 비교표, 참고문헌 목록).</p>
+<p>증거/인용 정책: 로컬 전문 텍스트/PDF(특히 “Cryptography &amp; Quantum Computing: Why it matters and what comes next?”, “Quantum Leap: A Look at Google’s and China’s Quantum Computing Efforts…”, 필요 시 “Full Characterization of the Depth Overhead…”)에서 핵심 주장에는 문장 단위 인용(저자/연도/제목) 또는 파일ID를 붙여라. Tavily 웹 검색 결과는 현재 본문 추출이 없어 직접 인용 대신 “개념 정합성 점검/정의 프레이밍” 참고로만 사용하라. 하드웨어/소재별 성능 수치, 최신 로드맵 등 추가 근거가 없으면 “공개정보 한계”로 표시하고 단정적 수치를 피하라.</p>
+<p>언어/문체: 한국어로 학술적으로 작성하되, 고유명사·논문 제목은 원문 유지. 단락 중심, 표/불릿은 최소화(Challenges, Risks &amp; Gaps, Critics, Appendix에서만 적극 활용).</p>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-02 00:33:45</li>
+<li>Duration: 00:03:19 (199.94s)</li>
+<li>Model: gpt-4o-mini</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: quantum, computing, 개념, 인용, and</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-viewer="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-raw="report/run_overview_report_full.md" class="viewer-link">./report/run_overview_report_full.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_mynewtest-index.md-c735ff26.html" data-viewer="report_views/archive_mynewtest-index.md-c735ff26.html" data-raw="archive/mynewtest-index.md" class="viewer-link">./archive/mynewtest-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_generated_prompt_mynewtest.txt-fb43ada4.html" data-viewer="report_views/instruction_generated_prompt_mynewtest.txt-fb43ada4.html" data-raw="instruction/generated_prompt_mynewtest.txt" class="viewer-link">./instruction/generated_prompt_mynewtest.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-viewer="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-raw="instruction/report_prompt_report_full.txt" class="viewer-link">./instruction/report_prompt_report_full.txt</a></li>
+</ul>
+</div>
+    </article>
+  </div>
+</body>
+</html>

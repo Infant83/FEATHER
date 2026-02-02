@@ -166,7 +166,7 @@ class ReportOrchestrator:
         supporting_line_limit = 120
 
         def pack_text(text: str) -> str:
-            return helpers.truncate_text(text, pack_limit)
+            return helpers.truncate_text_middle(text, pack_limit)
 
         def cache_key(*parts: object) -> str:
             hasher = hashlib.sha256()
@@ -366,7 +366,7 @@ class ReportOrchestrator:
             if not raw_text:
                 return raw_text
             if not reducer_runner:
-                return helpers.truncate_text(raw_text, max_chars)
+                return helpers.truncate_text_middle(raw_text, max_chars)
             chunks = split_into_chunks(raw_text, reducer_chunk_chars, reducer_chunk_overlap)
             if len(chunks) > reducer_max_chunk_summaries:
                 chunks = chunks[:reducer_max_chunk_summaries]
@@ -393,7 +393,7 @@ class ReportOrchestrator:
                     source_label,
                     max_chars,
                 )
-            return helpers.truncate_text(summary, max_chars)
+            return helpers.truncate_text_middle(summary, max_chars)
 
         def apply_tool_budget(payload: str, raw_text: str, source_label: str) -> str:
             nonlocal tool_chars_used
@@ -441,7 +441,7 @@ class ReportOrchestrator:
                 )
                 text = f"{header}\n\n{reduced}{artifact_note}{note}"
             else:
-                text = helpers.truncate_text(payload, remaining)
+                text = helpers.truncate_text_middle(payload, remaining)
             tool_chars_used += len(text)
             return text
 
@@ -486,7 +486,7 @@ class ReportOrchestrator:
                 if remaining <= 0:
                     break
                 if len(entry) > remaining:
-                    entry = helpers.truncate_text(entry, remaining)
+                    entry = helpers.truncate_text_middle(entry, remaining)
                 snippets.append(entry)
                 used += len(entry)
             return "\n\n".join(snippets)
@@ -524,6 +524,19 @@ class ReportOrchestrator:
                 rel_label = path.relative_to(run_dir).as_posix()
                 payload = f"[from pdf] {rel_label}\n\n{pdf_text}"
                 return apply_tool_budget(payload, pdf_text, rel_label)
+            if path.suffix.lower() == ".pptx":
+                slide_limit = getattr(args, "max_pptx_slides", 0)
+                slide_start = 0 if start_page is None else max(0, start_page)
+                pptx_text = helpers.read_pptx_text(
+                    path,
+                    slide_limit,
+                    limit,
+                    start_slide=slide_start,
+                    include_notes=True,
+                )
+                rel_label = path.relative_to(run_dir).as_posix()
+                payload = f"[from pptx] {rel_label}\n\n{pptx_text}"
+                return apply_tool_budget(payload, pptx_text, rel_label)
             text = normalize_rel_paths(read_text_file(path, start, limit))
             rel_label = path.relative_to(run_dir).as_posix()
             payload = f"[from text] {rel_label}\n\n{text}"
@@ -789,7 +802,7 @@ class ReportOrchestrator:
             elif ratio < 1.0:
                 limit = max(min_limit, int(len(content) * ratio))
             if limit and len(content) > limit:
-                content = helpers.truncate_text(content, limit)
+                content = helpers.truncate_text_middle(content, limit)
             section["content"] = content
 
         def build_payload(sections: list[dict]) -> str:
@@ -848,7 +861,7 @@ class ReportOrchestrator:
                     if estimate_tokens(payload) <= budget:
                         return payload, True, fallback_used
             max_chars = max(1000, estimate_chars_for_tokens(budget))
-            payload = helpers.truncate_text(payload, max_chars)
+            payload = helpers.truncate_text_middle(payload, max_chars)
             return payload, True, fallback_used
 
         def is_context_overflow(exc: Exception) -> bool:
@@ -974,13 +987,13 @@ class ReportOrchestrator:
                     ", ".join(missing_sections),
                     "",
                     "Evidence notes:",
-                    helpers.truncate_text(evidence_notes, args.quality_max_chars),
+                    helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
                     "",
                     "Report focus prompt:",
                     report_prompt or "(none)",
                     "",
                     "Current report:",
-                    helpers.truncate_text(report_text, args.quality_max_chars),
+                    helpers.truncate_text_middle(report_text, args.quality_max_chars),
                 ]
             )
             repair_text = self._runner.run(
@@ -1074,7 +1087,7 @@ class ReportOrchestrator:
                     "- Preserve citations and required section headings.",
                     "",
                     f"Primary draft ({primary_label}):",
-                    helpers.truncate_text(primary_report, args.quality_max_chars),
+                    helpers.truncate_text_middle(primary_report, args.quality_max_chars),
                 ]
             )
             if secondary_report:
@@ -1082,7 +1095,7 @@ class ReportOrchestrator:
                     [
                         "",
                         f"Secondary draft ({secondary_label or 'secondary'}):",
-                        helpers.truncate_text(secondary_report, args.quality_max_chars),
+                        helpers.truncate_text_middle(secondary_report, args.quality_max_chars),
                     ]
                 )
             if primary_eval:
@@ -1093,7 +1106,7 @@ class ReportOrchestrator:
                 finalizer_parts.extend(["", "Pairwise selection notes:", notes])
             if style_hint:
                 finalizer_parts.extend(["", style_hint])
-            finalizer_parts.extend(["", "Evidence notes:", helpers.truncate_text(evidence_notes, args.quality_max_chars)])
+            finalizer_parts.extend(["", "Evidence notes:", helpers.truncate_text_middle(evidence_notes, args.quality_max_chars)])
             if template_guidance_text:
                 finalizer_parts.extend(["", "Template guidance:", template_guidance_text])
             if report_prompt:
@@ -1149,7 +1162,7 @@ class ReportOrchestrator:
                 report_prompt or "(none)",
                 "",
                 "Stage content:",
-                helpers.truncate_text(content, alignment_max_chars),
+                helpers.truncate_text_middle(content, alignment_max_chars),
             ]
             align_payload = "\n".join(align_input)
             align_notes, cached = get_cached_output(
@@ -1938,7 +1951,7 @@ class ReportOrchestrator:
             (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
             if not is_deep:
                 condensed = "\n".join(section for section in [claim_map_text, gap_text] if section)
-                evidence_for_writer = condensed or helpers.truncate_text(evidence_notes, pack_limit)
+                evidence_for_writer = condensed or helpers.truncate_text_middle(evidence_notes, pack_limit)
             else:
                 evidence_for_writer = evidence_notes
         else:
@@ -2172,7 +2185,7 @@ class ReportOrchestrator:
                 )
             return sections
 
-        condensed_evidence = condensed or helpers.truncate_text(evidence_notes, pack_limit)
+        condensed_evidence = condensed or helpers.truncate_text_middle(evidence_notes, pack_limit)
         writer_budget = resolve_writer_budget(writer_max)
         condensed_ready = bool(condensed_evidence and evidence_for_writer == condensed_evidence)
         writer_sections = build_writer_sections(evidence_for_writer)
@@ -2253,10 +2266,10 @@ class ReportOrchestrator:
                 critic_input = "\n".join(
                     [
                         "Report:",
-                        helpers.truncate_text(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
+                        helpers.truncate_text_middle(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
                         "",
                         "Evidence notes:",
-                        helpers.truncate_text(evidence_notes, args.quality_max_chars),
+                        helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
                         "",
                         "Report focus prompt:",
                         report_prompt or "(none)",
@@ -2293,13 +2306,13 @@ class ReportOrchestrator:
                 revise_input = "\n".join(
                     [
                         "Original report:",
-                        helpers.truncate_text(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
+                        helpers.truncate_text_middle(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
                         "",
                         "Critique:",
                         critique,
                         "",
                         "Evidence notes:",
-                        helpers.truncate_text(evidence_notes, args.quality_max_chars),
+                        helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
                         "",
                         "Report focus prompt:",
                         report_prompt or "(none)",
