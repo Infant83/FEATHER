@@ -19,15 +19,21 @@ except Exception:
     pptx = None
 
 try:
+    import openpyxl  # type: ignore
+except Exception:
+    openpyxl = None
+
+try:
     from bs4 import BeautifulSoup  # type: ignore
 except Exception:
     BeautifulSoup = None
 
 DOCX_AVAILABLE = docx is not None
 PPTX_AVAILABLE = pptx is not None
+XLSX_AVAILABLE = openpyxl is not None
 BS4_AVAILABLE = BeautifulSoup is not None
 
-SUPPORTED_EXTS = {".txt", ".md", ".pdf", ".docx", ".pptx", ".html", ".htm"}
+SUPPORTED_EXTS = {".txt", ".md", ".pdf", ".docx", ".pptx", ".xlsx", ".html", ".htm"}
 
 
 def is_supported(path: Path) -> bool:
@@ -77,6 +83,30 @@ def extract_text(path: Path) -> Optional[str]:
             if texts:
                 parts.append(f"Slide {idx}\n" + "\n".join(texts))
         return "\n\n".join(parts)
+    if ext == ".xlsx":
+        if not XLSX_AVAILABLE:
+            raise RuntimeError("Missing dependency: openpyxl (pip install openpyxl)")
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)  # type: ignore[attr-defined]
+        try:
+            parts: List[str] = []
+            max_sheets = 10
+            max_rows = 200
+            max_cols = 50
+            sheet_names = wb.sheetnames[:max_sheets]
+            for name in sheet_names:
+                ws = wb[name]
+                parts.append(f"[sheet] {ws.title}")
+                row_count = 0
+                for row in ws.iter_rows(values_only=True):
+                    if row_count >= max_rows:
+                        break
+                    values = ["" if value is None else str(value) for value in row[:max_cols]]
+                    if any(values):
+                        parts.append("\t".join(values))
+                    row_count += 1
+            return "\n".join(parts).strip()
+        finally:
+            wb.close()
     if ext in {".html", ".htm"}:
         return html_to_text(read_text(path))
     return None

@@ -56,7 +56,9 @@ from .readers.pdf import (
     render_pdf_pages_poppler,
     select_figure_renderer,
 )
+from .readers.docx import read_docx_text
 from .readers.pptx import extract_pptx_images, read_pptx_text
+from .readers.xlsx import read_xlsx_text
 
 
 DEFAULT_MODEL = "gpt-5.2"
@@ -4272,9 +4274,11 @@ def build_format_instructions(
         citation_instruction = pick(
             "본문에 전체 URL을 그대로 출력하지 말고 [source], [paper] 같은 짧은 링크 라벨을 사용하세요. "
             "파일 경로는 클릭 가능하도록 마크다운 링크를 우선 사용하세요. "
+            "./archive/... 같은 파일 경로를 본문에 그대로 쓰지 말고 인용만 남기세요. "
             "인용은 문장 끝에 inline으로 붙이고, 인용만 단독 줄로 두지 마세요. ",
             "Avoid printing full URLs in the body; use short link labels like [source] or [paper] instead. "
             "Prefer markdown links for file paths so they are clickable. "
+            "Do not print archive file paths verbatim in the prose; keep only the citation. "
             "Keep citations inline at the end of the sentence; do not place citations on their own line. ",
         )
     else:
@@ -5419,7 +5423,8 @@ def inject_viewer_links(html_text: str, viewer_map: dict[str, dict[str, str]]) -
 
 
 def clean_citation_labels(html_text: str) -> str:
-    return re.sub(r'(<a [^>]*>)\\\[(\d+)\]\\\s*(</a>)', r'\1[\2]\3', html_text)
+    pattern = re.compile(r'(<a\b[^>]*>)\s*\\\[(\d+)\]\\\s*(</a>)')
+    return pattern.sub(r'\1[\2]\3', html_text)
 
 
 def build_text_meta_index(
@@ -5509,6 +5514,25 @@ def build_text_meta_index(
             }
             add_meta(rel_text, payload)
 
+    tavily_search = archive_dir / "tavily_search.jsonl"
+    tavily_extract_dir = archive_dir / "tavily_extract"
+    if tavily_search.exists() and tavily_extract_dir.exists():
+        for entry in iter_jsonl(tavily_search):
+            results = entry.get("result", {}).get("results") or entry.get("results") or []
+            for item in results:
+                url = feder_tools.normalize_url(item.get("url"))
+                if not url:
+                    continue
+                safe = feder_tools.safe_filename(url)
+                for text_path in tavily_extract_dir.glob(f"*_{safe}.txt"):
+                    rel_text = f"./{text_path.relative_to(run_dir).as_posix()}"
+                    payload = {
+                        "title": item.get("title"),
+                        "source_url": url,
+                        "source": "tavily",
+                    }
+                    add_meta(rel_text, payload)
+
     web_text_dir = archive_dir / "web" / "text"
     if web_text_dir.exists():
         for text_path in web_text_dir.glob("*.txt"):
@@ -5553,6 +5577,7 @@ def build_text_meta_index(
                 continue
             title = entry.get("title") or entry.get("file_name") or Path(entry.get("source_path") or "").name
             file_ext = str(entry.get("file_ext") or "").lower()
+            raw_path = coerce_rel_path(entry.get("raw_path"), run_dir)
             payload = {
                 "title": title,
                 "source_url": entry.get("source_path"),
@@ -5560,8 +5585,10 @@ def build_text_meta_index(
                 "source": "local",
                 "extra": entry.get("file_ext"),
             }
+            if raw_path:
+                payload["raw_path"] = raw_path
             if file_ext == ".pptx":
-                payload["pptx_path"] = coerce_rel_path(entry.get("raw_path"), run_dir)
+                payload["pptx_path"] = raw_path or coerce_rel_path(entry.get("raw_path"), run_dir)
             add_meta(rel_text, payload)
 
     return meta_map
@@ -5593,6 +5620,8 @@ def build_viewer_map(
         body_html = ""
         truncated = False
         suffix = path.suffix.lower()
+        if suffix in {".pptx", ".ppt", ".docx", ".doc", ".xlsx", ".xls"}:
+            continue
         if suffix in {".md", ".markdown"}:
             text = path.read_text(encoding="utf-8", errors="replace")
             text, truncated = truncate_for_view(text, max_chars)
@@ -6804,9 +6833,27 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
         refs.append({"index": idx, "kind": kind, "target": target})
         return idx
 
+    def should_anchor_citation(target: str) -> bool:
+        lowered = target.lower()
+        if lowered.endswith((".pptx", ".ppt", ".docx", ".doc", ".xlsx", ".xls")):
+            return True
+        if lowered.endswith(".txt"):
+            extract_hints = (
+                "/archive/web/text/",
+                "/archive/openalex/text/",
+                "/archive/arxiv/text/",
+                "/archive/local/text/",
+                "/archive/supporting/web_text/",
+                "/supporting/web_text/",
+            )
+            return any(hint in lowered for hint in extract_hints)
+        return False
+
     def format_inline_citation(idx: int, target: str) -> str:
         if output_format == "tex":
             return latex_link(target, f"[{idx}]")
+        if should_anchor_citation(target):
+            return f"[\\[{idx}\\]](#ref-{idx})"
         return f"[\\[{idx}\\]]({target})"
 
     def replace_md_link(match: re.Match[str]) -> str:
@@ -6873,6 +6920,21 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
             r"\1",
             updated,
         )
+        raw_path_re = re.compile(
+            r"(?<!\]\()(?<![\w./])((?:\./)?(?:archive|instruction|report_notes|report|supporting)/[A-Za-z0-9_./-]+)"
+        )
+
+        def replace_naked_path(match: re.Match[str]) -> str:
+            raw = match.group(1)
+            trimmed = raw.rstrip(".,;:!?)]")
+            suffix = raw[len(trimmed) :]
+            if not trimmed:
+                return raw
+            norm_target = normalize_target(trimmed, "path")
+            idx = add_ref(norm_target, "path")
+            return f"{format_inline_citation(idx, norm_target)}{suffix}"
+
+        updated = raw_path_re.sub(replace_naked_path, updated)
     return updated, refs
 
 
@@ -6885,9 +6947,17 @@ def merge_orphan_citations(report_text: str) -> str:
         stripped = line.strip()
         if stripped and _CITATION_LINE_RE.fullmatch(stripped):
             if merged:
-                prefix = merged[-1].rstrip()
-                joiner = "" if prefix.endswith(("(", "[", "{")) else " "
-                merged[-1] = prefix + joiner + stripped
+                idx = len(merged) - 1
+                while idx >= 0 and not merged[idx].strip():
+                    idx -= 1
+                if idx >= 0:
+                    prefix = merged[idx].rstrip()
+                    joiner = "" if prefix.endswith(("(", "[", "{")) else " "
+                    merged[idx] = prefix + joiner + stripped
+                    if idx < len(merged) - 1:
+                        del merged[idx + 1 :]
+                else:
+                    merged.append(stripped)
             else:
                 merged.append(stripped)
             continue
@@ -7053,6 +7123,15 @@ def render_reference_section(
     by_archive = {ref.get("archive", "").lstrip("./"): ref for ref in refs_meta}
     by_url = {ref.get("url"): ref for ref in refs_meta if ref.get("url")}
     text_meta_index = text_meta_index or {}
+    extract_hints = (
+        "/archive/tavily_extract/",
+        "/archive/web/text/",
+        "/archive/openalex/text/",
+        "/archive/arxiv/text/",
+        "/archive/local/text/",
+        "/supporting/web_text/",
+        "/archive/supporting/web_text/",
+    )
     if output_format == "tex":
         lines = ["", "\\section*{References}", "\\renewcommand{\\labelenumi}{[\\arabic{enumi}]}", "\\begin{enumerate}"]
     else:
@@ -7061,6 +7140,7 @@ def render_reference_section(
         idx = entry["index"]
         kind = entry["kind"]
         target = entry["target"]
+        anchor = "" if output_format == "tex" else f"<span id=\"ref-{idx}\"></span>"
         if kind == "path":
             norm = target.lstrip("./")
             index_label = index_label_for_path(norm)
@@ -7076,7 +7156,7 @@ def render_reference_section(
                             lines.append(f"\\item {format_reference_item(item, output_format)}")
                         lines.append("\\end{itemize}")
                     else:
-                        lines.append(f"{idx}. {index_label} ({target}) — selected sources:")
+                        lines.append(f"{idx}. {anchor} {index_label} ({target}) — selected sources:")
                         for item in items[:6]:
                             lines.append(f"   - {format_reference_item(item, output_format)}")
                     continue
@@ -7108,17 +7188,29 @@ def render_reference_section(
                 ref_payload["url"] = url
             item_text = format_reference_item(ref_payload, output_format)
             pdf_path = ref_payload.get("pdf_path") if isinstance(ref_payload, dict) else None
+            raw_path = ref_payload.get("raw_path") if isinstance(ref_payload, dict) else None
+            pptx_path = ref_payload.get("pptx_path") if isinstance(ref_payload, dict) else None
+            primary_path = raw_path or pdf_path or pptx_path or target
+            hide_primary = False
+            if url and isinstance(primary_path, str) and primary_path == target:
+                lowered = primary_path.lower()
+                if any(hint in lowered for hint in extract_hints):
+                    hide_primary = True
             if output_format == "tex":
-                file_link = latex_link(target, f"\\texttt{{{latex_escape(target)}}}")
-                parts = [item_text, file_link]
+                parts = [item_text]
+                if not hide_primary:
+                    file_link = latex_link(primary_path, f"\\texttt{{{latex_escape(primary_path)}}}")
+                    parts.append(file_link)
                 if pdf_path and pdf_path != target:
                     parts.append(latex_link(pdf_path, "pdf"))
                 lines.append("\\item " + " --- ".join(parts))
             else:
-                parts = [item_text, f"[file]({target})"]
-                if pdf_path and pdf_path != target:
+                parts = [item_text]
+                if not hide_primary:
+                    parts.append(f"[file]({primary_path})")
+                if pdf_path and pdf_path not in {primary_path, target}:
                     parts.append(f"[pdf]({pdf_path})")
-                lines.append(f"{idx}. " + " — ".join(parts))
+                lines.append(f"{idx}. {anchor} " + " — ".join(parts))
         else:
             meta = by_url.get(target)
             payload = {"title": meta.get("title") if meta else None, "url": target}
@@ -7128,7 +7220,7 @@ def render_reference_section(
             if output_format == "tex":
                 lines.append(f"\\item {item_text}")
             else:
-                lines.append(f"{idx}. {item_text}")
+                lines.append(f"{idx}. {anchor} {item_text}")
     if output_format == "tex":
         lines.append("\\end{enumerate}")
     return "\n".join(lines)

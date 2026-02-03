@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import mimetypes
 from pathlib import Path
+import shutil
 from typing import Any, Iterable, Optional
 
 from .constants import INSTRUCTION_EXTS, SUMMARY_FILE_LIMIT
@@ -43,6 +45,8 @@ def list_run_dirs(root: Path, run_roots: Iterable[Path]) -> list[dict[str, Any]]
         for candidate in run_root.iterdir():
             if not candidate.is_dir():
                 continue
+            if candidate.name.startswith("."):
+                continue
             if not _is_run_dir(candidate):
                 continue
             key = str(candidate.resolve())
@@ -74,6 +78,40 @@ def list_run_dirs(root: Path, run_roots: Iterable[Path]) -> list[dict[str, Any]]
             }
     items = sorted(runs.values(), key=lambda item: item["run_rel"])
     return items
+
+
+def _find_run_root(run_dir: Path, run_roots: Iterable[Path]) -> Optional[Path]:
+    matched: Optional[Path] = None
+    for root in run_roots:
+        try:
+            run_dir.relative_to(root)
+        except ValueError:
+            continue
+        if matched is None or len(str(root)) > len(str(matched)):
+            matched = root
+    return matched
+
+
+def move_run_to_trash(root: Path, run_rel: str | None, run_roots: Iterable[Path]) -> dict[str, Any]:
+    run_dir = resolve_run_dir(root, run_rel)
+    run_root = _find_run_root(run_dir, run_roots)
+    if not run_root:
+        raise ValueError("Run folder is not under a configured run root.")
+    trash_root = run_root / ".trash"
+    trash_root.mkdir(parents=True, exist_ok=True)
+    base_name = run_dir.name
+    dest = trash_root / base_name
+    counter = 1
+    while dest.exists():
+        dest = trash_root / f"{base_name}_{counter}"
+        counter += 1
+    shutil.move(str(run_dir), str(dest))
+    return {
+        "run_rel": safe_rel(run_dir, root),
+        "trash_rel": safe_rel(dest, root),
+        "trash_abs": str(dest.resolve()),
+        "trashed": True,
+    }
 
 
 def _list_run_instruction_files(root: Path, run_dir: Path) -> list[dict[str, Any]]:
@@ -160,6 +198,13 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
             + list(run_dir.glob("_federlicht_log*.txt"))
         )
     )
+    report_meta_path = run_dir / "report_notes" / "report_meta.json"
+    report_meta: dict[str, Any] = {}
+    if report_meta_path.exists():
+        try:
+            report_meta = json.loads(report_meta_path.read_text(encoding="utf-8"))
+        except Exception:
+            report_meta = {}
     index_mds = sorted(run_dir.glob("archive/*-index.md"))
     reports = sorted(run_dir.glob("report_full*.html"))
     latest_report = max(reports, key=lambda p: p.stat().st_mtime) if reports else None
@@ -217,6 +262,14 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
         "jsonl_files": jsonl_files,
         "updated_at": iso_ts(updated_ts),
         "summary_lines": summary_lines,
+        "report_meta": {
+            "template": report_meta.get("template"),
+            "language": report_meta.get("language"),
+            "model": report_meta.get("model"),
+            "quality_model": report_meta.get("quality_model"),
+            "model_vision": report_meta.get("model_vision"),
+            "output_format": report_meta.get("output_format"),
+        },
     }
 
 

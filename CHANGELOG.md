@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0
+- Introduce **Canvas** in Federnett: open a report from File Preview, select excerpts, write update instructions, auto-generate an update prompt, and re-run Federlicht from the same workspace.
+- Replace the standalone Update Report panel with the Canvas-based revision workflow.
+- Restore run settings when reopening Past Runs (template/language/model/vision) using `report_notes/report_meta.json`.
+- Add Run Studio trash action to move whole runs to a safe trash folder.
+- Improve telemetry layout with resizable logs/preview split, collapsible logs, and clearer file preview handling for unsupported binaries (download-first).
+- Add new Federnett themes (sage/amber) and darken template editor controls for better focus.
+
 ## 0.9.0
 - Add shared input trimming across scout/plan/web/evidence/clarifier/writer payloads with priority caps to reduce context overflows.
 - Add `--max-tool-chars` to cap cumulative `read_document` output across a run (CLI/API/Federnett).

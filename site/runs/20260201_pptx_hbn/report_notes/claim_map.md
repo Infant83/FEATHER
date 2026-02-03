@@ -1,28 +1,34 @@
 Claim | Evidence | Strength | Flags
 --- | --- | --- | ---
-`archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx` (18MB) | (none) | none | no_evidence
-`archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt` (PPTX 텍스트 추출본) | (none) | none | no_evidence
-`archive/tavily_search.jsonl` (웹 결과/요약 포함) | (none) | none | no_evidence
-`archive/local/manifest.jsonl` (로컬 문서 메타) | (none) | none | no_evidence
-`archive/openalex/works.jsonl` (없음) | (none) | none | no_evidence
-`archive/arxiv/papers.jsonl` (없음) | (none) | none | no_evidence
-`archive/youtube/videos.jsonl` (없음) | (none) | none | no_evidence
-`instruction/20260201_pptx_hbn.txt` (쿼리: “hBN encapsulation annealing (PPTX)”) | (none) | none | no_evidence
-`archive/20260201_pptx_hbn-index.md` (실행 기록/산출물 인덱스) | (none) | none | no_evidence
--- | (none) | none | no_evidence
-**`archive/local/raw/...pptx`**: 원본 슬라이드(그림/도표/맥락) | (none) | none | no_evidence
-**`archive/local/text/...txt`**: 빠른 키워드 스캔/슬라이드 구조 파악용(이미 확인됨) | (none) | none | no_evidence
-(a) **hBN encapsulation + high-T anneal로 광특성 향상(디도핑/결함 억제)** | (none) | none | no_evidence
-(b) **hBN/그래핀(또는 2D) 캡슐화 공정에서 어닐링이 인터페이스 오염/버블 제거에 미치는 영향** | (none) | none | no_evidence
-이유: 최종 산출물(발표/보고서)의 “주장–그림–결론” 구조가 여기 있음. 텍스트 추출본만으로는 Figure/데이터 의미가 빠짐. | (none) | none | no_evidence
-이유: 슬라이드별 키 메시지(산화 시작 온도 ~400°C, O2 dissociation barrier 0.52 eV, Sevac adsorption energy 등) 체크리스트로 활용 가능. | (none) | none | no_evidence
-이유: “hBN encapsulation annealing로 PLQY/수명 대폭 증가, 1000°C 등” PPTX 주제와 가장 직접적으로 맞닿은 최신 축. | (none) | none | no_evidence
-이유: “캡슐화된 2D 디바이스에서 어닐링이 전기적 특성/오염/트랩에 미치는 영향”을 공정 관점에서 보강. | (none) | none | no_evidence
-이유: “전사/캡슐화 후 저온 어닐(예: 180°C)로 인터페이스 품질 개선” 같은 공정 레시피 비교 기준 제공. | (none) | none | no_evidence
-이유: hBN 성장/전사 후 어닐 조건에서 “Ar/H2 400°C가 hBN에 pitting/etching 유발” 같은 주의사항이 있어 공정 설계의 안전장치가 됨. | (none) | none | no_evidence
-이유: hBN 자체 결함/컬러센터/어닐링 분위기(Ar/O2/CH4 등)와 결함 밀도 변화 정리 → PPTX의 “다른 기체/원자를 defect에 넣을 수?” 질문에 직접적인 배경. | (none) | none | no_evidence
-이유: “h-BN encapsulation + 300°C H2/Ar 3h로 버블/오염 감소”처럼 인터페이스 개선을 위한 실무형 어닐 레시피가 명시적. | (none) | none | no_evidence
-이유: dry-transfer/스탬프 기반 제작에서 hBN 캡슐화가 언급되어 공정 흐름 비교용(단, 초록/접근성 한계 가능). | (none) | none | no_evidence
-이유: 추가로 필요한 “PPTX 내 인용 논문(예: Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330)”을 다시 찾아 아카이브에 PDF로 확보하기 위한 출발점. | (none) | none | no_evidence
-이유: 로컬 산출물(원본/텍스트) 경로·해시·수정시각 확인 → 재현/추적용. | (none) | none | no_evidence
-이유: 이번 런이 “웹 URL 다운로드 없이 검색 결과만 생성”된 상태임을 확인했고, 후속 수집(논문 PDF, OpenAlex 확장)의 작업 계획을 세우는 데 필요. | (none) | none | no_evidence
+PPTX / 로컬 프레젠테이션 | (none) | none | no_evidence
+`NCML hBN encapsulation annealing` (WSe₂ 1L, hBN 캡슐화 어닐링 메커니즘 제안 발표 자료) | (none) | none | no_evidence
+시스템 및 개요 | (none) | none | no_evidence
+1L WSe₂ 샘플에 대해 hBN 캡슐화 후 어닐링 공정(“Encapsulation annealing scheme”)을 적용하고, 300 K PL intensity map 및 AFM raw data를 활용해 계면 상태와 광응답을 매핑하는 실험 구성 제시(Slide 1). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+저온 PL 및 피크 분석 | (none) | none | no_evidence
+10 K에서 어닐링 전/후 PL 스펙트럼을 비교하며, Intervalley trion, Biexciton, Localized excitons, Negatively charged biexciton 등 여러 피크를 식별하고 FWHM 값(예: 31, 39, 19, 22, 46, 61, 65, 78, 95, 52 meV)을 명시하여 선폭과 피크 구성 변화를 정량적으로 논의. | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+어닐 후 특정 국소준위 피크(L1, L2)는 감소하고(L1 감소, L2 감소), 다른 피크(L3, L4, L5)는 증가한다고 기술함으로써, 어닐링이 결함 관련 발광 채널의 상대적 기여를 재분배함을 시사(Slide 2). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+W annealing vs WO annealing 항목을 병기하여, 산소가 포함된 분위기와 포함되지 않은 분위기를 구분하는 실험 설계 혹은 계획이 있음을 암시(Slide 2, “W annealing / WO annealing”). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+외부 문헌 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330을 intervalley trion, biexciton, localized exciton, negatively charged biexciton 피크 할당의 레퍼런스로 인용하나, 해당 논문 본문은 현재 아카이브에 존재하지 않음(“원문 미확보”로 취급 필요). | archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx | low | -
+피크 할당의 신뢰성 향상을 위해 “It is needed to measure power dependent PL for peak assigning.”라는 메모를 포함하여, 향후 power-dependent PL 측정을 통한 피크 기원 검증 필요성을 명시(Slide 2). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+메커니즘 제안 및 에너지 장벽 | (none) | none | no_evidence
+“Mechanism proposal” 슬라이드에서 hBN 캡슐화 어닐링 중 산소 관련 결함화 과정을 중심으로 한 메커니즘 도식을 별도 제안(도식 내용은 텍스트 추출에 미포함이므로 도형 기반 해석 필요, Slide 3). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+전형적인 chalcogen vacancy(Se vacancy 등)의 migration barrier가 2.3 eV로 계산되었다고 명시하고, 이 장벽은 상온 열평형 조건에서는 유의미한 확산이 거의 없을 정도로 높지만, TEM 조건처럼 energetic electron bombardment 하에서는 vacancy 이동 가능성이 커질 수 있다고 설명(Slide 5). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+k_BT ~ 0.06 eV at ~773 K (~500 ℃)라는 수치를 제시해, 수백 ℃ 레짐에서 열에너지 스케일을 정량적으로 제시하고 어닐링 온도와 결함 이동/산화 개시 조건을 연결할 수 있는 기준값으로 사용(Slide 5, 8에 반복). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+산화 온도 및 산화–PL 상관 | (none) | none | no_evidence
+외부 문헌 조건을 인용하여, WSe₂ nanosheets(두께 2–100 nm, lateral 2–100 μm)를 SiO₂/Si 위에 exfoliation 후 quartz tube furnace에서 400 ℃까지 6분 동안 램핑하고, ambient atmosphere에서 400 ℃에서 일정 시간 유지(th)하는 산화 실험 프로토콜을 소개(Slide 7). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+SeO₂는 350 ℃ 이상에서 승화하므로 400 ℃에서 solid phase로 남아 분석을 방해하지 않도록 온도를 선택했다고 언급하여, 산화·승화 균형에 기반한 온도 설정 rationale을 제공(Slide 7). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+“Oxidation temperature ~ 400 ℃”라고 명시하고, PL intensity 증가가 시작되는 온도가 산화가 시작되는 온도와 동일한 지점에서 관찰된다는 문장을 두 번 반복하여, 산화 개시와 PL 향상 사이의 경험적 상관 관계를 핵심 포인트로 강조(Slides 6, 7: “2. Oxidation이 시작되는 온도와 동일한 지점에서 PL 증가 시작”). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+산소 흡착/해리 및 결함화 DFT 데이터 | (none) | none | no_evidence
+O 관련 결함(Sevac, O_ins, O_ad)에 대한 adsorption energy를 제시: 원자 O 기준으로 E_ads(O on Sevac) ≈ −7.1 eV, O_ins ≈ −2.9 eV, O_ad ≈ −2.4 eV; 분자 O₂ 기준으로 각각 −1.6, −0.3, 0.2 eV로 제시하여, O 관련 결함 상태들의 열역학적 안정성과 O₂ 해리 반응 구동력을 정량적으로 비교(Slide 8). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+“we compute an O₂ dissociation barrier of 0.52 eV at Sevac.”라고 명기하여, Se vacancy에서 O₂ 분자가 해리되어 O-substituted Se vacancy로 전환되는 반응의 활성화 장벽이 상당히 낮은 편임을 시사(Slide 8). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+요약 문장 “O₂가 Sevac에서 O로 분해되며 O-substituted Se vacancies가 형성되는 에너지”라는 설명과 함께, 고온에서 k_BT ~ 0.06 eV 수준임을 다시 제시해, 0.52 eV 장벽이 수백 ℃ 어닐링 조건에서 충분히 극복 가능한 범위라는 논리를 뒷받침(Slide 8). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+결함 상태 및 PL 변화 | (none) | none | no_evidence
+“O-substituted Se vacancies로 인한 defect state 변화”라는 문구와 함께 “Our data”를 배치해, 실제 측정된 PL 혹은 전자 구조 데이터가 O 치환된 Se vacancy에 의해 유도되는 defect level 변화를 지지한다는 주장 구조를 제시(Slide 9). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+TEM/STEM 관점에서, TMD에서 electron beam-induced damage threshold가 낮아 내재적 vacancy와 electron beam에 의해 새로 생성된 vacancy를 구분하기 어렵고, C/O와 같은 경원소는 TEM 대비에서 신호가 약해 chalcogen vacancy와 O substitution을 구분하기가 매우 어렵다는 점을 상세히 서술(Slide 10). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+특히 chalcogen 존재, top/bottom vacancy, O substitution의 이미지 대비 차이가 미세하여, 고 S/N 이미지를 얻기 위해 필요한 높은 electron dose가 오히려 새로운 결함을 생성하는 trade-off를 지적함으로써, STEM으로 OSe 결함을 직접 식별하는 데 본질적인 난제를 강조(Slide 10: “STEM으로 OSe를 확인하기 힘듦”). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+최종 메커니즘 카툰 및 확장 아이디어 | (none) | none | no_evidence
+결론 슬라이드에서 “Interface에 trap된 O₂가 이동하여 defect site에 O로 결합됨.”이라고 정리하며, hBN–WSe₂ 계면에 포획된 O₂ 분자가 어닐링 동안 defect site로 확산/이동해 O-substituted vacancy를 형성하는 시나리오를 제안(Slide 11). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+도식 안에 O₂, O 등의 기호와 “annealing” 라벨이 반복적으로 등장해, 계면에서의 O₂ 트랩 → 어닐링 동안 defect site로 확산 → O substitution 형성이라는 단계적 그림을 제공(Slide 11). | archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx | low | -
+“Defect site에 다른 원자를 결합시킬 수 있는 테크닉으로서의 가능성?”, “O의 결합에 따른 E–k diagram 계산?”, “O₂가 interface에서 이동할 수 있는 에너지 계산?” 등의 노트가 포함되어 있어, O 이외의 원자 도핑, 밴드 구조 계산, 계면 O₂ 확산 장벽 계산 등 후속 이론·실험 연구 방향을 제안하는 speculative 아이디어가 명시(Slide 11). | archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt | high | -
+메타 정보 및 데이터 출처 | (none) | none | no_evidence
+아카이브 인덱스에는 본 프레젠테이션이 로컬 파일 `201112 NCML hBN encapsulation annealing_RHJ.pptx`에서 유래하며, 텍스트 추출본이 `./local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt`로 저장되어 있다는 메타데이터가 기록되어 있어, 리뷰 서두에서 데이터 출처를 명시할 근거를 제공. | archive/20260201_pptx_hbn-index.md; ./local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt`로 | high | -

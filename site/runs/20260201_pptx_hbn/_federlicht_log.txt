@@ -289,3 +289,16 @@ hBN의 구조적 특성은 고온에서도 우수한 성능을 유지하게 합�
 hBN이 가진 또 다른 이점은 고온에서도 변형되지 않는다는 점입니다
 ... [truncated]
 [2026-02-03 03:45:57] JOB END
+[2026-02-03 19:46:49] JOB START
+[2026-02-03 19:55:23] Report Preview: hBN 캡슐화 1L WSe₂ 어닐링에 따른 PL·결함 변화
+Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 19:55
+Executive Summary
+이 보고서는 로컬 프레젠테이션 “NCML hBN encapsulation annealing”을 1차 근거로, 1L WSe₂를 hBN으로 캡슐화한 뒤 어닐링(annealing)을 수행했을 때 광발광(PL), 결함, 도핑, 산화 거동이 어떻게 변하는지를 재구성해 정리한다.
+\[1\]
+핵심 가설은 (1) hBN–WSe₂ 계면에 트랩된 O₂가 어닐링 동안 결함 사이트(특히 Se vacancy)로 확산·해리되어 O‑substituted Se vacancy(OSe)를 형성하고, (2) 이 과정이 PL 피크 구성과 강도, 선폭에 체계적 변화를 유도한다는 것이다.
+\[2\]
+이를 지지하는 증거로 저온(10 K) PL 스펙트럼의 피크 분해 및 어닐 전/후 피크 강도 재분배, 산화 개시 온도(~400 ℃)와 PL 증가 온도의 일치, O 관련 결함에 대한 DFT adsorption energy 및 O₂ dissociation barrier(0.52 eV), chalcogen vacancy migration barrier(2.3 eV) 계산값이 제시된다.
+\[2\]
+다만 PLQY·lifetime 등 정량 광학 지표와 in situ 구조 분석은 제공되지 않으며, 피크 할당도 Nanotechnology 28 (2017) 395702, Nat. Commun. 10 (2019) 2330
+... [truncated]
+[2026-02-03 19:55:24] JOB END

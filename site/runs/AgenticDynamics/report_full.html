@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>다중에이전트 강화학습의 한계와 게임·진화동학</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-technical_deep_dive {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-technical_deep_dive">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">다중에이전트 강화학습의 한계와 게임·진화동학</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>다중에이전트 강화학습의 한계와 게임·진화동학</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-04 05:04</p>
+<h2>Executive Summary</h2>
+<ul>
+<li>핵심 주장</li>
+<li>표준 강화학습(RL)은 상호의존성과 환경 비정상성(non-stationarity)로 인해 다중 에이전트 시스템(MAS)에서 자주 실패하며, 상호의존성을 모델링하기 위해 게임이론을 도입해야 한다는 주장을 전개합니다(전사 [01:26–01:39], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>진화게임이론(EGT)의 핵심 규칙은 “집단 내 한 전략의 성장률은 그 전략의 기대 보상이 집단 평균 보상을 초과하는 정도에 비례”하며 “what works gets replicated”라는 원리입니다(전사 [08:00–08:14], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>“Survival of the flattest”: 변이·잡음·환경 변동이 존재할 때 효율 최적(optimal)보다 “평탄하고(resilient) 변동에 둔감한” 전략이 장기적으로 생존에 유리할 수 있습니다(전사 [09:11–09:16], [12:19–12:41], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>무한 집단·무변이 가정의 수학적 모델은 현실성을 잃기 쉬우며, 유한 집단과 변이를 허용하는 agent-based 모델이 필요합니다(전사 [08:34–08:59], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>완전 예측의 불가능성: Turing halting problem으로 인해 복잡한 에이전트 동학에 대한 “complete prediction”은 원리적으로 제한됩니다(전사 [14:55–15:32], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>근거 강도 라벨</li>
+<li>위 주장들은 모두 단일 1차 소스(YouTube 강연 전사) 직접 인용에 기반하며, 정량 수치·코드·그래프 등 외부 실증 근거는 전사에 부재합니다(정량 근거 부재; 전사 헤더에는 Slides/GitHub 언급이 있으나 콘텐츠 미수집, <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>즉시 실행 가능한 검증 과제</li>
+<li>유한 집단·비영(非零) 변이율 조건에서 반복 게임(예: PD) 기반의 replicator-like 동역학 시뮬레이션을 설계하여 “flattest vs optimal” 전략의 점유율·안정성·회복탄력성을 변이율/노이즈 스윕으로 비교(제안).</li>
+<li>오인식 확률과 돌연변이를 도입한 반복 죄수의 딜레마에서 Tit-for-Tat(TFT)의 장기 누적 보상과 파레토 프론티어 위치를 다른 전략군(Always Cooperate/Defect, Win-Stay-Lose-Shift 등)과 비교(전사 [10:41–11:04] 전제 확인; 제안, <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>MARL 베이스라인(독립 학습 vs 중앙 가치함수, opponent modeling) 간 비정상성·정책 이동(shift) 지표 비교로 “표준 RL 한계” 명제 재현(제안).</li>
+</ul>
+<h2>Scope &amp; Methodology</h2>
+<ul>
+<li>사용 소스</li>
+<li>1차 본문: YouTube 전사 “Game Theory and the Dynamics of Complex Agentic Systems” (파일 헤더에 제목/URL/채널/게시일/Slides·GitHub 언급 포함, <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>메타/인덱스: <a href="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-viewer="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-raw="instruction/AgenticDynamics.txt" class="viewer-link">[2]</a>, <a href="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-viewer="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-raw="archive/AgenticDynamics-index.md" class="viewer-link">[3]</a>, <a href="report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="report_views/report_notes_source_index.jsonl-69956240.html" data-raw="report_notes/source_index.jsonl" class="viewer-link">[4]</a>, <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[5]</a>는 경로·범위 확인용이며, 본문 인용에는 사용하지 않았습니다.</li>
+<li>분석 절차</li>
+<li>논지 맵: 전사 1차 패스 후 핵심 앵커(RL 한계, 게임이론/EGT, replicator dynamics, ESS, survival of the flattest, finite population &amp; mutation, halting problem)로 2차 스캔.</li>
+<li>용어·수식 정리: EGT·replicator·ESS를 표준 표기와 함께 정리(일반 배경설명).</li>
+<li>주장-증거 매핑: 각 주장에 해당하는 전사 인용구와 타임스탬프를 연결.</li>
+<li>검증 필요 항목 도출: 정량 근거 부재 영역을 실험 설계(시뮬레이션/파라미터 스윕/지표 정의)로 보완(해석).</li>
+</ul>
+<h2>Technical Background</h2>
+<h3>MAS와 게임(인센티브/제약)</h3>
+<ul>
+<li>게임은 “규칙의 집합”으로, 인센티브·제약·에이전트의 허용된 행위를 명시해 상호작용 구조를 모델링합니다(전사 [05:36–05:57], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>). MAS에서는 이러한 규칙이 상호의존성과 비정상성을 유발합니다(해석).</li>
+</ul>
+<h3>RL vs 게임이론</h3>
+<ul>
+<li>발표자는 “대부분의 에이전트 시스템이 표준 RL에서 실패한다”고 진단하며, 상호의존성을 모델링하기 위해 게임이론을 도입해야 한다고 제안합니다(전사 [01:26–01:39], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>). RL은 고정적 보상·정적 환경 가정에서 강하지만, 상대 정책 변화와 상호작용 네트워크가 만들 비정상성에는 취약합니다(해석).</li>
+</ul>
+<h3>진화게임이론(EGT)와 Replicator Dynamics</h3>
+<ul>
+<li>핵심 원리: “전략 성장률 ∝ 전략 보상 − 평균 보상”(전사 [08:00–08:14], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>표준 연속시간 방정식(일반 배경):</li>
+<li>$\dot{x}_i = x_i \big[(A x)_i - x^\top A x\big]$, 여기서 $x$는 전략 분포, $A$는 보상행렬, $x^\top A x$는 평균 보상.</li>
+<li>대표 이산시간 형태(일반 배경):</li>
+<li>$x_i(t{+}1) = x_i(t)\,\dfrac{(A x(t))_i}{x(t)^\top A x(t)}$.</li>
+<li>직관: 평균보다 잘하는 전략이 증식하고, 그렇지 못한 전략은 감소합니다. 단, 변이·잡음·유한 집단에서는 비선형 동학과 표류가 발생합니다(해석).</li>
+</ul>
+<h3>ESS(Evolutionarily Stable Strategy)</h3>
+<ul>
+<li>“이론상 최적이 반드시 안정적이지 않다… ESS는 많은 과정을 거친 뒤 남는 것”이라는 설명은, 침입 변이에 견디는 전략 안정성 개념을 강조합니다(전사 [03:54–04:08], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h3>Survival of the Flattest</h3>
+<ul>
+<li>변이와 환경변동 하에서는 “가장 평탄한(=민감도 낮고 회복탄력성이 큰) 전략이 가장 회복력 있다”는 직관을 제시합니다(전사 [09:11–09:16], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>). 발표자는 quasi-species 사례에서 “상대적으로 비효율적이지만 매우 안정적”인 군집을 언급합니다(전사 [12:19–12:41], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h2>Methods &amp; Data</h2>
+<h3>모델 가정 및 접근</h3>
+<ul>
+<li>“순수 수학적 접근은 무한 집단과 무변이를 가정하지만 비현실적이며, agent-based 모델은 유한 집단과 변이를 도입할 수 있다”는 전환이 제안됩니다(전사 [08:34–08:59], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>). 이는 시뮬레이션 기반 검증과 파라미터 스윕의 필요성을 의미합니다(해석).</li>
+</ul>
+<h3>사례·알고리즘·워크플로(전사에 기초)</h3>
+<ul>
+<li>전략군 예시와 “Tit-for-Tat(TFT)가 장기적으로 가장 효율적”이라는 주장은 반복 게임 실험 문헌을 암시하나, 전제 조건으로 “저변이·저가변성”을 명시합니다(전사 [10:41–11:04], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>발표자는 “two papers”와 “evolutionary game theory using agentic based methods”라는 케이스 스터디를 언급하지만, 서지·데이터·코드는 전사에 구체화되어 있지 않습니다(전사 [10:12–10:30], [11:49–12:07], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h3>공개정보 한계와 추가 수집 요구</h3>
+<ul>
+<li>전사 헤더는 Slides(GDrive)와 GitHub(lselector/seminar)를 가리키지만, 본 아카이브에는 슬라이드/코드 본문이 수집되어 있지 않습니다(전사 헤더 요약, <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>재현을 위한 필수 수집 항목(제안):</li>
+<li>슬라이드 원본(pptx)와 보상행렬·그래프·실험 파라미터(집단 크기, 변이율, 오인식 확률, 상호작용 topology, 관측 기간).</li>
+<li>GitHub 코드와 실행 워크플로(의존성, 시드, 평가 지표).</li>
+<li>“two papers” 및 “systematic review”의 정확 서지(저자/연도/장소)(전사 [16:37–17:02], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+</ul>
+<h2>Results &amp; Evidence</h2>
+<p>다음 표는 주장별 관측(전사)과 근거 성격을 구분해 정리합니다. 정량 수치가 제시되지 않은 경우 “정량 근거 부재”로 표기했습니다.</p>
+<table>
+<thead>
+<tr>
+<th>주장</th>
+<th>관측/인용(전사)</th>
+<th>근거 성격</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>표준 RL의 한계와 게임이론 도입</td>
+<td>“most agent systems fail with standard reinforcement learning… Use of game theory to model interdependencies.”(전사 [01:26–01:39], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>)</td>
+<td>정성 진술, 정량 근거 부재</td>
+<td>사례·지표·데이터 미제시</td>
+</tr>
+<tr>
+<td>Replicator 규칙</td>
+<td>“growth rate… proportional to how much its payoff exceeds the average payoff… what works gets replicated.”(전사 [08:00–08:14], [source])</td>
+<td>이론 서술, 정량 근거 부재</td>
+<td>표준식으로 요약 가능(해석)</td>
+</tr>
+<tr>
+<td>유한 집단·변이의 필요</td>
+<td>“pure mathematical… assumes infinite population and zero mutation… Agent based models allow… finite population and mutations.”(전사 [08:34–08:59], [source])</td>
+<td>방법론 제안, 정량 근거 부재</td>
+<td>ABM 도입 필요(해석)</td>
+</tr>
+<tr>
+<td>Survival of the flattest</td>
+<td>“the flattest strategy is the one that is the most resilient.”(전사 [09:11–09:16], [source]); “quasi species… highly stable yet relatively inefficient.”(전사 [12:19–12:41], [source])</td>
+<td>정성 진술, 정량 근거 부재</td>
+<td>안정성-효율 트레이드오프 가설(해석)</td>
+</tr>
+<tr>
+<td>Tit-for-Tat 효율(전제 부가)</td>
+<td>“tit for tat… shown to be most efficient… assumes low mutation and low variability.”(전사 [10:41–11:04], [source])</td>
+<td>문헌 요약형 진술, 정량 근거 부재</td>
+<td>전제 조건 민감(해석)</td>
+</tr>
+<tr>
+<td>계산비용</td>
+<td>“incredibly computationally demanding… just running… is… expensive.”(전사 [13:26–13:53], [source])</td>
+<td>운영 상 제약 진술</td>
+<td>규모·자원 추정치 부재</td>
+</tr>
+<tr>
+<td>예측 불가성</td>
+<td>“halting problem… complete prediction… limited by solvable problems.”(전사 [14:55–15:32], [source])</td>
+<td>개념적 근거</td>
+<td>설계 가드레일 필요(해석)</td>
+</tr>
+</tbody>
+</table>
+<p>종합하면, 발표 내용은 문제 제기와 방법론적 직관을 제공하나, 재현 가능한 정량 결과나 코드·데이터는 전사에 부재합니다(해석).</p>
+<h2>Limitations &amp; Open Questions</h2>
+<ul>
+<li>재현성: 슬라이드·코드·보상행렬·파라미터(집단 크기/변이/노이즈) 부재로 핵심 명제(“flattest 우월”, “TFT 효율”)의 정량 재현이 불가합니다(전사 전반; <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>스케일링/비용: 다에이전트·장시간 시뮬레이션의 계산비용이 높아 실험 설계에 제약(전사 [13:26–13:53], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>모델 가정: 무한 집단/무변이 vs 유한 집단/변이 사이에서 어떤 매개변수가 현실 MAS를 가장 잘 근사하는지 불명확합니다(전사 [08:34–08:59], [source]). 변이율·탐색정책·관측오차·상호작용 topology의 민감도 분석이 필요합니다(추론).</li>
+<li>관측가능성/예측가능성: halting problem으로 완전 예측 불가. 운영 관점에서는 실시간 모니터링과 위험 제한자(가드레일) 설계가 요구됩니다(전사 [14:55–15:32], [source]; 제안).</li>
+<li>윤리/안전: “runaway experiment” 우려와 사회적 민감성 언급(전사 [14:17–14:35], [source]). 연구 거버넌스·중단 기준·샌드박스가 필요합니다(제안).</li>
+</ul>
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li>미확인 참조문헌: “two papers”, “systematic review” 언급이나 서지·링크가 전사에 구체화되지 않음(전사 [10:12–10:30], [16:37–17:02], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>).</li>
+<li>개념→실증 갭: flattest 가설·TFT 효율·ABM 필요성은 정성 진술 위주이며, 구체 실험 설정·수치·신뢰구간·검정이 결여됨.</li>
+<li>적용 제약: 보상 구조, 상호작용 그래프, 정보 비대칭, 관측잡음 등 맥락에 따른 외삽 가능성 불명.</li>
+<li>검증 누락: 변이율/잡음 강도/오인식 확률/집단 크기/초기분포에 대한 체계적 스윕과 공개 재현 코드가 없음.</li>
+<li>운영 리스크: 고비용·장시간 실험의 중단·재개 전략과 메트릭(안정성, 회복탄력성, non-stationarity 지표) 미정의.</li>
+</ul>
+<h2>Critics</h2>
+<ul>
+<li>헤드라인: “MARL은 이미 다에이전트 상호의존성을 다루는 기법을 축적 중이며, 게임이론 일반화에는 과잉범주화 위험이 있다”</li>
+<li>요지: CTDE, opponent modeling, population-based training, equilibrium-regularized 업데이트 등은 비정상성 완화를 목표로 발전 중입니다. 게임이론은 강력한 프레임이지만 모든 도메인에 필요충분하지 않을 수 있고, flattest 우위는 변이·노이즈·탐색정책에 민감합니다(해석).</li>
+<li>논점<ul>
+<li>일부 도메인(네고시에이션, 전력시장, 광고경매 등)에서는 MARL 실무 성과가 확인되고 있어 “표준 RL의 광범위한 실패”는 과장일 수 있음(해석).</li>
+<li>TFT 효율은 저변이·저가변성 전제 하에서만 성립할 가능성이 높으며, 조건 변화 시 다른 전략(WSLS 등)이 우세할 수 있음(전사 [10:41–11:04]의 전제와 합치, <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>; 해석).</li>
+<li>halting problem은 원리적 한계이나, 엔지니어링 관점에서는 모델 축약, 안전 가드레일, 불변량 기반 모니터링으로 실용적 통제가 가능할 수 있음(해석).</li>
+</ul>
+</li>
+</ul>
+<h2>Appendix</h2>
+<h3>인용 전사 구절(발췌)</h3>
+<ul>
+<li>“most agent systems fail with standard reinforcement learning… Use of game theory to model interdependencies.”(전사 [01:26–01:39], <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">[1]</a>)</li>
+<li>“The growth rate of a strategy… proportional to… payoff exceeds the average payoff… what works gets replicated.”(전사 [08:00–08:14], [source])</li>
+<li>“assumes infinite population and zero mutation… Agent based models allow… finite population and mutations.”(전사 [08:34–08:59], [source])</li>
+<li>“Survival of the flattest… the flattest strategy is… most resilient.”(전사 [09:11–09:16], [source])</li>
+<li>“tit for tat… most efficient… assumes low mutation and low variability.”(전사 [10:41–11:04], [source])</li>
+<li>“quick case study… evolutionary game theory using agentic based methods… links… in the end of the slides.”(전사 [11:49–12:07], [source])</li>
+<li>“quasi species… highly stable yet relatively inefficient.”(전사 [12:19–12:41], [source])</li>
+<li>“incredibly computationally demanding… just running… is… expensive.”(전사 [13:26–13:53], [source])</li>
+<li>“halting problem… complete prediction… limited by solvable problems.”(전사 [14:55–15:32], [source])</li>
+<li>“touchy and tabooish in certain circles.”(전사 [14:17–14:35], [source])</li>
+<li>전사 헤더: Slides on GDrive, GitHub(lselector/seminar) 언급(파일 헤더 요약부, [source])</li>
+</ul>
+<h3>용어/기호 표(간단)</h3>
+<ul>
+<li>MAS: 상호작용하는 다수 에이전트로 이루어진 시스템. 상호의존성으로 인해 비정상성이 빈발(일반 배경설명).</li>
+<li>게임/인센티브/제약: 규칙 집합을 통해 보상·제약·허용행위를 명시(전사 [05:36–05:57], [source]).</li>
+<li>Replicator dynamics: $\dot{x}_i = x_i\big[(Ax)_i - x^\top A x\big]$ 또는 $x_i(t{+}1) = x_i(t)\frac{(A x(t))_i}{x(t)^\top A x(t)}$(일반 배경설명).</li>
+<li>ESS: 소수 침입 변이에 대해 자신을 방어하는 전략 안정성(전사 [03:54–04:08], [source]).</li>
+<li>Survival of the flattest: 효율 최적보다 변동에 둔감한 평탄·강건 전략이 장기 생존에 유리(전사 [09:11–09:16], [12:19–12:41], [source]).</li>
+</ul>
+<h3>추가 수집 쿼리 초안(슬라이드/코드/서지 추적)</h3>
+<ul>
+<li>“Game Theory and the Dynamics of Complex Agentic Systems slides” site:github.com lselector/seminar pptx</li>
+<li>“evolutionary game theory using agentic based methods” Maxim Yakimenko quasi-species</li>
+<li>“survival of the flattest” quasi-species EGT finite population mutation rate</li>
+<li>“systematic review” agent-based system dynamics evolutionary game theory multi-agent reinforcement learning</li>
+</ul>
+<h3>재현 체크리스트(요구 데이터)</h3>
+<ul>
+<li>보상행렬/상호작용 topology/초기분포/집단 크기/변이율/오인식 확률/학습·평가 에폭 수.</li>
+<li>시드·반복 수·신뢰구간 산출법.</li>
+<li>지표: 평균 보상, 정책 이동량(Δπ), 다양성(Shannon), 회복탄력성(충격 후 복귀 시간), 안정성(점유율 분산).</li>
+<li>코드/환경: 버전 고정, 실행 스크립트, 로그·스냅샷 공개.</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: technical_deep_dive<br />
+Depth: normal  </p>
+<p>목적/범위: Run ID ‘AgenticDynamics’ 아카이브에 수집된 자료를 근거로, YouTube 강연 “Game Theory and the Dynamics of Complex Agentic Systems”(<a href="https://www.youtube.com/watch?v=nm-OnKyBNbk)의" target="_blank" rel="noopener">https://www.youtube.com/watch?v=nm-OnKyBNbk)의</a> 핵심 기술 주장(다중 에이전트 시스템/표준 RL의 한계, 게임이론·진화게임이론(EGT)·replicator dynamics·ESS, “survival of the flattest”, 예측불가능성/halting problem 관련 논지)을 R&amp;D 리더/도메인 전문가 관점에서 방법 중심으로 검토하는 기술 보고서를 작성하라. 현재 아카이브 내 1차 콘텐츠는 전사 1개뿐이므로, 외부 논문/슬라이드/GitHub 내용은 ‘공개정보 한계’로 명시하거나 “추가 수집 필요”로 처리하라.  </p>
+<p>핵심 포함 항목(섹션별 요구):<br />
+- Executive Summary: 주장 3~5개, 근거 강도(전사 기반/추정) 라벨링, 즉시 실행 가능한 검증 과제 2~3개.<br />
+- Scope &amp; Methodology: 사용 소스(전사 파일, videos.jsonl 메타), 분석 절차(논지 맵→용어/수식 정리→주장-증거 매핑→검증 필요 항목 도출).<br />
+- Technical Background: MAS, incentives/constraints, EGT, replicator dynamics, ESS를 정의하고 RL 접근과 대비. 필요 시 핵심 방정식/표기 포함.<br />
+- Methods &amp; Data: 강연에서 제시된 “two papers”, 사례/실험, 알고리즘/워크플로가 전사에서 충분히 특정되는지 점검. 특정 불가 시 ‘공개정보 한계’와 추가 데이터(슬라이드/GitHub/논문 서지) 요구사항 명시.<br />
+- Results &amp; Evidence: 정량 결과/실험 주장만 분리해 표로 정리(무엇이 관측/무엇이 해석인지 구분). 전사에 수치가 없으면 “정량 근거 부재”로 기록.<br />
+- Limitations &amp; Open Questions: 재현성, 스케일링, 가정(무한/유한 집단, mutation 등), 관측가능성 한계.<br />
+- Risks &amp; Gaps: 검증 누락, 적용 제약, 미확인 참조문헌, 개념적 점프를 구체적으로 지적. 해당 없으면 Not applicable+사유.<br />
+- Critics: 반대 관점(예: RL의 대안적 성공사례, 게임이론 적용의 과잉일반화)을 헤드라인+요약+불릿으로. 근거 부족 시 Not applicable+사유.<br />
+- Appendix: 인용한 전사 구절, 용어/기호 표, 추가 수집 쿼리 초안(슬라이드/GitHub/“two papers” 추적).  </p>
+<p>증거/인용 정책: 1차 인용은 전사 파일에서 직접 인용(짧은 인용문+파일명). videos.jsonl은 링크/메타 확인용으로만 사용. 아카이브 밖 자료는 현재 미수집이므로 단정 금지; 필요 시 “추가 수집 필요”로 표시. 경험적 결과와 추측을 명확히 분리하라.  </p>
+<p>언어 지시: 전체 한국어로, 고유명사/영상 제목/리포지토리명은 원문 표기 유지. 톤은 기술적·정밀·방법 중심.</p>
+<p>Language: Korean</p>
+<p>Template: technical_deep_dive<br />
+Depth: normal  </p>
+<p>목적/범위: Run ID ‘AgenticDynamics’ 아카이브에 수집된 자료를 근거로, YouTube 강연 “Game Theory and the Dynamics of Complex Agentic Systems”(<a href="https://www.youtube.com/watch?v=nm-OnKyBNbk)의" target="_blank" rel="noopener">https://www.youtube.com/watch?v=nm-OnKyBNbk)의</a> 핵심 기술 주장(다중 에이전트 시스템/표준 RL의 한계, 게임이론·진화게임이론(EGT)·replicator dynamics·ESS, “survival of the flattest”, 예측불가능성/halting problem 관련 논지)을 R&amp;D 리더/도메인 전문가 관점에서 방법 중심으로 검토하는 기술 보고서를 작성하라. 현재 아카이브 내 1차 콘텐츠는 전사 1개뿐이므로, 외부 논문/슬라이드/GitHub 내용은 ‘공개정보 한계’로 명시하거나 “추가 수집 필요”로 처리하라.  </p>
+<p>핵심 포함 항목(섹션별 요구):<br />
+- Executive Summary: 주장 3~5개, 근거 강도(전사 기반/추정) 라벨링, 즉시 실행 가능한 검증 과제 2~3개.<br />
+- Scope &amp; Methodology: 사용 소스(전사 파일, videos.jsonl 메타), 분석 절차(논지 맵→용어/수식 정리→주장-증거 매핑→검증 필요 항목 도출).<br />
+- Technical Background: MAS, incentives/constraints, EGT, replicator dynamics, ESS를 정의하고 RL 접근과 대비. 필요 시 핵심 방정식/표기 포함.<br />
+- Methods &amp; Data: 강연에서 제시된 “two papers”, 사례/실험, 알고리즘/워크플로가 전사에서 충분히 특정되는지 점검. 특정 불가 시 ‘공개정보 한계’와 추가 데이터(슬라이드/GitHub/논문 서지) 요구사항 명시.<br />
+- Results &amp; Evidence: 정량 결과/실험 주장만 분리해 표로 정리(무엇이 관측/무엇이 해석인지 구분). 전사에 수치가 없으면 “정량 근거 부재”로 기록.<br />
+- Limitations &amp; Open Questions: 재현성, 스케일링, 가정(무한/유한 집단, mutation 등), 관측가능성 한계.<br />
+- Risks &amp; Gaps: 검증 누락, 적용 제약, 미확인 참조문헌, 개념적 점프를 구체적으로 지적. 해당 없으면 Not applicable+사유.<br />
+- Critics: 반대 관점(예: RL의 대안적 성공사례, 게임이론 적용의 과잉일반화)을 헤드라인+요약+불릿으로. 근거 부족 시 Not applicable+사유.<br />
+- Appendix: 인용한 전사 구절, 용어/기호 표, 추가 수집 쿼리 초안(슬라이드/GitHub/“two papers” 추적).  </p>
+<p>증거/인용 정책: 1차 인용은 전사 파일에서 직접 인용(짧은 인용문+파일명). videos.jsonl은 링크/메타 확인용으로만 사용. 아카이브 밖 자료는 현재 미수집이므로 단정 금지; 필요 시 “추가 수집 필요”로 표시. 경험적 결과와 추측을 명확히 분리하라.  </p>
+<p>언어 지시: 전체 한국어로, 고유명사/영상 제목/리포지토리명은 원문 표기 유지. 톤은 기술적·정밀·방법 중심.</p>
+<h2>References</h2>
+<ol>
+<li><span id="ref-1"></span> youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt — <a href="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-viewer="report_views/archive_youtube_transcripts_youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of-d55f54e9.html" data-raw="archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt" class="viewer-link">file</a></li>
+<li><span id="ref-2"></span> AgenticDynamics.txt — <a href="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-viewer="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-raw="instruction/AgenticDynamics.txt" class="viewer-link">file</a></li>
+<li><span id="ref-3"></span> AgenticDynamics-index.md — <a href="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-viewer="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-raw="archive/AgenticDynamics-index.md" class="viewer-link">file</a></li>
+<li><span id="ref-4"></span> source_index.jsonl — <a href="report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="report_views/report_notes_source_index.jsonl-69956240.html" data-raw="report_notes/source_index.jsonl" class="viewer-link">file</a></li>
+<li><span id="ref-5"></span> source_triage.md — <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-04 05:04:44</li>
+<li>Duration: 00:18:54 (1134.89s)</li>
+<li>Model: gpt-5-2025-08-07</li>
+<li>Quality model: gpt-5-2025-08-07</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: technical_deep_dive</li>
+<li>Language: Korean</li>
+<li>Tags: 전사, 필요, 한계, 추가, 핵심</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-viewer="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-raw="report/run_overview_report_full.md" class="viewer-link">./report/run_overview_report_full.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-viewer="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-raw="archive/AgenticDynamics-index.md" class="viewer-link">./archive/AgenticDynamics-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-viewer="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-raw="instruction/AgenticDynamics.txt" class="viewer-link">./instruction/AgenticDynamics.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-viewer="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-raw="instruction/report_prompt_report_full.txt" class="viewer-link">./instruction/report_prompt_report_full.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

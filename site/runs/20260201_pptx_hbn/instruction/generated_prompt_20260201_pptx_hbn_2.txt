@@ -1,0 +1,17 @@
+Language: Korean
+
+Template: custom_deepdive  
+Depth: normal  
+
+목적/범위: 로컬 발표자료 “NCML hBN encapsulation annealing”(hBN 캡슐화 어닐링)이 WSe2/TMD의 PL(및 결함/산화) 특성에 미치는 영향을 **공정-메커니즘-증거** 축으로 기술적으로 검토하라. 특히 (1) 어닐링 조건(온도/분위기/시간)과 (2) 인터페이스 오염·버블 제거, (3) Se vacancy–O 결합/산화 개시(~400 °C), (4) 장벽/에너지(예: O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)의 연결 논리를 정리하라.  
+
+핵심 포함 항목(섹션별):  
+- Executive Summary: 5~8개 핵심 결론(“무엇이 개선/악화되는가, 어떤 조건에서, 왜 그런가”)과 즉시 실행 가능한 R&D 권고 3개를 bullet로 제시.  
+- Technical Background: hBN encapsulation, annealing, PLQY/스펙트럼 변화, 결함(Se vacancy)·산화 메커니즘 용어 정의. “캡슐화+어닐” vs “비캡슐화 어닐/다른 캡슐화” 접근 비교(장단점/가설). 필요 시 간단한 식/표기(예: Arrhenius, barrier 표기) 사용.  
+- Results & Evidence: **3페이지 분량의 심층 논의**로, PPTX의 관측(PL 변화, 산화 onset, 에너지 장벽 수치 등)을 “측정/계산 종류→조건→정량 결과→해석(실험적 근거 vs 추정)” 순으로 정리. 그림/표가 있을 경우 캡션 수준으로 설명하고, 쉬운 설명(비전문가용 한 문장 요약)을 각 소절 말미에 추가.  
+- Limitations & Open Questions: 재현성(샘플 편차, 공정 윈도우), 스케일업(CVD/대면적 전사), 측정/모델 한계, 대안 가설을 명시. “다음 실험/계산”을 우선순위로 제안.  
+- Appendix: 슬라이드/페이지별 주장-수치-조건 매핑 표, 약어집, 사용 파일 경로/런ID 기록(20260201_pptx_hbn).  
+
+증거/인용 정책: 1차 근거는 로컬 PPTX 원본 및 텍스트 추출본을 우선 인용(슬라이드 번호/문구/수치). 웹/논문은 현재 **tavily_search.jsonl 인덱스 요약만 존재**하므로, 원문 PDF/DOI 확인 전에는 “2차 요약 근거”로만 취급하고 단정 표현을 피하라. PPTX에 언급된 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 아카이브 미수집으로 **공개정보 한계**를 명시. 경험적 결과(측정/계산 수치)와 추론/가설을 문장 단위로 분리 표기.  
+
+언어/문체: 한국어로 기술하되, 논문명/저널명/약어(PLQY, hBN, WSe2 등)는 원문 표기를 유지. 기술적·정확·방법론 중심 톤을 유지.

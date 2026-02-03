@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>report/run_overview_report_full.md</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>report/run_overview_report_full.md</h1></header>
+  <main><h1>Report Overview</h1>
+<h2>Report Output</h2>
+<p>Output: <a href="./report_full.html">./report_full.html</a>
+Template: technical_deep_dive
+Format: html
+Language: Korean
+Quality iterations: 1
+Quality strategy: pairwise
+Figures: enabled (auto)</p>
+<h2>Report Prompt (Saved)</h2>
+<p>Source: <a href="../instruction/report_prompt_report_full.txt">./instruction/report_prompt_report_full.txt</a></p>
+<pre><code>Language: Korean
+
+Template: technical_deep_dive  
+Depth: normal  
+
+목적/범위: Run ID ‘AgenticDynamics’ 아카이브에 수집된 자료를 근거로, YouTube 강연 “Game Theory and the Dynamics of Complex Agentic Systems”(https://www.youtube.com/watch?v=nm-OnKyBNbk)의 핵심 기술 주장(다중 에이전트 시스템/표준 RL의 한계, 게임이론·진화게임이론(EGT)·replicator dynamics·ESS, “survival of the flattest”, 예측불가능성/halting problem 관련 논지)을 R&amp;D 리더/도메인 전문가 관점에서 방법 중심으로 검토하는 기술 보고서를 작성하라. 현재 아카이브 내 1차 콘텐츠는 전사 1개뿐이므로, 외부 논문/슬라이드/GitHub 내용은 ‘공개정보 한계’로 명시하거나 “추가 수집 필요”로 처리하라.  
+
+핵심 포함 항목(섹션별 요구):  
+- Executive Summary: 주장 3~5개, 근거 강도(전사 기반/추정) 라벨링, 즉시 실행 가능한 검증 과제 2~3개.  
+- Scope &amp; Methodology: 사용 소스(전사 파일, videos.jsonl 메타), 분석 절차(논지 맵→용어/수식 정리→주장-증거 매핑→검증 필요 항목 도출).  
+- Technical Background: MAS, incentives/constraints, EGT, replicator dynamics, ESS를 정의하고 RL 접근과 대비. 필요 시 핵심 방정식/표기 포함.  
+- Methods &amp; Data: 강연에서 제시된 “two papers”, 사례/실험, 알고리즘/워크플로가 전사에서 충분히 특정되는지 점검. 특정 불가 시 ‘공개정보 한계’와 추가 데이터(슬라이드/GitHub/논문 서지) 요구사항 명시.  
+- Results &amp; Evidence: 정량 결과/실험 주장만 분리해 표로 정리(무엇이 관측/무엇이 해석인지 구분). 전사에 수치가 없으면 “정량 근거 부재”로 기록.  
+- Limitations &amp; Open Questions: 재현성, 스케일링, 가정(무한/유한 집단, mutation 등), 관측가능성 한계.  
+- Risks &amp; Gaps: 검증 누락, 적용 제약, 미확인 참조문헌, 개념적 점프를 구체적으로 지적. 해당 없으면 Not applicable+사유.  
+- Critics: 반대 관점(예: RL의 대안적 성공사례, 게임이론 적용의 과잉일반화)을 헤드라인+요약+불릿으로. 근거 부족 시 Not applicable+사유.  
+- Appendix: 인용한 전사 구절, 용어/기호 표, 추가 수집 쿼리 초안(슬라이드/GitHub/“two papers” 추적).  
+
+증거/인용 정책: 1차 인용은 전사 파일에서 직접 인용(짧은 인용문+파일명). videos.jsonl은 링크/메타 확인용으로만 사용. 아카이브 밖 자료는 현재 미수집이므로 단정 금지; 필요 시 “추가 수집 필요”로 표시. 경험적 결과와 추측을 명확히 분리하라.  
+
+언어 지시: 전체 한국어로, 고유명사/영상 제목/리포지토리명은 원문 표기 유지. 톤은 기술적·정밀·방법 중심.
+
+Language: Korean
+
+Template: technical_deep_dive  
+Depth: normal  
+
+목적/범위: Run ID ‘AgenticDynamics’ 아카이브에 수집된 자료를 근거로, YouTube 강연 “Game Theory and the Dynamics of Complex Agentic Systems”(https://www.youtube.com/watch?v=nm-OnKyBNbk)의 핵심 기술 주장(다중 에이전트 시스템/표준 RL의 한계, 게임이론·진화게임이론(EGT)·replicator dynamics·ESS, “survival of the flattest”, 예측불가능성/halting problem 관련 논지)을 R&amp;D 리더/도메인 전문가 관점에서 방법 중심으로 검토하는 기술 보고서를 작성하라. 현재 아카이브 내 1차 콘텐츠는 전사 1개뿐이므로, 외부 논문/슬라이드/GitHub 내용은 ‘공개정보 한계’로 명시하거나 “추가 수집 필요”로 처리하라.  
+
+핵심 포함 항목(섹션별 요구):  
+- Executive Summary: 주장 3~5개, 근거 강도(전사 기반/추정) 라벨링, 즉시 실행 가능한 검증 과제 2~3개.  
+- Scope &amp; Methodology: 사용 소스(전사 파일, videos.jsonl 메타), 분석 절차(논지 맵→용어/수식 정리→주장-증거 매핑→검증 필요 항목 도출).  
+- Technical Background: MAS, incentives/constraints, EGT, replicator dynamics, ESS를 정의하고 RL 접근과 대비. 필요 시 핵심 방정식/표기 포함.  
+- Methods &amp; Data: 강연에서 제시된 “two papers”, 사례/실험, 알고리즘/워크플로가 전사에서 충분히 특정되는지 점검. 특정 불가 시 ‘공개정보 한계’와 추가 데이터(슬라이드/GitHub/논문 서지) 요구사항 명시.  
+- Results &amp; Evidence: 정량 결과/실험 주장만 분리해 표로 정리(무엇이 관측/무엇이 해석인지 구분). 전사에 수치가 없으면 “정량 근거 부재”로 기록.  
+- Limitations &amp; Open Questions: 재현성, 스케일링, 가정(무한/유한 집단, mutation 등), 관측가능성 한계.  
+- Risks &amp; Gaps: 검증 누락, 적용 제약, 미확인 참조문헌, 개념적 점프를 구체적으로 지적. 해당 없으면 Not applicable+사유.  
+- Critics: 반대 관점(예: RL의 대안적 성공사례, 게임이론 적용의 과잉일반화)을 헤드라인+요약+불릿으로. 근거 부족 시 Not applicable+사유.  
+- Appendix: 인용한 전사 구절, 용어/기호 표, 추가 수집 쿼리 초안(슬라이드/GitHub/“two papers” 추적).  
+
+증거/인용 정책: 1차 인용은 전사 파일에서 직접 인용(짧은 인용문+파일명). videos.jsonl은 링크/메타 확인용으로만 사용. 아카이브 밖 자료는 현재 미수집이므로 단정 금지; 필요 시 “추가 수집 필요”로 표시. 경험적 결과와 추측을 명확히 분리하라.  
+
+언어 지시: 전체 한국어로, 고유명사/영상 제목/리포지토리명은 원문 표기 유지. 톤은 기술적·정밀·방법 중심.
+</code></pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

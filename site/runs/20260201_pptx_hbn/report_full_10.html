@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>hBN 캡슐화 1L WSe₂ 어닐링에 따른 PL·결함 변화</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-technical_deep_dive {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-custom_deepdive template-technical_deep_dive">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">hBN 캡슐화 1L WSe₂ 어닐링에 따른 PL·결함 변화</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>hBN 캡슐화 1L WSe₂ 어닐링에 따른 PL·결함 변화</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 19:55</p>
+<h2>Executive Summary</h2>
+<p>이 보고서는 로컬 프레젠테이션 “NCML hBN encapsulation annealing”을 1차 근거로, 1L WSe₂를 hBN으로 캡슐화한 뒤 어닐링(annealing)을 수행했을 때 광발광(PL), 결함, 도핑, 산화 거동이 어떻게 변하는지를 재구성해 정리한다.<a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">\[1\]</a> 핵심 가설은 (1) hBN–WSe₂ 계면에 트랩된 O₂가 어닐링 동안 결함 사이트(특히 Se vacancy)로 확산·해리되어 O‑substituted Se vacancy(OSe)를 형성하고, (2) 이 과정이 PL 피크 구성과 강도, 선폭에 체계적 변화를 유도한다는 것이다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 이를 지지하는 증거로 저온(10 K) PL 스펙트럼의 피크 분해 및 어닐 전/후 피크 강도 재분배, 산화 개시 온도(~400 ℃)와 PL 증가 온도의 일치, O 관련 결함에 대한 DFT adsorption energy 및 O₂ dissociation barrier(0.52 eV), chalcogen vacancy migration barrier(2.3 eV) 계산값이 제시된다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 다만 PLQY·lifetime 등 정량 광학 지표와 in situ 구조 분석은 제공되지 않으며, 피크 할당도 Nanotechnology 28 (2017) 395702, Nat. Commun. 10 (2019) 2330 등의 외부 문헌을 인용하지만 원문은 현재 아카이브에 없어 “원문 미확보” 상태이다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 따라서 본 보고서는 (i) PPTX 기반으로 일관되게 지지되는 결론(Consensus)과 (ii) 후속 검증이 필요한 가설적 시나리오(Speculative)를 분리해 제시하며, 특히 분위기 제어 실험 매트릭스, 동위원소 O₂, in situ Raman/XPS/TEM, time‑resolved PL 등 검증용 후속 연구 방향을 상세히 제안한다.(전망)</p>
+<hr />
+<h2>Technical Background</h2>
+<h3>핵심 용어 및 시스템 정의</h3>
+<ul>
+<li><strong>TMD (Transition Metal Dichalcogenide)</strong>: WSe₂와 같은 2차원 층상 반도체로, 전이금속(W, Mo 등)과 칼코겐(Se, S, Te 등)으로 구성된 화합물을 지칭한다. 단일층(1L)에서 직접천이 밴드갭과 강한 PL을 보이는 것이 특징이다.</li>
+<li><strong>WSe₂ 1L</strong>: 본 PPTX가 다루는 주요 재료는 단일층 WSe₂로, 300 K PL intensity map과 AFM를 통해 샘플 균일성과 계면 상태를 평가한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li><strong>hBN encapsulation</strong>: hexagonal boron nitride(hBN) 상하로 TMD를 샌드위치하여, 잔류 폴리머·기판 roughness·환경 흡착물로부터 보호하고 계면 트랩을 줄이는 공정이다. 여기서는 “Encapsulation annealing scheme”으로 지칭되는 후속 어닐링이 핵심 변수이다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li><strong>PL (Photoluminescence)</strong>: 광여기 후 방출되는 발광으로, 여기서는 300 K map과 10 K 스펙트럼을 사용해 결함·도핑·계면 상태를 추적한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li><strong>Se vacancy, O‑substituted Se vacancy(OSe)</strong>: WSe₂에서 Se 원자가 결손된 결함(Sevac)과, 그 자리에 O가 치환된 상태(O‑substituted Se vacancy)를 지칭한다. PPTX는 O adsorption energy와 O₂ dissociation barrier를 제공하며, PL 변화의 주된 기전으로 OSe 형성을 상정한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<h3>TMD PL 저하 원인과 hBN 캡슐화+어닐링의 위치</h3>
+<p>TMD의 PL 효율이 떨어지는 주요 요인은 (1) 칼코겐 vacancy와 같은 포인트 결함, (2) 표면·계면 오염(잔류 폴리머, 수분, 산소 등), (3) 서브스트레이트 기인 전하 트랩, (4) 비의도적 도핑(n/p doping), (5) 산화·화학변질이다. hBN encapsulation은 이들 중 (2)–(4)를 크게 완화하는 것으로 알려져 있으며, 어닐링은 추가로 (i) 잔류 오염과 interfacial bubbles 제거, (ii) trapped O₂·H₂O의 재배열 및 탈착, (iii) 특정 결함의 패시베이션 또는 새로운 산화 결함 형성을 유도할 수 있다.(해석)</p>
+<p>본 PPTX는 특히 “interface에 trap된 O₂”가 어닐링 동안 활성화되어 Se vacancy로 이동·해리·치환되는 과정을 메커니즘의 중심에 둔다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 이 접근은 hBN encapsulation이 단순 보호막에 그치지 않고, 계면에 포획된 O₂를 반응 전구체로 활용해 결함 공학(defect engineering)을 수행하는 테크닉으로 확장될 수 있음을 시사한다.(추론)</p>
+<h3>WSe₂/hBN 시스템에서의 어닐링 레시피 분류</h3>
+<p>PPTX 자체는 세부 공정 매트릭스를 모두 제공하지 않지만, 텍스트 안에서 세 가지 축이 암시된다.</p>
+<ol>
+<li><strong>온도 영역</strong></li>
+<li>저온(수백 ℃ 미만)에서는 주로 오염·버블 재배열 및 약한 흡착종 탈착이 일어나고, 칼코겐 vacancy migration barrier(2.3 eV)가 매우 높아 vacancy 재배열은 제한적이다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>중·고온(~400 ℃)에서는 WSe₂ 산화가 시작되며, PL 증가가 산화 개시 온도와 거의 동일한 지점에서 관찰된다고 명시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li><strong>분위기</strong></li>
+<li>“W annealing / WO annealing” 표기가 있어, 산소가 있는(w/ O₂) 분위기와 산소가 없는(wo/ O₂) 분위기를 대비하는 계획 또는 결과가 존재함을 암시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li><strong>캡슐화 유무</strong></li>
+<li>직접적인 비교 데이터는 PPTX에 없지만, 결론 슬라이드에서 “interface에 trap된 O₂”라는 표현을 사용한다는 점에서, hBN 캡슐화가 O₂를 계면에 가둔 상태에서 열처리를 하는 특수한 조건임이 전제된다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ol>
+<p>PL 관점에서 보면, 저온 PL에서는 exciton/trion/biexciton/localized exciton 및 defect‑related emission의 상대 강도, 선폭(FWHM), 피크 위치, 그리고 어닐 전/후 intensity 재분배가 핵심 관측 지표로 사용되고 있다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 반면 PLQY·lifetime·고온 PL 등은 이 PPTX에선 보고되지 않았다.</p>
+<hr />
+<h2>Results &amp; Evidence</h2>
+<h3>1. 샘플 구성과 300 K PL/AFM 관찰</h3>
+<p>Slide 1은 1L WSe₂ 샘플에 대해 “Encapsulation annealing scheme”을 적용하고, 300 K에서의 PL intensity map(“300 K”, “PL intensity (cts)”)과 AFM raw data를 제시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 이는 다음을 시사한다.(해석)</p>
+<ul>
+<li>1L WSe₂의 PL은 공간적으로 비균일하며, brightness variation이 계면 결함·오염·버블 분포를 반영한다.</li>
+<li>AFM raw data를 함께 분석함으로써, topography(예: bubble, wrinkle)와 PL intensity를 매핑하여 구조–광학 상관 관계를 확인할 수 있다.</li>
+</ul>
+<p>다만 텍스트 추출에는 구체적인 PL intensity 스케일, RMS roughness, bubble density 등 수치가 포함되어 있지 않아, 정량적 비교보다는 질적 상관 관계만 논의 가능하다.</p>
+<h3>2. 10 K PL 스펙트럼: 피크 분해와 어닐링 효과</h3>
+<p>Slide 2는 10 K에서 어닐 전(before annealing)과 후(after annealing)의 PL 스펙트럼을 비교하며, 다양한 피크와 FWHM을 제시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<h4>2.1 피크 구성 및 FWHM</h4>
+<p>텍스트에는 다음과 같은 정보가 포함된다.</p>
+<ul>
+<li>에너지 축: 10 K에서 약 1.642–1.737 eV 범위(“1.642”, “1.659”, “1.672”, “1.676”, “1.691”, “1.698”, “1.706”, “1.715”, “1.718”, “1.737 eV”) 주변에 다수 피크 존재.</li>
+<li>FWHM: 31, 39, 19, 22, 46, 61, 65, 78, 95, 52 meV 등 다양한 선폭 값이 피크마다 주어져 있다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>피크 레이블:</li>
+<li>Intervalley trion</li>
+<li>Biexciton</li>
+<li>Localized excitons</li>
+<li>Negatively charged biexciton (Nat. Commun. (2019) 10:2330)</li>
+<li>추가로 L1–L5로 표기된 localized/defect 관련 피크(L1 감소, L2 감소, L3 증가, L4 증가, L5 증가).<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>피크 할당은 Nanotechnology 28 (2017) 395702, Nat. Commun. 10 (2019) 2330을 참조로 명시하지만, 해당 논문의 원문은 현재 아카이브에 없으므로 에너지 위치·g‑factor·power dependence 등 상세 근거는 확인할 수 없다(“원문 미확보”).<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 이에 PPTX에서도 “It is needed to measure power dependent PL for peak assigning.”라고 밝혀 power‑dependent PL을 통한 피크 기원 검증이 필요함을 인정하고 있다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<h4>2.2 어닐 전/후 피크 강도 재분배</h4>
+<p>Same slide에서 다음과 같이 요약된다.</p>
+<ul>
+<li>“어닐 후(L1 감소, L2 감소, L3 증가, L4 증가, L5 증가)”로 표기되어, 특정 localized/defect 관련 피크들의 intensity가 감소하거나 증가하는 경향이 명시되어 있다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>이는 어닐링이</p>
+<ul>
+<li>일부 깊은 트랩(예: L1, L2)을 패시베이트하여 해당 발광 채널을 약화시키고,</li>
+<li>다른 결함 상태(L3–L5)를 생성 또는 활성화하여 새 발광 채널을 강화하는</li>
+</ul>
+<p>결함 landscape 재조정 역할을 수행함을 시사한다.(해석) 선폭(FWHM)의 변화는 텍스트에 직접 연결되어 있지 않으나, multiple FWHM 값이 동시에 언급된 점을 고려하면, 어닐 전/후 line broadening 또는 narrowing이 개별 피크별로 다르게 나타날 가능성이 높다.(추론)</p>
+<h4>2.3 분위기(산소 유무) 변수</h4>
+<p>“W annealing / WO annealing”이라는 텍스트가 Slide 2에 포함되어 있다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 일반적으로 이러한 표기는</p>
+<ul>
+<li>“with O₂”(W) vs “without O₂”(WO) 또는</li>
+<li>“with oxygen” vs “without oxygen”</li>
+</ul>
+<p>을 의미하는 축약으로 널리 사용된다.(해석) 이로부터 PPTX의 실험 설계 또는 계획이 산소 분위기 유무에 따른 어닐링 효과 차이를 구분하려 했음을 알 수 있다. 다만 텍스트에는 구체적인 온도, 시간, 산소 분압, PL 변화량 등 실측 데이터가 포함되어 있지 않아, 본 보고서에서는 단지 변수 설정의 존재만 인정하고 정량적 결론은 보류한다.</p>
+<h3>3. 산화 온도와 PL 증가의 상관</h3>
+<p>Slide 6과 7에서, 산화 개시 온도와 PL 증가 시작 온도가 동일하다는 사실이 두 차례 강조된다.</p>
+<ul>
+<li>Slide 6: “2. Oxidation이 시작되는 온도와 동일한 지점에서 PL 증가 시작”<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 7: 동일 문구를 반복하며, 외부 문헌의 산화 실험 프로토콜을 인용.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>Slide 7의 프로토콜은 다음과 같다.</p>
+<ul>
+<li>WSe₂ nanosheets(두께 2–100 nm, lateral 2–100 μm)를 285 nm SiO₂/Si 위에 기계적 박리.</li>
+<li>quartz tube furnace에서 400 ℃까지 6분 동안 램핑 후, ambient atmosphere에서 400 ℃에서 일정 시간 $t_h$ 동안 유지.</li>
+<li>온도 선택의 근거: SeO₂는 350 ℃ 이상에서 승화하므로, 400 ℃에서는 solid SeO₂가 남아 element 분석을 방해하지 않도록 하기 위함.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>PPTX는 이를 바탕으로 “Oxidation temperature ~ 400 ℃”라고 명시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 그리고 이 온도에서 산화가 시작되며, 바로 이 지점에서 PL intensity 상승이 관측되었다고 주장한다. 이는</p>
+<ul>
+<li>산화(특히 초기 산화 단계)가 PL quenching이 아니라 enhancement를 유도하는 범위가 존재할 수 있고,</li>
+<li>그 원인이 Se vacancy의 O 치환(OSe 형성)에 따른 radiative recombination pathway 변화일 수 있다는 메커니즘 제안과 자연스럽게 연결된다.(추론)</li>
+</ul>
+<p>다만 해당 산화 실험은 hBN 캡슐화 여부가 명시되지 않은 WSe₂ nanosheets에 대한 문헌 조건이며, PPTX의 hBN‑encapsulated 1L WSe₂와 조건이 완전히 일치한다고 단정할 수는 없다.(해석) 따라서 이 상관 관계는 “유사 시스템”에서의 경험적 근거로 보는 것이 타당하다.</p>
+<h3>4. DFT 기반 산소 흡착/해리 및 결함화 에너지</h3>
+<p>Slide 8은 O 관련 결함에 대한 adsorption energy와 O₂ dissociation barrier를 정량적으로 제시한다.</p>
+<h4>4.1 Adsorption energy: Sevac vs Oins vs Oad</h4>
+<p>텍스트에 따르면, O 관련 결함의 adsorption energy $E_\text{ads}$는 다음과 같다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<ul>
+<li>원자 O 기준(reference: atomic O):</li>
+<li>O on Sevac: $E_\text{ads} \approx -7.1 \text{ eV}$</li>
+<li>O\(_\text{ins}\): $E_\text{ads} \approx -2.9 \text{ eV}$</li>
+<li>O\(_\text{ad}\): $E_\text{ads} \approx -2.4 \text{ eV}$</li>
+<li>분자 O₂ 기준(reference: molecular O₂):</li>
+<li>O on Sevac: $E_\text{ads} \approx -1.6 \text{ eV}$</li>
+<li>O\(_\text{ins}\): $E_\text{ads} \approx -0.3 \text{ eV}$</li>
+<li>O\(_\text{ad}\): $E_\text{ads} \approx 0.2 \text{ eV}$</li>
+</ul>
+<p>PPTX는 “Here, the adsorption energy relative to molecular O₂ tells us about the thermodynamic stability of the O‑related defect relative to gas phase O₂ in ambient conditions and is an indication of the thermodynamic driving force of an O₂ dissociation reaction.”라고 설명한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<p>이로부터 다음과 같은 결론이 도출된다.(합의)</p>
+<ul>
+<li>$E_\text{ads} &lt; 0$ 인 경우(특히 Sevac, O\(_\text{ins}\)): O₂에 비해 열역학적으로 안정하므로, O₂로부터 O가 떨어져 나와 결함에 결합하는 반응이 자발적으로 진행될 수 있다.</li>
+<li>O on Sevac의 $-1.6$ eV는 특히 강한 구동력을 의미하므로, Se vacancy는 O₂ 해리 및 O 치환에 대해 매우 반응성이 높다.</li>
+<li>O\(_\text{ad}\)의 $+0.2$ eV는 분자 O₂에 비해 상대적으로 불안정함을 시사하여, 단순 흡착(adatom)보다 vacancy‑substitution 형태가 선호됨을 보여준다.</li>
+</ul>
+<h4>4.2 O₂ dissociation barrier at Sevac</h4>
+<p>같은 슬라이드에서 “we compute an O₂ dissociation barrier of 0.52 eV at Sevac.”라고 명시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<p>또한 “KBT ~ 0.06 eV (~773K)”라는 구절이 반복되어, $T \approx 773 \text{ K} \approx 500 \,^\circ\text{C}$에서 $k_BT$를 약 0.06 eV로 제시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<p>활성화 장벽 $E_a$와 온도 $T$에서의 반응률 $k$는 Arrhenius 식</p>
+<p>$$
+k \propto \exp\left(-\frac{E_a}{k_BT}\right)
+$$</p>
+<p>으로 근사할 수 있다. $E_a = 0.52 \text{ eV}$, $k_BT = 0.06 \text{ eV}$일 때</p>
+<p>$$
+\frac{E_a}{k_BT} \approx \frac{0.52}{0.06} \approx 8.7
+$$</p>
+<p>이므로 $k \sim e^{-8.7} \sim 1.7 \times 10^{-4}$ 수준이다. 이는 실험 시간(분–시간 스케일)을 고려하면 해리가 유의미하게 일어날 수 있는 수준으로, PPTX가 말하는 “0.52 eV 장벽이 수백 ℃ 어닐링 조건에서 충분히 극복 가능하다”는 논리를 정량적으로 뒷받침한다.(해석)</p>
+<h4>4.3 Chalcogen vacancy migration barrier</h4>
+<p>Slide 5에서는 “This is also supported by the calculated migration barrier of 2.3 eV. This barrier is too high for significant diffusion at room temperature under thermal equilibrium.”라고 기술한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<ul>
+<li>$E_a = 2.3 \text{ eV}$, $k_BT \approx 0.025 \text{ eV}$ (300 K)에서 $E_a/k_BT \approx 92$로, 실질적으로 vacancy migration은 일어나지 않는다.</li>
+<li>PPTX는 이어서 “However, the sample is under continuous bombardment by energetic electrons.”라고 덧붙여, TEM 조건에서 electron beam이 vacancy migration을 촉진할 수 있음을 지적한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>이는 (i) 일반 열평형 조건에서는 vacancy는 거의 고정된 반면, (ii) TEM 분석 과정 자체가 vacancy 생성·이동을 초래할 수 있어, 실험 전·후 결함 상태의 직접 비교가 왜곡될 수 있음을 의미한다.(합의)</p>
+<h3>5. TEM/STEM에서의 OSe 결함 관찰 한계</h3>
+<p>Slide 10은 TEM/STEM 분석의 근본적인 한계를 다음과 같이 서술한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<ul>
+<li>TMD에서 electron beam‑induced damage threshold가 낮아, 내재적 vacancy와 electron beam이 새로 생성한 vacancy를 구분하기 어렵다.</li>
+<li>C, O와 같은 경원소는 TEM 이미지 대비에 약하게 기여한다.</li>
+<li>extant chalcogen vs top/bottom vacancy는 비교적 선명히 구분되지만, chalcogen vacancy vs oxygen substitution(OSe) 간 대비 차이는 매우 미묘하다.</li>
+<li>OSe를 분해능 있게 관찰하기 위해서는 높은 S/N의 이미지가 필요하고, 이를 위해서는 높은 electron dose가 요구되지만, 이 dose가 오히려 많은 새로운 결함을 유도한다.</li>
+</ul>
+<p>PPTX는 이를 “5. STEM으로 OSe를 확인하기 힘듦”이라는 요약으로 정리한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a> 따라서</p>
+<ul>
+<li>OSe 형성은 DFT 에너지 및 간접 PL 증거로는 설득력이 있으나,</li>
+<li>TEM/STEM에서 직접적으로 OSe를 확인하는 것은 현재 조건에서는 거의 불가능에 가깝다는 결론에 이른다.(합의)</li>
+</ul>
+<p>이는 본 보고서의 “Mechanistic Insights”가 구조적 직접 관찰 대신, 광학/DFT 기반 간접 증거에 의존할 수밖에 없는 이유이기도 하다.</p>
+<h3>6. 최종 메커니즘 카툰과 확장 아이디어</h3>
+<p>Slide 11의 결론은 다음 문장으로 요약된다.</p>
+<ul>
+<li>“결론: Interface에 trap된 O₂가 이동하여 defect site에 O로 결합됨.”<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<p>도식에는 O₂와 O, 그리고 “annealing” 라벨이 반복적으로 등장하며, 계면에서의 O₂ 트랩 → 어닐링 동안 defect site로 확산 → O substitution 형성이라는 단계적 그림이 그려진다.<a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">\[3\]</a> (도형 기반 해석, 해석)</p>
+<p>추가로 노트에는 다음과 같은 speculative 아이디어가 포함된다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></p>
+<ul>
+<li>“Defect site에 다른 원자를 결합시킬 수 있는 테크닉으로서의 가능성?”</li>
+<li>“O의 결합에 따른 E–k diagram 계산?”</li>
+<li>“O₂가 interface에서 이동할 수 있는 에너지 계산?”</li>
+</ul>
+<p>이는</p>
+<ul>
+<li>O₂ 대신 다른 기체(예: N₂, F₂, H₂S, Cl₂ 등)를 계면에 트랩시킨 후 어닐링을 통해 새로운 substitutional dopant를 주입하는 개념,</li>
+<li>OSe 형성이 밴드 구조(E–k diagram)에 미치는 영향을 이론적으로 평가하는 작업,</li>
+<li>hBN–WSe₂ 계면에서 O₂ 확산 barrier를 계산해 어닐링 조건–확산 길이–결함화 정도를 연결하는 모델링을 제안하는 것으로 해석된다.(추론)</li>
+</ul>
+<p>요컨대 PPTX는 현재까지의 데이터와 계산을 기반으로 하나의 일관된 시나리오를 제시하고, 이를 더 일반화된 “interfacial defect engineering platform”으로 확장할 수 있다는 가능성을 열어둔다.</p>
+<hr />
+<h2>Limitations &amp; Open Questions</h2>
+<h3>1. 데이터·지표의 불완전성</h3>
+<ul>
+<li>PLQY, time‑resolved PL(lifetime), 정확한 peak shift(에너지 이동량) 등 중요한 광학 지표는 PPTX 텍스트에 포함되어 있지 않다. 따라서 PL 증가가 radiative recombination 증가인지, non‑radiative channel 감소인지, 혹은 단지 특정 defect‑related emission의 강화인지를 구분하기 어렵다.</li>
+<li>300 K PL map과 AFM 데이터도 수치나 정량 분석 결과 없이 이미지 언급 수준에 그쳐, 계면 roughness·bubble density와 PL intensity 사이의 상관을 정량적으로 논의하기에는 정보가 부족하다.</li>
+</ul>
+<h3>2. 피크 할당과 참조 문헌의 제약</h3>
+<ul>
+<li>Intervalley trion, biexciton, localized exciton, negatively charged biexciton 등 피크 할당은 Nanotechnology 28 (2017) 395702, Nat. Commun. 10 (2019) 2330을 참조하고 있지만, 두 논문의 원문은 현재 아카이브에 없다(“원문 미확보”).<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>PPTX도 이 한계를 인지하고 “It is needed to measure power dependent PL for peak assigning.”라고 명시한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>따라서 현 단계에서 피크 레이블은 “가능성 높은 가설” 수준으로 취급해야 하며, exciton complex의 정확한 정체에 기반한 미세 메커니즘 논의는 보류하는 것이 타당하다.(합의)</li>
+</ul>
+<h3>3. 공정 조건·분위기 제어의 상세 부재</h3>
+<ul>
+<li>“W annealing / WO annealing”이라는 표시만으로는 산소 유무 외에 구체적인 분압, 유량, 습도, N₂/Ar carrier gas 여부를 알 수 없다.</li>
+<li>산화 실험 프로토콜(400 ℃ ramp/hold)은 캡슐화되지 않은 WSe₂ nanosheets에 대한 외부 문헌 조건이며, 실제 hBN‑encapsulated 1L WSe₂ 샘플에 적용된 어닐링 레시피(온도, 시간, heating/cooling rate, pressure)는 제공되지 않는다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>이로 인해, hBN 캡슐화 어닐링에서 PL 증가가 나타나는 정확한 온도 범위, 열 이력, 임계 조건을 다른 연구자가 재현하기 어렵다.</li>
+</ul>
+<h3>4. in situ·직접 관찰의 부재</h3>
+<ul>
+<li>TEM/STEM에서 OSe를 직접 식별하기 어렵다는 점을 PPTX가 상세히 설명하지만, 동시에 이는 제안된 메커니즘이 구조적 직접 관찰 없이 DFT와 PL에만 의존하고 있음을 의미한다.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>in situ XPS/Raman, in situ TEM/EELS, operando PL–전기 측정과 같은 동적 분석 데이터가 없어, O₂ 흡착/해리/치환의 시간 전개와 PL 변화의 인과성을 실시간으로 확인하지 못한다.</li>
+</ul>
+<h3>5. 스케일업·재현성 이슈</h3>
+<ul>
+<li>PPTX는 개별 샘플(1L WSe₂) 수준에서의 관찰을 중심으로 하며, wafer‑scale 또는 large‑area 샘플에서 동일한 메커니즘이 작동하는지에 대한 정보는 제공하지 않는다.</li>
+<li>계면에 trap된 O₂의 양, Se vacancy density, hBN 결정성·두께 등의 샘플 간 편차가 크다면, 동일한 어닐 조건이라고 해도 PL 반응이 크게 달라질 수 있다.(추론)</li>
+<li>따라서 이 메커니즘을 이용한 공정 개발 시, 샘플간 통계적 변동성과 공정 윈도우(tolerance)에 대한 체계적 매핑이 필요하다.</li>
+</ul>
+<hr />
+<h2>Appendix</h2>
+<h3>A. 근거 아티팩트 및 슬라이드–내용 매핑</h3>
+<ul>
+<li>메인 소스:</li>
+<li>PPTX 텍스트 추출: <a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a>[source]</li>
+<li>PPTX 원본: <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">\[3\]</a>[source]</li>
+<li>인덱스/메타데이터: <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">\[1\]</a>[source]</li>
+<li>슬라이드별 핵심 내용:</li>
+<li>Slide 1: 1L WSe₂, Encapsulation annealing scheme, 300 K PL intensity map, AFM raw data.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 2: 10 K PL before/after annealing, exciton/trion/biexciton/localized peaks, FWHM, L1–L5 intensity 변화, W vs WO annealing, power‑dependent PL 필요성.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 5: chalcogen vacancy migration barrier 2.3 eV, beam‑induced damage 언급, $k_BT \sim 0.06$ eV @ 773 K.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 6–7: Oxidation temperature ~400 ℃, 산화 개시 온도와 PL 증가 온도의 일치, 외부 WSe₂ 산화 프로토콜.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 8: O on Sevac/O\(_\text{ins}\)/O\(_\text{ad}\) adsorption energy, O₂ dissociation barrier 0.52 eV, $k_BT$ 언급.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 9: O‑substituted Se vacancies에 따른 defect state 변화, “Our data”.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 10: TEM/STEM에서 OSe 식별의 난점, beam‑induced damage, low contrast of O.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Slide 11: 결론 메커니즘 카툰(Interface‑trapped O₂ → annealing → defect site O substitution), 추가 speculative 아이디어 목록.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+</ul>
+<h3>B. 수치 요약 및 용어 간단 정리</h3>
+<ul>
+<li>에너지·온도:</li>
+<li>Oxidation temperature: $\sim 400\,^\circ\text{C}$.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>$k_BT \sim 0.06$ eV @ $\sim 773$ K(≈500 ℃).<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Chalcogen vacancy migration barrier: 2.3 eV.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>O₂ dissociation barrier at Sevac: 0.52 eV.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>Adsorption energy (relative to O₂):</li>
+<li>O on Sevac: −1.6 eV.</li>
+<li>O\(_\text{ins}\): −0.3 eV.</li>
+<li>O\(_\text{ad}\): 0.2 eV.<a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">\[2\]</a></li>
+<li>용어:</li>
+<li>Sevac: Se vacancy.</li>
+<li>O\(_\text{ins}\): interstitial O.</li>
+<li>O\(_\text{ad}\): O adatom.</li>
+<li>OSe: O‑substituted Se vacancy(문맥상).(해석)</li>
+</ul>
+<hr />
+<h2>Results &amp; Evidence</h2>
+<p>(위 “Results &amp; Evidence” 섹션 전체가 요구 사항을 충족하므로, 중복 본문은 생략한다.)</p>
+<hr />
+<h2>Limitations &amp; Open Questions</h2>
+<p>(위 “Limitations &amp; Open Questions” 섹션 전체가 요구 사항을 충족하므로, 중복 본문은 생략한다.)</p>
+<hr />
+<h2>Appendix</h2>
+<p>(위 Appendix 섹션 전체가 요구 사항을 충족하므로, 중복 본문은 생략한다.)</p>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: Source PPTX: local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx; <a href="#fig-2">Figure 2</a>: Source PPTX: local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx; <a href="#fig-3">Figure 3</a>: Source PPTX: local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx; <a href="#fig-4">Figure 4</a>: Source PPTX: local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="report_assets/figures/._archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.-fac6d4b5.png" alt="Figure from ./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx (slide 7)" />
+  <figcaption>Figure 1: <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</a> (slide 7)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="report_assets/figures/._archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.-1920b9d8.png" alt="Figure from ./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx (slide 8)" />
+  <figcaption>Figure 2: <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</a> (slide 8)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="report_assets/figures/._archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.-fc86e9ca.png" alt="Figure from ./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx (slide 9)" />
+  <figcaption>Figure 3: <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</a> (slide 9)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="report_assets/figures/._archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.-1e375b28.png" alt="Figure from ./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx (slide 10)" />
+  <figcaption>Figure 4: <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">./archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx</a> (slide 10)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>목표/범위: 로컬 PPTX “NCML hBN encapsulation annealing”을 1차 근거로 삼아, hBN 캡슐화 어닐링이 WSe2(및 일반 TMD) 광발광(PL)·결함·도핑·산화 거동에 미치는 영향을 ACS 스타일 리뷰로 정리하라. 공정 조건(온도/시간/분위기)–구조/계면 변화–광학/전기 특성의 인과를 중심으로, 합의된 결론과 가설적 신호를 분리한다.<br />
+pptx 파일의 주요 내용에 대해 심도있게 설명하고 정리하라.</p>
+<p>핵심 포함 항목(필수 섹션 모두 포함):<br />
+- Abstract(5–7문장): 다루는 시스템(WSe2/TMD, hBN encapsulation, annealing), 핵심 메커니즘(오염/버블 제거, 디도핑, 결함 패시베이션/산화 억제 또는 유발), 결론·검증 필요점 요약.<br />
+- Introduction: TMD PL 저하 원인(트랩/오염/결함/도핑)과 hBN 캡슐화+어닐링 접근의 위치. 약어(PL, TMD, hBN, Se vacancy 등) 정의.<br />
+- Current Landscape: (i) hBN 캡슐화 후 저/중/고온 어닐 레시피, (ii) 캡슐화 없는 어닐 대비, (iii) 그래핀/hBN 캡슐화 디바이스 사례로 범주화. 각 범주별 “관측 지표(PLQY, linewidth, lifetime, peak shift 등)” 정리.<br />
+- Mechanistic Insights: PPTX의 수치/키워드(예: 산화 시작 ~400°C, O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)를 중심으로 Se vacancy–O 결합, 산소 확산/해리, 계면 오염 제거와 PL 변화의 연결을 단계적(원인→중간상→결과)으로 설명.<br />
+- Applications: 고품질 발광/양자광원/소자 신뢰성 관점의 적용과, 재현성·스케일업 공백 명시.<br />
+- Challenges: 분위기 제어, 열이력, 계면 버블/오염 정량, in situ 분석 부재 등 “데이터 한계”를 구체화.<br />
+- Outlook: 검증 실험(분위기별 어닐 매트릭스, isotopic O2, in situ Raman/XPS, TEM/EELS, time-resolved PL) 제안.<br />
+- Risks &amp; Gaps: 현재 아카이브에 OpenAlex/arXiv/논문 PDF가 없어 PPTX 외 주장 일반화에는 공개정보 한계가 있음을 명시하고, 특히 PPTX 내 인용으로 보이는 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 “원문 미확보”로 표시.<br />
+- Critics: “hBN 캡슐화 어닐링의 보편성 과장” 등 반론(열 손상/산화 촉진 가능, 샘플 의존성, 측정 아티팩트)을 헤드라인+불릿으로 제시.<br />
+- Appendix: PPTX 슬라이드 기반 핵심 파라미터/수치 표, 용어집, 조건-결과 매핑 테이블.  </p>
+<p>증거/인용 정책: PPTX 텍스트/도표에서 확인 가능한 문장은 (슬라이드 번호/그림) 형태로 내부 인용. tavily_search.jsonl은 “인덱스 참고”로만 쓰고, 원문 PDF 미확보 항목은 추정·일반론으로 단정하지 말 것(공개정보 한계 라벨).  </p>
+<p>언어 지시: 본문은 한국어, 고유명사/저널/논문 제목은 원문 유지. 학술적·재료/화학 중심 톤 유지, 합의(Consensus) vs 가설(Speculative) 명확히 구분.</p>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>목표/범위: 로컬 PPTX “NCML hBN encapsulation annealing”을 1차 근거로 삼아, hBN 캡슐화 어닐링이 WSe2(및 일반 TMD) 광발광(PL)·결함·도핑·산화 거동에 미치는 영향을 ACS 스타일 리뷰로 정리하라. 공정 조건(온도/시간/분위기)–구조/계면 변화–광학/전기 특성의 인과를 중심으로, 합의된 결론과 가설적 신호를 분리한다.<br />
+pptx 파일의 주요 내용에 대해 심도있게 설명하고 정리하라.</p>
+<p>핵심 포함 항목(필수 섹션 모두 포함):<br />
+- Abstract(5–7문장): 다루는 시스템(WSe2/TMD, hBN encapsulation, annealing), 핵심 메커니즘(오염/버블 제거, 디도핑, 결함 패시베이션/산화 억제 또는 유발), 결론·검증 필요점 요약.<br />
+- Introduction: TMD PL 저하 원인(트랩/오염/결함/도핑)과 hBN 캡슐화+어닐링 접근의 위치. 약어(PL, TMD, hBN, Se vacancy 등) 정의.<br />
+- Current Landscape: (i) hBN 캡슐화 후 저/중/고온 어닐 레시피, (ii) 캡슐화 없는 어닐 대비, (iii) 그래핀/hBN 캡슐화 디바이스 사례로 범주화. 각 범주별 “관측 지표(PLQY, linewidth, lifetime, peak shift 등)” 정리.<br />
+- Mechanistic Insights: PPTX의 수치/키워드(예: 산화 시작 ~400°C, O2 dissociation barrier 0.52 eV, adsorption energy, vacancy migration barrier 등)를 중심으로 Se vacancy–O 결합, 산소 확산/해리, 계면 오염 제거와 PL 변화의 연결을 단계적(원인→중간상→결과)으로 설명.<br />
+- Applications: 고품질 발광/양자광원/소자 신뢰성 관점의 적용과, 재현성·스케일업 공백 명시.<br />
+- Challenges: 분위기 제어, 열이력, 계면 버블/오염 정량, in situ 분석 부재 등 “데이터 한계”를 구체화.<br />
+- Outlook: 검증 실험(분위기별 어닐 매트릭스, isotopic O2, in situ Raman/XPS, TEM/EELS, time-resolved PL) 제안.<br />
+- Risks &amp; Gaps: 현재 아카이브에 OpenAlex/arXiv/논문 PDF가 없어 PPTX 외 주장 일반화에는 공개정보 한계가 있음을 명시하고, 특히 PPTX 내 인용으로 보이는 Nanotechnology 28 (2017) 395702, Nat. Commun. (2019) 10:2330 등은 “원문 미확보”로 표시.<br />
+- Critics: “hBN 캡슐화 어닐링의 보편성 과장” 등 반론(열 손상/산화 촉진 가능, 샘플 의존성, 측정 아티팩트)을 헤드라인+불릿으로 제시.<br />
+- Appendix: PPTX 슬라이드 기반 핵심 파라미터/수치 표, 용어집, 조건-결과 매핑 테이블.  </p>
+<p>증거/인용 정책: PPTX 텍스트/도표에서 확인 가능한 문장은 (슬라이드 번호/그림) 형태로 내부 인용. tavily_search.jsonl은 “인덱스 참고”로만 쓰고, 원문 PDF 미확보 항목은 추정·일반론으로 단정하지 말 것(공개정보 한계 라벨).  </p>
+<p>언어 지시: 본문은 한국어, 고유명사/저널/논문 제목은 원문 유지. 학술적·재료/화학 중심 톤 유지, 합의(Consensus) vs 가설(Speculative) 명확히 구분.</p>
+<h2>References</h2>
+<ol>
+<li>20260201_pptx_hbn-index.md — <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">file</a></li>
+<li>local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt — <a href="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-viewer="report_views/archive_local_text_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.t-fc3f6edd.html" data-raw="archive/local/text/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.txt" class="viewer-link">file</a></li>
+<li>local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx — <a href="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-viewer="report_views/archive_local_raw_local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pp-12392471.html" data-raw="archive/local/raw/local-a0387b5a--201112_NCML_hBN_encapsulation_annealing_RHJ.pptx" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-03 19:55:23</li>
+<li>Duration: 00:08:32 (512.06s)</li>
+<li>Model: gpt-5.1-2025-11-13</li>
+<li>Quality model: gpt-5.1-2025-11-13</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: custom_deepdive</li>
+<li>Language: Korean</li>
+<li>Tags: hbn, PPTX, 캡슐화, TMD, 결함</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_10.md-a2fa9a78.html" data-viewer="report_views/report_run_overview_report_full_10.md-a2fa9a78.html" data-raw="report/run_overview_report_full_10.md" class="viewer-link">./report/run_overview_report_full_10.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-viewer="report_views/archive_20260201_pptx_hbn-index.md-0f4fb347.html" data-raw="archive/20260201_pptx_hbn-index.md" class="viewer-link">./archive/20260201_pptx_hbn-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-viewer="report_views/instruction_20260201_pptx_hbn.txt-88abb151.html" data-raw="instruction/20260201_pptx_hbn.txt" class="viewer-link">./instruction/20260201_pptx_hbn.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_10.txt-2b4ff27b.html" data-viewer="report_views/instruction_report_prompt_report_full_10.txt-2b4ff27b.html" data-raw="instruction/report_prompt_report_full_10.txt" class="viewer-link">./instruction/report_prompt_report_full_10.txt</a></li>
+<li>Figure candidates: <a href="./report_views/figures_preview.html">./report_views/figures_preview.html</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

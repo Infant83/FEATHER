@@ -537,6 +537,23 @@ class ReportOrchestrator:
                 rel_label = path.relative_to(run_dir).as_posix()
                 payload = f"[from pptx] {rel_label}\n\n{pptx_text}"
                 return apply_tool_budget(payload, pptx_text, rel_label)
+            if path.suffix.lower() in {".docx", ".doc"}:
+                docx_text = helpers.read_docx_text(path, limit, start=start)
+                rel_label = path.relative_to(run_dir).as_posix()
+                payload = f"[from docx] {rel_label}\n\n{docx_text}"
+                return apply_tool_budget(payload, docx_text, rel_label)
+            if path.suffix.lower() in {".xlsx", ".xls"}:
+                sheet_limit = 0 if max_pages is None else max_pages
+                sheet_start = 0 if start_page is None else max(0, start_page)
+                xlsx_text = helpers.read_xlsx_text(
+                    path,
+                    limit,
+                    max_sheets=sheet_limit,
+                    start_sheet=sheet_start,
+                )
+                rel_label = path.relative_to(run_dir).as_posix()
+                payload = f"[from xlsx] {rel_label}\n\n{xlsx_text}"
+                return apply_tool_budget(payload, xlsx_text, rel_label)
             text = normalize_rel_paths(read_text_file(path, start, limit))
             rel_label = path.relative_to(run_dir).as_posix()
             payload = f"[from text] {rel_label}\n\n{text}"

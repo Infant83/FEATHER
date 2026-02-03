@@ -1,0 +1,28 @@
+# Report Overview
+
+## Report Output
+Output: ./report_full_1.html
+Template: acs_review
+Format: html
+Language: Korean
+Quality iterations: 0
+Quality strategy: pairwise
+Figures: enabled (auto)
+
+## Report Prompt (Saved)
+Source: ./instruction/report_prompt_report_full_1.txt
+
+```
+Update request:
+현재 Bullet 으로 주요 내용을 정리하고 있는데, 자연스러운 문단구성으로 내용을 정리하고 인사이트를 발굴해줘. 전문적인 내용은 세심하게 설명해주고 이해하기 쉽게. 배경에 대한 설명도 같이 해줘.
+
+Second prompt:
+deep dive
+
+Base report: site/runs/AgenticDynamics/report_full.html
+
+Instructions:
+- Read the base report file and keep its structure unless the update requests a change.
+- Apply only the requested edits; avoid rewriting everything from scratch.
+- Preserve citations and update them only if you change the referenced content.
+```

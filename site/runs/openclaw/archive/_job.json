@@ -1,0 +1,39 @@
+{
+  "date": "2026-02-03",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\openclaw\\instruction\\openclaw.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\openclaw",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\openclaw\\archive",
+  "query_id": "openclaw",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": true,
+  "youtube_max_results": 8,
+  "youtube_transcript": false,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": true,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://twofootdog.tistory.com/555",
+    "https://openclaw.ai/",
+    "https://dev.to/czmilo/moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e",
+    "https://skywork.ai/skypage/en/moltbot-proactive-ai-assistants/2016342203473260544",
+    "https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments"
+  ],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "https://twofootdog.tistory.com/555",
+    "https://openclaw.ai/",
+    "https://dev.to/czmilo/moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e",
+    "https://skywork.ai/skypage/en/moltbot-proactive-ai-assistants/2016342203473260544",
+    "https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments"
+  ]
+}

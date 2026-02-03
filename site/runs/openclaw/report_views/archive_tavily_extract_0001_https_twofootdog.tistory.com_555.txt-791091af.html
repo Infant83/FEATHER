@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</h1></header>
+  <main><pre>{
+  &quot;results&quot;: [
+    {
+      &quot;url&quot;: &quot;<a href="https://twofootdog.tistory.com/555&quot;">https://twofootdog.tistory.com/555&quot;</a>,
+      &quot;title&quot;: &quot;[실전 가이드] 오픈클로(OpenClaw) 설치부터 제미나이(Gemini) 무료 연동까지 완벽 가이드(feat. 구 클로드봇(Clawdbot) 설치 가이드)&quot;,
+      &quot;raw_content&quot;: &quot; \n\n[본문 바로가기](#content)\n\n# [두깨씨의 블로그](<a href="https://twofootdog.tistory.com/)\n\nIT/AI\n\n#">https://twofootdog.tistory.com/)\n\nIT/AI\n\n#</a> [실전 가이드] 오픈클로(OpenClaw) 설치부터 제미나이(Gemini) 무료 연동까지 완벽 가이드(feat. 구 클로드봇(Clawdbot) 설치 가이드)\n\n by twofootdog 2026. 1. 30.\n\n반응형\n\n안녕하세요\n\n오늘은 오픈클로(OpenClaw)(구 클로드봇(clawdbot), 구 몰트봇(moltbot))을 로컬 PC에 설치하고 AI Model과 연동 및 구동하는 방법에 대해서 공유해 드리겠습니다.\n\n또한 이 글에서는 오픈클로를 무료로 사용하기 위해 무료 사용이 가능한 AI Model인 제미나이 API와 연동까지 진행해 보겠습니다.\n\n몰트봇이 무엇이고 기능이 어떤지에 대한 글은 아래 글 참고하시면 됩니다.\n\n**★ 관련 글 :**\n\n[2026.01.28 - [IT/AI] - \&quot;자비스가 현실로?\&quot; 알아서 일하는 AI 오픈클로(OpenClaw. 구 클로드봇)의 정체와 핵심 기능](<a href="https://twofootdog.tistory.com/553)\n\n[2026.01.28">https://twofootdog.tistory.com/553)\n\n[2026.01.28</a> - [IT/AI] - 0원으로 나만의 AI 비서 만들기: 오픈클로(OpenClaw, 구 클로드봇) 비용 및 무료 사용법 총정리](<a href="https://twofootdog.tistory.com/554)\n\n[목차여기]\n\n##">https://twofootdog.tistory.com/554)\n\n[목차여기]\n\n##</a> **1. 사전 준비사항(prerequisite)**\n\n#### **① git-bash or Cmder 설치(혹은 WSL 설치)**\n\nGit Bash나 Cmder를 사용하면 Windows 환경에서도 리눅스와 유사한 명령어(ls, rm, touch 등)를 사용할 수 있어 편의성을 높일 수 있습니다.\n\n**＊ 설치 방법**\n\n* **Git Bash:** Git 공식 사이트(&lt;<a href="https://git-scm.com/downloads&gt;)에서">https://git-scm.com/downloads&gt;)에서</a> Windows용 버전을 다운로드하여 설치합니다.\n* **Cmder:** 공식 사이트(&lt;<a href="https://cmder.app/&gt;)에서">https://cmder.app/&gt;)에서</a> 다운로드합니다.\n* **WSL**: Windows Powershell 실행 후 \&quot;wsl --install\&quot; 명령어를 통해 WSL을 설치할 수 있습니다(wsl 이름을 입력하지 않을 경우 기본 ubuntu가 설치됩니다)\n\n#### **② Node 설치(22버전 이상)**\n\n몰트봇(=클로드봇) 설치를 NPM으로 진행되기 때문에 Node 설치가 필수입니다.\n\n**＊ 설치 방법**\n\n1. Node.js 공식 홈페이지 다운로드 페이지(&lt;<a href="https://nodejs.org/ko/download&gt;)에">https://nodejs.org/ko/download&gt;)에</a> 접속 후, **LTS(Long Term Support)** 버전을 선택해서 다운로드 후 기본 설정대로 설치합니다.\n2. 설치가 잘 되었는지 확인하려면 터미널(CMD)을 열고 node -v와 npm -v를 입력하여 버전 정보가 출력되는지 확인합니다.\n\n#### **③ Google AI STUDIO 계정 및 API KEY 발급**\n\n몰트봇은 혼자서는 아무것도 하지 못합니다. 클로드 / 코파일럿 / 쳇GPT / 제미나이 API 등 AI Model과 연동 후 해당 AI Model의 기능을 사용하는 것이기 때문이죠.\n\n대부분의 AI Model 들은 API 사용 시 토큰 수대로 비용이 청구되지만, 제미나이는 무료 사용이 가능하므로(물론 사용량 제한이 있습니다만), 이번 실습에서는 몰트봇 무료 사용을 위해 제미나이 API와 연동을 할 예정입니다.\n\n만약 제미나이 API 사용량 이상을 사용하고 싶으신 분들은 다른 AI Model과 연동하시면 됩니다.\n\n**＊ 수행 방법**\n\n1. Google AI 스튜디오(&lt;<a href="https://aistudio.google.com/&gt;">https://aistudio.google.com/&gt;</a>) 에 들어가서 좌측 하단의 \&quot;Get API Key\&quot; 를 선택 &gt; \&quot;API Key 만들기\&quot; 선택 &gt; 키 이름 및 프로젝트 선택 후 키 생성(프로젝트는 디폴트를 쓰셔도 되고, 몰트봇 용으로 한개 만드셔도 됩니다)\n2. copy api key를 눌러 생성한 API KEY를 복사해둡니다(추후 몰트봇 설치 시 사용합니다)\n\n## **2. 오픈클로(=클로드봇) 설치하기**\n\n준비는 다 끝났습니다. 이제 오픈클로를 설치해 보겠습니다.\n\n#### **① 오픈클로 사이트 접속 후 다운로드**\n\n몰트봇 홈페이지(&lt;<a href="https://openclaw.ai/&gt;">https://openclaw.ai/&gt;</a>) 접속 후 \&quot;Quick Start\&quot; 항목을 확인해보면 npm 으로 다운로드 하는 방법이 나와 있습니다.\n\n아래 명령어를 git-bash 등 커맨드 창에 입력합니다(만약 다른 방식으로 설치하고 싶으신 분들은 시작가이드(&lt;<a href="https://docs.openclaw.ai/start/getting-started&gt;)에">https://docs.openclaw.ai/start/getting-started&gt;)에</a> 맞춰 다운로드 진행하시면 됩니다.\n\n**명령어 :**\n\n```\nnpm i -g openclaw\n```\n\n명령어 입력 후 다음과 같이 다운로드가 완료된 걸 확인할 수 있습니다.\n\n#### **② 오픈클로 설치하기(설정하기)**\n\n다음으로는 몰트봇을 설치(설정)하면서 AI model 연동, Skill 등을 구성해야 합니다.\n\n아래 명령어를 통해 설치(설정)을 진행합니다.\n\n**명령어 :**\n\n```\nopenclaw onboard\n```\n\n이제 하나씩 설정해 나가면서 설치하시면 됩니다.\n\n* I understand this is powerful and inherently risky. Continue? (설치하실래요?) -&gt; Yes\n* Onboarding modeQuickStart  -&gt; QuickStart (빠른 시작. 자세한 설정은 나중에)\n* Model/auth provider -&gt; Google (이 글에서는 제미나이 API 를 사용하기 때문에 Google 선택. 다른거 쓰시는분들은 다른거 선택해도 됩니다)\n* Google auth method -&gt; Google Gemini API key\n* Enter Gemini API key -&gt; 이전에 Google AI Studio에서 생성한 KEY를 복사해서 넣습니다.\n* Default model -&gt; 이부분 중요합니다. 제가 model을 엉뚱한걸 입력하는 바람에 몰트봇 채팅이 안된적이 있습니다. 현재 Google AI Studio에서 제미나이 모델 확인 후(Home &gt; Quck Start에 가시면 모델명이 나옵니다) 동일 모델을 선택합니다(이 글에서는 google/gemini-3-flash-preview를 선택했습니다)\n\n- Select channel (QuickStart) -&gt; Skip for now(이건 지금 선택 안하셔도 됩니다. 채널을 선택 안해도 몰트봇과 채팅창에서 대화할 수 있습니다. 물론 내 로컬 PC의 몰트봇을 원격에서도 사용하려면 채널 설정이 필수지만 해당 설정은 설치 후에도 가능합니다. 채널 별 설정 방법은 다음 글에서 설명 드리겠습니다.)\n- Configure skills now?  -&gt; No (이것도 지금 선택 안하셔도 됩니다. 스킬 설정을 안해도 몰트봇과 대화가 가능하며 추후에도 설정 가능합니다. 이번 글은 설치를 위한 글이기 때문에 넘어갑니다)\n- Enable hooks? -&gt; 3개 다 선택. 다중 선택 모드이기 때문에 선택 시 스페이스(space) 키를 누르시고 넘어가실 때는 엔터 누르시면 됩니다.  \n  * boot-md : 부팅 시 Markdown 파일 읽기. 봇이 시작될 때 특정 마크다운 파일(메모, 규칙 등)을 자동으로 읽어서 학습한 상태로 시작합니다. \&quot;너는 코딩 비서야\&quot; 같은 페르소나를 주입할 때 씁니다.\n  * command-logger : 명령어 기록. 사용자가 입력한 모든 명령어와 대화 내역을 별도 파일에 로그로 남깁니다. 나중에 \&quot;내가 뭐라고 물어봤더라?\&quot; 하고 찾아볼 때 유용합니다.\n  * session-memory : 단기 기억 저장소. 대화 세션의 문맥(Context)을 저장합니다. 이걸 켜면 /new 명령어로 새 대화를 시작할 때 이전 대화의 중요 내용을 요약해서 넘겨주기도 합니다.\n- 설치가 완료되면 아래와 같은 화면이 나오면서, 접속 URL이 나옵니다.\n\n## **3. 실행하기**\n\n#### **① 브라우저로 오픈클로 실행**\n\n이제 오픈클로를 실행시켜 보겠습니다.\n\n조금 전 설치화면에서 나온 URL을 복사( Token 정보까지 복사) 해서 브라우저에 붙여넣어 실행시키면 됩니다.\n\nChat 창에서 말을 걸어보면 페르소나를 설정하라는 말이 나옵니다.\n\n#### **② 몰트봇 페르소나 설정**\n\n다음과 같이 페르소나를 설정하면 해당 설정이 내 로컬PC에 저장되면서 앞으로는 아래 페르소나를 가지고 대답을 하게 됩니다.\n\n## **4. 마치며**\n\n이번 글에서는 오픈클로(=클로드봇) 설치 및 제미나이 연동하는 방법에 대해 알아보았습니다.\n\n다음 글에서는 설치한 오픈클로에 다양한 기능을 적용하는 방법에 대해 공유 드리겠습니다.\n\n**＊ 다음 글 :**\n\n* [2026.01.31 - [IT/AI] - [실전 가이드] 오픈클로(OpenClaw. 구 Clawdbot)에 텔레그램 채널 등록 완벽 가이드](<a href="https://twofootdog.tistory.com/557)\n*">https://twofootdog.tistory.com/557)\n*</a> [2026.02.01 - [IT/AI] - [실전 가이드] 오픈클로(OpenClaw. 구 Clawdbot)으로 인터넷 검색하기(feat. Brave Search API 연동)](<a href="https://twofootdog.tistory.com/558)\n*">https://twofootdog.tistory.com/558)\n*</a> [2026.02.03 - [IT/AI] - [실전 가이드] 오픈클로(OpenClaw. 구 Clawdbot)에 노션(notion) 연동하기](<a href="https://twofootdog.tistory.com/560)\n\n##">https://twofootdog.tistory.com/560)\n\n##</a> **5. 참고 자료**\n\n* &lt;<a href="https://docs.openclaw.ai/start/getting-started&gt;\n\n반응형\n\n[저작자표시">https://docs.openclaw.ai/start/getting-started&gt;\n\n반응형\n\n[저작자표시</a>  (새창열림)](<a href="https://creativecommons.org/licenses/by/4.0/deed.ko)\n\n####">https://creativecommons.org/licenses/by/4.0/deed.ko)\n\n####</a> &#x27;[IT](/category/IT) &gt; [AI](/category/IT/AI)&#x27; 카테고리의 다른 글\n\n|  |  |\n| --- | --- |\n| [[실전 가이드] 오픈클로(OpenClaw. 구 Clawdbot)에 텔레그램(Telegram) 채널 등록 완벽 가이드](/557)  (4) | 2026.01.31 |\n| [Gemini API 무료 VS 유료 차이점 및 유료 전환 방법(feat. 제미나이 API 유료 전환 방법)](/556)  (0) | 2026.01.31 |\n| [0원으로 나만의 AI 비서 만들기: 오픈클로(OpenClaw, 구 클로드봇) 비용 및 무료 사용법 총정리](/554)  (2) | 2026.01.28 |\n| [\&quot;자비스가 현실로?\&quot; 알아서 일하는 AI 오픈클로(OpenClaw. 구 클로드봇)의 정체와 핵심 기능](/553)  (0) | 2026.01.28 |\n| [Claude Code CLI에서 MCP 연결하기(로컬 및 원격 Postgresql DB)](/527)  (0) | 2026.01.16 |\n\n## 태그\n\n[Clawdbot gemini](/tag/Clawdbot%20gemini), [moltbot 설치하기](/tag/moltbot%20%EC%84%A4%EC%B9%98%ED%95%98%EA%B8%B0), [openclaw gemini](/tag/openclaw%20gemini), [OpenClaw 무료 사용](/tag/OpenClaw%20%EB%AC%B4%EB%A3%8C%20%EC%82%AC%EC%9A%A9), [openclaw 설치](/tag/openclaw%20%EC%84%A4%EC%B9%98), [무료 AI 비서 만들기](/tag/%EB%AC%B4%EB%A3%8C%20AI%20%EB%B9%84%EC%84%9C%20%EB%A7%8C%EB%93%A4%EA%B8%B0), [오픈클로 무료 사용](/tag/%EC%98%A4%ED%94%88%ED%81%B4%EB%A1%9C%20%EB%AC%B4%EB%A3%8C%20%EC%82%AC%EC%9A%A9), [오픈클로 제미나이 연동](/tag/%EC%98%A4%ED%94%88%ED%81%B4%EB%A1%9C%20%EC%A0%9C%EB%AF%B8%EB%82%98%EC%9D%B4%20%EC%97%B0%EB%8F%99), [클로드봇 설치하기](/tag/%ED%81%B4%EB%A1%9C%EB%93%9C%EB%B4%87%20%EC%84%A4%EC%B9%98%ED%95%98%EA%B8%B0), [클로드봇 제미나이 연동](/tag/%ED%81%B4%EB%A1%9C%EB%93%9C%EB%B4%87%20%EC%A0%9C%EB%AF%B8%EB%82%98%EC%9D%B4%20%EC%97%B0%EB%8F%99)\n\n## 관련글\n\n* [[실전 가이드] 오픈클로(OpenClaw. 구 Clawdbot)에 텔레그램(Telegram) 채널 등록 완벽 가이드](/557?category=1325142)\n* [Gemini API 무료 VS 유료 차이점 및 유료 전환 방법(feat. 제미나이 API 유료 전환 방법)](/556?category=1325142)\n* [0원으로 나만의 AI 비서 만들기: 오픈클로(OpenClaw, 구 클로드봇) 비용 및 무료 사용법 총정리](/554?category=1325142)\n* [\&quot;자비스가 현실로?\&quot; 알아서 일하는 AI 오픈클로(OpenClaw. 구 클로드봇)의 정체와 핵심 기능](/553?category=1325142)\n\n## 댓글15\n\n---\n\n## 티스토리툴바&quot;,
+      &quot;images&quot;: []
+    }
+  ],
+  &quot;failed_results&quot;: [],
+  &quot;response_time&quot;: 25.59,
+  &quot;request_id&quot;: &quot;f2adb5c6-dab9-4e6f-af92-019adb712e79&quot;
+}</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

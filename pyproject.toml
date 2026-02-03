@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "federlicht"
-version = "0.9.0"
+version = "1.0.0"
 description = "Feather-light knowledge intake."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -14,7 +14,7 @@ dependencies = ["requests"]
 arxiv = ["arxiv"]
 pdf = ["pymupdf", "pypdfium2", "pillow", "pdfplumber"]
 youtube = ["youtube-transcript-api"]
-local = ["python-docx", "python-pptx", "beautifulsoup4"]
+local = ["python-docx", "python-pptx", "beautifulsoup4", "openpyxl"]
 agents = ["deepagents", "markdown", "langchain-openai"]
 report = [
   "deepagents",
@@ -25,6 +25,7 @@ report = [
   "pillow",
   "pdfplumber",
   "beautifulsoup4",
+  "openpyxl",
 ]
 opencv = ["opencv-python"]
 all = [
@@ -36,6 +37,7 @@ all = [
   "youtube-transcript-api",
   "python-docx",
   "python-pptx",
+  "openpyxl",
   "beautifulsoup4",
   "deepagents",
   "markdown",

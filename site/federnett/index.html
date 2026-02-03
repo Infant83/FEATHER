@@ -31,6 +31,8 @@
               <option value="default">Default</option>
               <option value="sky">Sky</option>
               <option value="crimson">Crimson</option>
+              <option value="sage">Sage</option>
+              <option value="amber">Amber</option>
             </select>
           </label>
         </div>
@@ -449,48 +451,15 @@
                   <h3>Run Snapshot &amp; Files</h3>
                   <p>Coverage summary and quick file access for the selected run.</p>
                 </header>
+                <div class="summary-actions">
+                  <button id="run-trash" class="danger" type="button" disabled>
+                    Trash Run
+                  </button>
+                </div>
                 <ul id="run-summary-lines" class="summary-lines"></ul>
                 <div id="run-summary-links" class="summary-links"></div>
                 <div id="run-summary-reports" class="summary-reports"></div>
                 <div class="file-list" id="run-file-list"></div>
-              </section>
-              <section class="studio-card" id="run-update-card">
-                <header>
-                  <h3>Update Report</h3>
-                  <p>Describe what to revise. Generates a new report file for the same run.</p>
-                </header>
-                <label class="field-label" for="run-update-notes">Update instructions</label>
-                <textarea
-                  id="run-update-notes"
-                  class="ghost-input"
-                  rows="6"
-                  placeholder="e.g. Improve abstract clarity, fix citation tone, and add a short limitations section."
-                ></textarea>
-                <label class="field-label" for="run-update-secondary">Second prompt (optional)</label>
-                <textarea
-                  id="run-update-secondary"
-                  class="ghost-input"
-                  rows="4"
-                  placeholder="Optional extra guidance to append (e.g. tighten tone, add bullet summary)."
-                ></textarea>
-                <div class="field-row">
-                  <label class="toggle">
-                    <input type="checkbox" id="run-update-fast" checked />
-                    <span>Fast update (writer + quality only)</span>
-                  </label>
-                </div>
-                <label class="field-label" for="run-update-output">Next report output</label>
-                <input
-                  id="run-update-output"
-                  class="ghost-input"
-                  placeholder="report_full_1.html"
-                  readonly
-                />
-                <div class="field-actions">
-                  <button type="button" id="run-update-go" class="primary">
-                    Update Report
-                  </button>
-                </div>
               </section>
             </div>
           </section>
@@ -510,6 +479,7 @@
                   <p id="job-status">No active job.</p>
                 </div>
                 <div class="log-actions">
+                  <button id="log-toggle" class="ghost">Hide Logs</button>
                   <button id="log-clear" class="ghost">Clear</button>
                   <button id="job-kill" class="danger" disabled>Stop</button>
                 </div>
@@ -525,8 +495,19 @@
                 <div class="jobs-actions">
                   <button type="button" id="jobs-toggle" class="ghost">Show more</button>
                 </div>
+                <div class="jobs-history">
+                  <h4>Past Runs</h4>
+                  <div id="jobs-history-list" class="jobs-history-list"></div>
+                </div>
               </div>
             </section>
+
+            <div
+              id="telemetry-splitter"
+              class="splitter-vertical"
+              aria-hidden="true"
+              title="Drag to resize logs"
+            ></div>
 
             <section class="telemetry-block preview-block">
               <div class="panel-head slim">
@@ -558,6 +539,9 @@
               <div class="file-preview-actions">
                 <button type="button" id="file-preview-open" class="ghost">
                   Open
+                </button>
+                <button type="button" id="file-preview-canvas" class="ghost">
+                  Canvas
                 </button>
                 <button type="button" id="file-preview-save" class="ghost">
                   Save
@@ -946,6 +930,90 @@
                 </li>
               </ul>
             </section>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal canvas-modal" id="canvas-modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-canvas-close></div>
+        <div class="modal-card canvas-card" role="document">
+          <header class="modal-header">
+            <div>
+              <h3>Report Canvas</h3>
+              <p>Draft update requests and re-run Federlicht on a selected report.</p>
+            </div>
+            <button type="button" class="ghost" data-canvas-close>Close</button>
+          </header>
+          <div class="canvas-meta">
+            <span class="meta-pill" id="canvas-run-rel">-</span>
+            <span class="meta-pill" id="canvas-base-rel">-</span>
+            <span class="meta-pill" id="canvas-status">Ready</span>
+          </div>
+          <div class="canvas-grid">
+            <section class="canvas-panel">
+              <h4>Preview</h4>
+              <iframe id="canvas-preview-frame" class="canvas-preview-frame" title="Canvas preview"></iframe>
+            </section>
+            <section class="canvas-panel">
+              <label>
+                Base report
+                <input id="canvas-base-path" class="ghost-input" disabled />
+              </label>
+              <label>
+                Next report output
+                <input id="canvas-output-path" class="ghost-input" />
+              </label>
+              <label>
+                Update prompt file
+                <input id="canvas-update-path" class="ghost-input" disabled />
+              </label>
+              <label>
+                Update instructions
+                <textarea
+                  id="canvas-update"
+                  class="ghost-input"
+                  rows="6"
+                  placeholder="Describe what should change, what to keep, and how to adjust tone or structure."
+                ></textarea>
+              </label>
+              <label>
+                Second prompt (optional)
+                <textarea
+                  id="canvas-second"
+                  class="ghost-input"
+                  rows="3"
+                  placeholder="Optional extra guidance to append."
+                ></textarea>
+              </label>
+              <label>
+                Selection (optional)
+                <textarea id="canvas-selection" class="ghost-input" rows="4" readonly></textarea>
+              </label>
+              <div class="canvas-actions">
+                <button type="button" id="canvas-use-selection" class="ghost">
+                  Use selection
+                </button>
+                <button type="button" id="canvas-clear-selection" class="ghost">
+                  Clear selection
+                </button>
+                <button type="button" id="canvas-run" class="primary">
+                  Update Report
+                </button>
+              </div>
+            </section>
+          </div>
+          <div class="canvas-text">
+            <div class="canvas-text-head">
+              <h4>Report text</h4>
+              <span class="muted">Select text below, then click Use selection.</span>
+            </div>
+            <textarea
+              id="canvas-report-text"
+              class="canvas-report-text"
+              rows="10"
+              placeholder="Report text will appear here for selection."
+              readonly
+            ></textarea>
           </div>
         </div>
       </div>

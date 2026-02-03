@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-02-03T03:49:07.860406",
+  "created_at": "2026-02-03T19:55:21.954244",
   "stages": {
     "scout": {
-      "status": "cached",
+      "status": "ran",
       "detail": ""
     },
     "clarifier": {
@@ -22,7 +22,7 @@
       "detail": ""
     },
     "evidence": {
-      "status": "disabled",
+      "status": "ran",
       "detail": ""
     },
     "plan_check": {
@@ -30,12 +30,12 @@
       "detail": ""
     },
     "writer": {
-      "status": "skipped",
-      "detail": "state_only"
+      "status": "ran",
+      "detail": ""
     },
     "quality": {
-      "status": "skipped",
-      "detail": "state_only"
+      "status": "disabled",
+      "detail": ""
     }
   },
   "order": [

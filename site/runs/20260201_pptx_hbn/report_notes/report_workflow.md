@@ -1,15 +1,15 @@
 # Report Workflow
 
 ## Stages
-1. scout: cached
+1. scout: ran
 2. clarifier: skipped (disabled)
 3. template_adjust: skipped (disabled)
 4. plan: disabled
 5. web: disabled
-6. evidence: disabled
+6. evidence: ran
 7. plan_check: disabled
-8. writer: skipped (state_only)
-9. quality: skipped (state_only)
+8. writer: ran
+9. quality: disabled
 
 ## Artifacts
 ### scout
@@ -28,3 +28,9 @@
 ### quality
 - Quality evaluations: ./report_notes/quality_evals.jsonl
 - Quality pairwise: ./report_notes/quality_pairwise.jsonl
+## Outputs
+- Report overview: ./report/run_overview_report_full_10.md
+- Report meta: ./report_notes/report_meta.json
+- Report prompt copy: ./instruction/report_prompt_report_full_10.txt
+- Figure candidates: ./report_views/figures_preview.html
+- Template summary: ./report_notes/report_template.txt

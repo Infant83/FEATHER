@@ -1,0 +1,12 @@
+[2026-02-04 04:37:35] JOB START: AgenticDynamics.txt date=2026-02-04 days=365 max_results=8
+[2026-02-04 04:37:35] TAVILY EXTRACT SKIP (youtube): https://www.youtube.com/watch?v=nm-OnKyBNbk
+[2026-02-04 04:37:35] YOUTUBE SEARCH SKIP: no youtube hint or explicit site:youtube.com queries
+[2026-02-04 04:37:36] YOUTUBE DIRECT: https://www.youtube.com/watch?v=nm-OnKyBNbk
+[2026-02-04 04:37:36] YOUTUBE TRANSCRIPT: nm-OnKyBNbk
+[2026-02-04 04:37:37] JOB END
+[2026-02-04 04:39:21] JOB START: AgenticDynamics.txt date=2026-02-04 days=365 max_results=8
+[2026-02-04 04:39:21] TAVILY EXTRACT SKIP (youtube): https://www.youtube.com/watch?v=nm-OnKyBNbk
+[2026-02-04 04:39:21] YOUTUBE UPDATE: 1 cached videos
+[2026-02-04 04:39:21] YOUTUBE SEARCH SKIP: no youtube hint or explicit site:youtube.com queries
+[2026-02-04 04:39:21] YOUTUBE DIRECT SKIP (exists): https://www.youtube.com/watch?v=nm-OnKyBNbk
+[2026-02-04 04:39:21] JOB END

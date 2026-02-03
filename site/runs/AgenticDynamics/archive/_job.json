@@ -1,0 +1,31 @@
+{
+  "date": "2026-02-04",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AgenticDynamics\\instruction\\AgenticDynamics.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AgenticDynamics",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AgenticDynamics\\archive",
+  "query_id": "AgenticDynamics",
+  "lang_pref": "en",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": true,
+  "youtube_max_results": 8,
+  "youtube_transcript": true,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": true,
+  "citations_enabled": true,
+  "queries": [],
+  "query_specs": [],
+  "local_paths": [],
+  "urls": [
+    "https://www.youtube.com/watch?v=nm-OnKyBNbk"
+  ],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "https://www.youtube.com/watch?v=nm-OnKyBNbk"
+  ]
+}

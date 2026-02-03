@@ -48,6 +48,7 @@ const state = {
   activeSource: null,
   jobs: [],
   jobsExpanded: false,
+  logsCollapsed: false,
   logBuffer: [],
   pipeline: {
     order: [],
@@ -58,6 +59,17 @@ const state = {
   templateGen: {
     log: "",
     active: false,
+  },
+  canvas: {
+    open: false,
+    runRel: "",
+    basePath: "",
+    baseRel: "",
+    outputPath: "",
+    updatePath: "",
+    selection: "",
+    reportText: "",
+    reportHtml: "",
   },
 };
 
@@ -544,6 +556,7 @@ async function loadRuns() {
   state.runs = sortRuns(runs);
   refreshRunSelectors();
   updateHeroStats();
+  renderRunHistory();
   const runRel = selectedRunRel();
   if (runRel) {
     await updateRunStudio(runRel).catch((err) => {
@@ -582,6 +595,7 @@ function renderFilePreview() {
   const image = $("#file-preview-image");
   const saveBtn = $("#file-preview-save");
   const saveAsBtn = $("#file-preview-saveas");
+  const canvasBtn = $("#file-preview-canvas");
   if (pathEl) pathEl.textContent = state.filePreview.path || "No file selected";
   if (statusEl) {
     if (!state.filePreview.canEdit) {
@@ -592,6 +606,12 @@ function renderFilePreview() {
   }
   if (saveBtn) saveBtn.disabled = !state.filePreview.canEdit;
   if (saveAsBtn) saveAsBtn.disabled = !state.filePreview.canEdit;
+  if (canvasBtn) {
+    const mode = state.filePreview.mode || "text";
+    const canCanvas =
+      !!state.filePreview.path && (mode === "html" || mode === "markdown" || mode === "text");
+    canvasBtn.disabled = !canCanvas;
+  }
   if (!editor || !markdown || !frame || !image) return;
   const mode = state.filePreview.mode || "text";
   editor.style.display = "none";
@@ -781,6 +801,290 @@ async function loadFilePreview(relPath) {
   }
 }
 
+function stripRunPrefix(pathValue, runRel) {
+  const cleaned = normalizePathString(pathValue);
+  const runPath = normalizePathString(runRel);
+  if (runPath && cleaned.startsWith(`${runPath}/`)) {
+    return cleaned.slice(runPath.length + 1);
+  }
+  return cleaned;
+}
+
+function inferRunRelFromPath(relPath) {
+  const cleaned = normalizePathString(relPath);
+  const runRoots = state.info?.run_roots || [];
+  for (const root of runRoots) {
+    const prefix = normalizePathString(root);
+    if (!prefix) continue;
+    if (cleaned.startsWith(`${prefix}/`)) {
+      const rest = cleaned.slice(prefix.length + 1);
+      const head = rest.split("/")[0];
+      if (head) return `${prefix}/${head}`;
+    }
+  }
+  return selectedRunRel();
+}
+
+function extractTextFromHtml(html) {
+  const temp = document.createElement("div");
+  temp.innerHTML = html || "";
+  let text = temp.textContent || "";
+  text = text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return text;
+}
+
+function truncateSelection(text, maxChars = 4000) {
+  if (!text) return "";
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars - 1)}…`;
+}
+
+function guessNextReportPathFromBase(basePath) {
+  if (!basePath) return "";
+  const cleaned = normalizePathString(basePath);
+  const match = cleaned.match(/^(.*\/)?report_full(?:_(\d+))?\.html$/);
+  if (!match) return "";
+  const prefix = match[1] || "";
+  const idx = Number.parseInt(match[2] || "0", 10);
+  const next = Number.isFinite(idx) ? idx + 1 : 1;
+  return `${prefix}report_full_${next}.html`;
+}
+
+function setCanvasStatus(text) {
+  const el = $("#canvas-status");
+  if (el) el.textContent = text || "";
+}
+
+function updateCanvasFields() {
+  const baseInput = $("#canvas-base-path");
+  const outputInput = $("#canvas-output-path");
+  const updatePathInput = $("#canvas-update-path");
+  const selection = $("#canvas-selection");
+  const textArea = $("#canvas-report-text");
+  const runPill = $("#canvas-run-rel");
+  const basePill = $("#canvas-base-rel");
+  const frame = $("#canvas-preview-frame");
+  if (baseInput) baseInput.value = state.canvas.basePath || "";
+  if (outputInput && state.canvas.outputPath) outputInput.value = state.canvas.outputPath;
+  if (updatePathInput && state.canvas.updatePath) updatePathInput.value = state.canvas.updatePath;
+  if (selection) selection.value = state.canvas.selection || "";
+  if (textArea) textArea.value = state.canvas.reportText || "";
+  if (runPill) runPill.textContent = state.canvas.runRel ? `run: ${state.canvas.runRel}` : "-";
+  if (basePill) {
+    basePill.textContent = state.canvas.baseRel ? `base: ${state.canvas.baseRel}` : "-";
+  }
+  if (frame && state.canvas.basePath) {
+    frame.src = rawFileUrl(state.canvas.basePath);
+  }
+}
+
+async function loadCanvasReport(relPath) {
+  if (!relPath) return;
+  setCanvasStatus("Loading report...");
+  try {
+    const data = await fetchJSON(`/api/files?path=${encodeURIComponent(relPath)}`);
+    const content = data.content || "";
+    const mode = previewModeForPath(relPath);
+    let text = content;
+    if (mode === "html") {
+      text = extractTextFromHtml(content);
+    }
+    state.canvas.reportText = text;
+    state.canvas.reportHtml = content;
+    updateCanvasFields();
+    setCanvasStatus("Ready");
+  } catch (err) {
+    setCanvasStatus(`Failed to load report: ${err}`);
+  }
+}
+
+async function nextUpdateRequestPath(runRel) {
+  if (!runRel) return "";
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
+    now.getDate(),
+  ).padStart(2, "0")}`;
+  const dir = joinPath(runRel, "report_notes");
+  let existing = [];
+  try {
+    const listing = await fetchJSON(`/api/fs?path=${encodeURIComponent(dir)}`);
+    existing = (listing.entries || []).map((entry) => entry.name);
+  } catch (err) {
+    existing = [];
+  }
+  let name = `update_request_${stamp}.txt`;
+  if (existing.includes(name)) {
+    let idx = 1;
+    while (existing.includes(`update_request_${stamp}_${idx}.txt`)) {
+      idx += 1;
+    }
+    name = `update_request_${stamp}_${idx}.txt`;
+  }
+  return `${dir}/${name}`;
+}
+
+function buildUpdatePromptContent({ updateText, secondPrompt, baseRel, selection }) {
+  const lines = ["Update request:"];
+  if (updateText) lines.push(updateText.trim());
+  if (selection) {
+    lines.push("");
+    lines.push("Target excerpt:");
+    lines.push("<<<");
+    lines.push(selection.trim());
+    lines.push(">>>");
+  }
+  if (secondPrompt) {
+    lines.push("");
+    lines.push("Second prompt:");
+    lines.push(secondPrompt.trim());
+  }
+  lines.push("");
+  lines.push(`Base report: ${baseRel || ""}`);
+  lines.push("");
+  lines.push("Instructions:");
+  lines.push("- Read the base report file and keep its structure unless the update requests a change.");
+  lines.push("- Apply only the requested edits; avoid rewriting everything from scratch.");
+  lines.push("- Preserve citations and update them only if you change the referenced content.");
+  if (selection) {
+    lines.push("- Limit edits to the target excerpt unless the update requests broader changes.");
+  }
+  return lines.join("\n");
+}
+
+async function openCanvasModal(relPath) {
+  const modal = $("#canvas-modal");
+  if (!modal) return;
+  const basePath = relPath || state.filePreview.path;
+  if (!basePath) {
+    appendLog("[canvas] select a report file first.\n");
+    return;
+  }
+  const runRel = inferRunRelFromPath(basePath);
+  if (runRel && $("#run-select") && $("#run-select").value !== runRel) {
+    $("#run-select").value = runRel;
+    refreshRunDependentFields();
+    await updateRunStudio(runRel).catch(() => {});
+  }
+  const baseRel = stripRunPrefix(basePath, runRel);
+  const outputPath =
+    nextReportPath(state.runSummary) ||
+    guessNextReportPathFromBase(basePath) ||
+    joinPath(runRel, "report_full.html");
+  state.canvas = {
+    ...state.canvas,
+    open: true,
+    runRel: runRel || "",
+    basePath,
+    baseRel,
+    outputPath,
+    selection: "",
+    updatePath: "",
+  };
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  setCanvasStatus("Ready");
+  updateCanvasFields();
+  await loadCanvasReport(basePath);
+  state.canvas.updatePath = await nextUpdateRequestPath(runRel);
+  updateCanvasFields();
+}
+
+function closeCanvasModal() {
+  const modal = $("#canvas-modal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  state.canvas.open = false;
+}
+
+function syncCanvasSelection() {
+  const textArea = $("#canvas-report-text");
+  if (!textArea) return;
+  const start = textArea.selectionStart || 0;
+  const end = textArea.selectionEnd || 0;
+  if (start === end) {
+    appendLog("[canvas] select text in the report area first.\n");
+    return;
+  }
+  const raw = textArea.value.slice(start, end);
+  const trimmed = truncateSelection(raw.trim());
+  state.canvas.selection = trimmed;
+  updateCanvasFields();
+}
+
+async function runCanvasUpdate() {
+  const updateText = $("#canvas-update")?.value?.trim();
+  if (!updateText) {
+    appendLog("[canvas] update instructions are required.\n");
+    return;
+  }
+  const secondPrompt = $("#canvas-second")?.value?.trim();
+  const selection = $("#canvas-selection")?.value?.trim();
+  const baseRel = state.canvas.baseRel || "";
+  const runRel = state.canvas.runRel || selectedRunRel();
+  if (!runRel) {
+    appendLog("[canvas] run folder not resolved.\n");
+    return;
+  }
+  let outputPath = $("#canvas-output-path")?.value?.trim() || state.canvas.outputPath;
+  if (!outputPath) {
+    outputPath = nextReportPath(state.runSummary);
+  }
+  if (!outputPath) {
+    appendLog("[canvas] output path is required.\n");
+    return;
+  }
+  let updatePath = $("#canvas-update-path")?.value?.trim() || state.canvas.updatePath;
+  if (!updatePath) {
+    updatePath = await nextUpdateRequestPath(runRel);
+  }
+  if (!updatePath) {
+    appendLog("[canvas] update prompt path is required.\n");
+    return;
+  }
+  const content = buildUpdatePromptContent({
+    updateText,
+    secondPrompt,
+    baseRel,
+    selection,
+  });
+  try {
+    await fetchJSON("/api/files", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: updatePath, content }),
+    });
+    state.canvas.updatePath = updatePath;
+    updateCanvasFields();
+    setCanvasStatus("Update prompt saved.");
+  } catch (err) {
+    appendLog(`[canvas] failed to write update prompt: ${err}\n`);
+    return;
+  }
+  const payload = buildFederlichtPayload();
+  payload.run = runRel;
+  payload.output = expandSiteRunsPath(outputPath);
+  payload.prompt_file = expandSiteRunsPath(updatePath);
+  delete payload.prompt;
+  const cleanPayload = pruneEmpty(payload);
+  setCanvasStatus("Running update...");
+  await startJob("/api/federlicht/start", cleanPayload, {
+    kind: "federlicht",
+    onSuccess: async () => {
+      await loadRuns().catch(() => {});
+      if (runRel && $("#run-select")) {
+        $("#run-select").value = runRel;
+        refreshRunDependentFields();
+        await updateRunStudio(runRel).catch(() => {});
+      }
+      setCanvasStatus("Update started.");
+    },
+    onDone: () => {
+      setCanvasStatus("Ready");
+    },
+  });
+}
+
 async function saveFilePreview(targetPath) {
   const relPath = targetPath || state.filePreview.path;
   const editor = $("#file-preview-editor");
@@ -841,6 +1145,14 @@ function renderRunFiles(summary) {
 function renderRunSummary(summary) {
   state.runSummary = summary;
   setStudioMeta(summary?.run_rel, summary?.updated_at);
+  const trashBtn = $("#run-trash");
+  if (trashBtn) {
+    trashBtn.disabled = !summary?.run_rel;
+    trashBtn.onclick = () => {
+      if (!summary?.run_rel) return;
+      trashRun(summary.run_rel);
+    };
+  }
   const linesHost = $("#run-summary-lines");
   if (linesHost) {
     const lines = summary?.summary_lines || [];
@@ -895,7 +1207,25 @@ function renderRunSummary(summary) {
     reportsHost.innerHTML = parts.join("");
   }
   renderRunFiles(summary);
-  updateRunUpdateOutput(summary);
+  applyRunSettings(summary);
+}
+
+async function trashRun(runRel) {
+  if (!runRel) return;
+  const ok = confirm(`Move run folder to trash?\n${runRel}`);
+  if (!ok) return;
+  try {
+    const payload = { run: runRel };
+    const result = await fetchJSON("/api/runs/trash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    appendLog(`[runs] trashed ${runRel} -> ${result?.trash_rel || "trash"}\n`);
+    await loadRuns();
+  } catch (err) {
+    appendLog(`[runs] trash failed: ${err}\n`);
+  }
 }
 
 function nextReportPath(summary) {
@@ -922,13 +1252,6 @@ function nextReportPath(summary) {
   }
   const next = maxIndex + 1;
   return `${runRel}/report_full_${next}.html`;
-}
-
-function updateRunUpdateOutput(summary) {
-  const field = $("#run-update-output");
-  if (!field) return;
-  const value = nextReportPath(summary);
-  field.value = value || "";
 }
 
 async function loadRunSummary(runRel) {
@@ -1318,125 +1641,6 @@ async function updateRunStudio(runRel) {
   await Promise.all([loadRunSummary(runRel), loadInstructionFiles(runRel)]);
 }
 
-async function resolveUpdatePromptPath(runRel) {
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const baseName = `update_request_${today}.txt`;
-  const basePath = `${runRel}/report_notes/${baseName}`;
-  try {
-    const listing = await fetchJSON(
-      `/api/fs?path=${encodeURIComponent(`${runRel}/report_notes`)}`,
-    );
-    const entries = listing?.entries || [];
-    const matches = entries
-      .filter((entry) => entry.type === "file")
-      .map((entry) => entry.name || "")
-      .filter((name) => name.startsWith(`update_request_${today}`));
-    if (!matches.length) return basePath;
-    let maxSuffix = 0;
-    matches.forEach((name) => {
-      if (name === baseName) {
-        maxSuffix = Math.max(maxSuffix, 0);
-        return;
-      }
-      const match = name.match(new RegExp(`^update_request_${today}_(\\d+)\\.txt$`));
-      if (match) {
-        const idx = Number.parseInt(match[1], 10);
-        if (Number.isFinite(idx)) maxSuffix = Math.max(maxSuffix, idx);
-      }
-    });
-    const next = maxSuffix + 1;
-    return `${runRel}/report_notes/update_request_${today}_${next}.txt`;
-  } catch (err) {
-    return basePath;
-  }
-}
-
-async function buildUpdateReportPayload() {
-  const run = $("#run-select")?.value;
-  if (!run) throw new Error("Run folder is required.");
-  const outputRaw = $("#run-update-output")?.value || "";
-  const output = expandSiteRunsPath(outputRaw);
-  if (!output) throw new Error("Output report path is required.");
-  const notes = $("#run-update-notes")?.value || "";
-  if (!notes.trim()) throw new Error("Update instructions are required.");
-  const secondary = $("#run-update-secondary")?.value || "";
-  const fastUpdate = $("#run-update-fast")?.checked;
-  const figuresEnabled = $("#federlicht-figures")?.checked;
-  const baseReport =
-    state.runSummary?.latest_report_rel ||
-    (state.runSummary?.report_files || []).slice(-1)[0] ||
-    "";
-  const promptParts = [
-    "Update request:",
-    notes.trim(),
-    secondary.trim() ? "\nSecond prompt:\n" + secondary.trim() : "",
-    baseReport ? `\nBase report: ${baseReport}` : "",
-    "\nInstructions:",
-    "- Read the base report file and keep its structure unless the update requests a change.",
-    "- Apply only the requested edits; avoid rewriting everything from scratch.",
-    "- Preserve citations and update them only if you change the referenced content.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-  const promptPath = await resolveUpdatePromptPath(run);
-  const payload = {
-    run,
-    output,
-    template: $("#template-select")?.value,
-    lang: $("#federlicht-lang")?.value,
-    depth: $("#federlicht-depth")?.value,
-    prompt_file: promptPath,
-    model: $("#federlicht-model")?.value,
-    check_model: $("#federlicht-check-model")?.value,
-    model_vision: $("#federlicht-model-vision")?.value,
-    figures: figuresEnabled ? true : undefined,
-    no_figures: figuresEnabled ? undefined : true,
-    figures_mode: $("#federlicht-figures-mode")?.value,
-    figures_select: $("#federlicht-figures-select")?.value,
-    web_search: $("#federlicht-web-search")?.checked,
-    site_output: $("#federlicht-site-output")?.value,
-    extra_args: $("#federlicht-extra-args")?.value,
-  };
-  if (fastUpdate) {
-    payload.stages = "writer,quality";
-  }
-  payload._update_prompt_content = promptParts;
-  return pruneEmpty(payload);
-}
-
-function handleRunUpdate() {
-  const button = $("#run-update-go");
-  if (!button) return;
-  button.addEventListener("click", async () => {
-    try {
-      const payload = await buildUpdateReportPayload();
-      const runRel = payload.run;
-      const promptContent = payload._update_prompt_content;
-      delete payload._update_prompt_content;
-      if (promptContent) {
-        await fetchJSON("/api/files", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: payload.prompt_file, content: promptContent }),
-        });
-      }
-      await startJob("/api/federlicht/start", payload, {
-        kind: "federlicht",
-        onSuccess: async () => {
-          await loadRuns().catch(() => {});
-          if (runRel && $("#run-select")) {
-            $("#run-select").value = runRel;
-            if ($("#instruction-run-select")) $("#instruction-run-select").value = runRel;
-            refreshRunDependentFields();
-            await updateRunStudio(runRel).catch(() => {});
-          }
-        },
-      });
-    } catch (err) {
-      appendLog(`[update] ${err}\n`);
-    }
-  });
-}
 
 function refreshTemplateSelectors() {
   const templateSelect = $("#template-select");
@@ -2153,6 +2357,7 @@ function renderJobs() {
   const collapsed = !state.jobsExpanded;
   const jobs = collapsed ? state.jobs.slice(0, 3) : state.jobs;
   host.classList.toggle("is-collapsed", collapsed);
+  host.classList.toggle("is-expanded", !collapsed);
   host.innerHTML = jobs
     .map((job) => {
       const status = job.status || "unknown";
@@ -2190,9 +2395,112 @@ function renderJobs() {
   });
 }
 
-function setJobStatus(text) {
+function renderRunHistory() {
+  const host = $("#jobs-history-list");
+  if (!host) return;
+  const runs = [...(state.runs || [])]
+    .filter((run) => run.run_rel)
+    .sort((a, b) => {
+      const da = Date.parse(a.updated_at || "") || 0;
+      const db = Date.parse(b.updated_at || "") || 0;
+      return db - da;
+    })
+    .slice(0, 5);
+  if (!runs.length) {
+    host.innerHTML = `<div class="muted">No past runs.</div>`;
+    return;
+  }
+  host.innerHTML = runs
+    .map((run) => {
+      const rel = run.run_rel || "";
+      const name = run.run_name || rel || "run";
+      const updated = run.updated_at ? formatDate(run.updated_at) : "";
+      return `
+        <div class="job-item secondary">
+          <div>
+            <strong>${escapeHtml(name)}</strong>
+            <div class="job-meta">
+              <span class="job-pill">${escapeHtml(rel)}</span>
+              ${updated ? `<span class="job-pill">${escapeHtml(updated)}</span>` : ""}
+            </div>
+          </div>
+          <button class="ghost" data-run-open="${escapeHtml(rel)}">Open</button>
+        </div>
+      `;
+    })
+    .join("");
+  host.querySelectorAll("[data-run-open]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const runRel = btn.getAttribute("data-run-open");
+      if (!runRel) return;
+      if ($("#run-select")) $("#run-select").value = runRel;
+      if ($("#prompt-run-select")) $("#prompt-run-select").value = runRel;
+      if ($("#instruction-run-select")) $("#instruction-run-select").value = runRel;
+      refreshRunDependentFields();
+      updateRunStudio(runRel).catch(() => {});
+    });
+  });
+}
+
+function setJobStatus(text, running = false) {
   const el = $("#job-status");
-  if (el) el.textContent = text;
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("is-running", !!running);
+}
+
+function setLogsCollapsed(collapsed) {
+  state.logsCollapsed = !!collapsed;
+  document.body.dataset.logsCollapsed = collapsed ? "true" : "false";
+  const button = $("#log-toggle");
+  if (button) button.textContent = collapsed ? "Show Logs" : "Hide Logs";
+  localStorage.setItem("federnett-logs-collapsed", collapsed ? "true" : "false");
+}
+
+function normalizeLanguage(value) {
+  if (!value) return "";
+  const lowered = String(value).trim().toLowerCase();
+  if (lowered.startsWith("ko") || lowered.includes("korean")) return "ko";
+  if (lowered.startsWith("en") || lowered.includes("english")) return "en";
+  if (lowered.startsWith("de") || lowered.includes("german")) return "de";
+  return lowered;
+}
+
+function applyRunSettings(summary) {
+  const meta = summary?.report_meta || {};
+  const template = meta.template;
+  if (template) {
+    const templateSelect = $("#template-select");
+    if (templateSelect && Array.from(templateSelect.options).some((o) => o.value === template)) {
+      templateSelect.value = template;
+    }
+    const promptTemplateSelect = $("#prompt-template-select");
+    if (
+      promptTemplateSelect &&
+      Array.from(promptTemplateSelect.options).some((o) => o.value === template)
+    ) {
+      promptTemplateSelect.value = template;
+    }
+  }
+  const lang = normalizeLanguage(meta.language);
+  if (lang) {
+    const langSelect = $("#federlicht-lang");
+    if (langSelect && Array.from(langSelect.options).some((o) => o.value === lang)) {
+      langSelect.value = lang;
+    }
+  }
+  if (meta.model) {
+    const modelInput = $("#federlicht-model");
+    if (modelInput) modelInput.value = meta.model;
+  }
+  if (meta.quality_model) {
+    const checkModelInput = $("#federlicht-check-model");
+    if (checkModelInput) checkModelInput.value = meta.quality_model;
+  }
+  if (meta.model_vision) {
+    const visionInput = $("#federlicht-model-vision");
+    if (visionInput) visionInput.value = meta.model_vision;
+  }
 }
 
 function setKillEnabled(enabled) {
@@ -2220,7 +2528,7 @@ function attachToJob(jobId, opts = {}) {
     setFederlichtRunEnabled(false);
   }
   setKillEnabled(true);
-  setJobStatus(`Streaming job ${shortId(jobId)} ...`);
+  setJobStatus(`Streaming job ${shortId(jobId)} ...`, true);
   const source = new EventSource(`/api/jobs/${jobId}/events`);
   state.activeSource = source;
   source.addEventListener("log", (ev) => {
@@ -2249,7 +2557,7 @@ function attachToJob(jobId, opts = {}) {
       });
       if (opts.onDone) opts.onDone(payload);
       if (payload.returncode === 0 && opts.onSuccess) opts.onSuccess(payload);
-      setJobStatus(`Job ${shortId(jobId)} ${status}${code}`);
+      setJobStatus(`Job ${shortId(jobId)} ${status}${code}`, false);
     } catch (err) {
       appendLog(`[done] failed to parse event: ${err}\n`);
     } finally {
@@ -2263,6 +2571,7 @@ function attachToJob(jobId, opts = {}) {
   });
   source.onerror = () => {
     appendLog("[error] event stream closed unexpectedly\n");
+    setJobStatus("Stream closed unexpectedly.", false);
     setKillEnabled(false);
     if (state.activeJobKind === "federlicht") {
       setFederlichtRunEnabled(true);
@@ -2649,6 +2958,11 @@ function handleFilePreviewControls() {
     }
     window.open(url, "_blank", "noopener");
   });
+  $("#file-preview-canvas")?.addEventListener("click", () => {
+    const rel = state.filePreview.path;
+    if (!rel) return;
+    openCanvasModal(rel);
+  });
   $("#file-preview-save")?.addEventListener("click", async () => {
     const rel = state.filePreview.path;
     const saveAsPath = saveAsInput?.value?.trim();
@@ -2885,6 +3199,30 @@ function handleFeatherInstructionPicker() {
   });
 }
 
+function handleCanvasModal() {
+  const modal = $("#canvas-modal");
+  if (!modal) return;
+  modal.querySelectorAll("[data-canvas-close]").forEach((el) => {
+    el.addEventListener("click", () => closeCanvasModal());
+  });
+  $("#canvas-use-selection")?.addEventListener("click", () => {
+    syncCanvasSelection();
+  });
+  $("#canvas-clear-selection")?.addEventListener("click", () => {
+    state.canvas.selection = "";
+    updateCanvasFields();
+  });
+  $("#canvas-output-path")?.addEventListener("input", (event) => {
+    const value = event.target?.value || "";
+    state.canvas.outputPath = value;
+  });
+  $("#canvas-run")?.addEventListener("click", () => {
+    runCanvasUpdate().catch((err) => {
+      appendLog(`[canvas] update failed: ${err}\n`);
+    });
+  });
+}
+
 function handleUploadDrop() {
   const target = document.body;
   if (!target) return;
@@ -3085,6 +3423,15 @@ function bindHelpModal() {
 }
 
 function handleLogControls() {
+  const saved = localStorage.getItem("federnett-logs-collapsed");
+  if (saved === "true" || saved === "false") {
+    setLogsCollapsed(saved === "true");
+  } else {
+    setLogsCollapsed(false);
+  }
+  $("#log-toggle")?.addEventListener("click", () => {
+    setLogsCollapsed(!state.logsCollapsed);
+  });
   $("#log-clear")?.addEventListener("click", () => {
     clearLogs();
   });
@@ -3261,7 +3608,11 @@ function handleTelemetrySplitter() {
   const rootStyle = document.documentElement.style;
   const saved = localStorage.getItem("federnett-log-height");
   if (saved) {
-    rootStyle.setProperty("--telemetry-log-height", saved);
+    const parsed = Number.parseFloat(saved);
+    if (Number.isFinite(parsed)) {
+      const clamped = Math.max(220, parsed);
+      rootStyle.setProperty("--telemetry-log-height", `${Math.round(clamped)}px`);
+    }
   }
   let dragging = false;
   const onMove = (event) => {
@@ -3438,9 +3789,9 @@ async function bootstrap() {
   handleFederlichtPromptPicker();
   handleFederlichtPromptEditor();
   handleRunPicker();
-  handleRunUpdate();
   handleReloadRuns();
   handleLogControls();
+  handleCanvasModal();
   handleTemplateSync();
   handleTemplateEditor();
   handleTemplateGenerator();

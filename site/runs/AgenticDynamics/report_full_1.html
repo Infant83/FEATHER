@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>다중에이전트 강화학습 실패와 진화게임 동학 기반 강건성</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-acs_review template-default">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">다중에이전트 강화학습 실패와 진화게임 동학 기반 강건성</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>다중에이전트 강화학습 실패와 진화게임 동학 기반 강건성</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-04 05:51</p>
+<h2>Abstract</h2>
+<p>다중에이전트 시스템(multi-agent systems, MAS)에서 표준 강화학습(reinforcement learning, RL)이 빈번히 실패하는 핵심 원인으로는 에이전트 간 상호의존성과 이에 따른 환경 비정상성(non-stationarity)이 지목되며, 이를 구조적으로 다루기 위한 도구로 게임이론 및 진화게임이론(evolutionary game theory, EGT)이 제안된다(전사 [01:26–01:39], [1]). 특히 EGT의 핵심 동학인 replicator dynamics는 “평균보다 높은 보상을 얻는 전략이 증식한다”는 선택 규칙으로 학습/적응의 “경로”를 서술하는 데 초점이 맞춰진다(전사 [08:00–08:14], [1]). 또한 변이·잡음·환경변동이 존재할 때 효율 최적(optimal) 전략보다 변동에 둔감하고 회복탄력성이 큰 “평탄한(flattest)” 전략이 장기 생존에 유리할 수 있다는 직관(“survival of the flattest”)이 MAS 설계의 강건성 개념과 연결된다(전사 [09:11–09:16], [12:19–12:41], [1]). 그러나 본 아카이브의 1차 근거는 단일 YouTube 강연 전사에 국한되어, 보상행렬·파라미터·정량 결과·코드가 부재하며(전사 전반, [1]), 따라서 핵심 주장(예: Tit-for-Tat 효율, quasi-species 안정성)의 재현과 일반화는 추가 자료 수집 및 실험 설계가 필요하다(해석). 마지막으로 계산비용과 더불어, 프로그램 행태의 완전 예측이 원리적으로 제한된다는 논지(halting problem)는 “완전한 사전 예측” 대신 모니터링·가드레일·실험 거버넌스 중심의 운영 설계를 요구한다(전사 [14:55–15:32], [1]). (전망)</p>
+<h2>Introduction</h2>
+<p>MAS는 개별 에이전트가 동일한 환경을 공유하면서도 서로의 행동에 의해 보상 구조와 전이 확률이 변형되는 시스템을 포괄한다(일반 배경설명). 이때 단일 에이전트 RL의 전형적 가정—환경이 (충분히) 정상적이며, 정책 개선이 곧 환경의 안정적 반응을 유도한다—은 쉽게 깨진다(해석). 강연은 이러한 실패 양상을 “에이전트 결과가 서로의 행동에 의존하는 끊임없이 변하는 환경”으로 요약하며, 상호의존성을 명시적으로 모델링하기 위한 언어로 게임이론을 호출한다(전사 [01:26–01:39], [1]).</p>
+<p>게임이론의 관점에서 “게임”은 오락적 의미가 아니라 규칙의 집합이며, 인센티브(보상)와 제약(가능 행동, 정보 구조)을 명시함으로써 상호작용을 분석가능한 대상으로 만든다(전사 [05:36–05:57], [1]). 그러나 정태적 균형 개념만으로는 MAS의 학습 과정에서 나타나는 경로 의존성, 전이적 동학, 불안정(정책 진동, 붕괴)을 충분히 설명하기 어렵다(해석). 따라서 EGT 및 agent-based model(ABM)은 “최종 균형”뿐 아니라 “어떻게 그 상태로(혹은 못) 가는가”를 다루는 도구로 제시된다(전사 [06:15–06:35], [08:34–08:59], [1]).</p>
+<p>본 리뷰는 단일 전사 자료에 근거해 (i) RL 실패 진단의 구조적 의미, (ii) EGT/replicator/ESS의 메커니즘적 해석, (iii) “survival of the flattest”가 시사하는 강건 설계 원리, (iv) 재현·검증을 위한 실행 가능한 실험 프레임을 문단형으로 정리한다(해석). 단, 강연에서 언급된 슬라이드·GitHub·참조 논문은 현재 아카이브에 수집되어 있지 않으므로, 본문은 정량적 단정 대신 검증 필요성을 전면에 둔다(전사 헤더 및 전반, [1]).</p>
+<h2>Current Landscape</h2>
+<h3>1) “표준 RL의 실패”를 만드는 비정상성의 구조</h3>
+<p>강연의 핵심 문제의식은 “표준 RL이 MAS에서 자주 실패한다”는 진단이며, 그 이유를 에이전트 상호의존성과 환경의 지속적 변화로 설명한다(전사 [01:26–01:39], [1]). 이는 MAS에서 각 에이전트가 업데이트할 때마다 타 에이전트에게는 환경이 바뀌는 효과를 낳아, 관측된 경험이 빠르게 구식이 되는(데이터 분포 이동) 문제로 나타난다(해석). 강연은 이를 해결하기 위한 “더 나은 메타 프레임워크”로 게임이론을 제시하지만, 어떤 알고리즘 계열(예: CTDE, opponent modeling 등)을 비교했는지에 대한 구체는 전사에 포함되어 있지 않다(전사 전반, [1]).</p>
+<h3>2) EGT/ABM: 정태 균형에서 “동학”으로</h3>
+<p>게임이론이 상호의존성을 명시하는 언어라면, EGT는 상호작용 속에서 전략 분포가 시간에 따라 어떻게 변화하는지(학습/적응의 경로)를 다루는 동학적 틀이다(해석). 강연은 replicator dynamics의 핵심 규칙을 “전략의 성장률은 그 전략 보상이 집단 평균을 얼마나 초과하는지에 비례하며, what works gets replicated”로 정리한다(전사 [08:00–08:14], [1]). 또한 “순수 수학 모델의 무한 집단·무변이 가정은 비현실적”이며, ABM을 통해 유한 집단과 변이를 도입해야 한다고 강조한다(전사 [08:34–08:59], [1]). 이는 MAS에서 관측되는 우연적 표류, 희귀 사건, 변이·탐색의 역할을 실험적으로 포함시키려는 방향으로 해석될 수 있다(해석).</p>
+<h3>3) 안정성 개념의 이동: 최적 $\rightarrow$ ESS, 그리고 “평탄함”</h3>
+<p>강연은 이론적으로 “가장 좋은(best/optimal)” 해가 항상 실천적으로 “안정적(stable)”이지 않음을 강조하고, 진화적으로 생존 가능한 전략(ESS)이 남는다는 관점을 제시한다(전사 [03:54–04:08], [1]). 더 나아가 변이·잡음이 존재하는 현실적 조건에서는 효율 최적보다 “가장 회복력 있는 평탄한 전략”이 유리할 수 있다는 “survival of the flattest”를 제시하며, quasi-species 사례를 통해 “비효율적이지만 매우 안정적”인 군집의 존재를 언급한다(전사 [09:11–09:16], [12:19–12:41], [1]). 다만 이러한 사례가 어떤 모델/데이터에서 관찰되었는지(보상 구조, 변이율, 집단 크기 등)는 전사만으로 특정할 수 없다(전사 전반, [1]).</p>
+<h2>Mechanistic Insights</h2>
+<h3>1) 규칙의 집합으로서의 게임: 인센티브와 제약의 화학적 비유(해석)</h3>
+<p>강연은 게임을 “규칙의 집합”으로 정의하며, 인센티브·제약·허용 행위를 명시하는 틀로 설명한다(전사 [05:36–05:57], [1]). 재료/화학 관점에서 비유하자면, 이는 반응 네트워크에서 자유에너지 구배(구동력)와 반응 경로 제약(선택 규칙, 촉매/억제)을 지정하는 것에 가깝다(해석). MAS의 거시적 거동은 단일 에이전트의 최적화 결과가 아니라, 규칙(상호작용)과 업데이트(학습)가 결합된 비선형 동학의 산물로 나타나며, 따라서 “정답(균형)”보다 “경로(동학)”가 엔지니어링의 핵심 변수가 된다(전사 [06:15–06:35], [1]; 해석).</p>
+<h3>2) Replicator dynamics: 평균 대비 초과이득의 증폭</h3>
+<p>강연이 제시한 replicator 원리는 다음과 같이 표준적으로 정식화할 수 있다(일반 배경설명). 전략 분포 $x$와 보상행렬 $A$에 대해 연속시간 replicator dynamics는
+$$
+\dot{x}_i = x_i\big[(A x)_i - x^\top A x\big]
+$$
+로 주어지며, 여기서 $x^\top A x$는 평균 보상이다. 강연의 서술(“성장률은 평균 초과 보상에 비례”)은 위 식의 대괄호 항과 정합적이다(전사 [08:00–08:14], [1]). 이 메커니즘은 “잘 되는 전략이 더 자주 관측/채택되어 더 강해지는” 양의 피드백을 만들지만, 동시에 다에이전트 상호작용에서는 상대의 적응이 $A$에 해당하는 유효 보상 구조를 시간에 따라 바꾸므로, 동학은 쉽게 비정상화된다(해석).</p>
+<h3>3) ESS: 최적이 아니라 “침입에 대한 저항성”</h3>
+<p>강연은 “가장 좋은 것이 반드시 안정적인 것은 아니며, ESS가 남는다”는 요지로 안정성 개념을 전면화한다(전사 [03:54–04:08], [1]). 표준적으로 ESS는 소수의 침입 전략이 등장했을 때도 해당 전략 분포가 선택 동학 하에서 붕괴되지 않는 조건으로 정의되며(일반 배경설명), 이는 MAS 설계에서 “성능 최대화”와 별개로 “교란(상대 변화, 변이, 오인식) 하에서의 붕괴 방지”를 목표 함수로 포함해야 함을 시사한다(해석).</p>
+<h3>4) “Survival of the flattest”: 강건성(민감도) 중심의 선택(추론)</h3>
+<p>강연은 변이·환경변동이 존재할 때 “평탄한 전략이 가장 회복력 있다”고 말하며, quasi-species가 “무작위 규칙을 많이 포함하지만 매우 안정적”이고 “상대적으로 비효율적”일 수 있음을 언급한다(전사 [09:11–09:16], [12:19–12:41], [1]). 이를 메커니즘적으로 해석하면, 성능 지형에서 날카로운 최대점(고효율)이 변이/잡음에 의해 쉽게 이탈되는 반면, 넓은 준최적 평탄대(저효율)가 확률적으로 더 오래 점유되는 현상으로 이해할 수 있다(추론). MAS에서는 정책 업데이트의 잡음(탐색), 상대 변화, 관측 오차가 모두 “유효 변이율”로 작동할 수 있으므로, 안정적 운용을 목표로 할 때는 최고점 성능보다 “평탄도(민감도, 회복 시간)”를 지표화하는 것이 타당하다(제안).</p>
+<h3>5) 예측가능성의 원리적 한계와 운영적 전환</h3>
+<p>강연은 halting problem을 언급하며 복잡한 에이전트 동학에 대해 “프로그램이 끝나는지 여부조차 일반적으로 알 수 없다”는 식으로 완전 예측의 불가능성을 강조한다(전사 [14:55–15:32], [1]). 이를 MAS 운영에 적용하면, 설계 철학은 “정확한 장기 예측”에서 “단기 관측-제어 루프, 안전한 중단 조건, 위험 제한”으로 이동한다(해석). 즉, 이론적 예측 한계를 이유로 실험 거버넌스(샌드박스, 중단 기준, 자원 한도)를 설계 변수로 포함시켜야 한다(전사 [14:17–14:35], [14:55–15:32], [1]; 제안).</p>
+<h2>Applications</h2>
+<h3>1) MARL 실험 설계: 비정상성 하에서의 비교 검증(제안)</h3>
+<p>강연의 “표준 RL의 실패” 명제를 검증하려면, 최소한 상대 정책 변화로 인한 비정상성을 통제·계측하는 실험이 필요하다(전사 [01:26–01:39], [1]; 제안). 예를 들어 동일한 환경에서 (i) 독립 학습(independent learners)과 (ii) 상호작용을 일부 모델링하는 학습(예: 상대 모델링 혹은 인센티브 설계)을 비교하고, 정책 이동량 $\Delta \pi$, 성능 분산, 수렴/진동 여부를 지표로 삼을 수 있다(제안). 본 아카이브에는 해당 비교 실험의 결과가 없으므로, 이는 “즉시 실행 가능한 검증 과제”로 남는다(전사 전반, [1]; 해석).</p>
+<h3>2) 반복 게임 기반 안정성 공학: TFT 주장의 조건부 재현(제안)</h3>
+<p>강연은 Tit-for-Tat(TFT)이 장기적으로 효율적이라고 말하면서도 “저변이·저가변성” 조건을 전제로 둔다(전사 [10:41–11:04], [1]). 따라서 응용의 핵심은 TFT 자체의 ‘승리’가 아니라, 변이율·오인식·탐색 강도가 증가할 때 전략 우세가 어떻게 바뀌는지를 조건부로 지도화하는 것이다(해석). 반복 죄수의 딜레마에서 변이율(전략 전환 확률)과 오인식 확률(행동 오류)을 스윕하고, 평균 보상뿐 아니라 회복탄력성(충격 후 복귀 시간), 협력률의 안정성(분산)을 함께 보고하는 실험 설계가 실용적이다(제안).</p>
+<h3>3) “평탄한” 정책 설계: 최고 효율 대신 강건성 지표로의 최적화(제안)</h3>
+<p>“Survival of the flattest”의 응용은, 정책을 단일 성능지표로만 최적화하지 않고 변동에 대한 민감도(예: 보상 지형의 기울기/곡률에 대응하는 경험적 민감도)를 함께 최소화하는 다목적 설계로 나타날 수 있다(추론). 이는 재료 설계에서 최고 성능 재료가 환경 스트레스에 취약할 수 있어, 공정 변동성/결함 허용도를 포함해 설계하는 관행과 유사한 방향성을 갖는다(해석). 강연은 quasi-species의 “안정하지만 비효율적” 특성을 통해 이러한 트레이드오프를 문제 설정 자체로 끌어올린다(전사 [12:19–12:41], [1]).</p>
+<h2>Challenges</h2>
+<h3>1) 재현성 위기: 서지·슬라이드·코드·정량 결과의 부재</h3>
+<p>강연은 “two papers”, “systematic review”, “evolutionary game theory using agentic based methods”를 언급하지만, 전사에는 서지정보와 실험 설정이 구체화되어 있지 않다(전사 [10:12–10:30], [11:49–12:07], [16:37–17:02], [1]). 또한 전사 헤더는 슬라이드(GDrive)와 GitHub(lselector/seminar)를 가리키나, 본 아카이브에는 해당 파일이 수집되어 있지 않아 핵심 주장(예: quasi-species 안정성)의 근거가 “진술” 수준에 머문다(전사 헤더 및 전반, [1]). 결과적으로 본 주제는 현재 상태에서 개념적 리뷰는 가능하나, 학술적 의미의 검증(재현 실험, 수치 비교, 통계 검정)은 추가 수집 없이는 불가능하다(해석).</p>
+<h3>2) 계산비용과 실험 시간: 동학을 보려면 길게 돌려야 한다</h3>
+<p>강연은 다에이전트 실험이 “계산적으로 매우 요구가 크고… 오래 돌리는 것이 비싸다”고 강조한다(전사 [13:26–13:53], [1]). 동학적 안정성(예: 장기 협력 유지, 전략 점유율의 천이)을 보려면 에피소드 수/세대 수가 길어지며, 변이율 스윕까지 포함하면 비용은 곱셈적으로 증가한다(해석). 따라서 실험 설계에서는 (i) 최소 모델로 메커니즘을 분리하고, (ii) 지표를 압축하며, (iii) 조기 중단 조건과 로그/스냅샷을 표준화하는 것이 중요하다(제안).</p>
+<h3>3) 안전·윤리: 자가복제/자가유지 시스템에 대한 사회적 민감성</h3>
+<p>강연은 “life를 너무 가깝게 모사하는 runaway experiment”에 대한 윤리적 난점과 사회적 민감성을 언급한다(전사 [14:17–14:35], [1]). 이는 실제로는 (i) 실험 범위 제한(샌드박스), (ii) 자원 한도(GPU/네트워크), (iii) 종료 조건, (iv) 외부 상호작용 차단과 같은 운영 통제가 연구 설계의 일부가 되어야 함을 의미한다(해석). 해당 통제의 구체 지침은 전사에 포함되지 않으므로, 도메인별 거버넌스 프레임과 연결하는 후속 작업이 필요하다(제안).</p>
+<h3>4) 이론적 한계의 해석: halting problem과 공학적 통제 사이</h3>
+<p>강연은 halting problem을 통해 “완전 예측”의 한계를 강조한다(전사 [14:55–15:32], [1]). 그러나 공학적으로 중요한 것은 (i) 모든 것을 예측하는 것이 아니라 (ii) 위험 사건을 조기에 탐지하고 (iii) 손실을 제한하는 제어 구조를 구축하는 것이다(해석). 따라서 이론적 불가능성은 “아무 것도 할 수 없다”가 아니라 “무엇을 관측하고 어디서 끊을지”를 설계해야 한다는 요구로 재해석되어야 한다(추론).</p>
+<h2>Outlook</h2>
+<p>MAS에서 게임이론/EGT의 역할은 “정답을 계산”하기보다 “상호작용이 만들어내는 동학을 설계”하는 방향으로 강화될 가능성이 크다(전망). 특히 강연이 강조한 유한 집단·변이·잡음의 도입은, 실험적으로는 ABM 및 population-based 방법과 결합되어 “안정성-효율 트레이드오프”의 위상도를 구축하는 연구로 수렴할 수 있다(전사 [08:34–08:59], [09:11–09:16], [1]; 전망). 이때 검증의 핵심은 (i) 변이율/오인식/탐색 강도 스윕, (ii) 회복탄력성 지표의 표준화, (iii) 공개 코드/로그 기반 재현성 확보다(전망).</p>
+<p>또한 “survival of the flattest”는 단순 은유가 아니라, 강건 설계의 실용적 목적함수로 변환될 여지가 있다(전망). 예컨대 동일 평균 성능에서 분산(리스크)을 최소화하거나, 교란 후 복귀 시간을 최소화하는 정책이 실세계 시스템(분산 제어, 시장 메커니즘, 로보틱스 군집 등)에서 더 높은 운영 가치를 가질 수 있다(추론). 다만 본 아카이브 근거가 단일 전사에 국한된 만큼, 다음 단계는 강연이 언급한 슬라이드/코드/참조문헌을 확보해 “개념→실증”을 연결하는 것이다(전망; 전사 헤더 및 [16:37–17:02], [1]).</p>
+<h2>Risks &amp; Gaps</h2>
+<p>핵심 리스크는 “강한 개념적 주장”에 비해 “검증 가능한 실험 사양”이 결여되어 있다는 점이다(전사 전반, [1]). 강연은 “two papers”, “systematic review”를 언급하지만 서지정보가 없고, 케이스 스터디도 보상행렬·변이율·집단 크기·상호작용 구조 등 핵심 파라미터가 제시되지 않아, 독립 검증이 불가능하다(전사 [10:12–10:30], [11:49–12:07], [16:37–17:02], [1]). 또한 TFT 효율 주장도 “저변이·저가변성” 조건을 내재 전제로 두므로, 조건을 벗어나면 결론이 반전될 수 있으며(전사 [10:41–11:04], [1]), 이 민감도를 정량화하지 않으면 응용 시 오판 위험이 있다(해석).</p>
+<p>운영 측면에서는 계산비용이 큰 장기 시뮬레이션이 요구되지만, 어떤 지표로 안정성을 판정할지(수렴/진동/붕괴), 언제 실험을 중단할지(조기 종료), 재현을 위해 무엇을 기록할지(시드/로그)가 표준화되어 있지 않다(전사 [13:26–13:53], [1]; 해석). 마지막으로 안전·윤리 리스크(“runaway experiment”)가 언급되었음에도 구체적 완화 프레임이 부재하므로, 실제 연구 착수 시 거버넌스 설계가 병행되지 않으면 사회적·조직적 리스크로 증폭될 수 있다(전사 [14:17–14:35], [1]; 제안).</p>
+<h2>Critics</h2>
+<h3>헤드라인: “게임이론은 유용하지만, MAS의 모든 실패를 설명하는 만능 키는 아니다”(해석)</h3>
+<p>강연은 표준 RL의 실패를 광범위하게 진술하고 게임이론을 해법으로 제안하지만(전사 [01:26–01:39], [1]), 실무/연구 현장에서는 이미 다양한 MARL 기법이 비정상성 완화와 상호작용 학습을 목표로 발전해 왔다는 반론이 가능하다(해석). 즉, 문제는 “게임이론 vs RL”의 이분법이 아니라, 어떤 상호작용 구조에서 어떤 학습/설계 기법이 안정적으로 작동하는지의 조건부 지도화일 수 있다(해석).</p>
+<p>또한 “survival of the flattest”는 강한 직관을 제공하지만, 이를 MAS에 그대로 이식하면 “낮은 효율을 강건성으로 정당화”하는 과도한 일반화가 될 위험이 있다(해석). 강연 자체도 TFT 효율이 “저변이·저가변성”에 의존한다고 말하므로(전사 [10:41–11:04], [1]), 많은 주장들이 조건 민감적임을 전제로 읽어야 한다(해석).</p>
+<ul>
+<li>게임이론 도입의 과잉범주화: 일부 도메인에서는 게임이론적 모델보다 데이터 기반/모델 기반 제어가 더 직접적일 수 있음(해석).</li>
+<li>TFT/평탄 전략의 조건 민감성: 강연이 전제한 저변이 조건이 깨지면 전략 우열이 달라질 수 있음(전사 [10:41–11:04], [1]; 해석).</li>
+<li>halting problem의 실무적 의미: 원리적 한계가 존재하더라도, 엔지니어링은 “완전 예측”이 아니라 “위험 제한”에 최적화될 수 있음(전사 [14:55–15:32], [1]; 해석).</li>
+</ul>
+<h2>Appendix</h2>
+<h3>용어 및 약어 정리(재료/화학 연구자 관점의 해설 포함)</h3>
+<ul>
+<li><strong>MAS</strong>: 여러 에이전트가 상호작용하며 집단 거동이 나타나는 시스템(일반 배경설명). 강연은 상호의존성과 환경 비정상성이 표준 RL 실패의 핵심 원인이라고 주장한다(전사 [01:26–01:39], [1]).</li>
+<li><strong>게임(규칙의 집합)</strong>: 인센티브·제약·허용 행동을 명시하는 형식 언어(전사 [05:36–05:57], [1]). (해석) 이는 반응 네트워크에서 구동력과 경로 제약을 명시하는 것처럼 “거동을 결정하는 규칙”을 외재화한다.</li>
+<li><strong>EGT / replicator dynamics</strong>: 평균 대비 초과 보상 전략이 증식한다는 선택 규칙(전사 [08:00–08:14], [1]). 표준식은 $\dot{x}_i = x_i\big[(A x)_i - x^\top A x\big]$(일반 배경설명).</li>
+<li><strong>ESS</strong>: 최적이 아니라 침입(변이)에 대한 저항성을 기준으로 한 안정성 개념(전사 [03:54–04:08], [1]).</li>
+<li><strong>Survival of the flattest</strong>: 변이·변동 하에서 효율 최적보다 회복력 높은 “평탄” 전략이 유리할 수 있다는 주장(전사 [09:11–09:16], [12:19–12:41], [1]).</li>
+</ul>
+<h3>근거 아티팩트(아카이브 내 1차 자료)</h3>
+<ul>
+<li>YouTube 전사: “Game Theory and the Dynamics of Complex Agentic Systems”에서 RL 한계, EGT 원리, flattest, 계산비용, halting problem, 안전 우려 등이 직접 언급된다(전사 [01:26–01:39], [08:00–08:14], [09:11–09:16], [12:19–12:41], [13:26–13:53], [14:17–14:35], [14:55–15:32], [1]).</li>
+</ul>
+<h3>재현성 체크리스트(실험 설계 최소 요건)</h3>
+<ul>
+<li>(제안) <strong>모델 사양</strong>: 게임/보상행렬 $A$, 상호작용 그래프(topology), 정보 구조(관측 가능/부분관측), 집단 크기 $N$, 변이율(전략 전환 확률), 행동 오인식 확률.</li>
+<li>(제안) <strong>프로토콜</strong>: 시드 고정, 반복 횟수, 관측 기간(세대/에피소드 수), 로그(전략 점유율 $x(t)$, 평균 보상, 분산), 스냅샷 저장.</li>
+<li>(제안) <strong>지표</strong>: 성능(평균 보상) + 안정성(수렴/진동/붕괴율) + 회복탄력성(교란 후 복귀 시간) + 다양성(예: Shannon entropy).</li>
+<li>(해석) 강연이 언급한 슬라이드/GitHub/참조문헌이 확보되지 않으면, 위 항목을 충족하는 독립 재현 설계로만 주장 검증이 가능하다(전사 헤더 및 [16:37–17:02], [1]).</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Update request:
+현재 Bullet 으로 주요 내용을 정리하고 있는데, 자연스러운 문단구성으로 내용을 정리하고 인사이트를 발굴해줘. 전문적인 내용은 세심하게 설명해주고 이해하기 쉽게. 배경에 대한 설명도 같이 해줘.</p>
+<p>Second prompt:
+deep dive</p>
+<p>Base report: site/runs/AgenticDynamics/report_full.html</p>
+<p>Instructions:
+- Read the base report file and keep its structure unless the update requests a change.
+- Apply only the requested edits; avoid rewriting everything from scratch.
+- Preserve citations and update them only if you change the referenced content.</p>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-04 05:51:56</li>
+<li>Duration: 00:04:13 (253.98s)</li>
+<li>Model: gpt-5.2</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: acs_review</li>
+<li>Language: Korean</li>
+<li>Tags: the, update, and, 다중에이전트, 강화학습</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_1.md-9f952eef.html" data-viewer="report_views/report_run_overview_report_full_1.md-9f952eef.html" data-raw="report/run_overview_report_full_1.md" class="viewer-link">./report/run_overview_report_full_1.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-viewer="report_views/archive_AgenticDynamics-index.md-8390773c.html" data-raw="archive/AgenticDynamics-index.md" class="viewer-link">./archive/AgenticDynamics-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-viewer="report_views/instruction_AgenticDynamics.txt-ac71f96b.html" data-raw="instruction/AgenticDynamics.txt" class="viewer-link">./instruction/AgenticDynamics.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_1.txt-33f5a855.html" data-viewer="report_views/instruction_report_prompt_report_full_1.txt-33f5a855.html" data-raw="instruction/report_prompt_report_full_1.txt" class="viewer-link">./instruction/report_prompt_report_full_1.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

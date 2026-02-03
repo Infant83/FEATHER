@@ -24,6 +24,7 @@ from .config import FedernettConfig
 from .constants import DEFAULT_RUN_ROOTS, DEFAULT_STATIC_DIR, DEFAULT_SITE_ROOT
 from .filesystem import (
     list_run_dirs,
+    move_run_to_trash,
     summarize_run,
     list_instruction_files as _list_instruction_files,
     read_text_file as _read_text_file,
@@ -329,6 +330,11 @@ class FedernettHandler(BaseHTTPRequestHandler):
                 if not isinstance(content, str):
                     raise ValueError("content must be a string")
                 result = _write_text_file(cfg.root, raw_path, content)
+                self._send_json(result)
+                return
+            if path == "/api/runs/trash":
+                run_rel = payload.get("run")
+                result = move_run_to_trash(cfg.root, run_rel, cfg.run_roots)
                 self._send_json(result)
                 return
             if path == "/api/template-preview":

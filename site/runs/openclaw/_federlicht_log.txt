@@ -1,0 +1,8 @@
+[2026-02-03 22:04:07] JOB START
+[2026-02-03 22:14:40] Report Preview: OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토
+Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 22:14
+Executive Summary
+Abstract
+본 보고서는 OpenClaw(일부 문서에서 ClawdBot / Moltbot으로도 표기) 계열의 "지속 실행형 개인/업무용 AI 에이전트"가 주장하는 기능·아키텍처·설치 경로와, 기업·연구 환경(특히 화학·재료 연구 워크플로)에 적용할 때의 보안·거버넌스 리스크를 공개 자료 기반으로 정리한 기술검토이다. OpenClaw는 persistent memory(지속 메모리), 브라우저 제어, 파일·셸 명령 실행 등 광범위한 시스템 권한을 지원한다고 제품 문서에서 명시한다 (공식: openclaw.ai, ./archive/tavily_extract/0002_https_openclaw.ai.txt). 로컬 게이트웨이(예: 웹소켓 바인딩 ws://127.0.0.1:18789)와 온보드(onboard) 마법사, 외부 모델 연동(예: Google Gemini) 등 재현 가능한 설치·구성 경로가 커뮤니티·튜토리얼에 문서화되어 있다 (커뮤니티: dev.to, ./archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt; 현장 튜토리얼: twofootdog.tistory.com, ./archive/tavily_extr
+... [truncated]
+[2026-02-03 22:14:40] JOB END
