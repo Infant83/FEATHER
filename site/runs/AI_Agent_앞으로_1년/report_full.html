@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AI 에이전트의 최신 동향 및 향후 과제</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-default,
+body.template-arxiv_preprint,
+body.template-acs_review {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1d1b17;
+  --muted: #59524a;
+  --accent: #8b3f2d;
+  --paper-alt: #f2ede3;
+  --page-bg: radial-gradient(1200px 600px at 18% -12%, #efe9e0 0%, #f6f2ea 45%, #fdfcf9 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+  --ui-font: "Avenir Next", "Gill Sans", "Trebuchet MS", "Helvetica Neue", sans-serif;
+}
+
+body.template-default .kicker,
+body.template-arxiv_preprint .kicker,
+body.template-acs_review .kicker {
+  letter-spacing: 0.26em;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-default">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">AI 에이전트의 최신 동향 및 향후 과제</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>AI 에이전트의 최신 동향 및 향후 과제</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-04 23:24</p>
+<h2>Executive Summary</h2>
+<p>AI 에이전트의 최신 동향 및 향후 1년 중 결치해야 할 사항은 여러 방면에서 중요성이 증가하고 있다. 첫째, AI 기반의 잘못된 정보 생성이 민주적 회복력을 저해할 수 있다는 연구가 있다(Alexander Romanishyn et al., 2025) [10.3389/frai.2025.1569115]. 둘째, 대형 언어 모델(LLM) 에이전트의 평가 및 벤치마킹의 필요성이 커지고 있다(Mahmoud Mohammadi et al., 2025) [10.1145/3711896.3736570]. 셋째, 금융 분야의 AI 협업 성과 향상에 대한 연구가 필요하다(Chao Xu &amp; Sung Eui Cho, 2025) [10.3390/su17104335]. 넷째, AI 에이전트를 활용한 예측 유지보수 방법론이 제안되고 있다(Wenyu Jiang &amp; Fuwen Hu, 2025) [10.3390/computers14080329]. 이러한 동향들은 기업의 기술 발전 및 정책 설계에 중요한 영향을 미칠 수 있다.</p>
+<h2>Scope &amp; Methodology</h2>
+<p>본 리뷰에서는 AI 에이전트와 관련된 최신 연구 결과 및 현황을 살펴보았다. 분석은 제공된 아카이브 자료(OpenAlex, Tavily)를 기반으로 하여, 주요 문헌과 웹 자료를 비교하여 실증적 데이터와 연구 결과를 삼각측량하였다. 각 출처의 신뢰성과 질을 평가한 후, 해당 자료들이 어떻게 현재 트렌드와 연결되는지를 탐구하였다. 인용은 저자, 연도, 제목, DOI/URL 형식으로 제공하며, 웹 기반 자료는 [Web]으로 라벨링하였다.</p>
+<h2>Key Findings</h2>
+<ol>
+<li><strong>AI의 정보 왜곡 문제</strong>  </li>
+<li>AI는 잘못된 정보를 생성하여 민주적 회복력을 저하할 가능성이 있음(Alexander Romanishyn et al., 2025) [10.3389/frai.2025.1569115].  </li>
+<li>
+<p>한계: 특정 사례에 한정된 내러티브이므로 광범위한 결론을 내리기 어려움.</p>
+</li>
+<li>
+<p><strong>LLM 에이전트의 평가 기준 필요성</strong>  </p>
+</li>
+<li>LLM 에이전트의 평가 기준을 표준화할 필요가 있는 것으로 나타남(Mahmoud Mohammadi et al., 2025) [10.1145/3711896.3736570].  </li>
+<li>
+<p>한계: 기술 변화의 빠름으로 인해 지속적인 업데이트 필요.</p>
+</li>
+<li>
+<p><strong>금융 분야에서의 AI 협업 성과</strong>  </p>
+</li>
+<li>AI 협업 성과에 영향을 미치는 요인 분석이 필요함(Chao Xu &amp; Sung Eui Cho, 2025) [10.3390/su17104335].  </li>
+<li>
+<p>한계: 특정 시장 및 환경을 고려하지 않은 일반화의 오류 가능성.</p>
+</li>
+<li>
+<p><strong>예측 유지보수 방법론</strong>  </p>
+</li>
+<li>AI 에이전트를 활용한 예측 유지보수 방법론이 제안됨(Wenyu Jiang &amp; Fuwen Hu, 2025) [10.3390/computers14080329].  </li>
+<li>
+<p>한계: 실제 적용 사례 및 효과에 대한 기초 자료 부족.</p>
+</li>
+<li>
+<p><strong>Self-Healing DevOps 파이프라인 구성</strong>  </p>
+</li>
+<li>AI 기반의 셀프 힐링 DevOps 파이프라인 구현 분석(Bipul Bhattarai, 2025) [10.20944/preprints202506.1436.v1].  </li>
+<li>한계: 실험적 접근으로 인해 상용화 단계 통한 검증 부족.</li>
+</ol>
+<h2>Trends &amp; Implications</h2>
+<p>AI 에이전트 기술의 신뢰성, 평가 기준, 그리고 협업 성과에서 관찰된 신호들은 향후 12개월 동안의 기술 개발 및 정책적 결정에 중대한 함의를 가진다. 예를 들어, 정부 및 기업들은 AI 기반의 평가 체계를 마련하고, 신뢰성을 강화하기 위해 표준화된 가이드라인을 개발해야 할 것이다. 또한, 인프라 발전을 위해서는 효율적인 워크플로 평가 방법이 요구된다. LLM에 대한 기법의 발전은 결국 사용자 경험의 개선으로 연결될 수 있으며, 보안 및 거버넌스를 어떻게 강화할 것인지에 대한 고민이 필요하다.</p>
+<h2>Risks &amp; Gaps</h2>
+<p>현재 문헌은 AI 에이전트의 기술과 정책적 발전을 반영하고 있음에도 불구하고, 특정 영역에 필요한 추가적인 연구가 요구된다. AI 기반 기술의 신뢰성과 안전성 점검이 상이한 환경에서의 적합성을 보장하지 못할 수 있다. 또한, 잘못된 정보의 확산 방지와 관련된 정책 권고는 알지 못하는 위험을 내포하고 있으며, 현실적인 사례에 대한 정량화된 데이터 부족이 문제로 지적되고 있다.</p>
+<h2>Critics</h2>
+<p>디지털 환경에서의 AI Agent의 역할에 대한 과대평가 또는 벤더에 의한 편향이 발생할 수 있음을 주의해야 할 필요가 있다. 다음은 주요 반론이다:
+- <strong>과대평가 이슈</strong>: 특정 AI 기술의 능력이 과장될 수 있음.
+- <strong>벤더 편향</strong>: 특정 기술 제공자에 의한 정보 제공이 편향될 수 있음.
+- <strong>재현성 문제</strong>: 현재 평가 시스템의 재현성 부족 문제.</p>
+<h2>Appendix</h2>
+<h3>1. 소스 목록</h3>
+<ul>
+<li>Alexander Romanishyn, Olena Malytska, V. A. Goncharuk. 2025. AI-driven disinformation: policy recommendations for democratic resilience. DOI: <a href="https://doi.org/10.3389/frai.2025.1569115" target="_blank" rel="noopener">\[1\]</a>.</li>
+<li>Mahmoud Mohammadi, Yipeng Li, Jane Lo, Wendy Yip. 2025. Evaluation and Benchmarking of LLM Agents: A Survey. DOI: <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">\[2\]</a>.</li>
+<li>Chao Xu, Sung Eui Cho. 2025. Factors Affecting Human–AI Collaboration Performances in Financial Sector: Sustainable Service Development Perspective. DOI: <a href="https://doi.org/10.3390/su17104335" target="_blank" rel="noopener">\[3\]</a>.</li>
+<li>Wenyu Jiang, Fuwen Hu. 2025. Artificial Intelligence Agent-Enabled Predictive Maintenance: Conceptual Proposal and Basic Framework. DOI: <a href="https://doi.org/10.3390/computers14080329" target="_blank" rel="noopener">\[4\]</a>.</li>
+<li>Bipul Bhattarai. 2025. Scaling Generative AI for Self-Healing DevOps Pipelines: Technical Analysis. DOI: <a href="https://doi.org/10.20944/preprints202506.1436.v1" target="_blank" rel="noopener">\[5\]</a>.</li>
+<li>Liangyue Yu et al. 2025. Multimodal Sensing-Enabled Large Language Models for Automated Emotional Regulation: A Review of Current Technologies, Opportunities, and Challenges. DOI: <a href="https://doi.org/10.3390/s25154763" target="_blank" rel="noopener">\[6\]</a>.</li>
+</ul>
+<h3>2. 증거 강도 메모</h3>
+<ul>
+<li>높은 신뢰성을 가진 연구를 포함했으나, 일부 웹 기반 자료는 보조적 상징으로 참고됨. </li>
+<li>동향에 대한 명확한 데이터 부족은 후속 연구 필요성을 불러옴.</li>
+</ul>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: default<br />
+Depth: normal  </p>
+<p>목표/범위: “AI Agent 최신 동향과 앞으로 1년 내 대비해야 할 사항”을 기술 리더/연구자 관점에서 학술 리뷰 스타일로 정리하라. 초점은 LLM agent orchestration(오케스트레이션/플로우), tool use(툴사용 설계), reliability(프로덕션 신뢰성), evals(평가/벤치마킹), security(보안/거버넌스)이며, ‘사실’과 ‘해석/권고’를 명확히 구분하라.  </p>
+<p>필수 섹션 구성: Executive Summary, Scope &amp; Methodology, Key Findings, Trends &amp; Implications, Risks &amp; Gaps, Critics, Appendix. Executive Summary는 5–7문장으로 핵심 주장→근거(출처 유형 표기)→의미/의사결정 함의 순으로 작성. Key Findings는 3–6개 항목으로 각 항목에 (1) 핵심 주장 (2) 근거(연구/웹) (3) 한계/전제(공개정보 한계 포함)를 붙여라. Trends &amp; Implications는 관측된 신호(평가 표준화, AgentOps/관측, 워크플로 평가, 멀티에이전트 운영, 정책/리스크)에서 향후 12개월의 제품/조직/인프라 의사결정(예: 평가체계, 가드레일, 감사추적, 블라스트 레디어스, HITL 운영)을 연결하라.  </p>
+<p>방법론/소스 정책: 제공된 아카이브(OpenAlex works 메타, Tavily 웹 검색 요약, source_index/triage)를 기반으로 “소스 삼각측량(논문/프리프린트 vs 벤더·블로그 vs 가이드)”을 수행하라. 인용은 (저자/기관, 연도, 제목, DOI/URL) 형식으로 최소 단위 근거를 제시하고, 웹 기반 근거는 [Web]로 라벨링하라. OpenAlex는 PDF/전문 추출이 없으므로 초록/메타 기반 주장에는 ‘공개정보 한계’를 명시하고 과도한 단정 금지. 보안(Security)은 1차 근거가 상대적으로 약하므로, 직접 증거 부족 영역은 Risks &amp; Gaps에 별도 표기하고 정책/허위정보 논문은 “간접 근거”로 취급하라.  </p>
+<p>Critics: 주류 주장에 대한 반론(예: 에이전트 과대평가, 벤더 편향, 평가의 재현성 문제, 운영 리스크 과소추정)을 헤드라인+단락+불릿으로 제시. 해당 없음이면 Not applicable과 사유를 명시. Appendix에는 사용 소스 목록(우선 12개)과 분류(연구/웹/가이드), 그리고 ‘증거 강도’ 메모를 포함하라.</p>
+<h2>References</h2>
+<ol>
+<li><span id="ref-1"></span> Alexander Romanishyn, Olena Malytska, V. A. Goncharuk (2025). AI-driven disinformation: policy recommendations for democratic resilience. Frontiers in Artificial Intelligence — <a href="https://doi.org/10.3389/frai.2025.1569115" target="_blank" rel="noopener">link</a> <small>citations: 7</small></li>
+<li><span id="ref-2"></span> Mahmoud Mohammadi, Yipeng Li, Jane Lo, Wendy Yip (2025). Evaluation and Benchmarking of LLM Agents: A Survey — <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">link</a> <small>citations: 5</small></li>
+<li><span id="ref-3"></span> Chao Xu, Sung Eui Cho (2025). Factors Affecting Human–AI Collaboration Performances in Financial Sector: Sustainable Service Development Perspective. Sustainability — <a href="https://doi.org/10.3390/su17104335" target="_blank" rel="noopener">link</a> <small>citations: 5</small></li>
+<li><span id="ref-4"></span> Wenyu Jiang, Fuwen Hu (2025). Artificial Intelligence Agent-Enabled Predictive Maintenance: Conceptual Proposal and Basic Framework. Computers — <a href="https://doi.org/10.3390/computers14080329" target="_blank" rel="noopener">link</a> <small>citations: 4</small></li>
+<li><span id="ref-5"></span> Bipul Bhattarai (2025). Scaling Generative AI for Self-Healing DevOps Pipelines: Technical Analysis. Preprints.org — <a href="https://doi.org/10.20944/preprints202506.1436.v1" target="_blank" rel="noopener">link</a> <small>citations: 1</small></li>
+<li><span id="ref-6"></span> Liangyue Yu et al. (2025). Multimodal Sensing-Enabled Large Language Models for Automated Emotional Regulation: A Review of Current Technologies, Opportunities, and Challenges. Sensors — <a href="https://doi.org/10.3390/s25154763" target="_blank" rel="noopener">link</a> <small>citations: 1</small></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-04 23:24:24</li>
+<li>Duration: 00:05:16 (316.36s)</li>
+<li>Model: gpt-4o-mini</li>
+<li>Quality model: gpt-4o-mini</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: default</li>
+<li>Language: Korean</li>
+<li>Tags: 최신, 향후, executive, 에이전트의, 평가</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-viewer="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-raw="report/run_overview_report_full.md" class="viewer-link">./report/run_overview_report_full.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="./archive/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항-index.md">./archive/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_generated_prompt_ai_agent_trends.txt-52438639.html" data-viewer="report_views/instruction_generated_prompt_ai_agent_trends.txt-52438639.html" data-raw="instruction/generated_prompt_ai_agent_trends.txt" class="viewer-link">./instruction/generated_prompt_ai_agent_trends.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-viewer="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-raw="instruction/report_prompt_report_full.txt" class="viewer-link">./instruction/report_prompt_report_full.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

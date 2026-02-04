@@ -33,13 +33,19 @@ from .filesystem import (
     list_dir as _list_dir,
     resolve_run_dir as _resolve_run_dir,
 )
+from .agent_profiles import (
+    list_agent_profiles,
+    get_agent_profile,
+    save_agent_profile,
+    delete_agent_profile,
+)
 from .jobs import Job, JobRegistry
 from .templates import list_template_styles, list_templates, read_template_style, template_details
 from .utils import json_bytes as _json_bytes, safe_rel as _safe_rel
 
 
 class FedernettHandler(BaseHTTPRequestHandler):
-    server_version = "federnett/0.1"
+    server_version = "federnett/1.1.0"
 
     def _cfg(self) -> FedernettConfig:
         return self.server.cfg  # type: ignore[attr-defined]
@@ -211,6 +217,19 @@ class FedernettHandler(BaseHTTPRequestHandler):
             )
             self._send_json({"html": rendered})
             return
+        if path == "/api/agent-profiles":
+            self._send_json({"profiles": list_agent_profiles(cfg.root)})
+            return
+        if path.startswith("/api/agent-profiles/"):
+            profile_id = unquote(path.split("/", 3)[3])
+            source = (qs.get("source") or [None])[0]
+            try:
+                payload = get_agent_profile(cfg.root, profile_id, source=source)
+            except ValueError as exc:
+                self._send_json({"error": str(exc)}, status=404)
+                return
+            self._send_json(payload)
+            return
         if path == "/api/models":
             payload = _list_models()
             self._send_json(payload)
@@ -340,6 +359,20 @@ class FedernettHandler(BaseHTTPRequestHandler):
             if path == "/api/template-preview":
                 html = _render_template_preview(cfg.root, payload)
                 self._send_json({"html": html})
+                return
+            if path == "/api/agent-profiles/save":
+                profile = payload.get("profile")
+                if not isinstance(profile, dict):
+                    raise ValueError("profile must be an object")
+                memory_text = payload.get("memory_text")
+                store = payload.get("store") or "site"
+                result = save_agent_profile(cfg.root, profile, memory_text=memory_text, store=store)
+                self._send_json(result)
+                return
+            if path == "/api/agent-profiles/delete":
+                profile_id = payload.get("id")
+                result = delete_agent_profile(cfg.root, profile_id)
+                self._send_json(result)
                 return
             if path == "/api/upload":
                 name = (qs.get("name") or ["upload.bin"])[0]

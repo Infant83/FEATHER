@@ -1,1 +1,1 @@
-- [youtube] Game Theory and the Dynamics of Complex Agentic Systems — https://www.youtube.com/watch?v=nm-OnKyBNbk (score=0.78; year=2026; text=./archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt)
+- [youtube] Game Theory and the Dynamics of Complex Agentic Systems — https://www.youtube.com/watch?v=nm-OnKyBNbk (score=0.76; year=2026; text=./archive/youtube/transcripts/youtu.be-nm-OnKyBNbk-Game_Theory_and_the_Dynamics_of_Complex_Agentic_Systems.txt)

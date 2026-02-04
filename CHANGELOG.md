@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+- Add FederHav CLI to draft update requests against an existing report and re-run Federlicht with a chosen agent profile.
+- Add Federnett Agent Profiles panel (list/edit/save/delete) with site-scoped profile storage and memory hooks.
+- Persist `agent_profile` into `report_meta.json` and restore it when reopening past runs.
+- Improve citation rendering by stripping escaped `\\[n\\]` anchors and merging orphaned citation-only lines.
+- Move Recent Jobs into a compact hero card near Run Folders and clean up the Live Logs panel framing/scroll behavior.
+
 ## 1.0.0
 - Introduce **Canvas** in Federnett: open a report from File Preview, select excerpts, write update instructions, auto-generate an update prompt, and re-run Federlicht from the same workspace.
 - Replace the standalone Update Report panel with the Canvas-based revision workflow.

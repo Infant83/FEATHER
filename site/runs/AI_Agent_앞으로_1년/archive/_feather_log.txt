@@ -1,0 +1,47 @@
+[2026-02-04 23:14:34] JOB START: instruction.txt date=2026-02-04 days=365 max_results=6
+[2026-02-04 23:14:34] TAVILY SEARCH: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항 (한국어)
+[2026-02-04 23:14:45] TAVILY SEARCH: LLM agent orchestration, tool use, reliability, evals, security (한국어)
+[2026-02-04 23:14:49] OPENALEX SEARCH: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항
+[2026-02-04 23:14:51] OPENALEX SEARCH: LLM agent orchestration, tool use, reliability, evals, security
+[2026-02-04 23:14:53] JOB END
+[2026-02-05 04:41:12] JOB START: AI_Agent_앞으로_1년.txt date=2026-02-05 days=365 max_results=8
+[2026-02-05 04:41:12] TAVILY SEARCH UPDATE: 2 cached queries
+[2026-02-05 04:41:12] TAVILY SEARCH SKIP (exists): AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항 (한국어)
+[2026-02-05 04:41:12] TAVILY SEARCH SKIP (exists): LLM agent orchestration, tool use, reliability, evals, security (한국어)
+[2026-02-05 04:41:12] TAVILY SEARCH: youtube: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항 (한국어)
+[2026-02-05 04:41:15] YOUTUBE SEARCH SKIP: no youtube hint or explicit site:youtube.com queries
+[2026-02-05 04:41:15] OPENALEX UPDATE: 6 cached works
+[2026-02-05 04:41:15] OPENALEX SEARCH: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항
+[2026-02-05 04:41:17] OPENALEX SEARCH: LLM agent orchestration, tool use, reliability, evals, security
+[2026-02-05 04:41:19] OPENALEX SKIP (exists): W4412877164
+[2026-02-05 04:41:19] OPENALEX PDF DOWNLOAD: https://dl.acm.org/doi/pdf/10.1145/3711896.3736570 -> W4412877164.pdf
+[2026-02-05 04:41:19] WARN openalex pdf download failed url=https://dl.acm.org/doi/pdf/10.1145/3711896.3736570 err=HTTPError('403 Client Error: Forbidden for url: https://dl.acm.org/doi/pdf/10.1145/3711896.3736570')
+[2026-02-05 04:41:19] OPENALEX PDF DOWNLOAD: https://arxiv.org/pdf/2507.21504 -> W4412877164.pdf
+[2026-02-05 04:41:19] PDF->TEXT: W4412877164.pdf
+[2026-02-05 04:41:19] OPENALEX SKIP (exists): W4413380618
+[2026-02-05 04:41:19] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2073-431X/14/8/329/pdf?version=1755247301 -> W4413380618.pdf
+[2026-02-05 04:41:19] WARN openalex pdf download failed url=https://www.mdpi.com/2073-431X/14/8/329/pdf?version=1755247301 err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2073-431X/14/8/329/pdf?version=1755247301')
+[2026-02-05 04:41:19] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2073-431X/14/8/329/pdf?version=1755247301') urls=['https://www.mdpi.com/2073-431X/14/8/329/pdf?version=1755247301']
+[2026-02-05 04:41:19] OPENALEX SKIP (exists): W4410304152
+[2026-02-05 04:41:19] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2071-1050/17/10/4335/pdf?version=1746872948 -> W4410304152.pdf
+[2026-02-05 04:41:20] WARN openalex pdf download failed url=https://www.mdpi.com/2071-1050/17/10/4335/pdf?version=1746872948 err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2071-1050/17/10/4335/pdf?version=1746872948')
+[2026-02-05 04:41:20] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2071-1050/17/10/4335/pdf?version=1746872948') urls=['https://www.mdpi.com/2071-1050/17/10/4335/pdf?version=1746872948']
+[2026-02-05 04:41:20] OPENALEX SKIP (exists): W4412787296
+[2026-02-05 04:41:20] OPENALEX PDF DOWNLOAD: https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2025.1569115/pdf -> W4412787296.pdf
+[2026-02-05 04:41:22] PDF->TEXT: W4412787296.pdf
+[2026-02-05 04:41:22] OPENALEX SKIP (exists): W4411361610
+[2026-02-05 04:41:22] OPENALEX PDF DOWNLOAD: https://www.preprints.org/frontend/manuscript/31987ebf32ae0d7ef875f4970f738b2e/download_pub -> W4411361610.pdf
+[2026-02-05 04:41:23] WARN openalex pdf download failed url=https://www.preprints.org/frontend/manuscript/31987ebf32ae0d7ef875f4970f738b2e/download_pub err=HTTPError('403 Client Error: Forbidden for url: https://www.preprints.org/frontend/manuscript/31987ebf32ae0d7ef875f4970f738b2e/download_pub')
+[2026-02-05 04:41:23] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.preprints.org/frontend/manuscript/31987ebf32ae0d7ef875f4970f738b2e/download_pub') urls=['https://www.preprints.org/frontend/manuscript/31987ebf32ae0d7ef875f4970f738b2e/download_pub']
+[2026-02-05 04:41:23] OPENALEX SKIP (exists): W4412931371
+[2026-02-05 04:41:23] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/1424-8220/25/15/4763/pdf?version=1754056980 -> W4412931371.pdf
+[2026-02-05 04:41:23] WARN openalex pdf download failed url=https://www.mdpi.com/1424-8220/25/15/4763/pdf?version=1754056980 err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/15/4763/pdf?version=1754056980')
+[2026-02-05 04:41:23] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/1424-8220/25/15/4763/pdf?version=1754056980') urls=['https://www.mdpi.com/1424-8220/25/15/4763/pdf?version=1754056980']
+[2026-02-05 04:41:23] OPENALEX PDF DOWNLOAD: https://www.techrxiv.org/doi/pdf/10.36227/techrxiv.174762883.35612385/v1 -> W4410508625.pdf
+[2026-02-05 04:41:23] WARN openalex pdf download failed url=https://www.techrxiv.org/doi/pdf/10.36227/techrxiv.174762883.35612385/v1 err=HTTPError('403 Client Error: Forbidden for url: https://www.techrxiv.org/doi/pdf/10.36227/techrxiv.174762883.35612385/v1')
+[2026-02-05 04:41:23] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.techrxiv.org/doi/pdf/10.36227/techrxiv.174762883.35612385/v1') urls=['https://www.techrxiv.org/doi/pdf/10.36227/techrxiv.174762883.35612385/v1']
+[2026-02-05 04:41:23] OPENALEX PDF DOWNLOAD: https://www.mdpi.com/2075-1702/13/6/504/pdf?version=1749550271 -> W4411152803.pdf
+[2026-02-05 04:41:23] WARN openalex pdf download failed url=https://www.mdpi.com/2075-1702/13/6/504/pdf?version=1749550271 err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2075-1702/13/6/504/pdf?version=1749550271')
+[2026-02-05 04:41:23] ERROR openalex pdf download failed query=LLM agent orchestration, tool use, reliability, evals, security err=HTTPError('403 Client Error: Forbidden for url: https://www.mdpi.com/2075-1702/13/6/504/pdf?version=1749550271') urls=['https://www.mdpi.com/2075-1702/13/6/504/pdf?version=1749550271']
+[2026-02-05 04:41:24] OPENALEX SEARCH: youtube: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항
+[2026-02-05 04:41:25] JOB END

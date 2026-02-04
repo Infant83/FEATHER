@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-02-05 05:38:18",
+  "started_at": "2026-02-05 05:27:48",
+  "duration_seconds": 630.5,
+  "duration_hms": "00:10:30",
+  "model": "gpt-5-2025-08-07",
+  "model_vision": null,
+  "quality_model": null,
+  "quality_iterations": 0,
+  "quality_strategy": "none",
+  "template": "custom_mit_tech_review",
+  "title": "엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스",
+  "summary": "엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-05 05:37 실행 요약 관찰: AI 에이전트는 ‘앱’이 아니라 LLM이 도구와 환경을 통해 작업을 이어가는 운영형 워크플로우로 재정의되고 있으며, 연구 커뮤니티는 평가 목적(행동/능력…",
+  "output_format": "html",
+  "language": "Korean",
+  "author": "Hyun-Jung Kim / AI Governance Team",
+  "tags": [
+    "핵심",
+    "문장",
+    "관찰",
+    "agent",
+    "orchestration"
+  ],
+  "free_format": false,
+  "pdf_status": "disabled",
+  "agent_profile": {
+    "id": "federhav",
+    "name": "FederHav",
+    "tagline": "FederHav: Havruta-inspired Knowledge Resonance AI",
+    "version": "1.0",
+    "apply_to": [
+      "writer",
+      "critic",
+      "reviser"
+    ]
+  },
+  "report_stem": "report_full_3",
+  "stage_workflow": [
+    "1. scout: ran",
+    "2. clarifier: skipped (disabled)",
+    "3. template_adjust: skipped (disabled)",
+    "4. plan: ran",
+    "5. web: disabled",
+    "6. evidence: skipped (depth=brief)",
+    "7. plan_check: disabled",
+    "8. writer: ran",
+    "9. quality: skipped (iterations=0)"
+  ],
+  "report_workflow_path": "./report_notes/report_workflow.md",
+  "run_overview_path": "./report/run_overview.md",
+  "report_overview_path": "./report/run_overview_report_full_3.md",
+  "archive_index_path": "./archive/AI_Agent_앞으로_1년-index.md",
+  "instruction_path": "./instruction/AI_Agent_앞으로_1년.txt",
+  "report_prompt_path": "./instruction/report_prompt_report_full_3.txt",
+  "figures_preview_path": "./report_views/figures_preview.html",
+  "site_index_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\index.html"
+}

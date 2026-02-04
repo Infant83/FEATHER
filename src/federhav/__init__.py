@@ -1,0 +1,1 @@
+"""FederHav CLI package."""

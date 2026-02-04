@@ -762,85 +762,6 @@ body[data-tab="feather"] #run-studio-wrap {
   justify-content: space-between;
 }
 
-.canvas-modal .modal-card {
-  width: min(1200px, 96vw);
-  max-height: 90vh;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-}
-
-.canvas-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.canvas-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
-  gap: 16px;
-  min-height: 0;
-}
-
-.canvas-panel {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-  min-width: 0;
-}
-
-.canvas-panel h4 {
-  margin: 0;
-  font-size: 15px;
-}
-
-.canvas-preview-frame {
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-  border: 1px solid var(--edge);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-.canvas-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 4px;
-}
-
-.canvas-text {
-  border-radius: 18px;
-  border: 1px solid var(--edge);
-  background: rgba(7, 11, 18, 0.7);
-  padding: 12px;
-  display: grid;
-  gap: 8px;
-  min-height: 180px;
-}
-
-.canvas-text-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.canvas-report-text {
-  width: 100%;
-  min-height: 160px;
-  border-radius: 12px;
-  border: 1px solid var(--edge);
-  background: rgba(8, 12, 18, 0.65);
-  color: var(--ink);
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  padding: 10px;
-  resize: vertical;
-}
 
 .help-body {
   display: grid;
@@ -1015,6 +936,127 @@ body[data-tab="feather"] #run-studio-wrap {
 .templates-panel {
   margin-top: 22px;
   padding-top: 24px;
+}
+
+.agent-panel {
+  margin-top: 22px;
+  padding-top: 24px;
+}
+
+.agent-panel.collapsed .agent-grid {
+  display: none;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 14px;
+}
+
+.agent-list,
+.agent-editor {
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--surface-2);
+  display: grid;
+  gap: 12px;
+}
+
+.agent-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-list-items {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.agent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--edge);
+  background: var(--surface-3);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.agent-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.agent-item .agent-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.agent-source {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+.agent-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.agent-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.agent-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agent-editor-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.agent-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.agent-status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--edge);
+  background: rgba(7, 12, 18, 0.7);
+  color: #dfe9ff;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 140px;
+  overflow: auto;
+  white-space: pre-wrap;
 }
 
 .templates-grid {
@@ -1415,6 +1457,53 @@ body[data-tab="feather"] #run-studio-wrap {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.hero-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hero-card.hero-recent {
+  min-height: 132px;
+  gap: 8px;
+}
+
+.hero-card.hero-recent.is-hidden {
+  display: none;
+}
+
+.hero-card.hero-recent small {
+  margin-top: -2px;
+}
+
+.hero-card.hero-recent .jobs-list {
+  display: grid;
+  gap: 6px;
+  max-height: 200px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.hero-card.hero-recent .jobs-list.compact .job-item {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.hero-card.hero-recent .jobs-list.compact .job-meta {
+  gap: 4px;
+}
+
+.hero-card.hero-recent .job-pill {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.hero-card.hero-recent button.mini {
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 .hero-card {
@@ -1856,8 +1945,8 @@ button.danger:disabled {
 }
 
 .logs-block {
-  overflow: auto;
-  padding-right: 4px;
+  overflow: hidden;
+  padding-right: 0;
 }
 
 body[data-logs-collapsed="true"] {
@@ -1921,7 +2010,8 @@ body[data-logs-collapsed="true"] .preview-block {
   border: 1px solid var(--edge);
   border-radius: 20px;
   background: var(--surface-3);
-  padding: 0;
+  padding: 6px;
+  box-sizing: border-box;
   min-height: 180px;
   flex: 1 1 auto;
   overflow: hidden;
@@ -1945,16 +2035,20 @@ body[data-logs-collapsed="true"] .preview-block {
 
 #log-output {
   margin: 0;
-  padding: 16px 18px;
+  padding: 14px 16px;
   box-sizing: border-box;
   flex: 1;
   max-width: 100%;
+  height: 100%;
   overflow: auto;
+  scrollbar-gutter: stable both-edges;
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
   min-width: 0;
   min-height: 0;
+  border-radius: 14px;
+  background: rgba(7, 12, 18, 0.55);
   color: #eaf6ff;
   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
@@ -2095,9 +2189,6 @@ body[data-logs-collapsed="true"] .preview-block {
   .templates-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .canvas-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 720px) {
@@ -2129,12 +2220,6 @@ body[data-logs-collapsed="true"] .preview-block {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-  }
-  .canvas-modal .modal-card {
-    max-height: 92vh;
-  }
-  .canvas-preview-frame {
-    min-height: 220px;
   }
 }
 

@@ -1,7 +1,65 @@
 {
-  "revision": "2026-02-04T05:51:57.031685",
-  "generated_at": "2026-02-04T05:51:57.031685",
+  "revision": "2026-02-05T05:38:19.034810",
+  "generated_at": "2026-02-05T05:38:19.034810",
   "items": [
+    {
+      "id": "AI_Agent_앞으로_1년",
+      "run": "AI_Agent_앞으로_1년",
+      "report_stem": "report_full_3",
+      "title": "엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-05 05:37 실행 요약 관찰: AI 에이전트는 ‘앱’이 아니라 LLM이 도구와 환경을 통해 작업을 이어가는 운영형 워크플로우로 재정의되고 있으며, 연구 커뮤니티는 평가 목적(행동/능력…",
+      "lang": "Korean",
+      "template": "custom_mit_tech_review",
+      "format": "html",
+      "model": "gpt-5-2025-08-07",
+      "tags": [
+        "핵심",
+        "문장",
+        "관찰",
+        "agent",
+        "orchestration"
+      ],
+      "date": "2026-02-05",
+      "timestamp": "2026-02-05T05:38:18.744318",
+      "source_mtime": 1770237499,
+      "source_size": 48154,
+      "paths": {
+        "report": "runs/AI_Agent_앞으로_1년/report_full_3.html",
+        "overview": "runs/AI_Agent_앞으로_1년/report/run_overview_report_full_3.md",
+        "workflow": "runs/AI_Agent_앞으로_1년/report_notes/report_workflow.md",
+        "run": "runs/AI_Agent_앞으로_1년"
+      }
+    },
+    {
+      "id": "AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항",
+      "run": "AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항",
+      "report_stem": "report_full_1",
+      "title": "AI 에이전트 동향 및 정책 제안 보고서",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "AI 에이전트 동향 및 정책 제안 보고서 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-04 23:43 AI Agent 최신 동향과 앞으로 1년 대비해야 할 사항 Executive Summary AI 에이전트의 최신 동향은 기술 리더와 연구자들에게 중요한 의사결정 함의를 제공합니다. 최근…",
+      "lang": "Korean",
+      "template": "default",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [
+        "정책",
+        "agent",
+        "executive",
+        "에이전트",
+        "최신"
+      ],
+      "date": "2026-02-04",
+      "timestamp": "2026-02-04T23:43:05.730231",
+      "source_mtime": 1770216185,
+      "source_size": 27697,
+      "paths": {
+        "report": "runs/20260204_ai_agent_trends/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항/report_full_1.html",
+        "overview": "runs/20260204_ai_agent_trends/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항/report/run_overview_report_full_1.md",
+        "workflow": "runs/20260204_ai_agent_trends/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항/report_notes/report_workflow.md",
+        "run": "runs/20260204_ai_agent_trends/AI_Agent_최신_동향_앞으로_1년_대비해야_할_사항"
+      }
+    },
     {
       "id": "AgenticDynamics",
       "run": "AgenticDynamics",

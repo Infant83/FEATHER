@@ -136,6 +136,13 @@ def _build_federlicht_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list
         cmd.extend(["--figures-select", str(resolved_select)])
     if parse_bool(payload, "web_search"):
         cmd.append("--web-search")
+    agent_profile = payload.get("agent_profile")
+    if agent_profile:
+        cmd.extend(["--agent-profile", str(agent_profile)])
+    agent_profile_dir = payload.get("agent_profile_dir")
+    if agent_profile_dir:
+        resolved_dir = resolve_under_root(cfg.root, str(agent_profile_dir))
+        cmd.extend(["--agent-profile-dir", str(resolved_dir)])
     site_output = payload.get("site_output")
     if site_output:
         resolved_site = resolve_under_root(cfg.root, str(site_output))

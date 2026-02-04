@@ -269,6 +269,7 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
             "quality_model": report_meta.get("quality_model"),
             "model_vision": report_meta.get("model_vision"),
             "output_format": report_meta.get("output_format"),
+            "agent_profile": report_meta.get("agent_profile"),
         },
     }
 

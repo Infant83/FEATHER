@@ -79,6 +79,14 @@
                 <strong id="run-roots-badge">-</strong>
                 <small>Load an existing run folder</small>
               </div>
+              <div class="hero-card hero-recent" id="hero-card-recent" aria-live="polite">
+                <div class="hero-card-head">
+                  <span>Recent Jobs</span>
+                  <button type="button" id="jobs-toggle" class="ghost mini">Show more</button>
+                </div>
+                <small id="recent-jobs-subtitle">Select a run folder to surface jobs.</small>
+                <div id="jobs-list" class="jobs-list compact"></div>
+              </div>
             </div>
           </div>
 
@@ -268,6 +276,10 @@
                 <label>
                   <span>Model</span>
                   <input id="federlicht-model" placeholder="$OPENAI_MODEL" list="model-options" />
+                </label>
+                <label>
+                  <span>Agent Profile</span>
+                  <select id="federlicht-agent-profile"></select>
                 </label>
 
                 <label class="wide">
@@ -488,18 +500,6 @@
               <div class="log-shell">
                 <pre id="log-output" aria-live="polite"></pre>
               </div>
-
-              <div class="jobs">
-                <h3>Recent Jobs</h3>
-                <div id="jobs-list" class="jobs-list"></div>
-                <div class="jobs-actions">
-                  <button type="button" id="jobs-toggle" class="ghost">Show more</button>
-                </div>
-                <div class="jobs-history">
-                  <h4>Past Runs</h4>
-                  <div id="jobs-history-list" class="jobs-history-list"></div>
-                </div>
-              </div>
             </section>
 
             <div
@@ -667,6 +667,102 @@
             placeholder="Paste or edit template markdown here..."
           ></textarea>
           <div class="template-editor-meta" id="template-editor-meta"></div>
+        </div>
+      </section>
+
+      <section class="panel agent-panel" id="agent-panel">
+        <div class="panel-head slim">
+          <div>
+            <h2>Agent Profiles</h2>
+            <p>Manage persona prompts, memory hooks, and registry metadata.</p>
+          </div>
+          <div class="panel-pills">
+            <button type="button" class="ghost" id="agent-panel-toggle">Hide panel</button>
+            <span class="meta-pill">bottom dock</span>
+          </div>
+        </div>
+        <div class="agent-grid">
+          <div class="agent-list">
+            <div class="agent-list-head">
+              <h3>Profiles</h3>
+              <button type="button" id="agent-new" class="ghost">New</button>
+            </div>
+            <div id="agent-list" class="agent-list-items"></div>
+          </div>
+          <div class="agent-editor">
+            <div class="agent-editor-head">
+              <div>
+                <h3 id="agent-editor-title">Profile</h3>
+                <p id="agent-editor-meta" class="muted">Select a profile to edit.</p>
+              </div>
+              <div class="agent-editor-actions">
+                <button type="button" id="agent-clone" class="ghost">Clone</button>
+                <button type="button" id="agent-save" class="primary">Save</button>
+                <button type="button" id="agent-delete" class="danger">Delete</button>
+              </div>
+            </div>
+            <div class="agent-editor-grid">
+              <label>
+                Profile ID
+                <input id="agent-id" class="ghost-input" placeholder="federhav" />
+              </label>
+              <label>
+                Name
+                <input id="agent-name" class="ghost-input" placeholder="FederHav" />
+              </label>
+              <label>
+                Tagline
+                <input
+                  id="agent-tagline"
+                  class="ghost-input"
+                  placeholder="Havruta-inspired Knowledge Resonance AI"
+                />
+              </label>
+              <label>
+                Apply to
+                <input
+                  id="agent-apply-to"
+                  class="ghost-input"
+                  placeholder="writer,critic,reviser"
+                />
+              </label>
+              <label>
+                Memory description
+                <input
+                  id="agent-memory-desc"
+                  class="ghost-input"
+                  placeholder="Stable editorial values, interests, style preferences."
+                />
+              </label>
+              <label>
+                Memory file
+                <input id="agent-memory-path" class="ghost-input" disabled />
+              </label>
+              <label class="agent-inline-check">
+                <input type="checkbox" id="agent-store-site" />
+                Store in site (shared)
+              </label>
+            </div>
+            <label>
+              System prompt
+              <textarea
+                id="agent-system-prompt"
+                class="ghost-input"
+                rows="6"
+                placeholder="Describe the persona, tone, and constraints for this agent."
+              ></textarea>
+            </label>
+            <label>
+              Memory hook
+              <textarea
+                id="agent-memory-text"
+                class="ghost-input"
+                rows="5"
+                placeholder="Optional long-term notes, style rules, or domain anchors."
+              ></textarea>
+            </label>
+            <pre id="agent-status" class="agent-status">Ready.</pre>
+          </div>
         </div>
       </section>
 
@@ -930,90 +1026,6 @@
                 </li>
               </ul>
             </section>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal canvas-modal" id="canvas-modal" aria-hidden="true" role="dialog">
-        <div class="modal-backdrop" data-canvas-close></div>
-        <div class="modal-card canvas-card" role="document">
-          <header class="modal-header">
-            <div>
-              <h3>Report Canvas</h3>
-              <p>Draft update requests and re-run Federlicht on a selected report.</p>
-            </div>
-            <button type="button" class="ghost" data-canvas-close>Close</button>
-          </header>
-          <div class="canvas-meta">
-            <span class="meta-pill" id="canvas-run-rel">-</span>
-            <span class="meta-pill" id="canvas-base-rel">-</span>
-            <span class="meta-pill" id="canvas-status">Ready</span>
-          </div>
-          <div class="canvas-grid">
-            <section class="canvas-panel">
-              <h4>Preview</h4>
-              <iframe id="canvas-preview-frame" class="canvas-preview-frame" title="Canvas preview"></iframe>
-            </section>
-            <section class="canvas-panel">
-              <label>
-                Base report
-                <input id="canvas-base-path" class="ghost-input" disabled />
-              </label>
-              <label>
-                Next report output
-                <input id="canvas-output-path" class="ghost-input" />
-              </label>
-              <label>
-                Update prompt file
-                <input id="canvas-update-path" class="ghost-input" disabled />
-              </label>
-              <label>
-                Update instructions
-                <textarea
-                  id="canvas-update"
-                  class="ghost-input"
-                  rows="6"
-                  placeholder="Describe what should change, what to keep, and how to adjust tone or structure."
-                ></textarea>
-              </label>
-              <label>
-                Second prompt (optional)
-                <textarea
-                  id="canvas-second"
-                  class="ghost-input"
-                  rows="3"
-                  placeholder="Optional extra guidance to append."
-                ></textarea>
-              </label>
-              <label>
-                Selection (optional)
-                <textarea id="canvas-selection" class="ghost-input" rows="4" readonly></textarea>
-              </label>
-              <div class="canvas-actions">
-                <button type="button" id="canvas-use-selection" class="ghost">
-                  Use selection
-                </button>
-                <button type="button" id="canvas-clear-selection" class="ghost">
-                  Clear selection
-                </button>
-                <button type="button" id="canvas-run" class="primary">
-                  Update Report
-                </button>
-              </div>
-            </section>
-          </div>
-          <div class="canvas-text">
-            <div class="canvas-text-head">
-              <h4>Report text</h4>
-              <span class="muted">Select text below, then click Use selection.</span>
-            </div>
-            <textarea
-              id="canvas-report-text"
-              class="canvas-report-text"
-              rows="10"
-              placeholder="Report text will appear here for selection."
-              readonly
-            ></textarea>
           </div>
         </div>
       </div>

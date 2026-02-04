@@ -1,0 +1,20 @@
+Language: Korean
+
+Template: mit_tech_review  
+Depth: extreme
+
+목적/범위: “AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항”을 MIT Technology Review 스타일(영향+맥락)로 정리한다. 초점은 LLM agent orchestration, tool use, reliability, evals, security이며, 기술 리더/제품 전략가가 12개월 로드맵·투자·리스크 결정을 내릴 수 있도록 “관측된 신호 vs. 추정”을 분리해 논의한다. (YouTube 원문/메타데이터는 아카이브에 없어 직접 인용은 제한됨. 필요시 웹서치.)  
+
+필수 섹션 구성 지시:  
+- Executive Summary: 불릿 없이 2개 짧은 문단(각 ≤3문장). 첫 문단은 lede(무슨 변화가 왔는가), 둘째는 deck(왜 지금 중요한가/무엇을 준비할까).  
+- Trend Scan: 1–2문단. “에이전트=앱”이 아니라 “워크플로우+도구+운영”으로 이동한 변화를 비전문 용어로.  
+- The Core Idea: 핵심 메커니즘을 평이하게 설명하고 용어 1–2개 정의(예: orchestration, agent evals/reliability).  
+- Discussion: 각 항목에 대해 심도있는 논의를 진행하라. 우선 근거는 *Evaluation and Benchmarking of LLM Agents: A Survey* (2025, DOI: 10.1145/3711896.3736570), ReliabilityBench (arxiv html), Comet “AI Agent Orchestration Flows”, CodeAnt “Evaluating LLM Agents in Multi-Step Workflows (2026 Guide)”에서 추출. LinkedIn 관측성 글은 홍보성 가능성을 명시.  
+- What’s Next: 향후 12개월 마일스톤(평가 체계, 관측성, 가드레일, 배포/거버넌스) + 의사결정 질문 3개 내외.  
+- Risks & Gaps: 미지수/부정 결과/결측 증거를 명시. 공개정보 한계: arXiv 원문 JSONL, YouTube/videos, local manifest 부재로 전수 검증 불가. 보안(tool-use 공격, 데이터 유출) 관련 1차 실증 자료가 아카이브에 제한적임을 표기.  
+- Critics: 짧은 헤드라인 후 반론(“에이전트는 신뢰성·ROI가 아직 과장”, “관측/평가가 제품보다 뒤처짐” 등)과 근거 수준을 함께.  
+- Appendix: 사용 소스 목록(아카이브 파일 경로/URL), 용어, 가정/제외 범위.  
+
+증거/인용 정책: 모든 핵심 주장에는 최소 1개 출처를 붙이고, 수치·벤치마크·분류체계는 원문 표현을 최대한 유지. 관찰/가설/권고를 문장 내 라벨링(“관찰:”, “추정:”, “권고:” ).  
+
+언어/스타일: 한국어, 명확하고 유려한 문장, 과장 금지, 편집 가능 문장으로 작성.

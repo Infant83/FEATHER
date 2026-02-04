@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>archive/openalex/text/W4412877164.txt</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>archive/openalex/text/W4412877164.txt</h1></header>
+  <main><p><em>Truncated view for readability.</em></p><div class="meta-block"><p><strong>Title:</strong> Evaluation and Benchmarking of LLM Agents: A Survey</p><p><strong>Authors:</strong> Mahmoud Mohammadi, Yipeng Li, Jane Lo, Wendy Yip</p><p><strong>Published:</strong> 2025-08-03</p><p><strong>Source:</strong> <a href="https://doi.org/10.1145/3711896.3736570">https://doi.org/10.1145/3711896.3736570</a></p><p><strong>PDF:</strong> <a href="../archive/openalex/pdf/W4412877164.pdf">./archive/openalex/pdf/W4412877164.pdf</a></p><p><strong>Summary:</strong><br />The rise of LLM-based agents has opened new frontiers in AI applications, yet evaluating these agents remains a complex and underdeveloped area. This survey provides an in-depth overview of the emerging field of LLM agent evaluation, introducing a two-dimensional taxonomy that organizes existing work along (1) evaluation objectives -- what to evaluate, such as agent behavior, capabilities, reliability, and safety -- and (2) evaluation process -- how to evaluate, including interaction modes, datasets and benchmarks, metric computation methods, and tooling. In addition to taxonomy, we highlight enterprise-specific challenges, such as role-based access to data, the need for reliability guarantees, dynamic and long-horizon interactions, and compliance, which are often overlooked in current research. We also identify future research directions, including holistic, more realistic, and scalable evaluation. This work aims to bring clarity to the fragmented landscape of agent evaluation and provide a framework for systematic assessment, enabling researchers and practitioners to evaluate LLM agents for real-world deployment.</p></div><pre>
+
+===== PAGE 1 =====
+Evaluation and Benchmarking of LLM Agents: A Survey
+Mahmoud Mohammadi
+mahmoud.mohammadi@sap.com
+SAP Labs
+Bellevue, WA, USA
+Yipeng Li
+yipeng.li@sap.com
+SAP Labs
+Bellevue, WA, USA
+Jane Lo
+jane.lo@sap.com
+SAP Labs
+Palo Alto, CA, USA
+Wendy Yip
+wendy.yip@sap.com
+SAP Labs
+Palo Alto, CA, USA
+Abstract
+The rise of LLM-based agents has opened new frontiers in AI ap-
+plications, yet evaluating these agents remains a complex and un-
+derdeveloped area. This survey provides an in-depth overview of
+the emerging field of LLM agent evaluation, introducing a two-
+dimensional taxonomy that organizes existing work along (1) eval-
+uation objectives—what to evaluate, such as agent behavior, capa-
+bilities, reliability, and safety—and (2) evaluation process—how to
+evaluate, including interaction modes, datasets and benchmarks,
+metric computation methods, and tooling. In addition to taxonomy,
+we highlight enterprise-specific challenges, such as role-based ac-
+cess to data, the need for reliability guarantees, dynamic and long-
+horizon interactions, and compliance, which are often overlooked
+in current research. We also identify the future research directions,
+including holistic, more realistic, and scalable evaluation. This work
+aims to bring clarity to the fragmented landscape of agent evalua-
+tion and provide a framework for systematic assessment, enabling
+researchers and practitioners to evaluate LLM agents for real-world
+deployment.
+CCS Concepts
+• Computing methodologies →Natural language processing;
+• Software and its engineering →Software verification and
+validation; • Human-centered computing →Human com-
+puter interaction (HCI).
+Keywords
+LLM Agents; Agent Evaluation; Evaluation Taxonomy; Agent Be-
+havior, Benchmarks, Safety; Enterprise AI
+ACM Reference Format:
+Mahmoud Mohammadi, Yipeng Li, Jane Lo, and Wendy Yip. 2025. Evaluation
+and Benchmarking of LLM Agents: A Survey. In Proceedings of the 31st ACM
+SIGKDD Conference on Knowledge Discovery and Data Mining V.2 (KDD ’25),
+August 3–7, 2025, Toronto, ON, Canada. ACM, New York, NY, USA, 11 pages.
+<a href="https://doi.org/10.1145/3711896.3736570">https://doi.org/10.1145/3711896.3736570</a>
+This work is licensed under a Creative Commons Attribution 4.0 International License.
+KDD ’25, Toronto, ON, Canada
+© 2025 Copyright held by the owner/author(s).
+ACM ISBN 979-8-4007-1454-2/2025/08
+<a href="https://doi.org/10.1145/3711896.3736570">https://doi.org/10.1145/3711896.3736570</a>
+1
+Introduction
+Agents based on LLMs are autonomous or semi-autonomous sys-
+tems that use LLMs to reason, plan, and act, and represent a rapidly
+growing frontier in artificial intelligence [69, 105]. From customer
+service bots and coding copilots to digital assistants, LLM agents
+are redefining how we build intelligent systems.
+As these agents move from research prototypes to real-world
+applications [23, 62], the question of how to rigorously evaluate
+them becomes both pressing and complex. However, evaluating
+LLM agents is more complex than evaluating LLMs in isolation.
+Unlike LLMs, which are primarily assessed for text generation or
+question answering, LLM agents operate in dynamic, interactive
+environments. They reason and make plans, execute tools, lever-
+age memory, and even collaborate with humans or other agents
+[20]. This complex behavior and dependence on real-world effects
+make standard LLM evaluation approaches insufficient. To make an
+analogy, LLM evaluation is like examining the performance of an
+engine. In contrast, agent evaluation assesses a car’s performance
+comprehensively, as well as under various driving conditions.
+LLM agent evaluation also differs from traditional software eval-
+uation. While software testing focuses on deterministic and static
+behavior, LLM agents are inherently probabilistic and behave dy-
+namically; therefore, they require new approaches to assessing their
+performance. The evaluation of LLM agents is at the intersection
+of natural language processing (NLP), human-computer interac-
+tion (HCI), and software engineering, which demands additional
+perspectives.
+Despite increasing interest in this space, existing surveys focus
+narrowly on LLM evaluation or cover specific agent capabilities
+without a holistic perspective [121]. In addition, enterprise appli-
+cations bring additional requirements to agents, including secure
+access to data and systems, a high degree of reliability for audit
+and compliance purposes, and more complex interaction patterns,
+which are rarely addressed in the existing literature [107]. This
+survey aims to serve as a helpful reference for practitioners and
+researchers in the field of agent evaluation. Our contributions in
+this survey are twofold.
+• We propose a taxonomy of LLM agent evaluation that orga-
+nizes prior work by evaluation objectives (what to evaluate,
+such as behavior, capabilities, reliability, and safety) and
+evaluation process (how to evaluate, including interaction
+modes, datasets and benchmarks, metrics computation meth-
+ods, evaluation tooling, and evaluation environments).
+arXiv:2507.21504v1  [cs.LG]  29 Jul 2025
+
+
+===== PAGE 2 =====
+KDD ’25, August 3–7, 2025, Toronto, ON, Canada
+Mahmoud Mohammadi, Yipeng Li, Jane Lo, and Wendy Yip
+• We highlight enterprise-specific challenges, including role-
+based access control, reliability guarantees, long-term inter-
+action, and compliance requirements.
+The remainder of this paper is structured as follows. Section 2
+describes the taxonomy used in this survey paper to analyze the
+agent evaluation landscape. Section 3 dives into the first dimension
+of the taxonomy, evaluation objectives, and focuses on the aspects
+of the agent to be evaluated. Section 4 describes the second dimen-
+sion, the evaluation process, and focuses on the evaluation method.
+Section 5 discusses the challenges of assessing LLM agents in enter-
+prise environments. Section 6 outlines open questions and future
+research directions to guide the next phase of work in evaluating
+LLM agents.
+2
+Taxonomy for LLM-based Agent Evaluation
+We propose a two-dimensional taxonomy to organize different as-
+pects of the evaluation of LLM-based agents, structured along the
+axes of Evaluation Objectives (what to evaluate) and Evalua-
+tion Process (how to evaluate). This taxonomy is visualized as a
+hierarchical tree in 1.
+The Evaluation Objectives dimension is concerned with the tar-
+gets of evaluation. The first category, Agent Behavior, in this dimen-
+sion focuses on outcome-oriented aspects such as task completion
+and output quality, capturing how well an agent meets end-users’
+expectations. Next, Agent Capabilities emphasize process-oriented
+competencies, including tool use, planning and reasoning, mem-
+ory and context retention, and multi-agent collaboration. These
+capabilities provide insights into how agents achieve their goals
+and how well they meet their design specification. Reliability as-
+sesses whether an agent behaves consistently for the same input
+and robustly when input varies or the system encounters errors.
+Finally, Safety and Alignment evaluates the agent’s trustworthiness
+and security, including fairness, compliance, and the prevention of
+harmful or unethical behaviors.
+The Evaluation Process dimension describes how agents are as-
+sessed. Interaction Mode distinguishes between static evaluation,
+where agents respond to fixed inputs, and interactive assessment,
+where agents engage with users. Evaluation Data discusses both
+synthetic and real-world datasets, as well as benchmarks tailored
+to specific domains such as software engineering, healthcare, and
+finance [23, 62]. Metrics Computation Methods encompasses quan-
+titative measures, such as task success and factual accuracy, as
+well as qualitative evaluations based on human or LLM judgments.
+Evaluation Tooling refers to the supporting infrastructure, such as
+instrumentation frameworks (e.g., LangSmith, Arize AI) and pub-
+lic leaderboards (e.g., Holistic Evaluation of Agents), that enable
+scalable and reproducible assessment. Lastly, Evaluation Contexts
+define the environment in which evaluations are conducted, from
+controlled simulations to open-world settings such as web browsers
+or APIs.
+This taxonomy serves both as a conceptual framework and a
+practical guide, enabling systematic comparison and analysis of
+LLM agents across a wide range of goals, methodologies, and de-
+ployment conditions. In the following sections, we examine each
+dimension in detail, highlighting key evaluation practices and rep-
+resentative studies.
+As LLM agents are deployed in increasingly diverse and complex
+settings, factors such as single-turn versus multi-turn interactions,
+multilingualism, and multimodality all become more important.
+While the taxonomy remains applicable across these variations,
+tailored metrics and evaluation strategies are often required. We
+will discuss these specific adaptations in the relevant sections that
+follow.
+3
+Evaluation Objectives
+3.1
+Agent Behavior
+Agent behavior refers to the overall performance of the agent as
+perceived by a user, treating the agent as a black box. It represents
+the highest-level view in evaluation and offers the most direct
+insight into the user experience. This category encompasses aspects
+such as task completion, output quality, latency, and cost.
+3.1.1
+Task Completion: Task completion is a fundamental objec-
+tive of agent evaluation, assessing whether an agent successfully
+achieves the predefined goals of a given task [11, 80, 96, 115]. It
+involves determining whether a desired state is reached or if spe-
+cific criteria defined for task success are met [57, 93]. Although
+sometimes noted for providing limited fine-grained insight into
+failures, especially when most models achieve low success rates
+[64], task completion remains a predominant and essential measure
+of overall agent performance [64].
+Task completion is commonly quantified using metrics such as
+Success Rate (SR) [11, 57, 64], which can also be referred to as Task
+Success Rate [115] or Overall Success Rate [57]. Other related metrics
+include Task Goal Completion (TGC) [91] and Pass Rate [76]. Some
+evaluations employ binary indicators, such as a reward function
+that returns 0 or 1 for goal achievement [42]. Metrics such as pass@𝑘
+and pass^𝑘extend this by considering success over multiple trials
+[104].
+This crucial objective is applied across a wide range of LLM agent
+evaluation domains and benchmarks [93]. This includes tasks re-
+lated to coding and software engineering, such as resolving GitHub
+issues (SWE-bench [40]), scientific data analysis programming (Sci-
+enceAgentBench [11]), reproducing research (CORE-Bench [86],
+PaperBench [87]), and interactive coding in apps (AppWorld [91]).
+It is also extensively used for agents interacting with web envi-
+ronments, including general web navigation (BrowserGym [14],
+WebArena [126], WebCanvas [73]), multimodal web tasks (Visual-
+WebArena [42], MMInA [124]), and realistic time-consuming web
+tasks (ASSISTANTBENCH [109]).
+3.1.2
+Output Quality: Output quality refers to the characteristics
+of responses by an LLM agent. It is an umbrella term encompassing
+aspects such as accuracy, relevance, clarity, coherence, and adher-
+ence to agent specifications or task requirements [80]. An agent
+may complete a task yet still deliver a subpar user experience if the
+interaction lacks the qualities mentioned above. Output quality is
+particularly relevant in evaluating conversational agents, where
+user goals are often achieved over multiple turns. Many metrics in
+this category overlap with those used in large language model (LLM)
+evaluation. For example, the fluency metric is used to measure the
+degree to which the output of an LLM satisfies the conventions of
+natural language [120]. The logical coherence metric focuses on
+
+
+===== PAGE 3 =====
+Evaluation and Benchmarking of LLM Agents: A Survey
+KDD ’25, August 3–7, 2025, Toronto, ON, Canada
+Figure 1: Taxonomy of LLM Agent Evaluation
+the rigor in arguments [120]. As LLM agents may utilize tools for
+retrieving grounding information and providing context-aware text
+answers, standard metrics used in retrieval-augmented generation
+(RAG) systems also apply. Such metrics include Response Relevance
+or Factual Correctness [21].
+3.1.3
+Latency &amp; Cost: Latency is a critical aspect of agent behav-
+ior, especially in scenarios where users interact with agents syn-
+chronously. Long wait times can significantly degrade user experi-
+ence and erode trust in the system. A commonly used metric in this
+context is Time To First Token (TTFT), which measures the delay
+before a user sees the first token of an LLM’s response in stream-
+ing mode. For use cases where the agent operates asynchronously,
+End-to-End Request Latency—the time to receive the complete re-
+sponse—is often more relevant [70].
+While cost is not directly observable by end-users, it plays a
+crucial role in determining the practicality of deploying agents
+at scale. We include cost as a measure of an agent’s monetary
+efficiency. It is typically estimated based on the number of input and
+output tokens, which directly correlate with usage-based pricing
+in most LLM deployments.
+3.2
+Agent Capabilities
+Beyond external behavior, evaluations often target specific capa-
+bilities of LLM-based agents that enable their performance. Key
+aspects of this category include tool use, planning and reasoning,
+memory and context retention, and multi-agent collaboration. Eval-
+uating these capabilities helps determine an agent’s strengths and
+weaknesses on a more granular level.
+3.2.1
+Tool Use: Tool use is a core capability for LLM-based agents,
+enabling them to retrieve grounding information, perform actions,
+and interact with external environments. In this survey, tool use
+involves invocation of a single tool and is interchangeable with
+function calling; more complex cases of determining tool sequences
+for complex tasks will be discussed in 3.2.2. Recent advances have
+allowed LLMs, such as ChatGPT-3.5 and beyond, to support function
+calling natively. These models can autonomously decide whether to
+invoke a function, select the appropriate one from a candidate set,
+and generate the required parameters. As a result, LLM agents can
+directly build on the functions of the underlying model, allowing
+many of the evaluation techniques originally developed for LLMs
+to use tools [47].
+The evaluation of the tool’s use involves answering several key
+questions. First, can the agent correctly determine whether tool
+invocation is necessary for a given task? If so, can it select the
+appropriate tool from a defined set of candidates? Once the tool is
+selected, the agent must be able to identify the correct parameters
+required by the tool and then generate appropriate values for each
+parameter to ensure proper execution. In cases where the candidate
+toolset is extensive, the agent may also need to retrieve the correct
+tool from a repository based on a natural language description of
+the task [83].
+
+
+===== PAGE 4 =====
+KDD ’25, August 3–7, 2025, Toronto, ON, Canada
+Mahmoud Mohammadi, Yipeng Li, Jane Lo, and Wendy Yip
+Several metrics have been proposed to assess these abilities.
+Invocation Accuracy [54] evaluates whether the agent makes the
+correct decision about whether to call a tool at all. Tool Selection
+Accuracy measures whether the proper tool is chosen from a list
+of options. Retrieval Accuracy focuses on whether the system can
+retrieve the correct tool from a larger toolset, often measured using
+rank accuracy 𝑘. For ranking-based evaluation, Mean Reciprocal
+Rank (MRR) quantifies the position of the correct tool in the ranked
+list. In contrast, Normalized Discounted Cumulative Gain (NDCG)
+reflects how well the system ranks all relevant tools[54].
+Parameter-related evaluation involves two aspects. The param-
+eter name F1 score [83] measures the agent’s ability to identify the
+parameter names required for a given function correctly and then
+correctly assign values to them. While some evaluations rely on
+the correctness of abstract syntax trees (ASTs) to check if the tool</pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

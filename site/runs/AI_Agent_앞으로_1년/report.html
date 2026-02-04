@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent 최신 동향과 대비해야 할 사항</title>
+</head>
+<body>
+
+<h1>AI Agent 최신 동향과 대응 전략</h1>
+
+<h2>Executive Summary</h2>
+<p>AI 에이전트는 강력한 도구이지만, 그 신뢰성과 보안 문제는 기업의 안정성에 중대한 영향을 미칠 수 있다. 보안 정책 부족이 AI 에이전트의 정보 왜곡 위험을 증가시켜, 조직은 신뢰성을 높이기 위한 평가 메커니즘을 구축해야 한다. 따라서, LLM 에이전트의 오케스트레이션과 툴사용 설계는 필수적이며, 향후 1년 동안 이에 대한 전략적 계획이 필요하다.</p>
+
+<h2>Scope & Methodology</h2>
+<p>본 리뷰는 LLM agent orchestration, tool use, reliability, evals, security 분야에서 접근 방식을 심도 있게 분석한다. 주로 OpenAlex works 메타, Tavily 웹 검색 요약, 그리고 소스 삼각측량을 통해 손쉽게 확보한 자료를 기반으로 하며, 각 주장에 대해 명확한 근거를 제시한다. 공개정보 한계와 정확도에 주의하며, 관련 문헌을 기반으로 한 정보를 제공한다.</p>
+
+<h2>Key Findings</h2>
+<ul>
+    <li><strong>LLM 에이전트의 신뢰성이 항상 높지 않음.</strong>
+        <p>연구에 따르면 많은 LLM 에이전트가 실제 환경에서 신뢰성 부족 문제를 겪음 (Mohammadi et al., 2025, DOI: [10.1145/3711896.3736570](https://doi.org/10.1145/3711896.3736570)).
+        <strong>한계:</strong> 실제 사례가 부족하여 일반화에 제약.</p>
+    </li>
+    <li><strong>오케스트레이션 설계의 중요성.</strong>
+        <p>업체들이 에이전트 간의 오케스트레이션을 효과적으로 설계해야 함. (Bhattarai, 2025, DOI: [10.20944/preprints202506.1436.v1](https://doi.org/10.20944/preprints202506.1436.v1)).
+        <strong>한계:</strong> 설계 사례 연구가 결여됨.</p>
+    </li>
+    <li><strong>보안 및 거버넌스의 부족.</strong>
+        <p>AI 기술의 발전에 따라 보안 정책이 향후의 주요 위험 요소로 부각되고 있음 (Romanishyn et al., 2025, DOI: [10.3389/frai.2025.1569115](https://doi.org/10.3389/frai.2025.1569115)).
+        <strong>한계:</strong> 정책 연구의 부족으로 구체적 시나리오 제시 부족.</p>
+    </li>
+</ul>
+
+<h2>Trends & Implications</h2>
+<p>최근의 관측에 따르면, 평가의 표준화 및 다중 에이전트 운영에 대한 투자가 브랜드 신뢰도를 높이는 데 중요한 요소로 자리 잡고 있다. 이를 통해 기업은 신뢰성 문제 해결을 위한 구조적인 결정(예: 가드레일 및 감사추적)를 내릴 수 있다. 이러한 결정은 신속하게 변하는 시장에서의 AI 활용도를 극대화하는 데 필수적이다.</p>
+
+<h2>Risks & Gaps</h2>
+<p>보안/거버넌스에 대한 직접적 증거 부족은 위험 요소로 작용하고 있으며, 이는 AI 기술 사용에 대한 허위 정보 및 잘못된 해석을 낳을 수 있다. 따라서 이 분야에 대한 추가적인 연구와 정책 개발이 필요하다. <strong>Not applicable</strong> - 평가 데이터와 연구가 포괄적이지 않음.</p>
+
+<h2>Critics</h2>
+<p><strong>에이전트의 가능성을 과대평가하는 메커니즘</strong></p>
+<ul>
+    <li>현재 주류 주장에 따르면 AI 에이전트의 신뢰성은 과장되고 있으며, 이로 인해 운영 리스크가 간과되고 있다.</li>
+    <li>평가의 재현성 문제가 명확히 드러나지 않고 있음.</li>
+</ul>
+<p><strong>Not applicable</strong> - 균형적 비평 자료의 부족으로 인해 한계가 있음.</p>
+
+<h2>Appendix</h2>
+<p>사용된 출처 목록:</p>
+<ol>
+    <li>Evaluation and Benchmarking of LLM Agents: A Survey (Mahmoud Mohammadi, 2025, [10.1145/3711896.3736570](https://doi.org/10.1145/3711896.3736570)) - 연구</li>
+    <li>AI-driven disinformation: policy recommendations for democratic resilience (Alexander Romanishyn, 2025, [10.3389/frai.2025.1569115](https://doi.org/10.3389/frai.2025.1569115)) - 연구</li>
+    <li>Factors Affecting Human–AI Collaboration Performances in Financial Sector (Chao Xu, 2025, [10.3390/su17104335](https://doi.org/10.3390/su17104335)) - 연구</li>
+    <li>Artificial Intelligence Agent-Enabled Predictive Maintenance: Conceptual Proposal and Basic Framework (Wenyu Jiang, 2025, [10.3390/computers14080329](https://doi.org/10.3390/computers14080329)) - 연구</li>
+    <li>Scaling Generative AI for Self-Healing DevOps Pipelines: Technical Analysis (Bipul Bhattarai, 2025, [10.20944/preprints202506.1436.v1](https://doi.org/10.20944/preprints202506.1436.v1)) - 연구</li>
+</ol>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>report/run_overview_report_full_3.md</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
+    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    main { padding: 20px; }
+    .meta-block { background: #fdf7ea; border: 1px solid #e7dfd2; padding: 12px 14px; margin-bottom: 16px; }
+    .meta-block p { margin: 0 0 6px 0; }
+    .meta-block p:last-child { margin-bottom: 0; }
+    pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.95rem; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e7dfd2; padding: 8px 10px; text-align: left; }
+    th { background: #f6f1e8; }
+  </style>
+</head>
+<body>
+  <header><h1>report/run_overview_report_full_3.md</h1></header>
+  <main><h1>Report Overview</h1>
+<h2>Report Output</h2>
+<p>Output: <a href="./report_full_3.html">./report_full_3.html</a>
+Template: custom_mit_tech_review
+Format: html
+Language: Korean
+Quality iterations: 0
+Quality strategy: pairwise
+Figures: enabled (auto)</p>
+<h2>Report Prompt (Saved)</h2>
+<p>Source: <a href="../instruction/report_prompt_report_full_3.txt">./instruction/report_prompt_report_full_3.txt</a></p>
+<pre><code>Language: Korean
+
+Template: custom_mit_tech_review  
+Depth: normal  
+
+목적/범위: 기술 리더·제품 전략가가 “AI Agent”를 기능 데모가 아니라 **워크플로우·도구·운영 체계의 변화**로 이해하고, 향후 12개월 로드맵/투자/리스크 결정을 내리도록 돕는 MIT Technology Review 스타일 리포트를 작성하라. 주제 범위는 LLM agent orchestration, tool use, reliability, evals, security에 한정한다.  
+
+핵심 작성 원칙: 각 문장 또는 핵심 주장에 **라벨(관찰/추정/권고)** 을 붙이고, 관찰(증거 기반)과 추정(가설/전망)을 분리한다. 과장·유행어 남발 금지, 실무 실행 가능성(조직/프로세스/거버넌스 관점) 강조. 문단은 2–4문장으로 짧게.  
+
+섹션 요구(필수):  
+- 실행 요약: 2단락(lede≤3문장, deck≤3문장), 불릿 금지.  
+- 트렌드 스캔: 1–2단락. 핵심 메시지로 “에이전트=앱”이 아니라 “에이전트=운영되는 워크플로우”로 이동을 명시.  
+- 핵심 아이디어: 메커니즘을 평이하게 설명하고 orchestration, agent evals/reliability 중 1–2개 용어를 **실무적 정의**로 제시.  
+- 논의: 오케스트레이션/툴 사용/신뢰성·평가/보안(최소 4개 하위항목)별로 관찰·추정·권고를 나눠 제시하고, 각 핵심 주장에 최소 1개 출처(가능하면 DOI/URL/아카이브 경로)를 첨부. LinkedIn 등은 “홍보성 가능성:” 주석 필수.  
+- 향후 12개월: 평가 체계, 관측성(telemetry), 가드레일, 배포·거버넌스 마일스톤을 각 1–2문장으로 제안 + 리더 의사결정 질문 3개.  
+- 위험 및 결핍: 부정적 시나리오, 미지수, 증거 공백을 명시. 특히 **arXiv JSONL·YouTube 원문 아카이브 부재**, 1차 보안 실증자료 제약은 “공개정보 한계”로 표기.  
+- 비판자 관점: 헤드라인 1문장 + 반론(근거 수준: 높음/중간/낮음) 짧게 나열.  
+- 부록: 사용 소스 목록(예: `archive/openalex/text/W4412877164.txt`, DOI/URL), 용어, 가정·제외 범위 기록.  
+
+증거/인용 정책(사용 가능 소스): OpenAlex 텍스트/PDF(예: *Evaluation and Benchmarking of LLM Agents: A Survey* https://doi.org/10.1145/3711896.3736570), Tavily URL(Comet orchestration 글, ReliabilityBench arXiv HTML, CodeAnt 가이드, LinkedIn observability 글 등), 내부 파일(`instruction/AI_Agent_앞으로_1년.txt`, `report.md`). 원문 부재/간접 요약 사용 시 “공개정보 한계:”로 명확히 표시.
+
+Language: Korean
+
+Template: custom_mit_tech_review  
+Depth: normal  
+
+목적/범위: 기술 리더·제품 전략가가 “AI Agent”를 기능 데모가 아니라 **워크플로우·도구·운영 체계의 변화**로 이해하고, 향후 12개월 로드맵/투자/리스크 결정을 내리도록 돕는 MIT Technology Review 스타일 리포트를 작성하라. 주제 범위는 LLM agent orchestration, tool use, reliability, evals, security에 한정한다.  
+
+핵심 작성 원칙: 각 문장 또는 핵심 주장에 **라벨(관찰/추정/권고)** 을 붙이고, 관찰(증거 기반)과 추정(가설/전망)을 분리한다. 과장·유행어 남발 금지, 실무 실행 가능성(조직/프로세스/거버넌스 관점) 강조. 문단은 2–4문장으로 짧게.  
+
+섹션 요구(필수):  
+- 실행 요약: 2단락(lede≤3문장, deck≤3문장), 불릿 금지.  
+- 트렌드 스캔: 1–2단락. 핵심 메시지로 “에이전트=앱”이 아니라 “에이전트=운영되는 워크플로우”로 이동을 명시.  
+- 핵심 아이디어: 메커니즘을 평이하게 설명하고 orchestration, agent evals/reliability 중 1–2개 용어를 **실무적 정의**로 제시.  
+- 논의: 오케스트레이션/툴 사용/신뢰성·평가/보안(최소 4개 하위항목)별로 관찰·추정·권고를 나눠 제시하고, 각 핵심 주장에 최소 1개 출처(가능하면 DOI/URL/아카이브 경로)를 첨부. LinkedIn 등은 “홍보성 가능성:” 주석 필수.  
+- 향후 12개월: 평가 체계, 관측성(telemetry), 가드레일, 배포·거버넌스 마일스톤을 각 1–2문장으로 제안 + 리더 의사결정 질문 3개.  
+- 위험 및 결핍: 부정적 시나리오, 미지수, 증거 공백을 명시. 특히 **arXiv JSONL·YouTube 원문 아카이브 부재**, 1차 보안 실증자료 제약은 “공개정보 한계”로 표기.  
+- 비판자 관점: 헤드라인 1문장 + 반론(근거 수준: 높음/중간/낮음) 짧게 나열.  
+- 부록: 사용 소스 목록(예: `archive/openalex/text/W4412877164.txt`, DOI/URL), 용어, 가정·제외 범위 기록.  
+
+증거/인용 정책(사용 가능 소스): OpenAlex 텍스트/PDF(예: *Evaluation and Benchmarking of LLM Agents: A Survey* https://doi.org/10.1145/3711896.3736570), Tavily URL(Comet orchestration 글, ReliabilityBench arXiv HTML, CodeAnt 가이드, LinkedIn observability 글 등), 내부 파일(`instruction/AI_Agent_앞으로_1년.txt`, `report.md`). 원문 부재/간접 요약 사용 시 “공개정보 한계:”로 명확히 표시.
+</code></pre></main>
+  <script>
+    document.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener');
+    });
+  </script>
+</body>
+</html>

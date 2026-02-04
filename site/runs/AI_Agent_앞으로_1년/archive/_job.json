@@ -1,0 +1,48 @@
+{
+  "date": "2026-02-05",
+  "src_file": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AI_Agent_앞으로_1년\\instruction\\AI_Agent_앞으로_1년.txt",
+  "root_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AI_Agent_앞으로_1년",
+  "out_dir": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\runs\\AI_Agent_앞으로_1년\\archive",
+  "query_id": "AI_Agent_앞으로_1년",
+  "lang_pref": "ko",
+  "openalex_enabled": true,
+  "openalex_max_results": 8,
+  "youtube_enabled": true,
+  "youtube_max_results": 8,
+  "youtube_transcript": true,
+  "youtube_order": "relevance",
+  "days": 365,
+  "max_results": 8,
+  "download_pdf": true,
+  "arxiv_source": false,
+  "update_run": true,
+  "citations_enabled": true,
+  "queries": [
+    "AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항",
+    "LLM agent orchestration, tool use, reliability, evals, security",
+    "youtube: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항"
+  ],
+  "query_specs": [
+    {
+      "text": "AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항",
+      "hints": []
+    },
+    {
+      "text": "LLM agent orchestration, tool use, reliability, evals, security",
+      "hints": []
+    },
+    {
+      "text": "youtube: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항",
+      "hints": []
+    }
+  ],
+  "local_paths": [],
+  "urls": [],
+  "arxiv_ids": [],
+  "site_hints": [],
+  "raw_lines": [
+    "AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항",
+    "LLM agent orchestration, tool use, reliability, evals, security",
+    "youtube: AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항"
+  ]
+}

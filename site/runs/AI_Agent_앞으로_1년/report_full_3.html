@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-custom_mit_tech_review {
+  /* 템플릿 전체 레이아웃: 세련된 웹진 느낌, 가독성 최우선 */
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  color: #0b1220;
+  background: #fbfcfe;
+  line-height: 1.65;
+  margin: 0;
+  padding: 0 20px;
+}
+
+/* masthead 스타일: 짙은 박스 배경, 큰 타이틀, 얕은 데크 라인 */
+.masthead {
+  background: linear-gradient(180deg, #0f1724 0%, #0c1320 100%);
+  color: #ffffff;
+  padding: 48px 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 6px 24px rgba(3, 7, 18, 0.35);
+  border-radius: 8px;
+}
+.masthead .title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px 0;
+}
+.masthead .deck {
+  color: rgba(255,255,255,0.88);
+  font-size: 15px;
+  max-width: 920px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.06); /* 얕은 데크 라인 */
+  padding-top: 12px;
+}
+.masthead .byline {
+  margin-top: 14px;
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+}
+
+/* 본문 컨테이너 */
+.article {
+  max-width: 980px;
+  margin: 0 auto 80px auto;
+  padding: 28px 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,251,253,0.98));
+  border-radius: 8px;
+  box-shadow: 0 8px 36px rgba(13,18,25,0.06);
+}
+
+/* 타이포그래피 */
+h1, .section-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #071029;
+  margin: 28px 0 12px 0;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  border-left: 4px solid #e6eef7;
+  padding-left: 12px;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 18px 0 8px 0;
+  color: #0b1220;
+  font-weight: 600;
+}
+p {
+  font-size: 15px;
+  color: #0f1724;
+  margin: 10px 0;
+}
+
+.small {
+  font-size: 13px;
+  color: #4b5563;
+}
+blockquote {
+  border-left: 4px solid #d9e6ff;
+  background: #f8fbff;
+  padding: 12px 16px;
+  margin: 12px 0;
+  color: #0b1220;
+  font-style: italic;
+}
+
+/* 라벨(관찰/추정/권고) 스타일 */
+.label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #334155;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+.label.observation { background: #0ea5a4; } /* 관찰 */
+.label.hypothesis { background: #7c3aed; }   /* 추정 */
+.label.recommend { background: #0284c7; }    /* 권고 */
+
+/* 표 스타일: 세련된 미디어·보고서 표 */
+table.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 20px 0;
+  font-size: 14px;
+}
+table.spec-table thead th {
+  background: #f1f5f9;
+  color: #0b1220;
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  border-bottom: 2px solid #e6eef7;
+}
+table.spec-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f6;
+}
+table.spec-table tbody tr:nth-child(even) {
+  background: rgba(14, 165, 164, 0.02);
+}
+
+/* 코드/사이드 노트 */
+pre, code {
+  font-family: SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+  background: #0b1220;
+  color: #e6eef7;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* 반응형 */
+@media (max-width: 720px) {
+  .masthead .title { font-size: 22px; }
+  .masthead { padding: 28px 16px; }
+  .article { padding: 18px 12px; }
+}
+
+/* 접근성: 충분한 대비와 읽기 공간 */
+a { color: #0b84ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* 부가 유틸리티 클래스 */
+.kicker { color: #64748b; font-size: 13px; font-weight: 600; }
+.meta { color: #475569; font-size: 13px; }
+
+/* 끝: 템플릿 전용 스타일 */
+
+  </style>
+</head>
+<body class="theme-coral template-custom_mit_tech_review">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>엔터프라이즈 운영형 AI 에이전트 평가와 신뢰성 거버넌스</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-05 05:37</p>
+<h2>실행 요약</h2>
+<p>관찰: AI 에이전트는 ‘앱’이 아니라 LLM이 도구와 환경을 통해 작업을 이어가는 운영형 워크플로우로 재정의되고 있으며, 연구 커뮤니티는 평가 목적(행동/능력/신뢰성/안전)과 평가 과정(상호작용 모드/데이터/지표/도구/환경)의 이원 분류로 체계를 잡고 있다(Mohammadi et al., 2025 [paper]). 관찰: 엔터프라이즈 도입에서 추가 요구(권한통제, 신뢰성 보장, 장기 상호작용, 컴플라이언스)가 부각되며, 단발 벤치마크를 넘는 운영 평가와 거버넌스 결합이 필수 과제로 떠올랐다(Mohammadi et al., 2025 [paper]). 관찰: 프로덕션 신뢰성은 입력 변화·장애·외부 시스템 오류에 대한 강건성 점검(fault injection, 반복성·예외 처리 측정 등)으로 이동 중이다(공개정보 한계: 로컬 사본 부재, ReliabilityBench arXiv HTML [arXiv]).</p>
+<p>권고: 향후 12개월은 오케스트레이션(흐름/상태 관리)과 관측성(트레이싱/지표), 에이전트 전용 평가(agent evals), 가드레일/보안(권한/감사)의 4축을 우선 구축하라(제안). 권고: 벤더 블로그/목록형 글은 참고하되 홍보성 가능성을 명시하고 1차 연구 및 내부 텔레메트리로 교차검증하라(제안). 권고: 정보무결성·악용 리스크를 거버넌스 요구사항(감사로그·승인흐름·콘텐츠 출처표시)으로 선반영하라(Romanishyn et al., 2025 [Frontiers]).</p>
+<h2>트렌드 스캔</h2>
+<p>관찰: 주류 변화는 “에이전트=새 앱”이 아니라 “에이전트=운영되는 워크플로우(오케스트레이션·도구 호출·상태/메모리·감사)”로의 이행이며, 평가와 운영이 제품의 중심으로 편입되고 있다(Mohammadi et al., 2025 [paper]). 관찰: 산업 글·도구 에코시스템은 플로우 정의, 체크포인트, 트레이싱/관측성, 프레임워크 비교 위주로 정리되며 운영 관점 전환을 가속한다(Comet [Comet]; ZenML [ZenML], 홍보성 가능성: 있음).</p>
+<p>추정: 엔터프라이즈는 “파일럿→운영” 전환에서 신뢰성/안전/컴플라이언스 요구로 병목을 겪고 있어, RAG 품질개선보다 워크플로우 안정화와 거버넌스 자동화 투자를 확대할 것이다(추론). 관찰: 정보무결성·조작 리스크는 에이전트가 생성/증폭에 관여하며 정책·거버넌스 의제와 접점이 커지고 있다(Romanishyn et al., 2025 [Frontiers]).</p>
+<h2>핵심 아이디어</h2>
+<p>관찰: 오케스트레이션(orchestration)은 에이전트의 의사결정이 실제 도구 호출·흐름 제어·상태이행으로 연결되도록 설계/운영(플로우 정의, 체크포인트, 재시도/롤백, 트레이싱)을 책임지는 계층이다(Comet [Comet]). 관찰: 에이전트 평가/신뢰성(agent evals/reliability)은 “무엇을 평가(행동/능력/신뢰/안전)”와 “어떻게 평가(상호작용/데이터/지표/도구/환경)”의 이원 체계로, 반복성·강건성·장애내성 등 운영 신뢰성을 별도 축으로 본다(Mohammadi et al., 2025 [paper]; ReliabilityBench [arXiv]).</p>
+<p>권고: 실무 정의—오케스트레이션은 “LLM이 제어 결정을 내리고, 플랫폼이 실행·관측·회복을 보장하는 러닝 타임”으로, 에이전트 평가는 “사전 정의된 작업/환경에서 성공·결함·비용·지연·안전 준수의 계량/검토 체계”로 문서화하고 조직 표준으로 고정하라(제안).</p>
+<h2>논의</h2>
+<h3>오케스트레이션</h3>
+<p>관찰: 실무 가이드는 에이전트가 제어 흐름을 주도할 때 트레이싱/텔레메트리, 히스토리/메모리 관리, 드리프트 탐지, 체크포인트/재시도 전략이 핵심 운영 요소임을 제시한다(Comet [Comet]). 관찰: 프레임워크 지형은 그래프형 워크플로우, OpenTelemetry 연동, MCP/도구 레지스트리, 정책/가드레일 플러그인을 중심으로 수렴한다(ZenML [ZenML], 홍보성 가능성: 있음).</p>
+<p>추정: 장기 상호작용과 외부 API 연쇄가 늘수록 체크포인트·아이들포인트·중단복구가 품질/비용 지렛대가 된다(추론). 권고: 플로우 그래프 수준의 상태 스냅샷과 리트라이 폴리시를 표준화하고, 도구 호출·컨텍스트 변화를 전수 트레이싱해 원인분석 가능성을 확보하라(제안). 권고: 초기엔 벤더 도구를 쓰되 핵심 텔레메트리 스키마(요청 ID, 세션 ID, 도구명, 파라미터 요약, 에러코드, 비용/지연)를 자사 표준으로 독립 보관하라(제안). </p>
+<p>출처: Comet [Comet]; ZenML [ZenML] (홍보성 가능성: 있음).</p>
+<h3>툴 사용</h3>
+<p>관찰: 에이전트의 도구 사용 평가는 “호출 필요성 판단, 도구 선택 정확도, 파라미터 명/값 적합성, 실행 기반 결과 검증”으로 구조화되며, 실행 기반 평가가 AST 기반보다 의미오류 탐지에 유리하다(Mohammadi et al., 2025 [paper]). 관찰: 실무 체크리스트는 도구 선택 정확도, 파라미터 정합성, 호출 효율(호출 수/단계 수), 실패 후 복구전략 등으로 구성된다(CodeAnt [CodeAnt], 홍보성 가능성: 있음).</p>
+<p>추정: 툴셋이 커질수록 도구 검색/랭킹(MRR/NDCG)과 안전 파라미터 검증(스키마·화이트리스트)이 성능의 병목이 된다(추론; Mohammadi et al., 2025 [paper]). 권고: 도구 스키마에 제약(타입/ENUM/범위)을 엄격히 선언하고, 호출 전/후 검증과 샌드박스 실행을 기본값으로 설정하라(제안). 권고: 분기 커버리지 관점에서 “도구 호출 경로”를 테스트 케이스로 설계하고, 실패 로그를 재현·리그레션 테스트로 환류하라(제안). </p>
+<p>출처: Mohammadi et al., 2025 [paper]; CodeAnt [CodeAnt].</p>
+<h3>신뢰성/평가</h3>
+<p>관찰: LLM 에이전트 평가는 ‘목적×과정’ 이원 분류로 정립되었고, 엔터프라이즈 과제로 RBAC, 신뢰성 보장, 장기 상호작용, 컴플라이언스가 명시된다(Mohammadi et al., 2025 [paper]). 관찰: 프로덕션 신뢰성 벤치는 입력 변이·시스템 오류에 대한 강건성 측정과 fault injection, 반복성/성공률/예외 처리의 다차원 지표 설계를 제안한다(공개정보 한계: 로컬 사본 부재, ReliabilityBench [arXiv]).</p>
+<p>추정: 운영 환경에서의 신뢰성은 “평균 성공률”보다 “상황별 최악 성능”과 “회복 가능성”이 사용자 체감과 비용에 더 큰 영향을 준다(추론). 권고: 지표를 성공률(SR)·진행률(Progress Rate)·재시도 후 회복율·시간/비용·예외 분류(유형·근본원인)로 최소 세트화하고, 롱런 대화·멀티스텝·다도구 시나리오를 표준 벤치로 삼아 월간 리그레션을 수행하라(제안; Mohammadi et al., 2025 [paper]). 권고: 신뢰성 표면(시나리오×변이)의 커버리지를 관리하고 fault injection 캠페인을 분기별로 계획하라(제안; ReliabilityBench [arXiv]).</p>
+<h3>보안·거버넌스</h3>
+<p>관찰: 에이전트는 생성·증폭을 통해 정보무결성 위협(합성 텍스트/페르소나/봇 오케스트레이션)과 접점을 가지므로 정책·감사·출처 투명성의 제도화가 요구된다(Romanishyn et al., 2025 [Frontiers]). 관찰: 운영 도구들은 관측성·경보·루트코즈 클러스터링을 제공하나 목록형 홍보 콘텐츠의 편향 가능성이 크다(LinkedIn 목록 [LinkedIn], 홍보성 가능성: 높음).</p>
+<p>추정: 권한 경계(도구·데이터·거래)와 감사 추적이 미흡하면 프롬프트 주입·도구 오남용·데이터 유출이 체계적으로 축적될 위험이 있다(추론). 권고: 최소권한·세분권한(RBAC/ABAC)·보안 프록시·비밀관리·콘텐츠 출처표시(프롬프트/출력 워터마킹)·감사 로그(불변화)를 배포 전 필수 체크리스트로 의무화하라(제안; Romanishyn et al., 2025 [Frontiers]). 권고: 홍보성 자료는 위험 신호 수집에만 사용하고, 내부 침투테스트/레드팀 시나리오와 교차검증하라(제안).</p>
+<h2>향후 12개월(What’s Next)</h2>
+<p>관찰: 평가 체계—표준 시나리오(멀티스텝·다도구·롱런)와 핵심 지표(SR/진행률/회복율/시간/비용/예외)를 조직 표준으로 확정하고 월간 리그레션/분기별 fault injection을 운영화하라(Mohammadi et al., 2025 [paper]; ReliabilityBench [arXiv]). 관찰: 관측성—OpenTelemetry 기반 트레이싱 스키마를 채택하고 요청·세션·도구 호출 단위의 상관ID, 파라미터 요약, 에러코드, 비용/지연을 전수 수집·보관하라(Comet [Comet], 홍보성 가능성: 있음).</p>
+<p>관찰: 가드레일—입력 검증(주입 탐지)·출력 검증(정책/PII 필터/출처표시)·권한경계(RBAC/정책 엔진)·샌드박스 실행을 릴리즈 게이트로 설정하라(Romanishyn et al., 2025 [Frontiers]). 관찰: 배포/거버넌스—체인지 승인(에이전트 프롬프트/도구 스키마 변경)·릴리즈 노트·감사로그 불변화(예: WORM 스토리지)·모델/도구 버전 잠금 정책을 수립하라(Mohammadi et al., 2025 [paper]).</p>
+<p>의사결정 질문:
+- 우리의 에이전트는 “평균 성능”이 아니라 “최악 성능/회복”을 측정·개선하는 루프를 갖추었는가(추론)?
+- 트레이싱/감사 데이터는 규제감사에 바로 제출 가능한 수준으로 표준화·보관되는가(추론)?
+- 권한·출처표시·콘텐츠 정책 집행이 “릴리즈 게이트”로 자동화되어 있는가(추론)?</p>
+<h2>위험 및 결핍</h2>
+<p>관찰: 공개정보 한계—ReliabilityBench는 arXiv HTML 원문에 의존해 인용하며 로컬 아카이브/버전 동결이 없어 세부 수치/용어 변동 가능성이 있다(공개정보 한계: [arXiv]). 관찰: YouTube/영상 자료의 로컬 사본 부재로 2차 요약에 의존 시 편향 가능성이 있다(공개정보 한계).</p>
+<p>관찰: 1차 보안/침해 실증 자료의 제약으로, 공격/방어 효과성은 내부 침투테스트 없이 확정하기 어렵다(공개정보 한계). 추정: 벤더·목록형 글(프레임워크/관측성 도구)은 기능 부각·한계 축소 경향이 있어 과신 시 ROI·리스크 판단 오류가 발생할 수 있다(추론; ZenML [ZenML], LinkedIn [LinkedIn], 홍보성 가능성: 높음).</p>
+<p>권고: 중요한 수치·메트릭은 1차 논문/내부 텔레메트리로 재현 확인하고, 홍보성 자료는 보조 신호로만 사용하라(제안). 권고: 보안 가설은 레드팀/로그 기반 검증으로 닫고, 실패 케이스를 리그레션 테스트에 편입하라(제안).</p>
+<h2>비판자 관점</h2>
+<ul>
+<li>“에이전트 ROI 과장”—반론: 엔터프라이즈 요구(RBAC/컴플라이언스/신뢰성) 정식화는 실증적이며, 운영 지표·평가 체계 없이의 ROI 주장만이 과장이다(근거 수준: 중간; Mohammadi et al., 2025 [paper]).</li>
+<li>“프로덕션 신뢰성 측정 불가능”—반론: fault injection·반복성/회복율 지표로 운영 신뢰성 추정이 가능하며 사례 연구가 축적 중이다(근거 수준: 중간; ReliabilityBench [arXiv]).</li>
+<li>“보안/정보무결성은 플랫폼 과제이지 에이전트 과제 아님”—반론: 합성 콘텐츠/봇/페르소나가 에이전트 워크플로우와 결합해 리스크가 증폭되므로 거버넌스 내재화가 필요하다(근거 수준: 중간; Romanishyn et al., 2025 [Frontiers]).</li>
+<li>“관측성 도구로 만사 해결”—반론: 도구는 수단이고, 지표 정의/거버넌스/릴리즈 게이트 없이는 탐지·시정 루프가 닫히지 않는다(근거 수준: 낮음; LinkedIn/벤더 글 [LinkedIn][Comet], 홍보성 가능성: 높음).</li>
+</ul>
+<h2>부록</h2>
+<ul>
+<li>사용 소스 목록</li>
+<li>Mohammadi et al., 2025, Evaluation and Benchmarking of LLM Agents: A Survey (KDD’25) — DOI: <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">[3]</a>, 로컬: <a href="#ref-1">[1]</a> [paper]</li>
+<li>Romanishyn et al., 2025, AI-driven disinformation: policy recommendations for democratic resilience (Frontiers in AI) — DOI: <a href="https://doi.org/10.3389/frai.2025.1569115" target="_blank" rel="noopener">[4]</a>, 로컬: <a href="#ref-2">[2]</a> [Frontiers]</li>
+<li>ReliabilityBench: Evaluating LLM Agent Reliability Under Production (arXiv HTML) — URL: <a href="https://arxiv.org/html/2601.06112v1" target="_blank" rel="noopener">[5]</a> (공개정보 한계: 로컬 보존 없음) [arXiv]</li>
+<li>AI Agent Orchestration Flows — Comet — URL: <a href="https://www.comet.com/site/blog/agent-orchestration/" target="_blank" rel="noopener">[6]</a> (홍보성 가능성: 있음) [Comet]</li>
+<li>9 Best LLM Orchestration Frameworks — ZenML — URL: <a href="https://www.zenml.io/blog/best-llm-orchestration-frameworks" target="_blank" rel="noopener">[7]</a> (홍보성 가능성: 있음) [ZenML]</li>
+<li>Evaluating LLM Agents in Multi-Step Workflows — CodeAnt — URL: <a href="https://www.codeant.ai/blogs/evaluate-llm-agentic-workflows" target="_blank" rel="noopener">[8]</a> (홍보성 가능성: 있음) [CodeAnt]</li>
+<li>Top 15 Amazing LLM Observability Tools — LinkedIn — URL: <a href="https://www.linkedin.com/pulse/top-15-amazing-llm-observability-tools-catch-agent-failures-before-u5yzf" target="_blank" rel="noopener">[9]</a> (홍보성 가능성: 높음) [LinkedIn]</li>
+<li>
+<p>내부 지시: /instruction/AI_Agent_앞으로_1년.txt</p>
+</li>
+<li>
+<p>용어 메모</p>
+</li>
+<li>오케스트레이션: 에이전트 결정이 도구 호출·흐름 제어·상태이행으로 안전하게 실행되도록 플로우, 체크포인트/재시도, 트레이싱, 정책 집행을 제공하는 운영 계층(Comet [Comet]).</li>
+<li>
+<p>에이전트 평가/신뢰성: 행동(완수/품질/지연/비용), 능력(도구/계획·추론/메모리), 신뢰성(반복성/강건성/장애내성), 안전(정렬/컴플라이언스)을 목적 축으로, 상호작용/데이터/지표/도구/환경을 과정 축으로 계량하는 체계(Mohammadi et al., 2025 [paper]).</p>
+</li>
+<li>
+<p>가정·제외 범위</p>
+</li>
+<li>범위: LLM agent 오케스트레이션, 툴 사용, 신뢰성/평가, 보안/거버넌스에 한정. 모델 아키텍처/훈련 세부, 가격 비교, 개별 벤더 기능 심층 평가는 제외.</li>
+<li>공개정보 한계: ReliabilityBench는 외부 HTML 참조로 버전 동결 부재. YouTube/영상 원문 로컬 아카이브 부재. 1차 보안 실증 데이터 제한으로 일부 권고는 ‘제안’으로 표기.</li>
+<li>홍보성 자료 처리: Comet/ZenML/LinkedIn/CodeAnt 등은 홍보성 가능성을 명시하고 보조 근거로만 활용. 내부 텔레메트리/1차 논문과 교차검증 전제.</li>
+</ul>
+<h2>Figures</h2>
+<p class="figure-callout">Figures referenced: <a href="#fig-1">Figure 1</a>: Source PDF: W4412877164.pdf; <a href="#fig-2">Figure 2</a>: Source PDF: W4412877164.pdf; <a href="#fig-3">Figure 3</a>: Source PDF: W4412877164.pdf; <a href="#fig-4">Figure 4</a>: Source PDF: W4412877164.pdf; <a href="#fig-5">Figure 5</a>: Source PDF: W4412787296.pdf; <a href="#fig-6">Figure 6</a>: Source PDF: W4412787296.pdf; <a href="#fig-7">Figure 7</a>: Source PDF: W4412787296.pdf; <a href="#fig-8">Figure 8</a>: Source PDF: W4412787296.pdf</p>
+
+<figure class="report-figure" id="fig-1">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412877164.pdf-4f8d2845.png" alt="Figure from ./archive/openalex/pdf/W4412877164.pdf (page 1)" />
+  <figcaption>Figure 1: <a href="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-viewer="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-raw="archive/openalex/pdf/W4412877164.pdf" class="viewer-link">./archive/openalex/pdf/W4412877164.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-2">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412877164.pdf-5ca1a281.png" alt="Figure from ./archive/openalex/pdf/W4412877164.pdf (page 1)" />
+  <figcaption>Figure 2: <a href="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-viewer="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-raw="archive/openalex/pdf/W4412877164.pdf" class="viewer-link">./archive/openalex/pdf/W4412877164.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-3">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412877164.pdf-58a56591.png" alt="Figure from ./archive/openalex/pdf/W4412877164.pdf (page 1)" />
+  <figcaption>Figure 3: <a href="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-viewer="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-raw="archive/openalex/pdf/W4412877164.pdf" class="viewer-link">./archive/openalex/pdf/W4412877164.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-4">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412877164.pdf-4e199d43.png" alt="Figure from ./archive/openalex/pdf/W4412877164.pdf (page 3)" />
+  <figcaption>Figure 4: <a href="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-viewer="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-raw="archive/openalex/pdf/W4412877164.pdf" class="viewer-link">./archive/openalex/pdf/W4412877164.pdf</a> (page 3)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-5">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412787296.pdf-2507ed58.png" alt="Figure from ./archive/openalex/pdf/W4412787296.pdf (page 1)" />
+  <figcaption>Figure 5: <a href="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-viewer="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-raw="archive/openalex/pdf/W4412787296.pdf" class="viewer-link">./archive/openalex/pdf/W4412787296.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-6">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412787296.pdf-a7f01fb8.png" alt="Figure from ./archive/openalex/pdf/W4412787296.pdf (page 1)" />
+  <figcaption>Figure 6: <a href="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-viewer="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-raw="archive/openalex/pdf/W4412787296.pdf" class="viewer-link">./archive/openalex/pdf/W4412787296.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-7">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412787296.pdf-0bc9efbb.png" alt="Figure from ./archive/openalex/pdf/W4412787296.pdf (page 1)" />
+  <figcaption>Figure 7: <a href="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-viewer="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-raw="archive/openalex/pdf/W4412787296.pdf" class="viewer-link">./archive/openalex/pdf/W4412787296.pdf</a> (page 1)</figcaption>
+</figure>
+
+<figure class="report-figure" id="fig-8">
+  <img src="report_assets/figures/._archive_openalex_pdf_W4412787296.pdf-94427f19.png" alt="Figure from ./archive/openalex/pdf/W4412787296.pdf (page 2)" />
+  <figcaption>Figure 8: <a href="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-viewer="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-raw="archive/openalex/pdf/W4412787296.pdf" class="viewer-link">./archive/openalex/pdf/W4412787296.pdf</a> (page 2)</figcaption>
+</figure>
+
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: custom_mit_tech_review<br />
+Depth: normal  </p>
+<p>목적/범위: 기술 리더·제품 전략가가 “AI Agent”를 기능 데모가 아니라 <strong>워크플로우·도구·운영 체계의 변화</strong>로 이해하고, 향후 12개월 로드맵/투자/리스크 결정을 내리도록 돕는 MIT Technology Review 스타일 리포트를 작성하라. 주제 범위는 LLM agent orchestration, tool use, reliability, evals, security에 한정한다.  </p>
+<p>핵심 작성 원칙: 각 문장 또는 핵심 주장에 <strong>라벨(관찰/추정/권고)</strong> 을 붙이고, 관찰(증거 기반)과 추정(가설/전망)을 분리한다. 과장·유행어 남발 금지, 실무 실행 가능성(조직/프로세스/거버넌스 관점) 강조. 문단은 2–4문장으로 짧게.  </p>
+<p>섹션 요구(필수):<br />
+- 실행 요약: 2단락(lede≤3문장, deck≤3문장), 불릿 금지.<br />
+- 트렌드 스캔: 1–2단락. 핵심 메시지로 “에이전트=앱”이 아니라 “에이전트=운영되는 워크플로우”로 이동을 명시.<br />
+- 핵심 아이디어: 메커니즘을 평이하게 설명하고 orchestration, agent evals/reliability 중 1–2개 용어를 <strong>실무적 정의</strong>로 제시.<br />
+- 논의: 오케스트레이션/툴 사용/신뢰성·평가/보안(최소 4개 하위항목)별로 관찰·추정·권고를 나눠 제시하고, 각 핵심 주장에 최소 1개 출처(가능하면 DOI/URL/아카이브 경로)를 첨부. LinkedIn 등은 “홍보성 가능성:” 주석 필수.<br />
+- 향후 12개월: 평가 체계, 관측성(telemetry), 가드레일, 배포·거버넌스 마일스톤을 각 1–2문장으로 제안 + 리더 의사결정 질문 3개.<br />
+- 위험 및 결핍: 부정적 시나리오, 미지수, 증거 공백을 명시. 특히 <strong>arXiv JSONL·YouTube 원문 아카이브 부재</strong>, 1차 보안 실증자료 제약은 “공개정보 한계”로 표기.<br />
+- 비판자 관점: 헤드라인 1문장 + 반론(근거 수준: 높음/중간/낮음) 짧게 나열.<br />
+- 부록: 사용 소스 목록(예: <code><a href="report_views/archive_openalex_text_W4412877164.txt-24f9c12b.html" data-viewer="report_views/archive_openalex_text_W4412877164.txt-24f9c12b.html" data-raw="archive/openalex/text/W4412877164.txt" class="viewer-link">archive/openalex/text/W4412877164.txt</a></code>, DOI/URL), 용어, 가정·제외 범위 기록.  </p>
+<p>증거/인용 정책(사용 가능 소스): OpenAlex 텍스트/PDF(예: <em>Evaluation and Benchmarking of LLM Agents: A Survey</em> <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">https://doi.org/10.1145/3711896.3736570</a>), Tavily URL(Comet orchestration 글, ReliabilityBench arXiv HTML, CodeAnt 가이드, LinkedIn observability 글 등), 내부 파일(<code><a href="./instruction/AI_Agent_">instruction/AI_Agent_</a>앞으로_1년.txt</code>, <code>report.md</code>). 원문 부재/간접 요약 사용 시 “공개정보 한계:”로 명확히 표시.</p>
+<p>Language: Korean</p>
+<p>Template: custom_mit_tech_review<br />
+Depth: normal  </p>
+<p>목적/범위: 기술 리더·제품 전략가가 “AI Agent”를 기능 데모가 아니라 <strong>워크플로우·도구·운영 체계의 변화</strong>로 이해하고, 향후 12개월 로드맵/투자/리스크 결정을 내리도록 돕는 MIT Technology Review 스타일 리포트를 작성하라. 주제 범위는 LLM agent orchestration, tool use, reliability, evals, security에 한정한다.  </p>
+<p>핵심 작성 원칙: 각 문장 또는 핵심 주장에 <strong>라벨(관찰/추정/권고)</strong> 을 붙이고, 관찰(증거 기반)과 추정(가설/전망)을 분리한다. 과장·유행어 남발 금지, 실무 실행 가능성(조직/프로세스/거버넌스 관점) 강조. 문단은 2–4문장으로 짧게.  </p>
+<p>섹션 요구(필수):<br />
+- 실행 요약: 2단락(lede≤3문장, deck≤3문장), 불릿 금지.<br />
+- 트렌드 스캔: 1–2단락. 핵심 메시지로 “에이전트=앱”이 아니라 “에이전트=운영되는 워크플로우”로 이동을 명시.<br />
+- 핵심 아이디어: 메커니즘을 평이하게 설명하고 orchestration, agent evals/reliability 중 1–2개 용어를 <strong>실무적 정의</strong>로 제시.<br />
+- 논의: 오케스트레이션/툴 사용/신뢰성·평가/보안(최소 4개 하위항목)별로 관찰·추정·권고를 나눠 제시하고, 각 핵심 주장에 최소 1개 출처(가능하면 DOI/URL/아카이브 경로)를 첨부. LinkedIn 등은 “홍보성 가능성:” 주석 필수.<br />
+- 향후 12개월: 평가 체계, 관측성(telemetry), 가드레일, 배포·거버넌스 마일스톤을 각 1–2문장으로 제안 + 리더 의사결정 질문 3개.<br />
+- 위험 및 결핍: 부정적 시나리오, 미지수, 증거 공백을 명시. 특히 <strong>arXiv JSONL·YouTube 원문 아카이브 부재</strong>, 1차 보안 실증자료 제약은 “공개정보 한계”로 표기.<br />
+- 비판자 관점: 헤드라인 1문장 + 반론(근거 수준: 높음/중간/낮음) 짧게 나열.<br />
+- 부록: 사용 소스 목록(예: <code><a href="report_views/archive_openalex_text_W4412877164.txt-24f9c12b.html" data-viewer="report_views/archive_openalex_text_W4412877164.txt-24f9c12b.html" data-raw="archive/openalex/text/W4412877164.txt" class="viewer-link">archive/openalex/text/W4412877164.txt</a></code>, DOI/URL), 용어, 가정·제외 범위 기록.  </p>
+<p>증거/인용 정책(사용 가능 소스): OpenAlex 텍스트/PDF(예: <em>Evaluation and Benchmarking of LLM Agents: A Survey</em> <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">https://doi.org/10.1145/3711896.3736570</a>), Tavily URL(Comet orchestration 글, ReliabilityBench arXiv HTML, CodeAnt 가이드, LinkedIn observability 글 등), 내부 파일(<code><a href="./instruction/AI_Agent_">instruction/AI_Agent_</a>앞으로_1년.txt</code>, <code>report.md</code>). 원문 부재/간접 요약 사용 시 “공개정보 한계:”로 명확히 표시.</p>
+<h2>References</h2>
+<ol>
+<li><span id="ref-1"></span> Mahmoud Mohammadi, Yipeng Li, Jane Lo, Wendy Yip (2025). Evaluation and Benchmarking of LLM Agents: A Survey — <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">link</a> <small>citations: 5</small> — <a href="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-viewer="report_views/archive_openalex_pdf_W4412877164.pdf-1cf2b774.html" data-raw="archive/openalex/pdf/W4412877164.pdf" class="viewer-link">file</a></li>
+<li><span id="ref-2"></span> Alexander Romanishyn, Olena Malytska, V. A. Goncharuk (2025). AI-driven disinformation: policy recommendations for democratic resilience. Frontiers in Artificial Intelligence — <a href="https://doi.org/10.3389/frai.2025.1569115" target="_blank" rel="noopener">link</a> <small>citations: 7</small> — <a href="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-viewer="report_views/archive_openalex_pdf_W4412787296.pdf-d4d8b7eb.html" data-raw="archive/openalex/pdf/W4412787296.pdf" class="viewer-link">file</a></li>
+<li><span id="ref-3"></span> doi.org/10.1145/3711896.3736570 — <a href="https://doi.org/10.1145/3711896.3736570" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-4"></span> doi.org/10.3389/frai.2025.1569115 — <a href="https://doi.org/10.3389/frai.2025.1569115" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-5"></span> ReliabilityBench: Evaluating LLM Agent Reliability Under Production ... — <a href="https://arxiv.org/html/2601.06112v1" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-6"></span> AI Agent Orchestration Flows - Comet — <a href="https://www.comet.com/site/blog/agent-orchestration/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-7"></span> 9 Best LLM Orchestration Frameworks for Agents and RAG - ZenML — <a href="https://www.zenml.io/blog/best-llm-orchestration-frameworks" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-8"></span> Evaluating LLM Agents in Multi-Step Workflows (2026 Guide) — <a href="https://www.codeant.ai/blogs/evaluate-llm-agentic-workflows" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-9"></span> Top 15 Amazing LLM Observability Tools to Catch Agent Failures ... — <a href="https://www.linkedin.com/pulse/top-15-amazing-llm-observability-tools-catch-agent-failures-before-u5yzf" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-05 05:38:18</li>
+<li>Duration: 00:10:30 (630.5s)</li>
+<li>Model: gpt-5-2025-08-07</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: custom_mit_tech_review</li>
+<li>Language: Korean</li>
+<li>Tags: 핵심, 문장, 관찰, agent, orchestration</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_3.md-5b12a6ce.html" data-viewer="report_views/report_run_overview_report_full_3.md-5b12a6ce.html" data-raw="report/run_overview_report_full_3.md" class="viewer-link">./report/run_overview_report_full_3.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="./archive/AI_Agent_앞으로_1년-index.md">./archive/AI_Agent_앞으로_1년-index.md</a></li>
+<li>Instruction file: <a href="./instruction/AI_Agent_앞으로_1년.txt">./instruction/AI_Agent_앞으로_1년.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_3.txt-c0f65ac2.html" data-viewer="report_views/instruction_report_prompt_report_full_3.txt-c0f65ac2.html" data-raw="instruction/report_prompt_report_full_3.txt" class="viewer-link">./instruction/report_prompt_report_full_3.txt</a></li>
+<li>Figure candidates: <a href="./report_views/figures_preview.html">./report_views/figures_preview.html</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

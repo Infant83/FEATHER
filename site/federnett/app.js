@@ -60,6 +60,14 @@ const state = {
     log: "",
     active: false,
   },
+  agentProfiles: {
+    list: [],
+    activeId: "",
+    activeSource: "",
+    activeProfile: null,
+    memoryText: "",
+    readOnly: false,
+  },
   canvas: {
     open: false,
     runRel: "",
@@ -170,6 +178,21 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function isElementInViewport(el) {
+  if (!el) return false;
+  const rect = el.getBoundingClientRect();
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+  return rect.top >= 0 && rect.bottom <= viewHeight;
+}
+
+function focusPanel(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  if (!isElementInViewport(el)) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 const TEXT_PREVIEW_EXTS = new Set([
@@ -351,6 +374,21 @@ function updateHeroStats() {
   setText("#run-roots-badge", badge);
   setText("#run-count", String(state.runs.length || 0));
   setText("#template-count", String(state.templates.length || 0));
+  updateRecentJobsCard();
+}
+
+function updateRecentJobsCard() {
+  const card = $("#hero-card-recent");
+  if (!card) return;
+  const runRel = selectedRunRel();
+  const subtitle = $("#recent-jobs-subtitle");
+  if (!runRel) {
+    card.classList.add("is-hidden");
+    if (subtitle) subtitle.textContent = "Select a run folder to surface jobs.";
+    return;
+  }
+  card.classList.remove("is-hidden");
+  if (subtitle) subtitle.textContent = `Latest activity for ${runBaseName(runRel)}.`;
 }
 
 function setMetaStrip() {
@@ -762,6 +800,7 @@ async function loadFilePreview(relPath) {
       objectUrl: "",
       htmlDoc: "",
     });
+    focusPanel("#logs-wrap .preview-block");
     return;
   }
   if (mode === "binary") {
@@ -774,6 +813,7 @@ async function loadFilePreview(relPath) {
       objectUrl: "",
       htmlDoc: "",
     });
+    focusPanel("#logs-wrap .preview-block");
     return;
   }
   try {
@@ -788,6 +828,7 @@ async function loadFilePreview(relPath) {
       objectUrl: "",
       htmlDoc: "",
     });
+    focusPanel("#logs-wrap .preview-block");
   } catch (err) {
     updateFilePreviewState({
       path: relPath,
@@ -798,6 +839,7 @@ async function loadFilePreview(relPath) {
       objectUrl: "",
       htmlDoc: "",
     });
+    focusPanel("#logs-wrap .preview-block");
   }
 }
 
@@ -2354,33 +2396,39 @@ function upsertJob(jobPatch) {
 function renderJobs() {
   const host = $("#jobs-list");
   if (!host) return;
+  const isCompact = host.classList.contains("compact");
+  const limit = isCompact ? 2 : 3;
   const collapsed = !state.jobsExpanded;
-  const jobs = collapsed ? state.jobs.slice(0, 3) : state.jobs;
+  const jobs = collapsed ? state.jobs.slice(0, limit) : state.jobs;
   host.classList.toggle("is-collapsed", collapsed);
   host.classList.toggle("is-expanded", !collapsed);
-  host.innerHTML = jobs
-    .map((job) => {
-      const status = job.status || "unknown";
-      const code =
-        typeof job.returncode === "number" ? `rc=${job.returncode}` : "";
-      return `
-        <div class="job-item">
-          <div>
-            <strong>${job.kind || "job"}</strong>
-            <div class="job-meta">
-              <span class="job-pill">${shortId(job.job_id)}</span>
-              <span class="job-pill">${status}</span>
-              ${code ? `<span class="job-pill">${code}</span>` : ""}
+  if (!jobs.length) {
+    host.innerHTML = `<div class="muted">No recent jobs yet.</div>`;
+  } else {
+    host.innerHTML = jobs
+      .map((job) => {
+        const status = job.status || "unknown";
+        const code =
+          typeof job.returncode === "number" ? `rc=${job.returncode}` : "";
+        return `
+          <div class="job-item">
+            <div>
+              <strong>${job.kind || "job"}</strong>
+              <div class="job-meta">
+                <span class="job-pill">${shortId(job.job_id)}</span>
+                <span class="job-pill">${status}</span>
+                ${code ? `<span class="job-pill">${code}</span>` : ""}
+              </div>
             </div>
+            <button class="ghost" data-job-open="${job.job_id}">Open</button>
           </div>
-          <button class="ghost" data-job-open="${job.job_id}">Open</button>
-        </div>
-      `;
-    })
-    .join("");
+        `;
+      })
+      .join("");
+  }
   const toggle = $("#jobs-toggle");
   if (toggle) {
-    toggle.style.display = state.jobs.length > 3 ? "inline-flex" : "none";
+    toggle.style.display = state.jobs.length > limit ? "inline-flex" : "none";
     toggle.textContent = state.jobsExpanded ? "Show less" : "Show more";
     toggle.onclick = () => {
       state.jobsExpanded = !state.jobsExpanded;
@@ -2501,6 +2549,17 @@ function applyRunSettings(summary) {
     const visionInput = $("#federlicht-model-vision");
     if (visionInput) visionInput.value = meta.model_vision;
   }
+  if (meta.agent_profile) {
+    const profileId =
+      typeof meta.agent_profile === "string" ? meta.agent_profile : meta.agent_profile.id;
+    const select = $("#federlicht-agent-profile");
+    if (profileId && select) {
+      const match = Array.from(select.options).find((o) => o.value === profileId);
+      if (match) {
+        select.value = match.value;
+      }
+    }
+  }
 }
 
 function setKillEnabled(enabled) {
@@ -2591,6 +2650,8 @@ async function startJob(endpoint, payload, meta = {}) {
   });
   const jobId = res.job_id;
   upsertJob({ job_id: jobId, status: "running", kind: meta.kind || "job" });
+  setJobStatus(`Job ${shortId(jobId)} running…`, true);
+  focusPanel("#logs-wrap .logs-block");
   attachToJob(jobId, meta);
   return jobId;
 }
@@ -2638,6 +2699,12 @@ function buildFeatherPayload() {
 function buildFederlichtPayload() {
   const figuresEnabled = $("#federlicht-figures")?.checked;
   const noTags = $("#federlicht-no-tags")?.checked;
+  const agentSelect = $("#federlicht-agent-profile");
+  const agentProfile = agentSelect?.value;
+  const agentSource =
+    agentSelect?.selectedOptions?.[0]?.getAttribute("data-source") || "builtin";
+  const agentProfileDir =
+    agentSource === "site" ? joinPath(state.info?.site_root || "site", "agent_profiles") : "";
   const payload = {
     run: $("#run-select")?.value,
     output: expandSiteRunsPath($("#federlicht-output")?.value),
@@ -2669,6 +2736,8 @@ function buildFederlichtPayload() {
     figures_select: $("#federlicht-figures-select")?.value,
     web_search: $("#federlicht-web-search")?.checked,
     site_output: $("#federlicht-site-output")?.value,
+    agent_profile: agentProfile,
+    agent_profile_dir: agentProfileDir,
     extra_args: $("#federlicht-extra-args")?.value,
   };
   if (!payload.run) {
@@ -2830,6 +2899,7 @@ function handleRunChanges() {
     loadTemplates().catch((err) => {
       appendLog(`[templates] failed to refresh: ${err}\n`);
     });
+    updateHeroStats();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2847,6 +2917,7 @@ function handleRunChanges() {
     loadTemplates().catch((err) => {
       appendLog(`[templates] failed to refresh: ${err}\n`);
     });
+    updateHeroStats();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2864,6 +2935,7 @@ function handleRunChanges() {
     loadTemplates().catch((err) => {
       appendLog(`[templates] failed to refresh: ${err}\n`);
     });
+    updateHeroStats();
     updateRunStudio(runRel).catch((err) => {
       appendLog(`[studio] failed to refresh run studio: ${err}\n`);
     });
@@ -2961,7 +3033,8 @@ function handleFilePreviewControls() {
   $("#file-preview-canvas")?.addEventListener("click", () => {
     const rel = state.filePreview.path;
     if (!rel) return;
-    openCanvasModal(rel);
+    const url = `./canvas.html?report=${encodeURIComponent(rel)}`;
+    window.open(url, "_blank", "noopener");
   });
   $("#file-preview-save")?.addEventListener("click", async () => {
     const rel = state.filePreview.path;
@@ -3563,6 +3636,271 @@ function handleTemplateGenerator() {
   });
 }
 
+function setAgentStatus(message) {
+  const el = $("#agent-status");
+  if (el) {
+    el.textContent = message || "";
+  }
+}
+
+function normalizeApplyTo(value) {
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v).trim()).filter(Boolean);
+  }
+  if (!value) return [];
+  return String(value)
+    .split(/[,\\n]/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function renderAgentList() {
+  const listEl = $("#agent-list");
+  if (!listEl) return;
+  const items = state.agentProfiles.list || [];
+  listEl.innerHTML = items
+    .map((profile) => {
+      const id = escapeHtml(profile.id);
+      const name = escapeHtml(profile.name || profile.id);
+      const tagline = escapeHtml(profile.tagline || "");
+      const applyTo = escapeHtml((profile.apply_to || []).join(", "));
+      const active =
+        state.agentProfiles.activeId === profile.id &&
+        state.agentProfiles.activeSource === profile.source;
+      return `
+        <button class="agent-item ${active ? "active" : ""}" data-id="${id}" data-source="${profile.source}">
+          <div>
+            <strong>${name}</strong>
+            <div class="agent-meta">${id}${applyTo ? ` · ${applyTo}` : ""}</div>
+            ${tagline ? `<div class="agent-meta">${tagline}</div>` : ""}
+          </div>
+          <span class="agent-source">${escapeHtml(profile.source)}</span>
+        </button>
+      `;
+    })
+    .join("");
+  [...listEl.querySelectorAll(".agent-item")].forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const source = btn.dataset.source;
+      if (id && source) {
+        openAgentProfile(id, source);
+      }
+    });
+  });
+}
+
+function renderAgentProfileSelect() {
+  const select = $("#federlicht-agent-profile");
+  if (!select) return;
+  const items = state.agentProfiles.list || [];
+  select.innerHTML = items
+    .map((profile) => {
+      const label = profile.name || profile.id;
+      const source = profile.source || "builtin";
+      const suffix = source === "site" ? "site" : "builtin";
+      return `<option value="${escapeHtml(profile.id)}" data-source="${escapeHtml(
+        source,
+      )}">${escapeHtml(label)} (${suffix})</option>`;
+    })
+    .join("");
+  if (state.agentProfiles.activeId) {
+    const opt = Array.from(select.options).find(
+      (o) => o.value === state.agentProfiles.activeId,
+    );
+    if (opt) {
+      select.value = opt.value;
+    }
+  }
+}
+
+function fillAgentForm(profile, memoryText, source, readOnly) {
+  const memoryHook = profile?.memory_hook || {};
+  $("#agent-id").value = profile?.id || "";
+  $("#agent-name").value = profile?.name || "";
+  $("#agent-tagline").value = profile?.tagline || "";
+  $("#agent-apply-to").value = (profile?.apply_to || []).join(", ");
+  $("#agent-system-prompt").value = profile?.system_prompt || "";
+  $("#agent-memory-desc").value = memoryHook?.description || "";
+  $("#agent-memory-path").value = memoryHook?.path || "";
+  $("#agent-memory-text").value = memoryText || "";
+  const storeCheck = $("#agent-store-site");
+  if (storeCheck) {
+    storeCheck.checked = true;
+    storeCheck.disabled = true;
+  }
+  const meta = $("#agent-editor-meta");
+  if (meta) {
+    meta.textContent = readOnly
+      ? `Read-only built-in profile · ${source}`
+      : `Editable profile · ${source}`;
+  }
+}
+
+async function openAgentProfile(id, source) {
+  try {
+    const detail = await fetchJSON(`/api/agent-profiles/${encodeURIComponent(id)}?source=${encodeURIComponent(source)}`);
+    state.agentProfiles.activeId = id;
+    state.agentProfiles.activeSource = source;
+    state.agentProfiles.activeProfile = detail.profile;
+    state.agentProfiles.memoryText = detail.memory_text || "";
+    state.agentProfiles.readOnly = Boolean(detail.read_only);
+    fillAgentForm(detail.profile, detail.memory_text, source, detail.read_only);
+    renderAgentList();
+    renderAgentProfileSelect();
+    setAgentStatus("Profile loaded.");
+  } catch (err) {
+    setAgentStatus(`Failed to load profile: ${err}`);
+  }
+}
+
+function newAgentProfile() {
+  state.agentProfiles.activeId = "";
+  state.agentProfiles.activeSource = "site";
+  state.agentProfiles.activeProfile = {
+    id: "",
+    name: "",
+    tagline: "",
+    apply_to: [],
+    system_prompt: "",
+    memory_hook: {},
+  };
+  state.agentProfiles.memoryText = "";
+  state.agentProfiles.readOnly = false;
+  fillAgentForm(state.agentProfiles.activeProfile, "", "site", false);
+  renderAgentList();
+  setAgentStatus("New profile (site) ready.");
+}
+
+function readAgentForm() {
+  const id = $("#agent-id").value.trim();
+  const name = $("#agent-name").value.trim();
+  const tagline = $("#agent-tagline").value.trim();
+  const applyTo = normalizeApplyTo($("#agent-apply-to").value);
+  const systemPrompt = $("#agent-system-prompt").value;
+  const memoryDesc = $("#agent-memory-desc").value.trim();
+  const memoryPath = $("#agent-memory-path").value.trim();
+  const memoryText = $("#agent-memory-text").value;
+  const profile = {
+    id,
+    name,
+    tagline,
+    apply_to: applyTo,
+    system_prompt: systemPrompt,
+  };
+  if (memoryDesc || memoryPath) {
+    profile.memory_hook = {
+      description: memoryDesc,
+      path: memoryPath || undefined,
+    };
+  }
+  return { profile, memoryText };
+}
+
+async function saveAgentProfile() {
+  try {
+    const { profile, memoryText } = readAgentForm();
+    if (!profile.id) {
+      setAgentStatus("Profile ID is required.");
+      return;
+    }
+    if (state.agentProfiles.readOnly && profile.id === state.agentProfiles.activeId) {
+      setAgentStatus("Built-in profiles are read-only. Clone and save with a new ID.");
+      return;
+    }
+    setAgentStatus("Saving profile...");
+    await fetchJSON("/api/agent-profiles/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile,
+        memory_text: memoryText,
+        store: "site",
+      }),
+    });
+    await loadAgentProfiles(profile.id, "site");
+    setAgentStatus("Profile saved.");
+  } catch (err) {
+    setAgentStatus(`Save failed: ${err}`);
+  }
+}
+
+async function deleteAgentProfile() {
+  try {
+    if (state.agentProfiles.readOnly) {
+      setAgentStatus("Built-in profiles cannot be deleted.");
+      return;
+    }
+    const id = $("#agent-id").value.trim();
+    if (!id) {
+      setAgentStatus("Profile ID is required.");
+      return;
+    }
+    setAgentStatus("Deleting profile...");
+    await fetchJSON("/api/agent-profiles/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    await loadAgentProfiles();
+    newAgentProfile();
+    setAgentStatus("Profile deleted.");
+  } catch (err) {
+    setAgentStatus(`Delete failed: ${err}`);
+  }
+}
+
+function cloneAgentProfile() {
+  const { profile, memoryText } = readAgentForm();
+  const base = profile.id || "profile";
+  profile.id = `${base}_copy`;
+  $("#agent-id").value = profile.id;
+  state.agentProfiles.readOnly = false;
+  setAgentStatus("Cloned. Update the ID and save.");
+}
+
+async function loadAgentProfiles(selectId, selectSource) {
+  try {
+    const payload = await fetchJSON("/api/agent-profiles");
+    state.agentProfiles.list = payload.profiles || [];
+    renderAgentList();
+    renderAgentProfileSelect();
+    if (selectId && selectSource) {
+      await openAgentProfile(selectId, selectSource);
+      return;
+    }
+    if (!state.agentProfiles.activeId && state.agentProfiles.list.length) {
+      const first = state.agentProfiles.list[0];
+      await openAgentProfile(first.id, first.source);
+    }
+  } catch (err) {
+    setAgentStatus(`Failed to load profiles: ${err}`);
+  }
+}
+
+function handleAgentPanelToggle() {
+  const panel = $("#agent-panel");
+  const button = $("#agent-panel-toggle");
+  if (!panel || !button) return;
+  const stored = localStorage.getItem("federnett-agent-panel-collapsed");
+  if (stored === "true") {
+    panel.classList.add("collapsed");
+    button.textContent = "Show panel";
+  }
+  button.addEventListener("click", () => {
+    const collapsed = panel.classList.toggle("collapsed");
+    button.textContent = collapsed ? "Show panel" : "Hide panel";
+    localStorage.setItem("federnett-agent-panel-collapsed", collapsed ? "true" : "false");
+  });
+}
+
+function handleAgentProfiles() {
+  $("#agent-new")?.addEventListener("click", () => newAgentProfile());
+  $("#agent-save")?.addEventListener("click", () => saveAgentProfile());
+  $("#agent-delete")?.addEventListener("click", () => deleteAgentProfile());
+  $("#agent-clone")?.addEventListener("click", () => cloneAgentProfile());
+}
+
 function handleLayoutSplitter() {
   const splitter = $("#layout-splitter");
   const layout = $(".layout");
@@ -3791,23 +4129,25 @@ async function bootstrap() {
   handleRunPicker();
   handleReloadRuns();
   handleLogControls();
-  handleCanvasModal();
   handleTemplateSync();
   handleTemplateEditor();
   handleTemplateGenerator();
   handleTemplatesPanelToggle();
+  handleAgentProfiles();
+  handleAgentPanelToggle();
   bindTemplateModalClose();
   bindHelpModal();
   handleLayoutSplitter();
   handleTelemetrySplitter();
   bindForms();
   setFederlichtRunEnabled(true);
+  renderJobs();
 
   try {
     await loadInfo();
     bindHeroCards();
     initPipelineFromInputs();
-    await Promise.all([loadTemplates(), loadRuns(), loadModelOptions()]);
+    await Promise.all([loadTemplates(), loadRuns(), loadModelOptions(), loadAgentProfiles()]);
   } catch (err) {
     appendLog(`[init] ${err}\n`);
   }

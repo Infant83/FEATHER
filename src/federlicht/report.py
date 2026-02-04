@@ -32,6 +32,15 @@ from typing import Iterable, Optional
 
 from . import tools as feder_tools
 from . import prompts
+from .profiles import (
+    AgentProfile,
+    build_profile_context,
+    load_profile,
+    list_profiles,
+    profile_applies_to,
+    profile_summary,
+    resolve_profiles_dir,
+)
 from .orchestrator import (
     PipelineContext,
     PipelineResult,
@@ -104,6 +113,8 @@ REPORT_PLACEHOLDER_RE = re.compile(
 MAX_INPUT_TOKENS_ENV = "FEDERLICHT_MAX_INPUT_TOKENS"
 DEFAULT_MAX_INPUT_TOKENS: Optional[int] = None
 DEFAULT_MAX_INPUT_TOKENS_SOURCE = "none"
+ACTIVE_AGENT_PROFILE: Optional[AgentProfile] = None
+ACTIVE_AGENT_PROFILE_CONTEXT = ""
 
 
 class CleanHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -284,6 +295,16 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         nargs="?",
         const="-",
         help="Print agent registry JSON and exit (optional path to write).",
+    )
+    ap.add_argument(
+        "--agent-profile",
+        default=None,
+        help="Agent profile id (default: default).",
+    )
+    ap.add_argument(
+        "--agent-profile-dir",
+        default=None,
+        help="Directory containing agent profile registry and files.",
     )
     ap.add_argument(
         "--agent-config",
@@ -4275,11 +4296,11 @@ def build_format_instructions(
             "본문에 전체 URL을 그대로 출력하지 말고 [source], [paper] 같은 짧은 링크 라벨을 사용하세요. "
             "파일 경로는 클릭 가능하도록 마크다운 링크를 우선 사용하세요. "
             "./archive/... 같은 파일 경로를 본문에 그대로 쓰지 말고 인용만 남기세요. "
-            "인용은 문장 끝에 inline으로 붙이고, 인용만 단독 줄로 두지 마세요. ",
+            "인용은 문장 끝에 inline으로 붙이고, 인용만 단독 줄이나 단독 리스트 항목으로 두지 마세요. ",
             "Avoid printing full URLs in the body; use short link labels like [source] or [paper] instead. "
             "Prefer markdown links for file paths so they are clickable. "
             "Do not print archive file paths verbatim in the prose; keep only the citation. "
-            "Keep citations inline at the end of the sentence; do not place citations on their own line. ",
+            "Keep citations inline at the end of the sentence; do not place citations on their own line or as standalone list items. ",
         )
     else:
         citation_instruction = pick(
@@ -4524,6 +4545,7 @@ def prepare_runtime(
     DEFAULT_MAX_INPUT_TOKENS_SOURCE = getattr(args, "max_input_tokens_source", "none")
     output_format = choose_format(args.output)
     args.output_format = output_format
+    resolve_active_profile(args)
     return output_format, check_model
 
 
@@ -4547,10 +4569,27 @@ def resolve_agent_enabled(name: str, default: bool, overrides: dict) -> bool:
 
 def resolve_agent_prompt(name: str, default_prompt: str, overrides: dict) -> str:
     entry = overrides.get(name)
-    if not isinstance(entry, dict):
-        return default_prompt
-    prompt = entry.get("system_prompt")
-    return prompt if isinstance(prompt, str) and prompt.strip() else default_prompt
+    prompt = default_prompt
+    if isinstance(entry, dict):
+        override = entry.get("system_prompt")
+        if isinstance(override, str) and override.strip():
+            prompt = override
+    profile = ACTIVE_AGENT_PROFILE
+    if profile and profile_applies_to(profile, name):
+        if isinstance(entry, dict) and entry.get("profile") is False:
+            return prompt
+        if ACTIVE_AGENT_PROFILE_CONTEXT:
+            return f"{ACTIVE_AGENT_PROFILE_CONTEXT}\n\n{prompt}".strip()
+    return prompt
+
+
+def resolve_active_profile(args: argparse.Namespace) -> Optional[AgentProfile]:
+    global ACTIVE_AGENT_PROFILE
+    global ACTIVE_AGENT_PROFILE_CONTEXT
+    profile = load_profile(getattr(args, "agent_profile", None), getattr(args, "agent_profile_dir", None))
+    ACTIVE_AGENT_PROFILE = profile
+    ACTIVE_AGENT_PROFILE_CONTEXT = build_profile_context(profile) if profile else ""
+    return profile
 
 
 def resolve_agent_model(name: str, default_model: str, overrides: dict) -> str:
@@ -4612,6 +4651,8 @@ def build_agent_info(
     free_format: bool = False,
     agent_overrides: Optional[dict] = None,
 ) -> dict:
+    profile = resolve_active_profile(args)
+    profiles_dir = resolve_profiles_dir(getattr(args, "agent_profile_dir", None))
     if not required_sections and not free_format:
         required_sections = list(DEFAULT_SECTIONS)
     if not template_guidance_text:
@@ -4828,7 +4869,10 @@ def build_agent_info(
             "web_search": args.web_search,
             "alignment_check": args.alignment_check,
             "interactive": args.interactive,
+            "agent_profile": profile_summary(profile) if profile else None,
+            "agent_profile_dir": str(profiles_dir),
         },
+        "agent_profiles": list_profiles(profiles_dir),
         "stages": get_stage_info(["all"]),
         "agents": agents,
     }
@@ -5423,7 +5467,7 @@ def inject_viewer_links(html_text: str, viewer_map: dict[str, dict[str, str]]) -
 
 
 def clean_citation_labels(html_text: str) -> str:
-    pattern = re.compile(r'(<a\b[^>]*>)\s*\\\[(\d+)\]\\\s*(</a>)')
+    pattern = re.compile(r'(<a\b[^>]*>)\\\[(\d+)\\\](</a>)')
     return pattern.sub(r'\1[\2]\3', html_text)
 
 
@@ -6943,9 +6987,18 @@ def merge_orphan_citations(report_text: str) -> str:
         return report_text
     lines = report_text.splitlines()
     merged: list[str] = []
+    bullet_re = re.compile(r"^\s*(?:[-*•]|\d+\.)\s+")
+    bare_cite_re = re.compile(r"^\[?\s*\d+\s*\]?$")
     for line in lines:
         stripped = line.strip()
-        if stripped and _CITATION_LINE_RE.fullmatch(stripped):
+        candidate = bullet_re.sub("", stripped)
+        is_citation_line = False
+        if candidate:
+            if _CITATION_LINE_RE.fullmatch(candidate):
+                is_citation_line = True
+            elif bare_cite_re.fullmatch(candidate):
+                is_citation_line = True
+        if stripped and is_citation_line:
             if merged:
                 idx = len(merged) - 1
                 while idx >= 0 and not merged[idx].strip():
@@ -6953,13 +7006,13 @@ def merge_orphan_citations(report_text: str) -> str:
                 if idx >= 0:
                     prefix = merged[idx].rstrip()
                     joiner = "" if prefix.endswith(("(", "[", "{")) else " "
-                    merged[idx] = prefix + joiner + stripped
+                    merged[idx] = prefix + joiner + candidate
                     if idx < len(merged) - 1:
                         del merged[idx + 1 :]
                 else:
-                    merged.append(stripped)
+                    merged.append(candidate)
             else:
-                merged.append(stripped)
+                merged.append(candidate)
             continue
         merged.append(line)
     return "\n".join(merged)
@@ -7746,6 +7799,14 @@ def run_pipeline(
         "free_format": args.free_format,
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
     }
+    if ACTIVE_AGENT_PROFILE:
+        meta["agent_profile"] = {
+            "id": ACTIVE_AGENT_PROFILE.profile_id,
+            "name": ACTIVE_AGENT_PROFILE.name,
+            "tagline": ACTIVE_AGENT_PROFILE.tagline,
+            "version": ACTIVE_AGENT_PROFILE.version,
+            "apply_to": list(ACTIVE_AGENT_PROFILE.apply_to),
+        }
     if final_path:
         meta["report_stem"] = final_path.stem
     elif out_path:

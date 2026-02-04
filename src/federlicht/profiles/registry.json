@@ -1,0 +1,8 @@
+{
+  "default": {
+    "file": "default.json"
+  },
+  "federhav": {
+    "file": "federhav.json"
+  }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent 최신 동향과 앞으로 1년 내 대비해야 할 사항</title>
+</head>
+<body>
+    <h1>AI Agent 최신 동향과 앞으로 1년 내 대비해야 할 사항</h1>
+
+    <h2>Executive Summary</h2>
+    <p>AI 에이전트 기술은 최근 빠른 발전을 보이고 있으며, 이는 LLM 오케스트레이션, 도구 사용 설계, 신뢰성, 평가, 보안 등 다양한 분야에 걸쳐 중요한 변화를 가져오고 있다. (Mohammadi et al., 2025, "Evaluation and Benchmarking of LLM Agents", DOI: [10.1145/3711896.3736570]) 이러한 변화는 기업의 의사결정 및 기술 전략에 중대한 영향을 미치고 있다. 특히, AI 에이전트의 사용이 증가함에 따라 기존의 작업 흐름 및 관리 방식에 대한 재설계가 요구된다. 이는 특히 성능 평가 및 보안 관리에 있어 더 높은 신뢰성을 필요로 한다. (Bhattarai, 2025, "Scaling Generative AI for Self-Healing DevOps Pipelines", DOI: [10.20944/preprints202506.1436.v1]) 따라서, 기술 리더 및 연구자들은 이러한 동향에 대비한 체계적인 접근을 고려해야 한다.</p>
+
+    <h2>Scope & Methodology</h2>
+    <p>이 보고서는 OpenAlex 데이터베이스와 Tavily 웹 검색 보고서를 기반으로 한다. 각 출처의 논문과 벤더 정보, 블로그 자료 및 가이드를 참고하여 소스의 삼각측량을 수행하였다. (Romanishyn et al., 2025, "AI-driven disinformation: policy recommendations for democratic resilience", DOI: [10.3389/frai.2025.1569115]) 각 문서의 주장과 데이터는 개별적으로 분석되어, 신뢰성 있는 인사이트를 도출하는 데 사용되었다. 주요 논점은 LLM 에이전트의 성능, 보안 문제, 그리고 향후 조직에서의 적용 가능성을 포함한다.</p>
+
+    <h2>Key Findings</h2>
+    <ol>
+        <li>
+            <strong>LLM 에이전트의 중요성 증가</strong>
+            <p>LLM 에이전트는 복잡한 의사결정을 지원하는 데 필수적이다. (Mohammadi et al., 2025) 공개정보 한계가 있음.</p>
+        </li>
+        <li>
+            <strong>신뢰성 문제</strong>
+            <p>생산 환경에서 LLM 에이전트의 신뢰성 평가가 필수적이다. (Bhattarai, 2025) 관련 연구가 부족함.</p>
+        </li>
+        <li>
+            <strong>정책 및 보안 전략의 필요</strong>
+            <p>AI 기술 사용 시 보안 및 거버넌스 정책 수립이 긴급하다. (Romanishyn et al., 2025) 현재 정책의 명확성이 떨어짐.</p>
+        </li>
+    </ol>
+
+    <h2>Trends & Implications</h2>
+    <p>향후 12개월 내에 기업은 평가 표준화 및 에이전트 운영을 통해 의사결정 시스템을 개선해야 한다. 이러한 진행은 적절한 가드레일을 설정하고, 감사 추적 체계를 마련하는 데 필수적이다. 가령, HITL(사람 개입 필요) 운영 기준을 강화하여 신뢰성을 제고할 수 있다.</p>
+
+    <h2>Risks & Gaps</h2>
+    <p>현재 LLM 에이전트의 성능 및 보안에 대한 충분한 증거가 결여되어 있다. 특히, 평가의 재현성과 관련하여 많은 불확실성이 존재하며, 이는 조직의 리스크 관리에 큰 영향을 미친다. 이러한 문제는 사회적 반발을 초래할 가능성이 있다. Not applicable: 이 분야에 대한 명확한 지침 및 지원이 부족하다.</p>
+
+    <h2>Critics</h2>
+    <p>일부 전문가들은 LLM 에이전트의 성능 과대 평가와 벤더 편향의 위험을 지적하고 있다. 다음은 그들의 주요 의견이다:</p>
+    <ul>
+        <li>에이전트 과대 평가: 기술이 제공하는 실제 성능보다 더 잘 작동한다고 주장하는 경향이 있다.</li>
+        <li>재현성 문제: 평가 방법론의 일관성 부족이 운영 리스크를 초래할 수 있다.</li>
+        <li>보안 문제: AI 시스템에 대한 신뢰가 과소 추정되고 있다.</li>
+    </ul>
+    <p>Not applicable: 반론을 제기할 충분한 데이터가 부족하다.</p>
+
+    <h2>Appendix</h2>
+    <ul>
+        <li>1. AI-driven disinformation: policy recommendations for democratic resilience - [openalex] (Romanishyn et al., 2025, [DOI](https://doi.org/10.3389/frai.2025.1569115)) - 일반적 수준</li>
+        <li>2. Evaluation and Benchmarking of LLM Agents: A Survey - [openalex] (Mohammadi et al., 2025, [DOI](https://doi.org/10.1145/3711896.3736570)) - 높은 신뢰성</li>
+        <li>3. Factors Affecting Human–AI Collaboration Performances in Financial Sector - [openalex] (Xu et al., 2025, [DOI](https://doi.org/10.3390/su17104335)) - 일반적 수준</li>
+        <li>4. Artificial Intelligence Agent-Enabled Predictive Maintenance - [openalex] (Jiang et al., 2025, [DOI](https://doi.org/10.3390/computers14080329)) - 일반적 수준</li>
+        <li>5. Scaling Generative AI for Self-Healing DevOps Pipelines - [openalex] (Bhattarai, 2025, [DOI](https://doi.org/10.20944/preprints202506.1436.v1)) - 일반적 수준</li>
+    </ul>
+</body>
+</html>

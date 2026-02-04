@@ -1,0 +1,155 @@
+body.template-custom_mit_tech_review {
+  /* 템플릿 전체 레이아웃: 세련된 웹진 느낌, 가독성 최우선 */
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  color: #0b1220;
+  background: #fbfcfe;
+  line-height: 1.65;
+  margin: 0;
+  padding: 0 20px;
+}
+
+/* masthead 스타일: 짙은 박스 배경, 큰 타이틀, 얕은 데크 라인 */
+.masthead {
+  background: linear-gradient(180deg, #0f1724 0%, #0c1320 100%);
+  color: #ffffff;
+  padding: 48px 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 6px 24px rgba(3, 7, 18, 0.35);
+  border-radius: 8px;
+}
+.masthead .title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px 0;
+}
+.masthead .deck {
+  color: rgba(255,255,255,0.88);
+  font-size: 15px;
+  max-width: 920px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.06); /* 얕은 데크 라인 */
+  padding-top: 12px;
+}
+.masthead .byline {
+  margin-top: 14px;
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+}
+
+/* 본문 컨테이너 */
+.article {
+  max-width: 980px;
+  margin: 0 auto 80px auto;
+  padding: 28px 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,251,253,0.98));
+  border-radius: 8px;
+  box-shadow: 0 8px 36px rgba(13,18,25,0.06);
+}
+
+/* 타이포그래피 */
+h1, .section-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #071029;
+  margin: 28px 0 12px 0;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  border-left: 4px solid #e6eef7;
+  padding-left: 12px;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 18px 0 8px 0;
+  color: #0b1220;
+  font-weight: 600;
+}
+p {
+  font-size: 15px;
+  color: #0f1724;
+  margin: 10px 0;
+}
+
+.small {
+  font-size: 13px;
+  color: #4b5563;
+}
+blockquote {
+  border-left: 4px solid #d9e6ff;
+  background: #f8fbff;
+  padding: 12px 16px;
+  margin: 12px 0;
+  color: #0b1220;
+  font-style: italic;
+}
+
+/* 라벨(관찰/추정/권고) 스타일 */
+.label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #334155;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+.label.observation { background: #0ea5a4; } /* 관찰 */
+.label.hypothesis { background: #7c3aed; }   /* 추정 */
+.label.recommend { background: #0284c7; }    /* 권고 */
+
+/* 표 스타일: 세련된 미디어·보고서 표 */
+table.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 20px 0;
+  font-size: 14px;
+}
+table.spec-table thead th {
+  background: #f1f5f9;
+  color: #0b1220;
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  border-bottom: 2px solid #e6eef7;
+}
+table.spec-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f6;
+}
+table.spec-table tbody tr:nth-child(even) {
+  background: rgba(14, 165, 164, 0.02);
+}
+
+/* 코드/사이드 노트 */
+pre, code {
+  font-family: SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+  background: #0b1220;
+  color: #e6eef7;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* 반응형 */
+@media (max-width: 720px) {
+  .masthead .title { font-size: 22px; }
+  .masthead { padding: 28px 16px; }
+  .article { padding: 18px 12px; }
+}
+
+/* 접근성: 충분한 대비와 읽기 공간 */
+a { color: #0b84ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* 부가 유틸리티 클래스 */
+.kicker { color: #64748b; font-size: 13px; font-weight: 600; }
+.meta { color: #475569; font-size: 13px; }
+
+/* 끝: 템플릿 전용 스타일 */

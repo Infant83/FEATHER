@@ -1,0 +1,7 @@
+{
+  "id": "default",
+  "name": "Default",
+  "tagline": "General purpose research writer",
+  "apply_to": ["writer"],
+  "system_prompt": ""
+}

@@ -1,0 +1,2 @@
+AI Agent 최신 동향, 앞으로 1년 대비해야 할 사항
+LLM agent orchestration, tool use, reliability, evals, security

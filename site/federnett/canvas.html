@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Federnett Canvas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./app.css" />
+    <link rel="stylesheet" href="./canvas.css" />
+  </head>
+  <body class="canvas-page">
+    <header class="canvas-topbar">
+      <div class="brand">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <div class="brand-text">
+          <strong>Report Canvas</strong>
+          <span>Refine reports with AI-Researcher</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="canvas-back" class="ghost">Back to Federnett</button>
+      </div>
+    </header>
+
+    <main class="canvas-layout">
+      <section class="canvas-left">
+        <div class="canvas-card">
+          <div class="canvas-header">
+            <h1>Revision workspace</h1>
+            <p>
+              Select a passage, describe your revision, and stream the update as it runs.
+            </p>
+          </div>
+          <div class="canvas-meta">
+            <span class="meta-pill" id="canvas-run-rel">run: -</span>
+            <span class="meta-pill" id="canvas-base-rel">base: -</span>
+            <span class="meta-pill" id="canvas-status">Ready</span>
+          </div>
+          <div class="canvas-preview">
+            <iframe id="canvas-preview-frame" class="canvas-preview-frame" title="Report preview"></iframe>
+          </div>
+          <div class="canvas-output">
+            <div class="output-head">
+              <h3>Report outputs</h3>
+              <span class="muted">Click to preview</span>
+            </div>
+            <div id="canvas-report-list" class="output-list"></div>
+            <div class="output-actions">
+              <button id="canvas-open-report" class="ghost">Open Report</button>
+              <button id="canvas-open-hub" class="ghost">Open Report Hub</button>
+            </div>
+          </div>
+          <details class="canvas-text">
+            <summary>Report text (selection helper)</summary>
+            <textarea id="canvas-report-text" class="canvas-report-text" rows="10" readonly></textarea>
+          </details>
+        </div>
+      </section>
+
+      <section class="canvas-right">
+        <div class="canvas-card chat-card">
+          <div class="chat-head">
+            <div>
+              <h2>AI-Researcher</h2>
+              <p>Professional writer refining the report with evidence-aware edits.</p>
+            </div>
+            <div class="chat-pill" id="canvas-job-pill">Idle</div>
+          </div>
+          <div id="canvas-chat" class="chat-body"></div>
+
+          <div class="chat-selection">
+            <label for="canvas-selection">Selection (optional)</label>
+            <textarea id="canvas-selection" class="ghost-input" rows="3" readonly></textarea>
+            <div class="selection-actions">
+              <button type="button" id="canvas-use-selection" class="ghost">Use selection</button>
+              <button type="button" id="canvas-clear-selection" class="ghost">Clear</button>
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <label for="canvas-update">Update instructions</label>
+            <textarea
+              id="canvas-update"
+              class="ghost-input"
+              rows="5"
+              placeholder="Describe what should change, what to keep, and how to adjust tone or structure."
+            ></textarea>
+            <label for="canvas-second">Second prompt (optional)</label>
+            <textarea
+              id="canvas-second"
+              class="ghost-input"
+              rows="3"
+              placeholder="Optional extra guidance to append."
+            ></textarea>
+            <label for="canvas-output-path">Next report output</label>
+            <input id="canvas-output-path" class="ghost-input" />
+            <label for="canvas-update-path">Update prompt file</label>
+            <input id="canvas-update-path" class="ghost-input" disabled />
+            <div class="chat-actions">
+              <button type="button" id="canvas-run" class="primary">Send update</button>
+            </div>
+          </div>
+
+          <div class="chat-log">
+            <div class="chat-log-head">
+              <span>Live log</span>
+              <button type="button" id="canvas-log-toggle" class="ghost">Hide</button>
+            </div>
+            <pre id="canvas-log" class="canvas-log"></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./canvas.js" type="module"></script>
+  </body>
+</html>
