@@ -1,0 +1,65 @@
+ely align with human 
+intentions rather than merely optimizing for specified objectives that incompletely 
+capture human values.5
+1	
+ I. Asimov, Runaround, “Astounding Science Fiction” 1942, no. 3, pp. 94–103.
+2	  Cf. K. Mamak, Whether to Save a Robot or a Human: On the Ethical and Legal Limits of 
+Protections for Robots, “Frontiers in Robotics and AI” 2021, vol. 8.
+3	  For example, see J. Zajdel, Limes Inferior, Warszawa 1982; N. Bostrom, Deep Utopia: Life 
+and Meaning in a Solved World, 2024; S. Lem, Golem XIV, Kraków 1981.
+4	
+ Cf. M. de Sautoy, The Creativity Code: Art and Innovation in the Age of AI, Cambridge 2020.
+5	
+ A. Elliott, Making Sense of AI: Our Algorithmic World, Cambridge 2022, pp. 41–44.
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 3 =====
+Alignment Problem as Cultural and Legal Challenge…
+443
+Y. Bengio emphasizes that without a deep understanding of cultural mechanisms 
+of sense-making, even the most advanced AI systems may remain fundamentally 
+misaligned with human values.6 Furthermore, the 2025 International AI Safety 
+Report  identifies interpretability, knowledge extraction, and managing indetermin-
+ism as one of the key challenges for AI safety in the coming decade.7 The survey 
+and report both emphasize the insufficiency of purely technical approaches, high-
+lighting instead the need for socio-legal frameworks that can accommodate rapid 
+technological evolution.8 This urgency is underscored by D. Kokotajło’s AI 2027 
+scenario, which projects transformative AI capabilities emerging within just two 
+years – a timeline that suggests current alignment research may be racing against 
+technological development.9
+Bengio’s advocacy for slowing AI development reflects similar concerns about 
+the temporal mismatch between capability advancement and safety research, echo­
+ing Tegmark’s Future of Life Institute position that regulatory breathing room is 
+essential for developing adequate governance structures.10 These calls are directly 
+reflected in the growing emphasis on transparency as a key element of AI regulatory 
+policy.11 This is not, however, merely a call for a slowdown. In parallel, the first 
+6	
+ His conclusions are much more alarmistic: “I feel strongly that it is critical to invest immedi-
+ately and massively in research endeavours to design systems and safety protocols that will minimize 
+the probability of yielding rogue AIs, as well as to develop countermeasures against the possibility of 
+undesirable scenarios. There is a great need and opportunity for innovation in governance research 
+to design adaptable and agile regulations and treaties that will safeguard citizens and society as the 
+technology evolves and new unexpected threats may arise. I believe we have the moral responsibility 
+to mobilize our greatest minds and major resources in a bold, coordinated effort to fully reap the 
+economic and social benefits of AI, while protecting society, humanity, and our shared future against 
+its potential perils. And we need to do so urgently, with the United States playing the same leadership 
+role in protecting humanity as it is in advancing AI capabilities” (Y. Bengio, Government Interventions 
+to Avert Future Catastrophic AI Risks, “Harvard Data Science Review” 2024, no. 5, Special Issue).
+7	
+ Y. Bengio (ed.), International AI Safety Report: The International Scientific Report on the 
+Safety of Advanced AI, January 2025, https://assets.publishing.service.gov.uk/media/679a0c48a77d-
+250007d313ee/International_AI_Safety_Report_2025_accessible_f.pdf (access: 17.10.2025).
+8	  We can refer here also to technological developments of innovation, e.g. Gartner hype cycle 
+– framework introduced by J. Fenn which provides a visual model for tracking how technologies 
+evolve through stages of maturity and adoption within society. It maps the lifecycle of emerging 
+technologies from initial breakthrough to mainstream application. However, the model’s reliability 
+remains questionable. Research examining its predictive power has revealed significant limitations 
+– empirical evidence suggests the framework’s accuracy is sporadic and unreliable.
+9	
+ D. Kokotajło, S. Alexander, T. Larsen, E. Lifland, R. Dean, AI 2027, 3.4.2025, https://ai-2027.
+com (access: 19.10.2025).
+10	  Future of Life Institute, Pause Giant AI Experiments: An Open Letter, 22.3.2023, https://
+futureoflife.org/open-letter/pause-giant-ai-experiments (access: 

@@ -1,0 +1,81 @@
+uch formulations implicitly assume that all necessary
+visual evidence has been fully encoded into embeddings or
+textual descriptions prior to reasoning. However, this as-
+sumption breaks down in fine-grained or visually ambiguous
+retrieval scenarios, where subtle local details determine rel-
+evance and cannot be reliably inferred from compressed
+representations alone.
+To address this limitation, we reformulate multimodal re-
+trieval as an evidence-grounded reasoning problem. Under
+this formulation, retrieval is no longer a single-pass infer-
+ence process, but an iterative decision-making procedure in
+which the model is required to actively acquire and verify
+visual evidence during ranking. Specifically, the retrieval
+process consists of three tightly coupled steps: (i) generat-
+ing hypotheses about candidate relevance based on available
+information, (ii) selectively inspecting visual evidence to
+resolve uncertainty, and (iii) refining the ranking decision
+based on verified observations. This perspective naturally
+gives rise to an agentic reranking paradigm, where a re-
+trieval model is endowed with the ability to reason, inspect,
+and revise its decisions, rather than passively scoring candi-
+dates using fixed representations.
+3.2. Overview of V-Retrver
+Building on the above formulation, we propose V-Retrver,
+an evidence-driven reasoning framework for universal mul-
+timodal retrieval, As illustrated in Fig. 2. V-Retrver follows
+a coarse-to-fine retrieval pipeline that decouples efficient
+candidate proposal from computationally intensive evidence-
+based reasoning. In the first stage, an embedding model ϕ
+encodes the query q and each candidate cn into a shared
+representation space, retrieving the top-K candidates based
+on similarity. We adopt the same method as LamRA (Liu
+et al., 2025) for constructing the embedding model ϕ. This
+stage serves as an efficient candidate proposal mechanism
+and substantially reduces the search space:
+C = {ck}K
+k=1,
+K ≪N.
+In the second stage, V-Retrver employs a reasoning agent
+θ to perform fine-grained reranking over the reduced candi-
+date set C. Crucially, θ is not a conventional reranker that
+operates over static features. Instead, it is designed as an
+agentic evidence-gathering model that can iteratively rea-
+son, invoke visual inspection tools, and revise its ranking
+decisions based on newly acquired visual observations. The
+final prediction is produced as:
+ˆc = θ(q, C).
+3
+
+
+===== PAGE 4 =====
+V-Retrver: Evidence-Driven Agentic Reasoning for Universal Multimodal Retrieval
+Filtering
+SFT Data
+Update Policy
+·  Format Reward
+· Ranking Reward
+·  Tool-use Reward
+Evidence Aligned 
+Policy Optimization
+Tool Invocation
+Filtering
+High Quality Data
+Stage 1: Cold-start
+Stage 3: EAPO
+Stage 2: Reject Fine-tuning
+Tool Invocation
+Tool Invocation
+Cold Start
+Reject Fine-Tuning
+Embedding
+Model
+Top-K
+Tool 
+Invocation
+Select-Image
+Zoom-In
+Rank
+V-retrver
+Figure 2. Overview of the V-Retrver framework. The left panel illustrates the inference pipeline, featuring a coarse-to-fine process with
+embedding-based retrieval and agentic rerankin

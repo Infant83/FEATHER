@@ -1,0 +1,104 @@
+ constrained by their reference motion planners, mak-
+ing them fragile when the planned motions are dynamically
+unstable, a very common issue in HOI, where kinematic
+planners often neglect physical feasibility. Learned gener-
+ative priors address this limitation by encoding physically
+plausible motor memory encoded into policies. One line
+of research employs adversarial imitation with discrimina-
+tors [47] to learn the motor prior, and later extends to skill
+embeddings [48] and conditional control [9, 57].
+These
+approaches promote motion diversity but remain sample-
+2
+
+
+===== PAGE 3 =====
+inefficient and challenging to scale. A complementary line
+distills motor skills into compact latent codes. Earlier work
+adopts model learning to train a variational autoencoder
+(VAE) [27] based controller [11, 73, 89, 90], while recent
+studies pretrain universal trackers [35] and distill them into
+latent priors [36], masked policies [58], or offline training
+with diffusion models [17, 63, 75]. Yet, these methods are
+often limited by the expert converage. Our InterPrior syn-
+ergizes the strength of both lines: it first distills large-scale
+motion imitators and finetunes it via RL, bridging a genera-
+tive controller with versatile conditions while enhancing the
+control by alleviating out-of-distribution brittleness.
+2.2. Physics-based Human-Object Interaction
+Advances in physics-based character control have progres-
+sively expandeded the scope of HOI animation. Early ap-
+proaches primarily focus on simple object dynamics, such
+as striking or sitting [4, 6, 43, 48, 77], whereas recent devel-
+opments have extended to complex, scenario-specific sports
+and games [1, 30, 38, 67, 68, 71, 79, 93]. Progress has also
+been observed in generalizable tasks, such as object carry-
+ing and rearrangement [7, 12, 15, 29, 42, 44, 54, 70, 94,
+100], predominantly enabled by adversarial imitation learn-
+ing, while most systems remain skill-specific, relying on
+fixed procedural routines (e.g. approach, grasp, place with
+regular-shaped objects). They struggle to adapt to objects
+that require careful affordances and fine-grained interaction
+skills (e.g., grasping a chair bar with one hand). To address
+these limitations, HOI motion imitation [76, 80, 87, 91] has
+emerged as a promising paradigm for scaling skill reper-
+toires and capturing fine-grained interactions, as it directly
+emphasizes precision and stability. Distilling such imitation
+policies therefore represents a crucial step toward establish-
+ing a versatile HOI controller. However, existing efforts of-
+ten exhibit narrow task coverage, emphasizing single-object
+proficiency [91] or relying on curated dataset with low-
+dynamic and hand-centric skills [37, 39, 59]. Our InterPrior
+provides a principled solution for generalizing a generative
+controller for agile whole-body loco-manipulation.
+3. Methodology
+Task Formulation. We aim to learn a policy \pi that oper-
+ates in a physics simulator and produces human-object in-
+teraction motion from high-level goals rather than full ref-
+erence. Such goals can be extracted from a human user
+(e.g., steering control), a HOI kinematic motion generator
+(see Sec. F), or keypoints from Motion Captured (MoCap)
+data. The policy \pi conditions on the current human-object
+state and recent history together with these goals, and sam-
+ples control signals from its learned distribution to drive the
+simulated human or humanoid to interact with the object.
+The outcome is a rollout motion sequence that is physically
+simulated, follows the provided goals where available, and
+Prior
+Encoder
+Expert
+Expert
+Stage I: Motion Imitation
+Stage II: Pre-Training
+Stage III: Post-Training
+Prior
+Decoder
+Decoder
+πE
+Trajectory
+Contact
+Keypoint
+xt
+yt+k
+𝒢t
+𝒢t
+πE
+zt
+pψ
+fθ
+qϕ
+pψ
+fθ
+Goals
+Figure 2. Overview of the proposed InterPrior framework. It con-
+sists of: (I) full-reference imitation expert training on large-scale
+human-object interaction data; (II) distillation of the expert into a
+variational policy with a structured latent space for skill embed-
+dings; and (III) post-training of the variational policy to enhance
+generalization. Blue modules denote the final policy used at in-
+ference; green and red modules are training-only components, and
+red arrows denote supervision signals (rewards/losses).
+remains diverse and natural in aspects that are not specified.
+Overview. Figure 2 illustrates our three-stage paradigm.
+First, we train an expert policy \pi _E for large-scale HOI mo-
+tion imitation

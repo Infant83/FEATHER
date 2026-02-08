@@ -1,0 +1,85 @@
+training models to produce continuous embeddings supervised by visual reconstruction objec-
+tives. For instance, Mirage [36] employs hidden states trained to approximate annotated helper
+images, while LVR [11] focuses on reconstructing cropped image regions. SkiLa [22] proposes
+unified reasoning that alternates between generating latent visual tokens and discrete textual tokens.
+However, existing latent reasoning methods uniformly apply the same reasoning structure across all
+inputs: models trained with visual thoughts always generate them, even for purely textual queries.
+Furthermore, these methods use fixed-length latent tokens regardless of whether a problem requires
+minimal or extensive visual deliberation. SwimBird addresses both limitations through dynamic mode
+selection and adaptive visual token budgets, enabling truly query-adaptive multimodal reasoning.
+3
+
+
+===== PAGE 4 =====
+For Textual Thought
+Next Token Prediction
+SwimBird
+…
+LLM Head
+SwimBird
+<reason>The image … </reason>
+Last Hidden States
+…
+Shifted CE Loss
+Target Logits
+Predicted Logits
+For Visual Thought
+Next Embedding Prediction
+Shifted 
+MSE Loss
+Target Embedding
+Predicted Embedding
+Inference
+…
+<latent>
+</latent>
+Answer
+Embedding
+…
+Textual CoT
+…
+<latent>
+</latent>
+Answer
+Embedding
+…
+Vision Only (Dynamic Latent Visual Token Num)
+Interleave Vision-Text
+<latent>
+</latent>
+…
+Answer
+…
+Textual CoT
+Text Only
+Figure 2: SwimBird adopts a hybrid autoregressive formulation that performs next-token prediction
+for textual thoughts and switches to next-embedding prediction for visual thoughts. During
+inference, SwimBird performs query-adaptive multimodal reasoning by dynamically selecting among
+three modes conditioned on the input: text-only, vision-only, and interleaved vision-text reasoning.
+3
+Method
+SwimBird adopts a hybrid autoregressive formulation that supports both discrete textual tokens
+and continuous latent visual tokens. As shown in Fig. 2 (left), it performs standard next-token
+prediction for textual thoughts, optimized with a shifted cross-entropy loss, and performs next-
+embedding prediction for visual thoughts, optimized with a MSE loss to reconstruct the embeddings
+of intermediate thinking images. During inference (Fig. 2 right), SwimBird performs query-adaptive
+reasoning by generating either (i) text-only traces, (ii) vision-only traces with a variable-length latent
+span, or (iii) interleaved vision–text traces, conditioned on the input.
+3.1
+Hybrid Autoregressive Modeling
+Textual thought as next-token prediction. For textual reasoning spans, SwimBird behaves like a
+standard language model. Given a token sequence {w1, . . . , wT }, the model outputs logits parame-
+terizing
+pθ(wt | w<t, x),
+(1)
+where x denotes the observed image (and prior context). We train these spans with the standard
+cross-entropy loss:
+Ltext = −
+T
+X
+t=1
+log pθ(wt | w<t, x).
+(2)
+This objective preserves the discrete symbolic manipulation and logical consistency of the language
+backbone, which is essential for text-centric reasoning tasks.
+Visual thought as next-embedding prediction. For vision-only reasonin

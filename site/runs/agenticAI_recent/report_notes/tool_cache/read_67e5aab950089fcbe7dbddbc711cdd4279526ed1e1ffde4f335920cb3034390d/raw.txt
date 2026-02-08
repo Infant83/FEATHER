@@ -1,0 +1,235 @@
+
+
+===== PAGE 1 =====
+Studia Iuridica Lublinensia vol. 34, 2, 2025
+DOI: 10.17951/sil.2025.34.2.441-479
+﻿
+Karol Kasprowicz
+Maria Curie-Skłodowska University (Lublin), Poland
+ORCID: 0000-0001-6328-052X
+karol.kasprowicz@mail.umcs.pl
+Alignment Problem as Cultural and Legal Challenge: 
+Artificial Intelligence, Interpretability, and Searching 
+for Sense
+Problem dostosowania jako wyzwanie kulturowe i prawne. Sztuczna 
+inteligencja, interpretowalność i poszukiwanie sensu
+ABSTRACT
+The article examines the AI alignment problem as a fundamental challenge of cross-cultural 
+communication between human interpretive frameworks and algorithmic optimization. The author 
+argues that effective AI alignment requires integrating cultural sense-making practices and legal 
+frameworks that vary across societies. The analysis reveals how current regulatory attempts, including 
+the EU AI Act and national AI strategies, struggle with three interconnected challenges: ensuring the 
+interpretability of algorithmic decisions, managing the indeterminism inherent in AI systems, and 
+addressing knowledge extraction controversies. Through examination of emerging AI agents, Big 
+Tech’s regulatory capture, and the rise of AI nationalism, the study demonstrates that alignment fail-
+ures stem not from technical limitations alone, but from inadequate engagement with diverse cultural 
+logics of interpretation. The author proposes frameworks that adapt AI systems to varied contexts 
+while maintaining core functionality and concludes that solving alignment requires computational 
+cultural modelling capable of navigating value pluralism. The analysis warns that without integrating 
+technical safety mechanisms with cultural frameworks of societies, AI systems risk becoming tools 
+of extraction and control rather than beneficial partners for societies.
+Keywords: alignment; artificial intelligence; interpretability; regulations; sense-making; culture
+CORRESPONDENCE ADDRESS: Karol Kasprowicz, PhD, Assistant Professor, Maria Curie- 
+-Skłodowska University (Lublin), Faculty of Law and Administration, Institute of Legal Sciences, 
+5 Maria Curie-Skłodowska Square, 20-031 Lublin, Poland.
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 2 =====
+Karol Kasprowicz
+442
+The Zeroth Law of Robotics
+A robot may not injure humanity, or,
+through inaction, allow humanity to come to harm.
+I. Asimov, Robots and Empire (1985)
+INTRODUCTION
+In 1942, I. Asimov proposed the Three Laws of Robotics as a fictional foun-
+dation for safe coexistence between humans and intelligent machines.1 Eight dec-
+ades later, in an era of advanced artificial intelligence (AI) systems, we face far 
+more complex challenge: ensuring AI systems operate according to human values 
+and goals. Science fiction has long explored potential futures where intelligent 
+machines interact with humanity, but Asimov’s Laws represent perhaps the most 
+enduring attempt to codify principles governing such interactions.2 Nevertheless, 
+fictional guidelines, while elegant in their simplicity,3 fail to address the nuanced 
+challenges of modern AI systems that operate through statistical patterns rather 
+than deterministic rules.4
+Thus, the AI alignment problem is essentially a problem of cross-cultural com-
+munication between the world of human interpretation and the world of algorithmic 
+optimization. I presume that this framing reveals a key dimension of usefulness of 
+AI to human life – interpretability as more than a technical problem and sense-mak-
+ing of real uses of AI. It represents a challenge of translation between two distinct 
+forms of intelligence: human understanding built on cultural contexts, emotional 
+resonance, and embodied experience vs machine learning systems operating through 
+statistical pattern recognition across massive datasets. Interpretability challenges 
+emerge from technical opacity as well as from fundamental differences in how 
+humans and AI systems process information. While humans interpret through con-
+textual understanding, cultural frameworks, and embodied experience, AI systems 
+operate through statistical correlations that may lack causal understanding. This gap 
+creates profound challenges for ensuring AI systems genuinely align with human 
+intentions rather than merely optimizing for specified objectives that incompletely 
+capture human values.5
+1	
+ I. Asimov, Runaround, “Astounding Science Fiction” 1942, no. 3, pp. 94–103.
+2	  Cf. K. Mamak, Whether to Save a Robot or a Human: On the Ethical and Legal Limits of 
+Protections for Robots, “Frontiers in Robotics and AI” 2021, vol. 8.
+3	  For example, see J. Zajdel, Limes Inferior, Warszawa 1982; N. Bostrom, Deep Utopia: Life 
+and Meaning in a Solved World, 2024; S. Lem, Golem XIV, Kraków 1981.
+4	
+ Cf. M. de Sautoy, The Creativity Code: Art and Innovation in the Age of AI, Cambridge 2020.
+5	
+ A. Elliott, Making Sense of AI: Our Algorithmic World, Cambridge 2022, pp. 41–44.
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 3 =====
+Alignment Problem as Cultural and Legal Challenge…
+443
+Y. Bengio emphasizes that without a deep understanding of cultural mechanisms 
+of sense-making, even the most advanced AI systems may remain fundamentally 
+misaligned with human values.6 Furthermore, the 2025 International AI Safety 
+Report  identifies interpretability, knowledge extraction, and managing indetermin-
+ism as one of the key challenges for AI safety in the coming decade.7 The survey 
+and report both emphasize the insufficiency of purely technical approaches, high-
+lighting instead the need for socio-legal frameworks that can accommodate rapid 
+technological evolution.8 This urgency is underscored by D. Kokotajło’s AI 2027 
+scenario, which projects transformative AI capabilities emerging within just two 
+years – a timeline that suggests current alignment research may be racing against 
+technological development.9
+Bengio’s advocacy for slowing AI development reflects similar concerns about 
+the temporal mismatch between capability advancement and safety research, echo­
+ing Tegmark’s Future of Life Institute position that regulatory breathing room is 
+essential for developing adequate governance structures.10 These calls are directly 
+reflected in the growing emphasis on transparency as a key element of AI regulatory 
+policy.11 This is not, however, merely a call for a slowdown. In parallel, the first 
+6	
+ His conclusions are much more alarmistic: “I feel strongly that it is critical to invest immedi-
+ately and massively in research endeavours to design systems and safety protocols that will minimize 
+the probability of yielding rogue AIs, as well as to develop countermeasures against the possibility of 
+undesirable scenarios. There is a great need and opportunity for innovation in governance research 
+to design adaptable and agile regulations and treaties that will safeguard citizens and society as the 
+technology evolves and new unexpected threats may arise. I believe we have the moral responsibility 
+to mobilize our greatest minds and major resources in a bold, coordinated effort to fully reap the 
+economic and social benefits of AI, while protecting society, humanity, and our shared future against 
+its potential perils. And we need to do so urgently, with the United States playing the same leadership 
+role in protecting humanity as it is in advancing AI capabilities” (Y. Bengio, Government Interventions 
+to Avert Future Catastrophic AI Risks, “Harvard Data Science Review” 2024, no. 5, Special Issue).
+7	
+ Y. Bengio (ed.), International AI Safety Report: The International Scientific Report on the 
+Safety of Advanced AI, January 2025, https://assets.publishing.service.gov.uk/media/679a0c48a77d-
+250007d313ee/International_AI_Safety_Report_2025_accessible_f.pdf (access: 17.10.2025).
+8	  We can refer here also to technological developments of innovation, e.g. Gartner hype cycle 
+– framework introduced by J. Fenn which provides a visual model for tracking how technologies 
+evolve through stages of maturity and adoption within society. It maps the lifecycle of emerging 
+technologies from initial breakthrough to mainstream application. However, the model’s reliability 
+remains questionable. Research examining its predictive power has revealed significant limitations 
+– empirical evidence suggests the framework’s accuracy is sporadic and unreliable.
+9	
+ D. Kokotajło, S. Alexander, T. Larsen, E. Lifland, R. Dean, AI 2027, 3.4.2025, https://ai-2027.
+com (access: 19.10.2025).
+10	  Future of Life Institute, Pause Giant AI Experiments: An Open Letter, 22.3.2023, https://
+futureoflife.org/open-letter/pause-giant-ai-experiments (access: 20.7.2025).
+11	  See also RenAIssance Foundation, The Rome Call for AI Ethics, 28.2.2020, https://www.
+romecall.org/the-call (access: 20.6.2025). Cf. S. Hastings-Woodhouse, D. Kokotajło, We Should Not 
+Allow Powerful AI to Be Trained in Secret: The Case for Increased Public Transparency, 27.5.2025, 
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 4 =====
+Karol Kasprowicz
+444
+promising research avenues are emerging, aimed at increasing control over the 
+internal processes of models. One such avenue is Chain of Thought Monitorabil-
+ity: A New and Fragile Opportunity for AI Safety, which offers a new, albeit still 
+fragile, opportunity for real progress in safety (e.g. open source initiatives).12 The 
+significance of this direction is underscored by the fact13 that it is becoming the 
+focus of flagship government initiatives (e.g. such as the UK’s AI Safety Institute 
+– AISI).14 Thus, the debate on AI safety is transitioning from a phase of manifestos 
+and appeals to a stage of institutional support for concrete solutions to the alignment 
+problem – encapsulated in the first attempts to regulate it.
+Culture and, in particular, law can provide frameworks and tools to address 
+challenges of aligning AI to humanity. Legal frameworks provide essential struc-
+tures for governing technology, but law itself represents a cultural technology 
+evolving alongside the systems it regulates. Traditional legal approaches assum-
+ing deterministic causation face significant challenges when applied to proba-
+bilistic AI systems operating through statistical inference rather than explicit 
+rules. Human societies have historically developed sophisticated mechanisms 
+for coordinating diverse agents with potentially conflicting interests through 
+shared norms, institutions, and collaborative frameworks.15 These social practices 
+https://www.aipolicybulletin.org/articles/we-should-not-allow-powerful-ai-to-be-trained-in-secret-
+the-case-for-increased-public-transparency (access: 20.6.2025).
+12	  T. Korbak et al., Chain of Thought Monitorability: A New and Fragile Opportunity for AI 
+Safety, 15.7.2025, https://arxiv.org/abs/2507.11473 (access: 20.6.2025).
+13	  For this kind of action initiatives one of the key opportunities to succeed are open source 
+(open software/models) movements. They are an extremely important catalyst for advances in AI 
+security. Closed models, accessible only through APIs (such as GPT-4 from OpenAI), allow only their 
+“behaviour” to be studied. Open source models (such as Llama from Meta, Mistral) give researchers 
+full access to their “brain”. The open source community creates and provides tools for analysing 
+and interpreting AI models (e.g. libraries such as TransformerLens or platforms like Hugging Face). 
+This speeds up research for everyone because no one has to “reinvent the wheel”. Also open source 
+initiatives like automated toolkits, such as PyRIT, systematize the process of “red teaming” in search 
+of gaps. Initiatives such as the AI Alliance further standardize these efforts, providing a framework for 
+the secure development of open artificial intelligence. A key strength of this ecosystem is the global 
+community, which uses open access to conduct independent audits and public testing. From organized 
+“jailbreaking” competitions to academic publications exposing new vulnerabilities, the “many eyes 
+see more” principle is at work here. Not only does this enable verification of security claims made 
+by developers, but also ensures the reproducibility of research, which is fundamental to scientific 
+progress. In this way, grassroots pressure and open source collaboration create a dynamic cycle of 
+discovering, documenting and fixing vulnerabilities, realistically accelerating the development of 
+safer and more trustworthy AI systems. We will refer to open source later, defining major problems 
+with AI regulations.
+14	  AI Security Institute, The Alignment Project, https://alignmentproject.aisi.gov.uk (access: 
+20.7.2025).
+15	  Cf. M. Bennett, A Brief History of Intelligence: Evolution, AI, and the Five Breakthroughs That 
+Made Our Brains, New York–Boston 2023, pp. 344–358. On social dimension, see M. Pasquinelli, 
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 5 =====
+Alignment Problem as Cultural and Legal Challenge…
+445
+of sense-making, value negotiation, and collective decision-making represent 
+centuries of evolutionary adaptation to the challenge of aligning individual and 
+group interests. Within this broader social context, law emerges as a particularly 
+refined tool for fostering cooperation among agents and facilitating joint actions. 
+W. Załuski’s game-theoretic analysis of law as a cooperation-fostering mecha-
+nism offers potential pathways forward for AI alignment, suggesting that legal 
+frameworks might provide coordination tools for aligning multiple AI and human 
+agents around shared values and goals.16
+With all these considerations in mind, this article addresses the AI alignment 
+problem as a cultural and legal challenge, focusing on three key aspects: aligning 
+AI as a social practice of taming technological uncertain outcomes, interpretabil-
+ity of algorithmic decisions, and cultural practices of sense-making related to AI 
+systems’ actions. “Cultural practices of making sense” are a set of shared, socially 
+inherited schemas by which people interpret AI actions, judging their legitimacy, 
+fairness and credibility. In the context of this article, these practices explain why 
+the same regulatory framework for AI may be accepted as a necessary tool for 
+protecting fundamental rights in one jurisdiction, and rejected as a barrier to eco-
+nomic progress in another. 
+Hypotheses:
+1.	 Cultural practices of sense-making and interpretation hold fundamental 
+importance for effective AI alignment. Technical safety mechanisms are 
+inadequate and risk failure if not integrated into cultural frameworks of 
+societies.
+2.	Effective AI alignment requires a new, transdisciplinary approach which 
+integrates technical, cultural, social and legal dimensions of diverse phe-
+nomena (e.g. interpretability, indeterminism, and knowledge extraction).
+The aim of this analysis is to propose an integrated model of AI alignment. This 
+article employs a qualitative, interdisciplinary methodology, and the core method is 
+a critical analysis of a diverse range of texts, spanning technical AI safety research, 
+socio-legal theory, and contemporary policy documents. This approach facilitates 
+a theoretical synthesis that addresses the purely technical view of alignment by 
+foregrounding often overlooked cultural frameworks of sense-making. 
+ALIGNMENT PROBLEM
+From a theoretical standpoint, the alignment problem manifests as a key agency 
+problem – a situation where an agent (AI system) must act on behalf of and in 
+accordance with the intentions of a principal (human operator). The complexity of 
+The Eye of the Master: A Social History of Artificial Intelligence, London–New York 2023.
+16	  W. Załuski, Game Theory in Jurisprude

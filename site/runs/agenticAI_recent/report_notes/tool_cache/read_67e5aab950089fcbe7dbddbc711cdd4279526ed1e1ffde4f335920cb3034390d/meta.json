@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-02-08T16:59:56.604352",
+  "source": "archive/openalex/text/W4415728083.txt",
+  "raw_chars": 16000,
+  "chunk_chars": 4500,
+  "chunk_overlap": 200,
+  "chunk_count": 4,
+  "artifact_dir": "report_notes/tool_cache/read_67e5aab950089fcbe7dbddbc711cdd4279526ed1e1ffde4f335920cb3034390d"
+}

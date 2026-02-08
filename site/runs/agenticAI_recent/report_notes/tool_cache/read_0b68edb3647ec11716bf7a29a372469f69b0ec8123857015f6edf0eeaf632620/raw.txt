@@ -1,0 +1,344 @@
+
+
+===== PAGE 1 =====
+InterPrior: Scaling Generative Control for Physics-Based
+Human-Object Interactions
+Sirui Xu1
+Samuel Schulter2
+Morteza Ziyadi2
+Xialin He1
+Xiaohan Fei2
+Yu-Xiong Wang1†
+Liang-Yan Gui1†
+1 University of Illinois Urbana-Champaign
+2 Amazon
+† Equal Advising
+https://sirui-xu.github.io/InterPrior
+Regrasp after Failure
+Steering Control
+Humanoid Robot
+Contact Goal
+Snapshot Goal
+Trajectory Goal
+Figure 1. InterPrior is a versatile generative controller instantiated as a goal-conditioned policy that controls a simulated humanoid to
+follow goal guidance and interact with objects in a physics-based simulator. Three core, composable capabilities enable pursuing (I) long-
+horizon snapshot goals, (II) trajectory goals, and (III) contact goals (Top). Yellow, blue, and red dots respectively denote human, object,
+and contact goals. It demonstrates failure recovery (Bottom Left) from unsuccessful grasps. InterPrior enables steering control from a
+human operator and can be applied to humanoid robot embodiments (Bottom Right). More demo videos are provided in the webpage.
+Abstract
+Humans rarely plan whole-body interactions with objects
+at the level of explicit whole-body movements. High-level
+intentions, such as affordance, define the goal, while co-
+ordinated balance, contact, and manipulation can emerge
+naturally from underlying physical and motor priors. Scal-
+ing such priors is key to enabling humanoids to compose
+and generalize loco-manipulation skills across diverse con-
+texts while maintaining physically coherent whole-body co-
+ordination. To this end, we introduce InterPrior, a scal-
+able framework that learns a unified generative controller
+through large-scale imitation pretraining and post-training
+by reinforcement learning. InterPrior first distills a full-
+reference imitation expert into a versatile, goal-conditioned
+variational policy that reconstructs motion from multimodal
+observations and high-level intent. While the distilled pol-
+icy reconstructs training behaviors, it does not generalize
+reliably due to the vast configuration space of large-scale
+human-object interactions. To address this, we apply data
+augmentation with physical perturbations, and then per-
+form reinforcement learning finetuning to improve compe-
+tence on unseen goals and initializations. Together, these
+steps consolidate the reconstructed latent skills into a valid
+manifold, yielding a motion prior that generalizes beyond
+the training data, e.g., it can incorporate new behaviors
+such as interactions with unseen objects. We further demon-
+strate its effectiveness for user-interactive control and its
+potential for real robot deployment.
+1. Introduction
+Human-object interaction (HOI) is inherently hierarchical:
+humans plan at a high level with sparse intentions, while
+detailed limb coordination, balance, and contact emerge
+through fast, intuitive motor responses [61]. For instance,
+when reaching for a bottle, we plan the hand’s target and
+object motion, while the rest of the body follows through
+subconscious coordination. Motion imitation policies [87]
+1
+arXiv:2602.06035v1  [cs.CV]  5 Feb 2026
+
+
+===== PAGE 2 =====
+have scaled to large HOI skills but rely on explicit plan-
+ners for dense full-body and object references. In contrast,
+an interaction motor prior should sample feasible loco-
+manipulation behaviors from a distribution conditioned on
+sparse goals, e.g., next-second hand contact, rather than
+simply mimicking deterministic, fully specified trajectories.
+To model a distribution over feasible loco-manipulation
+behaviors, early work [15, 44] learns a generative controller
+via adversarial distributional matching and then uses rein-
+forcement learning (RL) to promote task achievement un-
+der it. These methods can expand motion coverage beyond
+demonstrations, but are hard to scale due to unstable op-
+timization, discriminator mode collapse, and handcrafted
+task objectives. An alternative is to distill reference imi-
+tation policies [37], with goal conditioning [59] achieved
+without task-specific design. While these approaches can
+absorb large-scale data, they can be brittle when reference
+coverage lags far behind the configuration space—as in
+loco-manipulation, where even a few object degrees of free-
+dom can induce a combinatorial explosion of contact modes
+and relative poses with different geometries.
+To address these limitations, we introduce InterPrior,
+a physics-based HOI controller that is scalable along four
+axes (Figure 1). (I) task coverage: a single policy sup-
+ports multiple goal formulations, e.g., sparse targets and
+their compositions; (II) skill coverage: the same training
+recipe scales to large HOI data and enables affordance-rich
+interactions beyond simple grasping; (III) motion coverage:
+it generates expressive trajectories instead of merely recon-
+structing demonstrations; and (IV) dynamics coverage: it
+maintains task success under varied physical properties.
+Our key insight is that RL finetuning is essential for turn-
+ing distillation from data reconstruction into a robust, gen-
+eralizable policy. Distillation alone cannot cover the full
+HOI configuration space, yet RL applied in isolation of-
+ten drifts toward unnatural reward-hacking behaviors. We
+therefore use distillation to provide a strong, natural initial-
+ization, and apply RL as a local optimizer that improves ro-
+bustness while remaining anchored to the pretrained model.
+Concretely, we leverage distillation to inherit broad skills
+from large-scale HOI demonstrations, by training a masked
+conditional variational policy to reconstruct motor control
+from sparse, multimodal goals, distilled from a reference
+imitation expert. We then RL finetune this policy to con-
+solidate its latent skills into a valid interaction manifold.
+The finetuning optimizes two objectives: improving suc-
+cess on unseen goals and initializations, and preserving pre-
+trained knowledge through regularization. It leverages the
+pretrained base policy to synthesize natural in-between mo-
+tions, with failure states to acquire recovery behaviors, e.g.
+re-approach and re-grasp. Together, these steps transform
+reconstructed latent skills into a stable, continuous mani-
+fold that generalizes beyond the training trajectories.
+Our contributions are fourfold.
+(I) We present Inter-
+Prior, a generalizable generative controller for physics-
+based human-object interaction,
+encompassing diverse
+skills rather than fixed procedural routines (e.g., approach,
+grasp, place) typical of prior work.
+(II) We develop an
+RL finetuning strategy that enables robust failure recovery
+and goal execution across varied configurations while main-
+taining human-like coordination. The resulting controller
+supports mid-trajectory command switching, re-grasps af-
+ter failures, and remains stable under perturbations. (III)
+We show that our finetuning strategy naturally extends to
+novel objects and interactions, functioning as a reusable
+prior. (IV) We demonstrate embodiment flexibility by train-
+ing on the G1 humanoid [64] with sim-to-sim evaluation
+and enabling real-time control via keyboard interfaces.
+2. Related Work
+Data-driven human interaction animation has progressed
+from kinematic models assuming simplified object dynam-
+ics [66, 99, 103] to methods generating whole-body motions
+with dynamic objects [5, 8, 13, 14, 16, 19, 21, 22, 25, 33,
+45, 49, 50, 74, 76, 83, 84, 88, 92, 97]. However, these kine-
+matic approaches often exhibit implausible contact drift and
+interpenetration. Such limitations partly arise from existing
+HOI datasets [3, 18, 20, 26, 28, 31, 34, 40, 78, 81, 95, 96,
+98, 102], which contain spatial or physical inconsistencies
+that impede the learning of realistic interactions. Physics-
+based methods seek to address this gap but often rely on
+early curated datasets [56] focusing on limited yet high-
+fidelity hand-centric manipulations [37, 59, 71].
+Recent
+advances in humanoid hardware [2, 10, 24, 55, 104] have
+begun to bridge the virtual and physical domains, though
+typically without too much agility. Together, these develop-
+ments highlight the need for scalable HOI priors, models
+capable of generalizing across tasks, remaining robust to
+imperfect data, and synthesizing physically realistic HOIs.
+2.1. Physics-based Character Animation
+Physics-based character animation learns simulated con-
+trollers via RL, e.g., tracking reference motions [46, 101].
+Scalability has been improved through multi-clip trackers
+with reference planners [23, 69, 72] without or with closed-
+loop schemes [60, 82]. Nevertheless, such controllers re-
+main constrained by their reference motion planners, mak-
+ing them fragile when the planned motions are dynamically
+unstable, a very common issue in HOI, where kinematic
+planners often neglect physical feasibility. Learned gener-
+ative priors address this limitation by encoding physically
+plausible motor memory encoded into policies. One line
+of research employs adversarial imitation with discrimina-
+tors [47] to learn the motor prior, and later extends to skill
+embeddings [48] and conditional control [9, 57].
+These
+approaches promote motion diversity but remain sample-
+2
+
+
+===== PAGE 3 =====
+inefficient and challenging to scale. A complementary line
+distills motor skills into compact latent codes. Earlier work
+adopts model learning to train a variational autoencoder
+(VAE) [27] based controller [11, 73, 89, 90], while recent
+studies pretrain universal trackers [35] and distill them into
+latent priors [36], masked policies [58], or offline training
+with diffusion models [17, 63, 75]. Yet, these methods are
+often limited by the expert converage. Our InterPrior syn-
+ergizes the strength of both lines: it first distills large-scale
+motion imitators and finetunes it via RL, bridging a genera-
+tive controller with versatile conditions while enhancing the
+control by alleviating out-of-distribution brittleness.
+2.2. Physics-based Human-Object Interaction
+Advances in physics-based character control have progres-
+sively expandeded the scope of HOI animation. Early ap-
+proaches primarily focus on simple object dynamics, such
+as striking or sitting [4, 6, 43, 48, 77], whereas recent devel-
+opments have extended to complex, scenario-specific sports
+and games [1, 30, 38, 67, 68, 71, 79, 93]. Progress has also
+been observed in generalizable tasks, such as object carry-
+ing and rearrangement [7, 12, 15, 29, 42, 44, 54, 70, 94,
+100], predominantly enabled by adversarial imitation learn-
+ing, while most systems remain skill-specific, relying on
+fixed procedural routines (e.g. approach, grasp, place with
+regular-shaped objects). They struggle to adapt to objects
+that require careful affordances and fine-grained interaction
+skills (e.g., grasping a chair bar with one hand). To address
+these limitations, HOI motion imitation [76, 80, 87, 91] has
+emerged as a promising paradigm for scaling skill reper-
+toires and capturing fine-grained interactions, as it directly
+emphasizes precision and stability. Distilling such imitation
+policies therefore represents a crucial step toward establish-
+ing a versatile HOI controller. However, existing efforts of-
+ten exhibit narrow task coverage, emphasizing single-object
+proficiency [91] or relying on curated dataset with low-
+dynamic and hand-centric skills [37, 39, 59]. Our InterPrior
+provides a principled solution for generalizing a generative
+controller for agile whole-body loco-manipulation.
+3. Methodology
+Task Formulation. We aim to learn a policy \pi that oper-
+ates in a physics simulator and produces human-object in-
+teraction motion from high-level goals rather than full ref-
+erence. Such goals can be extracted from a human user
+(e.g., steering control), a HOI kinematic motion generator
+(see Sec. F), or keypoints from Motion Captured (MoCap)
+data. The policy \pi conditions on the current human-object
+state and recent history together with these goals, and sam-
+ples control signals from its learned distribution to drive the
+simulated human or humanoid to interact with the object.
+The outcome is a rollout motion sequence that is physically
+simulated, follows the provided goals where available, and
+Prior
+Encoder
+Expert
+Expert
+Stage I: Motion Imitation
+Stage II: Pre-Training
+Stage III: Post-Training
+Prior
+Decoder
+Decoder
+πE
+Trajectory
+Contact
+Keypoint
+xt
+yt+k
+𝒢t
+𝒢t
+πE
+zt
+pψ
+fθ
+qϕ
+pψ
+fθ
+Goals
+Figure 2. Overview of the proposed InterPrior framework. It con-
+sists of: (I) full-reference imitation expert training on large-scale
+human-object interaction data; (II) distillation of the expert into a
+variational policy with a structured latent space for skill embed-
+dings; and (III) post-training of the variational policy to enhance
+generalization. Blue modules denote the final policy used at in-
+ference; green and red modules are training-only components, and
+red arrows denote supervision signals (rewards/losses).
+remains diverse and natural in aspects that are not specified.
+Overview. Figure 2 illustrates our three-stage paradigm.
+First, we train an expert policy \pi _E for large-scale HOI mo-
+tion imitation, incorporating data augmentation, physical
+perturbations, and shaped rewards to promote stable whole-
+body coordination and precise grasping across diverse con-
+figurations (Sec. 3.2). Second, we distill the expert into a
+masked conditional variational policy \pi that maps sparse
+goal inputs to a multi-modal distribution (Sec. 3.3). Third,
+we finetune this policy \pi using RL to enhance robustness
+under unseen configurations, employing failure-state resets
+to encourage recovery behaviors (Sec. 3.4).
+Each stage
+is modeled as a Markov Decision Process (MDP), which
+shares a consistent input formulation comprising observa-
+tions and goal conditioning, as well as an output action cor-
+responding to low-level actuation commands (Sec. 3.1).
+3.1. Policy States and Actions
+Observation. The policy input at time t includes an ob-
+servation that aggregates human kinematics, object kine-
+matics, and their interaction and contact states,  \
+b
+o
+ld
+s y mb
+o l  {x
+} _ t=
+\
+b
+i
+g 
+[
+\,\un
+d er
+br ac
+e {\b
+ol ds
+y
+m
+b
+ol
+ 
+{r}^h_
+t ,\b ol
+d sy m
+bol {\theta
+ 
+}^h_t,\boldsymbol {\dot r}^h_t,\boldsymbol {\dot \theta }^h_t}_{\text {human}},\; \underbrace {\boldsymbol {r}^o_t,\boldsymbol {\theta }^o_t,\boldsymbol {\dot r}^o_t,\boldsymbol {\dot \theta }^o_t}_{\text {object}},\; \underbrace {\boldsymbol {D}_t,\boldsymbol {C}_t}_{\text {interaction}}\,\big ]. Here, the su-
+perscripts h and o denote human and object quantities, re-
+spectively. \protect \boldsymbol  {r} and \protect \boldsymbol  {\theta } denote positions and orientations, re-
+spectively; the dotted terms indicate linear and angular ve-
+locities.
+The interaction terms include signed distances
+from body segments to object surfaces \protect \boldsymbol  {D}_t and binary con-
+tacts \protect \boldsymbol  {C}_t derived from simulator contact forces, follow-
+ing [87].
+All continuous quantities are normalized in a
+human root-centric and local heading frame for invariance
+to global placement. The human-related terms contain 52
+components for the SMPL humanoid [35] and 39 for the
+3
+
+
+===== PAGE 4 =====
+Unitree G1 robot [64]. Each rigid body contributes one el-
+ement to human-related variables in \protect \boldsymbol  {x}_t, including \protect \boldsymbol  {D}_t and
+\protect \boldsymbol  {C}_t, e.g., \p r otect \boldsymbol  {D}_t \in \mathbb {R}^{39 \times 3} for G1. Objects are all rigid.
+Goal Conditioning. The policy is also conditioned on a
+set of future goals that specify desired human-object con-
+figurations at different horizons. During training, we ex-
+tract goals from reference, where each reference yt shares
+the same state space as observation xt, including human,
+object, and contact components. A corresponding binary
+mask mt indicates which components of the reference are
+provided to the policy [58].
+To capture both near-term
+and distant intentions, we employ two types of goal con-
+ditioning: (I) a short-ho

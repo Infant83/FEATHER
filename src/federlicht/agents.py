@@ -11,12 +11,21 @@ class AgentRunner:
         self._extract_agent_text = extract_agent_text
         self._print_progress = print_progress
         self._summary_only_labels = {
+            "Reducer",
             "Writer Draft",
             "Writer Draft (retry)",
             "Writer Finalizer",
             "Writer Finalizer (retry)",
             "Structural Repair",
             "Structural Repair (final)",
+            "Scout Notes",
+            "Scout Notes (fallback)",
+            "Plan",
+            "Plan (fallback)",
+            "Evidence Notes",
+            "Evidence Notes (fallback)",
+            "Clarification Questions",
+            "Clarification Questions (fallback)",
         }
 
     def _coerce_stream_text(self, value: object) -> str:
@@ -56,7 +65,8 @@ class AgentRunner:
 
     def run(self, label: str, agent, payload: dict, show_progress: bool = True) -> str:
         args = self._args
-        if not args.stream or label in self._summary_only_labels:
+        stream_enabled = bool(args.stream and show_progress and label not in self._summary_only_labels)
+        if not stream_enabled:
             result = agent.invoke(payload)
             text = self._extract_agent_text(result)
             if show_progress:
@@ -69,6 +79,24 @@ class AgentRunner:
         message_events = 0
         value_events = 0
         debug_samples = 0
+        last_by_message: dict[str, str] = {}
+
+        def emit_incremental(message_key: str, text: str) -> str:
+            previous = last_by_message.get(message_key, "")
+            if not previous:
+                last_by_message[message_key] = text
+                return text
+            if text == previous:
+                return ""
+            if text.startswith(previous):
+                delta = text[len(previous) :]
+                last_by_message[message_key] = text
+                return delta
+            if previous.endswith(text):
+                return ""
+            last_by_message[message_key] = text
+            return text
+
         try:
             for chunk in agent.stream(payload, stream_mode=["messages", "values"], subgraphs=True):
                 mode, data = self._unpack_stream_chunk(chunk)
@@ -91,9 +119,14 @@ class AgentRunner:
                     content = getattr(message, "content", None)
                     text = self._coerce_stream_text(content)
                     if text:
-                        streamed_parts.append(text)
+                        msg_id = getattr(message, "id", None)
+                        msg_key = str(msg_id) if msg_id else f"{label}:{msg_type_label or 'assistant'}"
+                        delta = emit_incremental(msg_key, text)
+                        if not delta:
+                            continue
+                        streamed_parts.append(delta)
                         printed_any = True
-                        sys.stdout.write(self._sanitize_console_text(text))
+                        sys.stdout.write(self._sanitize_console_text(delta))
                         sys.stdout.flush()
                 elif mode == "values":
                     value_events += 1

@@ -1,0 +1,48 @@
+A Brief History of Intelligence: Evolution, AI, and the Five Breakthroughs That 
+Made Our Brains, New York–Boston 2023, pp. 344–358. On social dimension, see M. Pasquinelli, 
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 5 =====
+Alignment Problem as Cultural and Legal Challenge…
+445
+of sense-making, value negotiation, and collective decision-making represent 
+centuries of evolutionary adaptation to the challenge of aligning individual and 
+group interests. Within this broader social context, law emerges as a particularly 
+refined tool for fostering cooperation among agents and facilitating joint actions. 
+W. Załuski’s game-theoretic analysis of law as a cooperation-fostering mecha-
+nism offers potential pathways forward for AI alignment, suggesting that legal 
+frameworks might provide coordination tools for aligning multiple AI and human 
+agents around shared values and goals.16
+With all these considerations in mind, this article addresses the AI alignment 
+problem as a cultural and legal challenge, focusing on three key aspects: aligning 
+AI as a social practice of taming technological uncertain outcomes, interpretabil-
+ity of algorithmic decisions, and cultural practices of sense-making related to AI 
+systems’ actions. “Cultural practices of making sense” are a set of shared, socially 
+inherited schemas by which people interpret AI actions, judging their legitimacy, 
+fairness and credibility. In the context of this article, these practices explain why 
+the same regulatory framework for AI may be accepted as a necessary tool for 
+protecting fundamental rights in one jurisdiction, and rejected as a barrier to eco-
+nomic progress in another. 
+Hypotheses:
+1.	 Cultural practices of sense-making and interpretation hold fundamental 
+importance for effective AI alignment. Technical safety mechanisms are 
+inadequate and risk failure if not integrated into cultural frameworks of 
+societies.
+2.	Effective AI alignment requires a new, transdisciplinary approach which 
+integrates technical, cultural, social and legal dimensions of diverse phe-
+nomena (e.g. interpretability, indeterminism, and knowledge extraction).
+The aim of this analysis is to propose an integrated model of AI alignment. This 
+article employs a qualitative, interdisciplinary methodology, and the core method is 
+a critical analysis of a diverse range of texts, spanning technical AI safety research, 
+socio-legal theory, and contemporary policy documents. This approach facilitates 
+a theoretical synthesis that addresses the purely technical view of alignment by 
+foregrounding often overlooked cultural frameworks of sense-making. 
+ALIGNMENT PROBLEM
+From a theoretical standpoint, the alignment problem manifests as a key agency 
+problem – a situation where an agent (AI system) must act on behalf of and in 
+accordance with the intentions of a principal (human operator). The complexity of 
+The Eye of the Master: A Social History of Artificial Intelligence, London–New York 2023.
+16	  W. Załuski, Game Theory in Jurisprude

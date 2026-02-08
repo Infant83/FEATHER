@@ -9,9 +9,12 @@
 6. evidence: ran
 7. plan_check: disabled
 8. writer: ran
-9. quality: skipped (iterations=0)
+9. quality: ran (iterations=1)
 
 ## Artifacts
+### scout
+- Scout notes: ./report_notes/scout_notes.md
+
 ### plan
 - Plan update: ./report_notes/report_plan.md
 
@@ -21,3 +24,12 @@
 - Source index: ./report_notes/source_index.jsonl
 - Claim map: ./report_notes/claim_map.md
 - Gap report: ./report_notes/gap_finder.md
+
+### quality
+- Quality evaluations: ./report_notes/quality_evals.jsonl
+- Quality pairwise: ./report_notes/quality_pairwise.jsonl
+## Outputs
+- Report overview: ./report/run_overview_report_full_1.md
+- Report meta: ./report_notes/report_meta.json
+- Report prompt copy: ./instruction/report_prompt_report_full_1.txt
+- Template summary: ./report_notes/report_template.txt

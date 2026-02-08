@@ -1,0 +1,88 @@
+easoning.
+• We introduce a curriculum-based training strategy with
+an evidence-aligned reinforcement learning objective
+that jointly improves reasoning quality, ranking accu-
+racy, and efficient visual tool usage.
+• Extensive experiments across multiple benchmarks
+demonstrate that V-Retrver consistently outperforms
+existing methods and generalizes well to diverse multi-
+modal retrieval scenarios.
+2. Related Work
+Multi-modal Large Language Models.
+In recent years,
+the rapid advancement of multimodal large language mod-
+els (MLLMs) has driven the deep integration of visual
+perception and language reasoning, leading to the emer-
+gence of a series of high-performing open-source models,
+notably the LLaVA (Liu et al., 2024; Guo et al., 2024; Zhang
+et al., 2025c; Lin et al., 2023a; Li et al., 2023a), Qwen-VL
+(Bai et al., 2023; Wang et al., 2024a; Yang et al., 2024),
+and InternVL (Chen et al., 2024b; Gao et al., 2024; Lu
+et al., 2025) series. In parallel, large-scale models such as
+Flamingo (Alayrac et al., 2022), mPLUG-Owl (Ye et al.,
+2
+
+
+===== PAGE 3 =====
+V-Retrver: Evidence-Driven Agentic Reasoning for Universal Multimodal Retrieval
+2023; 2024b;a), and GPT-4V (Yang et al., 2023) pursue a
+more holistic vision-language modeling paradigm, incorpo-
+rating advanced mechanisms including mixture-of-experts
+architectures (Shu et al., 2024; Li et al., 2025b; Shen et al.,
+2024) and image generation components (Xie et al., 2024;
+Xu et al., 2025a). However, these models generally lack rea-
+soning capabilities such as Chain-of-Thought and test-time
+scalability (Muennighoff et al., 2025; Zhang et al., 2025b;
+Chen et al., 2024a), and to a large extent still decouple visual
+perception from text reasoning processes.
+Multimodal Retrieval.
+Recent advances in deep learn-
+ing (Zhu et al., 2021; 2024; 2025a;c;b; Ji et al., 2024) have
+substantially propelled progress across a broad spectrum of
+retrieval tasks, including text–image cross-modal retrieval
+(Pham et al., 2024; Fu et al., 2024; Zhang et al., 2020;
+Chun et al., 2021; Kim et al., 2023b;a), composed image
+retrieval (Baldrati et al., 2022; Saito et al., 2023; Gu et al.,
+2024; Suo et al., 2024; Baldrati et al., 2023), multimodal
+document retrieval (Chen et al., 2023; Hu et al., 2023; Liu
+et al., 2023), and instruction-based image retrieval (Wu et al.,
+2021; Zhang et al., 2024a; Asai et al., 2023). Among these
+approaches, vision–language models (VLMs), particularly
+CLIP (Radford et al., 2021), have demonstrated strong ef-
+fectiveness and scalability in multimodal retrieval scenarios
+(Baldrati et al., 2022; Wei et al., 2024b; Sain et al., 2023; Pei
+et al., 2023; Jin et al., 2024). For instance, Kim et al. (Kim
+et al., 2023a) improve CLIP via prompt tuning, enabling en-
+hanced generalization across diverse retrieval settings. More
+recently, multimodal large language models (MLLMs) have
+been introduced to further advance retrieval performance
+(Liu et al., 2025; Jiang et al., 2024; Lin et al., 2024a; Zhou
+et al., 2024). Some approaches (Zhou et al., 2024; Lan et al.,
+2025; Lin et al., 2024a; Zhang et al., 2024b; Jian et al., 2025;
+Gu et al., 2025) utilize embeddings extracted from MLLMs
+to perform similarity-based retrieval. Others approaches,
+such as LamRA (Liu et al., 2025; Li et al., 2025a), employ
+MLLMs as reranking agents to refine candidate lists and
+select the most relevant results. Retrv-R1(Zhu et al., 2025d)
+equips the model with text reasoning capabilities for mul-
+timodal retrieval tasks through reinforcement learning. In
+contrast to prior work, we introduce V-Retrver, an evidence-
+driven retrieval framework, which can adaptively adjust its
+visual exploration strategy during reasoning by invoking vi-
+sual tools, enabling a more flexible and effective reasoning
+process and thereby achieving significant improvements in
+retrieval performance.
+3. Method
+3.1. Problem Formulation
+We study the problem of universal multimodal retrieval.
+Given a query q of arbitrary modality (text, image, or in-
+terleaved multimodal input) and a candidate pool Ω=
+{cn}N
+n=1, the objective is to identify the most relevant candi-
+date ˆc ∈Ω. Conventional multimodal retrieval approaches
+typically formulate this problem as static similarity match-
+ing or language-only reranking over fixed visual representa-
+tions. Such formulations implicitly assume that all necessary
+visual evidence has been fully encoded into embeddings or
+textual descriptions prior to reasoning. However, this as-
+sumption breaks down in fine-

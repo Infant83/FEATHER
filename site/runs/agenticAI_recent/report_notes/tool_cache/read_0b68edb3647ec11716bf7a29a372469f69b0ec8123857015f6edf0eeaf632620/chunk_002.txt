@@ -1,0 +1,83 @@
+on of contact modes
+and relative poses with different geometries.
+To address these limitations, we introduce InterPrior,
+a physics-based HOI controller that is scalable along four
+axes (Figure 1). (I) task coverage: a single policy sup-
+ports multiple goal formulations, e.g., sparse targets and
+their compositions; (II) skill coverage: the same training
+recipe scales to large HOI data and enables affordance-rich
+interactions beyond simple grasping; (III) motion coverage:
+it generates expressive trajectories instead of merely recon-
+structing demonstrations; and (IV) dynamics coverage: it
+maintains task success under varied physical properties.
+Our key insight is that RL finetuning is essential for turn-
+ing distillation from data reconstruction into a robust, gen-
+eralizable policy. Distillation alone cannot cover the full
+HOI configuration space, yet RL applied in isolation of-
+ten drifts toward unnatural reward-hacking behaviors. We
+therefore use distillation to provide a strong, natural initial-
+ization, and apply RL as a local optimizer that improves ro-
+bustness while remaining anchored to the pretrained model.
+Concretely, we leverage distillation to inherit broad skills
+from large-scale HOI demonstrations, by training a masked
+conditional variational policy to reconstruct motor control
+from sparse, multimodal goals, distilled from a reference
+imitation expert. We then RL finetune this policy to con-
+solidate its latent skills into a valid interaction manifold.
+The finetuning optimizes two objectives: improving suc-
+cess on unseen goals and initializations, and preserving pre-
+trained knowledge through regularization. It leverages the
+pretrained base policy to synthesize natural in-between mo-
+tions, with failure states to acquire recovery behaviors, e.g.
+re-approach and re-grasp. Together, these steps transform
+reconstructed latent skills into a stable, continuous mani-
+fold that generalizes beyond the training trajectories.
+Our contributions are fourfold.
+(I) We present Inter-
+Prior, a generalizable generative controller for physics-
+based human-object interaction,
+encompassing diverse
+skills rather than fixed procedural routines (e.g., approach,
+grasp, place) typical of prior work.
+(II) We develop an
+RL finetuning strategy that enables robust failure recovery
+and goal execution across varied configurations while main-
+taining human-like coordination. The resulting controller
+supports mid-trajectory command switching, re-grasps af-
+ter failures, and remains stable under perturbations. (III)
+We show that our finetuning strategy naturally extends to
+novel objects and interactions, functioning as a reusable
+prior. (IV) We demonstrate embodiment flexibility by train-
+ing on the G1 humanoid [64] with sim-to-sim evaluation
+and enabling real-time control via keyboard interfaces.
+2. Related Work
+Data-driven human interaction animation has progressed
+from kinematic models assuming simplified object dynam-
+ics [66, 99, 103] to methods generating whole-body motions
+with dynamic objects [5, 8, 13, 14, 16, 19, 21, 22, 25, 33,
+45, 49, 50, 74, 76, 83, 84, 88, 92, 97]. However, these kine-
+matic approaches often exhibit implausible contact drift and
+interpenetration. Such limitations partly arise from existing
+HOI datasets [3, 18, 20, 26, 28, 31, 34, 40, 78, 81, 95, 96,
+98, 102], which contain spatial or physical inconsistencies
+that impede the learning of realistic interactions. Physics-
+based methods seek to address this gap but often rely on
+early curated datasets [56] focusing on limited yet high-
+fidelity hand-centric manipulations [37, 59, 71].
+Recent
+advances in humanoid hardware [2, 10, 24, 55, 104] have
+begun to bridge the virtual and physical domains, though
+typically without too much agility. Together, these develop-
+ments highlight the need for scalable HOI priors, models
+capable of generalizing across tasks, remaining robust to
+imperfect data, and synthesizing physically realistic HOIs.
+2.1. Physics-based Character Animation
+Physics-based character animation learns simulated con-
+trollers via RL, e.g., tracking reference motions [46, 101].
+Scalability has been improved through multi-clip trackers
+with reference planners [23, 69, 72] without or with closed-
+loop schemes [60, 82]. Nevertheless, such controllers re-
+main constrained by their reference motion planners, mak-
+ing them fragile when the planned motions are dynamically
+unstable, a very common issue in HOI, where kinematic
+planners often neglect physical fe

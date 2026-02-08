@@ -1,0 +1,88 @@
+view questions that require rea-
+soning from the described viewpoint.
+2. Related Work
+2.1. Multi-Image Spatial Reasoning Benchmarks
+Multi-image spatial reasoning is a key probe for evaluat-
+ing spatial intelligence in MLLMs, as it requires integrat-
+ing partial observations from multiple viewpoints into a
+coherent and viewpoint-consistent scene understanding. Re-
+cent benchmarks reveal substantial gaps between current
+2
+
+
+===== PAGE 3 =====
+Predicting Camera Pose from Perspective Descriptions for Spatial Reasoning
+MLLMs and human performance, with models often strug-
+gling to fuse evidence across views and maintain consis-
+tent spatial beliefs. Representative datasets include Mind-
+Cube (Yin et al., 2025), SpatialBench (Xu et al., 2025),
+MMSI-Bench (Yang et al., 2025b), All-Angles Bench (Yeh
+et al., 2025), and ViewSpatial-Bench (Li et al., 2025). Sur-
+veys and diagnostic studies further organize these bench-
+marks by cognitive demands and emphasize that reliable
+multi-view integration remains challenging (Liu et al., 2025;
+Zhang et al., 2025; Yu et al., 2025). These findings moti-
+vate methods that explicitly ground viewpoints and align
+observations across views, such as pose-aware approaches
+that use camera pose as a geometric anchor for multi-view
+fusion and perspective-consistent reasoning (Chen et al.,
+2024a; Liao et al., 2025).
+2.2. Perspective-Taking and Allocentric Reasoning in
+MLLMs
+Beyond reasoning within a single image, many embodied
+and multi-view tasks require perspective taking, where the
+model answers questions from an alternative viewpoint that
+is unobserved and specified in natural language. This setting
+calls for allocentric scene understanding and reliable view-
+point grounding, yet current MLLMs can be brittle under
+perspective shifts even with multiple context images (Ma
+et al., 2023; Yin et al., 2025; Yang et al., 2025b; Yeh et al.,
+2025; Li et al., 2025). Recent approaches attempt to bridge
+this gap via mental imagery or generative rollouts that syn-
+thesize missing observations at inference time (Lee et al.,
+2025; Yang et al., 2025c; Cao et al., 2025). While effective
+in some cases, these pipelines typically do not explicitly
+ground the language-specified viewpoint to a concrete target
+pose, and instead rely on searching over candidate motions
+and viewpoints. As a result, synthesized observations may
+drift from the intended viewpoint described in language,
+producing evidence that is misaligned with the target per-
+spective. Moreover, searching over many candidates can be
+computationally expensive, making such approaches less
+suitable for applications that require timely, interactive feed-
+back.
+2.3. Language-Grounded Viewpoint Imagination
+A key challenge underlying perspective taking is to imagine
+a faithful observation from a language-specified, unobserved
+viewpoint and use it to support cross-view alignment and
+spatial reasoning. Existing approaches largely fall into two
+lines. One line relies on pose-free image generation and
+editing models to synthesize a new view directly from text
+and contextual images (Team et al., 2023; Wu et al., 2025;
+Achiam et al., 2023). However, such generations provide
+no explicit control over camera information and may not be
+reliably 3D-consistent under perspective shifts, making the
+imagined evidence brittle for viewpoint-sensitive reasoning.
+The other line uses pose-conditioned novel-view synthesis
+models, which can produce geometrically consistent ren-
+derings when a target pose is given (Zhou et al., 2025; Jin
+et al., 2024; Yu et al., 2021; Charatan et al., 2024; Chen
+et al., 2024b; Wu et al., 2024; Gao et al., 2024), but they do
+not address the crucial missing step in our setting: mapping
+a natural-language viewpoint description to the target cam-
+era pose. CAMCUE bridges these two lines by learning to
+predict the target camera pose from language and using it
+as an explicit geometric anchor for token-level fusion and
+image imagination.
+3. Method
+In this section, we introduce CAMCUE, a pose-aware multi-
+image framework for perspective-shift spatial reasoning.
+Figure 2 provides an overview of the CAMCUE pipeline.
+Given a text prompt T that contains a natural-language de-
+scription of a target perspective and a question, together with
+a set of V contextual images I = {Ii}V
+i=1 and their associ-
+ated camera poses P = {Pi}V
+i=1, CAMCUE predicts the an-
+swer under the specified target perspective. We first present
+the CAMCUE model architecture in Sec. 3.1. We the

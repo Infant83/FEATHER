@@ -1,0 +1,85 @@
+sk completion. How-
+ever, uncalibrated communication could hinder efficiency by
+sharing irrelevant or misleading information. Therefore, it is
+critical to ensure that messages are accurate and pertinent to
+the recipient’s tasks. This work tackles the MM-EQA prob-
+lem by designing a communication framework that enhances
+multi-agent exploration efficiency and task performance.
+Large language Models (LLMs) have shown great poten-
+tial in solving EQA tasks due to their remarkable ability
+to understand natural-language queries, reason, and provide
+answers in natural language [6]. In the context of MM-EQA,
+natural language is an ideal communication protocol, as
+LLMs are inherently trained to engage in dialogues. Several
+LLM-based communication methods have been proposed in
+other domains [7], [8], but these cannot be directly adapted
+to our MM-EQA setting. Additionally, LLMs often produce
+miscalibrated and overconfident outputs [9], which can result
+in irrelevant or misleading information. This can hinder
+cooperation efficiency, as agents may share inaccurate data,
+arXiv:2602.06038v1  [cs.RO]  5 Feb 2026
+
+
+===== PAGE 2 =====
+reducing overall exploration effectiveness [10].
+Our work tackles this challenge and develops an LLM-
+based communication framework for MM-EQA. Our key
+insight is that an agent should only communicate information
+it confidently deems relevant to its partner agents’ tasks (see
+Fig. 1). We propose CommCP, a novel decentralized LLM-
+based communication framework that employs conformal
+prediction (CP) [11], [12] to calibrate the confidence of
+LLM’s outputs. Our framework ensures that the outputs gen-
+erated by LLMs are more reliable and reduces the negative
+impact of irrelevant or misleading information to partner
+agents, ultimately enhancing the overall task performance
+and efficiency of the multi-agent system. To evaluate our
+proposed framework, we create a novel MM-EQA bench-
+mark based on realistic scenarios and the Habitat-Matterport
+3D (HM3D) dataset [13]. The experimental results show that
+our approach enhances the task success rate and shortens
+completion time by a large margin over baselines.
+The main contributions of this paper are as follows:
+• We formulate the information-gathering process of com-
+pleting assignments provided in natural language as a
+novel multi-agent multi-task embodied question answer-
+ing (MM-EQA) problem, where multiple robots work as
+a team, handling EQA tasks in a shared environment and
+communicating to exchange information or answers.
+• We propose CommCP, a novel LLM-based decentral-
+ized communication framework for MM-EQA, where
+conformal prediction is employed to calibrate the gen-
+erated messages to reduce distractions to other agents
+and improve communication reliability and efficiency.
+• We create a novel MM-EQA benchmark with photo-
+realistic scenarios from the HM3D dataset to vali-
+date the effectiveness of the proposed framework. This
+benchmark is released to facilitate future studies.
+II. RELATED WORK
+A. LLM-based Decentralized Multi-Agent Cooperation
+LLM-based multi-agent cooperation has gained increasing
+attention recently [14], [15], with various systems developed
+for multi-agent tasks [7], [16]–[20]. Unlike single-agent
+or centralized systems, decentralized cooperative systems
+involve peer-to-peer communication, where agents inter-
+act directly, an architecture common in world simulation
+applications [21], [22]. In these systems, communication
+typically takes the form of natural language text generated
+by LLMs, with content varying by application, such as
+sharing environmental observations, coordinating actions,
+or reallocating tasks. However, the effectiveness of LLM-
+generated communication remains underexplored. As noted
+in [6], decentralized communication often incurs costs such
+as bandwidth limitations or delays. Thus, agents must com-
+municate efficiently and avoid unnecessary or redundant
+messages. Current approaches lack mechanisms to assess
+communication quality and rely solely on raw LLM outputs,
+leading to inefficiencies, especially when agents act on
+incomplete or uncertain information.
+B. Conformal Prediction and Calibration
+Recent research has highlighted the miscalibration issue in
+LLMs, where models may exhibit overconfidence or under-
+confidence in their text outputs. This presents a huge chal-
+lenge as foundation models are applied to embodied tasks
+where agents may have miscalibrated confidence in their
+decisions. Previous work [12], [23] h

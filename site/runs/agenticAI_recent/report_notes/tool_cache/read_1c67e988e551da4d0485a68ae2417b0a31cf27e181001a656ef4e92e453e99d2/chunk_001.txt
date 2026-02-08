@@ -1,0 +1,93 @@
+
+
+===== PAGE 1 =====
+CommCP: Efficient Multi-Agent Coordination via LLM-Based
+Communication with Conformal Prediction
+Xiaopan Zhang∗, Zejin Wang∗, Zhixu Li, Jianpeng Yao, Jiachen Li‡
+Abstract— To complete assignments provided by humans in
+natural language, robots must interpret commands, generate
+and answer relevant questions for scene understanding, and ma-
+nipulate target objects. Real-world deployments often require
+multiple heterogeneous robots with different manipulation ca-
+pabilities to handle different assignments cooperatively. Beyond
+the need for specialized manipulation skills, effective informa-
+tion gathering is important in completing these assignments.
+To address this component of the problem, we formalize the
+information-gathering process in a fully cooperative setting as
+an underexplored multi-agent multi-task Embodied Question
+Answering (MM-EQA) problem, which is a novel extension
+of canonical Embodied Question Answering (EQA), where
+effective communication is crucial for coordinating efforts
+without redundancy. To address this problem, we propose
+CommCP, a novel LLM-based decentralized communication
+framework designed for MM-EQA. Our framework employs
+conformal prediction to calibrate the generated messages,
+thereby minimizing receiver distractions and enhancing com-
+munication reliability. To evaluate our framework, we intro-
+duce an MM-EQA benchmark featuring diverse, photo-realistic
+household scenarios with embodied questions. Experimental
+results demonstrate that CommCP significantly enhances the
+task success rate and exploration efficiency over baselines.
+The experiment videos, code, and dataset are available on our
+project website: https://comm-cp.github.io.
+I. INTRODUCTION
+Modern service robots are designed to understand human
+instructions and complete tasks in real-world household
+environments (e.g., “Turn off the TV if it is currently on,”
+“Bring the red pillow from the living room to the bed-
+room”). This process involves interpreting natural language
+commands, generating and answering relevant questions for
+scene understanding and reasoning (e.g., “Is the TV turned
+on?” “What is the color of the pillow?”), and manipulating
+target objects accordingly. A crucial step is answering these
+questions, a task known as Embodied Question Answering
+(EQA) [1], which requires robots to efficiently explore the
+3D environment from a random starting location and actively
+gather information until a confident answer can be provided.
+Prior studies have investigated this in single-agent settings
+[1]–[5]. In contrast, we envision future households with
+multiple heterogeneous service robots, each with distinct
+capabilities and non-transferable assignments. While they
+cannot take over each other’s tasks, they can access all
+generated questions and share observations and interpre-
+tations to enhance exploration efficiency. We define this
+∗Equal contribution
+‡Corresponding author
+X. Zhang, Z. Wang, Z. Li, J. Yao, and J. Li are with the Trustworthy
+Autonomous Systems Laboratory at the University of California, Riverside,
+CA, USA. {xzhan006, jiachen.li}@ucr.edu.
+Robot 2
+I see a mirror relevant to your 
+target shampoo at {position1}.
+position2
+Time 0
+Time 22
+Time 3
+position1
+Where is the 
+shampoo?
+Robot 1
+ I can answer the 
+question now!
+Could you tell me where the 
+shampoo is most likely located?
+I see bath products that may be 
+your target at {position2}.
+Fig. 1.
+In a household setting, robots exchange observations and reasoning
+to collaboratively complete their assigned tasks. Each agent generates
+confident and goal-directed messages using calibrated outputs from LLMs.
+The bottom-left image shows a bird’s-eye view of Robot 1’s navigation
+path after incorporating information received from Robot 2. The top-right
+sequence captures both robots’ camera views at different timestamps.
+cooperative information-gathering setting as a multi-agent
+multi-task EQA (MM-EQA) problem, a novel challenge that
+facilitates multi-robot collaboration in real-world scenarios.
+While existing single-agent EQA solutions can be adapted
+to a multi-agent setting by having each robot work inde-
+pendently, this naive approach is inefficient. Communica-
+tion enables mutual assistance, improving exploration and
+increasing the likelihood of faster task completion. How-
+ever, uncalibrated communication could hinder efficiency by
+sharing irrelevant or misleading information. Therefore, it is
+critical to ensure that messages are accurate and pertine

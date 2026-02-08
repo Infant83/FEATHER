@@ -336,22 +336,70 @@ class FedernettHandler(BaseHTTPRequestHandler):
         try:
             if path == "/api/feather/start":
                 cmd = _build_feather_cmd(cfg, payload)
-                job = self._jobs().start("feather", cmd, cfg.root)
+                try:
+                    job = self._jobs().start("feather", cmd, cfg.root)
+                except RuntimeError as exc:
+                    running = self._jobs().find_running()
+                    self._send_json(
+                        {
+                            "error": str(exc),
+                            "running_job_id": getattr(running, "job_id", None),
+                            "running_kind": getattr(running, "kind", None),
+                        },
+                        status=409,
+                    )
+                    return
                 self._send_json({"job_id": job.job_id})
                 return
             if path == "/api/templates/generate":
                 cmd = _build_generate_template_cmd(cfg, payload)
-                job = self._jobs().start("template", cmd, cfg.root)
+                try:
+                    job = self._jobs().start("template", cmd, cfg.root)
+                except RuntimeError as exc:
+                    running = self._jobs().find_running()
+                    self._send_json(
+                        {
+                            "error": str(exc),
+                            "running_job_id": getattr(running, "job_id", None),
+                            "running_kind": getattr(running, "kind", None),
+                        },
+                        status=409,
+                    )
+                    return
                 self._send_json({"job_id": job.job_id})
                 return
             if path == "/api/federlicht/start":
                 cmd = _build_federlicht_cmd(cfg, payload)
-                job = self._jobs().start("federlicht", cmd, cfg.root)
+                try:
+                    job = self._jobs().start("federlicht", cmd, cfg.root)
+                except RuntimeError as exc:
+                    running = self._jobs().find_running()
+                    self._send_json(
+                        {
+                            "error": str(exc),
+                            "running_job_id": getattr(running, "job_id", None),
+                            "running_kind": getattr(running, "kind", None),
+                        },
+                        status=409,
+                    )
+                    return
                 self._send_json({"job_id": job.job_id})
                 return
             if path == "/api/federlicht/generate_prompt":
                 cmd = _build_generate_prompt_cmd(cfg, payload)
-                job = self._jobs().start("generate_prompt", cmd, cfg.root)
+                try:
+                    job = self._jobs().start("generate_prompt", cmd, cfg.root)
+                except RuntimeError as exc:
+                    running = self._jobs().find_running()
+                    self._send_json(
+                        {
+                            "error": str(exc),
+                            "running_job_id": getattr(running, "job_id", None),
+                            "running_kind": getattr(running, "kind", None),
+                        },
+                        status=409,
+                    )
+                    return
                 self._send_json({"job_id": job.job_id})
                 return
             if path == "/api/files":

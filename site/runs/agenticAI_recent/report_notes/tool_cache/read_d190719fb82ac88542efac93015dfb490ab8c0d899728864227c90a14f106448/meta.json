@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-02-08T16:59:58.444738",
+  "source": "archive/arxiv/text/2602.06043v1.txt",
+  "raw_chars": 16000,
+  "chunk_chars": 4500,
+  "chunk_overlap": 200,
+  "chunk_count": 4,
+  "artifact_dir": "report_notes/tool_cache/read_d190719fb82ac88542efac93015dfb490ab8c0d899728864227c90a14f106448"
+}

@@ -1,0 +1,96 @@
+emands, it lacks mechanisms for continual
+learning and knowledge integration, often requiring sepa-
+rate adapters for each task, which can be inefficient and
+hinders cross-task knowledge sharing which improves ro-
+bustness and domain generalization [30, 31].
+Recent
+advancements
+have
+explored
+integrating
+parameter-efficient tuning with continual learning strate-
+gies.
+For instance, methods like O-LoRA [42] propose
+learning new tasks in orthogonal subspaces to mitigate
+forgetting. However, these approaches do not fully leverage
+shared knowledge across tasks, limiting forward (and
+backward) knowledge transfer, as they require training
+individual models, or experts, for new tasks.
+All such
+methods fall short of Strict Continual Learning [13],
+which requires models to learn continually, without data
+replay, additional models, or increase in model size, much
+like humans. Our work tries to remedy this.
+Recently, Universal Weight Subspace Hypothesis [15]
+has proven that neural network weights often converge to
+layerwise, shared subspace across tasks and datasets, which
+can be employed for efficient training, inference and model
+merging. Method like EigenLoRAx [16] have applied this
+concept for very efficient finetuning achieving equal or bet-
+ter performance to LoRA at fraction of the cost. However,
+[16] extract the shared subspace beforehand, and the ques-
+tion of continually improving or learning the shared ”uni-
+versal” subspace is left unanswered. In this work, we show,
+with theoretical analysis, that our simple method, Share, is
+capable of approximating the shared subspace in an almost
+strict continual setup.
+In this paper, we introduce Share, a novel approach to
+Parameter-Efficient Continual Finetuning (PaCT) that
+learns and dynamically updates a shared low-rank sub-
+space, enabling seamless adaptation across multiple tasks
+and modalities. Share constructs a foundational subspace
+that captures core knowledge from past tasks and incre-
+mentally integrates new information by identifying and ex-
+panding essential subspace directions.
+Each new task is
+projected into this evolving subspace, facilitating forward
+knowledge transfer, while older knowledge is analytically
+reprojected to minimize catastrophic interference. Interest-
+ingly, we also observe instances of backward knowledge
+transfer due to presence of this subspace. This approach
+achieves up to 100× parameter reduction and 281× memory
+savings over traditional LoRA methods, maintaining perfor-
+mance comparable to jointly trained models. A single Share
+model can replace hundreds of task-specific LoRA adapters,
+supporting scalable, asynchronous continual learning. Ex-
+periments across image classification, 3D object pose esti-
+mation, natural language understanding, and text-to-image
+generation validate its effectiveness, making Share a practi-
+cal and scalable solution for lifelong learning in large-scale
+AI systems.
+To our knowledge, Share is among the earliest works to
+present a viable solution for Parameter-Efficient Continual
+Finetuning (for almost strict continual learning) applicable
+to diverse and complex models.
+Our main contributions are as follows:
+• We introduce a replay-free, (almost strict) continual
+learning method for large pretrained models that lever-
+ages a shared, low-rank foundational subspace of adapters
+to achieve compute and memory-efficient learning.
+• Share enables continual learning from hybrid streams
+of both data and LoRA adapters, seamlessly merging in-
+
+
+===== PAGE 3 =====
+formation into a single model.
+• Share requires orders of magnitude fewer trainable pa-
+rameters (up to 100× reduction) for finetuningand of-
+fers up to 281× memory savings compared to traditional
+LoRA methods.
+• A single set of continually learned Share principal fac-
+tors can replace hundreds of LoRA adapters, facilitating
+scalable and efficient model deployment.
+• We demonstrate Share’s applicability across various
+models and modalities, including image classification,
+3D object pose estimation, natural language understand-
+ing, commonsense reasoning, math reasoning, and text-
+to-image generative models.
+These contributions position Share as a scalable and
+practical solution for efficient continual learning in large-
+scale AI systems, addressing critical needs in the deploy-
+ment of adaptable machine learning models.
+2. Related Work
+Efficient Replay Free Continual Learning
+While con-
+tinual learning addresses catastrophic forgetting [7], its
+application to large mode

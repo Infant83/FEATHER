@@ -88,6 +88,7 @@ const state = {
 };
 
 const LOG_LINE_LIMIT = 1400;
+const LOG_LINE_MAX_CHARS = 3200;
 
 const STAGE_DEFS = [
   {
@@ -2732,7 +2733,17 @@ function initPipelineFromInputs() {
 
 function normalizeLogText(text) {
   if (!text) return "";
-  return text.endsWith("\n") ? text : `${text}\n`;
+  const raw = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  if (!raw) return "";
+  const lines = raw.split("\n");
+  const normalized = lines
+    .map((line) => {
+      if (line.length <= LOG_LINE_MAX_CHARS) return line;
+      const keep = Math.max(200, LOG_LINE_MAX_CHARS - 48);
+      return `${line.slice(0, keep)} … [line truncated]`;
+    })
+    .join("\n");
+  return normalized.endsWith("\n") ? normalized : `${normalized}\n`;
 }
 
 function setLogBufferFromText(text) {
@@ -2755,7 +2766,9 @@ function renderLogs() {
 
 function appendLog(text) {
   if (!text) return;
-  state.logBuffer.push(normalizeLogText(text));
+  const normalized = normalizeLogText(text);
+  if (!normalized) return;
+  state.logBuffer.push(normalized);
   if (state.logBuffer.length > LOG_LINE_LIMIT) {
     state.logBuffer.splice(0, state.logBuffer.length - LOG_LINE_LIMIT);
   }
@@ -3027,6 +3040,11 @@ function setFederlichtRunEnabled(enabled) {
   if (runBtn) runBtn.disabled = !enabled;
 }
 
+function setFeatherRunEnabled(enabled) {
+  const runBtn = $("#feather-run");
+  if (runBtn) runBtn.disabled = !enabled;
+}
+
 function closeActiveSource() {
   if (state.activeSource) {
     state.activeSource.close();
@@ -3040,6 +3058,8 @@ function attachToJob(jobId, opts = {}) {
   state.activeJobKind = opts.kind || "job";
   if (state.activeJobKind === "federlicht") {
     setFederlichtRunEnabled(false);
+  } else if (state.activeJobKind === "feather") {
+    setFeatherRunEnabled(false);
   }
   setKillEnabled(true);
   setJobStatus(`Streaming job ${shortId(jobId)} ...`, true);
@@ -3078,6 +3098,8 @@ function attachToJob(jobId, opts = {}) {
       setKillEnabled(false);
       if (state.activeJobKind === "federlicht") {
         setFederlichtRunEnabled(true);
+      } else if (state.activeJobKind === "feather") {
+        setFeatherRunEnabled(true);
       }
       if (opts.runRel) {
         loadRunLogs(opts.runRel).catch(() => {});
@@ -3092,6 +3114,8 @@ function attachToJob(jobId, opts = {}) {
     setKillEnabled(false);
     if (state.activeJobKind === "federlicht") {
       setFederlichtRunEnabled(true);
+    } else if (state.activeJobKind === "feather") {
+      setFeatherRunEnabled(true);
     }
     state.activeJobKind = null;
     closeActiveSource();
@@ -3177,14 +3201,17 @@ function buildFederlichtPayload() {
     agentSelect?.selectedOptions?.[0]?.getAttribute("data-source") || "builtin";
   const agentProfileDir =
     agentSource === "site" ? joinPath(state.info?.site_root || "site", "agent_profiles") : "";
+  const promptFileValue = expandSiteRunsPath($("#federlicht-prompt-file")?.value);
+  const promptValue = $("#federlicht-prompt")?.value;
+  const includeInlinePrompt = isPromptDirty() || !promptFileValue;
   const payload = {
     run: $("#run-select")?.value,
     output: expandSiteRunsPath($("#federlicht-output")?.value),
     template: $("#template-select")?.value,
     lang: $("#federlicht-lang")?.value,
     depth: $("#federlicht-depth")?.value,
-    prompt: $("#federlicht-prompt")?.value,
-    prompt_file: expandSiteRunsPath($("#federlicht-prompt-file")?.value),
+    prompt: includeInlinePrompt ? promptValue : undefined,
+    prompt_file: promptFileValue,
     model: $("#federlicht-model")?.value,
     check_model: $("#federlicht-check-model")?.value,
     model_vision: $("#federlicht-model-vision")?.value,

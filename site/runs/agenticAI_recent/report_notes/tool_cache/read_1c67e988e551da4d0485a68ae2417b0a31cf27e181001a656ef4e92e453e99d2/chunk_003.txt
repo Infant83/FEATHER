@@ -1,0 +1,128 @@
+in their text outputs. This presents a huge chal-
+lenge as foundation models are applied to embodied tasks
+where agents may have miscalibrated confidence in their
+decisions. Previous work [12], [23] has employed conformal
+prediction [11] to formally quantify an LLM’s uncertainty
+in a robot planning context, which ensures that the robot’s
+plans are executed with calibrated confidence. Explore until
+Confident [2] extends this approach by applying multi-step
+conformal prediction in EQA tasks to determine when the
+VLM is sufficiently confident when a visual language model
+(VLM) is sufficiently confident to stop exploration. To our
+best knowledge, we are the first to employ conformal pre-
+diction to enhance multi-agent communication through cal-
+ibrating confidence during collaborative exploration, which
+is a setting not addressed by prior work.
+III. PROBLEM FORMULATION
+Consider a scenario where Na robots are deployed in a
+3D scene with multiple different assignments, each starting
+from an initial pose gi
+0, and aiming to answer the questions
+qi
+1:Nq related to its assignments. The objective is to maximize
+the success rate while minimizing the exploration time, with
+all answers required within a time horizon Tmax. Each robot
+knows all questions, including those assigned to others. They
+can communicate via natural language messages, denoted ζi,
+to exchange information.
+Each robot i ∈Na is equipped with cameras that, at each
+time step t, can provide the robot with an RGB image Ii
+c,t
+and a depth image Ii
+d,t of the local scene as observations.
+The pose (2D position and orientation) of each robot at each
+time step is denoted as gi
+t, with the poses of all robots
+collected into a set Gt = {gi
+t | i = 1, ..., Na}. Each
+robot is equipped with a collision-free planner π to navigate.
+Given the current pose gi
+t and a target position, the planner
+π determines the next feasible pose gi
+t+1, with a low-level
+controller transporting the robot to the planned pose at t+1.
+In this case, a multi-robot multi-task Embodied Question
+Answering (MM-EQA) problem is defined with a tuple
+ξ := (E, G0, Tmax, Q, Y ), where E is the 3D scene with
+dimensions L × W × H, which is discretized into a voxel
+map M composed of cubes with a side length of l. L, W,
+and H representing the length, width, and height of the voxel
+map M; G0 = {gi
+0 | i = 1, ..., Na} is a set of initial poses of
+the robots, and Tmax is the maximum time horizon allowed
+for the robots to explore the scene and complete the task.
+Each robot i is assigned with Nq questions to answer. The
+set Q = {qi
+j | i = 1, ..., Na, j = 1, ..., Nq} collects all the
+questions assigned to the robots, with qi
+j being the jth ques-
+tion assigned to the ith robot. Each question is a multiple-
+choice question with four choices {‘A’, ‘B’, ‘C’, ‘D’}. The
+ground truth answers are denoted by the set Y = {ai
+j ∈
+{‘A’, ‘B’, ‘C’, ‘D’} | i = 1, ..., Na, j = 1, ..., Nq}.
+
+
+===== PAGE 3 =====
+Agent 1
+EQA Tasks
+Raw Prediction 
+Set for     by LLM
+Send Relevant 
+Object Message
+Calibrated 
+Prediction Set 
+for     by LLM
+pass
+Partner’s Request
+Conﬁdence
+Check
+Perception
+Communication
+Finish the 
+Current Task
+fail
+Perception
+Communication
+Finish the 
+Current Task
+Agent 2
+EQA Tasks
+Conﬁdence
+Check
+Conﬁdence
+Check
+Final SV
+SV from VLM
+Semantic Value Map
+Other Robots’ 
+Unsolved Questions
+pass
+pass
+fail
+Perception
+Planning
+Planning
+Perception
+move to the next task
+Send Answer 
+Message
+Observed Objects by VLM
+Getting Answers for 
+Partner’s Questions
+move to the next task
+Natural Language  
+Messages 
+Fig. 2.
+An overview of our framework shows each robot with a perception module, a communication module, a planning module, and a confidence check
+module. At each time step, a robot generates local and global semantic values (SV) based on the current view and the communication message from the
+other robot. It navigates using a 2D weighted semantic value map and handles related object-check requests from other agents. The messages are generated
+based on the robot’s current view, which are calibrated by conformal prediction to enhance relevance.
+IV. METHOD
+This section introduces the CommCP framework, which
+leverages communication to enhance multi-agent exploration
+for the MM-EQA problem. Building upon the approach
+presented in [2] for single-agent single-task EQA, our frame-
+work further enables communication capabilities to improve
+task completion efficiency and success rate. Furthermore, our
+framework can be easily extended to hand

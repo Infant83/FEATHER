@@ -1,0 +1,22 @@
+- **제목**: Predicting Camera Pose from Perspective Descriptions for Spatial Reasoning
+- **저자**: Xuejun Zhang, Aditi Tiwari, Zhenhailong Wang, Heng Ji (University of Illinois Urbana-Champaign)
+
+- **주요 내용**:
+  - 다중 이미지 공간 추론은 MLLMs에게 도전 과제가 됨.
+  - CAMCUE 프레임워크 소개: 카메라 포즈를 기하학적 기준으로 사용하여 다중 뷰 융합 및 새로운 뷰 추론 지원.
+  - CAMCUE-DATA: 27,668개의 훈련 인스턴스와 508개의 테스트 인스턴스 포함.
+  - CAMCUE는 정확도를 9.06% 향상시키고, 90% 이상의 회전 정확도 및 0.5의 번역 정확도 달성.
+  - 추론 시간을 256.6초에서 1.45초로 단축.
+
+- **문제 제기**: MLLMs는 언어 지정 뷰포인트를 신뢰성 있게 연결하는 데 어려움.
+
+- **기술적 접근**:
+  - CAMCUE는 각 뷰의 포즈를 시각적 토큰에 주입하고, 자연어 뷰포인트 설명을 목표 카메라 포즈에 연결하여 상상된 목표 뷰를 합성.
+
+- **기여**:
+  - 기하학적 융합을 통한 공간 추론 개선.
+  - 자연어 설명을 명시적 카메라 포즈에 매핑.
+  - 목표 뷰 이미지를 합성하여 추론 개선.
+  - 관점 이동 추론을 위한 데이터셋 구축.
+
+출처: [chunk_001.txt], [chunk_002.txt], [chunk_003.txt], [chunk_004.txt]

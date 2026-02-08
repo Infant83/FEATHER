@@ -1,0 +1,104 @@
+rimeter is the total distance 
+around the shape.
+Perimeter = 1 yd + 2 yd + 1 yd + 2 yd
+Perimeter = (1 + 2 + 1 + 2) yd
+Perimeter = 6 yd
+The perimeter of the rectangle is 6 yards.
+Textual CoT Method
+Unified CoT Method
+Modality Redundant
+Latent Visual CoT Method
+❌
+Modality Mismatch
+SwimBird (Switchable Reasoning Mode)
+What object is situated in 
+the corner of the room 
+depicted in this image?
+Answer: Television
+❌
+Unified CoT Method
+<think>…… To clearly pinpoint the 
+object, I will highlight the relevant 
+area with a bounding box.</think>
+<latent> latent embedding </latent> 
+<think>The red bounding box isolates 
+a small, rectangular electronic device 
+on a wooden stand, which appears to 
+be an old television set.…….</think>
+<answer>tv</answer>
+<reason> To answer the question, I need to identify the object 
+located in the corner of the provided image. I will mark it with a 
+bounding box for clarity.</reason>
+<|latent_start|> latent embedding <|latent_end|> 
+<reason> The red box highlights a small rectangular electronic 
+device on a wooden stand that appears to be an old-style 
+television; Based on the highlighted details, it can be identified 
+as a television. </reason>
+<answer>Television.</answer>
+SwimBird (Switchable Reasoning Mode)
+<latent> latent embedding </latent>
+<answer>Chair</answer>
+Latent Visual CoT Method
+❌
+Based on the image provided, the object 
+situated in the corner of the room is an 
+**air conditioner**.
+Textual CoT Method
+❌
+Quantify the relocation steps 
+between green and red positions
+Correct Answer: 4
+… …
+The path is as follows:
+- From the green square, move right 
+to the red square.
+There is only one step involved in this 
+movement.
+Therefore, the number of relocation 
+steps between the green and red 
+positions is **1**
+Textual CoT Method
+<think>…... it's essential to visually 
+trace the most efficient path through 
+the maze, ensuring that all black wall 
+segments are avoided. …….</think>
+<latent> latent embedding </latent> 
+<think>…... Starting from the green 
+square and following the blue line 
+until reaching the red square, I find 
+that the total number of steps 
+required is 20.</think>
+<answer>It takes 20 steps.</answer>
+Modality Redundant
+Unified CoT Method
+<|latent_start|> latent embedding <|latent_end>
+<answer>4</answer> 
+<latent> latent embedding </latent>
+<answer>4</answer>
+Latent Visual CoT Method
+Modality Mismatch
+❌
+❌
+SwimBird (Switchable Reasoning Mode)
+Figure 1: SwimBird enables query-adaptive multimodal reasoning by dynamically switching
+among text-only, vision-only, and interleaved vision–text modes. As illustrated, it avoids redundant
+latent steps on text-centric queries (Case 1), relies on latent visual thoughts for vision-dense spatial
+problems (Case 2), and interleaves visual grounding with textual deduction when both are needed
+(Case 3), mitigating modality mismatch and improving robustness.
+hidden states as visual thoughts, enabling intermediate visual representations to be maintained and
+updated across steps, which substantially strengthens performance on vision-dense benchmarks.
+Despite these advances, existing multimodal CoT designs largely rely on a rigid, pre-defined reasoning
+pattern. Concretely, prior methods [25, 39, 36] typically fall into three fixed paradigms: text-only
+CoT, vision-only CoT, or interleaved vision–text CoT. As shown in Fig. 1, such fixed patterns create a
+mismatch between the reasoning modality and the actual needs of the question: forcing visual thoughts
+for text-centric queries can interfere with discrete symbolic reasoning, while restricting strongly
+visual queries to text-only reasoning removes an appropriate latent workspace. Even interleaved
+reasoning remains a fixed schedule that may generate redundant modality steps [23].
+We argue that the core limitation is the assumption that a single, static reasoning template can
+generalize across heterogeneous multimodal queries. Different questions demand different internal
+computation formats. Some require only discrete symbolic steps, some require only latent visual
+transitions, and some require tight alternation between visual grounding and textual deduction. A
+more capable MLLM should therefore be able to choose when to think in language, when to think
+in vision, conditioned on the input and the evolving reasoning state.
+Motivated by this, we propose SwimBird, a reasoning-switchable MLLM for query-adaptive mul-
+timodal reasoning. SwimBird is built on two key ideas derived from the limitations above. Fir

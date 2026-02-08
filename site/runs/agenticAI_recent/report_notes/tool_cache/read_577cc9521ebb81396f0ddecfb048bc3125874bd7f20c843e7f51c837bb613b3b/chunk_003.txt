@@ -1,0 +1,60 @@
+asoning state.
+Motivated by this, we propose SwimBird, a reasoning-switchable MLLM for query-adaptive mul-
+timodal reasoning. SwimBird is built on two key ideas derived from the limitations above. First,
+we adopt a hybrid autoregressive formulation that supports both (i) standard next-token prediction
+for textual thoughts and (ii) next-embedding prediction for continuous visual thoughts. This unified
+generation interface provides the foundation for switchable reasoning. Second, we attribute the rigid-
+ity of prior patterns partly to training data bias. We therefore design a systematic curation strategy
+that filters and categorizes multimodal CoT samples into reasoning modes based on their visual
+dependency and reasoning characteristics. Through this strategy, we construct SwimBird-SFT-92K,
+a diverse supervised fine-tuning dataset covering text-only, vision-only, and interleaved vision–text
+patterns. With these designs, SwimBird can dynamically switch among three reasoning modes.
+2
+
+
+===== PAGE 3 =====
+Importantly, SwimBird also removes the fixed-budget constraint in visual reasoning. Instead of
+generating a constant-length sequence of visual thought tokens, it dynamically determines the number
+of visual thought tokens during vision-only or interleaved reasoning, allocating more latent compu-
+tation to vision-dense queries while avoiding redundant visual thoughts for text-centric problems.
+As a result, a single model can robustly handle diverse query types, whereas fixed-pattern baselines
+typically excel only on a subset and may underperform when the required thinking modality or
+visual-thought budget deviates from their pre-defined design.
+Our contributions are summarized as follows:
+• We identify two key bottlenecks of prior multimodal CoT frameworks, namely fixed reasoning-
+mode templates and fixed visual-thought lengths, and show how they lead to a modality mismatch
+that harms either vision-dense performance or text-based logical reasoning.
+• We introduce SwimBird, a hybrid autoregressive MLLM that can dynamically switch among text-
+only, vision-only, and interleaved reasoning modes, combining next-token prediction for textual
+thoughts with next-embedding prediction for visual thoughts.
+• We further introduce adaptive visual-thought allocation, enabling SwimBird to dynamically deter-
+mine the number of continuous visual-thought tokens based on query complexity.
+• We design a systematic reasoning-mode curation strategy for multimodal CoT samples and construct
+SwimBird-SFT-92K, a dataset covering three reasoning patterns that enables query-adaptive mode
+selection.
+• Extensive experiments across diverse benchmarks demonstrate that SwimBird achieves state-of-the-
+art performance on both text-centric reasoning and challenging vision-dense tasks, outperforming
+prior fixed-pattern multimodal reasoning methods.
+2
+Related Works
+2.1
+Textual CoT in MLLMs
+The integration of vision and language has evolved from discriminative tasks toward generative
+reasoning frameworks. Early MLLMs focus primarily on visual question answering through direct
+answer generation [13, 15, 27, 14, 35]. With the success of step-by-step reasoning in LLMs, recent
+MLLMs incorporate explicit reasoning chains to handle complex multimodal problems [1, 29, 34].
+These models generate intermediate textual explanations before producing final answers, demonstrat-
+ing improved performance on mathematical word problems, scientific diagram understanding, and
+multi-hop visual reasoning [38, 31, 17]. Despite their effectiveness on logic-heavy benchmarks, these
+text-based reasoning approaches struggle when the core challenge lies in visual perception rather than
+logical decomposition [20]. Tasks requiring spatial transformation tracking, visual state prediction, or
+fine-grained visual comparison expose the fundamental limitation that the model is forced to describe
+intermediate visual evidence in language, even when language is not a faithful or efficient carrier for
+the required information, leading to brittle reasoning and error accumulation.
+2.2
+Latent Visual Reasoning
+Recognizing the constraints of language-only reasoning, researchers have explored alternative com-
+putational substrates for visual thinking [18, 28]. Recent methods propose latent visual reasoning
+by training models to produce continuous embeddings supervised by visual reconstruction objec-
+tives. For instance, Mirage [36] employs hidden states trained to approximate annotated helper
+images, while

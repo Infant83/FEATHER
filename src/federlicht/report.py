@@ -490,6 +490,12 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Log streaming event metadata for debugging (default: disabled).",
     )
     ap.add_argument(
+        "--cache",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Reuse per-stage cache under report_notes/cache (default: enabled).",
+    )
+    ap.add_argument(
         "--alignment-check",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -534,8 +540,8 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         type=int,
         default=0,
         help=(
-            "Max cumulative chars returned by read tool across a run (default: 0 = unlimited). "
-            "Set to cap total read_document output."
+            "Max cumulative chars returned by read tool across a run. "
+            "Set 0 to use an automatic safety cap derived from stage/model budgets."
         ),
     )
     ap.add_argument(
@@ -2792,15 +2798,26 @@ def is_korean_language(value: str) -> bool:
 
 def load_report_prompt(prompt_text: Optional[str], prompt_file: Optional[str]) -> Optional[str]:
     parts: list[str] = []
+    seen: set[str] = set()
+
+    def _add_part(text: str) -> None:
+        normalized = re.sub(r"\s+", " ", text).strip()
+        if not normalized:
+            return
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        parts.append(text)
+
     if prompt_file:
         path = Path(prompt_file)
         content = path.read_text(encoding="utf-8", errors="replace").strip()
         if content:
-            parts.append(content)
+            _add_part(content)
     if prompt_text:
         text = prompt_text.strip()
         if text:
-            parts.append(text)
+            _add_part(text)
     if not parts:
         return None
     return "\n\n".join(parts)
@@ -3758,7 +3775,9 @@ def synthesize_reports(
 
 def resolve_notes_dir(run_dir: Path, notes_dir: Optional[str]) -> Path:
     if notes_dir:
-        path = Path(notes_dir)
+        raw = Path(notes_dir)
+        path = raw if raw.is_absolute() else (run_dir / raw)
+        path = path.resolve()
     else:
         path = run_dir / "report_notes"
     path.mkdir(parents=True, exist_ok=True)
@@ -4598,6 +4617,7 @@ def normalize_config_overrides(raw: dict) -> dict:
         "alignment_check",
         "stream",
         "stream_debug",
+        "cache",
         "repair_mode",
         "repair_debug",
         "interactive",
@@ -4646,6 +4666,8 @@ def apply_config_overrides(args: argparse.Namespace, config: dict) -> None:
         args.stream = config["stream"]
     if isinstance(config.get("stream_debug"), bool):
         args.stream_debug = config["stream_debug"]
+    if isinstance(config.get("cache"), bool):
+        args.cache = config["cache"]
     if isinstance(config.get("repair_mode"), str) and config["repair_mode"] in {"append", "replace", "off"}:
         args.repair_mode = config["repair_mode"]
     if isinstance(config.get("repair_debug"), bool):
@@ -5148,6 +5170,7 @@ def build_agent_info(
             "web_search": args.web_search,
             "alignment_check": args.alignment_check,
             "interactive": args.interactive,
+            "cache": args.cache,
             "agent_profile": profile_summary(profile) if profile else None,
             "agent_profile_dir": str(profiles_dir),
         },
@@ -6085,10 +6108,31 @@ def run_web_research(
 
 
 class SafeFilesystemBackend:
-    def __init__(self, root_dir: Path) -> None:
+    def __init__(
+        self,
+        root_dir: Path,
+        max_read_chars: int = 6000,
+        max_list_entries: int = 300,
+        max_grep_matches: int = 200,
+    ) -> None:
         from deepagents.backends import FilesystemBackend  # type: ignore
+        from deepagents.backends.protocol import EditResult, WriteResult  # type: ignore
 
         class _Backend(FilesystemBackend):
+            def __init__(
+                self,
+                root_dir: Path,
+                virtual_mode: bool = True,
+                max_file_size_mb: int = 10,
+                max_read_chars: int = 6000,
+                max_list_entries: int = 300,
+                max_grep_matches: int = 200,
+            ) -> None:
+                super().__init__(root_dir=root_dir, virtual_mode=virtual_mode, max_file_size_mb=max_file_size_mb)
+                self._max_read_chars = max(1000, int(max_read_chars))
+                self._max_list_entries = max(50, int(max_list_entries))
+                self._max_grep_matches = max(20, int(max_grep_matches))
+
             def _map_windows_path(self, normalized: str) -> Optional[str]:
                 root_norm = str(self.cwd).replace("\\", "/")
                 if normalized.lower().startswith(root_norm.lower()):
@@ -6114,7 +6158,49 @@ class SafeFilesystemBackend:
                                 return super()._resolve_path(mapped)
                 return super()._resolve_path(key)
 
-        self._backend = _Backend(root_dir=root_dir, virtual_mode=True)
+            def read(self, file_path: str, offset: int = 0, limit: int = 2000) -> str:  # type: ignore[override]
+                # Keep default filesystem-tool reads bounded to avoid exploding model context.
+                bounded_limit = min(max(1, int(limit or 1)), 240)
+                content = super().read(file_path, offset=offset, limit=bounded_limit)
+                if isinstance(content, str) and len(content) > self._max_read_chars:
+                    return truncate_text_middle(content, self._max_read_chars)
+                return content
+
+            def ls_info(self, path: str):  # type: ignore[override]
+                info = super().ls_info(path)
+                if len(info) <= self._max_list_entries:
+                    return info
+                return info[: self._max_list_entries]
+
+            def grep_raw(self, pattern: str, path: str | None = None, glob: str | None = None):  # type: ignore[override]
+                result = super().grep_raw(pattern, path=path, glob=glob)
+                if isinstance(result, list) and len(result) > self._max_grep_matches:
+                    return result[: self._max_grep_matches]
+                return result
+
+            def write(self, file_path: str, content: str) -> WriteResult:  # type: ignore[override]
+                # The report pipeline manages artifacts itself; disable ad-hoc writes from model tools.
+                return WriteResult(error="write_file is disabled in this pipeline. Return content in the agent response.")
+
+            def edit(
+                self,
+                file_path: str,
+                old_string: str,
+                new_string: str,
+                replace_all: bool = False,
+            ) -> EditResult:  # type: ignore[override]
+                # Prevent large in-memory replace operations from model tool misuse.
+                if len(old_string or "") > 20000 or len(new_string or "") > 20000:
+                    return EditResult(error="edit_file payload too large; use structured response instead.")
+                return EditResult(error="edit_file is disabled in this pipeline. Return revised content in agent response.")
+
+        self._backend = _Backend(
+            root_dir=root_dir,
+            virtual_mode=True,
+            max_read_chars=max_read_chars,
+            max_list_entries=max_list_entries,
+            max_grep_matches=max_grep_matches,
+        )
 
     def __getattr__(self, name: str):
         return getattr(self._backend, name)
@@ -8198,21 +8284,21 @@ def run_pipeline(
     if result.workflow_summary:
         meta["stage_workflow"] = list(result.workflow_summary)
     if result.workflow_path:
-        meta["report_workflow_path"] = f"./{result.workflow_path.relative_to(run_dir).as_posix()}"
+        meta["report_workflow_path"] = rel_path_or_abs(result.workflow_path, run_dir)
     if overview_path:
-        meta["run_overview_path"] = f"./{overview_path.relative_to(run_dir).as_posix()}"
+        meta["run_overview_path"] = rel_path_or_abs(overview_path, run_dir)
     if report_overview_path:
-        meta["report_overview_path"] = f"./{report_overview_path.relative_to(run_dir).as_posix()}"
+        meta["report_overview_path"] = rel_path_or_abs(report_overview_path, run_dir)
     if index_file:
-        meta["archive_index_path"] = f"./{index_file.relative_to(run_dir).as_posix()}"
+        meta["archive_index_path"] = rel_path_or_abs(index_file, run_dir)
     if instruction_file:
-        meta["instruction_path"] = f"./{instruction_file.relative_to(run_dir).as_posix()}"
+        meta["instruction_path"] = rel_path_or_abs(instruction_file, run_dir)
     if prompt_copy_path:
-        meta["report_prompt_path"] = f"./{prompt_copy_path.relative_to(run_dir).as_posix()}"
+        meta["report_prompt_path"] = rel_path_or_abs(prompt_copy_path, run_dir)
     if template_adjustment_path:
-        meta["template_adjustment_path"] = f"./{template_adjustment_path.relative_to(run_dir).as_posix()}"
+        meta["template_adjustment_path"] = rel_path_or_abs(template_adjustment_path, run_dir)
     if preview_path:
-        meta["figures_preview_path"] = f"./{preview_path.relative_to(run_dir).as_posix()}"
+        meta["figures_preview_path"] = rel_path_or_abs(preview_path, run_dir)
     append_report_workflow_outputs(
         result.workflow_path,
         run_dir,

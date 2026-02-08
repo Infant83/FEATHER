@@ -1,0 +1,60 @@
+ps://ai-2027.
+com (access: 19.10.2025).
+10	  Future of Life Institute, Pause Giant AI Experiments: An Open Letter, 22.3.2023, https://
+futureoflife.org/open-letter/pause-giant-ai-experiments (access: 20.7.2025).
+11	  See also RenAIssance Foundation, The Rome Call for AI Ethics, 28.2.2020, https://www.
+romecall.org/the-call (access: 20.6.2025). Cf. S. Hastings-Woodhouse, D. Kokotajło, We Should Not 
+Allow Powerful AI to Be Trained in Secret: The Case for Increased Public Transparency, 27.5.2025, 
+Pobrane z czasopisma Studia Iuridica Lublinensia http://studiaiuridica.umcs.pl
+Data: 08/02/2026 02:33:46
+UMCS
+
+
+===== PAGE 4 =====
+Karol Kasprowicz
+444
+promising research avenues are emerging, aimed at increasing control over the 
+internal processes of models. One such avenue is Chain of Thought Monitorabil-
+ity: A New and Fragile Opportunity for AI Safety, which offers a new, albeit still 
+fragile, opportunity for real progress in safety (e.g. open source initiatives).12 The 
+significance of this direction is underscored by the fact13 that it is becoming the 
+focus of flagship government initiatives (e.g. such as the UK’s AI Safety Institute 
+– AISI).14 Thus, the debate on AI safety is transitioning from a phase of manifestos 
+and appeals to a stage of institutional support for concrete solutions to the alignment 
+problem – encapsulated in the first attempts to regulate it.
+Culture and, in particular, law can provide frameworks and tools to address 
+challenges of aligning AI to humanity. Legal frameworks provide essential struc-
+tures for governing technology, but law itself represents a cultural technology 
+evolving alongside the systems it regulates. Traditional legal approaches assum-
+ing deterministic causation face significant challenges when applied to proba-
+bilistic AI systems operating through statistical inference rather than explicit 
+rules. Human societies have historically developed sophisticated mechanisms 
+for coordinating diverse agents with potentially conflicting interests through 
+shared norms, institutions, and collaborative frameworks.15 These social practices 
+https://www.aipolicybulletin.org/articles/we-should-not-allow-powerful-ai-to-be-trained-in-secret-
+the-case-for-increased-public-transparency (access: 20.6.2025).
+12	  T. Korbak et al., Chain of Thought Monitorability: A New and Fragile Opportunity for AI 
+Safety, 15.7.2025, https://arxiv.org/abs/2507.11473 (access: 20.6.2025).
+13	  For this kind of action initiatives one of the key opportunities to succeed are open source 
+(open software/models) movements. They are an extremely important catalyst for advances in AI 
+security. Closed models, accessible only through APIs (such as GPT-4 from OpenAI), allow only their 
+“behaviour” to be studied. Open source models (such as Llama from Meta, Mistral) give researchers 
+full access to their “brain”. The open source community creates and provides tools for analysing 
+and interpreting AI models (e.g. libraries such as TransformerLens or platforms like Hugging Face). 
+This speeds up research for everyone because no one has to “reinvent the wheel”. Also open source 
+initiatives like automated toolkits, such as PyRIT, systematize the process of “red teaming” in search 
+of gaps. Initiatives such as the AI Alliance further standardize these efforts, providing a framework for 
+the secure development of open artificial intelligence. A key strength of this ecosystem is the global 
+community, which uses open access to conduct independent audits and public testing. From organized 
+“jailbreaking” competitions to academic publications exposing new vulnerabilities, the “many eyes 
+see more” principle is at work here. Not only does this enable verification of security claims made 
+by developers, but also ensures the reproducibility of research, which is fundamental to scientific 
+progress. In this way, grassroots pressure and open source collaboration create a dynamic cycle of 
+discovering, documenting and fixing vulnerabilities, realistically accelerating the development of 
+safer and more trustworthy AI systems. We will refer to open source later, defining major problems 
+with AI regulations.
+14	  AI Security Institute, The Alignment Project, https://alignmentproject.aisi.gov.uk (access: 
+20.7.2025).
+15	  Cf. M. Bennett, A Brief History of Intelligence: Evolution, AI, and the Five Breakthroughs That 
+Made Our Brains, New York–Boston 2023, pp. 344–358. On social dimension, see M. Pasquinelli, 
+Pobrane z czasopisma Stud

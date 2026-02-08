@@ -1,0 +1,36 @@
+- **제목**: SwimBird: Eliciting Switchable Reasoning Mode in Hybrid Autoregressive MLLMs
+- **저자**: Jintao Tong 외 7명
+- **소속**: Huazhong University of Science and Technology, Accio Team, Alibaba Group
+- **주요 내용**:
+  - 기존 MLLMs는 텍스트 기반 CoT로 비전 집약적 작업에서 한계를 보임.
+  - SwimBird는 입력에 따라 텍스트 전용, 비전 전용, 비전-텍스트 혼합 모드로 동적으로 전환 가능.
+  - 하이브리드 자기 회귀 형식을 통해 텍스트와 비전 추론을 통합하고, SwimBird-SFT-92K 데이터셋을 설계.
+  - 실험 결과, SwimBird는 비전 밀집 작업에서 성능을 크게 향상시킴.
+- **링크**:
+  - [프로젝트 페이지](https://accio-lab.github.io/SwimBird)
+  - [Github Repo](https://github.com/Accio-Lab/SwimBird)
+  - [HuggingFace](https://huggingface.co/datasets/Accio-Lab/SwimBird-SFT-92K)
+
+출처: [chunk_001.txt]
+- **예시**: 사각형의 둘레 계산 과정에서 텍스트 CoT와 비전 추론의 필요성 설명.
+- **SwimBird 기능**:
+  - 동적 모드 전환 가능.
+  - 고정된 추론 패턴의 한계 극복.
+  - 다양한 질문에 따라 내부 계산 형식 선택 가능.
+
+출처: [chunk_002.txt]
+- SwimBird은 쿼리 적응형 멀티모달 추론을 위한 reasoning-switchable MLLM으로 개발됨.
+- 하이브리드 자기 회귀 형식 채택.
+- SwimBird-SFT-92K 데이터셋 구축, 텍스트 전용, 비전 전용, 혼합 패턴 포함.
+- 고정된 비주얼 사고 길이 제약 제거, 쿼리 복잡성에 따라 비주얼 사고 토큰 수 동적 결정.
+- 주요 기여:
+  - 고정된 추론 모드 템플릿과 비주얼 사고 길이 병목 현상 식별.
+  - 동적 전환 가능성 도입.
+
+출처: [chunk_003.txt]
+- SwimBird은 시각 재구성 목표에 의해 감독되는 연속 임베딩 생성.
+- 기존 잠재적 추론 방법의 한계 해결.
+- 하이브리드 자기 회귀 형식으로 이산 텍스트 토큰과 연속 잠재적 시각 토큰 지원.
+- 쿼리 적응형 다중 모드 추론 가능.
+
+출처: [chunk_004.txt]

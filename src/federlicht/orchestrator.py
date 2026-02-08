@@ -147,10 +147,17 @@ class ReportOrchestrator:
         instruction_file = helpers.find_instruction_file(run_dir)
         overview_path = helpers.write_run_overview(run_dir, instruction_file, index_file)
         baseline_report = helpers.find_baseline_report(run_dir)
-        backend = helpers.SafeFilesystemBackend(root_dir=run_dir)
         notes_dir = helpers.resolve_notes_dir(run_dir, args.notes_dir)
+        # Keep run_dir as backend root so built-in file tools can resolve archive paths reliably.
+        # Bound filesystem read/list payloads in the backend to prevent context blowups.
+        backend = helpers.SafeFilesystemBackend(
+            root_dir=run_dir,
+            max_read_chars=max(3000, min(12000, int(getattr(args, "max_tool_chars", 0) or 0) or 6000)),
+        )
         cache_dir = notes_dir / "cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_schema_version = "v4"
+        cache_enabled = bool(getattr(args, "cache", True))
         supporting_dir: Optional[Path] = None
         supporting_summary: Optional[str] = None
         alignment_max_chars = min(args.quality_max_chars, 8000)
@@ -164,6 +171,8 @@ class ReportOrchestrator:
         triage_line_limit = 80
         guidance_line_limit = 80
         supporting_line_limit = 120
+        context_limit = 2400 if pack_limit <= 0 else min(2400, max(1200, pack_limit // 2))
+        context_line_limit = 60
 
         def pack_text(text: str) -> str:
             return helpers.truncate_text_middle(text, pack_limit)
@@ -211,7 +220,19 @@ class ReportOrchestrator:
             payload: str,
             runner: Callable[[], str],
         ) -> tuple[str, bool]:
-            key = cache_key(stage, model, prompt, payload)
+            if not cache_enabled:
+                return runner(), False
+            key = cache_key(
+                cache_schema_version,
+                stage,
+                model,
+                prompt,
+                payload,
+                tool_char_limit,
+                tool_budget_source,
+                str(run_dir),
+                str(notes_dir),
+            )
             cached = read_cache(stage, key)
             if cached is not None:
                 return cached, True
@@ -332,7 +353,21 @@ class ReportOrchestrator:
             candidate = pdf_path.with_suffix(".txt")
             return candidate if candidate.exists() else None
 
-        tool_char_limit = int(getattr(args, "max_tool_chars", 0) or 0)
+        configured_tool_char_limit = int(getattr(args, "max_tool_chars", 0) or 0)
+        tool_budget_source = "cli" if configured_tool_char_limit > 0 else "auto"
+        if configured_tool_char_limit > 0:
+            tool_char_limit = configured_tool_char_limit
+        else:
+            # Keep tool output bounded even when the CLI flag is omitted.
+            # This prevents scout/evidence histories from silently exceeding model context.
+            lang_for_budget = helpers.normalize_lang(args.lang)
+            char_ratio = 2 if helpers.is_korean_language(lang_for_budget) else 4
+            token_cap = int(
+                getattr(args, "max_input_tokens", 0)
+                or getattr(helpers, "DEFAULT_MAX_INPUT_TOKENS", 0)
+                or 128000
+            )
+            tool_char_limit = max(16000, int(token_cap * char_ratio * 0.25))
         tool_chars_used = 0
         reducer_chunk_chars = 4500
         reducer_chunk_overlap = 200
@@ -401,7 +436,10 @@ class ReportOrchestrator:
                 return payload
             remaining = tool_char_limit - tool_chars_used
             if remaining <= 0:
-                return "[error] Tool output budget exhausted. Increase --max-tool-chars."
+                return (
+                    "[error] Tool output budget exhausted. "
+                    "Increase --max-tool-chars or reduce tool reads."
+                )
             if len(payload) <= remaining:
                 tool_chars_used += len(payload)
                 return payload
@@ -650,7 +688,10 @@ class ReportOrchestrator:
                     continue
                 artifact_lines.append(f"### {stage_name}")
                 for label, path in existing:
-                    rel = f"./{path.relative_to(run_dir).as_posix()}"
+                    try:
+                        rel = f"./{path.relative_to(run_dir).as_posix()}"
+                    except Exception:
+                        rel = path.as_posix()
                     artifact_lines.append(f"- {label}: {rel}")
                 artifact_lines.append("")
             if artifact_lines:
@@ -756,22 +797,25 @@ class ReportOrchestrator:
         def estimate_tokens(text: str) -> int:
             if not text:
                 return 0
-            ratio = 2 if helpers.is_korean_language(language) else 4
-            return (len(text) + ratio - 1) // ratio
+            # Conservative heuristic: keep extra headroom to avoid underestimation.
+            ratio = 1.6 if helpers.is_korean_language(language) else 3.5
+            base = int((len(text) / ratio) + 0.999)
+            return int(base * 1.15) + 8
 
         def resolve_stage_budget(
             max_tokens: Optional[int],
             reserve: int = 3000,
             minimum: int = 2000,
+            default_budget: int = 24000,
         ) -> Optional[int]:
             fallback = getattr(helpers, "DEFAULT_MAX_INPUT_TOKENS", None)
             budget = max_tokens or args.max_input_tokens or fallback
             if not budget:
-                return None
+                return max(minimum, default_budget)
             return max(minimum, int(budget) - reserve)
 
         def resolve_writer_budget(max_tokens: Optional[int]) -> Optional[int]:
-            return resolve_stage_budget(max_tokens, reserve=8000, minimum=10000)
+            return resolve_stage_budget(max_tokens, reserve=8000, minimum=10000, default_budget=48000)
 
         def estimate_chars_for_tokens(token_budget: int) -> int:
             ratio = 2 if helpers.is_korean_language(language) else 4
@@ -803,6 +847,17 @@ class ReportOrchestrator:
                 "min_limit": min_limit,
                 "max_lines": max_lines,
             }
+
+        def context_section(lines: list[str]) -> dict:
+            return make_section(
+                "context",
+                None,
+                "\n".join(lines),
+                priority="high",
+                base_limit=context_limit,
+                min_limit=800,
+                max_lines=context_line_limit,
+            )
 
         def apply_section_limits(section: dict, ratio: float) -> None:
             content = section.get("content") or ""
@@ -1331,7 +1386,19 @@ class ReportOrchestrator:
             max_input_tokens_source=scout_max_source,
         )
         scout_sections = [
-            make_section("context", None, "\n".join(context_lines), priority="high"),
+            context_section(context_lines),
+            make_section(
+                "scout_guardrail",
+                "Scout constraints:",
+                (
+                    "Scout is an inventory stage. Do not read full long documents. "
+                    "Prefer list_archive_files and metadata/index files first. "
+                    "Avoid large reads with read_file/read_document unless strictly required for source disambiguation."
+                ),
+                priority="high",
+                base_limit=600,
+                min_limit=200,
+            ),
         ]
         if report_prompt:
             scout_sections.append(
@@ -1360,26 +1427,95 @@ class ReportOrchestrator:
         if stage_enabled("scout"):
             scout_budget = resolve_stage_budget(scout_max, reserve=3000, minimum=2000)
             scout_payload, _, _ = build_stage_payload(scout_sections, scout_budget)
-            scout_notes, cached = get_cached_output(
-                "scout",
-                scout_model,
-                scout_prompt,
-                scout_payload,
-                lambda: self._runner.run(
-                    "Scout Notes",
-                    scout_agent,
-                    {"messages": [{"role": "user", "content": scout_payload}]},
-                    show_progress=True,
-                ),
-            )
-            if cached:
+            cached = False
+            try:
+                scout_notes, cached = get_cached_output(
+                    "scout",
+                    scout_model,
+                    scout_prompt,
+                    scout_payload,
+                    lambda: self._runner.run(
+                        "Scout Notes",
+                        scout_agent,
+                        {"messages": [{"role": "user", "content": scout_payload}]},
+                        show_progress=True,
+                    ),
+                )
+            except Exception as exc:
+                if not is_context_overflow(exc):
+                    raise
+                # Retry scout with lightweight tools only when the first pass overflows context.
                 helpers.print_progress(
-                    "Scout Notes [cache]",
-                    sanitize_console_text(scout_notes),
+                    "Scout Notes",
+                    "[warn] context overflow in scout; retrying with lightweight tools.",
                     args.progress,
                     args.progress_chars,
                 )
-            record_stage("scout", "cached" if cached else "ran")
+                scout_fallback_agent = helpers.create_agent_with_fallback(
+                    self._create_deep_agent,
+                    scout_model,
+                    [list_archive_files, list_supporting_files],
+                    scout_prompt,
+                    backend,
+                    max_input_tokens=scout_max,
+                    max_input_tokens_source=scout_max_source,
+                )
+                fallback_budget = max(2000, (scout_budget // 2) if scout_budget else 2000)
+                fallback_sections = [context_section(context_lines)]
+                fallback_sections.append(
+                    make_section(
+                        "scout_guardrail",
+                        "Scout fallback constraints:",
+                        (
+                            "Fallback mode: list-only reconnaissance. "
+                            "Do not open long files. Do not call read_file/read_document/glob/grep. "
+                            "Use list_archive_files and list_supporting_files only."
+                        ),
+                        priority="high",
+                        base_limit=500,
+                        min_limit=200,
+                    )
+                )
+                if report_prompt:
+                    fallback_sections.append(
+                        make_section(
+                            "report_prompt",
+                            "Report focus prompt:",
+                            report_prompt,
+                            priority="high",
+                            base_limit=report_prompt_limit,
+                            min_limit=800,
+                        )
+                    )
+                if source_triage_text:
+                    fallback_sections.append(
+                        make_section(
+                            "source_triage",
+                            "Source triage (lightweight):",
+                            source_triage_text,
+                            priority="low",
+                            base_limit=triage_limit,
+                            min_limit=400,
+                            max_lines=triage_line_limit,
+                        )
+                    )
+                fallback_payload, _, _ = build_stage_payload(fallback_sections, fallback_budget)
+                scout_notes = self._runner.run(
+                    "Scout Notes (fallback)",
+                    scout_fallback_agent,
+                    {"messages": [{"role": "user", "content": fallback_payload}]},
+                    show_progress=True,
+                )
+                record_stage("scout", "ran", "overflow_fallback")
+            else:
+                if cached:
+                    helpers.print_progress(
+                        "Scout Notes [cache]",
+                        sanitize_console_text(scout_notes),
+                        args.progress,
+                        args.progress_chars,
+                    )
+                record_stage("scout", "cached" if cached else "ran")
         if state and state.scout_notes and not scout_notes:
             scout_notes = state.scout_notes
         scout_context = scout_notes if len(scout_notes) <= pack_limit else pack_text(scout_notes)
@@ -1404,7 +1540,7 @@ class ReportOrchestrator:
                 max_input_tokens_source=clarifier_max_source,
             )
             clarifier_sections = [
-                make_section("context", None, "\n".join(context_lines), priority="high"),
+                context_section(context_lines),
                 make_section(
                     "scout_notes",
                     "Scout notes:",
@@ -1427,13 +1563,32 @@ class ReportOrchestrator:
                 )
             clarifier_budget = resolve_stage_budget(clarifier_max, reserve=3000, minimum=2000)
             clarifier_payload, _, _ = build_stage_payload(clarifier_sections, clarifier_budget)
-            clarification_questions = self._runner.run(
-                "Clarification Questions",
-                clarifier_agent,
-                {"messages": [{"role": "user", "content": clarifier_payload}]},
-                show_progress=True,
-            )
-            record_stage("clarifier", "ran")
+            try:
+                clarification_questions = self._runner.run(
+                    "Clarification Questions",
+                    clarifier_agent,
+                    {"messages": [{"role": "user", "content": clarifier_payload}]},
+                    show_progress=True,
+                )
+                record_stage("clarifier", "ran")
+            except Exception as exc:
+                if not is_context_overflow(exc):
+                    raise
+                helpers.print_progress(
+                    "Clarification Questions",
+                    "[warn] context overflow in clarifier; retrying with reduced payload.",
+                    args.progress,
+                    args.progress_chars,
+                )
+                fallback_budget = max(2000, (clarifier_budget // 2) if clarifier_budget else 2000)
+                fallback_payload, _, _ = build_stage_payload(clarifier_sections, fallback_budget)
+                clarification_questions = self._runner.run(
+                    "Clarification Questions (fallback)",
+                    clarifier_agent,
+                    {"messages": [{"role": "user", "content": fallback_payload}]},
+                    show_progress=True,
+                )
+                record_stage("clarifier", "ran", "overflow_fallback")
             if clarification_questions and "no_questions" not in clarification_questions.lower():
                 if not clarification_answers and args.interactive:
                     clarification_answers = helpers.read_user_answers()
@@ -1528,7 +1683,7 @@ class ReportOrchestrator:
             max_input_tokens_source=plan_max_source,
         )
         plan_sections = [
-            make_section("context", None, "\n".join(context_lines), priority="high"),
+            context_section(context_lines),
             make_section(
                 "scout_notes",
                 "Scout notes:",
@@ -1601,26 +1756,46 @@ class ReportOrchestrator:
         if stage_enabled("plan"):
             plan_budget = resolve_stage_budget(plan_max, reserve=3000, minimum=2000)
             plan_payload, _, _ = build_stage_payload(plan_sections, plan_budget)
-            plan_text, cached = get_cached_output(
-                "plan",
-                plan_model,
-                plan_prompt,
-                plan_payload,
-                lambda: self._runner.run(
-                    "Plan",
-                    plan_agent,
-                    {"messages": [{"role": "user", "content": plan_payload}]},
-                    show_progress=True,
-                ),
-            )
-            if cached:
+            cached = False
+            try:
+                plan_text, cached = get_cached_output(
+                    "plan",
+                    plan_model,
+                    plan_prompt,
+                    plan_payload,
+                    lambda: self._runner.run(
+                        "Plan",
+                        plan_agent,
+                        {"messages": [{"role": "user", "content": plan_payload}]},
+                        show_progress=True,
+                    ),
+                )
+                if cached:
+                    helpers.print_progress(
+                        "Plan [cache]",
+                        sanitize_console_text(plan_text),
+                        args.progress,
+                        args.progress_chars,
+                    )
+                record_stage("plan", "cached" if cached else "ran")
+            except Exception as exc:
+                if not is_context_overflow(exc):
+                    raise
                 helpers.print_progress(
-                    "Plan [cache]",
-                    sanitize_console_text(plan_text),
+                    "Plan",
+                    "[warn] context overflow in plan; retrying with reduced payload.",
                     args.progress,
                     args.progress_chars,
                 )
-            record_stage("plan", "cached" if cached else "ran")
+                fallback_budget = max(2000, (plan_budget // 2) if plan_budget else 2000)
+                fallback_payload, _, _ = build_stage_payload(plan_sections, fallback_budget)
+                plan_text = self._runner.run(
+                    "Plan (fallback)",
+                    plan_agent,
+                    {"messages": [{"role": "user", "content": fallback_payload}]},
+                    show_progress=True,
+                )
+                record_stage("plan", "ran", "overflow_fallback")
             plan_context = plan_text if len(plan_text) <= pack_limit else pack_text(plan_text)
             (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
             align_plan = run_alignment_check("plan", plan_text)
@@ -1656,7 +1831,7 @@ class ReportOrchestrator:
                 max_input_tokens_source=web_max_source,
             )
             web_sections = [
-                make_section("context", None, "\n".join(context_lines), priority="high"),
+                context_section(context_lines),
                 make_section(
                     "scout_notes",
                     "Scout notes:",
@@ -1687,12 +1862,30 @@ class ReportOrchestrator:
                 )
             web_budget = resolve_stage_budget(web_max, reserve=3000, minimum=2000)
             web_payload, _, _ = build_stage_payload(web_sections, web_budget)
-            web_text = self._runner.run(
-                "Web Query Draft",
-                web_agent,
-                {"messages": [{"role": "user", "content": web_payload}]},
-                show_progress=False,
-            )
+            try:
+                web_text = self._runner.run(
+                    "Web Query Draft",
+                    web_agent,
+                    {"messages": [{"role": "user", "content": web_payload}]},
+                    show_progress=False,
+                )
+            except Exception as exc:
+                if not is_context_overflow(exc):
+                    raise
+                helpers.print_progress(
+                    "Web Query Draft",
+                    "[warn] context overflow in web-query stage; retrying with reduced payload.",
+                    args.progress,
+                    args.progress_chars,
+                )
+                fallback_budget = max(2000, (web_budget // 2) if web_budget else 2000)
+                fallback_payload, _, _ = build_stage_payload(web_sections, fallback_budget)
+                web_text = self._runner.run(
+                    "Web Query Draft (fallback)",
+                    web_agent,
+                    {"messages": [{"role": "user", "content": fallback_payload}]},
+                    show_progress=False,
+                )
             web_queries = helpers.parse_query_lines(web_text, args.web_max_queries)
             helpers.print_progress(
                 "Web Queries",
@@ -1771,7 +1964,7 @@ class ReportOrchestrator:
                 max_input_tokens_source=evidence_max_source,
             )
             evidence_sections = [
-                make_section("context", None, "\n".join(context_lines), priority="high"),
+                context_section(context_lines),
                 make_section(
                     "scout_notes",
                     "Scout notes:",
@@ -1871,26 +2064,46 @@ class ReportOrchestrator:
                 )
             evidence_budget = resolve_stage_budget(evidence_max, reserve=3000, minimum=2000)
             evidence_input, _, _ = build_stage_payload(evidence_sections, evidence_budget)
-            evidence_notes, cached = get_cached_output(
-                "evidence",
-                evidence_model,
-                evidence_prompt,
-                evidence_input,
-                lambda: self._runner.run(
-                    "Evidence Notes",
-                    evidence_agent,
-                    {"messages": [{"role": "user", "content": evidence_input}]},
-                    show_progress=True,
-                ),
-            )
-            record_stage("evidence", "cached" if cached else "ran")
-            if cached:
+            cached = False
+            try:
+                evidence_notes, cached = get_cached_output(
+                    "evidence",
+                    evidence_model,
+                    evidence_prompt,
+                    evidence_input,
+                    lambda: self._runner.run(
+                        "Evidence Notes",
+                        evidence_agent,
+                        {"messages": [{"role": "user", "content": evidence_input}]},
+                        show_progress=True,
+                    ),
+                )
+                record_stage("evidence", "cached" if cached else "ran")
+                if cached:
+                    helpers.print_progress(
+                        "Evidence Notes [cache]",
+                        sanitize_console_text(evidence_notes),
+                        args.progress,
+                        args.progress_chars,
+                    )
+            except Exception as exc:
+                if not is_context_overflow(exc):
+                    raise
                 helpers.print_progress(
-                    "Evidence Notes [cache]",
-                    sanitize_console_text(evidence_notes),
+                    "Evidence Notes",
+                    "[warn] context overflow in evidence; retrying with reduced payload.",
                     args.progress,
                     args.progress_chars,
                 )
+                fallback_budget = max(2000, (evidence_budget // 2) if evidence_budget else 2000)
+                fallback_payload, _, _ = build_stage_payload(evidence_sections, fallback_budget)
+                evidence_notes = self._runner.run(
+                    "Evidence Notes (fallback)",
+                    evidence_agent,
+                    {"messages": [{"role": "user", "content": fallback_payload}]},
+                    show_progress=True,
+                )
+                record_stage("evidence", "ran", "overflow_fallback")
             (notes_dir / "evidence_notes.md").write_text(evidence_notes, encoding="utf-8")
             align_evidence = run_alignment_check("evidence", evidence_notes)
             verification_requests = parse_verification_requests(evidence_notes)
@@ -2077,7 +2290,7 @@ class ReportOrchestrator:
 
         def build_writer_sections(evidence_payload: str) -> list[dict]:
             sections = [
-                make_section("context", None, "\n".join(context_lines), priority="high"),
+                context_section(context_lines),
                 make_section(
                     "evidence",
                     "Evidence notes:",

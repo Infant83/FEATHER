@@ -1,0 +1,83 @@
+ learned. The learning
+process consists of three phases—initialization, continual
+adaptation, and merging & fine-tuning—as illustrated in
+Fig. 2. During initialization, an incomplete low-rank sub-
+space of principal basis vectors is formed. In the continual
+adaptation phase, this subspace is refined as new data or
+LoRA adapters arrive. Finally, in the merging & fine-tuning
+
+
+===== PAGE 4 =====
+phase, newly learned basis vectors are integrated with exist-
+ing ones, updating the principal basis vectors, and optimiz-
+ing task-specific coefficients.
+3.2.1. Step 1 - Initialization
+We initialize the foundational subspace (i.e., principal basis
+vectors) using t ≥1 LoRA adapters, where a larger t pro-
+vides a more representative subspace. Given a frozen pre-
+trained weight matrix W0 ∈Rn×d, LoRA introduces two
+low-rank trainable matrices, B ∈Rn×r and A ∈Rr×d,
+where r is the LoRA rank. The modified forward pass is
+h = W0x + ∆Wx = W0x + BAx. To compute the ba-
+sis vectors of previously seen t tasks, we reshape the LoRA
+matrices as stacked rank-r vectors:
+Bt = [B1, B2, . . . , Bt] ∈Rn×(tr).
+A similar stacked matrix At is calculated for A matrices
+from t tasks. We center the matrices Bt and At and per-
+form SVD on the mean-centered matrices Bt and At re-
+spectively. This gives us principal basis vectors, βt and αt,
+respectively. We repeat this for each layer. Then we select
+the top k basis vectors based on the highest eigenvalues that
+span our reusable shared subspace:
+βt
+[:k] ∈Rn×k, αt
+[:k] ∈Rd×k
+We keep these principal basis vectors frozen during finetun-
+ing, while training only the randomly initialized coefficients
+ϵα, ϵβ ∈Rk×p, where p (pseudo-rank) can be as small as 1.
+This initialization significantly reduces trainable param-
+eters compared to LoRA (e.g., 100× fewer parameters for
+one task in the GLUE [41] experiment, Sec. 4.1), yielding a
+relative savings of 1 −
+k×p
+(n+d)×r. The modified forward pass
+with an initialized Share model is:
+ht = W0x + (βtϵt
+β)(αtϵt
+α)⊤x
+∀x ∈St
+(1)
+Notably, this initialization is data- and gradient-free. If
+no LoRA adapters are available, Share can be initialized by
+training a LoRA adapter on initial data.
+3.2.2. Step 2 - Continual Adaptation
+After initialization, we receive either new task adapters
+∆Wt+1 or ar St+1. If only adapters arrive, we proceed di-
+rectly to merging. For the latter case, we perform efficient
+adaptation by adding new basis vectors while preserving the
+foundational subspace:
+Learning new basis vectors: To learn new basis vectors
+at time t + 1, we initialize φ < k temporary basis vectors
+along with their coefficients as follows:
+βt→t+1 = βt
+[:φ] ∈Rn×φ
+αt→t+1 = αt
+[:φ] ∈Rd×φ
+ϵt→t+1
+β
+, ϵt→t+1
+α
+∼N(0, σ2) ∈Rφ×p
+The modified forward pass becomes:
+h = W0x + (βt→t+1ϵt→t+1
+β
+)(αt→t+1ϵt→t+1
+α
+)⊤x ∀x ∈St
+This temporary expansion requires only φ(n + d + 2p)
+parameters, significantly fewer than LoRA’s r(n + d) pa-
+rameters. Both temporary basis vectors and coefficients are
+optimized before merging.
+3.2.3. Step 3 - Merging and Finetuning
+After continual adaptation, we merge the temporary ba-
+sis vectors with t

@@ -1,0 +1,36 @@
+- **저자**: Karol Kasprowicz, Maria Curie-Skłodowska University, Poland
+- **논문 제목**: Alignment Problem as Cultural and Legal Challenge: Artificial Intelligence, Interpretability, and Searching for Sense
+- **초록 요약**:
+  - AI 정렬 문제를 인간 해석 체계와 알고리즘 최적화 간의 문화적 소통의 도전으로 분석.
+  - 다양한 사회의 문화적 의미 생성 관행과 법적 틀 통합 필요.
+  - 현재 규제 시도는 해석 가능성, 불확실성 관리, 지식 추출 논란 등 세 가지 도전에 직면.
+  - 정렬 실패는 기술적 한계와 문화적 해석 논리의 불충분한 참여에서 비롯됨.
+  - AI 시스템 조정 프레임워크 제안, 기술적 안전 메커니즘과 문화적 틀 통합 필요성 강조.
+- **키워드**: 정렬, 인공지능, 해석 가능성, 규제, 의미 생성, 문화
+- **연락처**: Karol Kasprowicz, PhD, Maria Curie-Skłodowska University, Lublin, Poland
+- **DOI**: 10.17951/sil.2025.34.2.441-479
+
+출처: Studia Iuridica Lublinensia vol. 34, 2, 2025 [chunk_001.txt]
+- Y. Bengio는 AI 시스템이 인간 가치와 불일치할 수 있음을 강조.
+- 2025년 국제 AI 안전 보고서는 해석 가능성, 지식 추출, 불확실성 관리 등을 주요 도전 과제로 식별.
+- 기술적 접근의 불충분함과 사회-법적 프레임워크 필요성 강조.
+- D. Kokotajło의 예측에 따르면, 2년 내에 변혁적 AI 능력이 등장할 것으로 예상.
+- 투명성은 AI 규제 정책의 핵심 요소로 강조됨.
+- 혁신적인 거버넌스 연구 필요성 강조.
+
+출처: [chunk_002.txt]
+- **Chain of Thought Monitorability**: 오픈 소스 이니셔티브 포함.
+- AI 안전성 논의는 정부 지원을 받으며 구체적인 해결책으로 전환 중.
+- 법적 프레임워크 필요성 강조.
+- 오픈 소스 모델은 연구자들에게 AI 모델 접근 제공.
+- AI 보안 촉진을 위한 독립 감사 및 공개 테스트 강조.
+- AI 얼라이언스는 안전한 개발을 위한 프레임워크 제공.
+
+출처: [chunk_003.txt]
+- **주제**: AI 정렬 문제를 문화적 및 법적 도전으로 다룸.
+- 법은 개인과 집단의 이익을 조화시키는 도구로 작용.
+- AI 정렬 문제는 기술적 불확실성, 알고리즘 결정의 해석 가능성, 문화적 해석 관행 포함.
+- 효과적인 AI 정렬을 위한 새로운 학제적 접근 필요성 강조.
+- 질적, 학제적 방법론 사용하여 비판적 분석 수행.
+
+NEEDS_VERIFICATION: [chunk_004.txt]

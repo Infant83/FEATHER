@@ -1,7 +1,36 @@
 {
-  "revision": "2026-02-06T06:55:14.390173",
-  "generated_at": "2026-02-06T06:55:14.390173",
+  "revision": "2026-02-08T19:02:28.801266",
+  "generated_at": "2026-02-08T19:02:28.801266",
   "items": [
+    {
+      "id": "agenticAI_recent",
+      "run": "agenticAI_recent",
+      "report_stem": "report_full_1",
+      "title": "경영진을 위한 AI 도입 리스크 보고서",
+      "author": "AI Governance Team / AI Governance Office",
+      "summary": "경영진을 위한 AI 도입 리스크 보고서 Federlicht assisted and prompted by \"AI Governance Team / AI Governance Office\" — 2026-02-08 19:02 Executive Summary 최근 \"Agentic AI\"의 도입은 기업의 의사결정에 중대한 영향을 미치고 있으며, 특히 보안, 신뢰성, 비용, 데이터 거버넌스 등 다양한 리…",
+      "lang": "Korean",
+      "template": "acs_review",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [
+        "도입",
+        "링크",
+        "agentic",
+        "개월",
+        "의사결정에"
+      ],
+      "date": "2026-02-08",
+      "timestamp": "2026-02-08T19:02:28.547761",
+      "source_mtime": 1770544948,
+      "source_size": 35560,
+      "paths": {
+        "report": "runs/agenticAI_recent/report_full_1.html",
+        "overview": "runs/agenticAI_recent/report/run_overview_report_full_1.md",
+        "workflow": "runs/agenticAI_recent/report_notes/report_workflow.md",
+        "run": "runs/agenticAI_recent"
+      }
+    },
     {
       "id": "physical_ai_insight",
       "run": "physical_ai_insight",

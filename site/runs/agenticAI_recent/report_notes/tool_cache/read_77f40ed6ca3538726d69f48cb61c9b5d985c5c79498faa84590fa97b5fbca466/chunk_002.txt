@@ -1,0 +1,101 @@
+ewpoint specification
+and pose-controlled generation (Jin et al., 2024; Zhou et al.,
+2025).
+1
+arXiv:2602.06041v1  [cs.CV]  5 Feb 2026
+
+
+===== PAGE 2 =====
+Predicting Camera Pose from Perspective Descriptions for Spatial Reasoning
+Query: If I sit on the sofa behind the 
+black table, is the plant visible next to 
+the TV?
+Mental Image
+CAMCUE: Pose-Aware Imagination
+Synthesized Target 
+View
+View 1
+View 2
+View 3
+Baseline:
+No viewpoint grounding
+Context and Query (Input)
+Model Output
+Answer: Yes, the plant will 
+be visible in your front-right.
+CAMCUE successfully reasons
+using the imagined view.
+Answer: No, The plant is not 
+visible.
+Base model struggles to reason 
+from a shifted perspective.
+Figure 1. Perspective-shift reasoning with CamCue. Given multi-view context images, CamCue maps a natural-language viewpoint
+description to an explicit target camera pose and synthesizes the corresponding target view for reliable spatial reasoning.
+To address these limitations, we introduce CAMCUE, a pose-
+aware multi-image MLLM framework that can predict the
+camera pose of the language-specified target perspective.
+Camera pose provides a compact, explicit representation of
+viewpoint that situates each image in a shared 3D coordi-
+nate frame, making inter-view geometry directly usable for
+multimodal reasoning (Liao et al., 2025; Zhao et al., 2025).
+Our key design principle is to make viewpoint an explicit
+geometric anchor for multi-view reasoning. We start by
+injecting per-view camera information into the correspond-
+ing visual features, so that the model can align evidence
+across images through geometry rather than treating each
+image as individual input. We then interpret the natural-
+language target-perspective description by mapping it to
+a concrete target camera pose, which specifies where the
+model should “mentally stand” to answer the question. Con-
+ditioned on this predicted pose, we further synthesize the
+corresponding target-view image and treat the imagined ob-
+servation as additional evidence for answering. This tight
+coupling between language-specified perspective, pose pre-
+diction, and pose-conditioned view synthesis strengthens
+multi-image fusion and substantially improves performance
+on perspective-shift spatial reasoning.
+To support this setting, we curate CAMCUE-DATA, a dataset
+tailored to perspective-shift reasoning. CAMCUE-DATA
+contains 27,668 training instances and 508 test instances,
+and pairs multi-view images and per-view camera poses
+with diverse natural-language target-perspective descrip-
+tions, including human-annotated descriptions, and ques-
+tions that require answering from the specified viewpoint.
+On this benchmark, CAMCUE yields substantial gains on
+perspective-shift spatial reasoning, improving overall accu-
+racy by 9.06%. It also predicts target camera poses directly
+from natural-language descriptions with strong accuracy,
+achieving over 90% rotation accuracy within 20◦and transla-
+tion accuracy at t@0.5. Moreover, by predicting an explicit
+target pose, CAMCUE avoids expensive test-time search-
+and-match used by prior methods, reducing inference time
+from 256.6 seconds to 1.45 seconds per example and en-
+abling fast, interactive use in real-world scenarios. Beyond
+CAMCUE-DATA, CAMCUE also improves performance on
+general multi-image spatial reasoning benchmarks such as
+MindCube Tiny (Yin et al., 2025) and MMSI (Yang et al.,
+2025b).
+In summary, our contributions are listed as follows:
+• We propose CAMCUE, a pose-aware multi-image
+MLLM framework that injects per-view camera infor-
+mation into the corresponding visual features, enabling
+geometry-aware fusion across views for spatial reason-
+ing.
+• CAMCUE can map a natural-language target-view de-
+scription to an explicit target camera pose, providing a
+concrete viewpoint representation for answering from
+the specified perspective.
+• Conditioned on the predicted target pose, CAMCUE
+synthesizes the corresponding target-view image and
+feeds it back as additional evidence, substantially im-
+proving perspective-shift reasoning ability.
+• We curate CAMCUE-DATA, a dataset tailored to
+perspective-shift reasoning that pairs multi-view im-
+ages with diverse, detailed natural-language camera
+viewpoint descriptions, including human-annotated de-
+scriptions, and target-view questions that require rea-
+soning from the described viewpoint.
+2. Related Work
+2.1. Multi-Image Spatial Reasoning Benchmarks
+Multi-image spatial reasoning is a key probe for evaluat-
+ing spatia

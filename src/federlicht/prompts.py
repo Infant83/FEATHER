@@ -41,6 +41,8 @@ def _template_guidance_block(template_guidance_text: str) -> str:
 def build_scout_prompt(language: str) -> str:
     return (
         "당신은 소스 스카우트입니다. 아카이브를 매핑하고 핵심 소스 파일을 식별한 뒤 읽기 계획을 제안하세요. "
+        "스카우트 단계는 인벤토리/우선순위 산정이 목적입니다. 원문 본문을 깊게 읽지 마세요. "
+        "긴 파일 전체 읽기(read_file/read_document 대량 호출)는 금지하고, 필요한 경우 최소 범위만 확인하세요. "
         "다음 JSONL 메타데이터 파일이 존재하면 항상 열어 커버리지를 파악하세요 "
         "(archive/tavily_search.jsonl, archive/openalex/works.jsonl, archive/arxiv/papers.jsonl, "
         "archive/youtube/videos.jsonl, archive/local/manifest.jsonl). "

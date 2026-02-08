@@ -1,0 +1,66 @@
+ngle-agent single-task EQA, our frame-
+work further enables communication capabilities to improve
+task completion efficiency and success rate. Furthermore, our
+framework can be easily extended to handle more complex
+human assignments in multi-agent settings, where robots
+are tasked with executing downstream tasks based on the
+information they acquire since robots are assigned questions
+based on their capabilities for the downstream tasks.
+The overall framework architecture is illustrated in Fig. 2,
+which consists of four core modules: perception, communi-
+cation, planning, and confidence check modules. The plan-
+ning and confidence check modules are modified from [2]. In
+the communication module, messages are generated and pro-
+jected onto the semantic value map in the planning module
+to guide the robots’ exploration strategies. This module also
+enables a robot to provide answers to other robots’ questions
+when it has sufficient confidence. All notations in this section
+correspond to time t. For each robot i, the perception module
+employs a VLM to detect a set of observed objects Oi
+observe
+from the RGB image Ii
+c with the following prompt:
+Consider the indoor scenario, analyze the provided image and
+list all the objects you observe. Provide the name of each object
+along with its color, separated by a comma.
+The perception module’s detected Oi
+observe are fed into the
+reasoning process to determine which objects to include in
+the communication by employing conformal prediction. Each
+unsolved question is sequentially prompted to the LLM,
+along with Oi
+observe, to generate an answer. If the answer
+passes the confidence check described in Sec. IV.D and the
+question is assigned to the responding robot, it proceeds.
+Otherwise, it sends the answer to the responsible robot.
+A. LLM-Based Object Relevance Reasoning
+In indoor scenarios, objects are typically organized accord-
+ing to patterns of human usage, and LLMs can leverage the
+general knowledge of these patterns. Thus, if LLM assesses
+that an object observed in an area is highly relevant to the
+target object, there is an increased likelihood that the target
+is nearby. Based on this intuition, we design a communica-
+tion framework that enables robots to share relevant object
+information or answers to other robots’ questions.
+During exploration, each robot ˆi sends a request rˆi
+j to seek
+for assistance on its question qˆi
+j and provide its target objects
+Oˆi
+request. The LLM evaluates objects observed by robot i,
+denoted as Oi
+observe, and the observed and target objects are
+labeled as Observed and Request, respectively. We employ
+the zero-shot chain-of-thought [24] to prompt the LLM to
+conduct detailed reasoning before generating a final output.
+The following is the prompts used for the LLM. Here, the
+system prompt is the instruction for the LLM, and the user
+prompt is the content of the conversation with LLM.
+System prompt:
+As a robot in a house, your partner is looking for {Request}
+and you can inform them about what you have observed.
+
+
+===== PAGE 4 =====
+User prompt:
+You observe {Observed}. You

@@ -1,0 +1,93 @@
+I = {Ii}V
+i=1 and their associ-
+ated camera poses P = {Pi}V
+i=1, CAMCUE predicts the an-
+swer under the specified target perspective. We first present
+the CAMCUE model architecture in Sec. 3.1. We then de-
+scribe the construction of CAMCUE-DATA in Sec. 3.2.
+3.1. Architecture
+Pl¨ucker encoder
+As shown in Fig. 2, each contextual
+view provides camera extrinsics Ci ∈R4×4 and intrinsics
+Ki.
+Following prior work (Jiang et al., 2025), we transform
+(Ci, Ki) into a pixel-aligned Pl¨ucker ray map
+Ri = Pl¨ucker(Ci, Ki) ∈RH×W ×6,
+(1)
+which represents the camera pose information as dense rays
+aligned with image pixels.
+We then encode Ri into patch-aligned camera tokens
+Zi = Epose(Ri) ∈RS×d,
+(2)
+where S = HpWp is the number of patch tokens under
+the backbone’s canonical resolution, with Hp = H′/p and
+Wp = W ′/p for patch size p.
+Epose is a lightweight Pl¨ucker encoder that follows the same
+patchification and spatial aggregation scheme as the vision
+backbone. Specifically, Epose follows the same tokenization
+pipeline as the vision encoder: it first resizes Ri to the back-
+bone’s canonical resolution, then patchifies it and applies
+a patch embedding to convert each local ray patch into a
+d-dimensional token. This yields a patch-aligned token grid
+that is spatially aligned with the image patch tokens for
+subsequent fusion.
+3
+
+
+===== PAGE 4 =====
+Predicting Camera Pose from Perspective Descriptions for Spatial Reasoning
+Input views & 
+Camera Poses
+Vision
+Encoder
+Plücker
+Encoder
+Image
+Tokens
+Camera
+Tokens
+MLLM
+Pose
+Adapter
+Yes, the trash bin is on 
+your right.
+Image Decoder
+Predicted 
+Camera Pose
+Imagined 
+Target View
+ℒpose
+Ground Truth
+Camera Pose
+ℒlang
+Ground Truth
+Answer
+Question: If I am standing in front 
+of the door. Is the trash bin on my 
+right side?
++
+Fusion MLP
+Pose Fusion
+Figure 2. Given multiple contextual images with their camera poses and a natural-language target-viewpoint description plus question,
+CamCue encodes visual content and pixel-aligned camera pose features, fuses them into pose-aware visual tokens, and uses an MLLM
+with a pose adapter to jointly generate the answer and predict the target camera pose. The predicted pose can further condition an image
+decoder to synthesize an imagined target view, which is fed back as additional evidence for answering.
+Pose-aware token fusion.
+Given the image patch tokens
+Xi ∈RS×d from the vision backbone and the correspond-
+ing Pl¨ucker camera tokens Zi ∈RS×d, we fuse pose in-
+formation into the visual representation in a patch-aligned
+manner. We concatenate tokens at the same patch index and
+apply a lightweight MLP projection to produce a residual
+update:
+˜Xi = Xi + W [Zi; Xi],
+(3)
+where [·; ·] denotes feature-wise concatenation and W ∈
+Rd×2d. This design preserves the backbone token layout
+while injecting per-patch geometric cues, yielding fused
+tokens ˜Xi ∈RS×d for subsequent multi-view reasoning.
+Target pose prediction.
+As shown in Fig. 2 (the Pose
+Adapter branch), given the fused multi-view scene tokens
+˜X ∈RTvis×d and the text hidden states H ∈RTtext×d, we
+predict the target camera pose with a query
