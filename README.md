@@ -2,7 +2,20 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.3.0
+Version: 1.4.0
+
+## Core Idea
+Federlicht is an agentic research and reporting platform designed around one principle:
+collect evidence carefully, then illuminate decisions clearly.
+
+In short: individual evidence fragments are lightweight, but when curated and composed with
+the right structure, they become actionable insight.
+
+## Platform Overview
+- `Feather`: source intake and archival (web, arXiv, local docs).
+- `Federlicht`: multi-stage report generation and quality pipeline.
+- `Federnett`: operational studio (UI) to run, inspect, and iterate workflows.
+- `FederHav`: profile-guided revision flow for persona-aware report refinement.
 
 Federlicht is the base platform package name. It includes four operational components:
 - `feather`: external evidence intake and source archival (RAG collector).
