@@ -347,6 +347,14 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Check alignment with the report prompt at each stage (default: enabled).",
     )
     ap.add_argument(
+        "--alignment-stages",
+        default="scout,plan,evidence,draft,final",
+        help=(
+            "Comma-separated stages for alignment checks. "
+            "Supported: scout, plan, evidence, draft, final (default: all)."
+        ),
+    )
+    ap.add_argument(
         "--repair-mode",
         default="append",
         choices=["append", "replace", "off"],
