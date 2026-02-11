@@ -67,6 +67,7 @@ const state = {
     historySourcePath: "",
     resumeStage: "",
     historyStageStatus: {},
+    historyFailedStage: "",
     selectedStages: new Set(),
     stageOrder: [],
     autoStages: new Set(),
@@ -3074,6 +3075,7 @@ function resetWorkflowState() {
   state.workflow.historySourcePath = "";
   state.workflow.resumeStage = "";
   state.workflow.historyStageStatus = {};
+  state.workflow.historyFailedStage = "";
   state.workflow.selectedStages = new Set(selectedStagesInOrder());
   state.workflow.stageOrder = currentPipelineStageOrder();
   state.workflow.autoStages = new Set();
@@ -3560,9 +3562,11 @@ function syncWorkflowHistoryControls() {
   const sourceName = state.workflow.historySourcePath
     ? state.workflow.historySourcePath.split("/").pop()
     : "";
+  const failedStage = String(state.workflow.historyFailedStage || "").trim();
+  const failedText = failedStage ? ` · stopped at ${workflowLabel(failedStage)}` : "";
   hintEl.textContent = sourceName
-    ? `History checkpoint: ${lastLabel} -> resume ${resumeLabel} (${sourceName})`
-    : `History checkpoint: ${lastLabel} -> resume ${resumeLabel}`;
+    ? `History checkpoint: ${lastLabel} -> resume ${resumeLabel}${failedText} (${sourceName})`
+    : `History checkpoint: ${lastLabel} -> resume ${resumeLabel}${failedText}`;
   resumeBtn.disabled = !resumeStage;
   resumeBtn.textContent = resumeStage
     ? `Resume from ${workflowLabel(resumeStage)}`
@@ -3698,6 +3702,7 @@ async function hydrateWorkflowFromHistory({ logPath, runRel, kind, logText }) {
     state.workflow.selectedStages = new Set();
     state.workflow.completedSteps = new Set(["feather"]);
     state.workflow.historyStageStatus = {};
+    state.workflow.historyFailedStage = "";
     state.workflow.autoStages = new Set();
     state.workflow.autoStageReasons = {};
     WORKFLOW_STAGE_ORDER.forEach((stageId) => {
@@ -3714,6 +3719,9 @@ async function hydrateWorkflowFromHistory({ logPath, runRel, kind, logText }) {
       }
       if (["error", "failed"].includes(status)) {
         state.workflow.hasError = true;
+        if (!state.workflow.historyFailedStage) {
+          state.workflow.historyFailedStage = stageId;
+        }
       }
       const detailMeta = parseWorkflowDetailMeta(detail);
       if (detailMeta.autoRequired || detailMeta.autoRequiredBy.length) {
@@ -3724,11 +3732,11 @@ async function hydrateWorkflowFromHistory({ logPath, runRel, kind, logText }) {
     if (!state.workflow.selectedStages.size) {
       selectedStagesInOrder().forEach((stageId) => state.workflow.selectedStages.add(stageId));
     }
-    if (parsedFromLog.resultPath) {
+    const latest = normalizePathString(state.runSummary?.latest_report_rel || "");
+    if (latest) {
+      state.workflow.resultPath = latest;
+    } else if (parsedFromLog.resultPath) {
       state.workflow.resultPath = normalizePathString(parsedFromLog.resultPath);
-    } else {
-      const latest = normalizePathString(state.runSummary?.latest_report_rel || "");
-      if (latest) state.workflow.resultPath = latest;
     }
     if (parsedFromLog.hasError) {
       state.workflow.hasError = true;
@@ -3738,6 +3746,9 @@ async function hydrateWorkflowFromHistory({ logPath, runRel, kind, logText }) {
     if (nextPending) {
       state.workflow.resumeStage = nextPending;
       state.workflow.activeStep = nextPending;
+      if (!state.workflow.historyFailedStage && state.workflow.hasError) {
+        state.workflow.historyFailedStage = nextPending;
+      }
       state.workflow.statusText = state.workflow.hasError
         ? `History · Failed near ${workflowLabel(nextPending)}`
         : `History · Resume ${workflowLabel(nextPending)}`;

@@ -702,6 +702,24 @@ class ReportOrchestrator:
         def agent_max_tokens(name: str) -> tuple[Optional[int], str]:
             return agent_runtime.max_input_tokens(name, self._agent_overrides)
 
+        def parse_alignment_stage_set(raw: object) -> set[str]:
+            default = {"scout", "plan", "evidence", "draft", "final"}
+            if raw is None:
+                return default
+            text = str(raw).strip()
+            if not text:
+                return default
+            requested = {
+                token.strip().lower()
+                for token in text.replace(";", ",").replace("|", ",").split(",")
+                if token.strip()
+            }
+            valid = {"scout", "plan", "evidence", "draft", "final"}
+            selected = requested & valid
+            return selected or default
+
+        alignment_stage_set = parse_alignment_stage_set(getattr(args, "alignment_stages", None))
+
         def normalize_depth(value: Optional[str]) -> Optional[str]:
             if not value:
                 return None
@@ -1193,17 +1211,31 @@ class ReportOrchestrator:
             return final_text
 
         def run_alignment_check(stage: str, content: str) -> Optional[str]:
-            if not alignment_enabled:
+            nonlocal alignment_agent
+            if not alignment_enabled or stage.strip().lower() not in alignment_stage_set:
                 return None
             align_max, align_max_source = agent_max_tokens("alignment")
-            alignment_agent = helpers.create_agent_with_fallback(
-                self._create_deep_agent,
-                alignment_model,
-                tools,
-                alignment_prompt,
-                backend,
-                max_input_tokens=align_max,
-                max_input_tokens_source=align_max_source,
+            if alignment_agent is None:
+                helpers.print_progress(
+                    f"Alignment Check ({stage})",
+                    "[prep] initializing alignment agent",
+                    args.progress,
+                    args.progress_chars,
+                )
+                alignment_agent = helpers.create_agent_with_fallback(
+                    self._create_deep_agent,
+                    alignment_model,
+                    tools,
+                    alignment_prompt,
+                    backend,
+                    max_input_tokens=align_max,
+                    max_input_tokens_source=align_max_source,
+                )
+            helpers.print_progress(
+                f"Alignment Check ({stage})",
+                "[prep] building alignment payload",
+                args.progress,
+                args.progress_chars,
             )
             align_sections = [
                 make_section("stage", "Stage:", stage, priority="high", base_limit=120, min_limit=40),
@@ -1240,6 +1272,12 @@ class ReportOrchestrator:
                 hard_cap=12000,
             )
             align_payload, _, _ = build_stage_payload(align_sections, align_budget)
+            helpers.print_progress(
+                f"Alignment Check ({stage})",
+                "[prep] resolving cache and invoking model",
+                args.progress,
+                args.progress_chars,
+            )
             try:
                 align_notes, cached = get_cached_output(
                     f"alignment_{stage}",
@@ -2030,6 +2068,12 @@ class ReportOrchestrator:
             record_stage("web", "skipped", "policy")
 
         if supporting_dir:
+            helpers.print_progress(
+                "Evidence Prep",
+                "[prep] indexing supporting sources and refreshing triage",
+                args.progress,
+                args.progress_chars,
+            )
             support_rel = supporting_dir.relative_to(run_dir).as_posix()
             context_lines.append(f"Supporting folder: {support_rel}")
             context_lines.append(f"Supporting search: {support_rel}/web_search.jsonl")
@@ -2233,6 +2277,12 @@ class ReportOrchestrator:
             align_evidence = run_alignment_check("evidence", evidence_notes)
             verification_requests = parse_verification_requests(evidence_notes)
             if verification_requests:
+                helpers.print_progress(
+                    "Evidence Verification",
+                    f"[prep] loading {len(verification_requests)} verification chunk(s)",
+                    args.progress,
+                    args.progress_chars,
+                )
                 verify_limit = min(args.quality_max_chars, 6000)
                 verified = read_verification_chunks(verification_requests, verify_limit)
                 if verified:
@@ -2263,31 +2313,73 @@ class ReportOrchestrator:
                     max_input_tokens=plan_check_max,
                     max_input_tokens_source=plan_check_max_source,
                 )
-                plan_check_input = "\n".join(
-                    [
-                        "Plan:",
-                        plan_text,
-                        "",
+                plan_check_sections = [
+                    make_section("plan", "Plan:", plan_text, priority="high", base_limit=pack_limit, min_limit=900),
+                    make_section(
+                        "evidence_notes",
                         "Evidence notes:",
                         evidence_notes,
-                        "",
+                        priority="high",
+                        base_limit=max(2200, min(args.quality_max_chars, 7000)),
+                        min_limit=1200,
+                    ),
+                    make_section(
+                        "report_prompt",
                         "Report focus prompt:",
                         report_prompt or "(none)",
-                    ]
-                )
-                plan_text, cached = get_cached_output(
-                    "plan_check",
-                    plan_check_model,
-                    plan_check_prompt,
-                    plan_check_input,
-                    lambda: self._runner.run(
-                        "Plan Update",
-                        plan_check_agent,
-                        {"messages": [{"role": "user", "content": plan_check_input}]},
-                        show_progress=True,
+                        priority="high",
+                        base_limit=report_prompt_limit,
+                        min_limit=800,
                     ),
+                ]
+                plan_check_budget = resolve_stage_budget(
+                    plan_check_max,
+                    reserve=2600,
+                    minimum=1600,
+                    default_budget=9000,
+                    hard_cap=14000,
                 )
-                record_stage("plan_check", "cached" if cached else "ran")
+                plan_check_input, _, _ = build_stage_payload(plan_check_sections, plan_check_budget)
+                helpers.print_progress(
+                    "Plan Update",
+                    "[prep] composing plan/evidence reconciliation payload",
+                    args.progress,
+                    args.progress_chars,
+                )
+                try:
+                    plan_text, cached = get_cached_output(
+                        "plan_check",
+                        plan_check_model,
+                        plan_check_prompt,
+                        plan_check_input,
+                        lambda: self._runner.run(
+                            "Plan Update",
+                            plan_check_agent,
+                            {"messages": [{"role": "user", "content": plan_check_input}]},
+                            show_progress=True,
+                        ),
+                    )
+                except Exception as exc:
+                    if not is_context_overflow(exc):
+                        raise
+                    helpers.print_progress(
+                        "Plan Update",
+                        "[warn] context overflow in plan_check; retrying with reduced payload.",
+                        args.progress,
+                        args.progress_chars,
+                    )
+                    fallback_budget = max(1400, (plan_check_budget // 2) if plan_check_budget else 1400)
+                    fallback_input, _, _ = build_stage_payload(plan_check_sections, fallback_budget)
+                    plan_text = self._runner.run(
+                        "Plan Update (fallback)",
+                        plan_check_agent,
+                        {"messages": [{"role": "user", "content": fallback_input}]},
+                        show_progress=True,
+                    )
+                    cached = False
+                    record_stage("plan_check", "ran", "overflow_fallback")
+                else:
+                    record_stage("plan_check", "cached" if cached else "ran")
                 if cached:
                     helpers.print_progress(
                         "Plan Update [cache]",
