@@ -698,7 +698,6 @@ class ReportOrchestrator:
             self._agent_overrides,
         )
         alignment_model = agent_runtime.model("alignment", check_model, self._agent_overrides)
-        alignment_agent = None
 
         def agent_max_tokens(name: str) -> tuple[Optional[int], str]:
             return agent_runtime.max_input_tokens(name, self._agent_overrides)
