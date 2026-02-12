@@ -227,3 +227,30 @@ def test_resolve_requested_model_supports_openai_model_reference(monkeypatch) ->
     chosen, explicit = help_agent._resolve_requested_model("$OPENAI_MODEL")
     assert chosen == "gpt-5-mini"
     assert explicit is False
+
+
+def test_stream_help_question_emits_delta_and_done(monkeypatch, tmp_path) -> None:
+    root = tmp_path
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 3))
+
+    def _fake_call_llm_stream(_q, _sources, **_kwargs):
+        def _iter():
+            yield "부분 "
+            yield "응답"
+        return _iter(), "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm_stream", _fake_call_llm_stream)
+    events = list(
+        help_agent.stream_help_question(
+            root,
+            "질문",
+            model="gpt-4o-mini",
+            history=[{"role": "user", "content": "prev"}],
+        )
+    )
+    event_types = [evt.get("event") for evt in events]
+    assert event_types[0] == "meta"
+    assert "delta" in event_types
+    assert event_types[-1] == "done"
+    done_payload = events[-1]
+    assert done_payload.get("answer") == "부분 응답"

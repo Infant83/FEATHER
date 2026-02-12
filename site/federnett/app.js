@@ -87,6 +87,7 @@ const state = {
     loopbackCount: 0,
     loopbackPulse: false,
     loopbackTimer: null,
+    qualityMenuOpen: false,
   },
   templateGen: {
     log: "",
@@ -116,6 +117,16 @@ const state = {
     busy: false,
     history: [],
     runRel: "",
+    profileId: "",
+    historyProfileId: "",
+    scopeKey: "",
+    threads: [],
+    activeThreadId: "",
+    selectionText: "",
+    pendingAction: null,
+    lastAction: null,
+    lastAnswer: "",
+    lastSources: [],
   },
   workspace: {
     open: false,
@@ -127,37 +138,58 @@ const LOG_LINE_LIMIT = 1400;
 const LOG_LINE_MAX_CHARS = 3200;
 const LOG_MD_MAX_CHARS = 120000;
 const LOG_MD_TAIL_CHARS = 60000;
+const MERMAID_CDN = "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js";
+const WORKFLOW_PREF_STORAGE_KEY = "federnett-workflow-pref-v1";
+const AGENT_PROFILE_STORAGE_KEY = "federnett-active-agent-profile-v1";
+const ASK_DEFAULT_THREAD_ID = "main";
+const ASK_DEFAULT_THREAD_TITLE = "기본 대화";
+const ASK_THREAD_LIMIT = 24;
+const AGENT_APPLY_TARGETS = [
+  { id: "writer", label: "Writer", hint: "최종 보고서 본문 생성" },
+  { id: "critic", label: "Critic", hint: "문장/논리 품질 비평" },
+  { id: "reviser", label: "Reviser", hint: "비평 반영 재작성" },
+  { id: "planner", label: "Planner", hint: "보고서 구조/작업 계획 수립" },
+  { id: "alignment", label: "Alignment", hint: "목표/정책 일치성 점검" },
+  { id: "scout", label: "Scout", hint: "초기 스캔/핵심 대상 선별" },
+  { id: "evidence", label: "Evidence", hint: "인용 가능한 근거 추출" },
+  { id: "quality", label: "Quality", hint: "최종 품질 루프 점검" },
+];
+const mermaidState = {
+  loading: null,
+  ready: false,
+};
+let workflowDismissBound = false;
 
 const STAGE_DEFS = [
   {
     id: "scout",
     label: "Scout",
     desc:
-      "Map the archive, read indices, and propose a focused reading plan. Best-effort triage before deeper extraction.",
+      "아카이브 지형도를 빠르게 훑고 핵심 읽기 대상을 고릅니다. 전체 맥락을 잡는 탐색 단계입니다.",
   },
   {
     id: "plan",
     label: "Plan",
     desc:
-      "Translate scout notes into a concrete execution plan. Useful when you want the run steps documented explicitly.",
+      "Scout 결과를 실행 가능한 작업 순서로 정리합니다. 단계 의사결정을 명시적으로 남길 때 유용합니다.",
   },
   {
     id: "evidence",
     label: "Evidence",
     desc:
-      "Read the key sources and extract structured evidence. This stage is the main bridge between raw documents and writing.",
+      "핵심 원문을 읽고 인용 가능한 근거를 뽑아 구조화합니다. 문서 수집과 Writer를 연결하는 핵심 단계입니다.",
   },
   {
     id: "writer",
     label: "Writer",
     desc:
-      "Synthesize the evidence into the report body using the selected template, depth, and language constraints.",
+      "근거를 바탕으로 보고서 본문을 작성합니다. 템플릿/깊이/언어 제약을 적용해 완성도를 맞춥니다.",
   },
   {
     id: "quality",
     label: "Quality",
     desc:
-      "Run critique/revision loops and structural repair. Helps with completeness but may add latency and token cost.",
+      "비평/수정 루프를 돌려 품질을 다듬습니다. 완성도는 올라가지만 시간과 토큰 사용량이 늘 수 있습니다.",
   },
 ];
 
@@ -466,6 +498,218 @@ function askStorageKey(key) {
   return `federnett-ask-${key}`;
 }
 
+function askScopeValues() {
+  const runRel = ensureAskRunRel();
+  const profileId = ensureAskProfileId() || "default";
+  const runKey = normalizePathString(runRel || "global") || "global";
+  const profileKey = slugifyLabel(profileId) || "default";
+  return {
+    runRel,
+    profileId,
+    scopeKey: `${runKey}::${profileKey}`,
+  };
+}
+
+function askThreadsStorageKey(scopeKey) {
+  return askStorageKey(`threads-${encodeURIComponent(scopeKey || "global::default")}`);
+}
+
+function normalizeAskThreadId(value) {
+  const cleaned = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return cleaned.slice(0, 32);
+}
+
+function createAskThread(seedTitle = "") {
+  const title = String(seedTitle || "").trim().slice(0, 48) || ASK_DEFAULT_THREAD_TITLE;
+  const id = normalizeAskThreadId(`t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`);
+  return {
+    id: id || `t_${Date.now().toString(36)}`,
+    title,
+    preview: "",
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function loadAskThreadMeta(scopeKey) {
+  const raw = localStorage.getItem(askThreadsStorageKey(scopeKey));
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry) => {
+        const id = normalizeAskThreadId(entry?.id);
+        if (!id) return null;
+        return {
+          id,
+          title: String(entry?.title || ASK_DEFAULT_THREAD_TITLE).trim().slice(0, 48),
+          preview: String(entry?.preview || "").trim().slice(0, 96),
+          updated_at: String(entry?.updated_at || ""),
+        };
+      })
+      .filter(Boolean)
+      .slice(0, ASK_THREAD_LIMIT);
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveAskThreadMeta() {
+  localStorage.setItem(
+    askThreadsStorageKey(state.ask.scopeKey),
+    JSON.stringify((state.ask.threads || []).slice(0, ASK_THREAD_LIMIT)),
+  );
+}
+
+function activeAskThread() {
+  return (state.ask.threads || []).find((item) => item.id === state.ask.activeThreadId) || null;
+}
+
+function renderAskThreadList() {
+  const host = $("#ask-thread-list");
+  if (!host) return;
+  const items = Array.isArray(state.ask.threads) ? state.ask.threads : [];
+  if (!items.length) {
+    host.innerHTML = '<p class="muted">스레드가 없습니다.</p>';
+    return;
+  }
+  host.innerHTML = items
+    .map((item) => {
+      const active = item.id === state.ask.activeThreadId;
+      const title = item.title || ASK_DEFAULT_THREAD_TITLE;
+      const preview = item.preview || "새 대화를 시작하세요.";
+      const updated = item.updated_at ? formatDate(item.updated_at) : "-";
+      return `
+        <button type="button" class="ask-thread-item ${active ? "active" : ""}" data-ask-thread="${escapeHtml(item.id)}">
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(preview)}</span>
+          <span>${escapeHtml(updated)}</span>
+        </button>
+      `;
+    })
+    .join("");
+  host.querySelectorAll("[data-ask-thread]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const threadId = btn.getAttribute("data-ask-thread") || "";
+      if (!threadId || threadId === state.ask.activeThreadId) return;
+      setAskActiveThread(threadId).catch((err) => setAskStatus(`스레드 전환 실패: ${err}`));
+    });
+  });
+}
+
+function askHistoryProfileId() {
+  const scope = askScopeValues();
+  const base = normalizeAskThreadId(scope.profileId) || "default";
+  const threadId = normalizeAskThreadId(state.ask.activeThreadId || ASK_DEFAULT_THREAD_ID) || ASK_DEFAULT_THREAD_ID;
+  return `${base}__th_${threadId}`;
+}
+
+function askCurrentThreadLabel() {
+  const thread = activeAskThread();
+  return thread?.title || ASK_DEFAULT_THREAD_TITLE;
+}
+
+function ensureAskThreadScope(force = false) {
+  const scope = askScopeValues();
+  if (!force && state.ask.scopeKey === scope.scopeKey && Array.isArray(state.ask.threads) && state.ask.threads.length) {
+    return;
+  }
+  const previousThreadId = force ? "" : state.ask.activeThreadId;
+  state.ask.runRel = scope.runRel;
+  state.ask.profileId = scope.profileId;
+  state.ask.scopeKey = scope.scopeKey;
+  const stored = loadAskThreadMeta(scope.scopeKey);
+  let threads = stored.length ? stored : [];
+  if (!threads.find((item) => item.id === ASK_DEFAULT_THREAD_ID)) {
+    threads.unshift({
+      id: ASK_DEFAULT_THREAD_ID,
+      title: ASK_DEFAULT_THREAD_TITLE,
+      preview: "",
+      updated_at: "",
+    });
+  }
+  threads = threads.slice(0, ASK_THREAD_LIMIT);
+  state.ask.threads = threads;
+  const nextThread =
+    threads.find((item) => item.id === previousThreadId)?.id
+    || threads[0]?.id
+    || ASK_DEFAULT_THREAD_ID;
+  state.ask.activeThreadId = nextThread;
+  state.ask.historyProfileId = askHistoryProfileId();
+  renderAskThreadList();
+}
+
+async function setAskActiveThread(threadId) {
+  const normalized = normalizeAskThreadId(threadId);
+  if (!normalized) return;
+  if (!(state.ask.threads || []).find((item) => item.id === normalized)) {
+    return;
+  }
+  state.ask.activeThreadId = normalized;
+  state.ask.historyProfileId = askHistoryProfileId();
+  renderAskThreadList();
+  await loadAskHistory(ensureAskRunRel());
+}
+
+async function createNewAskThread() {
+  ensureAskThreadScope(false);
+  const newThread = createAskThread("새 대화");
+  state.ask.threads = [newThread, ...(state.ask.threads || [])]
+    .filter((item, idx, arr) => arr.findIndex((candidate) => candidate.id === item.id) === idx)
+    .slice(0, ASK_THREAD_LIMIT);
+  state.ask.activeThreadId = newThread.id;
+  state.ask.history = [];
+  state.ask.historyProfileId = askHistoryProfileId();
+  state.ask.lastAction = null;
+  state.ask.lastAnswer = "";
+  state.ask.lastSources = [];
+  saveAskThreadMeta();
+  renderAskThreadList();
+  renderAskHistory();
+  renderAskAnswer("");
+  renderAskSources([]);
+  renderAskActions(null, "", []);
+  setAskStatus("새 스레드를 시작했습니다.");
+}
+
+function updateActiveThreadMeta(nextValues = {}) {
+  const thread = activeAskThread();
+  if (!thread) return;
+  if (nextValues.title) {
+    thread.title = String(nextValues.title).trim().slice(0, 48) || thread.title;
+  }
+  if (nextValues.preview !== undefined) {
+    thread.preview = String(nextValues.preview || "").trim().slice(0, 96);
+  }
+  thread.updated_at = String(nextValues.updated_at || new Date().toISOString());
+  state.ask.threads = (state.ask.threads || []).sort((a, b) => {
+    return String(b.updated_at || "").localeCompare(String(a.updated_at || ""));
+  });
+  saveAskThreadMeta();
+  renderAskThreadList();
+}
+
+function renderAskHistory(_pendingTurn = null) {
+  const host = $("#ask-history");
+  if (!host) return;
+  const count = Array.isArray(state.ask.history) ? state.ask.history.length : 0;
+  const runRel = ensureAskRunRel();
+  const profileId = ensureAskProfileId();
+  const threadLabel = askCurrentThreadLabel();
+  host.classList.add("has-content");
+  host.innerHTML = `
+    <span class="hint">
+      스레드: ${escapeHtml(threadLabel)} · 이력 ${escapeHtml(String(count))}개
+      ${runRel ? ` · run=${escapeHtml(stripSiteRunsPrefix(runRel) || runRel)}` : ""}
+      ${profileId ? ` · profile=${escapeHtml(profileId)}` : ""}
+    </span>
+  `;
+}
+
 function saveAskGeometry() {
   const panel = $("#ask-panel");
   if (!panel || !state.ask.open) return;
@@ -529,10 +773,38 @@ function ensureAskRunRel() {
   return selectedRunRel() || state.ask.runRel || "";
 }
 
+function ensureAskProfileId() {
+  const active = resolveActiveAgentProfileItem();
+  return active?.id || state.ask.profileId || "default";
+}
+
 async function loadAskHistory(runRel) {
+  ensureAskThreadScope(false);
   const resolvedRun = runRel || "";
+  const profileId = ensureAskProfileId();
+  const scopedProfileId = askHistoryProfileId();
   try {
-    const payload = await fetchJSON(`/api/help/history?run=${encodeURIComponent(resolvedRun)}`);
+    let payload = await fetchJSON(
+      `/api/help/history?run=${encodeURIComponent(resolvedRun)}&profile_id=${encodeURIComponent(scopedProfileId)}`,
+    );
+    let migratedLegacy = false;
+    if (
+      (!Array.isArray(payload?.items) || !payload.items.length)
+      && state.ask.activeThreadId === ASK_DEFAULT_THREAD_ID
+      && scopedProfileId !== profileId
+    ) {
+      try {
+        const legacy = await fetchJSON(
+          `/api/help/history?run=${encodeURIComponent(resolvedRun)}&profile_id=${encodeURIComponent(profileId)}`,
+        );
+        if (Array.isArray(legacy?.items) && legacy.items.length) {
+          payload = legacy;
+          migratedLegacy = true;
+        }
+      } catch (err) {
+        // ignore legacy fallback errors
+      }
+    }
     const items = Array.isArray(payload?.items) ? payload.items : [];
     state.ask.history = items
       .map((item) => ({
@@ -542,23 +814,63 @@ async function loadAskHistory(runRel) {
       }))
       .slice(-40);
     state.ask.runRel = payload?.run_rel || resolvedRun;
-    setAskStatus(state.ask.history.length ? `이력 불러옴 · ${state.ask.history.length}개` : "Ready.");
+    state.ask.profileId = profileId;
+    state.ask.historyProfileId = scopedProfileId;
+    state.ask.lastAction = null;
+    state.ask.lastAnswer = "";
+    state.ask.lastSources = [];
+    if (state.ask.history.length) {
+      const latestUser = [...state.ask.history]
+        .reverse()
+        .find((item) => item.role === "user" && String(item.content || "").trim());
+      updateActiveThreadMeta({
+        title: latestUser ? String(latestUser.content).trim().slice(0, 34) : askCurrentThreadLabel(),
+        preview: latestUser ? String(latestUser.content).trim().slice(0, 72) : "",
+      });
+    } else {
+      updateActiveThreadMeta({
+        preview: "",
+      });
+    }
+    renderAskHistory();
+    renderAskThreadList();
+    renderAskActions(null, "", []);
+    if (migratedLegacy) {
+      setAskStatus(`이력 불러옴(legacy) · ${state.ask.history.length}개`);
+    } else {
+      setAskStatus(state.ask.history.length ? `이력 불러옴 · ${state.ask.history.length}개` : "Ready.");
+    }
   } catch (err) {
     state.ask.history = [];
     state.ask.runRel = resolvedRun;
+    state.ask.profileId = profileId;
+    state.ask.historyProfileId = scopedProfileId;
+    state.ask.lastAction = null;
+    state.ask.lastAnswer = "";
+    state.ask.lastSources = [];
+    renderAskHistory();
+    renderAskThreadList();
+    renderAskActions(null, "", []);
     setAskStatus(`이력 로드 실패: ${err}`);
   }
 }
 
 async function saveAskHistory() {
   try {
+    ensureAskThreadScope(false);
     await fetchJSON("/api/help/history", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         run: ensureAskRunRel(),
+        profile_id: askHistoryProfileId(),
         items: state.ask.history.slice(-80),
       }),
+    });
+    updateActiveThreadMeta({
+      preview: state.ask.history
+        .filter((entry) => entry.role === "user")
+        .slice(-1)[0]?.content || "",
     });
   } catch (err) {
     appendLog(`[ask] history save failed: ${err}\n`);
@@ -567,17 +879,25 @@ async function saveAskHistory() {
 
 async function clearAskHistoryAndUi() {
   try {
+    ensureAskThreadScope(false);
     await fetchJSON("/api/help/history/clear", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ run: ensureAskRunRel() }),
+      body: JSON.stringify({ run: ensureAskRunRel(), profile_id: askHistoryProfileId() }),
     });
   } catch (err) {
     appendLog(`[ask] history clear failed: ${err}\n`);
   }
   state.ask.history = [];
+  state.ask.lastAction = null;
+  state.ask.lastAnswer = "";
+  state.ask.lastSources = [];
+  state.ask.selectionText = "";
+  renderAskHistory();
   renderAskAnswer("");
   renderAskSources([]);
+  renderAskActions(null, "", []);
+  updateActiveThreadMeta({ preview: "" });
   setAskStatus("이력이 초기화되었습니다.");
 }
 
@@ -594,6 +914,8 @@ function setAskPanelOpen(open, opts = {}) {
   }
   if (state.ask.open) {
     restoreAskGeometry(opts.anchor || null);
+    ensureAskThreadScope(false);
+    renderAskThreadList();
     loadAskHistory(ensureAskRunRel()).catch((err) => {
       setAskStatus(`이력 로드 실패: ${err}`);
     });
@@ -601,6 +923,7 @@ function setAskPanelOpen(open, opts = {}) {
       $("#ask-input")?.focus();
     }, 0);
   } else {
+    closeAskActionModal();
     saveAskGeometry();
   }
 }
@@ -611,9 +934,16 @@ function renderAskAnswer(answerText) {
   const text = String(answerText || "").trim();
   if (!text) {
     answerEl.innerHTML = '<p class="muted">아직 답변이 없습니다.</p>';
+    scrollAskAnswerToBottom(true);
     return;
   }
-  answerEl.innerHTML = renderMarkdown(text);
+  const nearBottom = isNearBottom(answerEl, 140);
+  setRenderedMarkdown(answerEl, text);
+  if (state.ask.busy || nearBottom) {
+    window.requestAnimationFrame(() => {
+      scrollAskAnswerToBottom(true);
+    });
+  }
 }
 
 function renderAskSources(sources) {
@@ -666,6 +996,7 @@ function renderAskSources(sources) {
 
 async function runAskQuestion() {
   if (state.ask.busy) return;
+  ensureAskThreadScope(false);
   const question = $("#ask-input")?.value?.trim() || "";
   const model = $("#ask-model")?.value?.trim() || "";
   if (!question) {
@@ -673,12 +1004,17 @@ async function runAskQuestion() {
     return;
   }
   state.ask.busy = true;
+  state.ask.lastAction = null;
+  state.ask.lastAnswer = "";
+  state.ask.lastSources = [];
+  state.ask.selectionText = "";
   const runButton = $("#ask-run");
   if (runButton) {
     runButton.disabled = true;
     runButton.textContent = "질문 중...";
   }
   setAskStatus("코드/문서를 분석 중입니다...");
+  renderAskActions(null, "", []);
   renderAskAnswer("");
   renderAskSources([]);
   try {
@@ -686,20 +1022,29 @@ async function runAskQuestion() {
     if (state.ask.runRel !== runRel) {
       await loadAskHistory(runRel);
     }
-    const result = await fetchJSON("/api/help/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question,
-        model: model || undefined,
-        strict_model: Boolean(model),
-        max_sources: 12,
-        history: state.ask.history.slice(-10),
-        run: runRel || undefined,
-      }),
-    });
+    renderAskHistory();
+    const requestPayload = {
+      question,
+      model: model || undefined,
+      strict_model: Boolean(model),
+      max_sources: 12,
+      history: state.ask.history.slice(-14),
+      run: runRel || undefined,
+      profile_id: askHistoryProfileId(),
+    };
+    let result;
+    try {
+      result = await runAskQuestionWithStream(requestPayload);
+    } catch (streamErr) {
+      appendLog(`[ask] stream fallback: ${streamErr}\n`);
+      result = await runAskQuestionLegacy(requestPayload);
+    }
     renderAskAnswer(result.answer || "");
     renderAskSources(result.sources || []);
+    renderAskActions(result.action || null, result.answer || "", result.sources || []);
+    state.ask.lastAction = result.action || null;
+    state.ask.lastAnswer = String(result.answer || "");
+    state.ask.lastSources = Array.isArray(result.sources) ? result.sources : [];
     const stamp = new Date().toISOString();
     state.ask.history.push({ role: "user", content: question, ts: stamp });
     state.ask.history.push({
@@ -710,6 +1055,13 @@ async function runAskQuestion() {
     if (state.ask.history.length > 40) {
       state.ask.history = state.ask.history.slice(-40);
     }
+    updateActiveThreadMeta({
+      title: question.slice(0, 34),
+      preview: question.slice(0, 72),
+      updated_at: stamp,
+    });
+    renderAskHistory();
+    renderAskThreadList();
     await saveAskHistory();
     const modelLabel = result.model || (model || "$OPENAI_MODEL");
     const requestedModel = result.requested_model || model || "$OPENAI_MODEL";
@@ -730,6 +1082,7 @@ async function runAskQuestion() {
     setAskStatus(`질문 실패: ${err}`);
     renderAskAnswer(`질문 실패: ${err}`);
     renderAskSources([]);
+    renderAskActions(null, "", []);
   } finally {
     state.ask.busy = false;
     if (runButton) {
@@ -742,8 +1095,12 @@ async function runAskQuestion() {
 function handleAskPanel() {
   const panel = $("#ask-panel");
   if (!panel) return;
+  ensureAskThreadScope(true);
+  renderAskHistory();
+  renderAskThreadList();
   renderAskAnswer("");
   renderAskSources([]);
+  renderAskActions(null, "", []);
   setAskStatus("Ready.");
   $("#ask-button")?.addEventListener("click", (ev) => {
     ev.preventDefault();
@@ -761,6 +1118,11 @@ function handleAskPanel() {
       setAskStatus(`Reset failed: ${err}`);
     });
   });
+  $("#ask-thread-new")?.addEventListener("click", () => {
+    createNewAskThread().catch((err) => {
+      setAskStatus(`새 스레드 생성 실패: ${err}`);
+    });
+  });
   $("#ask-run")?.addEventListener("click", () => runAskQuestion());
   $("#ask-input")?.addEventListener("keydown", (ev) => {
     if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {
@@ -768,8 +1130,38 @@ function handleAskPanel() {
       runAskQuestion();
     }
   });
+  const answerEl = $("#ask-answer");
+  if (answerEl) {
+    answerEl.addEventListener("mouseup", () => {
+      window.setTimeout(() => updateAskSelectionState(), 0);
+    });
+    answerEl.addEventListener("keyup", () => {
+      window.setTimeout(() => updateAskSelectionState(), 0);
+    });
+  }
+  document.addEventListener("selectionchange", () => {
+    if (!state.ask.open) return;
+    updateAskSelectionState();
+  });
+  document.querySelectorAll("[data-askaction-close]").forEach((node) => {
+    node.addEventListener("click", () => closeAskActionModal());
+  });
+  $("#ask-action-confirm")?.addEventListener("click", async () => {
+    const pending = state.ask.pendingAction;
+    const actionType = pending?.type || "";
+    if (!actionType) {
+      closeAskActionModal();
+      return;
+    }
+    closeAskActionModal();
+    await executeAskSuggestedAction(actionType);
+  });
   panel.addEventListener("click", (ev) => ev.stopPropagation());
   document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && isAskActionModalOpen()) {
+      closeAskActionModal();
+      return;
+    }
     if (ev.key === "Escape" && state.ask.open) {
       setAskPanelOpen(false);
     }
@@ -811,6 +1203,140 @@ function handleAskPanel() {
   });
 }
 
+async function runAskQuestionLegacy(payload) {
+  return fetchJSON("/api/help/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function consumeSseResponse(response, onEvent) {
+  if (!response.body) {
+    throw new Error("stream body is empty");
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const flushChunk = (rawChunk) => {
+    const chunk = String(rawChunk || "").trim();
+    if (!chunk) return false;
+    let eventName = "message";
+    const dataLines = [];
+    chunk.split(/\r?\n/).forEach((line) => {
+      if (line.startsWith("event:")) {
+        eventName = line.slice(6).trim() || "message";
+      } else if (line.startsWith("data:")) {
+        dataLines.push(line.slice(5).trimStart());
+      }
+    });
+    if (!dataLines.length) return false;
+    const rawData = dataLines.join("\n");
+    let payload;
+    try {
+      payload = JSON.parse(rawData);
+    } catch (err) {
+      payload = { raw: rawData };
+    }
+    const maybeStop = onEvent(eventName, payload);
+    return maybeStop === true;
+  };
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+      let sep = buffer.indexOf("\n\n");
+      while (sep >= 0) {
+        const part = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (flushChunk(part)) {
+          reader.cancel().catch(() => {});
+          return;
+        }
+        sep = buffer.indexOf("\n\n");
+      }
+    }
+    buffer += decoder.decode().replace(/\r\n/g, "\n");
+    flushChunk(buffer);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function runAskQuestionWithStream(payload) {
+  let answerText = "";
+  let finalResult = null;
+  let sources = [];
+  let doneSeen = false;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort("ask_stream_timeout");
+  }, 240000);
+  const streamRes = await fetch("/api/help/ask/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: controller.signal,
+  });
+  if (!streamRes.ok) {
+    window.clearTimeout(timeoutId);
+    throw new Error(`${streamRes.status} ${streamRes.statusText}`);
+  }
+  try {
+    await consumeSseResponse(streamRes, (eventName, data) => {
+      if (eventName === "meta") {
+        const indexed = Number(data?.indexed_files || 0);
+        const requested = String(data?.requested_model || payload.model || "$OPENAI_MODEL");
+        setAskStatus(`답변 생성 중 · model=${requested} · indexed=${indexed}`);
+        return false;
+      }
+      if (eventName === "delta") {
+        const chunk = String(data?.text || "");
+        if (!chunk) return false;
+        answerText += chunk;
+        renderAskAnswer(answerText);
+        return false;
+      }
+      if (eventName === "sources") {
+        const next = Array.isArray(data?.sources) ? data.sources : [];
+        sources = next;
+        renderAskSources(sources);
+        return false;
+      }
+      if (eventName === "error") {
+        const msg = String(data?.error || data?.message || "stream error");
+        throw new Error(msg);
+      }
+      if (eventName === "done") {
+        doneSeen = true;
+        finalResult = data && typeof data === "object" ? data : {};
+        if (!answerText) {
+          answerText = String(finalResult.answer || "");
+          renderAskAnswer(answerText);
+        }
+        if (!sources.length) {
+          const src = Array.isArray(finalResult.sources) ? finalResult.sources : [];
+          sources = src;
+          renderAskSources(sources);
+        }
+        return true;
+      }
+      return false;
+    });
+    if (!doneSeen) {
+      throw new Error("stream ended before done event");
+    }
+    return {
+      ...(finalResult || {}),
+      answer: answerText || String(finalResult?.answer || ""),
+      sources,
+    };
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 function setWorkspaceTab(tabKey) {
   const resolved = tabKey === "agents" ? "agents" : "templates";
   state.workspace.tab = resolved;
@@ -839,6 +1365,301 @@ function setWorkspacePanelOpen(open, tabKey) {
   } else {
     $("#workspace-open-templates")?.classList.remove("is-active");
     $("#workspace-open-agents")?.classList.remove("is-active");
+  }
+}
+
+function scrollAskAnswerToBottom(force = false) {
+  const answerEl = $("#ask-answer");
+  if (!answerEl) return;
+  const shouldScroll = force || isNearBottom(answerEl, 140);
+  if (!shouldScroll) return;
+  answerEl.scrollTop = answerEl.scrollHeight;
+}
+
+function updateAskSelectionState() {
+  const answerEl = $("#ask-answer");
+  if (!answerEl) return;
+  const selection = window.getSelection();
+  let text = "";
+  if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+    const range = selection.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    if (answerEl.contains(node)) {
+      text = selection.toString().trim();
+    }
+  }
+  const normalized = String(text || "").replace(/\s+/g, " ").trim().slice(0, 900);
+  if (state.ask.selectionText === normalized) return;
+  state.ask.selectionText = normalized;
+  renderAskActions(state.ask.lastAction, state.ask.lastAnswer, state.ask.lastSources);
+}
+
+function useAskSelectionAsFollowup() {
+  const selected = String(state.ask.selectionText || "").trim();
+  if (!selected) {
+    setAskStatus("먼저 답변에서 텍스트를 선택하세요.");
+    return;
+  }
+  const input = $("#ask-input");
+  if (!input) return;
+  const block = `선택된 맥락:\n"""\n${selected}\n"""\n\n이 선택 내용을 바탕으로 바로 이어서 설명해줘.`;
+  const prev = String(input.value || "").trim();
+  input.value = prev ? `${prev}\n\n${block}` : block;
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+  setAskStatus("선택 내용을 질문 입력창에 추가했습니다.");
+}
+
+function extractAskPathCandidates(answerText, sources = []) {
+  const out = [];
+  const seen = new Set();
+  const addPath = (rawValue) => {
+    const normalized = normalizeLogPathCandidate(rawValue);
+    if (!normalized) return;
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    out.push(normalized);
+  };
+  if (Array.isArray(sources)) {
+    sources.forEach((src) => {
+      if (src && src.path) addPath(src.path);
+    });
+  }
+  const text = String(answerText || "");
+  const regex =
+    /(?:\.\/)?(?:site\/runs\/[^\s`"'<>()]+|(?:report_notes|instruction|report|archive|output|supporting)\/[^\s`"'<>()]+)/gi;
+  let match = regex.exec(text);
+  while (match) {
+    addPath(match[0]);
+    if (out.length >= 8) break;
+    match = regex.exec(text);
+  }
+  return out.slice(0, 8);
+}
+
+function openAskActionModal(plan) {
+  const modal = $("#ask-action-modal");
+  if (!modal) return;
+  const titleEl = $("#ask-action-title");
+  const metaEl = $("#ask-action-meta");
+  const previewEl = $("#ask-action-preview");
+  state.ask.pendingAction = plan || null;
+  if (titleEl) titleEl.textContent = plan?.title || "Action Preview";
+  if (metaEl) metaEl.textContent = plan?.meta || "실행 전에 파라미터를 확인하세요.";
+  if (previewEl) previewEl.textContent = String(plan?.preview || "No preview.");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeAskActionModal() {
+  const modal = $("#ask-action-modal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  state.ask.pendingAction = null;
+}
+
+function isAskActionModalOpen() {
+  const modal = $("#ask-action-modal");
+  return Boolean(modal && modal.classList.contains("open"));
+}
+
+function renderAskActions(action, answerText = "", sources = []) {
+  const host = $("#ask-action-row");
+  if (!host) return;
+  const actionObj = action && typeof action === "object" ? action : null;
+  const buttons = [];
+  const pathCandidates = extractAskPathCandidates(answerText, sources);
+  if (actionObj?.type) {
+    const label = String(actionObj.label || "").trim();
+    if (actionObj.type === "run_feather") {
+      buttons.push(
+        `<button type="button" class="ghost" data-ask-action="run_feather">${escapeHtml(label || "Feather 실행")}</button>`,
+      );
+    } else if (actionObj.type === "run_federlicht") {
+      buttons.push(
+        `<button type="button" class="ghost" data-ask-action="run_federlicht">${escapeHtml(label || "Federlicht 실행")}</button>`,
+      );
+    } else if (actionObj.type === "run_feather_then_federlicht") {
+      buttons.push(
+        `<button type="button" class="ghost" data-ask-action="run_feather_then_federlicht">${escapeHtml(label || "Feather → Federlicht 실행")}</button>`,
+      );
+      buttons.push(
+        '<button type="button" class="ghost" data-ask-action="run_federlicht">Federlicht만 실행</button>',
+      );
+    }
+  }
+  if (state.ask.selectionText) {
+    buttons.push(
+      '<button type="button" class="ghost" data-ask-followup="selection">선택 내용으로 후속 질문</button>',
+    );
+  }
+  pathCandidates.slice(0, 5).forEach((path) => {
+    const shortLabel = stripSiteRunsPrefix(path) || path;
+    buttons.push(
+      `<button type="button" class="ghost" data-ask-open="${escapeHtml(path)}">열기: ${escapeHtml(shortLabel)}</button>`,
+    );
+  });
+  if (!buttons.length) {
+    host.innerHTML = "";
+    host.classList.remove("has-action");
+    return;
+  }
+  host.classList.add("has-action");
+  host.innerHTML = `
+    <span class="hint">Agent 제안/작업</span>
+    ${buttons.join("")}
+  `;
+  host.querySelectorAll("[data-ask-followup]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      useAskSelectionAsFollowup();
+    });
+  });
+  host.querySelectorAll("[data-ask-open]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const path = btn.getAttribute("data-ask-open") || "";
+      if (!path) return;
+      await loadFilePreview(path);
+      appendLog(`[ask-action] opened: ${path}\n`);
+    });
+  });
+  host.querySelectorAll("[data-ask-action]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const type = btn.getAttribute("data-ask-action") || "";
+      if (!type) return;
+      await runAskSuggestedAction(type);
+    });
+  });
+}
+
+async function buildAskActionPlan(actionType) {
+  if (actionType === "run_feather") {
+    const payload = buildFeatherPayload();
+    return {
+      type: actionType,
+      title: "Feather 실행 미리보기",
+      meta: "현재 Feather 폼 값을 사용해 수집 작업을 시작합니다.",
+      preview: JSON.stringify(
+        {
+          endpoint: "/api/feather/start",
+          payload,
+        },
+        null,
+        2,
+      ),
+    };
+  }
+  if (actionType === "run_federlicht") {
+    const payload = buildFederlichtPayload();
+    await applyFederlichtOutputSuggestionToPayload(payload, { syncInput: false });
+    return {
+      type: actionType,
+      title: "Federlicht 실행 미리보기",
+      meta: "현재 Federlicht 폼 값을 사용해 보고서 생성을 시작합니다.",
+      preview: JSON.stringify(
+        {
+          endpoint: "/api/federlicht/start",
+          payload,
+        },
+        null,
+        2,
+      ),
+    };
+  }
+  if (actionType === "run_feather_then_federlicht") {
+    const featherPayload = buildFeatherPayload();
+    const federPayload = buildFederlichtPayload();
+    await applyFederlichtOutputSuggestionToPayload(federPayload, { syncInput: false });
+    return {
+      type: actionType,
+      title: "Feather -> Federlicht 실행 미리보기",
+      meta: "1) Feather 수집 완료 후 2) 동일 run에서 Federlicht를 자동 실행합니다.",
+      preview: JSON.stringify(
+        {
+          sequence: [
+            { endpoint: "/api/feather/start", payload: featherPayload },
+            { endpoint: "/api/federlicht/start", payload: federPayload },
+          ],
+        },
+        null,
+        2,
+      ),
+    };
+  }
+  throw new Error(`unsupported action: ${actionType}`);
+}
+
+async function executeAskSuggestedAction(actionType) {
+  if (state.activeJobId) {
+    setAskStatus("이미 실행 중인 작업이 있습니다. 현재 작업 종료 후 다시 시도하세요.");
+    return;
+  }
+  if (state.ask.busy) {
+    setAskStatus("현재 답변 생성 중입니다. 완료 후 실행하세요.");
+    return;
+  }
+  if (actionType === "run_feather") {
+    document.querySelector('[data-tab="feather"]')?.click();
+    $("#feather-form")?.requestSubmit();
+    return;
+  }
+  if (actionType === "run_federlicht") {
+    document.querySelector('[data-tab="federlicht"]')?.click();
+    $("#federlicht-form")?.requestSubmit();
+    return;
+  }
+  if (actionType === "run_feather_then_federlicht") {
+    try {
+      const featherPayload = buildFeatherPayload();
+      const runRel = featherPayload.output;
+      await startJob("/api/feather/start", featherPayload, {
+        kind: "feather",
+        onSuccess: async () => {
+          await loadRuns().catch(() => {});
+          if (runRel && $("#run-select")) {
+            $("#run-select").value = runRel;
+            if ($("#prompt-run-select")) $("#prompt-run-select").value = runRel;
+            if ($("#instruction-run-select")) $("#instruction-run-select").value = runRel;
+            refreshRunDependentFields();
+            await updateRunStudio(runRel).catch(() => {});
+          }
+          try {
+            document.querySelector('[data-tab="federlicht"]')?.click();
+            const federPayload = buildFederlichtPayload();
+            await applyFederlichtOutputSuggestionToPayload(federPayload, { syncInput: true });
+            const reportRunRel = federPayload.run;
+            await startJob("/api/federlicht/start", federPayload, {
+              kind: "federlicht",
+              onSuccess: async () => {
+                await loadRuns().catch(() => {});
+                if (reportRunRel && $("#run-select")) {
+                  $("#run-select").value = reportRunRel;
+                  if ($("#instruction-run-select")) $("#instruction-run-select").value = reportRunRel;
+                  refreshRunDependentFields();
+                  await updateRunStudio(reportRunRel).catch(() => {});
+                }
+              },
+            });
+          } catch (err) {
+            appendLog(`[ask-action] federlicht auto-start failed: ${err}\n`);
+            setAskStatus(`Feather 완료 후 Federlicht 자동 실행 실패: ${err}`);
+          }
+        },
+      });
+      setAskStatus("Feather 실행 시작. 완료 후 Federlicht 자동 실행 예정입니다.");
+    } catch (err) {
+      appendLog(`[ask-action] ${err}\n`);
+      setAskStatus(`실행 실패: ${err}`);
+    }
+  }
+}
+
+async function runAskSuggestedAction(actionType) {
+  try {
+    const plan = await buildAskActionPlan(actionType);
+    openAskActionModal(plan);
+  } catch (err) {
+    setAskStatus(`실행 미리보기 생성 실패: ${err}`);
   }
 }
 
@@ -1296,6 +2117,8 @@ function refreshRunDependentFields() {
 
 function maybeReloadAskHistory() {
   if (!state.ask.open) return;
+  ensureAskThreadScope(true);
+  renderAskThreadList();
   loadAskHistory(ensureAskRunRel()).catch((err) => {
     setAskStatus(`이력 로드 실패: ${err}`);
   });
@@ -1397,7 +2220,7 @@ function renderFilePreview() {
   frame.style.display = "none";
   image.style.display = "none";
   if (mode === "markdown") {
-    markdown.innerHTML = renderMarkdown(state.filePreview.content || "");
+    setRenderedMarkdown(markdown, state.filePreview.content || "");
     markdown.style.display = "block";
   } else if (mode === "html" || mode === "pdf") {
     frame.removeAttribute("srcdoc");
@@ -1438,6 +2261,8 @@ function renderMarkdown(text) {
   let inList = false;
   let listTag = "ul";
   let inCode = false;
+  let codeLang = "";
+  let codeBuffer = [];
   let fenceToken = "";
   let inTable = false;
   const closeList = () => {
@@ -1450,6 +2275,20 @@ function renderMarkdown(text) {
     if (!inTable) return;
     html += "</tbody></table>";
     inTable = false;
+  };
+  const closeCode = () => {
+    if (!inCode) return;
+    const body = codeBuffer.join("\n");
+    if (codeLang === "mermaid") {
+      html += `<div class="md-mermaid" data-mermaid-source="${encodeURIComponent(body)}"><pre><code class="language-mermaid">${escapeHtml(body)}</code></pre></div>`;
+    } else {
+      const langClass = codeLang ? ` class="language-${escapeHtml(codeLang)}"` : "";
+      html += `<pre><code${langClass}>${escapeHtml(body)}</code></pre>`;
+    }
+    inCode = false;
+    codeLang = "";
+    codeBuffer = [];
+    fenceToken = "";
   };
   const parseTableCells = (value) => {
     const trimmed = value.trim().replace(/^\|/, "").replace(/\|$/, "");
@@ -1468,28 +2307,28 @@ function renderMarkdown(text) {
     const raw = lines[i];
     const line = raw.trimEnd();
     const lineTrim = raw.trim();
-    const fenceMatch = lineTrim.match(/^(```+|~~~+)/);
+    const fenceMatch = lineTrim.match(/^(```+|~~~+)(.*)$/);
     if (fenceMatch) {
       const token = fenceMatch[1] || "```";
+      const fenceLang = String(fenceMatch[2] || "").trim().split(/\s+/)[0]?.toLowerCase() || "";
       if (!inCode) {
         closeList();
         closeTable();
-        html += "<pre><code>";
         inCode = true;
         fenceToken = token;
+        codeLang = fenceLang;
+        codeBuffer = [];
       } else {
         if (!fenceToken || token.startsWith(fenceToken[0])) {
-          html += "</code></pre>";
-          inCode = false;
-          fenceToken = "";
+          closeCode();
         } else {
-          html += `${escapeHtml(raw)}\n`;
+          codeBuffer.push(raw);
         }
       }
       continue;
     }
     if (inCode) {
-      html += `${escapeHtml(raw)}\n`;
+      codeBuffer.push(raw);
       continue;
     }
     if (!line) {
@@ -1551,8 +2390,102 @@ function renderMarkdown(text) {
   }
   closeList();
   closeTable();
-  if (inCode) html += "</code></pre>";
+  if (inCode) closeCode();
   return html;
+}
+
+function decodeMermaidSource(token) {
+  const raw = String(token || "");
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(raw);
+  } catch (err) {
+    return raw;
+  }
+}
+
+function ensureMermaidLoaded() {
+  if (window.mermaid && typeof window.mermaid.render === "function") {
+    if (!window.__federnettMermaidConfigured) {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "loose",
+        theme: "dark",
+      });
+      window.__federnettMermaidConfigured = true;
+    }
+    mermaidState.ready = true;
+    return Promise.resolve(window.mermaid);
+  }
+  if (mermaidState.loading) return mermaidState.loading;
+  mermaidState.loading = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = MERMAID_CDN;
+    script.async = true;
+    script.onload = () => {
+      if (!window.mermaid || typeof window.mermaid.render !== "function") {
+        reject(new Error("mermaid unavailable"));
+        return;
+      }
+      if (!window.__federnettMermaidConfigured) {
+        window.mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "loose",
+          theme: "dark",
+        });
+        window.__federnettMermaidConfigured = true;
+      }
+      mermaidState.ready = true;
+      resolve(window.mermaid);
+    };
+    script.onerror = () => {
+      mermaidState.loading = null;
+      mermaidState.ready = false;
+      reject(new Error("failed to load mermaid"));
+    };
+    document.head.appendChild(script);
+  });
+  return mermaidState.loading;
+}
+
+async function renderMermaidBlocks(host, token = "") {
+  if (!host) return;
+  const blocks = Array.from(host.querySelectorAll(".md-mermaid[data-mermaid-source]"));
+  if (!blocks.length) return;
+  let mermaid;
+  try {
+    mermaid = await ensureMermaidLoaded();
+  } catch (err) {
+    return;
+  }
+  if (!mermaid || typeof mermaid.render !== "function") return;
+  for (let idx = 0; idx < blocks.length; idx += 1) {
+    if (!host.isConnected) return;
+    if (token && host instanceof HTMLElement && host.dataset.mdToken !== token) return;
+    const block = blocks[idx];
+    if (!(block instanceof HTMLElement)) continue;
+    const source = decodeMermaidSource(block.getAttribute("data-mermaid-source")).trim();
+    if (!source) continue;
+    const renderId = `federnett-mermaid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}-${idx}`;
+    try {
+      const rendered = await mermaid.render(renderId, source);
+      const svg = typeof rendered === "string" ? rendered : rendered?.svg;
+      if (svg) {
+        block.innerHTML = `<div class="md-mermaid-svg">${svg}</div>`;
+        block.setAttribute("data-mermaid-rendered", "true");
+      }
+    } catch (err) {
+      block.setAttribute("data-mermaid-error", "true");
+    }
+  }
+}
+
+function setRenderedMarkdown(host, markdownText) {
+  if (!host) return;
+  const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (host instanceof HTMLElement) host.dataset.mdToken = token;
+  host.innerHTML = renderMarkdown(markdownText);
+  renderMermaidBlocks(host, token).catch(() => {});
 }
 
 function previewModeForPath(relPath) {
@@ -3093,6 +4026,38 @@ function selectedStagesInOrder() {
   return state.pipeline.order.filter((id) => state.pipeline.selected.has(id));
 }
 
+function loadWorkflowPreferences() {
+  const raw = localStorage.getItem(WORKFLOW_PREF_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const order = Array.isArray(parsed.order)
+      ? parsed.order.filter((id) => STAGE_INDEX[id] !== undefined)
+      : [];
+    const selected = Array.isArray(parsed.selected)
+      ? parsed.selected.filter((id) => STAGE_INDEX[id] !== undefined)
+      : [];
+    const qualityIterations = parseQualityIterations(parsed.quality_iterations);
+    return {
+      order,
+      selected,
+      quality_iterations: qualityIterations,
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+function saveWorkflowPreferences() {
+  const payload = {
+    order: currentPipelineStageOrder(),
+    selected: selectedStagesInOrder(),
+    quality_iterations: getQualityIterations(),
+  };
+  localStorage.setItem(WORKFLOW_PREF_STORAGE_KEY, JSON.stringify(payload));
+}
+
 function currentPipelineStageOrder() {
   const canonical = STAGE_DEFS.map((s) => s.id);
   const ordered = [];
@@ -3122,6 +4087,7 @@ function updatePipelineOutputs() {
   setText("#pipeline-skip-value", skipCsv || "-");
   syncWorkflowStageSelection(selected);
   syncWorkflowQualityControls();
+  saveWorkflowPreferences();
 }
 
 function parseQualityIterations(value) {
@@ -3142,13 +4108,42 @@ function setQualityIterations(value) {
   const text = String(normalized);
   const mainInput = $("#federlicht-quality-iterations");
   if (mainInput && mainInput.value !== text) mainInput.value = text;
+  saveWorkflowPreferences();
   return normalized;
+}
+
+function closeWorkflowQualityMenu(options = {}) {
+  if (!state.workflow.qualityMenuOpen) return;
+  state.workflow.qualityMenuOpen = false;
+  if (!options.silent) {
+    renderWorkflow();
+  }
+}
+
+function bindWorkflowDismissHandlers() {
+  if (workflowDismissBound) return;
+  workflowDismissBound = true;
+  document.addEventListener("click", (ev) => {
+    if (!state.workflow.qualityMenuOpen) return;
+    const target = ev.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest("#workflow-track")) return;
+    closeWorkflowQualityMenu();
+  });
+  window.addEventListener("resize", () => {
+    if (state.workflow.qualityMenuOpen) {
+      closeWorkflowQualityMenu();
+    }
+  });
 }
 
 function syncWorkflowQualityControls() {
   const qualitySelected = workflowIsStageSelected("quality");
   const current = getQualityIterations();
   setQualityIterations(current);
+  if (!qualitySelected || state.workflow.running) {
+    closeWorkflowQualityMenu({ silent: true });
+  }
   const mainInput = $("#federlicht-quality-iterations");
   if (mainInput) {
     mainInput.title = qualitySelected
@@ -3159,6 +4154,20 @@ function syncWorkflowQualityControls() {
 
 function workflowLabel(stepId) {
   return WORKFLOW_LABELS[stepId] || stepId || "-";
+}
+
+function workflowNodeHint(stepId) {
+  if (stepId === "feather") {
+    return "Feather: 입력 소스를 수집·정리하여 분석 가능한 아카이브를 만듭니다.";
+  }
+  if (stepId === "result") {
+    return "Result: 최종 보고서 산출물입니다. 클릭하면 현재 결과 파일을 미리보기로 엽니다.";
+  }
+  const stage = STAGE_DEFS.find((item) => item.id === stepId);
+  if (stage) {
+    return `${stage.label}: ${stage.desc}`;
+  }
+  return workflowLabel(stepId);
 }
 
 function workflowSpotLabel(kind) {
@@ -3291,6 +4300,7 @@ function resetWorkflowState() {
   state.workflow.lastMainStageIndex = -1;
   state.workflow.loopbackCount = 0;
   state.workflow.loopbackPulse = false;
+  state.workflow.qualityMenuOpen = false;
   (state.workflow.spots || []).forEach((spot) => {
     if (spot?.id) clearWorkflowSpotTimer(spot.id);
   });
@@ -4173,11 +5183,19 @@ function renderWorkflow() {
   const status = $("#workflow-status");
   const extrasHost = $("#workflow-extras");
   if (!host || !status || !extrasHost) return;
+  if (state.workflow.running || !workflowIsStageSelected("quality")) {
+    state.workflow.qualityMenuOpen = false;
+  }
   status.textContent = state.workflow.statusText || "Idle";
   host.classList.toggle("is-running", !!state.workflow.running);
   const nodeOrder = workflowNodeOrder();
   host.innerHTML = nodeOrder.map((stepId, idx) => {
     const classes = ["workflow-node"];
+    const isResult = stepId === "result";
+    const isMainStage = WORKFLOW_STAGE_ORDER.includes(stepId);
+    if (stepId === "feather") classes.push("is-ingest");
+    if (isResult) classes.push("is-result");
+    if (isMainStage) classes.push("is-agent");
     const selected = workflowIsStageSelected(stepId);
     const isAuto = state.workflow.autoStages.has(stepId);
     const isActive = state.workflow.activeStep === stepId;
@@ -4194,9 +5212,8 @@ function renderWorkflow() {
     if (isResumeTarget) classes.push("is-resume-target");
     if (!isActive && !isComplete) classes.push("is-pending");
     if (stepId === "result" && state.workflow.hasError) classes.push("is-error");
-    const isResult = stepId === "result";
-    const isMainStage = WORKFLOW_STAGE_ORDER.includes(stepId);
     const canEdit = !state.workflow.running && isMainStage;
+    const nodeHint = workflowNodeHint(stepId);
     const previewPath = isResult ? normalizePathString(state.workflow.resultPath || "") : "";
     const openAttr = previewPath ? `data-workflow-open="${escapeHtml(previewPath)}"` : "";
     const stageAttr = isMainStage ? `data-workflow-stage="${stepId}"` : "";
@@ -4238,23 +5255,48 @@ function renderWorkflow() {
         </span>`
       : "";
     const qualityStageOn = workflowIsStageSelected("quality");
-    const iterSelectDisabled = state.workflow.running || !qualityStageOn ? "disabled" : "";
+    const iterSelectDisabled = state.workflow.running || !qualityStageOn;
+    const iterTriggerClasses = ["workflow-iter-trigger"];
+    if (state.workflow.running && state.workflow.activeStep === "quality") {
+      iterTriggerClasses.push("is-running");
+    }
+    if (!qualityStageOn) {
+      iterTriggerClasses.push("is-off");
+    }
+    if (state.workflow.qualityMenuOpen && !iterSelectDisabled) {
+      iterTriggerClasses.push("is-open");
+    }
     const iterValues = Array.from({ length: 10 }, (_, idx) => idx + 1);
     const iterOptions = iterValues
       .map((value) => {
-        const selected = value === qualityIterations ? "selected" : "";
+        const selected = value === qualityIterations ? "is-selected" : "";
         const label = `x${value}`;
-        return `<option value="${value}" ${selected}>${escapeHtml(label)}</option>`;
+        return (
+          `<button type="button" class="workflow-iter-option ${selected}" data-workflow-quality-value="${value}">`
+          + `${escapeHtml(label)}</button>`
+        );
       })
       .join("");
+    const menuOpen = state.workflow.qualityMenuOpen && !iterSelectDisabled;
     const qualityControls = isQualityNode
-      ? `<select
-          class="workflow-iter-select"
-          data-workflow-quality-select="true"
-          aria-label="Quality iterations"
-          title="Quality iterations"
-          ${iterSelectDisabled}
-        >${iterOptions}</select>`
+      ? `<span class="workflow-iter-wrap">
+          <button
+            type="button"
+            class="${iterTriggerClasses.join(" ")}"
+            data-workflow-quality-toggle="true"
+            aria-label="Quality iterations"
+            title="Quality iterations"
+            aria-haspopup="listbox"
+            aria-expanded="${menuOpen ? "true" : "false"}"
+            ${iterSelectDisabled ? "disabled" : ""}
+          >
+            <span class="workflow-iter-label">${escapeHtml(`x${qualityIterations}`)}</span>
+            <span class="workflow-iter-caret">▾</span>
+          </button>
+          <span class="workflow-iter-menu ${menuOpen ? "is-open" : ""}" role="listbox">
+            ${iterOptions}
+          </span>
+        </span>`
       : "";
     const arrow = idx < nodeOrder.length - 1 ? '<span class="workflow-arrow">→</span>' : "";
     return `
@@ -4263,6 +5305,7 @@ function renderWorkflow() {
           type="button"
           class="${classes.join(" ")}"
           data-workflow-node="${stepId}"
+          title="${escapeHtml(nodeHint)}"
           ${stageAttr}
           ${openAttr}
           ${dragAttr}
@@ -4353,12 +5396,14 @@ function renderWorkflow() {
         state.workflow.selectedStages.add(stageId);
         state.workflow.statusText = `History · Resume ${workflowLabel(stageId)}`;
         state.workflow.mainStatusText = state.workflow.statusText;
+        state.workflow.qualityMenuOpen = false;
         state.pipeline.activeStageId = stageId;
         renderStageDetail(stageId);
         renderWorkflow();
         return;
       }
       toggleStage(stageId);
+      state.workflow.qualityMenuOpen = false;
       state.pipeline.activeStageId = stageId;
       renderStageDetail(stageId);
       renderWorkflow();
@@ -4386,15 +5431,25 @@ function renderWorkflow() {
       renderWorkflow();
     });
   });
-  host.querySelectorAll("[data-workflow-quality-select]").forEach((el) => {
-    el.addEventListener("click", (ev) => ev.stopPropagation());
-    el.addEventListener("change", (ev) => {
+  host.querySelectorAll("[data-workflow-quality-toggle]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       if (state.workflow.running) return;
-      const target = ev.currentTarget;
-      if (!(target instanceof HTMLSelectElement)) return;
-      setQualityIterations(target.value || 0);
+      if (!workflowIsStageSelected("quality")) return;
+      state.workflow.qualityMenuOpen = !state.workflow.qualityMenuOpen;
+      renderWorkflow();
+    });
+  });
+  host.querySelectorAll("[data-workflow-quality-value]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (state.workflow.running) return;
+      const value = Number.parseInt(el.getAttribute("data-workflow-quality-value") || "", 10);
+      if (!Number.isFinite(value)) return;
+      setQualityIterations(value);
+      state.workflow.qualityMenuOpen = false;
       syncWorkflowQualityControls();
       renderWorkflow();
     });
@@ -4423,7 +5478,7 @@ function renderPipelineChips() {
   if (!host) return;
   host.innerHTML = STAGE_DEFS.map((def) => {
     const active = state.pipeline.selected.has(def.id) ? "active" : "";
-    return `<button type="button" class="pipeline-chip ${active}" data-stage-chip="${def.id}">${escapeHtml(def.label)}</button>`;
+    return `<button type="button" class="pipeline-chip ${active}" data-stage-chip="${def.id}" title="${escapeHtml(def.desc)}">${escapeHtml(def.label)}</button>`;
   }).join("");
   host.querySelectorAll("[data-stage-chip]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -4452,8 +5507,9 @@ function renderPipelineSelected() {
     .map((id) => {
       const def = STAGE_DEFS.find((s) => s.id === id);
       const label = def?.label || id;
+      const desc = def?.desc || "";
       return `
-        <div class="pipeline-item" draggable="true" data-stage-item="${id}">
+        <div class="pipeline-item" draggable="true" data-stage-item="${id}" title="${escapeHtml(desc)}">
           <span>${escapeHtml(label)}</span>
           <span class="handle">drag</span>
         </div>
@@ -4521,15 +5577,24 @@ function initPipelineFromInputs() {
   const skipCsv = $("#federlicht-skip-stages")?.value;
   const explicitStages = parseStageCsv(stagesCsv);
   const explicitSkip = new Set(parseStageCsv(skipCsv));
-  const preferredDefault = ["scout", "evidence", "writer", "quality"].filter(
+  const preferredDefault = ["scout", "evidence", "plan", "writer", "quality"].filter(
     (id) => STAGE_INDEX[id] !== undefined,
   );
-  const defaultStages = explicitStages.length
-    ? explicitStages
+  const stored = loadWorkflowPreferences();
+  const storedOrder = stored?.order?.length ? stored.order : [];
+  const storedSelected = stored?.selected?.length ? stored.selected : [];
+  const defaultStages = storedSelected.length
+    ? storedSelected
+    : explicitStages.length
+      ? explicitStages
     : explicitSkip.size
       ? canonicalOrder.filter((id) => !explicitSkip.has(id))
       : preferredDefault;
-  if (explicitStages.length) {
+  if (storedOrder.length) {
+    const seen = new Set(storedOrder);
+    const remaining = canonicalOrder.filter((id) => !seen.has(id));
+    state.pipeline.order = [...storedOrder, ...remaining];
+  } else if (explicitStages.length) {
     const seen = new Set(explicitStages);
     const remaining = canonicalOrder.filter((id) => !seen.has(id));
     state.pipeline.order = [...explicitStages, ...remaining];
@@ -4538,6 +5603,9 @@ function initPipelineFromInputs() {
   }
   state.pipeline.selected = new Set(defaultStages);
   defaultStages.forEach((id) => insertStageInOrder(id));
+  if (stored && Number.isFinite(stored.quality_iterations)) {
+    setQualityIterations(stored.quality_iterations);
+  }
   state.pipeline.activeStageId = defaultStages[0] || STAGE_DEFS[0]?.id || null;
   renderPipelineChips();
   renderPipelineSelected();
@@ -4704,7 +5772,7 @@ function renderLogs(autoScroll = false) {
       notice =
         `> Log preview is truncated for markdown rendering (${LOG_MD_TAIL_CHARS.toLocaleString()} chars tail).\n\n`;
     }
-    mdOut.innerHTML = renderMarkdown(`${notice}${mdSource}`);
+    setRenderedMarkdown(mdOut, `${notice}${mdSource}`);
   } else {
     mdOut.innerHTML = "";
   }
@@ -5044,14 +6112,16 @@ function applyRunSettings(summary) {
   if (meta.agent_profile) {
     const profileId =
       typeof meta.agent_profile === "string" ? meta.agent_profile : meta.agent_profile.id;
-    const select = $("#federlicht-agent-profile");
-    if (profileId && select) {
-      const match = Array.from(select.options).find((o) => o.value === profileId);
+    if (profileId) {
+      const match = (state.agentProfiles.list || []).find((item) => item.id === profileId);
       if (match) {
-        select.value = match.value;
+        openAgentProfile(match.id, match.source || "builtin").catch((err) => {
+          appendLog(`[agents] failed to switch profile from run meta: ${err}\n`);
+        });
       }
     }
   }
+  renderActiveProfileSummary();
   applyFreeFormatMode();
   syncWorkflowQualityControls();
 }
@@ -5299,10 +6369,13 @@ function buildFederlichtPayload() {
   const figuresEnabled = $("#federlicht-figures")?.checked;
   const noTags = $("#federlicht-no-tags")?.checked;
   const freeFormat = $("#federlicht-free-format")?.checked;
-  const agentSelect = $("#federlicht-agent-profile");
-  const agentProfile = agentSelect?.value;
-  const agentSource =
-    agentSelect?.selectedOptions?.[0]?.getAttribute("data-source") || "builtin";
+  const selectedStages = selectedStagesInOrder();
+  const skippedStages = STAGE_DEFS
+    .map((stage) => stage.id)
+    .filter((stageId) => !state.pipeline.selected.has(stageId));
+  const activeProfile = resolveActiveAgentProfileItem();
+  const agentProfile = activeProfile?.id || "";
+  const agentSource = activeProfile?.source || "builtin";
   const agentProfileDir =
     agentSource === "site" ? joinPath(state.info?.site_root || "site", "agent_profiles") : "";
   const promptFileValue = expandSiteRunsPath($("#federlicht-prompt-file")?.value);
@@ -5322,8 +6395,8 @@ function buildFederlichtPayload() {
     model_vision: $("#federlicht-model-vision")?.value,
     template_rigidity: freeFormat ? undefined : $("#federlicht-template-rigidity")?.value,
     temperature_level: $("#federlicht-temperature-level")?.value,
-    stages: $("#federlicht-stages")?.value,
-    skip_stages: $("#federlicht-skip-stages")?.value,
+    stages: selectedStages.join(","),
+    skip_stages: skippedStages.join(","),
     quality_iterations: Number.parseInt(
       $("#federlicht-quality-iterations")?.value || "",
       10,
@@ -6409,15 +7482,108 @@ function setAgentStatus(message) {
   }
 }
 
-function normalizeApplyTo(value) {
-  if (Array.isArray(value)) {
-    return value.map((v) => String(v).trim()).filter(Boolean);
+function saveActiveAgentProfileSelection(id, source) {
+  const payload = {
+    id: String(id || "").trim(),
+    source: String(source || "").trim() || "builtin",
+  };
+  localStorage.setItem(AGENT_PROFILE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadActiveAgentProfileSelection() {
+  const raw = localStorage.getItem(AGENT_PROFILE_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    const id = String(parsed?.id || "").trim();
+    const source = String(parsed?.source || "builtin").trim() || "builtin";
+    if (!id) return null;
+    return { id, source };
+  } catch (err) {
+    return null;
   }
-  if (!value) return [];
-  return String(value)
-    .split(/[,\\n]/)
-    .map((v) => v.trim())
-    .filter(Boolean);
+}
+
+function normalizeApplyTo(value) {
+  const values = Array.isArray(value) ? value : [value];
+  const tokens = [];
+  values.forEach((entry) => {
+    String(entry || "")
+      .split(/[,\n]/)
+      .map((v) => v.trim())
+      .filter(Boolean)
+      .forEach((token) => tokens.push(token));
+  });
+  const deduped = [];
+  const seen = new Set();
+  tokens.forEach((token) => {
+    const normalized = String(token).trim();
+    if (!normalized) return;
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    deduped.push(normalized);
+  });
+  return deduped;
+}
+
+function renderAgentApplyTargetChecks() {
+  const host = $("#agent-apply-to-checks");
+  if (!host) return;
+  if (host.childElementCount > 0) return;
+  host.innerHTML = AGENT_APPLY_TARGETS.map((item) => {
+    const id = escapeHtml(item.id);
+    const label = escapeHtml(item.label);
+    const hint = escapeHtml(item.hint || "");
+    return `
+      <label class="agent-apply-chip" title="${hint}">
+        <input type="checkbox" value="${id}" data-apply-target="${id}" />
+        <span>${label}</span>
+      </label>
+    `;
+  }).join("");
+  host.querySelectorAll("[data-apply-target]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const label = input.closest(".agent-apply-chip");
+      if (label) {
+        label.classList.toggle("is-on", input.checked);
+      }
+    });
+  });
+}
+
+function setAgentApplySelection(values) {
+  renderAgentApplyTargetChecks();
+  const tokens = normalizeApplyTo(values);
+  const known = new Set(AGENT_APPLY_TARGETS.map((item) => item.id));
+  const host = $("#agent-apply-to-checks");
+  if (host) {
+    host.querySelectorAll("[data-apply-target]").forEach((input) => {
+      const token = input.getAttribute("data-apply-target") || "";
+      const checked = tokens.includes(token);
+      input.checked = checked;
+      const label = input.closest(".agent-apply-chip");
+      if (label) label.classList.toggle("is-on", checked);
+    });
+  }
+  const custom = tokens.filter((token) => !known.has(token));
+  const customInput = $("#agent-apply-to-custom");
+  if (customInput) customInput.value = custom.join(", ");
+}
+
+function readAgentApplySelection() {
+  renderAgentApplyTargetChecks();
+  const selected = [];
+  const host = $("#agent-apply-to-checks");
+  if (host) {
+    host.querySelectorAll("[data-apply-target]").forEach((input) => {
+      if (input.checked) {
+        const token = input.getAttribute("data-apply-target");
+        if (token) selected.push(token);
+      }
+    });
+  }
+  const customTokens = normalizeApplyTo($("#agent-apply-to-custom")?.value || "");
+  return normalizeApplyTo([...selected, ...customTokens]);
 }
 
 function isSixDigitProfileId(value) {
@@ -6471,28 +7637,33 @@ function renderAgentList() {
   });
 }
 
-function renderAgentProfileSelect() {
-  const select = $("#federlicht-agent-profile");
-  if (!select) return;
+function resolveActiveAgentProfileItem() {
   const items = state.agentProfiles.list || [];
-  select.innerHTML = items
-    .map((profile) => {
-      const label = profile.name || profile.id;
-      const source = profile.source || "builtin";
-      const suffix = source === "site" ? "site" : "builtin";
-      return `<option value="${escapeHtml(profile.id)}" data-source="${escapeHtml(
-        source,
-      )}">${escapeHtml(label)} (${suffix})</option>`;
-    })
-    .join("");
-  if (state.agentProfiles.activeId) {
-    const opt = Array.from(select.options).find(
-      (o) => o.value === state.agentProfiles.activeId,
-    );
-    if (opt) {
-      select.value = opt.value;
-    }
+  if (!items.length) return null;
+  const exact = items.find(
+    (profile) =>
+      profile.id === state.agentProfiles.activeId
+      && profile.source === state.agentProfiles.activeSource,
+  );
+  if (exact) return exact;
+  const byId = items.find((profile) => profile.id === state.agentProfiles.activeId);
+  if (byId) return byId;
+  return items[0] || null;
+}
+
+function renderActiveProfileSummary() {
+  const el = $("#federlicht-profile-summary");
+  if (!el) return;
+  const active = resolveActiveAgentProfileItem();
+  if (!active) {
+    el.textContent = "활성 프로필 없음 (기본값 사용)";
+    return;
   }
+  const source = active.source === "site" ? "site" : "builtin";
+  const name = active.name || active.id;
+  const applyTo = Array.isArray(active.apply_to) ? active.apply_to.join(", ") : "";
+  const applyLabel = applyTo ? ` · apply: ${applyTo}` : "";
+  el.textContent = `${name} (${active.id}/${source})${applyLabel}`;
 }
 
 function setAgentEditorReadOnly(readOnly) {
@@ -6524,7 +7695,7 @@ function fillAgentForm(profile, memoryText, source, readOnly) {
   $("#agent-author-name").value = profile?.author_name || profile?.name || "";
   $("#agent-organization").value = profile?.organization || "";
   $("#agent-tagline").value = profile?.tagline || "";
-  $("#agent-apply-to").value = (profile?.apply_to || []).join(", ");
+  setAgentApplySelection(profile?.apply_to || []);
   $("#agent-system-prompt").value = profile?.system_prompt || "";
   $("#agent-config-overrides").value = Object.keys(configOverrides).length
     ? JSON.stringify(configOverrides, null, 2)
@@ -6572,10 +7743,12 @@ async function openAgentProfile(id, source) {
     state.agentProfiles.activeProfile = detail.profile;
     state.agentProfiles.memoryText = detail.memory_text || "";
     state.agentProfiles.readOnly = Boolean(detail.read_only);
+    saveActiveAgentProfileSelection(id, source);
     fillAgentForm(detail.profile, detail.memory_text, source, detail.read_only);
     renderAgentList();
-    renderAgentProfileSelect();
+    renderActiveProfileSummary();
     setAgentStatus("Profile loaded.");
+    maybeReloadAskHistory();
   } catch (err) {
     setAgentStatus(`Failed to load profile: ${err}`);
   }
@@ -6601,6 +7774,7 @@ function newAgentProfile() {
   state.agentProfiles.readOnly = false;
   fillAgentForm(state.agentProfiles.activeProfile, "", "site", false);
   renderAgentList();
+  renderActiveProfileSummary();
   setAgentStatus(`New profile (site) ready. Assigned ID ${generatedId}.`);
 }
 
@@ -6613,7 +7787,7 @@ function readAgentForm() {
   const authorName = $("#agent-author-name").value.trim();
   const organization = $("#agent-organization").value.trim();
   const tagline = $("#agent-tagline").value.trim();
-  const applyTo = normalizeApplyTo($("#agent-apply-to").value);
+  const applyTo = readAgentApplySelection();
   const systemPrompt = $("#agent-system-prompt").value;
   const configOverrides = parseOptionalJsonObject(
     $("#agent-config-overrides").value,
@@ -6709,6 +7883,7 @@ function cloneAgentProfile() {
   const meta = $("#agent-editor-meta");
   if (meta) meta.textContent = "Editable profile · site";
   setAgentEditorReadOnly(false);
+  renderActiveProfileSummary();
   setAgentStatus(`Cloned. New profile ID ${profile.id}.`);
 }
 
@@ -6717,15 +7892,27 @@ async function loadAgentProfiles(selectId, selectSource) {
     const payload = await fetchJSON("/api/agent-profiles");
     state.agentProfiles.list = payload.profiles || [];
     renderAgentList();
-    renderAgentProfileSelect();
+    renderActiveProfileSummary();
+    const persisted = loadActiveAgentProfileSelection();
     if (selectId && selectSource) {
       await openAgentProfile(selectId, selectSource);
       return;
     }
+    if (!state.agentProfiles.activeId && persisted) {
+      const matched = state.agentProfiles.list.find(
+        (item) => item.id === persisted.id && item.source === persisted.source,
+      );
+      if (matched) {
+        await openAgentProfile(matched.id, matched.source);
+        return;
+      }
+    }
     if (!state.agentProfiles.activeId && state.agentProfiles.list.length) {
       const first = state.agentProfiles.list[0];
       await openAgentProfile(first.id, first.source);
+      return;
     }
+    renderActiveProfileSummary();
   } catch (err) {
     setAgentStatus(`Failed to load profiles: ${err}`);
   }
@@ -6748,6 +7935,7 @@ function handleAgentPanelToggle() {
 }
 
 function handleAgentProfiles() {
+  renderAgentApplyTargetChecks();
   $("#agent-new")?.addEventListener("click", () => newAgentProfile());
   $("#agent-save")?.addEventListener("click", () => saveAgentProfile());
   $("#agent-delete")?.addEventListener("click", () => deleteAgentProfile());
@@ -7010,6 +8198,7 @@ async function bootstrap() {
   handleReloadRuns();
   handleLogControls();
   handleWorkflowHistoryControls();
+  bindWorkflowDismissHandlers();
   handleTemplateSync();
   handleFreeFormatToggle();
   handleTemplateEditor();
@@ -7028,6 +8217,7 @@ async function bootstrap() {
   resetWorkflowState();
   renderWorkflow();
   syncWorkflowQualityControls();
+  renderActiveProfileSummary();
 
   try {
     await loadInfo();

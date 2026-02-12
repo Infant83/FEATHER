@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 import datetime as dt
+import difflib
 import hashlib
 import json
 import re
@@ -12,6 +13,7 @@ import sys
 
 from federlicht import tools as feder_tools
 
+from . import artwork as feder_artwork
 from . import prompts, workflow_stages
 from .agent_runtime import AgentRuntime
 from .agents import AgentRunner
@@ -151,6 +153,19 @@ class ReportOrchestrator:
         overview_path = helpers.write_run_overview(run_dir, instruction_file, index_file)
         baseline_report = helpers.find_baseline_report(run_dir)
         notes_dir = helpers.resolve_notes_dir(run_dir, args.notes_dir)
+
+        def infer_model_context_hint(model_name: object) -> int:
+            token = str(model_name or "").strip().lower()
+            if not token:
+                return 24000
+            if any(marker in token for marker in ("nano", "haiku", "small", "tiny")):
+                return 12000
+            if any(marker in token for marker in ("mini", "lite", "flash")):
+                return 20000
+            if any(marker in token for marker in ("sonnet", "medium")):
+                return 32000
+            return 36000
+
         configured_tool_char_limit = int(getattr(args, "max_tool_chars", 0) or 0)
         tool_budget_source = "cli" if configured_tool_char_limit > 0 else "auto"
         if configured_tool_char_limit > 0:
@@ -162,9 +177,15 @@ class ReportOrchestrator:
             token_cap = int(
                 getattr(args, "max_input_tokens", 0)
                 or getattr(helpers, "DEFAULT_MAX_INPUT_TOKENS", 0)
-                or 128000
+                or infer_model_context_hint(getattr(args, "model", ""))
             )
-            tool_char_limit = max(16000, min(48000, int(token_cap * char_ratio * 0.14)))
+            if token_cap <= 16000:
+                min_tool_chars = 8000
+            elif token_cap <= 24000:
+                min_tool_chars = 10000
+            else:
+                min_tool_chars = 16000
+            tool_char_limit = max(min_tool_chars, min(48000, int(token_cap * char_ratio * 0.14)))
         fs_read_cap = max(1500, min(4000, max(2000, tool_char_limit // 8)))
         fs_total_cap = max(8000, min(tool_char_limit, int(tool_char_limit * 0.35)))
         # Keep run_dir as backend root so built-in file tools can resolve archive paths reliably.
@@ -188,6 +209,7 @@ class ReportOrchestrator:
         cache_scope_signature = ""
         supporting_dir: Optional[Path] = None
         supporting_summary: Optional[str] = None
+        evidence_for_quality = ""
         alignment_max_chars = min(args.quality_max_chars, 8000)
         pack_limit = min(args.quality_max_chars, 6000)
         report_prompt_limit = 4000 if pack_limit <= 0 else min(4000, pack_limit)
@@ -201,6 +223,33 @@ class ReportOrchestrator:
         supporting_line_limit = 120
         context_limit = 2400 if pack_limit <= 0 else min(2400, max(1200, pack_limit // 2))
         context_line_limit = 60
+
+        configured_max_input = int(getattr(args, "max_input_tokens", 0) or 0)
+        if configured_max_input <= 0:
+            model_hint_tokens = infer_model_context_hint(getattr(args, "model", ""))
+            if model_hint_tokens <= 14000:
+                pack_limit = min(pack_limit, 3200)
+                report_prompt_limit = min(report_prompt_limit, 2200)
+                triage_limit = min(triage_limit, 1800)
+                guidance_limit = min(guidance_limit, 1800)
+                supporting_limit = min(supporting_limit, 1800)
+                alignment_limit = min(alignment_limit, 1800)
+                clarification_limit = min(clarification_limit, 1800)
+                triage_line_limit = min(triage_line_limit, 60)
+                guidance_line_limit = min(guidance_line_limit, 60)
+                supporting_line_limit = min(supporting_line_limit, 90)
+                context_limit = min(context_limit, 1200)
+                context_line_limit = min(context_line_limit, 36)
+            elif model_hint_tokens <= 22000:
+                pack_limit = min(pack_limit, 4500)
+                report_prompt_limit = min(report_prompt_limit, 2800)
+                triage_limit = min(triage_limit, 2400)
+                guidance_limit = min(guidance_limit, 2400)
+                supporting_limit = min(supporting_limit, 2400)
+                alignment_limit = min(alignment_limit, 2400)
+                clarification_limit = min(clarification_limit, 2400)
+                context_limit = min(context_limit, 1600)
+                context_line_limit = min(context_line_limit, 48)
 
         def pack_text(text: str) -> str:
             return helpers.truncate_text_middle(text, pack_limit)
@@ -618,6 +667,66 @@ class ReportOrchestrator:
                 )
 
         tools = [list_archive_files, list_supporting_files, read_document]
+        writer_tools = list(tools)
+        writer_subagents: list[dict[str, object]] = []
+        writer_artwork_enabled = False
+
+        def artwork_capabilities() -> str:
+            """List available report artwork/diagram capabilities."""
+            return feder_artwork.list_artwork_capabilities()
+
+        def artwork_mermaid_flowchart(
+            nodes: str,
+            edges: str,
+            direction: str = "LR",
+            title: str = "",
+        ) -> str:
+            """Build a Mermaid flowchart snippet for direct insertion into the report."""
+            return feder_artwork.build_mermaid_flowchart(
+                nodes,
+                edges,
+                direction=direction,
+                title=title,
+            )
+
+        def artwork_mermaid_timeline(events: str, title: str = "") -> str:
+            """Build a Mermaid timeline snippet for the report."""
+            return feder_artwork.build_mermaid_timeline(events, title=title)
+
+        def artwork_d2_render(
+            d2_source: str,
+            output_rel_path: str = "report_assets/artwork/d2_diagram.svg",
+            theme: str = "200",
+            layout: str = "dagre",
+        ) -> str:
+            """Render D2 source into an SVG artifact under the run directory and return embed snippet."""
+            result = feder_artwork.render_d2_svg(
+                run_dir,
+                d2_source,
+                output_rel_path=output_rel_path,
+                theme=theme,
+                layout=layout,
+            )
+            if str(result.get("ok", "")).lower() != "true":
+                return (
+                    "[artwork][error] "
+                    + str(result.get("message") or result.get("error") or "d2_render_failed")
+                )
+            rel_path = str(result.get("path") or "").strip()
+            markdown = str(result.get("markdown") or "").strip()
+            lines = []
+            if rel_path:
+                lines.append(f"[artwork] generated: {rel_path}")
+            if markdown:
+                lines.append(markdown)
+            return "\n".join(lines).strip() or "[artwork] generated"
+
+        artwork_tools = [
+            artwork_capabilities,
+            artwork_mermaid_flowchart,
+            artwork_mermaid_timeline,
+            artwork_d2_render,
+        ]
 
         all_stages = set(STAGE_INFO)
         workflow_stage_order = workflow_stages.resolve_stage_order(
@@ -797,20 +906,46 @@ class ReportOrchestrator:
             minimum: int = 2000,
             default_budget: int = 24000,
             hard_cap: int = 36000,
+            model_name: Optional[str] = None,
+            tool_heavy: bool = False,
         ) -> Optional[int]:
             fallback = getattr(helpers, "DEFAULT_MAX_INPUT_TOKENS", None)
             budget = max_tokens or args.max_input_tokens or fallback
             if not budget:
-                return max(minimum, min(default_budget, hard_cap))
-            return max(minimum, min(int(budget) - reserve, hard_cap))
+                budget = infer_model_context_hint(model_name)
+                budget = max(minimum, min(int(budget), default_budget, hard_cap))
+            effective_reserve = reserve
+            if tool_heavy:
+                char_ratio = 2 if helpers.is_korean_language(language) else 4
+                tool_token_allowance = int(tool_char_limit / max(1, char_ratio))
+                effective_reserve += min(12000, max(1200, int(tool_token_allowance * 1.1)))
+            return max(minimum, min(int(budget) - effective_reserve, hard_cap))
 
-        def resolve_writer_budget(max_tokens: Optional[int]) -> Optional[int]:
+        def resolve_writer_budget(max_tokens: Optional[int], model_name: Optional[str] = None) -> Optional[int]:
+            hint = infer_model_context_hint(model_name)
+            if hint <= 16000:
+                reserve = 7000
+                minimum = 5000
+                default_budget = 18000
+                hard_cap = 22000
+            elif hint <= 24000:
+                reserve = 8000
+                minimum = 8000
+                default_budget = 28000
+                hard_cap = 32000
+            else:
+                reserve = 9000
+                minimum = 10000
+                default_budget = 42000
+                hard_cap = 42000
             return resolve_stage_budget(
                 max_tokens,
-                reserve=9000,
-                minimum=10000,
-                default_budget=42000,
-                hard_cap=42000,
+                reserve=reserve,
+                minimum=minimum,
+                default_budget=default_budget,
+                hard_cap=hard_cap,
+                model_name=model_name,
+                tool_heavy=True,
             )
 
         def estimate_chars_for_tokens(token_budget: int) -> int:
@@ -946,6 +1081,86 @@ class ReportOrchestrator:
                 )
             )
 
+        def extract_heading_outline(report_text: str, max_items: int = 24) -> str:
+            if not report_text:
+                return "(no headings)"
+            headings: list[str] = []
+            if output_format == "tex":
+                for match in re.finditer(r"^\\section\\*?\\{([^}]+)\\}", report_text, re.MULTILINE):
+                    headings.append(str(match.group(1) or "").strip())
+            else:
+                for match in re.finditer(r"^##\s+(.+)$", report_text, re.MULTILINE):
+                    headings.append(str(match.group(1) or "").strip())
+            if not headings:
+                return "(no headings)"
+            if len(headings) > max_items:
+                remain = len(headings) - max_items
+                headings = headings[:max_items] + [f"... (+{remain} more)"]
+            return "\n".join(f"- {heading}" for heading in headings if heading)
+
+        def compute_report_delta(previous_text: str, current_text: str, max_chars: int = 2600) -> str:
+            prev_lines = (previous_text or "").splitlines()
+            curr_lines = (current_text or "").splitlines()
+            if not prev_lines or not curr_lines:
+                return "(no delta)"
+            diff_lines = list(
+                difflib.unified_diff(
+                    prev_lines,
+                    curr_lines,
+                    fromfile="previous",
+                    tofile="current",
+                    lineterm="",
+                    n=1,
+                )
+            )
+            if not diff_lines:
+                return "(no delta)"
+            if len(diff_lines) > 140:
+                trimmed = diff_lines[:140]
+                trimmed.append(f"... (+{len(diff_lines) - 140} lines)")
+                diff_lines = trimmed
+            delta_text = "\n".join(diff_lines)
+            return helpers.truncate_text_middle(delta_text, max_chars)
+
+        def build_quality_report_digest(
+            current_report: str,
+            previous_report: Optional[str],
+            max_chars: int,
+        ) -> str:
+            current_norm = helpers.normalize_report_paths(current_report or "", run_dir)
+            excerpt = helpers.truncate_text_middle(current_norm, max_chars)
+            parts = [
+                "Report outline:",
+                extract_heading_outline(current_norm),
+                "",
+                "Current report excerpt:",
+                excerpt or "(empty)",
+            ]
+            if previous_report and previous_report.strip():
+                parts.extend(
+                    [
+                        "",
+                        "Delta vs previous revision:",
+                        compute_report_delta(previous_report, current_norm, max_chars=max(1200, max_chars // 2)),
+                    ]
+                )
+            return "\n".join(parts)
+
+        def invoke_agent(
+            label: str,
+            agent: object,
+            payload: dict,
+            *,
+            show_progress: bool = True,
+            reset_tools: bool = True,
+        ) -> str:
+            if reset_tools:
+                try:
+                    backend.reset_stage_budget(label)
+                except Exception:
+                    pass
+            return self._runner.run(label, agent, payload, show_progress=show_progress)
+
         def trim_to_sections(text: str) -> str:
             if not text:
                 return ""
@@ -1066,7 +1281,7 @@ class ReportOrchestrator:
                     ", ".join(missing_sections),
                     "",
                     "Evidence notes:",
-                    helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
+                    helpers.truncate_text_middle(evidence_for_quality or evidence_notes, args.quality_max_chars),
                     "",
                     "Report focus prompt:",
                     report_prompt or "(none)",
@@ -1075,7 +1290,7 @@ class ReportOrchestrator:
                     helpers.truncate_text_middle(report_text, args.quality_max_chars),
                 ]
             )
-            repair_text = self._runner.run(
+            repair_text = invoke_agent(
                 label,
                 repair_agent,
                 {"messages": [{"role": "user", "content": repair_input}]},
@@ -1139,6 +1354,7 @@ class ReportOrchestrator:
                     template_rigidity=args.template_rigidity,
                     figures_enabled=bool(args.extract_figures),
                     figures_mode=args.figures_mode,
+                    artwork_enabled=writer_artwork_enabled,
                 ),
                 self._agent_overrides,
             )
@@ -1147,11 +1363,12 @@ class ReportOrchestrator:
             finalizer_agent = helpers.create_agent_with_fallback(
                 self._create_deep_agent,
                 finalizer_model,
-                tools,
+                writer_tools,
                 finalizer_prompt,
                 backend,
                 max_input_tokens=finalizer_max,
                 max_input_tokens_source=finalizer_max_source,
+                subagents=writer_subagents or None,
             )
             notes = "\n".join(
                 f"- {note.get('reason', '')} (winner={note.get('winner')})"
@@ -1188,7 +1405,13 @@ class ReportOrchestrator:
                 finalizer_parts.extend(["", "Pairwise selection notes:", notes])
             if style_hint:
                 finalizer_parts.extend(["", style_hint])
-            finalizer_parts.extend(["", "Evidence notes:", helpers.truncate_text_middle(evidence_notes, args.quality_max_chars)])
+            finalizer_parts.extend(
+                [
+                    "",
+                    "Evidence notes:",
+                    helpers.truncate_text_middle(evidence_for_quality or evidence_notes, args.quality_max_chars),
+                ]
+            )
             if template_guidance_text:
                 finalizer_parts.extend(["", "Template guidance:", template_guidance_text])
             if report_prompt:
@@ -1198,7 +1421,7 @@ class ReportOrchestrator:
             if supporting_summary:
                 finalizer_parts.extend(["", "Supporting web research summary:", supporting_summary])
             finalizer_input = "\n".join(finalizer_parts)
-            final_text = self._runner.run(
+            final_text = invoke_agent(
                 "Writer Finalizer",
                 finalizer_agent,
                 {"messages": [{"role": "user", "content": finalizer_input}]},
@@ -1209,7 +1432,7 @@ class ReportOrchestrator:
             retry_needed, retry_reason = report_needs_retry(final_text)
             if retry_needed:
                 retry_input = "\n".join([build_writer_retry_guardrail(retry_reason), "", finalizer_input])
-                final_text = self._runner.run(
+                final_text = invoke_agent(
                     "Writer Finalizer (retry)",
                     finalizer_agent,
                     {"messages": [{"role": "user", "content": retry_input}]},
@@ -1295,7 +1518,7 @@ class ReportOrchestrator:
                     alignment_model,
                     alignment_prompt,
                     align_payload,
-                    lambda: self._runner.run(
+                    lambda: invoke_agent(
                         f"Alignment Check ({stage})",
                         alignment_agent,
                         {"messages": [{"role": "user", "content": align_payload}]},
@@ -1313,7 +1536,7 @@ class ReportOrchestrator:
                 )
                 fallback_budget = max(1200, (align_budget // 2) if align_budget else 1200)
                 fallback_payload, _, _ = build_stage_payload(align_sections, fallback_budget)
-                align_notes = self._runner.run(
+                align_notes = invoke_agent(
                     f"Alignment Check ({stage}) (fallback)",
                     alignment_agent,
                     {"messages": [{"role": "user", "content": fallback_payload}]},
@@ -1416,7 +1639,7 @@ class ReportOrchestrator:
         def run_reducer(prompt_text: str, source_label: str, max_chars: int) -> str:
             target = max(200, max_chars)
             payload = "\n".join([prompt_text, "", f"Target max chars: {target}"])
-            return self._runner.run(
+            return invoke_agent(
                 "Reducer",
                 ensure_reducer_agent(),
                 {"messages": [{"role": "user", "content": payload}]},
@@ -1546,6 +1769,8 @@ class ReportOrchestrator:
                 minimum=2000,
                 default_budget=16000,
                 hard_cap=18000,
+                model_name=scout_model,
+                tool_heavy=True,
             )
             scout_payload, _, _ = build_stage_payload(scout_sections, scout_budget)
             cached = False
@@ -1555,7 +1780,7 @@ class ReportOrchestrator:
                     scout_model,
                     scout_prompt,
                     scout_payload,
-                    lambda: self._runner.run(
+                    lambda: invoke_agent(
                         "Scout Notes",
                         scout_agent,
                         {"messages": [{"role": "user", "content": scout_payload}]},
@@ -1622,7 +1847,7 @@ class ReportOrchestrator:
                     )
                 fallback_payload, _, _ = build_stage_payload(fallback_sections, fallback_budget)
                 try:
-                    scout_notes = self._runner.run(
+                    scout_notes = invoke_agent(
                         "Scout Notes (fallback)",
                         scout_fallback_agent,
                         {"messages": [{"role": "user", "content": fallback_payload}]},
@@ -1700,10 +1925,12 @@ class ReportOrchestrator:
                 minimum=2000,
                 default_budget=12000,
                 hard_cap=14000,
+                model_name=clarifier_model,
+                tool_heavy=True,
             )
             clarifier_payload, _, _ = build_stage_payload(clarifier_sections, clarifier_budget)
             try:
-                clarification_questions = self._runner.run(
+                clarification_questions = invoke_agent(
                     "Clarification Questions",
                     clarifier_agent,
                     {"messages": [{"role": "user", "content": clarifier_payload}]},
@@ -1721,7 +1948,7 @@ class ReportOrchestrator:
                 )
                 fallback_budget = max(2000, (clarifier_budget // 2) if clarifier_budget else 2000)
                 fallback_payload, _, _ = build_stage_payload(clarifier_sections, fallback_budget)
-                clarification_questions = self._runner.run(
+                clarification_questions = invoke_agent(
                     "Clarification Questions (fallback)",
                     clarifier_agent,
                     {"messages": [{"role": "user", "content": fallback_payload}]},
@@ -1899,6 +2126,8 @@ class ReportOrchestrator:
                 minimum=2000,
                 default_budget=16000,
                 hard_cap=20000,
+                model_name=plan_model,
+                tool_heavy=True,
             )
             plan_payload, _, _ = build_stage_payload(plan_sections, plan_budget)
             cached = False
@@ -1908,7 +2137,7 @@ class ReportOrchestrator:
                     plan_model,
                     plan_prompt,
                     plan_payload,
-                    lambda: self._runner.run(
+                    lambda: invoke_agent(
                         "Plan",
                         plan_agent,
                         {"messages": [{"role": "user", "content": plan_payload}]},
@@ -1934,7 +2163,7 @@ class ReportOrchestrator:
                 )
                 fallback_budget = max(2000, (plan_budget // 2) if plan_budget else 2000)
                 fallback_payload, _, _ = build_stage_payload(plan_sections, fallback_budget)
-                plan_text = self._runner.run(
+                plan_text = invoke_agent(
                     "Plan (fallback)",
                     plan_agent,
                     {"messages": [{"role": "user", "content": fallback_payload}]},
@@ -2011,10 +2240,12 @@ class ReportOrchestrator:
                 minimum=2000,
                 default_budget=14000,
                 hard_cap=18000,
+                model_name=web_model,
+                tool_heavy=True,
             )
             web_payload, _, _ = build_stage_payload(web_sections, web_budget)
             try:
-                web_text = self._runner.run(
+                web_text = invoke_agent(
                     "Web Query Draft",
                     web_agent,
                     {"messages": [{"role": "user", "content": web_payload}]},
@@ -2031,7 +2262,7 @@ class ReportOrchestrator:
                 )
                 fallback_budget = max(2000, (web_budget // 2) if web_budget else 2000)
                 fallback_payload, _, _ = build_stage_payload(web_sections, fallback_budget)
-                web_text = self._runner.run(
+                web_text = invoke_agent(
                     "Web Query Draft (fallback)",
                     web_agent,
                     {"messages": [{"role": "user", "content": fallback_payload}]},
@@ -2103,6 +2334,8 @@ class ReportOrchestrator:
         gap_text = ""
         condensed = ""
         evidence_for_writer = evidence_notes
+        claim_packet_text = ""
+        claim_packet_stats: dict[str, object] = {}
         if use_evidence:
             evidence_prompt = agent_runtime.prompt(
                 "evidence",
@@ -2225,8 +2458,24 @@ class ReportOrchestrator:
                 minimum=2500,
                 default_budget=22000,
                 hard_cap=26000,
+                model_name=evidence_model,
+                tool_heavy=True,
             )
-            evidence_input, _, _ = build_stage_payload(evidence_sections, evidence_budget)
+            compact_span = max(900, min(2200, pack_limit // 2 if pack_limit > 0 else 1600))
+            evidence_fallback_map = {
+                "scout_notes": helpers.truncate_text_middle(scout_context, compact_span),
+                "plan": helpers.truncate_text_middle(plan_context, compact_span),
+                "align_plan": helpers.truncate_text_middle(align_plan or "", max(700, compact_span // 2)),
+                "template_guidance": helpers.truncate_text_middle(template_guidance_text or "", 900),
+                "clarification_questions": helpers.truncate_text_middle(clarification_questions or "", 900),
+                "clarification_answers": helpers.truncate_text_middle(clarification_answers or "", 900),
+                "supporting_summary": helpers.truncate_text_middle(supporting_summary or "", 900),
+            }
+            evidence_input, _, _ = build_stage_payload(
+                evidence_sections,
+                evidence_budget,
+                fallback_map=evidence_fallback_map,
+            )
             cached = False
             try:
                 evidence_notes, cached = get_cached_output(
@@ -2234,7 +2483,7 @@ class ReportOrchestrator:
                     evidence_model,
                     evidence_prompt,
                     evidence_input,
-                    lambda: self._runner.run(
+                    lambda: invoke_agent(
                         "Evidence Notes",
                         evidence_agent,
                         {"messages": [{"role": "user", "content": evidence_input}]},
@@ -2258,12 +2507,31 @@ class ReportOrchestrator:
                     args.progress,
                     args.progress_chars,
                 )
-                fallback_budget = max(2000, (evidence_budget // 2) if evidence_budget else 2000)
-                fallback_payload, _, _ = build_stage_payload(evidence_sections, fallback_budget)
+                fallback_budget = max(1600, (evidence_budget // 3) if evidence_budget else 1600)
+                fallback_payload, _, _ = build_stage_payload(
+                    evidence_sections,
+                    fallback_budget,
+                    fallback_map=evidence_fallback_map,
+                    force_fallback=True,
+                )
+                evidence_fallback_backend = helpers.SafeFilesystemBackend(
+                    root_dir=run_dir,
+                    max_read_chars=max(1200, fs_read_cap // 2),
+                    max_total_chars=max(5000, fs_total_cap // 2),
+                )
+                evidence_fallback_agent = helpers.create_agent_with_fallback(
+                    self._create_deep_agent,
+                    evidence_model,
+                    tools,
+                    evidence_prompt,
+                    evidence_fallback_backend,
+                    max_input_tokens=evidence_max,
+                    max_input_tokens_source=evidence_max_source,
+                )
                 try:
-                    evidence_notes = self._runner.run(
+                    evidence_notes = invoke_agent(
                         "Evidence Notes (fallback)",
-                        evidence_agent,
+                        evidence_fallback_agent,
                         {"messages": [{"role": "user", "content": fallback_payload}]},
                         show_progress=True,
                     )
@@ -2349,6 +2617,8 @@ class ReportOrchestrator:
                     minimum=1600,
                     default_budget=9000,
                     hard_cap=14000,
+                    model_name=plan_check_model,
+                    tool_heavy=True,
                 )
                 plan_check_input, _, _ = build_stage_payload(plan_check_sections, plan_check_budget)
                 helpers.print_progress(
@@ -2363,7 +2633,7 @@ class ReportOrchestrator:
                         plan_check_model,
                         plan_check_prompt,
                         plan_check_input,
-                        lambda: self._runner.run(
+                        lambda: invoke_agent(
                             "Plan Update",
                             plan_check_agent,
                             {"messages": [{"role": "user", "content": plan_check_input}]},
@@ -2381,7 +2651,7 @@ class ReportOrchestrator:
                     )
                     fallback_budget = max(1400, (plan_check_budget // 2) if plan_check_budget else 1400)
                     fallback_input, _, _ = build_stage_payload(plan_check_sections, fallback_budget)
-                    plan_text = self._runner.run(
+                    plan_text = invoke_agent(
                         "Plan Update (fallback)",
                         plan_check_agent,
                         {"messages": [{"role": "user", "content": fallback_input}]},
@@ -2407,15 +2677,45 @@ class ReportOrchestrator:
             claim_map = feder_tools.build_claim_map(evidence_notes, max_claims=80)
             claim_map_text = feder_tools.format_claim_map(claim_map)
             (notes_dir / "claim_map.md").write_text(claim_map_text, encoding="utf-8")
+            packet_focus_text = "\n".join(
+                item for item in [report_prompt or "", plan_text or "", query_id] if item
+            )
+            claim_packet = feder_tools.build_claim_evidence_packet(
+                claim_map,
+                packet_focus_text,
+                top_k=28 if is_deep else 18,
+                max_refs_per_claim=3,
+                include_index_only=False,
+            )
+            claim_packet_stats = dict(claim_packet.get("stats") or {})
+            claim_packet_text = feder_tools.format_claim_evidence_packet(claim_packet)
+            (notes_dir / "claim_evidence_map.json").write_text(
+                json.dumps(claim_packet, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            (notes_dir / "claim_evidence_map.md").write_text(claim_packet_text, encoding="utf-8")
             plan_text = feder_tools.attach_evidence_to_plan(plan_text, claim_map, max_evidence=2)
             (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
             gap_text = feder_tools.build_gap_report(plan_text, claim_map)
             (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
+            index_only_ratio = float(claim_packet_stats.get("index_only_ratio", 0.0) or 0.0)
+            if index_only_ratio >= 0.35:
+                index_only_warning = (
+                    "Evidence quality warning: index-only evidence ratio is high. "
+                    "Prioritize direct sources (PDF/text/transcript/official URL) and treat index-derived claims as tentative."
+                )
+                if gap_text.strip():
+                    gap_text = f"{gap_text.rstrip()}\n- {index_only_warning}"
+                else:
+                    gap_text = f"Gaps Summary\n- {index_only_warning}"
+                (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
             if not is_deep:
-                condensed = "\n".join(section for section in [claim_map_text, gap_text] if section)
+                condensed = "\n".join(
+                    section for section in [claim_packet_text, gap_text, claim_map_text] if section
+                )
                 evidence_for_writer = condensed or helpers.truncate_text_middle(evidence_notes, pack_limit)
             else:
-                evidence_for_writer = evidence_notes
+                evidence_for_writer = claim_packet_text or claim_map_text or evidence_notes
         else:
             evidence_for_writer = evidence_notes
             if stage_enabled("evidence"):
@@ -2427,6 +2727,8 @@ class ReportOrchestrator:
                 align_evidence = state.align_evidence
             if state.claim_map_text and not claim_map_text:
                 claim_map_text = state.claim_map_text
+            if state.claim_map_text and not claim_packet_text:
+                claim_packet_text = state.claim_map_text
             if state.gap_text and not gap_text:
                 gap_text = state.gap_text
             if not condensed and (state.claim_map_text or state.gap_text):
@@ -2438,6 +2740,10 @@ class ReportOrchestrator:
                 evidence_for_writer = condensed
             elif not evidence_for_writer:
                 evidence_for_writer = evidence_notes
+        evidence_for_quality = claim_packet_text or condensed or helpers.truncate_text_middle(
+            evidence_notes,
+            max(1400, min(args.quality_max_chars, pack_limit or args.quality_max_chars)),
+        )
         reuse_state_report_for_quality = bool(
             stage_set
             and "writer" not in stage_set
@@ -2499,6 +2805,30 @@ class ReportOrchestrator:
                 workflow_path=workflow_path,
             )
         plan_for_writer = plan_text if is_deep else plan_context
+        writer_artwork_enabled = agent_runtime.enabled("artwork", True, self._agent_overrides)
+        if writer_artwork_enabled:
+            writer_tools = [*tools, *artwork_tools]
+            artwork_prompt = agent_runtime.prompt(
+                "artwork",
+                prompts.build_artwork_prompt(output_format, language),
+                self._agent_overrides,
+            )
+            artwork_model = agent_runtime.model("artwork", args.model, self._agent_overrides)
+            writer_subagents = [
+                {
+                    "name": "artwork_agent",
+                    "description": (
+                        "Generate concise report artwork snippets (Mermaid flowchart/timeline "
+                        "or D2 SVG references) for specific sections."
+                    ),
+                    "system_prompt": artwork_prompt,
+                    "model": artwork_model,
+                    "tools": artwork_tools,
+                }
+            ]
+        else:
+            writer_tools = list(tools)
+            writer_subagents = []
         writer_prompt = agent_runtime.prompt(
             "writer",
             prompts.build_writer_prompt(
@@ -2512,6 +2842,7 @@ class ReportOrchestrator:
                 template_rigidity=args.template_rigidity,
                 figures_enabled=bool(args.extract_figures),
                 figures_mode=args.figures_mode,
+                artwork_enabled=writer_artwork_enabled,
             ),
             self._agent_overrides,
         )
@@ -2520,11 +2851,12 @@ class ReportOrchestrator:
         writer_agent = helpers.create_agent_with_fallback(
             self._create_deep_agent,
             writer_model,
-            tools,
+            writer_tools,
             writer_prompt,
             backend,
             max_input_tokens=writer_max,
             max_input_tokens_source=writer_max_source,
+            subagents=writer_subagents or None,
         )
         plan_limit = pack_limit if pack_limit > 0 else 6000
 
@@ -2664,8 +2996,9 @@ class ReportOrchestrator:
                 )
             return sections
 
-        condensed_evidence = condensed or helpers.truncate_text_middle(evidence_notes, pack_limit)
-        writer_budget = resolve_writer_budget(writer_max)
+        evidence_payload_base = evidence_for_writer or evidence_notes
+        condensed_evidence = condensed or helpers.truncate_text_middle(evidence_payload_base, pack_limit)
+        writer_budget = resolve_writer_budget(writer_max, writer_model)
         if reuse_state_report_for_quality:
             report = helpers.normalize_report_paths(state.report, run_dir)
             report = coerce_required_headings(report, required_sections)
@@ -2683,7 +3016,7 @@ class ReportOrchestrator:
             )
             condensed_applied = fallback_used or condensed_ready
             try:
-                report = self._runner.run(
+                report = invoke_agent(
                     "Writer Draft",
                     writer_agent,
                     {"messages": [{"role": "user", "content": writer_input}]},
@@ -2698,7 +3031,7 @@ class ReportOrchestrator:
                         fallback_map={"evidence": condensed_evidence} if condensed_evidence else None,
                         force_fallback=True,
                     )
-                    report = self._runner.run(
+                    report = invoke_agent(
                         "Writer Draft",
                         writer_agent,
                         {"messages": [{"role": "user", "content": writer_input}]},
@@ -2712,7 +3045,7 @@ class ReportOrchestrator:
             retry_needed, retry_reason = report_needs_retry(report)
             if retry_needed:
                 retry_input = "\n".join([build_writer_retry_guardrail(retry_reason), "", writer_input])
-                report = self._runner.run(
+                report = invoke_agent(
                     "Writer Draft (retry)",
                     writer_agent,
                     {"messages": [{"role": "user", "content": retry_input}]},
@@ -2732,7 +3065,19 @@ class ReportOrchestrator:
         secondary_eval: Optional[dict] = None
         pairwise_notes: list[dict] = []
         quality_model = args.quality_model or check_model or args.model
+        quality_evidence_context = evidence_for_quality or helpers.truncate_text_middle(
+            evidence_notes,
+            max(1600, min(args.quality_max_chars, 6000)),
+        )
+        quality_index_warning = ""
+        index_ratio = float(claim_packet_stats.get("index_only_ratio", 0.0) or 0.0)
+        if index_ratio >= 0.35:
+            quality_index_warning = (
+                "High index-only evidence ratio detected. "
+                "Treat weak claims as tentative and prioritize direct source-backed revisions."
+            )
         if quality_iterations > 0:
+            previous_report = ""
             for idx in range(quality_iterations):
                 critic_prompt = agent_runtime.prompt(
                     "critic",
@@ -2750,22 +3095,74 @@ class ReportOrchestrator:
                     max_input_tokens=critic_max,
                     max_input_tokens_source=critic_max_source,
                 )
-                critic_input = "\n".join(
-                    [
-                        "Report:",
-                        helpers.truncate_text_middle(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
-                        "",
-                        "Evidence notes:",
-                        helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
-                        "",
+                digest_limit = max(1800, min(args.quality_max_chars, 7000))
+                critic_sections = [
+                    make_section(
+                        "report_digest",
+                        "Report context:",
+                        build_quality_report_digest(report, previous_report, max_chars=digest_limit),
+                        priority="high",
+                        base_limit=digest_limit,
+                        min_limit=1200,
+                    ),
+                    make_section(
+                        "evidence",
+                        "Evidence packet:",
+                        quality_evidence_context,
+                        priority="high",
+                        base_limit=max(1500, min(args.quality_max_chars, 5200)),
+                        min_limit=900,
+                    ),
+                    make_section(
+                        "report_prompt",
                         "Report focus prompt:",
                         report_prompt or "(none)",
-                        "",
+                        priority="high",
+                        base_limit=report_prompt_limit,
+                        min_limit=700,
+                    ),
+                    make_section(
+                        "alignment_draft",
                         "Alignment notes (draft):",
                         align_draft or "(none)",
-                    ]
+                        priority="medium",
+                        base_limit=alignment_limit,
+                        min_limit=500,
+                    ),
+                ]
+                if quality_index_warning:
+                    critic_sections.append(
+                        make_section(
+                            "quality_warning",
+                            "Evidence quality warning:",
+                            quality_index_warning,
+                            priority="high",
+                            base_limit=600,
+                            min_limit=220,
+                        )
+                    )
+                critic_budget = resolve_stage_budget(
+                    critic_max,
+                    reserve=2200,
+                    minimum=1600,
+                    default_budget=9000,
+                    hard_cap=14000,
+                    model_name=critic_model,
+                    tool_heavy=False,
                 )
-                critique = self._runner.run(
+                critic_input, _, _ = build_stage_payload(
+                    critic_sections,
+                    critic_budget,
+                    fallback_map={
+                        "report_digest": helpers.truncate_text_middle(
+                            build_quality_report_digest(report, previous_report, max_chars=max(1200, digest_limit // 2)),
+                            2600,
+                        ),
+                        "evidence": helpers.truncate_text_middle(quality_evidence_context, 2200),
+                        "alignment_draft": helpers.truncate_text_middle(align_draft or "(none)", 900),
+                    },
+                )
+                critique = invoke_agent(
                     f"Critique Pass {idx + 1}",
                     critic_agent,
                     {"messages": [{"role": "user", "content": critic_input}]},
@@ -2790,25 +3187,82 @@ class ReportOrchestrator:
                     max_input_tokens=revise_max,
                     max_input_tokens_source=revise_max_source,
                 )
-                revise_input = "\n".join(
-                    [
-                        "Original report:",
-                        helpers.truncate_text_middle(helpers.normalize_report_paths(report, run_dir), args.quality_max_chars),
-                        "",
+                revise_sections = [
+                    make_section(
+                        "report_digest",
+                        "Original report context:",
+                        build_quality_report_digest(report, previous_report, max_chars=digest_limit),
+                        priority="high",
+                        base_limit=digest_limit,
+                        min_limit=1200,
+                    ),
+                    make_section(
+                        "critique",
                         "Critique:",
                         critique,
-                        "",
-                        "Evidence notes:",
-                        helpers.truncate_text_middle(evidence_notes, args.quality_max_chars),
-                        "",
+                        priority="high",
+                        base_limit=max(1200, min(args.quality_max_chars, 4200)),
+                        min_limit=700,
+                    ),
+                    make_section(
+                        "evidence",
+                        "Evidence packet:",
+                        quality_evidence_context,
+                        priority="high",
+                        base_limit=max(1500, min(args.quality_max_chars, 5200)),
+                        min_limit=900,
+                    ),
+                    make_section(
+                        "report_prompt",
                         "Report focus prompt:",
                         report_prompt or "(none)",
-                        "",
+                        priority="high",
+                        base_limit=report_prompt_limit,
+                        min_limit=700,
+                    ),
+                    make_section(
+                        "alignment_draft",
                         "Alignment notes (draft):",
                         align_draft or "(none)",
-                    ]
+                        priority="medium",
+                        base_limit=alignment_limit,
+                        min_limit=500,
+                    ),
+                ]
+                if quality_index_warning:
+                    revise_sections.append(
+                        make_section(
+                            "quality_warning",
+                            "Evidence quality warning:",
+                            quality_index_warning,
+                            priority="high",
+                            base_limit=600,
+                            min_limit=220,
+                        )
+                    )
+                revise_budget = resolve_stage_budget(
+                    revise_max,
+                    reserve=2400,
+                    minimum=1700,
+                    default_budget=9800,
+                    hard_cap=14500,
+                    model_name=revise_model,
+                    tool_heavy=False,
                 )
-                report = self._runner.run(
+                revise_input, _, _ = build_stage_payload(
+                    revise_sections,
+                    revise_budget,
+                    fallback_map={
+                        "report_digest": helpers.truncate_text_middle(
+                            build_quality_report_digest(report, previous_report, max_chars=max(1200, digest_limit // 2)),
+                            2600,
+                        ),
+                        "critique": helpers.truncate_text_middle(critique, 2400),
+                        "evidence": helpers.truncate_text_middle(quality_evidence_context, 2200),
+                    },
+                )
+                previous_report = report
+                report = invoke_agent(
                     f"Revision Pass {idx + 1}",
                     revise_agent,
                     {"messages": [{"role": "user", "content": revise_input}]},
@@ -2827,7 +3281,7 @@ class ReportOrchestrator:
                 eval_max, eval_max_source = agent_max_tokens("evaluator")
                 evaluation = helpers.evaluate_report(
                     candidate["text"],
-                    evidence_notes,
+                    quality_evidence_context,
                     report_prompt,
                     template_guidance_text,
                     required_sections,
@@ -2857,7 +3311,7 @@ class ReportOrchestrator:
                             candidates[j]["text"],
                             evaluations[i],
                             evaluations[j],
-                            evidence_notes,
+                            quality_evidence_context,
                             report_prompt,
                             required_sections,
                             output_format,

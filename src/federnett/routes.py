@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlparse
@@ -26,7 +27,7 @@ from .filesystem import (
     write_help_history,
     write_text_file as _write_text_file,
 )
-from .help_agent import answer_help_question
+from .help_agent import answer_help_question, stream_help_question
 from .jobs import Job
 from .templates import list_template_styles, list_templates, read_template_style, template_details
 from .utils import resolve_under_root as _resolve_under_root, safe_rel as _safe_rel
@@ -48,6 +49,15 @@ class HandlerLike(Protocol):
     def _read_json(self) -> dict[str, Any]: ...
 
     def _stream_job(self, job: Job) -> None: ...
+
+    def send_response(self, code: int, message: str | None = None) -> None: ...
+
+    def send_header(self, keyword: str, value: str) -> None: ...
+
+    def end_headers(self) -> None: ...
+
+    @property
+    def wfile(self): ...
 
 
 def _send_running_conflict(handler: HandlerLike, exc: RuntimeError) -> None:
@@ -94,6 +104,33 @@ def _resolve_unique_output_path(root: Path, raw_output: str) -> dict[str, Any]:
         "changed": requested != suggested,
         "requested_exists": requested.exists(),
     }
+
+
+def _stream_help_events(handler: HandlerLike, events: Any) -> None:
+    handler.send_response(200)
+    handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
+    handler.send_header("Cache-Control", "no-cache")
+    handler.send_header("Connection", "keep-alive")
+    handler.end_headers()
+    try:
+        for event in events:
+            payload = dict(event or {})
+            event_name = str(payload.pop("event", "message") or "message")
+            data = json.dumps(payload, ensure_ascii=False)
+            chunk = f"event: {event_name}\ndata: {data}\n\n".encode("utf-8")
+            try:
+                handler.wfile.write(chunk)
+                handler.wfile.flush()
+            except BrokenPipeError:
+                return
+    except Exception as exc:
+        payload = json.dumps({"error": str(exc)}, ensure_ascii=False)
+        chunk = f"event: error\ndata: {payload}\n\n".encode("utf-8")
+        try:
+            handler.wfile.write(chunk)
+            handler.wfile.flush()
+        except BrokenPipeError:
+            return
 
 
 def handle_api_get(
@@ -257,8 +294,9 @@ def handle_api_get(
         return
     if path == "/api/help/history":
         run_rel = (qs.get("run") or [None])[0]
+        profile_id = (qs.get("profile_id") or [None])[0]
         try:
-            payload = read_help_history(cfg.root, run_rel)
+            payload = read_help_history(cfg.root, run_rel, profile_id=profile_id)
         except ValueError as exc:
             handler._send_json({"error": str(exc)}, status=400)
             return
@@ -464,19 +502,51 @@ def handle_api_post(
             )
             handler._send_json(result)
             return
+        if path == "/api/help/ask/stream":
+            question = payload.get("question")
+            if not isinstance(question, str) or not question.strip():
+                raise ValueError("question must be a non-empty string")
+            model = payload.get("model")
+            model_value = str(model).strip() if isinstance(model, str) else None
+            strict_model_raw = payload.get("strict_model")
+            strict_model_value = bool(strict_model_raw) if isinstance(strict_model_raw, bool) else False
+            run_rel = payload.get("run")
+            run_value = str(run_rel).strip() if isinstance(run_rel, str) else None
+            history_raw = payload.get("history")
+            history_value = history_raw if isinstance(history_raw, list) else None
+            max_sources_raw = payload.get("max_sources")
+            try:
+                max_sources = int(max_sources_raw) if max_sources_raw is not None else 8
+            except Exception:
+                max_sources = 8
+            events = stream_help_question(
+                cfg.root,
+                question,
+                model=model_value,
+                strict_model=strict_model_value,
+                max_sources=max_sources,
+                history=history_value,
+                run_rel=run_value,
+            )
+            _stream_help_events(handler, events)
+            return
         if path == "/api/help/history":
             run_rel = payload.get("run")
             run_value = str(run_rel).strip() if isinstance(run_rel, str) else None
+            profile_raw = payload.get("profile_id")
+            profile_value = str(profile_raw).strip() if isinstance(profile_raw, str) else None
             items = payload.get("items")
             if not isinstance(items, list):
                 raise ValueError("items must be an array")
-            result = write_help_history(cfg.root, run_value, items)
+            result = write_help_history(cfg.root, run_value, items, profile_id=profile_value)
             handler._send_json(result)
             return
         if path == "/api/help/history/clear":
             run_rel = payload.get("run")
             run_value = str(run_rel).strip() if isinstance(run_rel, str) else None
-            result = clear_help_history(cfg.root, run_value)
+            profile_raw = payload.get("profile_id")
+            profile_value = str(profile_raw).strip() if isinstance(profile_raw, str) else None
+            result = clear_help_history(cfg.root, run_value, profile_id=profile_value)
             handler._send_json(result)
             return
         if path.startswith("/api/jobs/") and path.endswith("/kill"):

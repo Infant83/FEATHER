@@ -355,6 +355,8 @@ def run_pipeline(
                     handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
     report = feder_tools.normalize_math_expressions(report)
     report = remove_placeholder_citations(report)
+    report = scrub_internal_index_mentions(report)
+    report = smooth_writer_meta_labels(report)
     report_body, citation_refs = rewrite_citations(report.rstrip(), output_format)
     if output_format != "tex":
         report_body = merge_orphan_citations(report_body)
@@ -370,8 +372,7 @@ def run_pipeline(
     openalex_meta = load_openalex_meta(archive_dir)
     text_meta_index = build_text_meta_index(run_dir, archive_dir, supporting_dir)
     report = ensure_appendix_contents(report, output_format, refs, run_dir, notes_dir, language)
-    if report_prompt:
-        report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format)}"
+    report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format)}"
     if clarification_questions and "no_questions" not in clarification_questions.lower():
         report = f"{report.rstrip()}{format_clarifications_block(clarification_questions, clarification_answers, output_format)}"
     report = f"{report.rstrip()}{render_reference_section(citation_refs, refs, openalex_meta, output_format, text_meta_index)}"

@@ -6,7 +6,7 @@ import re
 from importlib.metadata import PackageNotFoundError, version as package_version
 from pathlib import Path
 
-DEFAULT_VERSION = "1.5.0"
+DEFAULT_VERSION = "1.6.0"
 
 
 def _read_pyproject_version() -> str | None:
@@ -37,4 +37,3 @@ def resolve_version() -> str:
 
 
 VERSION = resolve_version()
-

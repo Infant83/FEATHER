@@ -21,6 +21,9 @@ class DummyHandler:
         self.json_response: tuple[int, object] | None = None
         self.bytes_response: tuple[int, bytes, str] | None = None
         self.streamed_job = None
+        self.stream_status: int | None = None
+        self.stream_headers: list[tuple[str, str]] = []
+        self.wfile = io.BytesIO()
 
     def _cfg(self) -> FedernettConfig:
         return self._cfg_obj
@@ -43,6 +46,15 @@ class DummyHandler:
 
     def _stream_job(self, job) -> None:
         self.streamed_job = job
+
+    def send_response(self, code: int, message: str | None = None) -> None:
+        self.stream_status = code
+
+    def send_header(self, keyword: str, value: str) -> None:
+        self.stream_headers.append((keyword, value))
+
+    def end_headers(self) -> None:
+        return
 
 
 def make_cfg(tmp_path: Path) -> FedernettConfig:
@@ -148,3 +160,45 @@ def test_handle_api_post_help_ask_forwards_strict_model(tmp_path: Path, monkeypa
     assert isinstance(body, dict)
     assert captured.get("model") == "gpt-5"
     assert captured.get("strict_model") is True
+
+
+def test_handle_api_post_help_ask_stream_emits_sse(tmp_path: Path, monkeypatch) -> None:
+    cfg = make_cfg(tmp_path)
+
+    def _fake_stream(_root, _question, **_kwargs):
+        yield {"event": "meta", "requested_model": "gpt-5.2"}
+        yield {"event": "delta", "text": "안녕하세요"}
+        yield {"event": "done", "answer": "안녕하세요", "sources": []}
+
+    monkeypatch.setattr(routes_mod, "stream_help_question", _fake_stream)
+    handler = DummyHandler(
+        cfg,
+        "/api/help/ask/stream",
+        payload={"question": "테스트 스트림"},
+    )
+    handle_api_post(handler, render_template_preview=lambda _root, _payload: "")
+    assert handler.stream_status == 200
+    raw = handler.wfile.getvalue().decode("utf-8")
+    assert "event: meta" in raw
+    assert "event: delta" in raw
+    assert "event: done" in raw
+
+
+def test_handle_api_get_help_history_forwards_profile_id(tmp_path: Path, monkeypatch) -> None:
+    cfg = make_cfg(tmp_path)
+    captured: dict[str, object] = {}
+
+    def _fake_read_help_history(root, run_rel, profile_id=None):
+        captured["root"] = root
+        captured["run_rel"] = run_rel
+        captured["profile_id"] = profile_id
+        return {"run_rel": run_rel or "", "profile_id": profile_id or "", "items": []}
+
+    monkeypatch.setattr(routes_mod, "read_help_history", _fake_read_help_history)
+    handler = DummyHandler(cfg, "/api/help/history?run=site/runs/demo&profile_id=team_a")
+    handle_api_get(handler, list_models=lambda: [])
+    assert handler.json_response is not None
+    status, body = handler.json_response
+    assert status == 200
+    assert isinstance(body, dict)
+    assert captured.get("profile_id") == "team_a"

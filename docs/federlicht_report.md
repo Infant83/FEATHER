@@ -18,6 +18,9 @@ python -m pip install -e ".[all]"
 
 # Federlicht-focused bundle (report + PDF tooling)
 python -m pip install -e ".[report]"
+
+# Optional: artwork helpers for local chart/diagram generation
+python -m pip install -e ".[artwork]"
 ```
 
 License note:
@@ -27,6 +30,11 @@ License note:
 
 You also need the LLM provider credentials required by `deepagents` (for example, the API key for the model you use).
 For OpenAI-compatible local models (e.g., `qwen3-*`), set `OPENAI_BASE_URL` (or `OPENAI_API_BASE`) and `OPENAI_API_KEY`.
+
+Diagram tooling notes:
+- Mermaid rendering in HTML/report viewers works via client-side JavaScript (no local binary required).
+- D2 export is optional and requires the `d2` CLI on PATH: `d2 --version` should work.
+- If D2 is unavailable, the artwork tools fall back to Mermaid snippets.
 
 ## Quick start
 ```bash
@@ -273,6 +281,13 @@ When output is `.html`, links inside the report open in a side panel:
 - `Open raw` opens the file or URL in a new tab.
 - Markdown and JSON/JSONL are rendered for readability.
 - Math expressions are rendered with MathJax.
+- Mermaid code fences are rendered as diagrams.
+
+## Artwork agent (writer subagent)
+- The writer stage can delegate diagram generation to an internal `artwork_agent` subagent.
+- Primary output is Mermaid snippets (flowchart/timeline) for inline insertion.
+- Optional D2 path: when `d2` CLI is installed, the agent can render SVG artifacts under `report_assets/artwork/`.
+- This path is best used for workflow maps, timelines, architecture blocks, and compact explanatory figures.
 
 ## Key options (summary)
 - `--model`: LLM model name (default `gpt-5.2` if supported).

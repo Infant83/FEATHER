@@ -27,7 +27,7 @@ import sys
 import time  # noqa: F401
 import urllib.parse
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 from . import tools as feder_tools
 from . import prompts
@@ -1714,16 +1714,15 @@ def format_report_title(title: str, output_format: str) -> str:
 
 
 def format_report_prompt_block(report_prompt: Optional[str], output_format: str) -> str:
-    if not report_prompt:
-        return ""
+    prompt_text = (report_prompt or "").strip() or "No report prompt provided."
     if output_format == "tex":
         return (
             "\n\n\\section*{Report Prompt}\n"
             "\\begin{verbatim}\n"
-            f"{report_prompt}\n"
+            f"{prompt_text}\n"
             "\\end{verbatim}\n"
         )
-    return f"\n\n## Report Prompt\n{report_prompt}\n"
+    return f"\n\n## Report Prompt\n{prompt_text}\n"
 
 
 def format_clarifications_block(
@@ -3768,10 +3767,11 @@ def normalize_report_for_format(report_text: str, output_format: str) -> str:
 
 
 _URL_RE = re.compile(r"(https?://[^\s<]+)")
-_REL_PATH_RE = re.compile(r"(?<![\w/])(\./[A-Za-z0-9_./-]+)")
-_ARCHIVE_PATH_RE = re.compile(r"(/archive/[A-Za-z0-9_./-]+)")
+_PATH_TOKEN_RE = r"[^\s\]\[()<>\"',;]+"
+_REL_PATH_RE = re.compile(rf"(?<![\w/])(\./{_PATH_TOKEN_RE})")
+_ARCHIVE_PATH_RE = re.compile(rf"(/archive/{_PATH_TOKEN_RE})")
 _BARE_PATH_RE = re.compile(
-    r"(?<![\w./])((?:archive|instruction|report_notes|report|supporting)/[A-Za-z0-9_./-]+)"
+    rf"(?<![\w./])((?:archive|instruction|report_notes|report|supporting)/{_PATH_TOKEN_RE})"
 )
 _WINDOWS_ABS_RE = re.compile(r"^(?:\\\\\\?\\\\)?[A-Za-z]:/")
 _CODE_LINK_RE = re.compile(
@@ -3779,7 +3779,11 @@ _CODE_LINK_RE = re.compile(
     r"\.?/supporting/\S+|archive/\S+|instruction/\S+|report_notes/\S+|report/\S+|supporting/\S+|[A-Za-z]:/\S+)$"
 )
 _CITED_PATH_RE = re.compile(
-    r"(?<![\w./])((?:\./)?(?:archive|instruction|report_notes|report|supporting)/[A-Za-z0-9_./-]+)"
+    rf"(?<![\w./])((?:\./)?(?:archive|instruction|report_notes|report|supporting)/{_PATH_TOKEN_RE})"
+)
+_LINKIFY_TOKEN_RE = re.compile(
+    rf"(https?://[^\s<]+|(?<![\w/])\./{_PATH_TOKEN_RE}|(?<![\w./])/archive/{_PATH_TOKEN_RE}|"
+    rf"(?<![\w./])(?:archive|instruction|report_notes|report|supporting)/{_PATH_TOKEN_RE})"
 )
 _CITATION_LINK_PATTERN = r"\[(?:\\\[)?\d+(?:\\\])?\]\([^)]+\)"
 _CITATION_LINK_RE = re.compile(_CITATION_LINK_PATTERN)
@@ -3801,31 +3805,28 @@ INDEX_JSONL_HINTS = {
 
 
 def _linkify_text(text: str) -> str:
-    def replace_url(match: re.Match[str]) -> str:
-        url = match.group(1)
-        trimmed = url.rstrip(").,;")
-        suffix = url[len(trimmed) :]
-        return f'<a href="{html_lib.escape(trimmed)}">{html_lib.escape(trimmed)}</a>{suffix}'
+    def replace_token(match: re.Match[str]) -> str:
+        token = match.group(1)
+        trimmed = token.rstrip(").,;")
+        suffix = token[len(trimmed) :]
+        target = trimmed
+        if not target:
+            return token
+        if target.startswith(("http://", "https://")):
+            href = target
+            label = target
+        elif target.startswith("./"):
+            href = target
+            label = target
+        elif target.startswith("/archive/"):
+            href = f".{target}"
+            label = target
+        else:
+            href = f"./{target}"
+            label = target
+        return f'<a href="{html_lib.escape(href)}">{html_lib.escape(label)}</a>{suffix}'
 
-    def replace_rel(match: re.Match[str]) -> str:
-        path = match.group(1)
-        return f'<a href="{html_lib.escape(path)}">{html_lib.escape(path)}</a>'
-
-    def replace_archive(match: re.Match[str]) -> str:
-        path = match.group(1)
-        href = f".{path}"
-        return f'<a href="{html_lib.escape(href)}">{html_lib.escape(path)}</a>'
-
-    def replace_bare(match: re.Match[str]) -> str:
-        path = match.group(1)
-        href = f"./{path}"
-        return f'<a href="{html_lib.escape(href)}">{html_lib.escape(path)}</a>'
-
-    text = _URL_RE.sub(replace_url, text)
-    text = _REL_PATH_RE.sub(replace_rel, text)
-    text = _ARCHIVE_PATH_RE.sub(replace_archive, text)
-    text = _BARE_PATH_RE.sub(replace_bare, text)
-    return text
+    return _LINKIFY_TOKEN_RE.sub(replace_token, text)
 
 
 def linkify_plain_text(text: str) -> str:
@@ -4465,6 +4466,22 @@ class SafeFilesystemBackend:
     def __getattr__(self, name: str):
         return getattr(self._backend, name)
 
+    def reset_stage_budget(self, _stage_label: Optional[str] = None) -> None:
+        try:
+            setattr(self._backend, "_used_chars", 0)
+        except Exception:
+            return
+
+    def budget_snapshot(self) -> dict[str, int]:
+        used = int(getattr(self._backend, "_used_chars", 0) or 0)
+        max_read = int(getattr(self._backend, "_max_read_chars", 0) or 0)
+        max_total = int(getattr(self._backend, "_max_total_chars", 0) or 0)
+        return {
+            "used_chars": used,
+            "max_read_chars": max_read,
+            "max_total_chars": max_total,
+        }
+
 
 def iter_jsonl(path: Path):
     with path.open("r", encoding="utf-8", errors="replace") as handle:
@@ -4873,6 +4890,7 @@ def build_appendix_block(
         ("Source index", notes_dir / "source_index.jsonl"),
         ("Source triage", notes_dir / "source_triage.md"),
         ("Evidence notes", notes_dir / "evidence_notes.md"),
+        ("Claim-evidence map", notes_dir / "claim_evidence_map.md"),
         ("Report workflow", notes_dir / "report_workflow.md"),
     ]
     checklist = [
@@ -5487,6 +5505,78 @@ _PLACEHOLDER_CITATION_RE = re.compile(
     r"\[\s*(?:source|paper|evidence|citation|ref|reference|출처|근거)\s*\]",
     re.IGNORECASE,
 )
+_META_TAG_PATTERN = r"(?:해석|의미|리스크|위험|주의|제안|추론|가정|시사점|insight|risk|warning|note|proposal)"
+_META_PREFIX_TAG_RE = re.compile(rf"(?m)^(\s*(?:[-*•]\s+)?)\(({_META_TAG_PATTERN})\)\s*", re.IGNORECASE)
+_META_INLINE_TAG_RE = re.compile(rf"\s*\(({_META_TAG_PATTERN})\)\s*(?=(?:[.,;:!?]|$))", re.IGNORECASE)
+
+_INTERNAL_INDEX_MENTION_REPLACEMENTS: list[tuple[re.Pattern[str], str]] = [
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?archive/tavily_search\.jsonl(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "웹 검색 인덱스",
+    ),
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?archive/openalex/works\.jsonl(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "OpenAlex 인덱스",
+    ),
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?archive/arxiv/papers\.jsonl(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "arXiv 인덱스",
+    ),
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?archive/youtube/videos\.jsonl(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "유튜브 인덱스",
+    ),
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?report_notes/source_index\.jsonl(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "소스 인덱스",
+    ),
+    (
+        re.compile(
+            r"(?<!\[)(?<!\]\()(?<![A-Za-z0-9_./-])(?:\./)?report_notes/source_triage\.md(?![A-Za-z0-9_./-])",
+            re.IGNORECASE,
+        ),
+        "소스 트리아지 요약",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])tavily_search\.jsonl(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "웹 검색 인덱스",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])openalex/works\.jsonl(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "OpenAlex 인덱스",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])arxiv/papers\.jsonl(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "arXiv 인덱스",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])youtube/videos\.jsonl(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "유튜브 인덱스",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])source_index\.jsonl(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "소스 인덱스",
+    ),
+    (
+        re.compile(r"(?<!\[)(?<![A-Za-z0-9_./-])source_triage\.md(?![A-Za-z0-9_./-])", re.IGNORECASE),
+        "소스 트리아지 요약",
+    ),
+]
 
 
 def remove_placeholder_citations(report_text: str) -> str:
@@ -5495,6 +5585,23 @@ def remove_placeholder_citations(report_text: str) -> str:
     cleaned = _PLACEHOLDER_CITATION_RE.sub("", report_text)
     cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned
+
+
+def smooth_writer_meta_labels(report_text: str) -> str:
+    if not report_text:
+        return report_text
+    cleaned = _META_PREFIX_TAG_RE.sub(r"\1", report_text)
+    cleaned = _META_INLINE_TAG_RE.sub("", cleaned)
+    return cleaned
+
+
+def scrub_internal_index_mentions(report_text: str) -> str:
+    if not report_text:
+        return report_text
+    cleaned = report_text
+    for pattern, replacement in _INTERNAL_INDEX_MENTION_REPLACEMENTS:
+        cleaned = pattern.sub(replacement, cleaned)
     return cleaned
 
 
@@ -5607,7 +5714,7 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
             updated,
         )
         raw_path_re = re.compile(
-            r"(?<!\]\()(?<![\w./])((?:\./)?(?:archive|instruction|report_notes|report|supporting)/[A-Za-z0-9_./-]+)"
+            rf"(?<!\]\()(?<![\w./])((?:\./)?(?:archive|instruction|report_notes|report|supporting)/{_PATH_TOKEN_RE})"
         )
 
         def replace_naked_path(match: re.Match[str]) -> str:
@@ -5840,7 +5947,7 @@ def render_reference_section(
             "",
             "## References",
             "",
-            "> Citation policy: keep citations inline as `[n]`; source rights belong to original publishers/authors. Validate primary sources before high-stakes use.",
+            "Citation policy: keep citations inline as `[n]`; source rights belong to original publishers/authors. Validate primary sources before high-stakes use.",
             "",
         ]
     for entry in citations:
@@ -6204,6 +6311,8 @@ def create_agent_with_fallback(
     max_input_tokens: Optional[int] = None,
     max_input_tokens_source: str = "none",
     temperature: Optional[float] = None,
+    subagents: Optional[list[dict[str, Any]]] = None,
+    middleware: Optional[list[Any]] = None,
 ):
     max_input_tokens = max_input_tokens if max_input_tokens is not None else DEFAULT_MAX_INPUT_TOKENS
     if max_input_tokens_source == "none":
@@ -6213,8 +6322,40 @@ def create_agent_with_fallback(
     if effective_temperature is None:
         effective_temperature = parse_temperature(ACTIVE_AGENT_TEMPERATURE)
     kwargs = {"tools": tools, "system_prompt": system_prompt, "backend": backend}
+    if middleware:
+        kwargs["middleware"] = middleware
+    if subagents:
+        kwargs["subagents"] = subagents
     if effective_temperature is not None:
         kwargs["temperature"] = effective_temperature
+
+    _NO_MODEL = object()
+
+    def _invoke_deep_agent(model_value: object = _NO_MODEL):
+        call_kwargs = dict(kwargs)
+        if model_value is not _NO_MODEL:
+            call_kwargs["model"] = model_value
+        try:
+            return create_deep_agent(**call_kwargs)
+        except TypeError as exc:
+            msg = str(exc).lower()
+            retry_kwargs = dict(call_kwargs)
+            changed = False
+            if "temperature" in retry_kwargs and "temperature" in msg:
+                retry_kwargs.pop("temperature", None)
+                changed = True
+            # deepagents<0.4 does not support subagents; drop and retry.
+            if "subagents" in retry_kwargs and ("subagents" in msg or "unexpected keyword" in msg):
+                retry_kwargs.pop("subagents", None)
+                changed = True
+            # Keep compatibility when middleware kwargs are not supported.
+            if "middleware" in retry_kwargs and ("middleware" in msg or "unexpected keyword" in msg):
+                retry_kwargs.pop("middleware", None)
+                changed = True
+            if changed:
+                return create_deep_agent(**retry_kwargs)
+            raise
+
     if model_name:
         model_value = model_name
         base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
@@ -6268,13 +6409,7 @@ def create_agent_with_fallback(
         if not isinstance(model_value, str):
             apply_model_profile_max_input_tokens(model_value, max_input_tokens, force=force_override)
         try:
-            return create_deep_agent(model=model_value, **kwargs)
-        except TypeError as exc:
-            if "temperature" in kwargs and "temperature" in str(exc).lower():
-                retry_kwargs = dict(kwargs)
-                retry_kwargs.pop("temperature", None)
-                return create_deep_agent(model=model_value, **retry_kwargs)
-            raise
+            return _invoke_deep_agent(model_value)
         except Exception as exc:  # pragma: no cover - fallback path
             msg = str(exc).lower()
             if model_name == DEFAULT_MODEL and any(token in msg for token in ("model", "unsupported", "unknown")):
@@ -6284,14 +6419,7 @@ def create_agent_with_fallback(
                 )
             else:
                 raise
-    try:
-        return create_deep_agent(**kwargs)
-    except TypeError as exc:
-        if "temperature" in kwargs and "temperature" in str(exc).lower():
-            retry_kwargs = dict(kwargs)
-            retry_kwargs.pop("temperature", None)
-            return create_deep_agent(**retry_kwargs)
-        raise
+    return _invoke_deep_agent()
 
 
 def run_pipeline(

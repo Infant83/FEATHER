@@ -391,19 +391,30 @@ def list_run_logs(root: Path, run_rel: str | None) -> list[dict[str, Any]]:
     return items
 
 
-def _help_history_path(root: Path, run_rel: str | None) -> tuple[Path, str]:
+def _sanitize_profile_id(profile_id: str | None) -> str:
+    token = str(profile_id or "").strip()
+    if not token:
+        return ""
+    safe = "".join(ch for ch in token if ch.isalnum() or ch in {"_", "-"})
+    return safe[:80]
+
+
+def _help_history_path(root: Path, run_rel: str | None, profile_id: str | None = None) -> tuple[Path, str]:
+    suffix = _sanitize_profile_id(profile_id)
+    file_name = f"help_history_{suffix}.json" if suffix else "help_history.json"
     if run_rel:
         run_dir = resolve_run_dir(root, run_rel)
         notes_dir = run_dir / "report_notes"
         notes_dir.mkdir(parents=True, exist_ok=True)
-        return notes_dir / "help_history.json", safe_rel(run_dir, root)
+        return notes_dir / file_name, safe_rel(run_dir, root)
     shared_dir = root / "site" / "federnett"
     shared_dir.mkdir(parents=True, exist_ok=True)
-    return shared_dir / "help_history_global.json", ""
+    global_name = f"help_history_global_{suffix}.json" if suffix else "help_history_global.json"
+    return shared_dir / global_name, ""
 
 
-def read_help_history(root: Path, run_rel: str | None) -> dict[str, Any]:
-    path, resolved_run = _help_history_path(root, run_rel)
+def read_help_history(root: Path, run_rel: str | None, profile_id: str | None = None) -> dict[str, Any]:
+    path, resolved_run = _help_history_path(root, run_rel, profile_id=profile_id)
     items: list[dict[str, Any]] = []
     if path.exists():
         try:
@@ -424,13 +435,19 @@ def read_help_history(root: Path, run_rel: str | None) -> dict[str, Any]:
             items = []
     return {
         "run_rel": resolved_run or (run_rel or ""),
+        "profile_id": _sanitize_profile_id(profile_id),
         "path": safe_rel(path, root),
         "items": items[-80:],
     }
 
 
-def write_help_history(root: Path, run_rel: str | None, items: list[dict[str, Any]]) -> dict[str, Any]:
-    path, resolved_run = _help_history_path(root, run_rel)
+def write_help_history(
+    root: Path,
+    run_rel: str | None,
+    items: list[dict[str, Any]],
+    profile_id: str | None = None,
+) -> dict[str, Any]:
+    path, resolved_run = _help_history_path(root, run_rel, profile_id=profile_id)
     cleaned: list[dict[str, Any]] = []
     for entry in items[-80:]:
         if not isinstance(entry, dict):
@@ -447,17 +464,19 @@ def write_help_history(root: Path, run_rel: str | None, items: list[dict[str, An
     path.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {
         "run_rel": resolved_run or (run_rel or ""),
+        "profile_id": _sanitize_profile_id(profile_id),
         "path": safe_rel(path, root),
         "count": len(cleaned),
     }
 
 
-def clear_help_history(root: Path, run_rel: str | None) -> dict[str, Any]:
-    path, resolved_run = _help_history_path(root, run_rel)
+def clear_help_history(root: Path, run_rel: str | None, profile_id: str | None = None) -> dict[str, Any]:
+    path, resolved_run = _help_history_path(root, run_rel, profile_id=profile_id)
     if path.exists():
         path.unlink()
     return {
         "run_rel": resolved_run or (run_rel or ""),
+        "profile_id": _sanitize_profile_id(profile_id),
         "path": safe_rel(path, root),
         "cleared": True,
     }

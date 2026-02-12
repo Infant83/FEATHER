@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0
+- Strengthen Federnett "Agent 와 작업하기" UX:
+  - add left-side thread list with per-run/per-profile scoped conversation sessions
+  - keep run-scoped history persistent per thread and restore safely on reopen
+  - add answer-selection follow-up action (`선택 내용으로 후속 질문`)
+  - add action preview modal before suggested execution (parameter confirmation gate)
+  - improve streaming answer behavior and reduce stuck `질문 중...` states on stream completion
+- Fix Agent Profiles `Apply to` parsing corruption:
+  - remove faulty split behavior that broke tokens (for example `planner` -> `pla`, `er`)
+  - replace free-text-only entry with explicit target chips + optional custom targets
+  - keep save/load compatibility for existing profile data
+- Improve Agent Profiles editor readability and typography baseline for Korean/English mixed content.
+- Align Federnett UI panel structure updates (thread rail + answer/sources panes) for cleaner interaction flow.
+- Add initial artwork/diagram integration groundwork:
+  - introduce optional `artwork` extra in dependency profile
+  - add artifact-oriented documentation for diagram/figure agent planning and DeepAgents 0.4 migration policy
+
 ## 1.5.1
 - Simplify Federlicht/Federnett advanced controls by removing explicit temperature override wiring and keeping `temperature-level` as the single temperature control path.
 - Consolidate pipeline control UX into Live Logs:

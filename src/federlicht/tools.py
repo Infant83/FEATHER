@@ -27,6 +27,12 @@ INDEX_ONLY_HINTS = (
     "youtube/videos.jsonl",
     "local/manifest.jsonl",
 )
+_CLAIM_STRENGTH_WEIGHT = {
+    "high": 1.0,
+    "medium": 0.72,
+    "low": 0.42,
+    "none": 0.2,
+}
 
 
 def iter_jsonl(path: Path) -> Iterable[dict]:
@@ -496,6 +502,122 @@ def format_claim_map(claims: list[dict]) -> str:
         if len(evidence) > 3:
             ev_text += f" (+{len(evidence)-3} more)"
         lines.append(f"{claim} | {ev_text or '(none)'} | {strength} | {flags or '-'}")
+    return "\n".join(lines)
+
+
+def build_claim_evidence_packet(
+    claims: list[dict],
+    focus_text: str,
+    top_k: int = 24,
+    max_refs_per_claim: int = 3,
+    include_index_only: bool = False,
+) -> dict:
+    focus_tokens = set(tokenize(focus_text))
+    scored: list[tuple[float, dict]] = []
+    total_claims = len(claims)
+    index_only_total = 0
+    no_evidence_total = 0
+    strong_total = 0
+
+    for idx, entry in enumerate(claims, start=1):
+        claim = str(entry.get("claim") or "").strip()
+        refs_raw = entry.get("evidence") or []
+        refs: list[str] = []
+        for ref in refs_raw:
+            ref_text = str(ref).strip()
+            if ref_text and ref_text not in refs:
+                refs.append(ref_text)
+        flags = [str(flag).strip() for flag in (entry.get("flags") or []) if str(flag).strip()]
+        strength = str(entry.get("evidence_strength") or "none").strip().lower()
+        if "index_only" in flags:
+            index_only_total += 1
+            if not include_index_only:
+                continue
+        if not refs:
+            no_evidence_total += 1
+        if strength == "high":
+            strong_total += 1
+        claim_tokens = set(tokenize(claim))
+        overlap = len(claim_tokens & focus_tokens) / max(1, len(claim_tokens))
+        strength_score = _CLAIM_STRENGTH_WEIGHT.get(strength, 0.2)
+        ref_score = min(1.0, len(refs) / 3.0)
+        score = (overlap * 0.55) + (strength_score * 0.35) + (ref_score * 0.1)
+        scored.append(
+            (
+                score,
+                {
+                    "claim_id": f"C{idx:03d}",
+                    "claim": claim,
+                    "evidence_strength": strength,
+                    "flags": flags,
+                    "refs": refs[:max(1, max_refs_per_claim)],
+                    "score": round(score, 4),
+                },
+            )
+        )
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    selected = [item[1] for item in scored[: max(1, top_k)]]
+    evidence_registry: list[dict] = []
+    evidence_ids: dict[str, str] = {}
+    next_ev = 1
+
+    for claim in selected:
+        mapped_ids: list[str] = []
+        for ref in claim.get("refs", []):
+            if ref not in evidence_ids:
+                evidence_id = f"E{next_ev:03d}"
+                next_ev += 1
+                evidence_ids[ref] = evidence_id
+                evidence_registry.append({"evidence_id": evidence_id, "ref": ref})
+            mapped_ids.append(evidence_ids[ref])
+        claim["evidence_ids"] = mapped_ids
+
+    selected_index_only = sum(1 for entry in selected if "index_only" in (entry.get("flags") or []))
+    packet = {
+        "created_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "stats": {
+            "total_claims": total_claims,
+            "selected_claims": len(selected),
+            "selected_evidence": len(evidence_registry),
+            "index_only_claims": index_only_total,
+            "selected_index_only_claims": selected_index_only,
+            "no_evidence_claims": no_evidence_total,
+            "high_strength_claims": strong_total,
+            "index_only_ratio": round((index_only_total / total_claims), 4) if total_claims else 0.0,
+        },
+        "focus": " ".join((focus_text or "").split())[:400],
+        "claims": selected,
+        "evidence_registry": evidence_registry,
+    }
+    return packet
+
+
+def format_claim_evidence_packet(packet: dict, max_items: int = 24) -> str:
+    claims = list(packet.get("claims") or [])
+    evidence_registry = list(packet.get("evidence_registry") or [])
+    stats = dict(packet.get("stats") or {})
+    if not claims:
+        return "(no claim-evidence packet)"
+    lines: list[str] = [
+        "Claim-Evidence Packet",
+        f"- claims(selected/total): {stats.get('selected_claims', len(claims))}/{stats.get('total_claims', len(claims))}",
+        f"- evidence refs: {stats.get('selected_evidence', len(evidence_registry))}",
+        f"- index_only ratio: {stats.get('index_only_ratio', 0.0)}",
+        "",
+        "Top claims:",
+    ]
+    for entry in claims[:max_items]:
+        claim_id = entry.get("claim_id") or "-"
+        claim_text = entry.get("claim") or ""
+        strength = entry.get("evidence_strength") or "none"
+        flags = ",".join(entry.get("flags") or []) or "-"
+        ev_ids = ", ".join(entry.get("evidence_ids") or []) or "(none)"
+        lines.append(f"- {claim_id} [{strength}] {claim_text}")
+        lines.append(f"  refs: {ev_ids} | flags: {flags}")
+    lines.extend(["", "Evidence registry:"])
+    for item in evidence_registry:
+        lines.append(f"- {item.get('evidence_id')}: {item.get('ref')}")
     return "\n".join(lines)
 
 

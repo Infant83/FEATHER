@@ -154,6 +154,7 @@ def build_writer_prompt(
     template_rigidity: str = "balanced",
     figures_enabled: bool = False,
     figures_mode: str = "auto",
+    artwork_enabled: bool = False,
 ) -> str:
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
@@ -266,6 +267,13 @@ def build_writer_prompt(
         figure_guidance = (
             "Figure extraction이 비활성화되어 있으므로, 시각 자료가 필요한 설명은 표/불릿/문단 구조로 대체하세요. "
         )
+    artwork_guidance = (
+        "시각화가 논리를 명확히 만들 때만 Mermaid 다이어그램을 사용하세요. "
+        "실행 중 task 도구에 artwork_agent가 보이면, 다이어그램 초안 생성을 위임할 수 있습니다. "
+        "다이어그램은 장식용이 아니라 주장-근거 연결을 보조할 때만 포함하세요. "
+        if artwork_enabled
+        else "Mermaid 다이어그램은 꼭 필요한 경우에만 간결하게 사용하세요. "
+    )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -285,6 +293,8 @@ def build_writer_prompt(
         "소스 요약 나열이 아니라, 소스 간을 종합해 명확한 전개와 실행 가능한 인사이트를 제시하세요. "
         "사실/수치/출처 의존 주장에는 인용을 반드시 포함하세요. "
         "인용은 문장 끝에 inline으로 붙이고, 인용만 단독 줄로 두지 마세요. "
+        "문장 끝에 '(해석)', '(의미)', '(리스크)', '(주의)', '(제안)', '(추론)' 같은 메타 꼬리표를 붙이지 마세요. "
+        "대신 문장 자체의 논리와 연결로 의미를 전달하세요. "
         "NEEDS_VERIFICATION 태그가 붙은 항목은 tool_cache 원문 청크를 확인한 뒤 인용하세요. "
         "원문 확인 없이 수치/인용을 재구성하거나 추정하지 마세요. "
         "Verification excerpts 섹션이 있으면 우선 인용 근거로 사용하세요. "
@@ -311,6 +321,7 @@ def build_writer_prompt(
         f"{depth_guidance}"
         f"{evidence_layout_guidance}"
         f"{figure_guidance}"
+        f"{artwork_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
         f"{not_applicable_guidance}"
@@ -334,6 +345,7 @@ def build_writer_finalizer_prompt(
     template_rigidity: str = "balanced",
     figures_enabled: bool = False,
     figures_mode: str = "auto",
+    artwork_enabled: bool = False,
 ) -> str:
     base_prompt = build_writer_prompt(
         format_instructions,
@@ -346,12 +358,14 @@ def build_writer_finalizer_prompt(
         template_rigidity,
         figures_enabled,
         figures_mode,
+        artwork_enabled,
     )
     finalizer_guidance = (
         "이 단계는 선택된 초안에 대한 최종 정리 패스입니다. "
         "Primary draft를 기준으로 사용하세요. "
         "Secondary draft가 제공되면 명확성/구조/커버리지를 강화하는 데만 사용하세요. "
         "근거 노트에 없는 새로운 주장이나 출처를 추가하지 마세요. "
+        "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')를 제거하고 자연스러운 서술로 정리하세요. "
         "인용과 필수 섹션 헤딩을 유지하세요. "
         "보고서 본문만 반환하세요."
     )
@@ -430,6 +444,7 @@ def build_revise_prompt(format_instructions: "FormatInstructions", output_format
         f"{section_rule}"
         "서술 흐름, 종합성, 기술적 엄밀성을 개선하세요. "
         "사실/수치/출처 의존 주장은 인용을 추가해 보강하세요. "
+        "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')는 쓰지 말고 문맥으로 표현하세요. "
         "일반 라벨 인용('[source]' '[paper]')을 실제 URL/파일 경로 인용으로 교체하세요. "
         "References 전체 목록은 추가하지 마세요(스크립트가 Source Index를 자동 추가). "
         f"{'LaTeX 서식을 유지하고 섹션 명령을 사용하세요. Markdown으로 변환하지 마세요. ' if output_format == 'tex' else ''}"
@@ -479,6 +494,7 @@ def build_synthesize_prompt(
         "당신은 수석 편집자입니다. Report A와 Report B의 강점을 결합하고 약점을 수정해 더 높은 품질의 최종 보고서를 작성하세요. "
         "인용을 보존하고 새로운 출처를 만들지 마세요. "
         "사실/수치/출처 의존 주장에는 인용을 유지하세요. "
+        "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')는 제거하고 자연스러운 문장으로 합치세요. "
         "일반 라벨 인용('[source]' '[paper]')은 금지하고 실제 URL/파일 경로 인용으로 교체하세요. "
         "References 전체 목록은 추가하지 마세요(스크립트가 자동 추가). "
         f"{format_instructions.section_heading_instruction}{format_instructions.report_skeleton}\n"
@@ -547,6 +563,29 @@ def build_image_prompt() -> str:
         "당신은 이미지 분석가입니다. 보이는 것에 근거해 도표를 설명하세요. "
         "다음 키만 포함한 JSON을 반환하세요: summary(1-2문장), type(chart/diagram/table/screenshot/photo/other), "
         "relevance(0-100), recommended(yes/no). 불명확하면 summary='unclear'로 작성하세요."
+    )
+
+
+def build_artwork_prompt(output_format: str, language: str) -> str:
+    if output_format == "tex":
+        format_rule = (
+            "LaTeX 리포트에서는 mermaid 코드블록 대신 간결한 SVG/PNG 삽입 경로 또는 "
+            "텍스트 기반 다이어그램 스펙을 우선 제안하세요. "
+        )
+    else:
+        format_rule = (
+            "Markdown/HTML 리포트에서는 ```mermaid 코드블록을 우선 사용하고, "
+            "필요 시 SVG 경로를 함께 제안하세요. "
+        )
+    return (
+        "You are Artwork Agent, a report-visual specialist. "
+        "Create concise, professional diagrams that clarify structure, timeline, or process. "
+        "Prefer Mermaid flowchart/timeline snippets first, and keep labels short and factual. "
+        "Only include visuals that improve reasoning fidelity; avoid decorative diagrams. "
+        "When d2_render is available, you may output an SVG reference snippet for complex layouts. "
+        "Return only artifact-ready snippets (diagram block + optional one-line caption), no extra commentary. "
+        f"{format_rule}"
+        f"All explanations and captions should be in {language}."
     )
 
 

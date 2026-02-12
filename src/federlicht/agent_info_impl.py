@@ -11,7 +11,7 @@ STAGE_AGENT_MAP = {
     "plan": ["planner", "alignment"],
     "web": ["web_query"],
     "evidence": ["evidence", "plan_check", "alignment", "reducer"],
-    "writer": ["writer", "structural_editor"],
+    "writer": ["writer", "structural_editor", "artwork"],
     "quality": ["critic", "reviser", "evaluator", "pairwise_compare", "synthesizer"],
     "figures": ["image_analyst"],
 }
@@ -77,6 +77,7 @@ def build_agent_info(
         template_rigidity=args.template_rigidity,
         figures_enabled=bool(getattr(args, "extract_figures", False)),
         figures_mode=getattr(args, "figures_mode", "auto"),
+        artwork_enabled=runtime.enabled("artwork", True, overrides),
     )
     repair_default_prompt = prompts.build_repair_prompt(
         format_instructions,
@@ -139,6 +140,12 @@ def build_agent_info(
             "structural_editor",
             default_model=args.model,
             default_prompt=repair_default_prompt,
+        ),
+        "artwork": build_agent_entry(
+            "artwork",
+            default_model=args.model,
+            default_prompt=prompts.build_artwork_prompt(output_format, language),
+            default_enabled=True,
         ),
         "critic": build_agent_entry(
             "critic",
@@ -206,6 +213,7 @@ def build_agent_info(
             "quality_iterations": args.quality_iterations,
             "quality_strategy": args.quality_strategy,
             "web_search": args.web_search,
+            "artwork_enabled": bool(agents["artwork"].get("enabled", True)),
             "alignment_check": args.alignment_check,
             "interactive": args.interactive,
             "cache": args.cache,

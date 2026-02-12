@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "federlicht"
-version = "1.5.0"
+version = "1.6.0"
 description = "Federlicht platform: Feather intake, Federlicht report engine, Federnett studio, and FederHav profile workflows."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,9 +41,19 @@ arxiv = ["arxiv"]
 pdf = ["pymupdf", "pypdfium2", "pillow", "pdfplumber"]
 youtube = ["youtube-transcript-api"]
 local = ["python-docx", "python-pptx", "beautifulsoup4", "openpyxl"]
-agents = ["deepagents", "markdown", "langchain-openai"]
+artwork = [
+  "matplotlib>=3.8",
+  "networkx>=3.2",
+]
+agents = [
+  "deepagents>=0.3.5,<0.4; python_version<'3.11'",
+  "deepagents>=0.4.1; python_version>='3.11'",
+  "markdown",
+  "langchain-openai",
+]
 report = [
-  "deepagents",
+  "deepagents>=0.3.5,<0.4; python_version<'3.11'",
+  "deepagents>=0.4.1; python_version>='3.11'",
   "markdown",
   "langchain-openai",
   "pymupdf",
@@ -54,7 +64,8 @@ report = [
   "openpyxl",
 ]
 report-lite = [
-  "deepagents",
+  "deepagents>=0.3.5,<0.4; python_version<'3.11'",
+  "deepagents>=0.4.1; python_version>='3.11'",
   "markdown",
   "langchain-openai",
   "pypdfium2",
@@ -75,7 +86,8 @@ all = [
   "python-pptx",
   "openpyxl",
   "beautifulsoup4",
-  "deepagents",
+  "deepagents>=0.3.5,<0.4; python_version<'3.11'",
+  "deepagents>=0.4.1; python_version>='3.11'",
   "markdown",
   "langchain-openai",
   "opencv-python",

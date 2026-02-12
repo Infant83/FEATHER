@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from .utils import safe_rel
 
@@ -684,6 +685,250 @@ def _extract_responses_content(body: dict[str, Any]) -> str:
     return _extract_chat_content(body)
 
 
+def _iter_sse_json_objects(resp: Any) -> Iterator[dict[str, Any]]:
+    for raw_line in resp.iter_lines(decode_unicode=True):
+        if raw_line is None:
+            continue
+        line = str(raw_line).strip()
+        if not line or not line.startswith("data:"):
+            continue
+        payload = line[5:].strip()
+        if not payload or payload == "[DONE]":
+            break
+        try:
+            parsed = json.loads(payload)
+        except Exception:
+            continue
+        if isinstance(parsed, dict):
+            yield parsed
+
+
+def _iter_text_fragments(value: Any) -> Iterator[str]:
+    if isinstance(value, str):
+        if value:
+            yield value
+        return
+    if isinstance(value, list):
+        for entry in value:
+            if isinstance(entry, str):
+                if entry:
+                    yield entry
+                continue
+            if not isinstance(entry, dict):
+                continue
+            for key in ("text", "content", "value"):
+                token = entry.get(key)
+                if isinstance(token, str) and token:
+                    yield token
+                    break
+
+
+def _iter_chat_stream_content(resp: Any) -> Iterator[str]:
+    content_type = str(resp.headers.get("Content-Type") or "").lower()
+    if "text/event-stream" not in content_type:
+        try:
+            body = resp.json()
+        except Exception:
+            return
+        text = _extract_chat_content(body)
+        if text:
+            yield text
+        return
+    for event in _iter_sse_json_objects(resp):
+        choices = event.get("choices")
+        if not isinstance(choices, list) or not choices:
+            continue
+        first = choices[0] if isinstance(choices[0], dict) else {}
+        delta = first.get("delta")
+        if isinstance(delta, dict):
+            for token in _iter_text_fragments(delta.get("content")):
+                yield token
+            continue
+        message = first.get("message")
+        if isinstance(message, dict):
+            for token in _iter_text_fragments(message.get("content")):
+                yield token
+
+
+def _iter_responses_stream_content(resp: Any) -> Iterator[str]:
+    content_type = str(resp.headers.get("Content-Type") or "").lower()
+    if "text/event-stream" not in content_type:
+        try:
+            body = resp.json()
+        except Exception:
+            return
+        text = _extract_responses_content(body)
+        if text:
+            yield text
+        return
+    seen_delta = False
+    for event in _iter_sse_json_objects(resp):
+        event_type = str(event.get("type") or "").strip().lower()
+        if event_type == "response.output_text.delta":
+            delta = event.get("delta")
+            if isinstance(delta, str) and delta:
+                seen_delta = True
+                yield delta
+            continue
+        if event_type == "response.output_text.done":
+            text = event.get("text")
+            if not seen_delta and isinstance(text, str) and text.strip():
+                yield text.strip()
+            continue
+        if event_type == "response.completed":
+            response_payload = event.get("response")
+            if isinstance(response_payload, dict):
+                text = _extract_responses_content(response_payload)
+                if text and not seen_delta:
+                    yield text
+            continue
+
+
+def _call_llm_stream(
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    strict_model: bool = False,
+) -> tuple[Iterator[str], str]:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set")
+    if requests is None:
+        raise RuntimeError("requests package is unavailable")
+    chosen_model, explicit_model = _resolve_requested_model(model)
+    if not chosen_model:
+        raise RuntimeError("Model is not configured (set OPENAI_MODEL or pass model)")
+    base_url = _normalize_api_base_url(
+        (os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "https://api.openai.com").strip()
+    )
+    chat_urls = _chat_completion_urls(base_url)
+    responses_urls = _responses_urls(base_url)
+    context = _build_context(sources)
+    system = (
+        "You are Federnett usage guide assistant. "
+        "Default output language is Korean. "
+        "Prioritize Federnett UI workflow first, then explain CLI only if explicitly requested. "
+        "If CLI is not explicitly requested, do not output shell command lines. "
+        "For version/release questions, prioritize pyproject.toml and CHANGELOG evidence first. "
+        "Do not invent features/settings not grounded in the provided context. "
+        "If a feature is unavailable, explicitly say it is unavailable now. "
+        "Do not suggest unsafe/destructive commands. "
+        "Do not claim execution you did not perform or files you did not modify. "
+        "Keep replies concise and actionable. "
+        "Use provided context when relevant; if uncertain, explicitly say so. "
+        "For pure greeting/small-talk, respond in 1-2 short sentences and ask what they want to do next. "
+        "For technical usage questions, include evidence with [S#] markers when sources exist."
+    )
+    user = (
+        f"질문:\n{question}\n\n"
+        f"컨텍스트(코드/문서 발췌):\n{context}\n\n"
+        "출력 지침:\n"
+        "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
+        "- 사용법 질문이면 아래 형식을 사용:\n"
+        "  1) 핵심 답변(짧게, Federnett 기준)\n"
+        "  2) 실행 절차\n"
+        "  3) 옵션/체크 권장값\n"
+        "  4) 주의사항\n"
+        "  5) 근거 [S#] (소스가 있을 때)\n"
+        "- 코드블록은 반드시 마크다운 fenced code block(```)을 사용.\n"
+        "- 질문자가 CLI를 명시하지 않았다면 Federnett UI 단계로 안내.\n"
+        "- CLI를 요청받지 않은 상태에서는 명령어를 출력하지 말고, 화면 기준 동작만 안내.\n"
+        "- 제공된 소스에 없는 기능(예: 로그인/SSO/권한체계)은 임의로 추가하지 말 것.\n"
+        "- 이 에이전트는 안내 전용이므로, 파일 수정/실행을 했다고 쓰지 말 것.\n"
+    )
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    if history:
+        messages.extend(_normalize_history(history))
+    messages.append({"role": "user", "content": user})
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    last_error = "LLM request failed: no endpoint attempted"
+    for candidate_model in _resolve_model_candidates(
+        chosen_model,
+        explicit=explicit_model,
+        strict_model=bool(strict_model),
+    ):
+        model_unavailable = False
+        chat_payload_base = {
+            "model": candidate_model,
+            "messages": messages,
+            "temperature": 0.2,
+            "stream": True,
+        }
+        for url in chat_urls:
+            for payload in _payload_variants(chat_payload_base):
+                resp = requests.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=90,
+                    stream=True,
+                )
+                if resp.status_code == 200:
+                    def _chat_iter(response_obj: Any = resp) -> Iterator[str]:
+                        with response_obj:
+                            yield from _iter_chat_stream_content(response_obj)
+                    return _chat_iter(), candidate_model
+                text = (resp.text or "").strip()
+                resp.close()
+                last_error = f"LLM request failed: {resp.status_code} {text}"
+                if _is_model_unavailable_error(resp.status_code, text):
+                    model_unavailable = True
+                    break
+                if resp.status_code == 404:
+                    break
+                if _is_unsupported_token_error(text, "max_tokens"):
+                    continue
+                if _is_unsupported_token_error(text, "max_completion_tokens"):
+                    continue
+                if _is_unsupported_token_error(text, "temperature"):
+                    continue
+            if model_unavailable:
+                break
+        if model_unavailable:
+            continue
+        responses_payload_base = {
+            "model": candidate_model,
+            "input": messages,
+            "temperature": 0.2,
+            "stream": True,
+        }
+        for url in responses_urls:
+            for payload in _responses_payload_variants(responses_payload_base):
+                resp = requests.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=90,
+                    stream=True,
+                )
+                if resp.status_code == 200:
+                    def _responses_iter(response_obj: Any = resp) -> Iterator[str]:
+                        with response_obj:
+                            yield from _iter_responses_stream_content(response_obj)
+                    return _responses_iter(), candidate_model
+                text = (resp.text or "").strip()
+                resp.close()
+                last_error = f"LLM request failed: {resp.status_code} {text}"
+                if _is_model_unavailable_error(resp.status_code, text):
+                    model_unavailable = True
+                    break
+                if resp.status_code == 404:
+                    break
+                if _is_unsupported_token_error(text, "max_output_tokens"):
+                    continue
+                if _is_unsupported_token_error(text, "temperature"):
+                    continue
+            if model_unavailable:
+                break
+        if model_unavailable:
+            continue
+    raise RuntimeError(last_error)
+
+
 def _resolve_model_candidates(chosen_model: str, *, explicit: bool, strict_model: bool = False) -> list[str]:
     allow_fallback = str(os.getenv("FEDERNETT_HELP_ALLOW_MODEL_FALLBACK") or "").strip().lower() in {
         "1",
@@ -953,6 +1198,76 @@ def answer_help_question(
         error_msg = str(exc)
         answer = _fallback_answer(q, sources)
     return {
+        "answer": answer,
+        "sources": sources,
+        "used_llm": used_llm,
+        "model": used_model,
+        "requested_model": requested_model,
+        "model_selection": "explicit" if explicit_model else "auto",
+        "model_fallback": bool(used_llm and requested_model and used_model and requested_model != used_model),
+        "error": error_msg,
+        "indexed_files": indexed_files,
+        "action": _infer_safe_action(q, run_rel=run_rel),
+    }
+
+
+def stream_help_question(
+    root: Path,
+    question: str,
+    *,
+    model: str | None = None,
+    strict_model: bool = False,
+    max_sources: int = 8,
+    history: list[dict[str, str]] | None = None,
+    run_rel: str | None = None,
+) -> Iterator[dict[str, Any]]:
+    q = (question or "").strip()
+    if not q:
+        raise ValueError("question is required")
+    sources, indexed_files = _select_sources(
+        root,
+        q,
+        max_sources=max(3, min(max_sources, 16)),
+        run_rel=run_rel,
+    )
+    requested_model, explicit_model = _resolve_requested_model(model)
+    yield {
+        "event": "meta",
+        "requested_model": requested_model,
+        "model_selection": "explicit" if explicit_model else "auto",
+        "indexed_files": indexed_files,
+    }
+    error_msg = ""
+    used_llm = False
+    used_model = ""
+    answer_parts: list[str] = []
+    try:
+        chunk_iter, used_model = _call_llm_stream(
+            q,
+            sources,
+            model=model,
+            history=history,
+            strict_model=bool(strict_model),
+        )
+        used_llm = True
+        for chunk in chunk_iter:
+            token = str(chunk or "")
+            if not token:
+                continue
+            answer_parts.append(token)
+            yield {"event": "delta", "text": token}
+    except Exception as exc:
+        error_msg = str(exc)
+    answer = "".join(answer_parts).strip()
+    if not answer:
+        answer = _fallback_answer(q, sources)
+        if used_llm:
+            used_llm = False
+            if not error_msg:
+                error_msg = "LLM returned empty content"
+    yield {"event": "sources", "sources": sources}
+    yield {
+        "event": "done",
         "answer": answer,
         "sources": sources,
         "used_llm": used_llm,

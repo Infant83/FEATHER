@@ -77,6 +77,8 @@ def _artifact_sections(
             ("Source triage", notes_dir / "source_triage.md"),
             ("Source index", notes_dir / "source_index.jsonl"),
             ("Claim map", notes_dir / "claim_map.md"),
+            ("Claim-evidence map", notes_dir / "claim_evidence_map.md"),
+            ("Claim-evidence map (json)", notes_dir / "claim_evidence_map.json"),
             ("Gap report", notes_dir / "gap_finder.md"),
         ],
         "alignment": [
