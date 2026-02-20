@@ -3,18 +3,27 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
+import subprocess
 import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
+from urllib.parse import urlparse
 
+from .capabilities import infer_capability_action, runtime_capabilities
 from .utils import safe_rel
 
 try:
     import requests  # type: ignore
 except Exception:  # pragma: no cover - optional runtime dependency
     requests = None  # type: ignore
+
+try:
+    import tomllib
+except Exception:  # pragma: no cover - Python <3.11 fallback
+    tomllib = None  # type: ignore
 
 
 _INCLUDE_PATHS = (
@@ -91,10 +100,15 @@ _CHUNK_LINES = 80
 _CHUNK_OVERLAP = 24
 _MAX_SOURCE_TEXT = 360
 _MAX_CONTEXT_CHARS = 12000
+_MAX_LIVE_LOG_CONTEXT_CHARS = 5200
+_MAX_STATE_MEMORY_CONTEXT_CHARS = 4200
 _CACHE_LOCK = threading.Lock()
 _INDEX_CACHE: dict[str, "_IndexCache"] = {}
-_HISTORY_TURNS = 6
-_HISTORY_CHARS = 900
+_CODEX_MODEL_HINT_LOCK = threading.Lock()
+_CODEX_MODEL_HINT_CACHE: dict[str, str] = {}
+_HISTORY_TURNS = 10
+_HISTORY_CHARS = 1400
+_HISTORY_SUMMARY_PREFIX = "[context-compress]"
 _META_PATH_HINTS = (
     "pyproject.toml",
     "CHANGELOG.md",
@@ -114,6 +128,57 @@ _RUN_CONTEXT_PATTERNS = (
     "supporting/help_agent/web_extract/*.txt",
     "supporting/help_agent/web_text/*.txt",
     "README.md",
+)
+_HELP_LLM_BACKENDS = {"openai_api", "codex_cli"}
+_HELP_REASONING_EFFORT_CHOICES = ("off", "none", "low", "medium", "high", "extra_high")
+_HELP_REASONING_EFFORT_TO_OPENAI = {
+    "off": "",
+    "none": "",
+    "low": "low",
+    "medium": "medium",
+    "high": "high",
+    "extra_high": "high",
+}
+_HELP_DEFAULT_REASONING_EFFORT = "off"
+_HELP_REASONING_MODEL_RE = re.compile(r"^(gpt-5|o1|o3|o4)", re.IGNORECASE)
+_HELP_AGENTIC_ACTION_TYPES = {
+    "none",
+    "run_feather",
+    "run_federlicht",
+    "run_feather_then_federlicht",
+    "create_run_folder",
+    "switch_run",
+    "preset_resume_stage",
+    "focus_editor",
+    "set_action_mode",
+    "run_capability",
+}
+_GENERIC_EXECUTION_TOKENS = (
+    "실행",
+    "실행해",
+    "run",
+    "start",
+    "돌려",
+    "해줘",
+    "해 줘",
+    "시작",
+)
+_TOPIC_SIGNAL_TOKENS = (
+    "분석",
+    "동향",
+    "리포트",
+    "보고서",
+    "요약",
+    "근거",
+    "evidence",
+    "topic",
+    "주제",
+    "question",
+    "문헌",
+    "기술",
+    "전망",
+    "한계",
+    "리스크",
 )
 
 
@@ -504,7 +569,7 @@ def _normalize_history(history: Any) -> list[dict[str, str]]:
     if not isinstance(history, list):
         return []
     cleaned: list[dict[str, str]] = []
-    for item in history[-_HISTORY_TURNS:]:
+    for item in history[-40:]:
         if not isinstance(item, dict):
             continue
         role = str(item.get("role") or "").strip().lower()
@@ -519,7 +584,107 @@ def _normalize_history(history: Any) -> list[dict[str, str]]:
                 "content": content[:_HISTORY_CHARS],
             },
         )
-    return cleaned
+    if not cleaned:
+        return []
+    recent = cleaned[-_HISTORY_TURNS:]
+    summary_entry: dict[str, str] | None = None
+    for item in cleaned:
+        if item.get("role") != "assistant":
+            continue
+        content = str(item.get("content") or "").strip()
+        if not content:
+            continue
+        if content.lower().startswith(_HISTORY_SUMMARY_PREFIX):
+            summary_entry = item
+    if summary_entry:
+        summary_content = str(summary_entry.get("content") or "").strip()
+        if summary_content and all(str(item.get("content") or "").strip() != summary_content for item in recent):
+            return [summary_entry, *recent]
+    return recent
+
+
+def _normalize_live_log_tail(live_log_tail: Any) -> str:
+    if not isinstance(live_log_tail, str):
+        return ""
+    text = live_log_tail.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.replace("\x00", "").strip()
+    if not text:
+        return ""
+    return text[-_MAX_LIVE_LOG_CONTEXT_CHARS:]
+
+
+def _normalize_state_memory(state_memory: Any) -> str:
+    if not isinstance(state_memory, dict):
+        return ""
+    try:
+        text = json.dumps(state_memory, ensure_ascii=False, default=str)
+    except Exception:
+        return ""
+    text = str(text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not text:
+        return ""
+    if len(text) > _MAX_STATE_MEMORY_CONTEXT_CHARS:
+        text = f"{text[: max(1, _MAX_STATE_MEMORY_CONTEXT_CHARS - 1)].rstrip()}…"
+    return text
+
+
+def _normalize_execution_mode(value: Any) -> str:
+    token = str(value or "").strip().lower()
+    if token in {"act", "execute", "run"}:
+        return "act"
+    return "plan"
+
+
+def _normalize_runtime_mode(value: Any) -> str:
+    token = str(value or "").strip().lower()
+    if token in {"off", "0", "false", "none", "disable", "disabled"}:
+        return "off"
+    if token in {"deepagent", "agentic", "on", "1", "true"}:
+        return "deepagent"
+    return "auto"
+
+
+def _resolve_help_runtime_mode(preferred: str | None = None) -> str:
+    env_mode = (
+        str(os.getenv("FEDERHAV_AGENTIC_RUNTIME") or "").strip()
+        or str(os.getenv("FEDERHAV_RUNTIME_MODE") or "").strip()
+    )
+    return _normalize_runtime_mode(preferred or env_mode or "auto")
+
+
+def _normalize_agent_label(value: Any) -> str:
+    token = str(value or "").strip()
+    if not token:
+        return "federhav"
+    safe = "".join(ch for ch in token if ch.isalnum() or ch in {"_", "-", "."})
+    return safe[:80] or "federhav"
+
+
+def _augment_help_question(
+    question: str,
+    *,
+    execution_mode: str,
+    agent: str,
+    allow_artifacts: bool,
+) -> str:
+    q = str(question or "").strip()
+    mode = _normalize_execution_mode(execution_mode)
+    agent_id = _normalize_agent_label(agent)
+    policy = (
+        "plan-confirm (suggested actions require confirmation; direct sidebar runs are unaffected)"
+        if mode == "plan"
+        else "act (safe suggested actions may auto-run; direct sidebar runs are unaffected)"
+    )
+    artifact_note = "allow_artifacts=true" if allow_artifacts else "allow_artifacts=false"
+    hints = (
+        "[operator-control]",
+        f"agent={agent_id}",
+        f"execution_mode={mode}",
+        f"policy={policy}",
+        "scope=execution_mode controls FederHav suggested actions only",
+        artifact_note,
+    )
+    return f"{q}\n\n" + "\n".join(hints)
 
 
 def _build_help_web_queries(question: str, history: list[dict[str, str]] | None) -> list[str]:
@@ -685,9 +850,12 @@ def _payload_variants(base_payload: dict[str, Any]) -> list[dict[str, Any]]:
     first["max_completion_tokens"] = 900
     second = dict(base_payload)
     second["max_tokens"] = 900
-    third = dict(base_payload)
-    third.pop("temperature", None)
-    return [first, second, third]
+    third = dict(second)
+    third.pop("reasoning_effort", None)
+    fourth = dict(base_payload)
+    fourth.pop("temperature", None)
+    fourth.pop("reasoning_effort", None)
+    return [first, second, third, fourth]
 
 
 def _responses_payload_variants(base_payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -695,13 +863,26 @@ def _responses_payload_variants(base_payload: dict[str, Any]) -> list[dict[str, 
     first["max_output_tokens"] = 900
     second = dict(base_payload)
     third = dict(base_payload)
-    third.pop("temperature", None)
-    return [first, second, third]
+    third.pop("reasoning_effort", None)
+    fourth = dict(base_payload)
+    fourth.pop("temperature", None)
+    fourth.pop("reasoning_effort", None)
+    return [first, second, third, fourth]
 
 
 def _is_unsupported_token_error(text: str, key_name: str) -> bool:
     lowered = (text or "").lower()
-    return "unsupported parameter" in lowered and key_name.lower() in lowered
+    if key_name.lower() not in lowered:
+        return False
+    return any(
+        token in lowered
+        for token in (
+            "unsupported parameter",
+            "unrecognized request argument",
+            "unknown parameter",
+            "unknown argument",
+        )
+    )
 
 
 def _expand_env_reference(raw_value: str) -> str:
@@ -717,7 +898,659 @@ def _expand_env_reference(raw_value: str) -> str:
     return text
 
 
-def _resolve_requested_model(model_input: str | None) -> tuple[str, bool]:
+def _resolve_help_llm_backend(preferred: str | None = None) -> str:
+    raw_preferred = str(preferred or "").strip().lower()
+    if raw_preferred in {"codex", "codex_cli", "codex-cli", "cli"}:
+        backend = "codex_cli"
+        return backend if backend in _HELP_LLM_BACKENDS else "openai_api"
+    if raw_preferred in {"openai", "openai_api", "api", "default"}:
+        backend = "openai_api"
+        return backend if backend in _HELP_LLM_BACKENDS else "openai_api"
+    raw = str(os.getenv("FEDERNETT_HELP_LLM_BACKEND") or "").strip().lower()
+    if raw in {"codex", "codex_cli", "codex-cli", "cli"}:
+        backend = "codex_cli"
+        return backend if backend in _HELP_LLM_BACKENDS else "openai_api"
+    if raw in {"openai", "openai_api", "api", "default"}:
+        backend = "openai_api"
+        return backend if backend in _HELP_LLM_BACKENDS else "openai_api"
+    return "openai_api"
+
+
+def _normalize_reasoning_effort(value: Any, default: str = _HELP_DEFAULT_REASONING_EFFORT) -> str:
+    token = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if token in {"false", "0", "disabled", "disable"}:
+        return "off"
+    if token in _HELP_REASONING_EFFORT_CHOICES:
+        return token
+    fallback = str(default or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if fallback in {"false", "0", "disabled", "disable"}:
+        return "off"
+    if fallback in _HELP_REASONING_EFFORT_CHOICES:
+        return fallback
+    return _HELP_DEFAULT_REASONING_EFFORT
+
+
+def _resolve_help_reasoning_effort(preferred: str | None = None) -> str:
+    env_effort = _expand_env_reference(str(os.getenv("FEDERNETT_HELP_REASONING_EFFORT") or ""))
+    return _normalize_reasoning_effort(preferred or env_effort or _HELP_DEFAULT_REASONING_EFFORT)
+
+
+def _openai_reasoning_api_supported(base_url: str) -> bool:
+    token = _normalize_api_base_url(base_url)
+    host = urlparse(token).netloc.lower()
+    if not host:
+        return False
+    if host.endswith("openai.com") or host.endswith("openai.azure.com"):
+        return True
+    return False
+
+
+def _supports_openai_reasoning_model(model_name: str, base_url: str) -> bool:
+    if not _openai_reasoning_api_supported(base_url):
+        return False
+    token = str(model_name or "").strip().lower()
+    if not token:
+        return False
+    if token.startswith("$"):
+        token = _expand_env_reference(token).strip().lower()
+    if not token:
+        return False
+    if "codex" in token:
+        return False
+    if _HELP_REASONING_MODEL_RE.match(token):
+        return True
+    return "reason" in token
+
+
+def _resolve_openai_reasoning_token(
+    requested_effort: str,
+    *,
+    model_name: str,
+    base_url: str,
+) -> str:
+    normalized = _normalize_reasoning_effort(requested_effort, _HELP_DEFAULT_REASONING_EFFORT)
+    if normalized in {"", "off", "none"}:
+        return ""
+    if not _supports_openai_reasoning_model(model_name, base_url):
+        return ""
+    return _HELP_REASONING_EFFORT_TO_OPENAI.get(normalized, "")
+
+
+def _reported_reasoning_effort(
+    requested_effort: str | None,
+    *,
+    backend: str,
+    model_name: str | None,
+) -> str:
+    normalized = _resolve_help_reasoning_effort(requested_effort)
+    if normalized in {"", "off", "none"}:
+        return "off"
+    if backend == "codex_cli":
+        return normalized
+    base_url = _normalize_api_base_url(
+        (os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "https://api.openai.com").strip()
+    )
+    token = _resolve_openai_reasoning_token(
+        normalized,
+        model_name=str(model_name or "").strip(),
+        base_url=base_url,
+    )
+    return normalized if token else "off"
+
+
+def _extract_codex_model_from_event(event: dict[str, Any]) -> str:
+    if not isinstance(event, dict):
+        return ""
+    candidates: list[str] = []
+
+    def _visit(value: Any) -> None:
+        if isinstance(value, dict):
+            for key in (
+                "model",
+                "model_name",
+                "model_slug",
+                "resolved_model",
+                "assistant_model",
+                "name",
+            ):
+                token = value.get(key)
+                if isinstance(token, str) and token.strip():
+                    candidates.append(token.strip())
+            for child in value.values():
+                _visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                _visit(child)
+
+    _visit(event)
+    for token in candidates:
+        lowered = token.lower()
+        if lowered in {"agent_message", "item.completed", "event", "message"}:
+            continue
+        if len(token) < 3:
+            continue
+        return token
+    return ""
+
+
+def _extract_codex_model_from_stdout(stdout_text: str) -> str:
+    for raw in str(stdout_text or "").splitlines():
+        line = raw.strip()
+        if not line or not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except Exception:
+            continue
+        model = _extract_codex_model_from_event(event)
+        if model:
+            return model
+    return ""
+
+
+def _probe_codex_cli_default_model_hint(bin_path: str) -> str:
+    with _CODEX_MODEL_HINT_LOCK:
+        cached = _CODEX_MODEL_HINT_CACHE.get(bin_path)
+    if cached:
+        return cached
+    env_model = _expand_env_reference(str(os.getenv("CODEX_MODEL") or ""))
+    if env_model:
+        with _CODEX_MODEL_HINT_LOCK:
+            _CODEX_MODEL_HINT_CACHE[bin_path] = env_model
+        return env_model
+    config_path = Path.home() / ".codex" / "config.toml"
+    if config_path.exists():
+        try:
+            model_from_config = ""
+            if tomllib is not None:
+                parsed = tomllib.loads(config_path.read_text(encoding="utf-8", errors="replace"))
+                model_token = parsed.get("model") if isinstance(parsed, dict) else ""
+                if isinstance(model_token, str):
+                    model_from_config = model_token.strip()
+            else:
+                for raw in config_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    line = raw.strip()
+                    if not line.startswith("model"):
+                        continue
+                    match = re.match(r'^model\s*=\s*["\']([^"\']+)["\']', line)
+                    if match:
+                        model_from_config = match.group(1).strip()
+                        break
+            if model_from_config:
+                with _CODEX_MODEL_HINT_LOCK:
+                    _CODEX_MODEL_HINT_CACHE[bin_path] = model_from_config
+                return model_from_config
+        except Exception:
+            pass
+    commands = (
+        [bin_path, "config", "get", "model"],
+        [bin_path, "settings", "get", "model"],
+    )
+    for cmd in commands:
+        try:
+            proc = subprocess.run(
+                cmd,
+                text=True,
+                capture_output=True,
+                timeout=4,
+                check=False,
+            )
+        except Exception:
+            continue
+        if proc.returncode != 0:
+            continue
+        text = (proc.stdout or "").strip()
+        if not text:
+            continue
+        line = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
+        if not line:
+            continue
+        lowered = line.lower()
+        if any(token in lowered for token in ("unknown", "error", "usage", "not found")):
+            continue
+        with _CODEX_MODEL_HINT_LOCK:
+            _CODEX_MODEL_HINT_CACHE[bin_path] = line
+        return line
+    return ""
+
+
+def _help_system_prompt() -> str:
+    return (
+        "You are FederHav, the main operator agent in Federnett. "
+        "Default output language is Korean. "
+        "Prioritize Federnett UI workflow first, then explain CLI only if explicitly requested. "
+        "When user intent implies execution, focus on the executable action/result first instead of long manuals. "
+        "Do not answer as a passive helper when the user asks to run/create/update something. "
+        "The UI may execute safe actions in Act mode, so describe executable intent clearly. "
+        "execution_mode(plan/act) controls FederHav suggested-action execution only, never sidebar Run Feather/Run Federlicht. "
+        "For model/API schema errors (reasoning_effort, deployment, unauthorized, bad request), prioritize backend/model/reasoning fixes "
+        "and do not suggest changing execution_mode unless the user explicitly asks about action policy. "
+        "If CLI is not explicitly requested, do not output shell command lines. "
+        "For version/release questions, prioritize pyproject.toml and CHANGELOG evidence first. "
+        "Do not invent features/settings not grounded in the provided context. "
+        "If a feature is unavailable, explicitly say it is unavailable now. "
+        "Do not suggest unsafe/destructive commands. "
+        "Do not claim execution you did not perform or files you did not modify. "
+        "Keep replies concise and actionable. "
+        "Use provided context when relevant; if uncertain, explicitly say so. "
+        "For pure greeting/small-talk, respond in 1-2 short sentences and ask what they want to do next. "
+        "For technical usage questions, include evidence with [S#] markers when sources exist."
+    )
+
+
+def _help_user_prompt(
+    question: str,
+    context: str,
+    live_log_tail: str = "",
+    state_memory: str = "",
+) -> str:
+    log_tail = _normalize_live_log_tail(live_log_tail)
+    live_log_block = ""
+    if log_tail:
+        live_log_block = (
+            "라이브 로그 컨텍스트(최근 실행 흐름):\n"
+            "```log\n"
+            f"{log_tail}\n"
+            "```\n\n"
+        )
+    state_memory_block = ""
+    if state_memory:
+        state_memory_block = (
+            "상태 메모리(state_memory, 압축 컨텍스트/아티팩트/워크플로우):\n"
+            "```json\n"
+            f"{state_memory}\n"
+            "```\n\n"
+        )
+    return (
+        f"질문:\n{question}\n\n"
+        f"컨텍스트(코드/문서 발췌):\n{context}\n\n"
+        f"{live_log_block}"
+        f"{state_memory_block}"
+        "출력 지침:\n"
+        "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
+        "- 실행/생성/수정 요청이면 먼저 `실행할 작업`과 `예상 결과`를 2~4줄로 제시.\n"
+        "- 설명형 질문이면 핵심 답변 -> 절차 -> 주의사항 -> 근거 순서로 간결하게 답변.\n"
+        "- 과도한 장문 템플릿 답변은 피하고, 작업 중심으로 답변.\n"
+        "- 코드블록은 반드시 마크다운 fenced code block(```)을 사용.\n"
+        "- 질문자가 CLI를 명시하지 않았다면 Federnett UI 단계로 안내.\n"
+        "- CLI를 요청받지 않은 상태에서는 명령어를 출력하지 말고, 화면 기준 동작만 안내.\n"
+        "- reasoning_effort/model/권한 오류의 해법으로 execution_mode(plan/act) 전환을 기본 제안하지 말 것.\n"
+        "- 제공된 소스에 없는 기능(예: 로그인/SSO/권한체계)은 임의로 추가하지 말 것.\n"
+        "- `안내 전용이라 실행 불가` 같은 문구는 사용하지 말 것. 실행 가능한 액션이면 그 액션을 중심으로 답변.\n"
+        "- state_memory가 주어졌다면 run/워크플로우/아티팩트 상태를 우선 참조하고, 불확실한 항목은 불확실하다고 명시할 것.\n"
+    )
+
+
+def _build_help_messages(
+    question: str,
+    sources: list[dict[str, Any]],
+    history: list[dict[str, str]] | None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+) -> list[dict[str, str]]:
+    context = _build_context(sources)
+    normalized_state_memory = _normalize_state_memory(state_memory)
+    messages: list[dict[str, str]] = [{"role": "system", "content": _help_system_prompt()}]
+    if history:
+        messages.extend(_normalize_history(history))
+    messages.append(
+        {
+            "role": "user",
+            "content": _help_user_prompt(
+                question,
+                context,
+                live_log_tail,
+                state_memory=normalized_state_memory,
+            ),
+        },
+    )
+    return messages
+
+
+def _render_codex_prompt(messages: list[dict[str, str]]) -> str:
+    if not messages:
+        return ""
+    chunks: list[str] = [
+        "You are operating in non-interactive mode. Return only the final assistant answer text.",
+        "",
+    ]
+    for item in messages:
+        role = str(item.get("role") or "user").strip().lower()
+        role_label = "SYSTEM" if role == "system" else ("ASSISTANT" if role == "assistant" else "USER")
+        content = str(item.get("content") or "").strip()
+        if not content:
+            continue
+        chunks.append(f"[{role_label}]")
+        chunks.append(content)
+        chunks.append("")
+    return "\n".join(chunks).strip()
+
+
+def _extract_codex_exec_message(stdout_text: str) -> str:
+    lines = [line.strip() for line in str(stdout_text or "").splitlines() if line.strip()]
+    last_message = ""
+    for line in lines:
+        if not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except Exception:
+            continue
+        if str(event.get("type") or "") != "item.completed":
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("type") or "") != "agent_message":
+            continue
+        text = str(item.get("text") or "").strip()
+        if text:
+            last_message = text
+    return last_message
+
+
+def _extract_codex_exec_message_from_event(event: dict[str, Any]) -> str:
+    if not isinstance(event, dict):
+        return ""
+    if str(event.get("type") or "") != "item.completed":
+        return ""
+    item = event.get("item")
+    if not isinstance(item, dict):
+        return ""
+    if str(item.get("type") or "") != "agent_message":
+        return ""
+    return str(item.get("text") or "")
+
+
+def _extract_codex_stream_delta_from_event(event: dict[str, Any]) -> str:
+    if not isinstance(event, dict):
+        return ""
+    event_type = str(event.get("type") or "").strip().lower()
+    if event_type == "item.completed":
+        return ""
+
+    def _text(value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        if isinstance(value, dict):
+            for key in ("delta", "text", "output_text", "content"):
+                nested = value.get(key)
+                if isinstance(nested, str) and nested:
+                    return nested
+        if isinstance(value, list):
+            chunks: list[str] = []
+            for entry in value:
+                if isinstance(entry, str):
+                    chunks.append(entry)
+                    continue
+                if isinstance(entry, dict):
+                    for key in ("delta", "text", "output_text"):
+                        token = entry.get(key)
+                        if isinstance(token, str) and token:
+                            chunks.append(token)
+            return "".join(chunks)
+        return ""
+
+    for key in ("delta", "text", "output_text"):
+        token = _text(event.get(key))
+        if token:
+            return token
+
+    item = event.get("item")
+    if isinstance(item, dict):
+        for key in ("delta", "text", "output_text", "content"):
+            token = _text(item.get(key))
+            if token:
+                return token
+
+    data = event.get("data")
+    if isinstance(data, dict):
+        for key in ("delta", "text", "output_text", "content"):
+            token = _text(data.get(key))
+            if token:
+                return token
+
+    return ""
+
+
+def _call_llm_codex_cli(
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    reasoning_effort: str | None = None,
+    *,
+    root: Path | None = None,
+) -> tuple[str, str]:
+    codex_bin = _expand_env_reference(str(os.getenv("CODEX_CLI_BIN") or "codex"))
+    bin_path = shutil.which(codex_bin) if codex_bin else None
+    if not bin_path:
+        raise RuntimeError("codex CLI is not available in PATH")
+    model_choice = _expand_env_reference(str(model or "")) or _expand_env_reference(str(os.getenv("CODEX_MODEL") or ""))
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+    )
+    prompt = _render_codex_prompt(messages)
+    if not prompt:
+        raise RuntimeError("codex prompt is empty")
+    cmd = [
+        bin_path,
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--skip-git-repo-check",
+        "--sandbox",
+        "read-only",
+    ]
+    if root is not None:
+        cmd.extend(["--cd", str(root)])
+    if model_choice:
+        cmd.extend(["--model", model_choice])
+    effort = _resolve_help_reasoning_effort(reasoning_effort)
+    if effort:
+        cmd.extend(["-c", f'reasoning_effort="{effort}"'])
+    cmd.append("-")
+    try:
+        proc = subprocess.run(
+            cmd,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("codex CLI timed out") from exc
+    except Exception as exc:
+        raise RuntimeError(f"codex CLI execution failed: {exc}") from exc
+    answer = _extract_codex_exec_message(proc.stdout)
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()
+        detail = detail.splitlines()[-1] if detail else ""
+        raise RuntimeError(f"codex CLI failed ({proc.returncode}){f': {detail}' if detail else ''}")
+    if not answer:
+        detail = (proc.stderr or "").strip()
+        raise RuntimeError(f"codex CLI returned empty output{f': {detail}' if detail else ''}")
+    detected_model = _extract_codex_model_from_stdout(proc.stdout)
+    default_hint = _probe_codex_cli_default_model_hint(bin_path)
+    used_model = model_choice or detected_model or default_hint or "codex-cli-default"
+    return answer, used_model
+
+
+def _call_llm_stream_codex_cli(
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    reasoning_effort: str | None = None,
+    *,
+    root: Path | None = None,
+) -> tuple[Iterator[str], str]:
+    codex_bin = _expand_env_reference(str(os.getenv("CODEX_CLI_BIN") or "codex"))
+    bin_path = shutil.which(codex_bin) if codex_bin else None
+    if not bin_path:
+        raise RuntimeError("codex CLI is not available in PATH")
+    model_choice = _expand_env_reference(str(model or "")) or _expand_env_reference(str(os.getenv("CODEX_MODEL") or ""))
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+    )
+    prompt = _render_codex_prompt(messages)
+    if not prompt:
+        raise RuntimeError("codex prompt is empty")
+    cmd = [
+        bin_path,
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--skip-git-repo-check",
+        "--sandbox",
+        "read-only",
+    ]
+    if root is not None:
+        cmd.extend(["--cd", str(root)])
+    if model_choice:
+        cmd.extend(["--model", model_choice])
+    effort = _resolve_help_reasoning_effort(reasoning_effort)
+    if effort:
+        cmd.extend(["-c", f'reasoning_effort="{effort}"'])
+    cmd.append("-")
+
+    def _iter_chunks(text: str, target_chars: int = 18) -> Iterator[str]:
+        raw = str(text or "")
+        if not raw:
+            return
+        bucket: list[str] = []
+        size = 0
+        for ch in raw:
+            bucket.append(ch)
+            size += 1
+            if ch == "\n" and size >= 8:
+                yield "".join(bucket)
+                bucket = []
+                size = 0
+                continue
+            if size >= target_chars and ch in {" ", "\t", ",", ".", "!", "?", ";", ":", ")", "]", "}"}:
+                yield "".join(bucket)
+                bucket = []
+                size = 0
+        if bucket:
+            yield "".join(bucket)
+
+    def _iter() -> Iterator[str]:
+        proc: subprocess.Popen[str] | None = None
+        timeout_flag = threading.Event()
+        timer: threading.Timer | None = None
+        captured_lines: list[str] = []
+        completed_message = ""
+        streamed_any = False
+        stderr_text = ""
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+            )
+        except Exception:
+            answer, _ = _call_llm_codex_cli(
+                question,
+                sources,
+                model=model,
+                history=history,
+                state_memory=state_memory,
+                reasoning_effort=effort,
+                root=root,
+            )
+            if answer:
+                yield from _iter_chunks(answer)
+            return
+        try:
+            def _on_timeout() -> None:
+                timeout_flag.set()
+                try:
+                    proc.kill()  # type: ignore[union-attr]
+                except Exception:
+                    pass
+
+            timer = threading.Timer(120.0, _on_timeout)
+            timer.start()
+            if proc.stdin:
+                try:
+                    proc.stdin.write(prompt)
+                    if not prompt.endswith("\n"):
+                        proc.stdin.write("\n")
+                    proc.stdin.flush()
+                finally:
+                    proc.stdin.close()
+            if proc.stdout:
+                for raw_line in proc.stdout:
+                    line = str(raw_line or "").strip()
+                    if not line:
+                        continue
+                    captured_lines.append(line)
+                    if not line.startswith("{"):
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except Exception:
+                        continue
+                    delta = _extract_codex_stream_delta_from_event(event)
+                    if delta:
+                        streamed_any = True
+                        yield from _iter_chunks(delta, target_chars=16)
+                    completed = _extract_codex_exec_message_from_event(event).strip()
+                    if completed:
+                        completed_message = completed
+            if proc.stderr:
+                stderr_text = proc.stderr.read()
+            returncode = proc.wait()
+            if timeout_flag.is_set():
+                raise RuntimeError("codex CLI timed out")
+            if returncode != 0:
+                detail = (stderr_text or "\n".join(captured_lines)).strip()
+                detail = detail.splitlines()[-1] if detail else ""
+                raise RuntimeError(f"codex CLI failed ({returncode}){f': {detail}' if detail else ''}")
+            if streamed_any:
+                return
+            answer = completed_message or _extract_codex_exec_message("\n".join(captured_lines))
+            if not answer:
+                detail = (stderr_text or "").strip()
+                raise RuntimeError(f"codex CLI returned empty output{f': {detail}' if detail else ''}")
+            yield from _iter_chunks(answer)
+        finally:
+            if timer:
+                timer.cancel()
+            try:
+                if proc and proc.stdout:
+                    proc.stdout.close()
+            except Exception:
+                pass
+            try:
+                if proc and proc.stderr:
+                    proc.stderr.close()
+            except Exception:
+                pass
+
+    default_hint = _probe_codex_cli_default_model_hint(bin_path)
+    used_model = model_choice or default_hint or "codex-cli-default"
+    return _iter(), used_model
+
+
+def _resolve_requested_model(model_input: str | None, *, backend: str | None = None) -> tuple[str, bool]:
     raw = str(model_input or "").strip()
     if raw:
         expanded = _expand_env_reference(raw)
@@ -727,6 +1560,10 @@ def _resolve_requested_model(model_input: str | None) -> tuple[str, bool]:
         if raw.startswith("$"):
             return "", False
         return raw, True
+    resolved_backend = _resolve_help_llm_backend(backend)
+    if resolved_backend == "codex_cli":
+        env_model = _expand_env_reference(str(os.getenv("CODEX_MODEL") or ""))
+        return env_model, False
     env_model = _expand_env_reference(str(os.getenv("OPENAI_MODEL") or ""))
     return env_model, False
 
@@ -884,12 +1721,15 @@ def _iter_responses_stream_content(resp: Any) -> Iterator[str]:
             continue
 
 
-def _call_llm_stream(
+def _call_llm_stream_openai(
     question: str,
     sources: list[dict[str, Any]],
     model: str | None,
     history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
     strict_model: bool = False,
+    reasoning_effort: str | None = None,
 ) -> tuple[Iterator[str], str]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -904,47 +1744,18 @@ def _call_llm_stream(
     )
     chat_urls = _chat_completion_urls(base_url)
     responses_urls = _responses_urls(base_url)
-    context = _build_context(sources)
-    system = (
-        "You are Federnett usage guide assistant. "
-        "Default output language is Korean. "
-        "Prioritize Federnett UI workflow first, then explain CLI only if explicitly requested. "
-        "If CLI is not explicitly requested, do not output shell command lines. "
-        "For version/release questions, prioritize pyproject.toml and CHANGELOG evidence first. "
-        "Do not invent features/settings not grounded in the provided context. "
-        "If a feature is unavailable, explicitly say it is unavailable now. "
-        "Do not suggest unsafe/destructive commands. "
-        "Do not claim execution you did not perform or files you did not modify. "
-        "Keep replies concise and actionable. "
-        "Use provided context when relevant; if uncertain, explicitly say so. "
-        "For pure greeting/small-talk, respond in 1-2 short sentences and ask what they want to do next. "
-        "For technical usage questions, include evidence with [S#] markers when sources exist."
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
     )
-    user = (
-        f"질문:\n{question}\n\n"
-        f"컨텍스트(코드/문서 발췌):\n{context}\n\n"
-        "출력 지침:\n"
-        "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
-        "- 사용법 질문이면 아래 형식을 사용:\n"
-        "  1) 핵심 답변(짧게, Federnett 기준)\n"
-        "  2) 실행 절차\n"
-        "  3) 옵션/체크 권장값\n"
-        "  4) 주의사항\n"
-        "  5) 근거 [S#] (소스가 있을 때)\n"
-        "- 코드블록은 반드시 마크다운 fenced code block(```)을 사용.\n"
-        "- 질문자가 CLI를 명시하지 않았다면 Federnett UI 단계로 안내.\n"
-        "- CLI를 요청받지 않은 상태에서는 명령어를 출력하지 말고, 화면 기준 동작만 안내.\n"
-        "- 제공된 소스에 없는 기능(예: 로그인/SSO/권한체계)은 임의로 추가하지 말 것.\n"
-        "- 이 에이전트는 안내 전용이므로, 파일 수정/실행을 했다고 쓰지 말 것.\n"
-    )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
-    if history:
-        messages.extend(_normalize_history(history))
-    messages.append({"role": "user", "content": user})
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+    requested_effort = _resolve_help_reasoning_effort(reasoning_effort)
     last_error = "LLM request failed: no endpoint attempted"
     for candidate_model in _resolve_model_candidates(
         chosen_model,
@@ -952,12 +1763,19 @@ def _call_llm_stream(
         strict_model=bool(strict_model),
     ):
         model_unavailable = False
+        effort_token = _resolve_openai_reasoning_token(
+            requested_effort,
+            model_name=candidate_model,
+            base_url=base_url,
+        )
         chat_payload_base = {
             "model": candidate_model,
             "messages": messages,
             "temperature": 0.2,
             "stream": True,
         }
+        if effort_token:
+            chat_payload_base["reasoning_effort"] = effort_token
         for url in chat_urls:
             for payload in _payload_variants(chat_payload_base):
                 resp = requests.post(
@@ -986,6 +1804,8 @@ def _call_llm_stream(
                     continue
                 if _is_unsupported_token_error(text, "temperature"):
                     continue
+                if _is_unsupported_token_error(text, "reasoning_effort"):
+                    continue
             if model_unavailable:
                 break
         if model_unavailable:
@@ -996,6 +1816,8 @@ def _call_llm_stream(
             "temperature": 0.2,
             "stream": True,
         }
+        if effort_token:
+            responses_payload_base["reasoning_effort"] = effort_token
         for url in responses_urls:
             for payload in _responses_payload_variants(responses_payload_base):
                 resp = requests.post(
@@ -1021,6 +1843,8 @@ def _call_llm_stream(
                 if _is_unsupported_token_error(text, "max_output_tokens"):
                     continue
                 if _is_unsupported_token_error(text, "temperature"):
+                    continue
+                if _is_unsupported_token_error(text, "reasoning_effort"):
                     continue
             if model_unavailable:
                 break
@@ -1051,12 +1875,15 @@ def _resolve_model_candidates(chosen_model: str, *, explicit: bool, strict_model
     return candidates
 
 
-def _call_llm(
+def _call_llm_openai(
     question: str,
     sources: list[dict[str, Any]],
     model: str | None,
     history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
     strict_model: bool = False,
+    reasoning_effort: str | None = None,
 ) -> tuple[str, str]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -1071,47 +1898,18 @@ def _call_llm(
     )
     chat_urls = _chat_completion_urls(base_url)
     responses_urls = _responses_urls(base_url)
-    context = _build_context(sources)
-    system = (
-        "You are Federnett usage guide assistant. "
-        "Default output language is Korean. "
-        "Prioritize Federnett UI workflow first, then explain CLI only if explicitly requested. "
-        "If CLI is not explicitly requested, do not output shell command lines. "
-        "For version/release questions, prioritize pyproject.toml and CHANGELOG evidence first. "
-        "Do not invent features/settings not grounded in the provided context. "
-        "If a feature is unavailable, explicitly say it is unavailable now. "
-        "Do not suggest unsafe/destructive commands. "
-        "Do not claim execution you did not perform or files you did not modify. "
-        "Keep replies concise and actionable. "
-        "Use provided context when relevant; if uncertain, explicitly say so. "
-        "For pure greeting/small-talk, respond in 1-2 short sentences and ask what they want to do next. "
-        "For technical usage questions, include evidence with [S#] markers when sources exist."
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
     )
-    user = (
-        f"질문:\n{question}\n\n"
-        f"컨텍스트(코드/문서 발췌):\n{context}\n\n"
-        "출력 지침:\n"
-        "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
-        "- 사용법 질문이면 아래 형식을 사용:\n"
-        "  1) 핵심 답변(짧게, Federnett 기준)\n"
-        "  2) 실행 절차\n"
-        "  3) 옵션/체크 권장값\n"
-        "  4) 주의사항\n"
-        "  5) 근거 [S#] (소스가 있을 때)\n"
-        "- 코드블록은 반드시 마크다운 fenced code block(```)을 사용.\n"
-        "- 질문자가 CLI를 명시하지 않았다면 Federnett UI 단계로 안내.\n"
-        "- CLI를 요청받지 않은 상태에서는 명령어를 출력하지 말고, 화면 기준 동작만 안내.\n"
-        "- 제공된 소스에 없는 기능(예: 로그인/SSO/권한체계)은 임의로 추가하지 말 것.\n"
-        "- 이 에이전트는 안내 전용이므로, 파일 수정/실행을 했다고 쓰지 말 것.\n"
-    )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
-    if history:
-        messages.extend(_normalize_history(history))
-    messages.append({"role": "user", "content": user})
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+    requested_effort = _resolve_help_reasoning_effort(reasoning_effort)
     last_error = "LLM request failed: no endpoint attempted"
     resp = None
     for candidate_model in _resolve_model_candidates(
@@ -1120,11 +1918,18 @@ def _call_llm(
         strict_model=bool(strict_model),
     ):
         model_unavailable = False
+        effort_token = _resolve_openai_reasoning_token(
+            requested_effort,
+            model_name=candidate_model,
+            base_url=base_url,
+        )
         chat_payload_base = {
             "model": candidate_model,
             "messages": messages,
             "temperature": 0.2,
         }
+        if effort_token:
+            chat_payload_base["reasoning_effort"] = effort_token
         for url in chat_urls:
             for payload in _payload_variants(chat_payload_base):
                 resp = requests.post(
@@ -1154,6 +1959,8 @@ def _call_llm(
                     continue
                 if _is_unsupported_token_error(text, "temperature"):
                     continue
+                if _is_unsupported_token_error(text, "reasoning_effort"):
+                    continue
                 # For other errors, keep trying alternates but preserve the latest detail.
             if model_unavailable:
                 break
@@ -1166,6 +1973,8 @@ def _call_llm(
             "input": messages,
             "temperature": 0.2,
         }
+        if effort_token:
+            responses_payload_base["reasoning_effort"] = effort_token
         for url in responses_urls:
             for payload in _responses_payload_variants(responses_payload_base):
                 resp = requests.post(
@@ -1192,6 +2001,8 @@ def _call_llm(
                     continue
                 if _is_unsupported_token_error(text, "temperature"):
                     continue
+                if _is_unsupported_token_error(text, "reasoning_effort"):
+                    continue
             if model_unavailable:
                 break
             if resp is not None and resp.status_code == 200:
@@ -1199,6 +2010,188 @@ def _call_llm(
         if model_unavailable:
             continue
     raise RuntimeError(last_error)
+
+
+def _try_agentic_runtime_answer(
+    *,
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    llm_backend: str | None = None,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
+    root: Path | None = None,
+) -> tuple[str, str] | None:
+    try:
+        from federhav.agentic_runtime import runtime_enabled, try_deepagent_answer
+    except Exception:
+        return None
+    if not runtime_enabled(runtime_mode):
+        return None
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+    )
+    return try_deepagent_answer(
+        question=question,
+        messages=messages,
+        sources=sources,
+        state_memory=state_memory,
+        model=model,
+        llm_backend=llm_backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
+    )
+
+
+def _try_agentic_runtime_stream(
+    *,
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    llm_backend: str | None = None,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
+    root: Path | None = None,
+) -> tuple[Iterator[str], str] | None:
+    try:
+        from federhav.agentic_runtime import runtime_enabled, try_deepagent_stream
+    except Exception:
+        return None
+    if not runtime_enabled(runtime_mode):
+        return None
+    messages = _build_help_messages(
+        question,
+        sources,
+        history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+    )
+    return try_deepagent_stream(
+        question=question,
+        messages=messages,
+        sources=sources,
+        state_memory=state_memory,
+        model=model,
+        llm_backend=llm_backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
+    )
+
+
+def _call_llm(
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    strict_model: bool = False,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
+    *,
+    root: Path | None = None,
+    llm_backend: str | None = None,
+) -> tuple[str, str]:
+    backend = _resolve_help_llm_backend(llm_backend)
+    deepagent_try = _try_agentic_runtime_answer(
+        question=question,
+        sources=sources,
+        model=model,
+        history=history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+        llm_backend=backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
+    )
+    if deepagent_try:
+        return deepagent_try
+    if backend == "codex_cli":
+        return _call_llm_codex_cli(
+            question,
+            sources,
+            model=model,
+            history=history,
+            live_log_tail=live_log_tail,
+            state_memory=state_memory,
+            reasoning_effort=reasoning_effort,
+            root=root,
+        )
+    return _call_llm_openai(
+        question,
+        sources,
+        model=model,
+        history=history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+        strict_model=strict_model,
+        reasoning_effort=reasoning_effort,
+    )
+
+
+def _call_llm_stream(
+    question: str,
+    sources: list[dict[str, Any]],
+    model: str | None,
+    history: list[dict[str, str]] | None = None,
+    live_log_tail: str = "",
+    state_memory: Any = None,
+    strict_model: bool = False,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
+    *,
+    root: Path | None = None,
+    llm_backend: str | None = None,
+) -> tuple[Iterator[str], str]:
+    backend = _resolve_help_llm_backend(llm_backend)
+    deepagent_try = _try_agentic_runtime_stream(
+        question=question,
+        sources=sources,
+        model=model,
+        history=history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+        llm_backend=backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
+    )
+    if deepagent_try:
+        return deepagent_try
+    if backend == "codex_cli":
+        return _call_llm_stream_codex_cli(
+            question,
+            sources,
+            model=model,
+            history=history,
+            live_log_tail=live_log_tail,
+            state_memory=state_memory,
+            reasoning_effort=reasoning_effort,
+            root=root,
+        )
+    return _call_llm_stream_openai(
+        question,
+        sources,
+        model=model,
+        history=history,
+        live_log_tail=live_log_tail,
+        state_memory=state_memory,
+        strict_model=strict_model,
+        reasoning_effort=reasoning_effort,
+    )
 
 
 def _fallback_answer(question: str, sources: list[dict[str, Any]]) -> str:
@@ -1225,116 +2218,1300 @@ def _fallback_answer(question: str, sources: list[dict[str, Any]]) -> str:
     return "\n".join(lines).strip()
 
 
-def _infer_safe_action(question: str, run_rel: str | None = None) -> dict[str, Any] | None:
+def _normalize_run_hint(raw: str) -> str:
+    token = str(raw or "").strip()
+    if not token:
+        return ""
+    token = token.replace("\\", "/").strip("`'\" ")
+    token = re.sub(r"[.,;:!?]+$", "", token).strip()
+    token = re.sub(r"([A-Za-z0-9._/\-])으$", r"\1", token)
+    token = re.sub(r"(?:를|을|로|으로)$", "", token).strip()
+    token = re.sub(r"^(?:\./)+", "", token)
+    lowered = token.lower()
+    if lowered.startswith("site/runs/"):
+        token = token[len("site/runs/") :]
+    elif lowered.startswith("runs/"):
+        token = token[len("runs/") :]
+    token = token.strip("/")
+    return token[:180]
+
+
+def _is_invalid_run_hint(candidate: str, *, blocked: set[str] | None = None) -> bool:
+    token = _normalize_run_hint(candidate)
+    if not token:
+        return True
+    lowered = token.lower()
+    merged = re.sub(r"\s+", "", lowered)
+    blocked_tokens = set(blocked or set())
+    blocked_tokens.update(
+        {
+            "run",
+            "runs",
+            "site",
+            "folder",
+            "runfolder",
+            "run-folder",
+            "폴더",
+            "런",
+            "federnett",
+            "federlicht",
+            "federhav",
+            "feather",
+            "plan",
+            "act",
+            "mode",
+            "current",
+            "selected",
+            "target",
+            "default",
+            "지금",
+            "현재",
+            "선택",
+            "선택된",
+            "대상",
+            "대상에서",
+            "기준",
+            "기반",
+            "현재run",
+            "선택된run",
+            "run대상",
+            "run대상에서",
+            "에서",
+            "사용법",
+            "방법",
+            "설명",
+            "요약",
+            "가이드",
+            "알려",
+            "알려줘",
+            "짧게",
+            "how",
+            "guide",
+            "usage",
+        },
+    )
+    if lowered in blocked_tokens or merged in blocked_tokens:
+        return True
+    if merged.startswith("run") and len(merged) <= 9:
+        return True
+    if merged.endswith("대상") or merged.endswith("대상에서"):
+        return True
+    if lowered in {"from", "to", "as", "set", "use", "open", "switch"}:
+        return True
+    return False
+
+
+def _extract_run_hint(raw: str, *, strict: bool = False) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    blocked = {
+        "run",
+        "runs",
+        "site",
+        "folder",
+        "folder를",
+        "folder을",
+        "폴더",
+        "폴더를",
+        "폴더을",
+        "런",
+        "run을",
+        "run를",
+        "runfolder",
+        "run-folder",
+        "federnett",
+        "federlicht",
+        "federhav",
+        "feather",
+        "plan",
+        "act",
+        "mode",
+    }
+    patterns = (
+        r"((?:site/runs|runs)/[^\s`\"'<>]+)",
+        r"`([^`]+)`",
+        r"'([^']+)'",
+        r"\"([^\"]+)\"",
+        r"([A-Za-z0-9가-힣._/\-]{2,})(?=\s*(?:run|런)?\s*(?:로|으로)\s*(?:바꿔|변경|전환|선택|열어|실행|설정|지정|사용|하고))",
+        r"(?:run\s*(?:to|as|:|=)\s*)([A-Za-z0-9가-힣._/\-]{2,})",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if not match:
+            continue
+        candidate = _normalize_run_hint(match.group(1))
+        if not candidate:
+            continue
+        if _is_invalid_run_hint(candidate, blocked=blocked):
+            continue
+        return candidate
+    if strict:
+        return ""
+    lowered_text = text.lower()
+    if not any(token in lowered_text for token in ("run", "runs/", "site/runs/", "폴더", "런")):
+        return ""
+    for token in re.findall(r"(?:site/runs/|runs/)?[A-Za-z0-9가-힣][A-Za-z0-9가-힣._/\-]{2,}", text):
+        candidate = _normalize_run_hint(token)
+        if not candidate:
+            continue
+        if _is_invalid_run_hint(candidate, blocked=blocked):
+            continue
+        return candidate
+    return ""
+
+
+def _extract_recent_run_hint(history: list[dict[str, str]] | None) -> str:
+    if not history:
+        return ""
+    for entry in reversed(history[-12:]):
+        if str(entry.get("role") or "").strip().lower() != "user":
+            continue
+        content = str(entry.get("content") or "").strip()
+        if not content:
+            continue
+        lowered = content.lower()
+        if not any(
+            token in lowered
+            for token in (
+                "run folder",
+                "run 폴더",
+                "런 폴더",
+                "으로 설정",
+                "로 설정",
+                "으로 하고",
+                "로 하고",
+                "run as",
+                "use run",
+                "run=",
+                "run 전환",
+                "run 변경",
+                "switch run",
+                "select run",
+                "site/runs/",
+                "runs/",
+            )
+        ):
+            continue
+        hint = _extract_run_hint(content, strict=True)
+        if hint:
+            return hint
+    return ""
+
+
+def _infer_recent_execution_target(history: list[dict[str, str]] | None) -> str:
+    if not history:
+        return ""
+    for entry in reversed(history[-12:]):
+        if str(entry.get("role") or "").strip().lower() != "user":
+            continue
+        content = str(entry.get("content") or "").strip().lower()
+        if not content:
+            continue
+        if any(token in content for token in ("feather부터", "연속 실행", "end-to-end", "파이프라인")):
+            return "pipeline"
+        if "federlicht" in content or "보고서" in content:
+            return "federlicht"
+        if "feather" in content or any(token in content for token in ("자료 수집", "검색", "크롤링", "아카이브")):
+            return "feather"
+    return ""
+
+
+def _infer_stage_hint(raw: str) -> str:
+    text = str(raw or "").strip().lower()
+    if not text:
+        return ""
+    aliases: tuple[tuple[tuple[str, ...], str], ...] = (
+        (("scout", "스카우트", "탐색"), "scout"),
+        (("plan", "플랜", "기획"), "plan"),
+        (("evidence", "근거"), "evidence"),
+        (("writer", "작성"), "writer"),
+        (("quality", "퀄리티", "critic", "비평"), "quality"),
+    )
+    for tokens, stage in aliases:
+        if any(token in text for token in tokens):
+            return stage
+    return ""
+
+
+def _agentic_actions_enabled() -> bool:
+    token = str(os.getenv("FEDERNETT_HELP_AGENTIC_ACTIONS") or "1").strip().lower()
+    return token not in {"0", "false", "no", "off", "disable", "disabled"}
+
+
+def _allow_rule_fallback(runtime_mode: str | None) -> bool:
+    """
+    Keep safe-rule fallback as explicit opt-in.
+    Default behavior is agentic-first for all runtime modes.
+    Override with FEDERNETT_HELP_RULE_FALLBACK=1 to re-enable rule fallback.
+    """
+    override = str(os.getenv("FEDERNETT_HELP_RULE_FALLBACK") or "").strip().lower()
+    if override:
+        return override not in {"0", "false", "no", "off", "disable", "disabled"}
+    _ = runtime_mode
+    return False
+
+
+def _extract_first_json_object(raw: str) -> dict[str, Any] | None:
+    text = str(raw or "")
+    if not text:
+        return None
+    start = text.find("{")
+    while start >= 0:
+        depth = 0
+        in_string = False
+        escaped = False
+        for idx in range(start, len(text)):
+            ch = text[idx]
+            if in_string:
+                if escaped:
+                    escaped = False
+                    continue
+                if ch == "\\":
+                    escaped = True
+                    continue
+                if ch == '"':
+                    in_string = False
+                continue
+            if ch == '"':
+                in_string = True
+                continue
+            if ch == "{":
+                depth += 1
+                continue
+            if ch == "}":
+                depth -= 1
+                if depth == 0:
+                    snippet = text[start : idx + 1]
+                    try:
+                        payload = json.loads(snippet)
+                    except Exception:
+                        break
+                    if isinstance(payload, dict):
+                        return payload
+                    break
+        start = text.find("{", start + 1)
+    return None
+
+
+def _normalize_agentic_action(raw: Any, *, run_rel: str | None) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    action_type = str(raw.get("type") or "").strip().lower()
+    if action_type not in _HELP_AGENTIC_ACTION_TYPES:
+        return None
+    if action_type == "none":
+        return None
+    action: dict[str, Any] = {
+        "type": action_type,
+        "run_rel": run_rel or "",
+    }
+    label = str(raw.get("label") or "").strip()
+    summary = str(raw.get("summary") or "").strip()
+    safety = str(raw.get("safety") or "").strip()
+    if label:
+        action["label"] = label[:120]
+    if summary:
+        action["summary"] = summary[:220]
+    if safety:
+        action["safety"] = safety[:220]
+
+    if action_type in {
+        "run_feather",
+        "run_federlicht",
+        "run_feather_then_federlicht",
+        "switch_run",
+    }:
+        run_hint = _normalize_run_hint(str(raw.get("run_hint") or ""))
+        if run_hint and not _is_invalid_run_hint(run_hint):
+            action["run_hint"] = run_hint
+        if bool(raw.get("create_if_missing")):
+            action["create_if_missing"] = True
+        if bool(raw.get("auto_instruction")) and action_type in {"run_feather", "run_feather_then_federlicht"}:
+            action["auto_instruction"] = True
+        if bool(raw.get("require_instruction_confirm")) and action_type in {"run_feather", "run_feather_then_federlicht"}:
+            action["require_instruction_confirm"] = True
+        instruction_confirm_reason = str(raw.get("instruction_confirm_reason") or "").strip()
+        if instruction_confirm_reason and action_type in {"run_feather", "run_feather_then_federlicht"}:
+            action["instruction_confirm_reason"] = instruction_confirm_reason[:120]
+        topic_hint = str(raw.get("topic_hint") or "").strip()
+        if topic_hint and action_type in {"run_feather", "run_feather_then_federlicht"}:
+            action["topic_hint"] = topic_hint[:160]
+        effective_hint = str(action.get("run_hint") or "").strip()
+        if action_type == "switch_run" and not effective_hint:
+            return None
+        if action_type == "switch_run" and effective_hint:
+            action["label"] = f"Run 전환: {effective_hint}"
+        elif action_type == "run_feather":
+            action.setdefault("label", "Feather 실행")
+        elif action_type == "run_federlicht":
+            action.setdefault("label", "Federlicht 실행")
+        elif action_type == "run_feather_then_federlicht":
+            action.setdefault("label", "Feather -> Federlicht 실행")
+
+    if action_type == "create_run_folder":
+        run_name_hint = _normalize_run_hint(str(raw.get("run_name_hint") or ""))
+        topic_hint = str(raw.get("topic_hint") or "").strip()
+        if run_name_hint:
+            action["run_name_hint"] = run_name_hint
+        if topic_hint:
+            action["topic_hint"] = topic_hint[:160]
+
+    if action_type == "preset_resume_stage":
+        stage = _infer_stage_hint(str(raw.get("stage") or ""))
+        if not stage:
+            return None
+        action["stage"] = stage
+
+    if action_type == "focus_editor":
+        target = str(raw.get("target") or "").strip().lower()
+        if target not in {"feather_instruction", "federlicht_prompt"}:
+            return None
+        action["target"] = target
+
+    if action_type == "set_action_mode":
+        mode = _normalize_execution_mode(raw.get("mode"))
+        action["mode"] = mode
+        if mode == "act" and bool(raw.get("allow_artifacts")):
+            action["allow_artifacts"] = True
+
+    if action_type == "run_capability":
+        capability_id = str(raw.get("capability_id") or "").strip().lower()
+        if not capability_id:
+            return None
+        action["capability_id"] = capability_id[:80]
+
+    return action
+
+
+def _history_has_topic_signal(history: list[dict[str, str]] | None) -> bool:
+    normalized = _normalize_history(history)
+    if not normalized:
+        return False
+    for row in reversed(normalized[-8:]):
+        if str(row.get("role") or "") != "user":
+            continue
+        text = str(row.get("content") or "").strip().lower()
+        if len(text) >= 20 and any(token in text for token in _TOPIC_SIGNAL_TOKENS):
+            return True
+    return False
+
+
+def _is_generic_execution_question(question: str) -> bool:
+    q = str(question or "").strip().lower()
+    if not q:
+        return False
+    compact = re.sub(r"\s+", "", q)
+    if any(compact == token for token in ("실행해줘", "돌려줘", "해줘", "start", "run", "go")):
+        return True
+    has_exec = any(token in q for token in _GENERIC_EXECUTION_TOKENS)
+    has_topic = any(token in q for token in _TOPIC_SIGNAL_TOKENS)
+    return has_exec and not has_topic and len(compact) <= 18
+
+
+def _extract_topic_hint_from_question_or_history(
+    question: str,
+    history: list[dict[str, str]] | None,
+) -> str:
+    q = str(question or "").strip()
+    if q and not _is_generic_execution_question(q):
+        normalized = re.sub(r"\s+", " ", q).strip()
+        if normalized:
+            return normalized[:160]
+    for row in reversed(_normalize_history(history)[-12:]):
+        if str(row.get("role") or "") != "user":
+            continue
+        text = str(row.get("content") or "").strip()
+        if not text or _is_generic_execution_question(text):
+            continue
+        normalized = re.sub(r"\s+", " ", text).strip()
+        if normalized:
+            return normalized[:160]
+    return ""
+
+
+def _needs_agentic_action_planning(question: str) -> bool:
+    q = str(question or "").strip().lower()
+    if not q:
+        return False
+    trivial_tokens = {
+        "/help",
+        "help",
+        "hi",
+        "hello",
+        "thanks",
+        "thank you",
+        "고마워",
+        "감사",
+        "ㅇㅋ",
+        "ok",
+    }
+    compact = re.sub(r"\s+", " ", q).strip()
+    if compact in trivial_tokens:
+        return False
+    if re.fullmatch(r"[\W_]+", compact):
+        return False
+    if compact.startswith("/"):
+        command = compact.split(" ", 1)[0]
+        return command in {"/plan", "/act", "/profile", "/agent", "/runtime"}
+    if _is_generic_execution_question(q):
+        if not any(token in q for token in ("알려", "설명", "방법", "가이드", "guide", "how", "why")):
+            return True
+    action_hints = (
+        "실행",
+        "run",
+        "start",
+        "전환",
+        "switch",
+        "resume",
+        "재시작",
+        "열어",
+        "open",
+        "focus",
+        "만들",
+        "생성",
+        "create",
+        "설정",
+        "수정",
+        "적용",
+        "작성",
+        "launch",
+    )
+    if not any(token in q for token in action_hints):
+        return False
+    explanation_tokens = (
+        "설명",
+        "알려",
+        "방법",
+        "가이드",
+        "guide",
+        "how",
+        "why",
+        "요약",
+        "정리",
+        "review",
+        "계획을 알려",
+    )
+    direct_action_tokens = (
+        "실행해",
+        "run해",
+        "run 해",
+        "바로 실행",
+        "지금 실행",
+        "재실행",
+        "start now",
+        "돌려",
+        "전환해",
+        "switch run",
+        "만들어",
+        "생성해",
+        "열어줘",
+        "해줘",
+    )
+    asks_explanation = any(token in q for token in explanation_tokens)
+    asks_direct_action = any(token in q for token in direct_action_tokens)
+    if asks_explanation and not asks_direct_action:
+        return False
+    return True
+
+
+def _capability_prompt_digest(capabilities: dict[str, Any] | None) -> str:
+    if not isinstance(capabilities, dict):
+        return "-"
+    tools = capabilities.get("tools") if isinstance(capabilities.get("tools"), list) else []
+    skills = capabilities.get("skills") if isinstance(capabilities.get("skills"), list) else []
+    packs = capabilities.get("packs") if isinstance(capabilities.get("packs"), list) else []
+    tool_ids = [str(item.get("id") or "").strip() for item in tools if isinstance(item, dict)]
+    skill_ids = [str(item.get("id") or "").strip() for item in skills if isinstance(item, dict)]
+    pack_ids = [str(item.get("id") or "").strip() for item in packs if isinstance(item, dict)]
+    tool_ids = [token for token in tool_ids if token][:12]
+    skill_ids = [token for token in skill_ids if token][:10]
+    pack_ids = [token for token in pack_ids if token][:8]
+    return (
+        f"tools={','.join(tool_ids) if tool_ids else '-'}; "
+        f"skills={','.join(skill_ids) if skill_ids else '-'}; "
+        f"packs={','.join(pack_ids) if pack_ids else '-'}"
+    )
+
+
+def _build_agentic_action_prompt(
+    question: str,
+    *,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+    state_memory: str,
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+) -> str:
+    history_rows = _normalize_history(history)
+    history_brief = "\n".join(
+        f"- {row['role']}: {str(row['content'])[:180]}"
+        for row in history_rows[-8:]
+    ) or "- (none)"
+    return (
+        "FederHav governing-agent action planner.\n"
+        "Return exactly one JSON object and nothing else.\n\n"
+        "allowed_types=["
+        "none,run_feather,run_federlicht,run_feather_then_federlicht,"
+        "create_run_folder,switch_run,preset_resume_stage,focus_editor,set_action_mode,run_capability"
+        "]\n"
+        "schema={type,label,summary,safety,run_hint,create_if_missing,auto_instruction,require_instruction_confirm,instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id}\n"
+        "rules:\n"
+        "- avoid destructive/unbounded actions.\n"
+        "- if intent is unclear, type=none.\n"
+        "- if user asks run switch/create explicitly, fill run_hint or run_name_hint.\n"
+        "- use set_action_mode only when user explicitly asks policy mode.\n"
+        "- prefer focus_editor when instruction/prompt editing intent is explicit.\n"
+        "- if question is short generic execution request, prefer run_feather or run_feather_then_federlicht with auto_instruction=true.\n"
+        "- execution_mode and allow_artifacts are policy hints, not mandatory action.\n\n"
+        f"question={question}\n"
+        f"run_rel={run_rel or ''}\n"
+        f"execution_mode={execution_mode}\n"
+        f"allow_artifacts={str(bool(allow_artifacts)).lower()}\n"
+        f"capabilities={_capability_prompt_digest(capabilities)}\n"
+        f"recent_history:\n{history_brief}\n"
+        f"state_memory_json={state_memory or '{}'}\n"
+    )
+
+
+def _infer_agentic_action(
+    root: Path,
+    question: str,
+    *,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+    state_memory: str,
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+    model: str | None,
+    llm_backend: str | None,
+    reasoning_effort: str | None,
+    runtime_mode: str | None,
+    strict_model: bool,
+) -> dict[str, Any] | None:
+    if not _agentic_actions_enabled():
+        return None
+    if not _needs_agentic_action_planning(question):
+        return None
+    planner_prompt = _build_agentic_action_prompt(
+        question,
+        run_rel=run_rel,
+        history=history,
+        state_memory=state_memory,
+        capabilities=capabilities,
+        execution_mode=execution_mode,
+        allow_artifacts=allow_artifacts,
+    )
+    try:
+        planned, _planned_model = _call_llm(
+            planner_prompt,
+            [],
+            model=model,
+            history=None,
+            live_log_tail="",
+            state_memory=state_memory,
+            strict_model=bool(strict_model),
+            reasoning_effort=reasoning_effort,
+            runtime_mode=runtime_mode,
+            root=root,
+            llm_backend=llm_backend,
+        )
+    except Exception:
+        return None
+    payload = _extract_first_json_object(planned)
+    action = _normalize_agentic_action(payload, run_rel=run_rel)
+    if not action:
+        return None
+    action_type = str(action.get("type") or "")
+    if action_type in {"run_feather", "run_federlicht", "run_feather_then_federlicht", "switch_run"}:
+        run_hint = _normalize_run_hint(str(action.get("run_hint") or ""))
+        if run_hint and _is_invalid_run_hint(run_hint):
+            action.pop("run_hint", None)
+            run_hint = ""
+        if not run_hint:
+            hint = _extract_recent_run_hint(history)
+            if hint:
+                action["run_hint"] = hint
+                if action_type.startswith("run_"):
+                    action.setdefault("create_if_missing", True)
+        if action_type == "switch_run" and not str(action.get("run_hint") or "").strip():
+            return None
+    return action
+
+
+def _apply_instruction_quality_guard(
+    action: dict[str, Any] | None,
+    *,
+    question: str,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(action, dict):
+        return action
+    action_type = str(action.get("type") or "").strip().lower()
+    if action_type not in {"run_feather", "run_feather_then_federlicht"}:
+        return action
+    if not _is_generic_execution_question(question):
+        return action
+    next_action = dict(action)
+    topic_hint = _extract_topic_hint_from_question_or_history(question, history)
+    if not topic_hint:
+        return {
+            "type": "focus_editor",
+            "label": "Feather Instruction 열기",
+            "target": "feather_instruction",
+            "run_rel": run_rel or "",
+            "safety": "실행 전 instruction 품질 확인 필요 (자동 실행 보류)",
+            "summary": "요청이 짧아 주제가 불명확합니다. 먼저 질문을 보강한 뒤 instruction을 작성하세요.",
+            "clarify_required": True,
+            "clarify_question": (
+                "어떤 주제로 실행할까요? 예: '양자컴퓨터 최신 기술 동향을 분석해 보고서 작성해줘'"
+            ),
+        }
+    next_action["auto_instruction"] = True
+    next_action["require_instruction_confirm"] = True
+    next_action["instruction_confirm_reason"] = "short_generic_request"
+    next_action["topic_hint"] = topic_hint
+    next_action["safety"] = "instruction 품질 점검/자동작성 후 실행 (run 범위 내 파일만 사용)"
+    if action_type == "run_feather_then_federlicht":
+        next_action["summary"] = "질문이 짧아 instruction을 자동 보정한 뒤 Feather -> Federlicht 연속 실행"
+    else:
+        next_action["summary"] = "질문이 짧아 instruction을 자동 보정한 뒤 Feather 실행"
+    return next_action
+
+
+def _infer_governed_action(
+    root: Path,
+    question: str,
+    *,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+    state_memory: str,
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+    model: str | None,
+    llm_backend: str | None,
+    reasoning_effort: str | None,
+    runtime_mode: str | None,
+    strict_model: bool,
+) -> dict[str, Any] | None:
+    action = _infer_agentic_action(
+        root,
+        question,
+        run_rel=run_rel,
+        history=history,
+        state_memory=state_memory,
+        capabilities=capabilities,
+        execution_mode=execution_mode,
+        allow_artifacts=allow_artifacts,
+        model=model,
+        llm_backend=llm_backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        strict_model=bool(strict_model),
+    )
+    if action is None and _allow_rule_fallback(runtime_mode):
+        action = _infer_safe_action(root, question, run_rel=run_rel, history=history)
+    return _apply_instruction_quality_guard(
+        action,
+        question=question,
+        run_rel=run_rel,
+        history=history,
+    )
+
+
+def _infer_safe_action(
+    root: Path,
+    question: str,
+    run_rel: str | None = None,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any] | None:
     q = (question or "").strip().lower()
     if not q:
         return None
+    followup_execution_like = any(token in q for token in ("실행", "start", "run", "돌려", "시작", "해줘", "해 줘"))
+    custom = infer_capability_action(root, q, run_rel=run_rel)
+    if custom:
+        action_type = str(custom.get("type") or "").strip().lower()
+        if (
+            followup_execution_like
+            and action_type in {"run_feather", "run_federlicht", "run_feather_then_federlicht", "switch_run"}
+            and not str(custom.get("run_hint") or "").strip()
+        ):
+            hint = _extract_recent_run_hint(history)
+            if hint:
+                custom["run_hint"] = hint
+                if action_type.startswith("run_"):
+                    custom.setdefault("create_if_missing", True)
+        return custom
+
+    plan_mode_like = any(
+        token in q
+        for token in ("plan mode", "plan 모드", "계획 모드", "제안 후 확인", "확인 후 실행", "preview mode")
+    )
+    act_mode_like = any(
+        token in q
+        for token in ("act mode", "act 모드", "자동 실행 모드", "즉시 실행 모드")
+    )
+    if plan_mode_like:
+        return {
+            "type": "set_action_mode",
+            "label": "Plan 모드 전환",
+            "mode": "plan",
+            "run_rel": run_rel or "",
+            "safety": "제안 후 확인 실행 모드",
+            "summary": "FederHav 실행 정책을 Plan 모드로 전환",
+        }
+    if act_mode_like:
+        allow_artifacts = any(
+            token in q
+            for token in (
+                "파일쓰기허용",
+                "파일 쓰기 허용",
+                "artifact",
+                "바로 실행",
+                "즉시 실행",
+                "자동 실행",
+            )
+        )
+        return {
+            "type": "set_action_mode",
+            "label": "Act 모드 전환",
+            "mode": "act",
+            "allow_artifacts": allow_artifacts,
+            "run_rel": run_rel or "",
+            "safety": "안전 범위 내 자동 실행 모드",
+            "summary": "FederHav 실행 정책을 Act 모드로 전환",
+        }
+
+    run_hint = _extract_run_hint(question)
+    run_hint_from_history = False
+    if not run_hint and followup_execution_like:
+        run_hint = _extract_recent_run_hint(history)
+        run_hint_from_history = bool(run_hint)
+    run_binding_like = bool(run_hint) and (
+        any(
+            token in q
+            for token in (
+                "run folder",
+                "run 폴더",
+                "런 폴더",
+                "run을",
+                "run 를",
+                "런을",
+                "으로 설정",
+                "로 설정",
+                "으로 하고",
+                "로 하고",
+                "run as",
+                "use run",
+                "run=",
+            )
+        )
+        or "site/runs/" in q
+        or "runs/" in q
+        or run_hint_from_history
+    )
+    run_create_if_missing_like = bool(run_hint) and any(
+        token in q
+        for token in (
+            "run folder",
+            "run 폴더",
+            "런 폴더",
+            "으로 설정",
+            "로 설정",
+            "으로 하고",
+            "로 하고",
+            "run as",
+            "use run",
+            "run=",
+            "새 run",
+            "새로운 run",
+            "new run",
+            "신규 run",
+            "fresh run",
+            "create run",
+            "만들",
+            "생성",
+        )
+    )
+    switch_run_like = any(
+        token in q
+        for token in (
+            "run 변경",
+            "run 전환",
+            "run 바꿔",
+            "run 선택",
+            "switch run",
+            "select run",
+            "다른 run",
+            "런 변경",
+            "런 전환",
+            "런 바꿔",
+        )
+    ) or (
+        "run" in q
+        and any(token in q for token in ("전환", "변경", "바꿔", "선택", "switch", "select", "use"))
+    ) or (
+        ("site/runs/" in q or "runs/" in q)
+        and any(token in q for token in ("열어", "open", "선택", "바꿔", "전환", "use"))
+    )
+    if switch_run_like:
+        if run_hint:
+            action = {
+                "type": "switch_run",
+                "label": f"Run 전환: {run_hint}",
+                "run_hint": run_hint,
+                "run_rel": run_rel or "",
+                "safety": "기존 run 선택만 수행 (파일 변경 없음)",
+                "summary": f"대상 run으로 전환: {run_hint}",
+            }
+            if run_create_if_missing_like:
+                action["create_if_missing"] = True
+                action["summary"] = f"대상 run으로 전환 (없으면 생성): {run_hint}"
+            return action
+
+    stage_hint = _infer_stage_hint(q)
+    stage_control_like = any(
+        token in q
+        for token in ("단계", "stage", "부터", "재시작", "resume", "이어서", "다시", "start from", "시작점")
+    )
+    if stage_hint and stage_control_like:
+        stage_label = stage_hint.capitalize()
+        return {
+            "type": "preset_resume_stage",
+            "label": f"{stage_label}부터 재시작 프리셋",
+            "stage": stage_hint,
+            "run_rel": run_rel or "",
+            "safety": "워크플로우 시작점 프리셋만 변경",
+            "summary": f"Federlicht 재시작 단계를 {stage_label}로 설정",
+        }
+
+    editor_focus_like = any(
+        token in q
+        for token in ("열어", "focus", "편집", "수정", "작성", "입력", "update", "채워")
+    )
+    prompt_like = any(token in q for token in ("prompt", "프롬프트", "inline prompt", "inline"))
+    instruction_like = any(token in q for token in ("instruction", "지시문", "요청문", "query", "질문문"))
+    if editor_focus_like and (prompt_like or instruction_like):
+        target = (
+            "federlicht_prompt"
+            if (prompt_like or "federlicht" in q or "보고서" in q)
+            else "feather_instruction"
+        )
+        target_label = "Federlicht Inline Prompt" if target == "federlicht_prompt" else "Feather Instruction"
+        return {
+            "type": "focus_editor",
+            "label": f"{target_label} 열기",
+            "target": target,
+            "run_rel": run_rel or "",
+            "safety": "편집기 포커스만 이동 (자동 저장/실행 없음)",
+            "summary": f"{target_label} 편집기로 이동",
+        }
+
+    def _extract_topic_hint(raw: str) -> str:
+        text = str(raw or "").strip()
+        if not text:
+            return ""
+        patterns = [
+            r"(?:주제(?:는|:)\s*)(.+)$",
+            r"(?:topic\s*[:=]\s*)(.+)$",
+            r"(?:about\s+)(.+)$",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if not match:
+                continue
+            value = str(match.group(1) or "").strip()
+            if value:
+                value = re.sub(r"[.?!]+$", "", value).strip()
+                return value[:120]
+        cleaned = re.sub(r"\s+", " ", text).strip()
+        return cleaned[:120]
+
+    create_run_like = (
+        any(token in q for token in ("run folder", "run 폴더", "런 폴더", "runfolder", "새 run", "새로운 run"))
+        and any(token in q for token in ("만들", "생성", "create", "new"))
+    )
+    explicit_new_run_like = any(
+        token in q
+        for token in (
+            "새 run",
+            "새로운 run",
+            "new run",
+            "신규 run",
+            "fresh run",
+            "create run",
+        )
+    )
+    if create_run_like and run_hint and not explicit_new_run_like:
+        action = {
+            "type": "switch_run",
+            "label": f"Run 전환: {run_hint}",
+            "run_hint": run_hint,
+            "run_rel": run_rel or "",
+            "safety": "기존 run 선택만 수행 (파일 변경 없음)",
+            "summary": f"대상 run으로 전환: {run_hint}",
+        }
+        action["create_if_missing"] = True
+        action["summary"] = f"대상 run으로 전환 (없으면 생성): {run_hint}"
+        return action
+    if create_run_like:
+        topic_hint = _extract_topic_hint(question)
+        run_name_hint = run_hint or _extract_run_hint(topic_hint)
+        return {
+            "type": "create_run_folder",
+            "label": "새 Run Folder 생성",
+            "run_rel": run_rel or "",
+            "topic_hint": topic_hint,
+            "run_name_hint": run_name_hint,
+            "safety": "site/runs 하위에 안전한 새 run 폴더만 생성",
+            "summary": f"새 run 생성 · run={run_name_hint}" if run_name_hint else (
+                f"새 run 생성 · topic={topic_hint}" if topic_hint else "새 run 생성"
+            ),
+        }
+
+    execution_intent_like = any(token in q for token in ("실행", "start", "돌려", "시작", "run해", "run 해"))
+    if run_binding_like and run_hint and not execution_intent_like:
+        action = {
+            "type": "switch_run",
+            "label": f"Run 전환: {run_hint}",
+            "run_hint": run_hint,
+            "run_rel": run_rel or "",
+            "safety": "기존 run 선택만 수행 (파일 변경 없음)",
+            "summary": f"대상 run으로 전환: {run_hint}",
+        }
+        action["create_if_missing"] = True
+        action["summary"] = f"대상 run으로 전환 (없으면 생성): {run_hint}"
+        return action
+
     explicit_run = any(
         token in q
         for token in ("실행", "run", "start", "돌려", "해줘", "해 줘", "시작", "재작성", "다시 작성")
     )
+    analysis_like = any(
+        token in q
+        for token in (
+            "파악",
+            "분석",
+            "정리",
+            "조사",
+            "동향",
+            "최신 기술",
+            "최신 동향",
+            "보고서 작성",
+            "리포트 작성",
+        )
+    )
+    explicit_run = explicit_run or analysis_like
     if not explicit_run:
         return None
     if any(token in q for token in ("feather부터", "연속", "end-to-end", "파이프라인")):
-        return {
+        action = {
             "type": "run_feather_then_federlicht",
             "label": "Feather -> Federlicht 실행",
             "run_rel": run_rel or "",
             "safety": "현재 화면 폼 값만 사용",
             "summary": "수집부터 보고서 생성까지 연속 실행",
         }
-    if "feather" in q or any(token in q for token in ("자료 수집", "검색", "크롤링", "아카이브")):
-        return {
+        if run_binding_like and run_hint:
+            action["run_hint"] = run_hint
+            action["create_if_missing"] = True
+            action["summary"] = f"수집부터 보고서 생성까지 연속 실행 · run={run_hint}"
+        return action
+    target_from_history = _infer_recent_execution_target(history)
+    feather_requested = "feather" in q or any(token in q for token in ("자료 수집", "검색", "크롤링", "아카이브"))
+    federlicht_requested = "federlicht" in q or "보고서" in q
+    if feather_requested or (not federlicht_requested and target_from_history == "feather"):
+        action = {
             "type": "run_feather",
             "label": "Feather 실행",
             "run_rel": run_rel or "",
             "safety": "현재 화면 폼 값만 사용",
             "summary": "자료 수집/아카이브 실행",
         }
-    if "federlicht" in q or "보고서" in q:
-        return {
+        if run_binding_like and run_hint:
+            action["run_hint"] = run_hint
+            action["create_if_missing"] = True
+            action["summary"] = f"자료 수집/아카이브 실행 · run={run_hint}"
+        return action
+    if federlicht_requested or (not feather_requested and target_from_history == "federlicht"):
+        action = {
             "type": "run_federlicht",
             "label": "Federlicht 실행",
             "run_rel": run_rel or "",
             "safety": "현재 화면 폼 값만 사용",
             "summary": "현재 Run 기준 보고서 생성",
         }
-    return None
-
-
-def _help_capabilities(web_search_enabled: bool) -> dict[str, list[dict[str, Any]]]:
-    return {
-        "tools": [
-            {
-                "id": "source_index",
-                "label": "Source Index",
-                "description": "코드/문서/런 아티팩트 인덱스를 검색해 근거 후보를 선택합니다.",
-            },
-            {
-                "id": "web_research",
-                "label": "Web Search",
-                "description": "웹 보강 검색(Tavily)을 수행해 최신 근거를 보완합니다.",
-                "enabled": bool(web_search_enabled),
-            },
-            {
-                "id": "llm_generate",
-                "label": "LLM Generate",
-                "description": "선별된 근거를 바탕으로 답변을 생성합니다.",
-            },
-        ],
-        "skills": [
-            {
-                "id": "action_runner",
-                "label": "Action Runner",
-                "description": "질문 문맥 기반으로 안전한 실행 제안을 생성합니다.",
-            }
-        ],
-        "mcp": [],
+        if run_binding_like and run_hint:
+            action["run_hint"] = run_hint
+            action["create_if_missing"] = True
+            action["summary"] = f"현재 Run 기준 보고서 생성 · run={run_hint}"
+        return action
+    action = {
+        "type": "run_feather_then_federlicht",
+        "label": "Feather -> Federlicht 실행",
+        "run_rel": run_rel or "",
+        "safety": "현재 화면 폼 값만 사용",
+        "summary": "질문 의도 기반으로 수집+보고서 연속 실행",
     }
+    if run_binding_like and run_hint:
+        action["run_hint"] = run_hint
+        action["create_if_missing"] = True
+        action["summary"] = f"질문 의도 기반으로 수집+보고서 연속 실행 · run={run_hint}"
+    return action
+
+
+def _help_capabilities(root: Path, web_search_enabled: bool) -> dict[str, Any]:
+    return runtime_capabilities(root, web_search_enabled=bool(web_search_enabled))
+
+
+def _new_governor_trace_id() -> str:
+    millis = int(time.time() * 1000)
+    return f"fh-{millis:x}"
+
+
+def _estimate_token_count(text: str) -> int:
+    raw = str(text or "")
+    if not raw:
+        return 0
+    return max(1, int(len(raw) / 4))
+
+
+def _trace_step(
+    step_id: str,
+    status: str,
+    *,
+    message: str = "",
+    tool_id: str = "",
+    duration_ms: float | int | None = None,
+    token_est: int | None = None,
+    cache_hit: bool | None = None,
+) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "id": str(step_id or "").strip() or "unknown",
+        "status": str(status or "idle").strip().lower() or "idle",
+        "tool_id": str(tool_id or step_id or "unknown").strip() or "unknown",
+    }
+    note = str(message or "").strip()
+    if note:
+        out["message"] = note[:280]
+    if duration_ms is not None:
+        try:
+            out["duration_ms"] = max(0, int(float(duration_ms)))
+        except Exception:
+            pass
+    if token_est is not None:
+        try:
+            out["token_est"] = max(0, int(token_est))
+        except Exception:
+            pass
+    if cache_hit is not None:
+        out["cache_hit"] = bool(cache_hit)
+    return out
+
+
+def _trace_activity_event(
+    *,
+    trace_id: str,
+    step_id: str,
+    status: str,
+    message: str,
+    tool_id: str = "",
+    duration_ms: float | int | None = None,
+    token_est: int | None = None,
+    cache_hit: bool | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "event": "activity",
+        "id": str(step_id or "").strip() or "unknown",
+        "status": str(status or "idle").strip().lower() or "idle",
+        "message": str(message or "").strip(),
+        "trace_id": str(trace_id or "").strip(),
+        "tool_id": str(tool_id or step_id or "unknown").strip() or "unknown",
+    }
+    if duration_ms is not None:
+        try:
+            payload["duration_ms"] = max(0, int(float(duration_ms)))
+        except Exception:
+            pass
+    if token_est is not None:
+        try:
+            payload["token_est"] = max(0, int(token_est))
+        except Exception:
+            pass
+    if cache_hit is not None:
+        payload["cache_hit"] = bool(cache_hit)
+    return payload
+
+
+def _clarify_prompt_from_action(action: dict[str, Any] | None) -> tuple[bool, str]:
+    if not isinstance(action, dict):
+        return False, ""
+    required = bool(action.get("clarify_required"))
+    prompt = str(action.get("clarify_question") or "").strip()
+    if required and prompt:
+        return True, prompt[:220]
+    return False, ""
 
 
 def answer_help_question(
     root: Path,
     question: str,
     *,
+    agent: str | None = None,
+    execution_mode: str = "plan",
+    allow_artifacts: bool = False,
     model: str | None = None,
+    llm_backend: str | None = None,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
     strict_model: bool = False,
     max_sources: int = 8,
     history: list[dict[str, str]] | None = None,
+    state_memory: dict[str, Any] | None = None,
     run_rel: str | None = None,
     web_search: bool = False,
+    live_log_tail: str | None = None,
 ) -> dict[str, Any]:
     q = (question or "").strip()
     if not q:
         raise ValueError("question is required")
+    trace_id = _new_governor_trace_id()
+    trace_steps: list[dict[str, Any]] = []
+    resolved_mode = _normalize_execution_mode(execution_mode)
+    resolved_agent = _normalize_agent_label(agent)
+    effective_question = _augment_help_question(
+        q,
+        execution_mode=resolved_mode,
+        agent=resolved_agent,
+        allow_artifacts=bool(allow_artifacts),
+    )
     web_note = ""
     if web_search:
+        web_started = time.perf_counter()
         if _should_run_help_web_search(q, history):
             web_note = _run_help_web_research(root, question=q, run_rel=run_rel, history=history)
         else:
             web_note = "web_search enabled: skipped (query does not require web lookup)."
+        web_elapsed_ms = (time.perf_counter() - web_started) * 1000.0
+        web_status = "skipped" if "skipped" in web_note.lower() else ("error" if web_note.lower().startswith("web_search failed") else "done")
+        trace_steps.append(
+            _trace_step(
+                "web_research",
+                web_status,
+                message=web_note or "web research completed",
+                tool_id="web_research",
+                duration_ms=web_elapsed_ms,
+                cache_hit=False,
+            )
+        )
+    else:
+        trace_steps.append(
+            _trace_step(
+                "web_research",
+                "disabled",
+                message="web_search 옵션이 꺼져 있습니다.",
+                tool_id="web_research",
+                duration_ms=0,
+            )
+        )
+    source_index_started = time.perf_counter()
     sources, indexed_files = _select_sources(
         root,
         q,
         max_sources=max(3, min(max_sources, 16)),
         run_rel=run_rel,
     )
+    source_index_elapsed_ms = (time.perf_counter() - source_index_started) * 1000.0
+    trace_steps.append(
+        _trace_step(
+            "source_index",
+            "done",
+            message=f"근거 후보 {indexed_files}개 인덱스 완료",
+            tool_id="source_index",
+            duration_ms=source_index_elapsed_ms,
+            token_est=0,
+            cache_hit=False,
+        )
+    )
     error_msg = ""
     used_llm = False
     used_model = ""
-    requested_model, explicit_model = _resolve_requested_model(model)
+    resolved_backend = _resolve_help_llm_backend(llm_backend)
+    resolved_reasoning_effort = _resolve_help_reasoning_effort(reasoning_effort)
+    resolved_runtime_mode = _resolve_help_runtime_mode(runtime_mode)
+    normalized_live_log_tail = _normalize_live_log_tail(live_log_tail)
+    normalized_state_memory = _normalize_state_memory(state_memory)
+    capabilities = _help_capabilities(root, bool(web_search))
+    requested_model, explicit_model = _resolve_requested_model(model, backend=resolved_backend)
+    llm_started = time.perf_counter()
     try:
         answer, used_model = _call_llm(
-            q,
+            effective_question,
             sources,
             model=model,
             history=history,
+            live_log_tail=normalized_live_log_tail,
+            state_memory=normalized_state_memory,
             strict_model=bool(strict_model),
+            reasoning_effort=resolved_reasoning_effort,
+            runtime_mode=resolved_runtime_mode,
+            root=root,
+            llm_backend=resolved_backend,
         )
         used_llm = True
+        llm_elapsed_ms = (time.perf_counter() - llm_started) * 1000.0
+        trace_steps.append(
+            _trace_step(
+                "llm_generate",
+                "done",
+                message=f"완료 · model={used_model or requested_model or '-'}",
+                tool_id="llm_generate",
+                duration_ms=llm_elapsed_ms,
+                token_est=_estimate_token_count(answer),
+                cache_hit=False,
+            )
+        )
     except Exception as exc:
         error_msg = str(exc)
         answer = _fallback_answer(q, sources)
+        llm_elapsed_ms = (time.perf_counter() - llm_started) * 1000.0
+        trace_steps.append(
+            _trace_step(
+                "llm_generate",
+                "error",
+                message=error_msg,
+                tool_id="llm_generate",
+                duration_ms=llm_elapsed_ms,
+                token_est=_estimate_token_count(answer),
+                cache_hit=False,
+            )
+        )
+    reported_reasoning_effort = _reported_reasoning_effort(
+        resolved_reasoning_effort,
+        backend=resolved_backend,
+        model_name=used_model or requested_model,
+    )
+    action = _infer_governed_action(
+        root,
+        q,
+        run_rel=run_rel,
+        history=history,
+        state_memory=normalized_state_memory,
+        capabilities=capabilities,
+        execution_mode=resolved_mode,
+        allow_artifacts=bool(allow_artifacts),
+        model=model,
+        llm_backend=resolved_backend,
+        reasoning_effort=resolved_reasoning_effort,
+        runtime_mode=resolved_runtime_mode,
+        strict_model=bool(strict_model),
+    )
+    clarify_required, clarify_question = _clarify_prompt_from_action(action)
     return {
         "answer": answer,
         "sources": sources,
@@ -1343,12 +3520,26 @@ def answer_help_question(
         "requested_model": requested_model,
         "model_selection": "explicit" if explicit_model else "auto",
         "model_fallback": bool(used_llm and requested_model and used_model and requested_model != used_model),
+        "llm_backend": resolved_backend,
+        "reasoning_effort": reported_reasoning_effort,
+        "runtime_mode": resolved_runtime_mode,
         "error": error_msg,
         "indexed_files": indexed_files,
         "web_search": bool(web_search),
         "web_search_note": web_note,
-        "action": _infer_safe_action(q, run_rel=run_rel),
-        "capabilities": _help_capabilities(bool(web_search)),
+        "live_log_chars": len(normalized_live_log_tail),
+        "state_memory_chars": len(normalized_state_memory),
+        "agent": resolved_agent,
+        "execution_mode": resolved_mode,
+        "allow_artifacts": bool(allow_artifacts),
+        "action": action,
+        "capabilities": capabilities,
+        "trace": {
+            "trace_id": trace_id,
+            "steps": trace_steps,
+        },
+        "clarify_required": bool(clarify_required),
+        "clarify_question": clarify_question,
     }
 
 
@@ -1356,89 +3547,182 @@ def stream_help_question(
     root: Path,
     question: str,
     *,
+    agent: str | None = None,
+    execution_mode: str = "plan",
+    allow_artifacts: bool = False,
     model: str | None = None,
+    llm_backend: str | None = None,
+    reasoning_effort: str | None = None,
+    runtime_mode: str | None = None,
     strict_model: bool = False,
     max_sources: int = 8,
     history: list[dict[str, str]] | None = None,
+    state_memory: dict[str, Any] | None = None,
     run_rel: str | None = None,
     web_search: bool = False,
+    live_log_tail: str | None = None,
 ) -> Iterator[dict[str, Any]]:
     q = (question or "").strip()
     if not q:
         raise ValueError("question is required")
+    trace_id = _new_governor_trace_id()
+    trace_steps: list[dict[str, Any]] = []
+    resolved_mode = _normalize_execution_mode(execution_mode)
+    resolved_agent = _normalize_agent_label(agent)
+    effective_question = _augment_help_question(
+        q,
+        execution_mode=resolved_mode,
+        agent=resolved_agent,
+        allow_artifacts=bool(allow_artifacts),
+    )
     web_note = ""
-    yield {
-        "event": "activity",
-        "id": "source_index",
-        "status": "running",
-        "message": "코드/문서 인덱스를 탐색 중입니다.",
-    }
+    yield _trace_activity_event(
+        trace_id=trace_id,
+        step_id="source_index",
+        status="running",
+        message="코드/문서 인덱스를 탐색 중입니다.",
+        tool_id="source_index",
+    )
     if web_search:
-        yield {
-            "event": "activity",
-            "id": "web_research",
-            "status": "running",
-            "message": "웹 보강 검색을 준비 중입니다.",
-        }
+        yield _trace_activity_event(
+            trace_id=trace_id,
+            step_id="web_research",
+            status="running",
+            message="웹 보강 검색을 준비 중입니다.",
+            tool_id="web_research",
+        )
+        web_started = time.perf_counter()
         if _should_run_help_web_search(q, history):
             web_note = _run_help_web_research(root, question=q, run_rel=run_rel, history=history)
         else:
             web_note = "web_search enabled: skipped (query does not require web lookup)."
+        web_elapsed_ms = (time.perf_counter() - web_started) * 1000.0
         web_status = "error" if web_note.lower().startswith("web_search failed") else "done"
         if "skipped" in web_note.lower():
             web_status = "skipped"
-        yield {
-            "event": "activity",
-            "id": "web_research",
-            "status": web_status,
-            "message": web_note or "web search completed",
-        }
+        web_message = web_note or "web search completed"
+        trace_steps.append(
+            _trace_step(
+                "web_research",
+                web_status,
+                message=web_message,
+                tool_id="web_research",
+                duration_ms=web_elapsed_ms,
+                cache_hit=False,
+            )
+        )
+        yield _trace_activity_event(
+            trace_id=trace_id,
+            step_id="web_research",
+            status=web_status,
+            message=web_message,
+            tool_id="web_research",
+            duration_ms=web_elapsed_ms,
+            cache_hit=False,
+        )
     else:
-        yield {
-            "event": "activity",
-            "id": "web_research",
-            "status": "disabled",
-            "message": "web_search 옵션이 꺼져 있습니다.",
-        }
+        trace_steps.append(
+            _trace_step(
+                "web_research",
+                "disabled",
+                message="web_search 옵션이 꺼져 있습니다.",
+                tool_id="web_research",
+                duration_ms=0,
+            )
+        )
+        yield _trace_activity_event(
+            trace_id=trace_id,
+            step_id="web_research",
+            status="disabled",
+            message="web_search 옵션이 꺼져 있습니다.",
+            tool_id="web_research",
+            duration_ms=0,
+        )
+    source_index_started = time.perf_counter()
     sources, indexed_files = _select_sources(
         root,
         q,
         max_sources=max(3, min(max_sources, 16)),
         run_rel=run_rel,
     )
-    yield {
-        "event": "activity",
-        "id": "source_index",
-        "status": "done",
-        "message": f"근거 후보 {indexed_files}개 인덱스 완료",
-    }
-    requested_model, explicit_model = _resolve_requested_model(model)
+    source_index_elapsed_ms = (time.perf_counter() - source_index_started) * 1000.0
+    source_index_message = f"근거 후보 {indexed_files}개 인덱스 완료"
+    trace_steps.append(
+        _trace_step(
+            "source_index",
+            "done",
+            message=source_index_message,
+            tool_id="source_index",
+            duration_ms=source_index_elapsed_ms,
+            token_est=0,
+            cache_hit=False,
+        )
+    )
+    yield _trace_activity_event(
+        trace_id=trace_id,
+        step_id="source_index",
+        status="done",
+        message=source_index_message,
+        tool_id="source_index",
+        duration_ms=source_index_elapsed_ms,
+        token_est=0,
+        cache_hit=False,
+    )
+    resolved_backend = _resolve_help_llm_backend(llm_backend)
+    resolved_reasoning_effort = _resolve_help_reasoning_effort(reasoning_effort)
+    resolved_runtime_mode = _resolve_help_runtime_mode(runtime_mode)
+    normalized_live_log_tail = _normalize_live_log_tail(live_log_tail)
+    normalized_state_memory = _normalize_state_memory(state_memory)
+    capabilities = _help_capabilities(root, bool(web_search))
+    requested_model, explicit_model = _resolve_requested_model(model, backend=resolved_backend)
+    reported_reasoning_effort = _reported_reasoning_effort(
+        resolved_reasoning_effort,
+        backend=resolved_backend,
+        model_name=requested_model,
+    )
     yield {
         "event": "meta",
         "requested_model": requested_model,
         "model_selection": "explicit" if explicit_model else "auto",
+        "llm_backend": resolved_backend,
+        "reasoning_effort": reported_reasoning_effort,
+        "runtime_mode": resolved_runtime_mode,
         "indexed_files": indexed_files,
         "web_search": bool(web_search),
         "web_search_note": web_note,
-        "capabilities": _help_capabilities(bool(web_search)),
+        "live_log_chars": len(normalized_live_log_tail),
+        "state_memory_chars": len(normalized_state_memory),
+        "agent": resolved_agent,
+        "execution_mode": resolved_mode,
+        "allow_artifacts": bool(allow_artifacts),
+        "capabilities": capabilities,
+        "trace_id": trace_id,
     }
     error_msg = ""
     used_llm = False
     used_model = ""
     answer_parts: list[str] = []
-    yield {
-        "event": "activity",
-        "id": "llm_generate",
-        "status": "running",
-        "message": "답변 생성 중입니다.",
-    }
+    yield _trace_activity_event(
+        trace_id=trace_id,
+        step_id="llm_generate",
+        status="running",
+        message="답변 생성 중입니다.",
+        tool_id="llm_generate",
+    )
+    llm_started = time.perf_counter()
     try:
         chunk_iter, used_model = _call_llm_stream(
-            q,
+            effective_question,
             sources,
             model=model,
             history=history,
+            live_log_tail=normalized_live_log_tail,
+            state_memory=normalized_state_memory,
             strict_model=bool(strict_model),
+            reasoning_effort=resolved_reasoning_effort,
+            runtime_mode=resolved_runtime_mode,
+            root=root,
+            llm_backend=resolved_backend,
         )
         used_llm = True
         for chunk in chunk_iter:
@@ -1449,12 +3733,28 @@ def stream_help_question(
             yield {"event": "delta", "text": token}
     except Exception as exc:
         error_msg = str(exc)
-        yield {
-            "event": "activity",
-            "id": "llm_generate",
-            "status": "error",
-            "message": error_msg,
-        }
+        llm_elapsed_ms = (time.perf_counter() - llm_started) * 1000.0
+        trace_steps.append(
+            _trace_step(
+                "llm_generate",
+                "error",
+                message=error_msg,
+                tool_id="llm_generate",
+                duration_ms=llm_elapsed_ms,
+                token_est=0,
+                cache_hit=False,
+            )
+        )
+        yield _trace_activity_event(
+            trace_id=trace_id,
+            step_id="llm_generate",
+            status="error",
+            message=error_msg,
+            tool_id="llm_generate",
+            duration_ms=llm_elapsed_ms,
+            token_est=0,
+            cache_hit=False,
+        )
     answer = "".join(answer_parts).strip()
     if not answer:
         answer = _fallback_answer(q, sources)
@@ -1464,13 +3764,47 @@ def stream_help_question(
                 error_msg = "LLM returned empty content"
     if not error_msg:
         model_note = used_model or requested_model or "configured default"
-        yield {
-            "event": "activity",
-            "id": "llm_generate",
-            "status": "done",
-            "message": f"완료 · model={model_note}",
-        }
+        llm_elapsed_ms = (time.perf_counter() - llm_started) * 1000.0
+        llm_message = f"완료 · model={model_note}"
+        token_est = _estimate_token_count(answer)
+        trace_steps.append(
+            _trace_step(
+                "llm_generate",
+                "done",
+                message=llm_message,
+                tool_id="llm_generate",
+                duration_ms=llm_elapsed_ms,
+                token_est=token_est,
+                cache_hit=False,
+            )
+        )
+        yield _trace_activity_event(
+            trace_id=trace_id,
+            step_id="llm_generate",
+            status="done",
+            message=llm_message,
+            tool_id="llm_generate",
+            duration_ms=llm_elapsed_ms,
+            token_est=token_est,
+            cache_hit=False,
+        )
     yield {"event": "sources", "sources": sources}
+    action = _infer_governed_action(
+        root,
+        q,
+        run_rel=run_rel,
+        history=history,
+        state_memory=normalized_state_memory,
+        capabilities=capabilities,
+        execution_mode=resolved_mode,
+        allow_artifacts=bool(allow_artifacts),
+        model=model,
+        llm_backend=resolved_backend,
+        reasoning_effort=resolved_reasoning_effort,
+        runtime_mode=resolved_runtime_mode,
+        strict_model=bool(strict_model),
+    )
+    clarify_required, clarify_question = _clarify_prompt_from_action(action)
     yield {
         "event": "done",
         "answer": answer,
@@ -1480,10 +3814,28 @@ def stream_help_question(
         "requested_model": requested_model,
         "model_selection": "explicit" if explicit_model else "auto",
         "model_fallback": bool(used_llm and requested_model and used_model and requested_model != used_model),
+        "llm_backend": resolved_backend,
+        "reasoning_effort": _reported_reasoning_effort(
+            resolved_reasoning_effort,
+            backend=resolved_backend,
+            model_name=used_model or requested_model,
+        ),
+        "runtime_mode": resolved_runtime_mode,
         "error": error_msg,
         "indexed_files": indexed_files,
         "web_search": bool(web_search),
         "web_search_note": web_note,
-        "action": _infer_safe_action(q, run_rel=run_rel),
-        "capabilities": _help_capabilities(bool(web_search)),
+        "live_log_chars": len(normalized_live_log_tail),
+        "state_memory_chars": len(normalized_state_memory),
+        "agent": resolved_agent,
+        "execution_mode": resolved_mode,
+        "allow_artifacts": bool(allow_artifacts),
+        "action": action,
+        "capabilities": capabilities,
+        "trace": {
+            "trace_id": trace_id,
+            "steps": trace_steps,
+        },
+        "clarify_required": bool(clarify_required),
+        "clarify_question": clarify_question,
     }

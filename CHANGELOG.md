@@ -1,5 +1,111 @@
 # Changelog
 
+## 1.9.5
+- FederHav clarify-first execution flow hardening:
+  - add `clarify_required` and `clarify_question` in help-agent action responses for short/generic execution requests.
+  - block Act auto-run when clarification is required and surface follow-up guidance instead of direct execution.
+  - add `질의 보강하기` follow-up action in Live Ask to inject clarification prompts directly into input.
+- Governor trace visibility upgrade (Ask + Live Ask):
+  - include `trace.trace_id` and per-step telemetry (`tool_id`, `duration_ms`, `token_est`, `cache_hit`) in sync/stream responses.
+  - stream `activity` events into Ask trace panel and Live Ask process log as structured `run-agent:activity` lines.
+  - expose trace summary chips (`trace=<id>`, `tools=<N>`) in Live Ask turn metadata.
+- Observability/UI consistency:
+  - keep Ask trace timeline synchronized for stream and legacy fallback paths via shared trace application logic.
+  - classify and render `run-agent:activity` entries in structured log cards with tool-trace blocks.
+- Validation:
+  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py` -> `76 passed`
+  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py tests/test_federhav_core.py tests/test_federhav_cli.py` -> `89 passed`
+  - Playwright manual checks on `http://127.0.0.1:8767/` for clarify action + trace metadata rendering.
+
+## 1.9.4
+- FederHav agentic-policy tightening:
+  - disable safe-rule action fallback by default and keep it as explicit opt-in only via `FEDERNETT_HELP_RULE_FALLBACK=1`.
+  - keep `auto/deepagent` path as the primary governing runtime for action planning.
+- Live Logs UX compaction (4th pass):
+  - reduce process-log tail volume defaults (`max lines/chars`) to lower timeline noise.
+  - render per-turn process trace as collapsible `실행 trace N줄` blocks and persist fold state.
+  - clarify context wording (`state-memory + 최근 실행 로그 보조요약`) and keep policy detail in tooltip/placeholder.
+  - improve process source labeling (`실행 프로세스`) and role tagging (`feather/federlicht/tool`).
+- Workflow Studio operability:
+  - force Studio into overview-first mode while preserving selected-node focus hint.
+  - keep all sections visible and highlight only the relevant scope section instead of narrowing to single-stage view.
+
+## 1.9.3
+- Agent Profiles auth/permission hardening:
+  - allow built-in profile edits when the current session role is `root/admin/owner/superuser` (without requiring a separate root token unlock).
+  - include `session_root` in root-auth status payload and wire the UI to reflect session-root unlock state.
+- Live Logs readability pass:
+  - reduce live-thread bottom inset inflation to avoid clipped-looking tails.
+  - remove nested scroll inside inline process-log blocks (single-scroll timeline flow).
+  - compact composer helper line (`N자 · Enter · Shift+Enter`) while keeping context policy in tooltip/placeholder.
+- Workflow Studio selection clarity:
+  - increase active/inactive contrast for pipeline chips to make stage selection state more obvious.
+- Tests:
+  - add session-root permission tests in `tests/test_federnett_auth.py`.
+
+## 1.9.2
+- FederHav/Federnett agentic runtime and execution guard improvements:
+  - keep deepagent-first routing in `auto/deepagent` mode while reducing rule fallback dependence.
+  - strengthen direct `Run Feather` guard so weak prompts (for example generic "실행해줘") trigger instruction quality checks and auto-draft recovery before execution.
+- Live Logs UX stability pass:
+  - add dynamic thread bottom inset sizing tied to composer height to reduce bottom clipping/truncation.
+  - compact input helper line to include context policy inline (`state-memory + 최근 로그 tail 요약 N자`).
+  - hide noisy default `Ready.` status line in the Live composer for lower visual density.
+  - expand real-time-log noise filtering for legacy header lines (`실시간 로그 N줄` variants with symbols/prefixes).
+  - render process logs inline in each turn to reduce extra fold/popup hops during live operation.
+- Sidebar/layout adjustments:
+  - widen collapsed workspace rail and rebalance collapsed action button sizing/wrapping for clearer `Feather/Federlicht/Run Studio` access.
+- Model/options sync fix:
+  - consume Codex model options from `/api/info.llm_defaults.codex_model_options` in datalist merge path.
+- Session auth skeleton (server-side):
+  - add `SessionAuthManager` and `/api/auth/session/login|logout|status` endpoints.
+  - expose `session_auth` state via `/api/info`.
+  - auto-attach session signer metadata (`signed_by`, `signed_role`) to report-hub comment/followup/link writes when authenticated.
+- Session auth UI wiring:
+  - add Agent Profiles panel sign-in/sign-out control (`agent-session-auth`) with persisted session token header forwarding.
+  - show current session principal/role/expiry badge next to root unlock status.
+
+## 1.9.1
+- FederHav orchestration control expanded across CLI and Federnett Live Logs:
+  - add operational command flow for `/plan`, `/act`, `/profile`, `/agent`
+  - wire `agent`/`execution_mode`/`allow_artifacts` end-to-end (UI -> API -> help-agent core)
+  - persist optional `agent_override` in ask preferences
+- Federnett Live Logs UI/UX (3rd pass) compaction and priority tuning:
+  - add explicit `profile`/`agent` context chips in FederHav Live Timeline
+  - restore a dedicated `FederHav 제안` action rail inside Live Timeline
+  - reduce header/context density and hide global system-log card when no active run is executing
+  - improve sidebar readability with wider default panel, tighter quick-run layout, and container-query fallback
+- Report hub API skeleton completed for id-based post integration:
+  - post listing/detail endpoints
+  - comments/follow-up prompt endpoints
+  - post-to-run link mapping endpoints
+  - filesystem-backed storage under `report_hub/api_data/*`
+- Tests:
+  - add/extend coverage for FederHav CLI/core, help-agent operator controls, report-hub routes and storage.
+
+## 1.9.0
+- FederHav CLI upgraded to dual-mode operation:
+  - new `federhav chat` interactive operator mode (one-shot with `--question` supported)
+  - legacy revision runner kept as `federhav update` with backward-compatible flag routing
+  - shared FederHav chat core added at `src/federhav/core.py`, reusing `federnett.help_agent`
+  - run/profile-scoped chat history persistence aligned with Federnett history storage
+- Federnett Live Logs UI/UX (2nd pass) refresh:
+  - FederHav Live Dialog reorganized with a clearer split between thread and composer on wide screens
+  - run/mode/log context chips added for quick operational state awareness
+  - spacing, hierarchy, and panel sizing tuned for better readability in dense runs
+- Report hub separation groundwork:
+  - default Federlicht site output moved to `site/report_hub`
+  - site refresh now supports sibling-runs fallback (`<hub>/../runs`) when `<hub>/runs` is absent
+  - manifest entry paths now support relative links outside hub root (for example `../runs/...`)
+  - report back-link logic now prefers `report_hub/index.html` with fallback to `index.html`
+  - Federnett API now exposes `report_hub_root` in `/api/info`
+- Documentation updates:
+  - README version bump and FederHav chat usage added
+  - report hub hosting instructions updated for `site/runs` + `site/report_hub` separation
+- Tests added:
+  - FederHav core/CLI behavior tests
+  - report hub path separation tests
+
 ## 1.8.0
 - Expand artwork/diagram runtime with a new `artwork_diagrams_render` tool:
   - render architecture SVG artifacts via Python `diagrams` from node/edge specs

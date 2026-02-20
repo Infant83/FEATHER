@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass
 from typing import Any
 
@@ -116,6 +117,20 @@ def _sample_sources() -> list[dict[str, Any]]:
             "excerpt": "Federnett guide",
         }
     ]
+
+
+def test_help_system_prompt_enforces_ui_first_cli_guardrails() -> None:
+    prompt = help_agent._help_system_prompt()
+    assert "Prioritize Federnett UI workflow first" in prompt
+    assert "If CLI is not explicitly requested, do not output shell command lines." in prompt
+    assert "do not suggest changing execution_mode" in prompt
+
+
+def test_help_user_prompt_contains_ui_first_operating_rules() -> None:
+    prompt = help_agent._help_user_prompt("옵션 알려줘", "[S1] README.md:1-3")
+    assert "질문자가 CLI를 명시하지 않았다면 Federnett UI 단계로 안내." in prompt
+    assert "CLI를 요청받지 않은 상태에서는 명령어를 출력하지 말고" in prompt
+    assert "execution_mode(plan/act) 전환을 기본 제안하지 말 것." in prompt
 
 
 def test_chat_completion_urls_with_v1_base() -> None:
@@ -258,6 +273,173 @@ def test_stream_help_question_emits_delta_and_done(monkeypatch, tmp_path) -> Non
     assert isinstance(done_payload.get("capabilities"), dict)
 
 
+def test_infer_safe_action_detects_create_run_folder(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "새로운 run folder 를 하나 만들어줘. 주제는 양자컴퓨터 최신 기술소개",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "create_run_folder"
+    assert "양자컴퓨터" in str(action.get("topic_hint") or "")
+
+
+def test_infer_safe_action_detects_analysis_intent_as_run(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "양자컴퓨터 관련된 최신 기술동향을 파악해보자.",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_feather_then_federlicht"
+
+
+def test_infer_safe_action_binds_run_hint_for_run_execution(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "feather run folder를 test_my_run으로 설정하고 실행해줘",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_feather"
+    assert action.get("run_hint") == "test_my_run"
+    assert action.get("create_if_missing") is True
+
+
+def test_infer_safe_action_detects_switch_run(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "run을 mytest_01으로 전환해줘",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "switch_run"
+    assert str(action.get("run_hint") or "").lower().startswith("mytest_01")
+    assert action.get("create_if_missing") is not True
+
+
+def test_infer_safe_action_prefers_switch_when_run_hint_is_explicit(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "run 폴더를 test_my_run 으로 하고 예제를 만들어보자",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "switch_run"
+    assert action.get("run_hint") == "test_my_run"
+    assert action.get("create_if_missing") is True
+
+
+def test_infer_safe_action_uses_recent_run_hint_for_followup_execute(tmp_path) -> None:
+    history = [
+        {"role": "user", "content": "feather run folder를 test_my_run으로 설정하고 예제를 만들어보자"},
+        {"role": "assistant", "content": "좋아요. run을 맞춰두고 진행할게요."},
+    ]
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "실행해줘",
+        run_rel="site/runs/demo",
+        history=history,
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_feather"
+    assert action.get("run_hint") == "test_my_run"
+    assert action.get("create_if_missing") is True
+
+
+def test_infer_safe_action_uses_recent_target_for_followup_execute(tmp_path) -> None:
+    history = [
+        {"role": "user", "content": "이번에는 federlicht만 다시 돌리자"},
+        {"role": "assistant", "content": "좋아요. federlicht 기준으로 준비했습니다."},
+    ]
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "실행해줘",
+        run_rel="site/runs/demo",
+        history=history,
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_federlicht"
+
+
+def test_infer_safe_action_detects_stage_resume_preset(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "writer 단계부터 재시작해줘",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "preset_resume_stage"
+    assert action.get("stage") == "writer"
+
+
+def test_infer_safe_action_detects_focus_editor(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "inline prompt 편집창 열어줘",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "focus_editor"
+    assert action.get("target") == "federlicht_prompt"
+
+
+def test_infer_safe_action_detects_action_mode_switch(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "act 모드로 바꿔서 바로 실행해줘",
+        run_rel="site/runs/demo",
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "set_action_mode"
+    assert action.get("mode") == "act"
+    assert action.get("allow_artifacts") is True
+
+
+def test_instruction_quality_guard_keeps_run_action_and_enables_auto_instruction() -> None:
+    guarded = help_agent._apply_instruction_quality_guard(
+        {
+            "type": "run_feather",
+            "label": "Feather 실행",
+            "run_rel": "site/runs/demo",
+        },
+        question="실행해줘",
+        run_rel="site/runs/demo",
+        history=[
+            {"role": "user", "content": "양자컴퓨터 최신 기술 동향 보고서를 만들어줘"},
+            {"role": "assistant", "content": "좋아요. 준비하겠습니다."},
+        ],
+    )
+    assert isinstance(guarded, dict)
+    assert guarded.get("type") == "run_feather"
+    assert guarded.get("auto_instruction") is True
+    assert guarded.get("require_instruction_confirm") is True
+    assert guarded.get("instruction_confirm_reason") == "short_generic_request"
+    assert "양자컴퓨터" in str(guarded.get("topic_hint") or "")
+
+
+def test_instruction_quality_guard_requests_clarification_when_topic_missing() -> None:
+    guarded = help_agent._apply_instruction_quality_guard(
+        {
+            "type": "run_feather",
+            "label": "Feather 실행",
+            "run_rel": "site/runs/demo",
+        },
+        question="실행해줘",
+        run_rel="site/runs/demo",
+        history=[],
+    )
+    assert isinstance(guarded, dict)
+    assert guarded.get("type") == "focus_editor"
+    assert guarded.get("target") == "feather_instruction"
+    assert guarded.get("clarify_required") is True
+    assert "어떤 주제로 실행할까요" in str(guarded.get("clarify_question") or "")
+
+
+def test_needs_agentic_action_planning_for_actionable_query() -> None:
+    assert help_agent._needs_agentic_action_planning("run folder를 demo로 바꾸고 feather 실행해줘") is True
+
+
 def test_answer_help_question_runs_web_search_when_enabled(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 5))
     monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("웹검색 답변", "gpt-4o-mini"))
@@ -330,3 +512,325 @@ def test_answer_help_question_skips_web_search_when_query_is_local(monkeypatch, 
     )
     assert result["web_search"] is True
     assert "skipped" in str(result["web_search_note"])
+
+
+def test_call_llm_uses_codex_cli_backend(monkeypatch) -> None:
+    class _Proc:
+        returncode = 0
+        stderr = ""
+        stdout = "\n".join(
+            [
+                '{"type":"thread.started","thread_id":"t1"}',
+                '{"type":"item.completed","item":{"id":"x","type":"agent_message","text":"codex answer"}}',
+                '{"type":"turn.completed","usage":{"input_tokens":1,"output_tokens":1}}',
+            ]
+        )
+
+    monkeypatch.setenv("FEDERNETT_HELP_LLM_BACKEND", "codex_cli")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(help_agent.shutil, "which", lambda _name: "codex")
+    monkeypatch.setattr(help_agent.subprocess, "run", lambda *args, **kwargs: _Proc())
+
+    answer, model = help_agent._call_llm(
+        "codex 질문",
+        _sample_sources(),
+        model="gpt-5-codex",
+        history=None,
+    )
+
+    assert answer == "codex answer"
+    assert model == "gpt-5-codex"
+
+
+def test_call_llm_codex_cli_passes_reasoning_effort(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class _Proc:
+        returncode = 0
+        stderr = ""
+        stdout = '{"type":"item.completed","item":{"id":"x","type":"agent_message","text":"codex answer"}}'
+
+    def _fake_run(cmd, *args, **kwargs):
+        captured["cmd"] = list(cmd)
+        return _Proc()
+
+    monkeypatch.setenv("FEDERNETT_HELP_LLM_BACKEND", "codex_cli")
+    monkeypatch.setattr(help_agent.shutil, "which", lambda _name: "codex")
+    monkeypatch.setattr(help_agent.subprocess, "run", _fake_run)
+
+    answer, model = help_agent._call_llm(
+        "codex 질문",
+        _sample_sources(),
+        model="gpt-5-codex",
+        history=None,
+        reasoning_effort="extra_high",
+    )
+
+    assert answer == "codex answer"
+    assert model == "gpt-5-codex"
+    cmd = captured.get("cmd")
+    assert isinstance(cmd, list)
+    assert "-c" in cmd
+    assert 'reasoning_effort="extra_high"' in cmd
+
+
+def test_call_llm_openai_includes_reasoning_effort(monkeypatch) -> None:
+    stub = _RequestsStub()
+    monkeypatch.setattr(help_agent, "requests", stub)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-5-mini")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com")
+
+    answer, model = help_agent._call_llm(
+        "테스트 질문",
+        _sample_sources(),
+        model=None,
+        history=None,
+        reasoning_effort="extra_high",
+    )
+
+    assert answer == "요약 답변"
+    assert model == "gpt-5-mini"
+    assert any(call["json"].get("reasoning_effort") == "high" for call in stub.calls)
+
+
+def test_call_llm_openai_omits_reasoning_effort_on_non_reasoning_model(monkeypatch) -> None:
+    stub = _RequestsStub()
+    monkeypatch.setattr(help_agent, "requests", stub)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-4o-mini")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com")
+
+    answer, model = help_agent._call_llm(
+        "테스트 질문",
+        _sample_sources(),
+        model=None,
+        history=None,
+        reasoning_effort="extra_high",
+    )
+
+    assert answer == "요약 답변"
+    assert model == "gpt-4o-mini"
+    assert all("reasoning_effort" not in call["json"] for call in stub.calls)
+
+
+def test_call_llm_openai_omits_reasoning_effort_on_codex_named_model(monkeypatch) -> None:
+    stub = _RequestsStub()
+    monkeypatch.setattr(help_agent, "requests", stub)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com")
+
+    answer, model = help_agent._call_llm(
+        "테스트 질문",
+        _sample_sources(),
+        model="gpt-5.3-codex",
+        history=None,
+        reasoning_effort="extra_high",
+    )
+
+    assert answer == "요약 답변"
+    assert model == "gpt-5.3-codex"
+    assert all("reasoning_effort" not in call["json"] for call in stub.calls)
+
+
+def test_call_llm_stream_uses_codex_cli_backend(monkeypatch) -> None:
+    class _FakeStdin:
+        def __init__(self) -> None:
+            self.buffer = ""
+            self.closed = False
+
+        def write(self, text: str) -> int:
+            if self.closed:
+                return 0
+            self.buffer += str(text or "")
+            return len(text or "")
+
+        def flush(self) -> None:
+            return
+
+        def close(self) -> None:
+            self.closed = True
+
+    class _Proc:
+        def __init__(self) -> None:
+            self.returncode = 0
+            self.stdin = _FakeStdin()
+            self.stdout = io.StringIO(
+                '{"type":"item.completed","item":{"id":"x","type":"agent_message","text":"codex stream answer"}}\n'
+            )
+            self.stderr = io.StringIO("")
+
+        def wait(self) -> int:
+            return self.returncode
+
+        def kill(self) -> None:
+            self.returncode = -9
+
+    monkeypatch.setenv("FEDERNETT_HELP_LLM_BACKEND", "codex_cli")
+    monkeypatch.setattr(help_agent.shutil, "which", lambda _name: "codex")
+    monkeypatch.setattr(help_agent.subprocess, "Popen", lambda *args, **kwargs: _Proc())
+
+    chunk_iter, model = help_agent._call_llm_stream(
+        "codex 스트림 질문",
+        _sample_sources(),
+        model=None,
+        history=None,
+    )
+
+    assert "".join(list(chunk_iter)) == "codex stream answer"
+    assert isinstance(model, str) and model.strip()
+
+
+def test_answer_help_question_passes_live_log_tail_to_llm(monkeypatch, tmp_path) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 4))
+
+    def _fake_call_llm(_q, _sources, **kwargs):
+        captured.update(kwargs)
+        return "ok", "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fake_call_llm)
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "라이브 로그 기반으로 요약해줘",
+        live_log_tail="line-1\nline-2\nline-3",
+    )
+    assert result["answer"] == "ok"
+    assert captured.get("live_log_tail") == "line-1\nline-2\nline-3"
+    assert result.get("live_log_chars") == len("line-1\nline-2\nline-3")
+    trace = result.get("trace")
+    assert isinstance(trace, dict)
+    assert str(trace.get("trace_id") or "").startswith("fh-")
+    steps = trace.get("steps")
+    assert isinstance(steps, list)
+    assert any(str(step.get("id")) == "source_index" for step in steps if isinstance(step, dict))
+
+
+def test_stream_help_question_includes_live_log_char_count(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 4))
+
+    def _fake_call_llm_stream(_q, _sources, **_kwargs):
+        def _iter():
+            yield "스트림"
+        return _iter(), "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm_stream", _fake_call_llm_stream)
+    events = list(
+        help_agent.stream_help_question(
+            tmp_path,
+            "질문",
+            live_log_tail="x" * 9000,
+        )
+    )
+    meta = next(evt for evt in events if evt.get("event") == "meta")
+    done = events[-1]
+    assert meta.get("live_log_chars") == help_agent._MAX_LIVE_LOG_CONTEXT_CHARS
+    assert done.get("live_log_chars") == help_agent._MAX_LIVE_LOG_CONTEXT_CHARS
+    assert str(meta.get("trace_id") or "").startswith("fh-")
+    activity = next(evt for evt in events if evt.get("event") == "activity")
+    assert str(activity.get("trace_id") or "").startswith("fh-")
+    assert isinstance(done.get("trace"), dict)
+    assert str((done.get("trace") or {}).get("trace_id") or "").startswith("fh-")
+
+
+def test_answer_help_question_applies_operator_controls(monkeypatch, tmp_path) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 4))
+
+    def _fake_call_llm(question, _sources, **kwargs):
+        captured["question"] = question
+        captured["kwargs"] = kwargs
+        return "ok", "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fake_call_llm)
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "실행 계획을 알려줘",
+        agent="ai_governance_team",
+        execution_mode="act",
+        allow_artifacts=True,
+    )
+    forwarded = str(captured.get("question") or "")
+    assert "[operator-control]" in forwarded
+    assert "agent=ai_governance_team" in forwarded
+    assert "execution_mode=act" in forwarded
+    assert "allow_artifacts=true" in forwarded
+    assert result.get("agent") == "ai_governance_team"
+    assert result.get("execution_mode") == "act"
+    assert result.get("allow_artifacts") is True
+
+
+def test_normalize_history_keeps_context_summary_with_recent_turns() -> None:
+    history = [
+        {"role": "assistant", "content": "[context-compress] 이전 대화 요약"},
+    ]
+    for idx in range(14):
+        history.append({"role": "user", "content": f"user-{idx}"})
+        history.append({"role": "assistant", "content": f"assistant-{idx}"})
+    normalized = help_agent._normalize_history(history)
+    assert normalized
+    assert normalized[0]["role"] == "assistant"
+    assert normalized[0]["content"].startswith("[context-compress]")
+    assert any(item["content"] == "assistant-13" for item in normalized)
+
+
+def test_answer_help_question_reports_reasoning_off_for_non_reasoning_model(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com")
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 2))
+    monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("ok", "gpt-4o-mini"))
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "요약해줘",
+        llm_backend="openai_api",
+        model="gpt-4o-mini",
+        reasoning_effort="medium",
+    )
+    assert result.get("reasoning_effort") == "off"
+
+
+def test_answer_help_question_reports_reasoning_for_codex_backend(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 2))
+    monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("ok", "codex-cli-default"))
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "요약해줘",
+        llm_backend="codex_cli",
+        reasoning_effort="medium",
+    )
+    assert result.get("reasoning_effort") == "medium"
+
+
+def test_stream_help_question_reports_reasoning_off_for_non_reasoning_model(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com")
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 2))
+
+    def _fake_stream(*_args, **_kwargs):
+        def _iter():
+            yield "응답"
+        return _iter(), "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm_stream", _fake_stream)
+    events = list(
+        help_agent.stream_help_question(
+            tmp_path,
+            "현재 상태",
+            llm_backend="openai_api",
+            model="gpt-4o-mini",
+            reasoning_effort="medium",
+        )
+    )
+    done = events[-1]
+    assert done.get("event") == "done"
+    assert done.get("reasoning_effort") == "off"
+
+
+def test_allow_rule_fallback_defaults_to_false(monkeypatch) -> None:
+    monkeypatch.delenv("FEDERNETT_HELP_RULE_FALLBACK", raising=False)
+    assert help_agent._allow_rule_fallback("off") is False
+    assert help_agent._allow_rule_fallback("auto") is False
+    assert help_agent._allow_rule_fallback("deepagent") is False
+
+
+def test_allow_rule_fallback_can_be_enabled_by_env(monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "1")
+    assert help_agent._allow_rule_fallback("off") is True

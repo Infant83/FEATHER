@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.8.0
+Version: 1.9.5
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -15,13 +15,15 @@ the right structure, they become actionable insight.
 - `Feather`: source intake and archival (web, arXiv, local docs).
 - `Federlicht`: multi-stage report generation and quality pipeline.
 - `Federnett`: operational studio (UI) to run, inspect, and iterate workflows.
-- `FederHav`: profile-guided revision flow for persona-aware report refinement.
+- `FederHav`: operator chat + profile-guided revision flow for persona-aware report refinement.
+
+Federlicht focuses on process-first report operations: gather evidence in Feather, preserve context/artifacts in run archives, and assemble explainable outputs in Federlicht. FederHav is designed as an operator-side guide that helps clarify questions, organize arguments, and refine tone/structure, rather than acting as a rigid one-shot answer gate.
 
 Federlicht is the base platform package name. It includes four operational components:
 - `feather`: external evidence intake and source archival (RAG collector).
 - `federlicht`: report generation pipeline (agentic synthesis, quality loop, rendering).
 - `federnett`: web studio for workflow control and artifact inspection.
-- `federhav`: profile-guided update and revision workflow for report refinement.
+- `federhav`: operator chat and profile-guided update/revision workflow for report refinement.
 
 Feather-light knowledge intake is one component of this package. The collector ingests text instructions (`.txt` files), runs Tavily search/extract, fetches arXiv papers, and builds an offline-friendly archive of everything it collected. Input can be a single `.txt` file or a folder of `.txt` files.
 
@@ -35,7 +37,7 @@ Feather and Federlicht are designed as a deliberate two-step flow. Feather is ab
   - `feather` (collector)
   - `federlicht` (report engine)
   - `federnett` (studio UI)
-  - `federhav` (profile-guided revision runner)
+  - `federhav` (interactive operator chat + revision runner)
 
 ## Features
 - Parse natural-language instructions from `.txt` files.
@@ -167,7 +169,17 @@ Key points:
 - All paths are resolved under `--root` (guardrail against path escape).
 - It scans run folders from `--run-roots` (default: `examples/runs,site/runs,runs`).
 - Logs stream live via SSE and jobs can be stopped from the UI.
+- Live Logs ask context uses `state-memory` + optional recent-execution-log auxiliary summary (for example `1.2k` chars).
+  - `state-memory`: run/workflow/artifact/dialogue 상태 요약 메모리
+  - `recent-log tail summary`: 직전 실행 로그 끝부분 보조 컨텍스트 요약 (길이 선택값 기준)
+- FederHav action policy defaults to agentic runtime (`auto/deepagent`) and does not use safe-rule fallback unless explicitly enabled with `FEDERNETT_HELP_RULE_FALLBACK=1`.
 - Forward roadmap for account/profile/hub collaboration: `docs/federnett_roadmap.md`.
+
+Optional auth env:
+- `FEDERNETT_ROOT_PASSWORD`: enables root unlock for built-in profile editing.
+- `FEDERNETT_AUTH_ACCOUNTS_JSON`: enables session login API (JSON list/map of username/password/role/display_name).
+  - Example: `[{"username":"root","password":"change-me","role":"root","display_name":"Root Admin"}]`
+  - Session `role` in `root/admin/owner/superuser` grants built-in profile edit permission even when root token unlock is not active.
 
 ```bash
 # Start the UI server (defaults to ./site/federnett):
@@ -187,6 +199,53 @@ federnett --root . --static-dir site/federnett --site-root site
 ```
 
 Then open `http://127.0.0.1:8765/`.
+
+### FederHav (CLI Chat + Update Runner)
+`federhav` now has two modes:
+- `chat`: interactive operator dialog backed by the same `federnett.help_agent` core used in Live Logs.
+- `update`: legacy profile-guided report revision runner.
+
+```bash
+# One-shot question
+federhav --question "현재 run 폴더 구조를 요약해줘"
+
+# Interactive chat
+federhav chat --root . --run site/runs/my_run --profile-id default
+
+# Legacy revision runner
+federhav update \
+  --run site/runs/my_run \
+  --base-report report_full.html \
+  --update "요약 섹션을 더 간결하게 수정해줘" \
+  --agent-profile federhav
+```
+
+Interactive commands:
+- `/run <path>`: switch run context
+- `/profile <id>`: switch history/profile scope
+- `/agent <id>`: set operator agent label (or `/agent default` to clear override)
+- `/plan [질문]`: switch to plan-confirm mode (optionally send question immediately)
+- `/act [질문]`: switch to act mode (optionally send question immediately)
+- `/clear`: clear run/profile-scoped chat history
+- `/exit`: leave chat
+
+### Report Hub API Skeleton (Federnett)
+Federnett now exposes report-hub conversation/link primitives for post-id based loading and run linkage:
+- `GET /api/report-hub/posts?q=&run=&limit=&offset=`
+- `GET /api/report-hub/posts/{post_id}`
+- `GET /api/report-hub/posts/{post_id}/comments?limit=`
+- `GET /api/report-hub/posts/{post_id}/followups?limit=`
+- `GET /api/report-hub/posts/{post_id}/link`
+- `POST /api/report-hub/comments` (`post_id`, `text`, optional `author/run_rel/profile_id/metadata`)
+- `POST /api/report-hub/followups` (`post_id`, `prompt`, optional `status/author/run_rel/profile_id/metadata`)
+- `POST /api/report-hub/link` (`post_id`, `run_rel`, optional `linked_by/metadata`)
+
+Session auth endpoints:
+- `GET /api/auth/session/status`
+- `POST /api/auth/session/login` (`username`, `password`)
+- `POST /api/auth/session/logout` (`session_token` or `X-Federnett-Session-Token`)
+
+When report-hub writes are made with an authenticated session token, Federnett auto-stamps `metadata.signed_by` and `metadata.signed_role`.
 
 ### Agent Profile Author Metadata
 Agent profiles can carry report byline metadata:
@@ -268,7 +327,8 @@ federlicht --run ./examples/runs/20260104_oled \
 See `docs/federlicht_report.md` for full figure options and dependencies.
 
 ## Hosting the Report Hub (GitHub/GitLab Pages)
-Federlicht can generate a static report hub under `./site` (`index.html` + `manifest.json`). To host on an internal GitHub/GitLab, keep all report outputs under `site/runs/` and refresh the index before deployment.
+Federlicht can generate a static report hub under `./site/report_hub` (`index.html` + `manifest.json`) by default.  
+Report outputs can remain under `site/runs/`; the hub stores relative links (for example `../runs/<run>/report_full.html`).
 
 1) Generate reports under `site/`:
 ```bash
@@ -280,10 +340,10 @@ federlicht --run ./examples/runs/20260110_qc-oled \
 
 2) Rebuild the hub index:
 ```bash
-federlicht --site-refresh ./site
+federlicht --site-refresh ./site/report_hub
 ```
 
-3) Commit and push the `site/` folder.
+3) Commit and push both `site/runs/` and `site/report_hub/`.
 
 ### GitLab Pages (internal)
 Add a minimal `.gitlab-ci.yml`:
@@ -306,8 +366,8 @@ Option A: set Pages source to the `site/` folder.
 Option B: copy `site/` to `docs/` and set Pages source to `/docs`.
 
 Notes:
-- The hub expects relative paths under `site/`, so keep reports inside `site/runs/`.
-- When reports are updated, run `federlicht --site-refresh ./site` and redeploy.
+- Default separation is `site/runs` (artifacts) + `site/report_hub` (published index).
+- When reports are updated, run `federlicht --site-refresh ./site/report_hub` and redeploy.
 - The hub footer includes an AI transparency and source-rights notice for publication/distribution contexts.
 
 ## Workflow (Feather -> Federlicht)
