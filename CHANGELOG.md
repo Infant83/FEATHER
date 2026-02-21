@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.9
+- Federnett UI policy update (Feather/Federlicht):
+  - remove collapsible `Advanced` sections in both side panels and keep execution options visible by default.
+  - add explicit Feather agentic backend policy note so default backend/model behavior is always visible.
+  - strengthen backend-model auto-mapping:
+    - Feather agentic model now follows selected backend defaults (`openai_api` <-> `codex_cli`).
+    - Federlicht backend switch now force-syncs model/check defaults to prevent stale `gpt-4o-mini` under Codex backend.
+- Live Logs compact UX tuning:
+  - normalize process-fold summary to a true one-line header (`agent/backend · tool N · Ran ...`).
+  - improve summary readability with overflow-safe single-line styling.
+- Workflow Studio stage override clarity:
+  - add selected/focus stage badges near stage dropdown.
+  - improve stage prompt chain preview wording and stage-context readability.
+  - replace initial tools placeholder with non-loading guidance text.
+- Docs:
+  - update handoff state and remaining items (`docs/codex_handoff_20260220.md`).
+  - extend PPT writer strategy for partial artifact patch/edit via FederHav (`docs/ppt_writer_strategy.md`).
+
 ## 1.9.8
 - Federlicht prompt flexibility hardening (no rigid one-size-fits-all defaults):
   - apply adaptive guidance by `depth + template_rigidity + free_format` across planner/evidence/writer/evaluator prompts.

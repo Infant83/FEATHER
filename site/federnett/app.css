@@ -4803,6 +4803,31 @@ body[data-tab="runstudio"] .quick-run-row {
   gap: 10px;
 }
 
+.options-panel {
+  margin-top: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 10px 12px 12px;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    rgba(7, 12, 18, 0.48);
+}
+
+.options-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.options-title-row strong {
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
 .advanced-block {
   margin-top: 14px;
   padding: 12px;
@@ -6193,6 +6218,32 @@ body[data-logs-collapsed="true"] .preview-block {
   gap: 8px;
 }
 
+.workflow-stage-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workflow-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  padding: 1px 9px;
+  font-size: 10.8px;
+  font-weight: 700;
+}
+
+.workflow-stage-badge.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 70%, white 15%);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: color-mix(in srgb, var(--accent-2) 70%, white 30%);
+}
+
 .workflow-stage-select-wrap label {
   display: grid;
   gap: 4px;
@@ -6791,6 +6842,18 @@ small.workflow-studio-note {
   gap: 8px;
   font-size: 11px;
   color: var(--muted);
+  min-height: 24px;
+  padding: 2px 4px;
+}
+
+.live-ask-process-fold > summary > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 82%, var(--muted) 18%);
 }
 
 .live-ask-process-fold > summary::-webkit-details-marker {

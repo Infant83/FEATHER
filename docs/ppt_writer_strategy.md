@@ -45,12 +45,27 @@ Last updated: 2026-02-21
 - FederHav:
   - "이 보고서를 12장 의사결정용 브리핑으로 변환" 같은 후속 요청을 대화형으로 처리
   - slide별 톤/난이도(임원용/기술위원회용) 재작성 지원
+  - 특정 슬라이드/요소만 부분 수정(예: 4번 슬라이드 표만 업데이트, 결론 슬라이드 톤 완화) 가능한 액션 제공
+
+## 부분 산출물/인스턴스 조정 전략
+- 단일 output 전체 재생성 대신, slide/component 단위 patch를 허용한다.
+- 권장 구조:
+  - `artifacts/deck/<deck_id>/slides/<slide_id>.json`
+  - `artifacts/deck/<deck_id>/components/<component_id>.json`
+  - `artifacts/deck/<deck_id>/rendered/*.pptx|*.html|*.pdf`
+- FederHav는 변경 요청을 다음 액션으로 분해:
+  - `update_slide_text`
+  - `replace_table_data`
+  - `swap_diagram_type` (mermaid <-> d2)
+  - `retheme_slide_pack`
+- 변경 이력은 run 로그 + `deck_change_log.jsonl`로 남겨 추적성을 유지한다.
 
 ## 구현 단계(권장)
 1. Phase 1: schema + planner/composer JSON contract 고정
 2. Phase 2: minimal pptx renderer(텍스트/표/이미지) + smoke tests
 3. Phase 3: mermaid/d2 snapshot 삽입 + quality loop 통합
 4. Phase 4: Federnett UI publish flow 및 hub index 확장
+5. Phase 5: FederHav 대화형 partial patch API + 승인 후 재렌더링 자동화
 
 ## 리스크
 - 과도한 템플릿 강제는 유연성 저하를 유발하므로, `template_rigidity`와 동일한 강도 제어를 slide pipeline에도 적용해야 한다.

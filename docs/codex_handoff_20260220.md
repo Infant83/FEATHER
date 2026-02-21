@@ -1,6 +1,6 @@
 # Codex Handoff - 2026-02-21 (Latest)
 
-Last updated: 2026-02-21 (prompt flexibility patch + local hub publish verified)
+Last updated: 2026-02-21 (prompt flexibility + UI policy update + local hub publish verified)
 
 ## 목적
 - 중단된 세션을 다음 Codex 대화에서 **즉시 재개**할 수 있도록,
@@ -21,6 +21,11 @@ Last updated: 2026-02-21 (prompt flexibility patch + local hub publish verified)
 
 ### 1.2 이번 세션에서 반영된 핵심
 - Live Logs/Workflow Studio UI 안정화(표/mermaid 렌더, 로그 브릿지 compact, stage selector 가시성 개선).
+- Feather/Federlicht 옵션 노출 정책 업데이트:
+  - `Advanced` 접힘 패널 제거, 실행 옵션 기본 노출
+  - backend-model 자동 연동 강화(특히 Codex backend 전환 시 모델 자동 보정)
+- Live Logs compact 카드 1-line 요약 강화:
+  - summary 한 줄에 agent/tool/command 요약 집약
 - run/site 분리 정책 정리 문서 보강(`docs/run_site_publish_strategy.md`).
 - 보고서 품질 규칙 강화(프롬프트 정책):
   - 방법론 투명성(선정/제외 기준, 절차, 한계)
@@ -54,14 +59,14 @@ Last updated: 2026-02-21 (prompt flexibility patch + local hub publish verified)
 - 강제 포커스 이동 제거, 탭별 단일 실행 버튼 유지
 
 4. Live Logs 렌더 가독성
-- 상태: **완료(2차)**
+- 상태: **부분완료(3차 진행 중)**
 - markdown 표/코드블록/이미지 렌더 강화
-- 로그 브릿지 카드 compact 요약(한 줄)
+- 로그 브릿지 카드 compact 요약(한 줄) 고도화 + 추가 미세튜닝 잔여
 
 5. Workflow Studio 가시성/직관성
-- 상태: **완료(2차)**
+- 상태: **부분완료(3차 진행 중)**
 - 작은 상단 frame 제거
-- Stage 선택 드롭다운 + 현재 선택 stage 힌트 + prompt override 미리보기
+- Stage 선택 드롭다운 + selected/focus 배지 + prompt override 미리보기
 - "사용 가능 도구: 로딩중" 고정 노출 문제 완화
 
 6. READY 노드 의미 정합성

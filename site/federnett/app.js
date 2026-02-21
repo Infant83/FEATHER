@@ -1160,6 +1160,23 @@ function renderWorkflowStageOverrideContext(stageId, entry) {
     <div class="workflow-stage-context-desc">${escapeHtml(def?.desc || "선택된 stage에 대한 세부 override를 설정합니다.")}</div>
     <div class="workflow-stage-context-state">${escapeHtml(summarizeStageOverrideStatus(normalized))}</div>
   `;
+  const selectedPill = $("#wf-selected-stage-pill");
+  if (selectedPill) {
+    selectedPill.textContent = `selected: ${def?.label || token || "-"}`;
+  }
+  const activePill = $("#wf-active-stage-pill");
+  if (activePill) {
+    const activeToken = String(
+      state.pipeline.activeStageId
+      || state.workflow.activeStep
+      || state.workflow.focusHintStage
+      || "",
+    )
+      .trim()
+      .toLowerCase();
+    const activeDef = STAGE_DEFS.find((item) => item.id === activeToken);
+    activePill.textContent = `pipeline focus: ${activeDef?.label || activeToken || "-"}`;
+  }
 }
 
 function renderWorkflowStagePromptPreview(stageId, entry) {
@@ -1169,10 +1186,10 @@ function renderWorkflowStagePromptPreview(stageId, entry) {
   const def = STAGE_DEFS.find((item) => item.id === token);
   const normalized = normalizeStageOverrideEntry(entry || {});
   const lines = [
-    "[base prompt]",
-    `- stage: ${def?.label || token} (${token || "-"})`,
-    `- role intent: ${def?.desc || "runtime stage policy"}`,
-    "- source: federlicht runtime/profile 기본 system prompt",
+    "[prompt chain]",
+    `1) stage: ${def?.label || token} (${token || "-"})`,
+    `2) base intent: ${def?.desc || "runtime stage policy"}`,
+    "3) baseline prompt source: federlicht runtime/profile 기본 prompt",
     "",
     "[override]",
     normalized.system_prompt || "(none)",
@@ -1580,6 +1597,23 @@ function openaiVisionModelHint() {
   return hint;
 }
 
+function codexModelHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().codex_model
+    || window?.FEDERNETT_CODEX_MODEL_HINT
+    || "$CODEX_MODEL",
+  );
+  return hint || "$CODEX_MODEL";
+}
+
+function isCommonOpenaiDefaultModel(value) {
+  const token = normalizeModelToken(value).toLowerCase();
+  return token === "gpt-4o-mini"
+    || token === "gpt-4o"
+    || token === "gpt-4.1-mini"
+    || token === "gpt-4.1";
+}
+
 function openaiReasoningApiSupported() {
   const raw = llmDefaults().openai_reasoning_api;
   if (typeof raw === "boolean") return raw;
@@ -1649,6 +1683,7 @@ function sanitizeFederlichtModelConfig(raw = {}) {
   const notes = [];
   const defaultOpenaiModel = openaiModelHint();
   const defaultOpenaiVision = openaiVisionModelHint();
+  const defaultCodexModel = codexModelHint();
   const gatewayReasoningSupported = backend === "codex_cli" || openaiReasoningApiSupported();
 
   if (backend === "openai_api") {
@@ -1673,9 +1708,25 @@ function sanitizeFederlichtModelConfig(raw = {}) {
       visionModel = defaultOpenaiVision;
       notes.push(`OpenAI backend vision model을 ${defaultOpenaiVision}로 자동 조정했습니다.`);
     }
-  } else if (!model || model === "$OPENAI_MODEL" || model === "${OPENAI_MODEL}") {
-    model = "$CODEX_MODEL";
-    notes.push("Codex backend에서는 기본 모델 토큰을 $CODEX_MODEL로 사용합니다.");
+  } else {
+    if (
+      !model
+      || isOpenaiModelToken(model)
+      || isCommonOpenaiDefaultModel(model)
+      || model === "${OPENAI_MODEL}"
+      || model === "%OPENAI_MODEL%"
+    ) {
+      model = defaultCodexModel;
+      notes.push(`Codex backend model resolved -> ${defaultCodexModel}`);
+    }
+    if (!checkModel || isOpenaiModelToken(checkModel) || isCommonOpenaiDefaultModel(checkModel)) {
+      checkModel = model;
+      notes.push(`Codex backend check model resolved -> ${checkModel}`);
+    }
+    if (visionModel && (isOpenaiVisionModelToken(visionModel) || isCommonOpenaiDefaultModel(visionModel))) {
+      visionModel = openaiVisionModelHint();
+      notes.push(`Codex backend vision model은 ${visionModel}로 유지됩니다.`);
+    }
   }
 
   const reasoningTarget = checkModel || model;
@@ -1819,6 +1870,7 @@ function renderFederlichtRuntimeSummary(configOverride = null) {
 
 function syncFederlichtModelControls(options = {}) {
   const announce = Boolean(options.announce);
+  const forceBackendDefaults = Boolean(options.forceBackendDefaults);
   const backendEl = $("#federlicht-llm-backend");
   const modelEl = $("#federlicht-model");
   const checkModelEl = $("#federlicht-check-model");
@@ -1835,6 +1887,29 @@ function syncFederlichtModelControls(options = {}) {
   if (modelEl && modelEl.value !== next.model) modelEl.value = next.model;
   if (checkModelEl && checkModelEl.value !== next.checkModel) checkModelEl.value = next.checkModel;
   if (visionModelEl && visionModelEl.value !== next.visionModel) visionModelEl.value = next.visionModel;
+  if (forceBackendDefaults) {
+    if (next.backend === "codex_cli") {
+      const forcedCodex = codexModelHint();
+      if (modelEl && modelEl.value !== forcedCodex) {
+        modelEl.value = forcedCodex;
+        next.model = forcedCodex;
+      }
+      if (checkModelEl && (!checkModelEl.value || isCommonOpenaiDefaultModel(checkModelEl.value))) {
+        checkModelEl.value = forcedCodex;
+        next.checkModel = forcedCodex;
+      }
+    } else {
+      const forcedOpenai = openaiModelHint();
+      if (modelEl && (isCodexModelToken(modelEl.value) || isCodexModelPlaceholderToken(modelEl.value))) {
+        modelEl.value = forcedOpenai;
+        next.model = forcedOpenai;
+      }
+      if (checkModelEl && (isCodexModelToken(checkModelEl.value) || isCodexModelPlaceholderToken(checkModelEl.value))) {
+        checkModelEl.value = forcedOpenai;
+        next.checkModel = forcedOpenai;
+      }
+    }
+  }
   if (reasoningEl) {
     reasoningEl.disabled = !next.reasoningCompatible;
     reasoningEl.title = next.reasoningCompatible
@@ -4867,7 +4942,7 @@ function renderLiveAskProcessFold(processLog, options = {}) {
     .filter(Boolean)
     .join("");
   const summaryPrefix = String(options?.summaryPrefix || "").trim();
-  const showChips = options?.showChips !== false;
+  const showChips = options?.showChips === true;
   const firstCommand = lines.find((line) => line.startsWith("$ "));
   const compactCommand = firstCommand
     ? firstCommand.slice(2).replace(/\s+/g, " ").trim()
@@ -4875,7 +4950,20 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   const baseSummaryLabel = compactCommand
     ? `Ran ${compactCommand.slice(0, 96)}${compactCommand.length > 96 ? "..." : ""}`
     : `작업 로그 ${lineCount}줄`;
-  const summaryLabel = summaryPrefix ? `${summaryPrefix} · ${baseSummaryLabel}` : baseSummaryLabel;
+  const explicitToolCountRaw = Number(options?.toolCount || 0);
+  const explicitToolCount = Number.isFinite(explicitToolCountRaw) ? Math.max(0, Math.round(explicitToolCountRaw)) : 0;
+  const summaryParts = [];
+  if (summaryPrefix) summaryParts.push(summaryPrefix);
+  if (explicitToolCount > 0) {
+    summaryParts.push(`tool ${explicitToolCount}`);
+  } else if (summary.activity > 0) {
+    summaryParts.push(`tool ${summary.activity}`);
+  }
+  summaryParts.push(baseSummaryLabel);
+  const summaryLabel = summaryParts.join(" · ");
+  const summaryTitle = [summaryPrefix, compactCommand || `lines=${lineCount}`, summary.errors ? `errors=${summary.errors}` : ""]
+    .filter(Boolean)
+    .join(" | ");
   if (lineCount <= 4 && !hasError) {
     const plainRows = lines
       .map((line) => `<div class="live-ask-process-line">${renderRawLineWithLinks(line)}</div>`)
@@ -4890,7 +4978,7 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   return `
     <section class="live-ask-process-wrap is-inline">
       <details class="live-ask-process-fold ${options?.compact ? "is-compact" : ""}" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
-        <summary>
+        <summary title="${escapeHtml(summaryTitle || summaryLabel)}">
           <span>${escapeHtml(summaryLabel)}</span>
           ${showChips && chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
         </summary>
@@ -5012,6 +5100,7 @@ function renderLiveAskSystemLogCard() {
   const processBlock = renderLiveAskProcessFold(normalized, {
     open: Boolean(sourceLabel === "active" && (state.liveAsk.busy || state.ask.busy || state.activeJobId)),
     summaryPrefix: `${stageLabel} ${badgeLabel}`,
+    toolCount: summary.activity,
     compact: true,
     showChips: false,
   });
@@ -5120,7 +5209,8 @@ function renderLiveAskThread() {
             <article class="${assistantClass} is-log-only">
               ${renderLiveAskProcessFold(processLog, {
                 open: false,
-                summaryPrefix: `${assistantRoleLabel} backend log`,
+                summaryPrefix: `${assistantRoleLabel} backend`,
+                toolCount: Number(assistantMeta?.trace_steps || 0),
                 compact: true,
                 showChips: false,
               })}
@@ -8510,6 +8600,7 @@ async function loadInfo() {
   const defaults = llmDefaults();
   window.FEDERNETT_OPENAI_MODEL_HINT = normalizeModelToken(defaults.openai_model || "");
   window.FEDERNETT_OPENAI_MODEL_VISION_HINT = normalizeModelToken(defaults.openai_model_vision || "");
+  window.FEDERNETT_CODEX_MODEL_HINT = normalizeModelToken(defaults.codex_model || "");
   window.FEDERNETT_OPENAI_REASONING_API = Boolean(defaults.openai_reasoning_api);
   const runtimeDefault = normalizeAskRuntimeMode(defaults.federhav_runtime_mode || "auto");
   if (!state.ask.runtimeMode || state.ask.runtimeMode === "auto") {
@@ -15605,6 +15696,17 @@ function buildFeatherPayload(options = {}) {
   if (!Number.isFinite(payload.days)) delete payload.days;
   if (!Number.isFinite(payload.max_results)) delete payload.max_results;
   if (!Number.isFinite(payload.max_iter)) delete payload.max_iter;
+  if (payload.agentic_search) {
+    const backendToken = normalizeAskLlmBackend(payload.llm_backend || "openai_api");
+    const modelToken = normalizeModelToken(payload.model);
+    if (
+      !modelToken
+      || (backendToken === "codex_cli" && (isOpenaiModelToken(modelToken) || isCommonOpenaiDefaultModel(modelToken)))
+      || (backendToken === "openai_api" && (isCodexModelToken(modelToken) || isCodexModelPlaceholderToken(modelToken)))
+    ) {
+      payload.model = backendToken === "codex_cli" ? codexModelHint() : openaiModelHint();
+    }
+  }
   if (!payload.agentic_search) {
     delete payload.model;
     delete payload.max_iter;
@@ -15872,32 +15974,59 @@ function handleFeatherAgenticControls() {
   const modelInput = $("#feather-model");
   const iterInput = $("#feather-max-iter");
   const backendSelect = $("#feather-llm-backend");
+  const policyNote = $("#feather-agentic-policy-note");
   if (!toggle) return;
+  const modelForBackend = (backend) =>
+    normalizeAskLlmBackend(backend) === "codex_cli" ? codexModelHint() : openaiModelHint();
+  const shouldSwitchModel = (current, backend) => {
+    const token = normalizeModelToken(current);
+    if (!token) return true;
+    if (normalizeAskLlmBackend(backend) === "codex_cli") {
+      return isOpenaiModelToken(token) || isCommonOpenaiDefaultModel(token);
+    }
+    return isCodexModelToken(token) || isCodexModelPlaceholderToken(token);
+  };
+  const syncModelByBackend = ({ force = false } = {}) => {
+    if (!modelInput || !backendSelect) return;
+    const backend = normalizeAskLlmBackend(backendSelect.value);
+    if (force || shouldSwitchModel(modelInput.value, backend)) {
+      modelInput.value = modelForBackend(backend);
+    }
+  };
+  const updatePolicyNote = () => {
+    if (!policyNote || !backendSelect || !modelInput) return;
+    const backend = normalizeAskLlmBackend(backendSelect.value);
+    const backendLabel = backend === "codex_cli" ? "Codex CLI Auth" : "OpenAI API";
+    if (!toggle.checked) {
+      policyNote.textContent = "Agentic Search OFF: planner model/backend 설정은 저장되지만 실행에는 사용되지 않습니다.";
+      return;
+    }
+    const defaultLabel = backend === "codex_cli" ? "Codex CLI Auth" : "OpenAI API";
+    policyNote.textContent = `Agentic Search ON · backend=${backendLabel} (default: ${defaultLabel}) · model=${normalizeModelToken(modelInput.value) || modelForBackend(backend)}`;
+  };
   const applyState = () => {
     const enabled = Boolean(toggle.checked);
-    if (modelInput) modelInput.disabled = !enabled;
-    if (iterInput) iterInput.disabled = !enabled;
-    if (backendSelect) backendSelect.disabled = !enabled;
-    if (enabled && backendSelect && normalizeAskLlmBackend(backendSelect.value) === "codex_cli") {
-      const model = $("#feather-model");
-      if (model && (!model.value || model.value.trim() === "$OPENAI_MODEL")) {
-        model.value = "$CODEX_MODEL";
-      }
+    if (modelInput) modelInput.disabled = false;
+    if (iterInput) iterInput.disabled = false;
+    if (backendSelect) backendSelect.disabled = false;
+    if (enabled && backendSelect) {
+      if (!backendSelect.value) backendSelect.value = "openai_api";
+      syncModelByBackend();
     }
+    updatePolicyNote();
   };
   toggle.addEventListener("change", applyState);
   backendSelect?.addEventListener("change", () => {
     const backend = normalizeAskLlmBackend(backendSelect.value);
+    syncModelByBackend();
     if (backend === "codex_cli") {
       appendLog("[feather] Agentic planner backend: codex_cli\n");
-      const model = $("#feather-model");
-      if (model && (!model.value || model.value.trim() === "$OPENAI_MODEL")) {
-        model.value = "$CODEX_MODEL";
-      }
     } else {
       appendLog("[feather] Agentic planner backend: openai_api\n");
     }
+    updatePolicyNote();
   });
+  modelInput?.addEventListener("input", updatePolicyNote);
   applyState();
 }
 
@@ -15915,7 +16044,8 @@ function handlePipelineBackendControls() {
     return next;
   };
   federBackend?.addEventListener("change", () => {
-    syncAndAnnounce("backend");
+    syncFederlichtModelControls({ announce: true, forceBackendDefaults: true });
+    appendLog(`[federlicht] backend: ${normalizeAskLlmBackend(federBackend.value)}\n`);
   });
   modelInput?.addEventListener("input", () => syncFederlichtModelControls({ announce: false }));
   checkModelInput?.addEventListener("input", () => syncFederlichtModelControls({ announce: false }));
