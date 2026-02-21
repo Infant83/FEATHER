@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.5
+Version: 1.9.6
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -167,7 +167,8 @@ Federlicht CLIs via subprocess. It does not replace core behavior.
 Key points:
 - It serves the static UI from `./site/federnett/`.
 - All paths are resolved under `--root` (guardrail against path escape).
-- It scans run folders from `--run-roots` (default: `examples/runs,site/runs,runs`).
+- It scans run folders from `--run-roots` (default: `runs,site/runs`).
+- Default policy is `runs/*` for working run artifacts and `site/report_hub/*` for publishable hub pages (legacy `site/runs/*` is still compatible).
 - Logs stream live via SSE and jobs can be stopped from the UI.
 - Live Logs ask context uses `state-memory` + optional recent-execution-log auxiliary summary (for example `1.2k` chars).
   - `state-memory`: run/workflow/artifact/dialogue 상태 요약 메모리
@@ -192,7 +193,7 @@ federnett --root . --host 0.0.0.0 --port 8765
 python -m federnett.app --root . --port 8765
 
 # Customize run discovery roots:
-federnett --root . --run-roots examples/runs,site/runs
+federnett --root . --run-roots runs,site/runs,data/runs
 
 # Serve from a different static directory:
 federnett --root . --static-dir site/federnett --site-root site
@@ -210,11 +211,11 @@ Then open `http://127.0.0.1:8765/`.
 federhav --question "현재 run 폴더 구조를 요약해줘"
 
 # Interactive chat
-federhav chat --root . --run site/runs/my_run --profile-id default
+federhav chat --root . --run runs/my_run --profile-id default
 
 # Legacy revision runner
 federhav update \
-  --run site/runs/my_run \
+  --run runs/my_run \
   --base-report report_full.html \
   --update "요약 섹션을 더 간결하게 수정해줘" \
   --agent-profile federhav
@@ -328,12 +329,12 @@ See `docs/federlicht_report.md` for full figure options and dependencies.
 
 ## Hosting the Report Hub (GitHub/GitLab Pages)
 Federlicht can generate a static report hub under `./site/report_hub` (`index.html` + `manifest.json`) by default.  
-Report outputs can remain under `site/runs/`; the hub stores relative links (for example `../runs/<run>/report_full.html`).
+Report outputs can remain under `./runs/` (preferred) or `./site/runs/` (legacy); the hub stores relative links automatically based on actual run location.
 
-1) Generate reports under `site/`:
+1) Generate reports under `runs/` (preferred):
 ```bash
 federlicht --run ./examples/runs/20260110_qc-oled \
-  --output ./site/runs/20260110_qc-oled/report_full.html \
+  --output ./runs/20260110_qc-oled/report_full.html \
   --template review_of_modern_physics --lang ko \
   --prompt-file ./examples/instructions/20260110_prompt_qc-oled.txt --no-figures
 ```
@@ -343,7 +344,7 @@ federlicht --run ./examples/runs/20260110_qc-oled \
 federlicht --site-refresh ./site/report_hub
 ```
 
-3) Commit and push both `site/runs/` and `site/report_hub/`.
+3) Commit and push both run artifacts (`runs/` or `site/runs/`) and `site/report_hub/`.
 
 ### GitLab Pages (internal)
 Add a minimal `.gitlab-ci.yml`:
@@ -366,7 +367,7 @@ Option A: set Pages source to the `site/` folder.
 Option B: copy `site/` to `docs/` and set Pages source to `/docs`.
 
 Notes:
-- Default separation is `site/runs` (artifacts) + `site/report_hub` (published index).
+- Default separation is `runs` (artifacts) + `site/report_hub` (published index), with `site/runs` kept as legacy-compatible fallback.
 - When reports are updated, run `federlicht --site-refresh ./site/report_hub` and redeploy.
 - The hub footer includes an AI transparency and source-rights notice for publication/distribution contexts.
 

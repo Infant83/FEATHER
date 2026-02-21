@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./app.css" />
+    <link rel="stylesheet" href="./app.css?v=20260220_uiux_v23" />
   </head>
   <body>
     <div class="app">
@@ -45,16 +45,16 @@
         <div class="top-actions">
           <div class="top-actions-main">
             <button id="reload-runs" class="ghost">Reload Runs</button>
-            <button id="ask-button" class="ghost">Agent 와 작업하기</button>
-            <button id="workspace-open-agents" class="ghost">Agent Profiles</button>
+            <button id="workspace-open-settings" class="ghost">Agent Workspace Settings</button>
           </div>
           <div class="top-actions-side">
-            <button id="workspace-open-templates" class="ghost">Templates</button>
             <button id="help-button" class="ghost">Help</button>
             <label class="theme-select">
               <span>Theme</span>
               <select id="theme-select" aria-label="Theme">
                 <option value="default">Default</option>
+                <option value="white">White</option>
+                <option value="black">Black</option>
                 <option value="sky">Sky</option>
                 <option value="crimson">Crimson</option>
                 <option value="sage">Sage</option>
@@ -68,17 +68,36 @@
       <section class="ask-panel" id="ask-panel" aria-hidden="true">
           <div class="ask-panel-head">
             <div>
-            <h2>Agent 와 작업하기</h2>
-            <p>코드/문서/런 이력을 바탕으로 이어서 답변합니다.</p>
+            <h2>FederHav 고급 콘솔</h2>
+            <p>레거시 확장 패널입니다. 기본 작업은 Live Logs 타임라인에서 진행하세요.</p>
             </div>
             <div class="ask-panel-actions">
-              <button type="button" id="ask-thread-toggle" class="ghost">대화 스레드</button>
+              <div class="ask-thread-inline">
+                <button type="button" id="ask-thread-toggle" class="ghost">대화 스레드</button>
+              </div>
+              <label class="ask-backend-head" aria-label="LLM Backend">
+                <select id="ask-backend">
+                  <option value="openai_api">OpenAI API</option>
+                  <option value="codex_cli">Codex CLI Auth</option>
+                </select>
+              </label>
+              <label class="ask-model-head" aria-label="Model">
+                <input id="ask-model" list="model-options" placeholder="$OPENAI_MODEL" />
+              </label>
+              <label class="ask-reasoning-head" aria-label="Reasoning effort">
+                <select id="ask-reasoning-effort">
+                  <option value="off" selected>off</option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                  <option value="extra_high">extra_high</option>
+                </select>
+              </label>
+              <button type="button" id="ask-geometry-reset" class="ghost">위치 초기화</button>
               <button type="button" id="ask-reset" class="ghost">Reset</button>
               <button type="button" id="ask-close" class="ghost">접기</button>
             </div>
           </div>
-        <div class="ask-status" id="ask-status">Ready.</div>
-        <div id="ask-history" class="ask-history"></div>
         <div class="ask-thread-popover" id="ask-thread-popover" aria-hidden="true">
           <div class="ask-threads-head">
             <h3>대화 스레드</h3>
@@ -89,101 +108,76 @@
           </div>
           <div id="ask-thread-list" class="ask-thread-list"></div>
         </div>
-        <div class="ask-policy-row">
-          <div class="ask-policy-field ask-mode-field">
-            <span>Action mode</span>
-            <input type="hidden" id="ask-action-mode" value="plan" />
-            <div class="ask-mode-switch" id="ask-action-mode-switch" role="group" aria-label="Action mode">
-              <button type="button" class="ghost mini is-on" data-ask-mode="plan">Plan</button>
-              <button type="button" class="ghost mini" data-ask-mode="act">Act</button>
+        <div class="ask-main-scroll">
+          <div class="ask-status" id="ask-status">Ready.</div>
+          <div class="ask-results">
+            <article class="ask-answer-wrap">
+              <div class="ask-pane-head">
+                <h3>대화</h3>
+                <button type="button" id="ask-jump-latest" class="ghost mini" title="최신 대화로 이동">최신으로</button>
+              </div>
+              <div id="ask-answer" class="ask-answer"></div>
+            </article>
+            <aside class="ask-right-wrap">
+              <section class="ask-trace-wrap">
+                <div class="ask-pane-head">
+                  <h3>Agent 실행 추적</h3>
+                  <button type="button" id="ask-trace-toggle" class="ghost mini">이력 보기</button>
+                </div>
+                <div class="ask-sources-trace" id="ask-sources-trace">
+                  <div id="ask-sources-cap-grid" class="ask-sources-cap-grid"></div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </div>
+        <div class="ask-form-dock">
+          <div class="ask-form-row">
+            <label class="ask-question-field">
+              <div class="ask-question-head">
+                <span>질문</span>
+                <div id="ask-history" class="ask-history"></div>
+              </div>
+              <textarea
+                id="ask-input"
+                rows="2"
+                placeholder="예: Feather에서 Agentic Search를 언제 켜야 하나요?"
+              ></textarea>
+            </label>
+            <div class="ask-submit-column">
+              <div class="ask-policy-row ask-policy-row-inline">
+                <div class="ask-policy-field ask-mode-field">
+                  <input type="hidden" id="ask-action-mode" value="plan" />
+                  <div class="ask-mode-switch" id="ask-action-mode-switch" role="group" aria-label="Action mode">
+                    <button type="button" class="ghost mini is-on" data-ask-mode="plan">Plan</button>
+                    <button type="button" class="ghost mini" data-ask-mode="act">Act</button>
+                  </div>
+                  <small id="ask-action-mode-hint">Plan: FederHav 제안 후 확인 실행</small>
+                </div>
+                <label class="ask-policy-check is-hidden" id="ask-artifact-policy">
+                  <input type="checkbox" id="ask-allow-artifacts" />
+                  <span>파일쓰기허용</span>
+                </label>
+              </div>
+              <button type="button" id="ask-run" class="primary ask-run">
+                <span>질문 실행</span>
+                <small>Ctrl+Enter</small>
+              </button>
             </div>
-            <small id="ask-action-mode-hint">Plan: 제안 후 확인 실행</small>
           </div>
-          <label class="ask-policy-check">
-            <input type="checkbox" id="ask-allow-artifacts" />
-            <span>Run/artifacts 쓰기 허용 (실험)</span>
-          </label>
-        </div>
-        <section class="ask-capability-panel" id="ask-capability-panel" aria-live="polite">
-          <div class="ask-capability-head">
-            <strong>Agent 도구/스킬/MCP</strong>
-            <span id="ask-activity-status">대기</span>
-          </div>
-          <div class="ask-capability-grid" id="ask-capability-grid"></div>
-        </section>
-        <div class="ask-action-row" id="ask-action-row" aria-live="polite"></div>
-        <div class="ask-results">
-          <article class="ask-answer-wrap">
-            <h3>대화</h3>
-            <div id="ask-answer" class="ask-answer"></div>
-          </article>
-          <aside class="ask-sources-wrap">
-            <h3>근거 소스</h3>
-            <div id="ask-sources" class="ask-sources"></div>
-          </aside>
-        </div>
-        <div class="ask-form-row ask-form-dock">
-          <label>
-            <span>질문</span>
-            <textarea
-              id="ask-input"
-              rows="2"
-              placeholder="예: Feather에서 Agentic Search를 언제 켜야 하나요?"
-            ></textarea>
-          </label>
-          <label class="ask-model-field">
-            <span>Model (optional)</span>
-            <input id="ask-model" list="model-options" placeholder="$OPENAI_MODEL" />
-          </label>
-          <button type="button" id="ask-run" class="primary ask-run">질문 실행</button>
         </div>
       </section>
 
       <main class="layout">
-        <section class="panel control">
-          <div class="hero-grid panel-head is-cards-only">
-            <div class="hero-cards">
-              <div
-                class="hero-card hero-accent clickable"
-                id="hero-card-runs"
-                data-action="runs"
-              >
-                <span>Discovered Runs</span>
-                <strong id="run-count">0</strong>
-                <small>One level deep across run roots</small>
-              </div>
-              <div
-                class="hero-card clickable"
-                id="hero-card-templates"
-                data-action="templates"
-              >
-                <span>Templates</span>
-                <strong id="template-count">0</strong>
-                <small>Loaded from `src/federlicht/templates`</small>
-              </div>
-              <div
-                class="hero-card clickable"
-                id="hero-card-run-roots"
-                data-action="run-roots"
-              >
-                <span>Run Folders</span>
-                <strong id="run-roots-badge">-</strong>
-                <small>Load an existing run folder</small>
-              </div>
-              <div class="hero-card hero-recent clickable" id="hero-card-recent" aria-live="polite">
-                <div class="hero-card-head">
-                  <span>Recent Jobs</span>
-                </div>
-                <small id="recent-jobs-subtitle">Select a run folder to view activity.</small>
-                <div class="hero-recent-summary">
-                  <strong id="recent-jobs-count">0</strong>
-                  <span id="recent-jobs-last">No recent jobs.</span>
-                </div>
-                <div class="hero-recent-actions">
-                  <button type="button" id="jobs-open" class="ghost mini">View jobs</button>
-                </div>
-              </div>
-            </div>
+        <section class="panel control" id="control-panel">
+          <div class="control-collapse-rail">
+            <span class="control-rail-title">Workspace Sidebar</span>
+            <button type="button" id="control-panel-toggle" class="ghost mini" title="사이드바 닫기">닫기</button>
+          </div>
+          <div class="control-collapsed-actions" aria-hidden="true">
+            <button type="button" class="ghost mini" id="control-collapsed-open-feather">Feather</button>
+            <button type="button" class="ghost mini" id="control-collapsed-open-federlicht">Federlicht</button>
+            <button type="button" class="ghost mini" id="control-collapsed-open-runstudio">Run Studio</button>
           </div>
           <div class="tabs-row">
             <div class="tabs" role="tablist">
@@ -197,6 +191,9 @@
               </button>
               <button class="tab" data-tab="federlicht" role="tab">
                 Federlicht
+              </button>
+              <button class="tab" data-tab="runstudio" role="tab">
+                Run Studio
               </button>
             </div>
             <div class="quick-run-row" role="group" aria-label="Quick run actions">
@@ -227,13 +224,14 @@
                 </label>
 
                 <label class="wide">
-                  <span>Output Folder</span>
+                  <span>Run Folder (Output)</span>
                   <input
                     id="feather-output"
                     name="output"
                     placeholder="20260127_new-run"
                     required
                   />
+                  <small id="feather-output-hint" class="field-path-hint muted">Run output folder under the active run root.</small>
                 </label>
 
                 <label class="wide">
@@ -331,6 +329,13 @@
                       />
                     </label>
                     <label>
+                      <span>LLM Backend</span>
+                      <select id="feather-llm-backend">
+                        <option value="openai_api" selected>OpenAI API</option>
+                        <option value="codex_cli">Codex CLI Auth (agentic)</option>
+                      </select>
+                    </label>
+                    <label>
                       <span>Agentic Model</span>
                       <input
                         id="feather-model"
@@ -354,12 +359,13 @@
               <form id="federlicht-form" class="form-grid">
                 <label class="wide">
                   <span>Run Folder</span>
-                  <div class="combo">
+                  <div class="combo combo-run-folder">
                     <select id="run-select" required></select>
                     <button type="button" id="run-open" class="ghost">
                       Open Run Folder
                     </button>
                   </div>
+                  <small id="federlicht-run-hint" class="field-path-hint muted">선택된 run: -</small>
                 </label>
 
                 <label class="wide">
@@ -377,6 +383,16 @@
                 <label>
                   <span>Template</span>
                   <select id="template-select"></select>
+                </label>
+
+                <label>
+                  <span>Style Pack</span>
+                  <select id="federlicht-style-pack">
+                    <option value="none" selected>None</option>
+                    <option value="dark">Dark</option>
+                    <option value="journal">Journal</option>
+                    <option value="magazine">Magazine</option>
+                  </select>
                 </label>
 
                 <label>
@@ -399,9 +415,37 @@
                 </label>
 
                 <label>
+                  <span>LLM Backend</span>
+                  <select id="federlicht-llm-backend">
+                    <option value="openai_api" selected>OpenAI API</option>
+                    <option value="codex_cli">Codex CLI Auth (experimental)</option>
+                  </select>
+                </label>
+
+                <label>
                   <span>Model</span>
                   <input id="federlicht-model" placeholder="$OPENAI_MODEL" list="model-options" />
                 </label>
+                <label>
+                  <span>Reasoning Effort</span>
+                  <select id="federlicht-reasoning-effort">
+                    <option value="off" selected>off</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="extra_high">extra_high</option>
+                  </select>
+                </label>
+                <div class="runtime-summary-panel wide">
+                  <div class="runtime-summary-head">
+                    <strong>Runtime Model Policy</strong>
+                    <span id="federlicht-runtime-gateway" class="runtime-summary-pill">gateway: -</span>
+                  </div>
+                  <div id="federlicht-runtime-summary" class="runtime-summary-chips"></div>
+                  <p id="federlicht-runtime-notes" class="runtime-summary-notes muted">
+                    실행 전에 backend/model/check/reasoning 자동 조정 결과를 확인하세요.
+                  </p>
+                </div>
                 <div class="profile-summary-panel">
                   <span class="profile-summary-label">Active Agent Profile</span>
                   <div id="federlicht-profile-summary" class="profile-summary-value">-</div>
@@ -423,6 +467,7 @@
                       </button>
                     </div>
                   </div>
+                  <small id="federlicht-prompt-file-hint" class="field-path-hint muted">프롬프트 파일: -</small>
                 </label>
 
                 <label class="wide">
@@ -498,6 +543,7 @@
                     <input id="federlicht-stages" type="hidden" value="scout,evidence,plan,writer,quality" />
                     <input id="federlicht-skip-stages" type="hidden" value="" />
                     <input id="federlicht-quality-iterations" type="hidden" value="1" />
+                    <input id="federlicht-agent-config" type="hidden" value="" />
                     <label>
                       <span>Quality Strategy</span>
                       <input id="federlicht-quality-strategy" value="pairwise" />
@@ -519,7 +565,7 @@
                     </label>
                     <label class="wide">
                       <span>Site Output</span>
-                      <input id="federlicht-site-output" placeholder="run/report_full.html" />
+                      <input id="federlicht-site-output" placeholder="site/report_hub" />
                     </label>
                     <label class="wide">
                       <span>Extra Args</span>
@@ -535,41 +581,34 @@
             </div>
           </section>
 
-          <section
-            id="run-studio-wrap"
-            class="panel studio studio-inline"
-            aria-live="polite"
-          >
-            <div class="panel-head slim">
-              <div>
-                <h2>Run Studio</h2>
-                <p id="studio-meta">
-                  Pick a run to inspect evidence, review artifacts, and shape the pipeline.
-                </p>
-              </div>
-              <div class="panel-pills">
-                <span class="meta-pill" id="studio-run-rel">-</span>
-                <span class="meta-pill" id="studio-updated">-</span>
-              </div>
-            </div>
-
-            <div class="studio-grid">
-              <section class="studio-card summary-card" id="run-files-card">
-                <header>
-                  <h3>Run Snapshot &amp; Files</h3>
-                  <p>Coverage summary and quick file access for the selected run.</p>
-                </header>
-                <div class="summary-actions">
-                  <button id="run-trash" class="danger" type="button" disabled>
-                    Trash Run
-                  </button>
+          <section id="run-studio-wrap" class="tab-panel" role="tabpanel" aria-live="polite">
+            <div class="tab-shell runstudio-shell">
+              <div class="runstudio-meta-head">
+                <p id="studio-meta">Pick a run to inspect evidence, review artifacts, and shape the pipeline.</p>
+                <div class="panel-pills">
+                  <span class="meta-pill" id="studio-run-rel">-</span>
+                  <span class="meta-pill" id="studio-updated">-</span>
                 </div>
-                <div id="run-summary-lines" class="summary-lines"></div>
-                <div id="run-summary-links" class="summary-links"></div>
-                <div id="run-summary-reports" class="summary-reports"></div>
-                <div id="run-figure-tools" class="run-figure-tools is-empty"></div>
-                <div class="file-list" id="run-file-list"></div>
-              </section>
+              </div>
+
+              <div class="studio-grid">
+                <section class="studio-card summary-card" id="run-files-card">
+                  <header>
+                    <h3>Run Snapshot &amp; Files</h3>
+                    <p>Coverage summary and quick file access for the selected run.</p>
+                  </header>
+                  <div class="summary-actions">
+                    <button id="run-trash" class="danger" type="button" disabled>
+                      Trash Run
+                    </button>
+                  </div>
+                  <div id="run-summary-lines" class="summary-lines"></div>
+                  <div id="run-summary-links" class="summary-links"></div>
+                  <div id="run-summary-reports" class="summary-reports"></div>
+                  <div id="run-figure-tools" class="run-figure-tools is-empty"></div>
+                  <div class="file-list" id="run-file-list"></div>
+                </section>
+              </div>
             </div>
           </section>
         </section>
@@ -588,68 +627,278 @@
                   <p id="job-status">No active job.</p>
                 </div>
                 <div class="log-actions">
-                  <button id="log-mode" class="ghost">MD 보기</button>
-                  <button id="log-toggle" class="ghost">Hide Logs</button>
+                  <span class="meta-pill" id="recent-jobs-count">0</span>
+                  <span class="muted" id="recent-jobs-last">No recent jobs.</span>
+                  <button type="button" id="jobs-open" class="ghost mini">최근 이력</button>
+                  <button id="log-maximize" class="ghost">최대화</button>
                   <button id="log-clear" class="ghost">Clear</button>
                   <button id="job-kill" class="danger" disabled>Stop</button>
                 </div>
               </div>
-              <div class="workflow-strip" id="workflow-strip">
-                <div class="workflow-head">
-                  <strong>Workflow Pipeline</strong>
-                  <span id="workflow-status">Idle</span>
-                </div>
-                <div class="workflow-track" id="workflow-track" aria-live="polite"></div>
-                <div class="workflow-history-controls" id="workflow-history-controls">
-                  <span id="workflow-history-hint" class="muted">History checkpoint: -</span>
-                  <div class="workflow-history-actions">
-                    <button
-                      type="button"
-                      id="workflow-resume-apply"
-                      class="ghost"
-                      title="선택한 단계부터 재실행 프리셋을 만듭니다."
-                      disabled
-                    >
-                      Resume from stage
-                    </button>
-                    <button
-                      type="button"
-                      id="workflow-resume-prompt"
-                      class="ghost"
-                      title="재실행용 update prompt 초안을 instruction 폴더에 생성합니다."
-                      disabled
-                    >
-                      Draft update prompt
-                    </button>
-                    <div class="workflow-help-wrap">
-                      <button
-                        type="button"
-                        id="workflow-resume-help"
-                        class="ghost workflow-help-trigger"
-                        aria-label="Resume 도움말"
-                      >
-                        ?
+              <section class="live-ask-dock" id="live-ask-dock" aria-label="Live Logs 질문 패널">
+                <div class="workflow-strip workflow-in-dock" id="workflow-strip">
+                  <div class="workflow-head">
+                    <strong>Workflow Pipeline</strong>
+                    <div class="workflow-head-actions">
+                      <button type="button" id="workflow-studio-toggle" class="ghost mini">
+                        Workflow Studio 열기
                       </button>
-                      <div class="workflow-help-popover" role="tooltip">
-                        <strong>Resume 동작 방식</strong>
-                        <ol>
-                          <li>파이프라인에서 재시작할 에이전트 단계를 클릭합니다.</li>
-                          <li><code>Resume from ...</code> 버튼으로 실행 단계를 해당 위치부터로 맞춥니다.</li>
-                          <li><code>Draft update prompt</code>로 수정요청 파일 생성 후 Inline Prompt에 자동 로드합니다.</li>
-                        </ol>
+                      <span id="workflow-status">Idle</span>
+                    </div>
+                  </div>
+                  <div class="workflow-track" id="workflow-track" aria-live="polite"></div>
+                  <div class="workflow-runtime" id="workflow-runtime" aria-live="polite"></div>
+                  <details class="workflow-ops-wrap" id="workflow-ops-wrap">
+                    <summary>Resume &amp; Action Tools</summary>
+                    <div class="workflow-ops-body">
+                      <div class="workflow-history-controls" id="workflow-history-controls">
+                        <span id="workflow-history-hint" class="muted">History checkpoint: -</span>
+                        <div class="workflow-history-actions">
+                          <button
+                            type="button"
+                            id="workflow-resume-apply"
+                            class="ghost"
+                            title="선택한 단계부터 재실행 프리셋을 만듭니다."
+                            disabled
+                          >
+                            Resume from stage
+                          </button>
+                          <button
+                            type="button"
+                            id="workflow-resume-prompt"
+                            class="ghost"
+                            title="재실행용 update prompt 초안을 instruction 폴더에 생성합니다."
+                            disabled
+                          >
+                            Draft update prompt
+                          </button>
+                          <div class="workflow-help-wrap">
+                            <button
+                              type="button"
+                              id="workflow-resume-help"
+                              class="ghost workflow-help-trigger"
+                              aria-label="Resume 도움말"
+                            >
+                              ?
+                            </button>
+                            <div class="workflow-help-popover" role="tooltip">
+                              <strong>Resume 동작 방식</strong>
+                              <ol>
+                                <li>파이프라인에서 재시작할 에이전트 단계를 클릭합니다.</li>
+                                <li><code>Resume from ...</code> 버튼으로 실행 단계를 해당 위치부터로 맞춥니다.</li>
+                                <li><code>Draft update prompt</code>로 수정요청 파일 생성 후 Inline Prompt에 자동 로드합니다.</li>
+                              </ol>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="workflow-resume-guide is-empty" id="workflow-resume-guide" aria-live="polite"></div>
+                      <div class="workflow-extras is-empty" id="workflow-extras" aria-live="polite"></div>
+                    </div>
+                  </details>
+                </div>
+                <div class="live-ask-main">
+                  <div class="live-ask-thread-wrap">
+                    <div id="live-ask-thread" class="live-ask-thread is-empty" aria-live="polite">
+                      아직 대화가 없습니다. Live Logs/결과를 바탕으로 질문해보세요.
+                    </div>
+                    <button type="button" id="live-ask-jump-latest" class="ghost mini is-hidden">최신으로 이동</button>
+                  </div>
+                  <div class="live-ask-composer">
+                    <div class="live-ask-row">
+                      <label class="live-ask-input-wrap">
+                        <span id="live-ask-label">Agent에게 요청</span>
+                        <textarea
+                          id="live-ask-input"
+                          rows="3"
+                          placeholder="Live Logs/근거/결과를 바탕으로 Agent에게 질문하세요.
+예: run을 새로 만들고 instruction 자동 작성 후 Feather 실행해줘
+안내: state-memory + 보조로그 요약 1,200자(자동 압축)"
+                        ></textarea>
+                        <div class="live-ask-input-foot">
+                          <small id="live-ask-input-meta" class="muted">0자 · Enter 실행 · Shift+Enter 줄바꿈</small>
+                          <small id="live-ask-status" class="muted"></small>
+                        </div>
+                        <small id="live-ask-runtime-note" class="muted" hidden>
+                          실행 설정: backend=openai_api · model=$OPENAI_MODEL · reasoning=off
+                        </small>
+                      </label>
+                    </div>
+                    <div class="live-ask-toolbar">
+                      <div class="live-ask-controls">
+                        <div class="ask-policy-row ask-policy-row-inline live-ask-policy-row">
+                          <div class="ask-policy-field ask-mode-field">
+                            <div class="ask-mode-switch" id="live-ask-mode-switch" role="group" aria-label="Live ask action mode">
+                              <button type="button" class="ghost mini is-on" data-ask-mode="plan">Plan</button>
+                              <button type="button" class="ghost mini" data-ask-mode="act">Act</button>
+                            </div>
+                            <small id="live-ask-mode-scope-hint" class="muted">
+                              Plan/Act는 FederHav 제안 액션에만 적용됩니다.
+                            </small>
+                          </div>
+                          <label class="ask-policy-check is-hidden" id="live-ask-artifact-policy">
+                            <input type="checkbox" id="live-ask-allow-artifacts" />
+                            <span>파일쓰기허용</span>
+                          </label>
+                        </div>
+                        <details class="live-ask-runtime-fold" id="live-ask-runtime-fold">
+                          <summary>FederHav 설정 (backend/model/reasoning/log)</summary>
+                          <div class="live-ask-runtime-grid">
+                            <label class="live-ask-backend-field" for="live-ask-backend">
+                              <span>Backend</span>
+                              <select id="live-ask-backend">
+                                <option value="openai_api">OpenAI API</option>
+                                <option value="codex_cli">Codex CLI Auth</option>
+                              </select>
+                            </label>
+                            <label class="live-ask-runtime-mode-field" for="live-ask-runtime-mode">
+                              <span>Runtime</span>
+                              <select id="live-ask-runtime-mode">
+                                <option value="auto" selected>auto</option>
+                                <option value="deepagent">deepagent</option>
+                                <option value="off">off</option>
+                              </select>
+                            </label>
+                            <label class="live-ask-model-field" for="live-ask-model">
+                              <span>Model</span>
+                              <input id="live-ask-model" list="model-options" placeholder="$OPENAI_MODEL" />
+                            </label>
+                            <label class="live-ask-reasoning-field" for="live-ask-reasoning-effort">
+                              <span>Reasoning</span>
+                              <select id="live-ask-reasoning-effort">
+                                <option value="off" selected>off</option>
+                                <option value="low">low</option>
+                                <option value="medium">medium</option>
+                                <option value="high">high</option>
+                                <option value="extra_high">extra_high</option>
+                              </select>
+                            </label>
+                            <label class="live-ask-log-tail-size live-ask-log-tail-field" for="live-ask-log-tail-size">
+                              <span>보조로그 요약</span>
+                              <select id="live-ask-log-tail-size">
+                                <option value="1200" selected>1.2k</option>
+                                <option value="2200">2.2k</option>
+                                <option value="3600">3.6k</option>
+                                <option value="5200">5.2k</option>
+                              </select>
+                            </label>
+                            <label class="ask-policy-check live-ask-log-policy live-ask-log-policy-inline" id="live-ask-log-policy">
+                              <input type="checkbox" id="live-ask-auto-log" checked />
+                              <span>최근 로그 자동참조</span>
+                            </label>
+                          </div>
+                          <div class="live-ask-tools-actions" role="group" aria-label="타임라인 도구">
+                            <button type="button" id="live-ask-copy" class="ghost mini">대화 복사</button>
+                            <button type="button" id="live-ask-clear" class="ghost mini">초기화</button>
+                          </div>
+                        </details>
+                      </div>
+                      <div class="live-ask-run-row">
+                        <button type="button" id="live-ask-run" class="primary ask-run">
+                          <span>질문 실행</span>
+                          <small>Enter</small>
+                        </button>
+                        <button type="button" id="live-ask-stop" class="ghost mini" disabled>중단</button>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="workflow-resume-guide is-empty" id="workflow-resume-guide" aria-live="polite"></div>
-                <div class="workflow-extras is-empty" id="workflow-extras" aria-live="polite"></div>
-              </div>
-
-              <div class="log-shell">
-                <pre id="log-output" aria-live="polite"></pre>
-                <div id="log-output-md" aria-live="polite"></div>
-              </div>
+              </section>
             </section>
+
+            <aside
+              class="workflow-studio-panel"
+              id="workflow-studio-panel"
+              aria-hidden="true"
+              aria-label="Workflow Studio side panel"
+            >
+              <header class="workflow-studio-head">
+                <div>
+                  <h3>Workflow Studio</h3>
+                  <p>Feather/Federlicht 단계를 선택해 설정하고 바로 실행합니다.</p>
+                </div>
+                <button type="button" id="workflow-studio-close" class="ghost mini">접기</button>
+              </header>
+              <div class="workflow-studio-stagebar">
+                <strong id="stage-detail-title">Stage Details</strong>
+                <button type="button" id="pipeline-help" class="ghost mini">도움말</button>
+              </div>
+              <div class="workflow-studio-scroll">
+                <div class="stage-detail workflow-studio-detail">
+                  <pre id="stage-detail-body">Select a stage to see details.</pre>
+                </div>
+                <section class="workflow-studio-section">
+                  <h4>Pipeline 선택</h4>
+                  <div class="pipeline-chips" id="pipeline-chips"></div>
+                  <div class="pipeline-meta workflow-studio-meta">
+                    <div>stages: <code id="pipeline-stages-value">-</code></div>
+                    <div>skip_stages: <code id="pipeline-skip-value">-</code></div>
+                  </div>
+                  <p class="workflow-studio-note">
+                    선택된 단계만 실행됩니다. `skip_stages`는 비활성화된 단계를 자동 계산해 표시합니다.
+                  </p>
+                </section>
+
+                <section class="workflow-studio-section">
+                  <h4>고급 Stage 설정</h4>
+                  <p class="workflow-studio-note">
+                    현재 선택된 stage에만 적용됩니다. 비우면 기본 에이전트 설정을 사용합니다.
+                  </p>
+                  <div class="workflow-studio-grid">
+                    <label>
+                      <span>Subagent 모델 (선택)</span>
+                      <input id="wf-stage-model" placeholder="예: gpt-5.2 / $CODEX_MODEL" />
+                      <small class="workflow-studio-field-help">선택한 stage 1개에만 모델 override를 적용합니다.</small>
+                    </label>
+                    <label>
+                      <span>Tool Mapping (쉼표 구분)</span>
+                      <input id="wf-stage-tools" list="wf-stage-tool-suggestions" placeholder="예: list_archive_files,read_document,web_search" />
+                      <small class="workflow-studio-field-help">비우면 프로필/런타임 기본 도구를 사용합니다.</small>
+                    </label>
+                    <label class="wide">
+                      <span>System Prompt Override (선택)</span>
+                      <textarea id="wf-stage-prompt" rows="4" placeholder="선택한 stage의 system prompt를 덮어씁니다."></textarea>
+                      <small class="workflow-studio-field-help">실험 목적일 때만 권장됩니다. 기본 Prompt 일관성이 먼저입니다.</small>
+                    </label>
+                  </div>
+                  <small id="wf-stage-tools-known" class="workflow-studio-note">사용 가능 도구: 로딩중...</small>
+                  <div id="wf-stage-tool-help" class="workflow-studio-tool-help"></div>
+                  <datalist id="wf-stage-tool-suggestions">
+                    <option value="list_archive_files"></option>
+                    <option value="list_supporting_files"></option>
+                    <option value="read_document"></option>
+                    <option value="web_search"></option>
+                    <option value="search_web"></option>
+                    <option value="source_index"></option>
+                    <option value="llm_generate"></option>
+                  </datalist>
+                  <div class="workflow-studio-toggles">
+                    <label class="toggle">
+                      <input type="checkbox" id="wf-stage-enabled" checked />
+                      <span>이 stage 사용</span>
+                    </label>
+                  </div>
+                  <p class="workflow-studio-note">
+                    저장 시 <code>report_notes/workflow_stage_overrides.json</code>로 기록되고 Federlicht 실행에
+                    <code>--agent-config</code>로 연결됩니다.
+                  </p>
+                </section>
+
+                <section class="workflow-studio-section">
+                  <h4>FederHav Bridge</h4>
+                  <p class="workflow-studio-note">
+                    FederHav는 User와 Orchestrator 사이에서 의도를 해석하고, Executor subagent를 통해
+                    Feather/Federlicht/단계별 agent 작업으로 전달합니다.
+                  </p>
+                </section>
+              </div>
+              <footer class="workflow-studio-actions">
+                <button type="button" id="workflow-run-resume" class="ghost">선택 단계부터</button>
+                <button type="button" id="workflow-run-feather" class="ghost">Run Feather</button>
+                <button type="button" id="workflow-run-federlicht" class="ghost">Run Federlicht</button>
+                <button type="button" id="workflow-run-all" class="primary">Run Workflow</button>
+              </footer>
+            </aside>
 
             <div
               id="telemetry-splitter"
@@ -658,13 +907,18 @@
               title="Drag to resize logs"
             ></div>
 
-            <section class="telemetry-block preview-block">
-              <div class="panel-head slim">
+            <section class="telemetry-block preview-block is-open" id="preview-popup" aria-hidden="false" tabindex="-1">
+              <div class="panel-head slim preview-popup-head" id="preview-popup-head">
                 <div>
                   <h2>File Preview</h2>
                   <p>Preview reports, markdown, PDFs, or edit text files.</p>
                 </div>
                 <div class="file-preview-head">
+                  <div class="preview-popup-actions">
+                    <button type="button" id="preview-popup-reset" class="ghost mini">위치 초기화</button>
+                    <button type="button" id="preview-popup-maximize" class="ghost mini">최대화</button>
+                    <button type="button" id="preview-popup-close" class="ghost mini">닫기</button>
+                  </div>
                   <label class="file-preview-size">
                     <span>View</span>
                     <select id="file-preview-size">
@@ -704,7 +958,10 @@
                   Save
                 </button>
                 <button type="button" id="file-preview-saveas" class="ghost">
-                  Save As
+                  Download
+                </button>
+                <button type="button" id="file-preview-export-pdf" class="ghost">
+                  PDF 내보내기
                 </button>
               </div>
             </section>
@@ -715,8 +972,8 @@
       <section class="workspace-panel" id="workspace-panel" aria-hidden="true">
         <div class="workspace-panel-head">
           <div>
-            <h2>Federnett Workspace</h2>
-            <p>Templates와 Agent Profiles를 한 패널에서 제어합니다.</p>
+            <h2>Federnett Workspace Settings</h2>
+            <p>Templates, Agent Profiles, Agent Capabilities를 한 패널에서 제어합니다.</p>
           </div>
           <div class="workspace-panel-actions">
             <button type="button" id="workspace-close" class="ghost">Close</button>
@@ -740,6 +997,15 @@
             aria-selected="false"
           >
             Agent Profiles
+          </button>
+          <button
+            type="button"
+            class="workspace-tab"
+            id="workspace-tab-capabilities"
+            data-workspace-tab="capabilities"
+            aria-selected="false"
+          >
+            Agent Capabilities
           </button>
         </div>
         <div class="workspace-pane active" id="workspace-pane-templates" data-workspace-pane="templates">
@@ -884,12 +1150,15 @@
                 <p id="agent-editor-meta" class="muted">Select a profile to edit.</p>
               </div>
               <div class="agent-editor-actions">
+                <button type="button" id="agent-root-auth" class="ghost">Root Unlock</button>
+                <button type="button" id="agent-session-auth" class="ghost">Sign In</button>
                 <button type="button" id="agent-clone" class="ghost">Clone</button>
                 <button type="button" id="agent-save" class="primary">Save</button>
                 <button type="button" id="agent-delete" class="danger">Delete</button>
               </div>
             </div>
             <div id="agent-readonly-hint" class="agent-readonly-hint"></div>
+            <div id="agent-session-status" class="agent-session-status muted">Session auth: disabled</div>
             <div class="agent-editor-grid">
               <label>
                 Profile ID
@@ -982,6 +1251,87 @@
             </label>
             <pre id="agent-status" class="agent-status">Ready.</pre>
           </div>
+        </div>
+      </section>
+        </div>
+        <div class="workspace-pane" id="workspace-pane-capabilities" data-workspace-pane="capabilities">
+      <section class="panel capability-studio-panel" id="capability-studio-panel">
+        <div class="panel-head slim">
+          <div>
+            <h2>Agent Capabilities</h2>
+            <p>Tool/Skill/MCP capability registry를 중앙 스튜디오에서 관리합니다.</p>
+          </div>
+          <div class="panel-pills">
+            <button type="button" class="ghost" id="cap-studio-refresh">Refresh</button>
+          </div>
+        </div>
+        <div class="capability-studio-grid">
+          <section class="capability-studio-runtime">
+            <h3>Runtime 상태</h3>
+            <div id="cap-studio-runtime-grid" class="ask-capability-grid"></div>
+            <h3>Capability Packs</h3>
+            <div id="cap-studio-pack-detail" class="cap-studio-pack-detail"></div>
+          </section>
+          <section class="capability-studio-manager">
+            <div class="ask-cap-manager-head">
+              <strong>Capability Registry</strong>
+              <span class="muted">keywords + action(kind/target) 바인딩으로 동작 경로를 정의합니다.</span>
+            </div>
+            <div class="ask-cap-manager-form">
+              <label>
+                Type
+                <select id="cap-studio-kind">
+                  <option value="tool">Tool</option>
+                  <option value="skill">Skill</option>
+                  <option value="mcp">MCP</option>
+                </select>
+              </label>
+              <label>
+                ID
+                <input id="cap-studio-id" class="ghost-input" placeholder="my_capability_id" />
+              </label>
+              <label>
+                Name
+                <input id="cap-studio-label" class="ghost-input" placeholder="My Capability" />
+              </label>
+              <label>
+                Description
+                <input id="cap-studio-desc" class="ghost-input" placeholder="What this capability does" />
+              </label>
+              <label>
+                Keywords
+                <input id="cap-studio-keywords" class="ghost-input" placeholder="search, summarize, report" />
+              </label>
+              <label>
+                Action
+                <select id="cap-studio-action-kind">
+                  <option value="none">none (metadata only)</option>
+                  <option value="open_path">open_path</option>
+                  <option value="open_url">open_url</option>
+                  <option value="set_inline_prompt">set_inline_prompt</option>
+                  <option value="run_feather">run_feather</option>
+                  <option value="run_federlicht">run_federlicht</option>
+                  <option value="run_feather_then_federlicht">run_feather_then_federlicht</option>
+                  <option value="mcp_ping">mcp_ping</option>
+                </select>
+              </label>
+              <label>
+                Action Target
+                <input id="cap-studio-action-target" class="ghost-input" placeholder="path/url/prompt text" />
+              </label>
+              <label>
+                Endpoint (MCP optional)
+                <input id="cap-studio-endpoint" class="ghost-input" placeholder="http://localhost:8787/sse" />
+              </label>
+              <label class="ask-policy-check">
+                <input type="checkbox" id="cap-studio-enabled" checked />
+                <span>Enabled</span>
+              </label>
+              <button type="button" id="cap-studio-add" class="primary">추가</button>
+            </div>
+            <div id="cap-studio-list" class="ask-cap-manager-list"></div>
+            <pre id="cap-studio-status" class="cap-studio-status">Ready.</pre>
+          </section>
         </div>
       </section>
         </div>
@@ -1211,6 +1561,9 @@
                   <code>--template</code>: report template name/path (default: auto).
                 </li>
                 <li>
+                  <code>--style-pack</code>: free-format HTML 스타일 프리셋 (none|dark|journal|magazine).
+                </li>
+                <li>
                   <code>--prompt</code>/<code>--prompt-file</code>: report focus prompt.
                 </li>
                 <li>
@@ -1224,6 +1577,9 @@
                 </li>
                 <li>
                   <code>--temperature-level</code>: model creativity profile (default: balanced=0.2).
+                </li>
+                <li>
+                  <code>--reasoning-effort</code>: off | low | medium | high | extra_high (추론형 모델에서만 권장).
                 </li>
                 <li>
                   <code>--web-search</code>: enable web research (default: off).
@@ -1318,6 +1674,10 @@
               <h4>Agent Tools / Skills / MCP</h4>
               <ul>
                 <li>
+                  권장 용어는 <strong>Capability Packs(역량팩)</strong>입니다. Tool/Skill/MCP를
+                  분리 표시하되, 운영/거버넌스는 패키지 단위로 관리합니다.
+                </li>
+                <li>
                   Ask 패널의 <strong>Agent 도구/스킬/MCP</strong> 칩은 현재 답변에서 사용 가능한 구성과
                   실행 상태를 보여줍니다.
                 </li>
@@ -1330,9 +1690,19 @@
                   등록된 서버가 있을 때만 표시됩니다.
                 </li>
                 <li>
-                  MCP/Skill 확장은 소스 코드에서 표준 인터페이스를 유지해 추가하세요:
-                  <code>src/federnett/help_agent.py</code> capability payload, 
-                  <code>site/federnett/app.js</code> capability renderer를 함께 업데이트하면 됩니다.
+                  커스텀 Capability Registry는 <code>site/agent_profiles/capability_registry.json</code>에
+                  저장됩니다. Ask 패널의 <code>관리</code>에서 Tool/Skill/MCP 메타를 추가/삭제할 수 있습니다.
+                </li>
+                <li>
+                  커스텀 capability는 <code>keywords + action(kind/target)</code>를 설정하면,
+                  질문 문맥에서 자동 제안되어 실행 버튼으로 연결됩니다.
+                </li>
+                <li>
+                  Ask 패널에는 Ask 기본 도구뿐 아니라 Federlicht 내부 runtime 도구,
+                  deepagents 라우팅/실행 경로도 함께 노출됩니다.
+                </li>
+                <li>
+                  운영 정책 로드맵은 <code>docs/capability_governance_plan.md</code>를 참고하세요.
                 </li>
               </ul>
             </section>
@@ -1341,7 +1711,7 @@
               <ul>
                 <li>
                   Click a file in Run Studio to preview. Use Open to launch in a new tab,
-                  Save / Save As for editable text.
+                  Save / Download / PDF Export for editable text.
                 </li>
               </ul>
             </section>
@@ -1361,6 +1731,53 @@
           </header>
           <div class="modal-list">
             <pre id="ask-action-preview" class="agent-status">Ready.</pre>
+            <section id="ask-action-run-target-box" class="ask-action-run-target-box is-hidden">
+              <strong>실행 대상 Run 확정</strong>
+              <label for="ask-action-run-target">
+                <span>Target Run</span>
+                <input
+                  id="ask-action-run-target"
+                  list="ask-action-run-target-options"
+                  placeholder="예: test_my_run"
+                  autocomplete="off"
+                />
+              </label>
+              <div class="ask-action-run-quick">
+                <button type="button" id="ask-action-use-suggested-run" class="ghost mini is-hidden">
+                  제안 run 사용
+                </button>
+                <button type="button" id="ask-action-use-current-run" class="ghost mini">
+                  현재 선택 run 사용
+                </button>
+                <button type="button" id="ask-action-clear-run-target" class="ghost mini">
+                  입력 지우기
+                </button>
+              </div>
+              <small id="ask-action-run-target-context" class="muted"></small>
+              <datalist id="ask-action-run-target-options"></datalist>
+              <label class="ask-policy-check ask-action-create-policy" id="ask-action-run-create-wrap">
+                <input type="checkbox" id="ask-action-run-create" />
+                <span>Run이 없으면 생성</span>
+              </label>
+              <label class="ask-policy-check ask-action-run-target-confirm-wrap" id="ask-action-run-target-confirm-wrap">
+                <input type="checkbox" id="ask-action-run-target-confirm" />
+                <span id="ask-action-run-target-confirm-label">실행 대상을 확인했습니다.</span>
+              </label>
+              <small id="ask-action-run-target-note" class="muted"></small>
+            </section>
+            <section
+              id="ask-action-instruction-confirm-box"
+              class="ask-action-instruction-confirm-box is-hidden"
+              aria-hidden="true"
+            >
+              <strong>Instruction 확인</strong>
+              <small id="ask-action-instruction-confirm-context" class="muted"></small>
+              <label class="ask-policy-check ask-action-instruction-confirm-wrap" id="ask-action-instruction-confirm-wrap">
+                <input type="checkbox" id="ask-action-instruction-confirm" />
+                <span id="ask-action-instruction-confirm-label">Instruction 초안을 확인했습니다.</span>
+              </label>
+              <small id="ask-action-instruction-confirm-note" class="muted"></small>
+            </section>
           </div>
           <div class="modal-footer">
             <button type="button" id="ask-action-confirm" class="primary">확인 후 실행</button>
@@ -1376,6 +1793,6 @@
     </div>
 
     <datalist id="model-options"></datalist>
-    <script src="./app.js" type="module"></script>
+    <script src="./app.js?v=20260220_uiux_v23" type="module"></script>
   </body>
 </html>

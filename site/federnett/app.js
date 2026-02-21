@@ -1376,7 +1376,7 @@ function renderWorkflowStudioPanel(stageId = "") {
   } else if (focusDef) {
     focusNodeLabel = `${focusDef.label} (${focusDef.id})`;
   }
-  const stageHeader = "Workflow Studio (overview)";
+  const stageHeader = "Workflow Studio";
   setText("#stage-detail-title", stageHeader);
   const body = $("#stage-detail-body");
   if (body) {
@@ -1389,7 +1389,7 @@ function renderWorkflowStudioPanel(stageId = "") {
           : (spotlightStage === "result"
             ? "Result 단계는 현재 산출 파일 확인/재실행 전략 선택 지점입니다."
             : "전체 파이프라인을 한 화면에서 조정합니다.")));
-    body.textContent = `현재 선택 노드: ${focusNodeLabel}\n\n${focusHelp}\n\n아래 섹션에서 Feather/Federlicht/Quality/Bridge 설정을 함께 조정할 수 있습니다.`;
+    body.textContent = `현재 선택 노드: ${focusNodeLabel}\n\n${focusHelp}\n\n아래 섹션에서 Pipeline 선택, Stage Override, FederHav Bridge를 조정할 수 있습니다.`;
   }
   panel.querySelectorAll("[data-stage-scope]").forEach((section) => {
     const token = section.getAttribute("data-stage-scope") || "";
@@ -4784,6 +4784,13 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   ]
     .filter(Boolean)
     .join("");
+  const firstCommand = lines.find((line) => line.startsWith("$ "));
+  const compactCommand = firstCommand
+    ? firstCommand.slice(2).replace(/\s+/g, " ").trim()
+    : "";
+  const summaryLabel = compactCommand
+    ? `Ran ${compactCommand.slice(0, 96)}${compactCommand.length > 96 ? "..." : ""}`
+    : `작업 로그 ${lineCount}줄`;
   if (lineCount <= 4 && !hasError) {
     const plainRows = lines
       .map((line) => `<div class="live-ask-process-line">${renderRawLineWithLinks(line)}</div>`)
@@ -4797,13 +4804,15 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   }
   return `
     <section class="live-ask-process-wrap is-inline">
-      <div class="live-ask-process-inline-head">
-        <span>작업 로그</span>
-        ${chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
-      </div>
-      <div class="live-ask-process-body is-inline"${opened ? " data-process-open=\"true\"" : ""} data-process-fold="${escapeHtml(foldKey)}">
-        ${renderStructuredLog(normalized)}
-      </div>
+      <details class="live-ask-process-fold" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
+        <summary>
+          <span>${escapeHtml(summaryLabel)}</span>
+          ${chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
+        </summary>
+        <div class="live-ask-process-body is-inline">
+          ${renderStructuredLog(normalized)}
+        </div>
+      </details>
     </section>
   `;
 }
@@ -5066,7 +5075,7 @@ function renderLiveAskThread() {
     .join("");
 
   if (showGlobalLogCard) {
-    host.innerHTML = `${globalLogCard}${turnHtml}`;
+    host.innerHTML = `${turnHtml}${globalLogCard}`;
   } else {
     host.innerHTML = turnHtml;
   }
@@ -7530,7 +7539,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     if (resolvedRun) {
       payload.output = resolvedRun;
     } else if (runHint) {
-      payload.output = joinPath("site/runs", runHint);
+      payload.output = joinPath(siteRunsPrefix(), runHint);
     }
     const runMeta = runHint
       ? (resolvedRun
@@ -7598,7 +7607,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     if (resolvedRun) {
       featherPayload.output = resolvedRun;
     } else if (runHint) {
-      featherPayload.output = joinPath("site/runs", runHint);
+      featherPayload.output = joinPath(siteRunsPrefix(), runHint);
     }
     const federPayload = buildFederlichtPayload();
     if (resolvedRun) {
@@ -7643,7 +7652,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     return {
       type: actionType,
       title: "새 Run Folder 생성 미리보기",
-      meta: "site/runs 하위에 run 폴더를 만들고 instruction 초안을 생성합니다.",
+      meta: `${siteRunsPrefix()} 하위에 run 폴더를 만들고 instruction 초안을 생성합니다.`,
       preview: JSON.stringify(
         {
           endpoint: "/api/runs/create",
@@ -8429,6 +8438,7 @@ async function loadInfo() {
     siteOutputInput.value = reportHubBase();
   }
   setMetaStrip();
+  syncFeatherOutputHint();
 }
 
 function sortRuns(runs) {
@@ -8484,7 +8494,8 @@ function siteRunsBase() {
     .map((entry) => normalizePathString(entry))
     .find((entry) => entry && /(?:^|\/)runs$/i.test(entry));
   if (preferred) return preferred.replace(/\/+$/, "");
-  const siteRoot = state.info?.site_root ? String(state.info.site_root) : "site";
+  const siteRoot = state.info?.site_root ? String(state.info.site_root) : "";
+  if (!siteRoot) return "runs";
   return `${siteRoot.replace(/\/+$/, "")}/runs`;
 }
 
@@ -8646,10 +8657,23 @@ function normalizeRunHint(value) {
   token = token.replace(/[.,;:!?]+$/g, "").trim();
   token = normalizePathString(token);
   if (!token) return "";
-  if (token.toLowerCase().startsWith("site/runs/")) {
-    token = token.slice("site/runs/".length);
-  } else if (token.toLowerCase().startsWith("runs/")) {
-    token = token.slice("runs/".length);
+  const lowered = token.toLowerCase();
+  const runRoots = Array.isArray(state.info?.run_roots) ? state.info.run_roots : [];
+  const prefixes = [...new Set(
+    [...runRoots, "runs", "site/runs"]
+      .map((entry) => normalizePathString(entry).replace(/^\/+|\/+$/g, "").toLowerCase())
+      .filter(Boolean),
+  )]
+    .sort((a, b) => b.length - a.length);
+  for (const prefix of prefixes) {
+    if (lowered === prefix) {
+      token = "";
+      break;
+    }
+    if (lowered.startsWith(`${prefix}/`)) {
+      token = token.slice(prefix.length + 1);
+      break;
+    }
   }
   return token.replace(/^\/+|\/+$/g, "");
 }
@@ -11343,7 +11367,7 @@ function renderRunPickerList() {
     ? state.runPicker.filtered
     : state.runPicker.items;
   if (!items.length) {
-    host.innerHTML = `<div class="modal-item"><strong>No runs found</strong><small>Use Feather to create a run in site/runs.</small></div>`;
+    host.innerHTML = `<div class="modal-item"><strong>No runs found</strong><small>Use Feather to create a run in ${escapeHtml(siteRunsPrefix())}.</small></div>`;
     return;
   }
   host.innerHTML = items
@@ -13205,6 +13229,7 @@ function renderWorkflow() {
     const selected = workflowIsStageSelected(stepId);
     const isAuto = state.workflow.autoStages.has(stepId);
     const isActive = isFederhav ? federhavBusy : state.workflow.activeStep === stepId;
+    const isRunningNode = isFederhav ? isActive : (isActive && state.workflow.running);
     const isComplete = isFederhav ? federhavTouched : state.workflow.completedSteps.has(stepId);
     const isResumeTarget =
       state.workflow.historyMode
@@ -13245,7 +13270,7 @@ function renderWorkflow() {
       stateToken = "error";
     } else if (isResumeTarget) {
       stateToken = "resume";
-    } else if (isActive) {
+    } else if (isRunningNode) {
       stateToken = "running";
     } else if (isComplete) {
       stateToken = "done";
@@ -13739,9 +13764,20 @@ function normalizeLogPathCandidate(rawToken) {
     if (rootAbs && normalizedToken.startsWith(`${rootAbs}/`)) {
       return normalizedToken.slice(rootAbs.length + 1);
     }
-    const siteRunsPos = normalizedToken.toLowerCase().indexOf("/site/runs/");
-    if (siteRunsPos >= 0) {
-      return normalizedToken.slice(siteRunsPos + 1);
+    const loweredToken = normalizedToken.toLowerCase();
+    const runRoots = Array.isArray(state.info?.run_roots) ? state.info.run_roots : [];
+    for (const root of runRoots) {
+      const normalizedRoot = normalizePathString(root).toLowerCase();
+      if (!normalizedRoot) continue;
+      const marker = `/${normalizedRoot}/`;
+      const pos = loweredToken.indexOf(marker);
+      if (pos >= 0) {
+        return normalizedToken.slice(pos + 1);
+      }
+    }
+    const runsPos = loweredToken.indexOf("/runs/");
+    if (runsPos >= 0) {
+      return normalizedToken.slice(runsPos + 1);
     }
     return normalizedToken;
   }
@@ -15520,16 +15556,13 @@ function handleTabs() {
     }
     if (panels.feather) panels.feather.classList.toggle("active", resolved === "feather");
     if (panels.federlicht) panels.federlicht.classList.toggle("active", resolved === "federlicht");
-    if (panels.runstudio) panels.runstudio.classList.toggle("is-active", resolved === "runstudio");
+    if (panels.runstudio) panels.runstudio.classList.toggle("active", resolved === "runstudio");
     if (resolved === "federlicht") {
       syncPromptFromFile(true).catch((err) => {
         if (!isMissingFileError(err)) {
           appendLog(`[prompt] failed to load: ${err}\n`);
         }
       });
-    }
-    if (resolved === "runstudio") {
-      focusPanel("#run-studio-wrap");
     }
   };
   const initial = tabs.find((t) => t.classList.contains("active"))?.dataset.tab;
@@ -15545,16 +15578,11 @@ function handleTabs() {
 function handleQuickRunButtons() {
   const featherQuick = $("#quick-run-feather");
   const federlichtQuick = $("#quick-run-federlicht");
-  const runStudioQuick = $("#quick-open-runstudio");
   featherQuick?.addEventListener("click", () => {
     $("#feather-form")?.requestSubmit();
   });
   federlichtQuick?.addEventListener("click", () => {
     $("#federlicht-form")?.requestSubmit();
-  });
-  runStudioQuick?.addEventListener("click", () => {
-    document.querySelector('.tab[data-tab="runstudio"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    focusPanel("#run-studio-wrap");
   });
 }
 
@@ -15574,6 +15602,21 @@ function handlePromptExpandControl() {
   applyState();
 }
 
+function syncFeatherOutputHint() {
+  const output = $("#feather-output");
+  const hint = $("#feather-output-hint");
+  if (!output || !hint) return;
+  const base = siteRunsPrefix();
+  const current = normalizePathString(output.value || "");
+  if (!current) {
+    const example = joinPath(base, "my_run");
+    hint.innerHTML = `Run root: <code>${escapeHtml(base)}</code> · 예: <code>${escapeHtml(example)}</code>`;
+    return;
+  }
+  const resolved = normalizePathString(expandSiteRunsPath(current));
+  hint.innerHTML = `Run root: <code>${escapeHtml(base)}</code> · resolved: <code>${escapeHtml(resolved || current)}</code>`;
+}
+
 function handleFeatherRunName() {
   const runName = $("#feather-run-name");
   const output = $("#feather-output");
@@ -15584,12 +15627,14 @@ function handleFeatherRunName() {
     const value = runName.value.trim();
     if (!value) return;
     output.value = value;
+    syncFeatherOutputHint();
     if (input && !featherInputTouched) {
       input.value = `${value}/instruction/${value}.txt`;
     }
   });
   output.addEventListener("input", () => {
     featherOutputTouched = true;
+    syncFeatherOutputHint();
     if (input && !featherInputTouched) {
       const cleaned = normalizePathString(output.value || "");
       if (cleaned) {
@@ -15601,6 +15646,7 @@ function handleFeatherRunName() {
   input?.addEventListener("input", () => {
     featherInputTouched = true;
   });
+  syncFeatherOutputHint();
 }
 
 function handleFeatherAgenticControls() {
@@ -17928,7 +17974,6 @@ function handleControlPanelToggle() {
   openRunStudio?.addEventListener("click", () => {
     openPanel();
     document.querySelector('.tab[data-tab="runstudio"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    focusPanel("#run-studio-wrap");
   });
 }
 

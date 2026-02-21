@@ -129,199 +129,110 @@ pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_fed
 
 ## 3) 반영 완료/부분완료/미완 상태표
 
-## 3.1 사용자 요구 대비 상태
+## 3.1 사용자 요구 대비 상태 (2026-02-21 최신)
 
-1. Codex 모델 옵션 노출
-- 상태: **부분완료**
-- UI preset 목록 반영됨. 다만 최종 옵션 세트/라벨 정책 고정 필요.
-
-2. 규칙 기반이 아닌 agentic 수행
-- 상태: **부분완료**
-- deepagent 우선 + rule fallback opt-in 구조 반영됨.
-- 아직 "완전한 governing-agent 네트워크" 관점(E2E 오케스트레이션 증명)은 추가 필요.
-
-3. 로그인/서명 기반 책임성
-- 상태: **부분완료**
-- session auth + report-hub signed metadata 반영.
-- 계정 관리 UX/운영 정책 문서화 보강 필요.
-
-4. 워크플로우에 FederHav + tool 가시성
+1. run root / site 정책 분리
 - 상태: **완료(2차)**
-- pipeline에 federhav 노드 추가.
-- Ask/Live Ask 경로에서 governor tool trace(`trace_id/tool_id/duration/token/cache`)를 실시간/이력 UI와 작업 로그에 노출.
-- 후속: stage-level 비용 집계 카드(일/런 단위)는 별도 대시보드화 필요.
+- `DEFAULT_RUN_ROOTS=("runs","site/runs")`로 전환되어 신규 run은 `runs/*`를 우선 사용.
+- 기존 `site/runs/*`는 하위 호환으로 계속 스캔/열람 가능.
 
-5. Run Studio 분리/접근성
+2. 산출물(run)과 report hub 분리
 - 상태: **완료(1차)**
-- 사이드바에서 Run Studio 접근 버튼 분리 + Run Map 계층 필터 반영.
-- 계층 칩을 `필수/결과/근거/로그/보조` 톤으로 재분류해 필수/보조 탐색 경로를 축약.
-- 후속: 대형 run(수백 파일)에서 스크롤 성능 최적화.
+- `run roots`와 `report_hub_root(site/report_hub)`를 분리 노출하고 메타 스트립에 병렬 표기.
+- report hub는 게시/공유 목적, run은 작업 아카이브 목적이라는 역할 분리 유지.
 
-6. Live Logs 답변 잘림/표시 문제
+3. Sidebar 탭 UX 통일(Feather/Federlicht/Run Studio)
+- 상태: **완료**
+- Run Studio 탭 클릭 시 강제 포커스 이동(`focusPanel`) 제거.
+- Quick 버튼은 탭별 단일 버튼만 표시(`Run Feather` 또는 `Run Federlicht`), `Open Run Studio` 제거.
+
+4. Feather Run Folder 입력 가시성
+- 상태: **완료**
+- `Run Folder (Output)` 라벨로 명확화하고 run root 기준 resolved 경로 힌트를 실시간 표시.
+
+5. Workflow Result 상태 오표시(`RUNNING`) 수정
+- 상태: **완료**
+- `activeStep=result`만 남은 완료 상태에서 `running`으로 보이지 않도록 노드 상태 판정 분리.
+
+6. Live Ask 작업로그 표시 개선
+- 상태: **완료(2차)**
+- 작업로그를 접힘형으로 바꾸고 summary에 `Ran <command>` 형태를 표시.
+- turn 로그가 없을 때 글로벌 로그 카드가 대화 하단에 붙도록 정리.
+
+7. Workflow Studio 중복 설정 정리
 - 상태: **완료(1차)**
-- `live-ask-thread` inset 계산을 composer overlay 여부 기준으로 분기해 과도한 하단 inset 누적을 차단.
-- 1366x768 / 1920x1080 / 2560x1440에서 마지막 답변/액션 버튼 잘림 재현 케이스 해소.
-- 후속: 대화가 수백 turn 이상일 때 auto-follow 성능 관찰.
+- `Feather 설정`, `Federlicht 설정`, `Quality 루프 설정` 중복 섹션 제거.
+- Studio는 pipeline 선택/Stage override/FederHav bridge 중심으로 축소.
 
-7. "FederHav에게 요청" 라벨 동적화
+8. Workflow Studio 패널 렌더링 가시성
+- 상태: **완료(1차)**
+- stagebar/detail frame의 배경/경계/z-index/overflow를 조정해 잘림/겹침 현상 완화.
+
+9. `READY` 노드 의미 정합성
+- 상태: **완료(정의 확인)**
+- 현재 구현에서 `READY`는 해당 노드가 실행 가능하며 선행 조건이 충족된 대기 상태를 의미.
+- 사용자 설명(“작업 수행 준비 상태”)과 구현 의미가 일치함.
+
+10. Federlicht 철학 반영(Feather -> Archive -> Federlicht)
 - 상태: **부분완료**
-- `Agent에게 요청` + active profile/agent 기반 표시 로직 존재.
-- 모든 케이스(기존 이력 복원 포함)에서 일관 노출 재검증 필요.
+- 질문 보강/근거 추적/run archive 재활용 흐름은 반영됨.
+- report hub의 토론/코멘트/follow-up write-flow UI 완성은 잔여.
 
-8. 입력창 하단 안내문 UX
+11. 계정/권한 운영 문서화
 - 상태: **부분완료**
-- 문구 및 위치가 개편되었으나, 시인성/톤(강조색 과다) 개선 필요.
+- auth API와 signed metadata는 반영.
+- 운영 정책(초기 root bootstrap, 권한 분기 가이드) 문서 정리는 추가 필요.
 
-9. White/Black 테마
-- 상태: **완료(기능)**
-- 기본 동작 존재. 컴포넌트별 대비/테마별 미세 조정은 후속.
-
-10. Built-in profile 수정 잠금/root unlock
+12. Playwright 회귀 자동화
 - 상태: **부분완료**
-- root unlock + session root 권한 반영.
-- 실제 운영 계정 정책(초기 root bootstrap, 비밀번호 갱신 등) 고도화 필요.
-
-11. 사이드바 버튼 비율/균형
-- 상태: **완료(반응형)**
-- 1024x768 / 900x700 / 820x680 / 768x1024 기준 quick-run/tab 버튼 clipping 미재현 확인.
-- 후속: 모바일 세로폭(<=430px)에서 버튼 밀집도 미세 조정.
-
-12. "state-memory + 보조로그 1,200자" 의미 명확화
-- 상태: **부분완료**
-- README 설명 추가됨.
-- UI inline 설명을 더 직관적으로 줄여야 함.
-
-13. deepagent 기반 자동 instruction 보정 + 실행
-- 상태: **완료(3차)**
-- quality guard + auto_instruction + `require_instruction_confirm` 신호 반영.
-- Ask Action modal에 `Instruction 확인` 체크 게이트가 추가되어 미확인 상태 실행이 차단됨.
-- `clarify_required + clarify_question` 응답 필드 추가.
-- Live Ask 액션 버튼에 `질의 보강하기`를 연결해 보강 질문을 입력창으로 즉시 주입.
-- Act 모드 자동실행은 `clarify_required=true`일 때 강제 보류됨.
-
-14. E2E 테스트/반복 개선
-- 상태: **부분완료**
-- 단위/통합 테스트는 확장됨.
-- Playwright 기반 시각/상호작용 E2E 회귀셋은 아직 부족.
+- 수동 회귀 시나리오는 안정화.
+- CI 고정 smoke 시나리오는 미완.
 
 ---
 
 ## 4) 남은 핵심 TODO (새 대화 첫 스프린트 권장)
 
-## P0 (즉시)
+## P0 (즉시 유지)
 
-- [x] Live Logs 렌더링 안정화 (1차 완료)
-  - 목표:
-    - 긴 답변, 근거 펼침, 제안 버튼, composer 동시 노출 상황에서 **잘림 0건**
-    - 내부 중첩 스크롤 최소화
-  - 대상:
-    - `site/federnett/app.css`
-    - `site/federnett/app.js`
-    - `site/federnett/index.html`
-  - 검증:
-    - 1366x768 / 1920x1080 / 2560x1440 Playwright 재현에서 마지막 메시지 + 제안 액션 버튼 clipping 미재현
+- [ ] 계정/권한 운영 문서화 마무리
+  - root/admin/user 권한표, root unlock/session auth 정책, built-in profile 편집 기준을 한 문서로 고정.
 
-- [x] Run Studio 파일 계층 UX 정리 (1차 완료)
-  - 목표:
-    - 결과물/입력/근거/로그를 계층적으로 구분
-    - 긴 파일명 잘림 시 hover/tooltip + 폭 유연화
-  - 대상:
-    - `site/federnett/app.js` (트리 렌더러)
-    - `site/federnett/app.css`
-  - 검증:
-    - `openclaw`, `agenticAI_recent`, `동영상생성AI` run 기준 all-view에서 입력/결과/근거/로그 계층 분리 확인
-    - 계층 칩 필터 + 상단 Latest 항목으로 필수 파일 접근 경로 단축
+- [ ] Report Hub write-flow UI 완성
+  - comment/followup/link API를 UI submit 플로우와 연결.
+  - 게시 승인(사용자 허락) 이후 hub 게시 흐름 명시.
 
-- [x] Workflow Studio 조작성 재정비 (가시성 1차 완료)
-  - 목표:
-    - 개별 노드 클릭이 Studio 전체 제어성을 해치지 않도록 정리
-    - active/selected/running 상태 색상 3단계 명확 구분
-  - 대상:
-    - `site/federnett/app.js`
-    - `site/federnett/app.css`
-  - 검증:
-    - workflow 노드별 `state` 배지(`ready/queued/running/done/off/resume/error`) 추가
-    - selected/active/complete 시각 구분을 테마 공통 토큰으로 강화
+- [ ] Playwright 회귀셋 상시화
+  - 핵심 플로우(질문 -> 제안 -> run 전환 -> Feather/Federlicht 실행 -> 결과 확인)를 CI smoke로 고정.
 
-- [x] run-target 확정 UX 최종 마무리 (정책 반영 완료)
-  - 목표:
-    - 실행 전 대상 run 확인/생성 정책이 항상 일관
-    - 힌트 추론 실패 시 자동 fallback 문구/가이드 제공
-  - 대상:
-    - `site/federnett/app.js`
-    - `src/federnett/help_agent.py`
-  - 검증:
-    - 잘못된 run label/action 미표시
-    - `switch_run`은 유효 hint 없으면 서버/클라이언트 모두 액션 생성 차단
+## P1 (개선)
 
-## P1 (바로 다음)
+- [ ] 대형 run 성능 최적화
+  - Run Studio 트리(수백 파일)에서 렌더/필터 체감지연 계측 후 가상화/지연 렌더링 검토.
 
-- [x] FederHav deepagent governor 고도화 (trace 가시화 1차 완료)
-  - 목표:
-    - help/executor/planner/evidence/writer/quality subagent 체인을 명확히 분리
-    - tool 호출 추적(trace id, tool id, 비용/시간 카운터) 노출
-  - 대상:
-    - `src/federhav/agentic_runtime.py`
-    - `src/federnett/help_agent.py`
-    - `site/federnett/app.js` (로그 뷰)
-  - 진행(2026-02-21):
-    - `/api/help/ask` 및 `/api/help/ask/stream`에 `trace.trace_id/steps` 포함
-    - Live Ask process log에 `[run-agent:activity]` 라인 추가
-    - Ask trace 패널 + Live Ask inline 로그에 `trace/tool/duration/token/cache` 메타 표시
+- [ ] Workflow 관측 대시보드
+  - stage-level 비용/시간 집계를 run 단위 카드로 분리 노출.
 
-- [x] instruction 자동작성/보정 흐름 강화 (질의 보강 단계 포함)
-  - 목표:
-    - 모호한 질문 -> 질의 보강 질문 -> instruction draft -> 사용자 확인 -> 실행
-  - 대상:
-    - `src/federnett/help_agent.py`
-    - `src/federnett/routes.py`
-    - `site/federnett/app.js`
-  - 수용기준:
-    - "실행해줘" 같은 입력에서 저품질 query 직접 실행 금지
-  - 진행(2026-02-20):
-    - `require_instruction_confirm` / `instruction_confirm_reason` 액션 필드 도입
-    - Ask Action modal에 instruction 확인 체크박스 게이트 추가
-    - 체크 미완료 시 Confirm 버튼 비활성 + 실행 함수 직접 호출 경로에서도 서버 실행 차단
-  - 진행(2026-02-21):
-    - `clarify_required` / `clarify_question` 도입
-    - `질의 보강하기` 액션 버튼 추가 + follow-up prompt 자동 입력
-    - Act 모드에서 clarify-required 액션 자동실행 차단
+## 4.1 미완 원인 분석
 
-- [ ] 계정/권한 운영 시나리오 문서화
-  - 목표:
-    - root/admin/user 역할별 가능 동작 표준화
-    - built-in profile 수정/잠금 해제 정책 명문화
-  - 대상:
-    - `README.md`
-    - `docs/*`
+- 원인 A: 기능 구현이 문서화 속도를 앞질러 운영 가이드가 뒤처짐.
+  - 조치: 권한/게시 정책을 README+docs로 동기화.
 
-## P2 (후속)
+- 원인 B: Report Hub는 API 선구현, UI 연결은 후행이라 사용자 관점 completion이 낮음.
+  - 조치: write-flow 최소 UI를 먼저 붙여 운영 루프를 닫기.
 
-- [ ] Report Hub 협업 기능 본 구현
-  - comment/followup/link API에 실제 UI write flow 연결
-  - 게시물 ID 기반 로딩 + run 연결 + 재생성 제안 흐름 완성
+- 원인 C: Playwright는 수동 점검 중심이라 회귀 누락 위험이 남아 있음.
+  - 조치: smoke 시나리오를 스크립트화해 고정.
 
-- [ ] Playwright E2E 회귀 세트 상시화
-  - 핵심 시나리오:
-    - 질문 -> 답변 -> 제안 실행 -> run 전환 -> feather/federlicht 실행 -> 결과/로그 표시
+## 4.2 목표 조정 (지금 굳이 완성하지 않아도 되는 항목)
 
-## 4.1 미완 원인 분석 + 다음 핵심 TODO
+- `site/runs`의 즉시 물리적 대규모 마이그레이션은 보류 가능.
+  - 이유: 현재 `runs/*` 우선 + `site/runs/*` 호환으로 운영 리스크 없이 점진 이전 가능.
 
-- 원인 A (해결): FederHav governor 체인의 trace 스키마를 UI까지 고정 포맷으로 노출 완료.
-  - 반영: `trace_id/tool_id/duration/token_est/cache_hit`를 `help_agent -> app.js`에 직렬화/렌더링.
+- Federnett/Federlicht 코드베이스의 별도 리포 분리(완전 분기)는 당장 필수 아님.
+  - 이유: 경로/정책 분리와 산출물 분리만으로도 pages publish/git 관리 효율을 즉시 확보 가능.
 
-- 원인 B (대부분 해결): `질문 보강 -> draft 확인 -> 실행` 중 질문 보강 유도 추가.
-  - 반영: `clarify_required + 질의 보강하기`로 모호한 실행요청을 보강 턴으로 유도.
-  - 잔여: server-side confirmed-draft 토큰(라우트 레벨) 정책은 문서화/선택 구현 필요.
-
-- 원인 C: Playwright 회귀가 수동 스크립트 중심이라 지속적 회귀 감시가 어려움.
-  - 영향: UI 변경 시 재현 시나리오 누락 가능성.
-  - 다음 조치: 핵심 시나리오(ask->action->run-switch->workflow)를 CI용 smoke 스크립트로 고정.
-
-- 다음 착수 우선순위(권장):
-  1. P1 `계정/권한 운영 시나리오 문서화`
-  2. P2 `Playwright 회귀 세트 상시화`
-  3. P2 `Report Hub 협업 write-flow 완성`
+- Workflow Studio의 세부 시각효과(애니메이션/미세 타이포 튜닝)는 후순위.
+  - 이유: 현재 우선순위는 기능 일관성/오표시 제거/회귀 안정화.
 
 ---
 

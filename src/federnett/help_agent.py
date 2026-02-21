@@ -13,6 +13,7 @@ from typing import Any, Iterator
 from urllib.parse import urlparse
 
 from .capabilities import infer_capability_action, runtime_capabilities
+from .constants import DEFAULT_RUN_ROOTS
 from .utils import safe_rel
 
 try:
@@ -36,6 +37,7 @@ _INCLUDE_PATHS = (
     "site/federnett",
 )
 _EXCLUDE_PREFIXES = (
+    "runs",
     "site/runs",
     "site/analytics",
 )
@@ -118,6 +120,42 @@ _META_PATH_HINTS = (
     "src/federnett/app.py",
     "src/federnett/help_agent.py",
 )
+
+
+def _build_known_run_root_prefixes() -> tuple[str, ...]:
+    prefixes: list[str] = []
+    for raw in [*DEFAULT_RUN_ROOTS, "runs", "site/runs"]:
+        token = str(raw or "").strip().replace("\\", "/").strip("/").lower()
+        if not token:
+            continue
+        if token not in prefixes:
+            prefixes.append(token)
+    prefixes.sort(key=len, reverse=True)
+    return tuple(prefixes)
+
+
+_KNOWN_RUN_ROOT_PREFIXES = _build_known_run_root_prefixes()
+
+
+def _strip_known_run_root_prefix(token: str) -> str:
+    value = str(token or "").strip().replace("\\", "/").strip("/")
+    if not value:
+        return ""
+    lowered = value.lower()
+    for prefix in _KNOWN_RUN_ROOT_PREFIXES:
+        if lowered == prefix:
+            return ""
+        marker = f"{prefix}/"
+        if lowered.startswith(marker):
+            return value[len(marker) :]
+    return value
+
+
+def _mentions_run_root_token(text: str) -> bool:
+    lowered = str(text or "").strip().lower()
+    if not lowered:
+        return False
+    return any(f"{prefix}/" in lowered for prefix in _KNOWN_RUN_ROOT_PREFIXES)
 _RUN_CONTEXT_PATTERNS = (
     "instruction/*.txt",
     "instruction/*.md",
@@ -2227,12 +2265,7 @@ def _normalize_run_hint(raw: str) -> str:
     token = re.sub(r"([A-Za-z0-9._/\-])으$", r"\1", token)
     token = re.sub(r"(?:를|을|로|으로)$", "", token).strip()
     token = re.sub(r"^(?:\./)+", "", token)
-    lowered = token.lower()
-    if lowered.startswith("site/runs/"):
-        token = token[len("site/runs/") :]
-    elif lowered.startswith("runs/"):
-        token = token[len("runs/") :]
-    token = token.strip("/")
+    token = _strip_known_run_root_prefix(token).strip("/")
     return token[:180]
 
 
@@ -2328,8 +2361,9 @@ def _extract_run_hint(raw: str, *, strict: bool = False) -> str:
         "act",
         "mode",
     }
+    run_root_pattern = "|".join(re.escape(prefix) for prefix in _KNOWN_RUN_ROOT_PREFIXES)
     patterns = (
-        r"((?:site/runs|runs)/[^\s`\"'<>]+)",
+        rf"((?:{run_root_pattern})/[^\s`\"'<>]+)",
         r"`([^`]+)`",
         r"'([^']+)'",
         r"\"([^\"]+)\"",
@@ -2349,9 +2383,13 @@ def _extract_run_hint(raw: str, *, strict: bool = False) -> str:
     if strict:
         return ""
     lowered_text = text.lower()
-    if not any(token in lowered_text for token in ("run", "runs/", "site/runs/", "폴더", "런")):
+    if not any(token in lowered_text for token in ("run", "폴더", "런")) and not _mentions_run_root_token(lowered_text):
         return ""
-    for token in re.findall(r"(?:site/runs/|runs/)?[A-Za-z0-9가-힣][A-Za-z0-9가-힣._/\-]{2,}", text):
+    for token in re.findall(
+        rf"(?:{run_root_pattern}/)?[A-Za-z0-9가-힣][A-Za-z0-9가-힣._/\-]{{2,}}",
+        text,
+        flags=re.IGNORECASE,
+    ):
         candidate = _normalize_run_hint(token)
         if not candidate:
             continue
@@ -2388,10 +2426,8 @@ def _extract_recent_run_hint(history: list[dict[str, str]] | None) -> str:
                 "run 변경",
                 "switch run",
                 "select run",
-                "site/runs/",
-                "runs/",
             )
-        ):
+        ) and not _mentions_run_root_token(lowered):
             continue
         hint = _extract_run_hint(content, strict=True)
         if hint:
@@ -3011,8 +3047,7 @@ def _infer_safe_action(
                 "run=",
             )
         )
-        or "site/runs/" in q
-        or "runs/" in q
+        or _mentions_run_root_token(q)
         or run_hint_from_history
     )
     run_create_if_missing_like = bool(run_hint) and any(
@@ -3056,7 +3091,7 @@ def _infer_safe_action(
         "run" in q
         and any(token in q for token in ("전환", "변경", "바꿔", "선택", "switch", "select", "use"))
     ) or (
-        ("site/runs/" in q or "runs/" in q)
+        _mentions_run_root_token(q)
         and any(token in q for token in ("열어", "open", "선택", "바꿔", "전환", "use"))
     )
     if switch_run_like:
@@ -3168,7 +3203,7 @@ def _infer_safe_action(
             "run_rel": run_rel or "",
             "topic_hint": topic_hint,
             "run_name_hint": run_name_hint,
-            "safety": "site/runs 하위에 안전한 새 run 폴더만 생성",
+            "safety": "configured run root 하위에 안전한 새 run 폴더만 생성",
             "summary": f"새 run 생성 · run={run_name_hint}" if run_name_hint else (
                 f"새 run 생성 · topic={topic_hint}" if topic_hint else "새 run 생성"
             ),

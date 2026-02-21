@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.9.6
+- Federnett run-root and hub separation hardening:
+  - switch default run discovery roots to `runs,site/runs` (new runs prefer `runs/*`, legacy `site/runs/*` stays compatible).
+  - keep report hub root explicit (`site/report_hub`) and expose run/hub separation consistently in UI hints and docs.
+  - strengthen run-hint normalization in both UI and help-agent logic to respect configured run roots (not only `site/runs`).
+- Workspace Sidebar / Run Studio UX alignment:
+  - remove `Open Run Studio` quick button and keep tab-specific single primary action (`Run Feather` or `Run Federlicht`).
+  - stop forced focus jumps when opening Run Studio tab; keep panel switching behavior consistent with Feather/Federlicht tabs.
+  - clarify Feather output field as `Run Folder (Output)` with resolved run-root hint text.
+- Workflow and Live Logs clarity:
+  - fix `Result` node state so completed pipelines do not show misleading `running` badge.
+  - render process logs as collapsible blocks with `Ran <command>` summary labels.
+  - place global pipeline log bridge card after turn messages when no per-turn process logs exist.
+- Workflow Studio cleanup:
+  - remove redundant settings blocks already available in workspace panels (`Feather/Federlicht/Quality` duplicate controls).
+  - improve stagebar/detail frame visibility via z-index/background/overflow tuning.
+- Validation:
+  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_commands.py tests/test_site_hub_separation.py` -> `95 passed`
+  - `pytest -q tests/test_site_hub_separation.py` -> `2 passed`
+  - Playwright checks on `http://127.0.0.1:8767/` for tab consistency, quick-button visibility, Run Studio focus behavior, and Workflow Studio section cleanup.
+
 ## 1.9.5
 - FederHav clarify-first execution flow hardening:
   - add `clarify_required` and `clarify_question` in help-agent action responses for short/generic execution requests.
