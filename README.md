@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.6
+Version: 1.9.7
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -175,6 +175,7 @@ Key points:
   - `recent-log tail summary`: 직전 실행 로그 끝부분 보조 컨텍스트 요약 (길이 선택값 기준)
 - FederHav action policy defaults to agentic runtime (`auto/deepagent`) and does not use safe-rule fallback unless explicitly enabled with `FEDERNETT_HELP_RULE_FALLBACK=1`.
 - Forward roadmap for account/profile/hub collaboration: `docs/federnett_roadmap.md`.
+- Playwright MCP troubleshooting and fallback validation path: `docs/playwright_mcp_troubleshooting.md`.
 
 Optional auth env:
 - `FEDERNETT_ROOT_PASSWORD`: enables root unlock for built-in profile editing.
@@ -328,39 +329,40 @@ federlicht --run ./examples/runs/20260104_oled \
 See `docs/federlicht_report.md` for full figure options and dependencies.
 
 ## Hosting the Report Hub (GitHub/GitLab Pages)
-Federlicht can generate a static report hub under `./site/report_hub` (`index.html` + `manifest.json`) by default.  
-Report outputs can remain under `./runs/` (preferred) or `./site/runs/` (legacy); the hub stores relative links automatically based on actual run location.
+Federlicht uses separated roots by default:
+- working runs: `./runs/*` (legacy fallback: `./site/runs/*`)
+- publish hub: `./site/report_hub/*`
 
-1) Generate reports under `runs/` (preferred):
+Recommended publish flow:
+
+1) Generate a report under `runs/`:
 ```bash
-federlicht --run ./examples/runs/20260110_qc-oled \
+federlicht --run ./runs/20260110_qc-oled \
   --output ./runs/20260110_qc-oled/report_full.html \
   --template review_of_modern_physics --lang ko \
-  --prompt-file ./examples/instructions/20260110_prompt_qc-oled.txt --no-figures
+  --prompt-file ./examples/instructions/20260110_prompt_qc-oled.txt
 ```
 
-2) Rebuild the hub index:
+2) Publish approved output into hub snapshot storage:
+```bash
+python -m federlicht.hub_publish \
+  --report ./runs/20260110_qc-oled/report_full.html \
+  --run ./runs/20260110_qc-oled \
+  --hub ./site/report_hub
+```
+
+3) (Optional) Rebuild hub by scanning run roots:
 ```bash
 federlicht --site-refresh ./site/report_hub
 ```
 
-3) Commit and push both run artifacts (`runs/` or `site/runs/`) and `site/report_hub/`.
+4) Commit/push `site/report_hub/*` for static deployment.
 
 ### GitLab Pages (internal)
-Add a minimal `.gitlab-ci.yml`:
-```yaml
-pages:
-  stage: deploy
-  script:
-    - rm -rf public
-    - mv site public
-  artifacts:
-    paths:
-      - public
-  only:
-    - main
-```
-Then enable Pages in your GitLab project settings.
+- This repo now includes a baseline `.gitlab-ci.yml` with:
+  - `pytest_smoke` test job
+  - `pages` deploy job (`site/report_hub -> public/report_hub`)
+- Enable Pages in GitLab project settings and deploy from `main`.
 
 ### GitHub Pages (enterprise)
 Option A: set Pages source to the `site/` folder.  
@@ -368,8 +370,9 @@ Option B: copy `site/` to `docs/` and set Pages source to `/docs`.
 
 Notes:
 - Default separation is `runs` (artifacts) + `site/report_hub` (published index), with `site/runs` kept as legacy-compatible fallback.
-- When reports are updated, run `federlicht --site-refresh ./site/report_hub` and redeploy.
+- For on-prem publishing, keep run artifacts internal and expose only `site/report_hub`.
 - The hub footer includes an AI transparency and source-rights notice for publication/distribution contexts.
+- Detailed policy: `docs/run_site_publish_strategy.md`.
 
 ## Workflow (Feather -> Federlicht)
 Use Feather to collect sources, then Federlicht to synthesize a report.

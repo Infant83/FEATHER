@@ -1,93 +1,62 @@
 # Federnett Remaining Tasks
 
-Last updated: 2026-02-09
+Last updated: 2026-02-21
 
-This file is the execution backlog for unresolved work after `1.4.1`.
-Reference roadmap: `docs/federnett_roadmap.md`.
+Reference roadmap: `docs/federnett_roadmap.md`
 
-## P0 - Stability and UX (next sprint)
+## P0 - Stability and UX
 
-- [ ] Guide Agent answer quality hardening
-  - Scope: prioritize Federnett UI actions over raw CLI instructions in responses.
-  - Add stronger system policy: "UI-first guidance, CLI only when explicitly requested."
-  - Acceptance: simple queries (e.g., version/help/options) return direct answers with source lines.
+- [x] Live Logs markdown readability baseline
+  - Status: done (2026-02-21)
+  - Scope: markdown table fallback(탭/공백 정렬), fenced markdown table 렌더, 이미지/mermaid 후처리.
 
-- [ ] Guide Agent safe action mode (read-only + dry-run)
-  - Scope: allow safe actions (`list runs`, `list templates`, `preview config`, `dry-run command`) from chat.
-  - Must block write/delete/network-side-effect actions by default.
-  - Acceptance: every blocked action returns explicit reason and allowed alternative.
+- [x] Workflow Studio visibility pass
+  - Status: done (2026-02-21)
+  - Scope: 상단 작은 detail frame 제거, stage selector/focus hint/context preview 추가.
 
-- [ ] Guide Agent conversation continuity
-  - Scope: multi-turn context memory per run/session with reset.
-  - Storage target: `site/runs/<run>/report_notes/help_history.json`.
-  - Acceptance: follow-up questions resolve references to prior turns.
+- [x] run root / report hub 정책 분리 반영
+  - Status: done (2026-02-21)
+  - Scope: `runs,site/runs` + `site/report_hub` 분리 표기/운영.
 
-- [ ] Live Logs path linking
-  - Scope: when log prints file paths (`Wrote ...`), make them clickable to open File Preview directly.
-  - Acceptance: one-click open from log to preview panel.
+- [ ] Live Logs tool trace card 최종 compact
+  - Scope: log-only 카드의 1-line summary를 기본으로 유지하고, 확장 상세의 밀도/간격 추가 개선.
 
-- [ ] Live Logs markdown readability mode refinement
-  - Scope: improve table/list rendering and line-wrap behavior in markdown mode.
-  - Acceptance: no malformed layout for long table rows; readable on standard 1080p width.
+- [ ] Report Hub write-flow UI 완성
+  - Scope: comment/followup/link API를 실제 submit UI로 연결.
 
-- [ ] File Preview density controls
-  - Scope: add preview height presets (`compact/normal/tall`) and fit behavior.
-  - Acceptance: user can adjust without excessive page scrolling.
+## P1 - Identity and Permission
 
-## P1 - Identity, Permissions, and Personalization
+- [ ] 계정/권한 운영 문서화
+  - root/admin/user 정책표, bootstrap 절차, 세션 만료/회수 정책.
 
-- [ ] Account/session foundation
-  - Local first: account, login/logout, settings profile.
-  - Session handling: secure cookie/token, per-user settings isolation.
+- [ ] Agent profile ownership 고도화
+  - built-in / private / org-shared 권한 모델을 UI에 명확히 표시.
 
-- [ ] Role and permission model
-  - Roles: admin/editor/viewer (minimum).
-  - Enforce policy for profile editing, posting, and action execution.
+## P2 - Report Hub and Publish
 
-- [ ] Agent Profile ownership scopes
-  - built-in (read-only), user-private, org-shared.
-  - Preserve reproducibility by separating persona preset vs identity metadata.
+- [x] run/site 분리 기반 발행 모듈
+  - Status: done (2026-02-21)
+  - `python -m federlicht.hub_publish` 추가.
 
-- [ ] Memory connector gate design
-  - Add connector stubs (vector/file/sql) behind authZ checks.
-  - Add bounded retrieval contract (top-k + token budget + source metadata required).
+- [x] GitLab Pages 기본 CI
+  - Status: done (2026-02-21)
+  - `.gitlab-ci.yml` pages job 추가(허브 정적 배포).
 
-## P2 - Federlicht Report Hub evolution
+- [ ] 승인 워크플로우(초안->검토->발행) UI
+  - Scope: Federnett에서 승인된 결과만 hub publish 되도록 버튼/상태 모델 연결.
 
-- [ ] Posting workflow
-  - Lifecycle: draft -> review -> published -> archived.
-  - Keep current auto-scan as fallback ingestion mode.
+## P3 - Regression and Observability
 
-- [ ] Collaboration primitives
-  - Section-level comments, update requests, and patch history.
-  - Link revisions to report metadata and stage workflow snapshots.
+- [ ] Playwright e2e CI 고정
+  - Scope: Live Logs 질문->제안->실행->결과 확인 시나리오를 자동화.
 
-- [ ] GitLab Pages compatibility plan
-  - Constraint: static hosting cannot run server-side auth/session logic.
-  - Strategy: split architecture into
-    - static read portal (Pages)
-    - API/control plane (separate backend service).
-
-## P3 - Pipeline performance and async strategy
-
-- [ ] Safe parallelization audit
-  - Identify independent I/O-heavy substeps (index reads, metadata parsing, non-mutating scans).
-  - Keep model-call stages serialized when shared context mutation exists.
-
-- [ ] Log stream ordering guarantees
-  - Add stage/task ids and monotonic sequence numbers for merged streams.
-  - Acceptance: no interleaved unreadable stage logs.
-
-- [ ] Context overflow resilience validation
-  - Validate across scout/evidence/writer/quality with:
-    - `max_input_tokens`
-    - `max_tool_chars`
-    - reducer fallback
-    - large PDF/PPTX/docx/xlsx cases.
+- [ ] Stage 비용/시간 대시보드
+  - Scope: run 단위 stage elapsed/token/cache 집계 카드.
 
 ## Open decisions
 
-- [ ] Decide whether to bump release to `1.4.2` after P0 completion, or batch into `1.5.0`.
-- [ ] Decide default policy for `progress_chars` in Federnett:
-  - keep conservative default (`800`)
-  - or raise for debug-oriented runs (`1600`/`2400`).
+- [ ] Pages 배포 브랜치 전략 확정
+  - 단일 repo(main + pages job) vs 이원 repo(product + hub-publish)
+
+- [ ] run 산출물 git 추적 정책 확정
+  - 기본 ignore 유지 vs 샘플 run 일부만 추적

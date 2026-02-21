@@ -81,6 +81,11 @@ def build_plan_prompt(language: str) -> str:
     return (
         "당신은 보고서 플래너입니다. 최종 보고서를 만들기 위한 간결한 순서형 계획(5~9단계)을 작성하세요. "
         "각 단계는 한 줄이며 체크박스 형식을 사용합니다. "
+        "계획에는 다음 축이 반드시 포함되어야 합니다: "
+        "(1) 연구 질문/범위 정리, "
+        "(2) 방법론/소스 선정 기준 및 제외 기준, "
+        "(3) 핵심 결과/비교 분석 전개, "
+        "(4) 리스크/불확실성 및 추가 검증 계획. "
         "형식:\n"
         "- [ ] Step title — short description\n"
         "가장 관련성 높은 소스를 읽고, 근거를 추출하고, 인사이트를 종합하는 데 초점을 맞추세요. "
@@ -138,6 +143,10 @@ def build_evidence_prompt(language: str) -> str:
         "read_document로 다시 열어 원문을 확인한 뒤 인용하세요. "
         "PDF의 뒷부분이 필요하면 read_document의 start_page를 사용해 필요한 페이지를 추가로 읽으세요. "
         "Verification excerpts 섹션이 있으면 우선 활용하고, 원문 확인 없이 수치/인용을 재구성하지 마세요. "
+        "출력 마지막에는 Evidence Ledger를 추가하세요. "
+        "가능하면 표 형식(Claim | Evidence summary | Source URL/path | Strength(high/medium/low) | Limits | Recency)으로 작성하고, "
+        "표가 어려우면 같은 필드를 갖는 불릿 리스트로 대체하세요. "
+        "근거 강도(Strength)는 과장 없이 보수적으로 표시하세요. "
         f"소스 유형별로 묶은 간결한 불릿 리스트를 {language}로 출력하세요. "
         "고유명사와 소스 제목은 원문 언어를 유지하세요."
     )
@@ -156,6 +165,41 @@ def build_writer_prompt(
     figures_mode: str = "auto",
     artwork_enabled: bool = False,
 ) -> str:
+    section_tokens = [str(section or "").strip().lower() for section in required_sections]
+    has_method_section = any(
+        any(token in section for token in ("method", "methodology", "scope", "approach", "방법", "방법론"))
+        for section in section_tokens
+    )
+    has_result_section = any(
+        any(token in section for token in ("result", "results", "finding", "findings", "benchmark", "결과", "핵심"))
+        for section in section_tokens
+    )
+    if has_method_section:
+        method_transparency_guidance = (
+            "방법론 투명성: Method 계열 섹션에서 소스 선정 기준, 제외 기준, 분석 절차, "
+            "데이터 공백/한계를 명시하세요. "
+        )
+    else:
+        method_transparency_guidance = (
+            "방법론 투명성: Method 전용 섹션이 없더라도 초반 섹션(예: Executive Summary/Scope/Key Findings)에서 "
+            "소스 선정 기준, 제외 기준, 분석 절차, 한계를 짧게 공개하세요. "
+        )
+    if has_result_section:
+        result_traceability_guidance = (
+            "결과 추적성: Results/Findings 계열 섹션에서 최소 1개의 evidence matrix "
+            "(Claim | Evidence | Source | Confidence | Limits)를 제시하세요. "
+        )
+    else:
+        result_traceability_guidance = (
+            "결과 추적성: 결과 전개 구간에서 최소 1개의 evidence matrix "
+            "(Claim | Evidence | Source | Confidence | Limits)를 포함하거나 동등한 구조로 정리하세요. "
+        )
+    uncertainty_guidance = (
+        "확정 사실과 불확실/추정 항목을 분리해 쓰고, 불확실 항목에는 왜 불확실한지와 추가 검증 방법을 함께 제시하세요. "
+    )
+    narrative_flow_guidance = (
+        "섹션 시작 문장과 끝 문장에서 이전/다음 섹션과의 논리 연결을 명시해 문단 간 단절을 줄이세요. "
+    )
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
         critics_guidance = (
@@ -275,6 +319,13 @@ def build_writer_prompt(
         if artwork_enabled
         else "다이어그램은 꼭 필요한 경우에만 간결하게 사용하세요. "
     )
+    visual_mandate_guidance = ""
+    if depth in {"deep", "exhaustive"} and output_format != "tex":
+        visual_mandate_guidance = (
+            "깊이 있는 보고서 품질을 위해 최소 1개의 비교 표와 최소 1개의 다이어그램을 포함하세요. "
+            "다이어그램은 Mermaid 코드블록 또는 artwork 도구 렌더 결과(SVG 경로) 중 하나로 제시하세요. "
+            "표/다이어그램은 반드시 본문 해석 문장과 함께 배치해 장식적 삽입을 피하세요. "
+        )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -299,15 +350,16 @@ def build_writer_prompt(
         "NEEDS_VERIFICATION 태그가 붙은 항목은 tool_cache 원문 청크를 확인한 뒤 인용하세요. "
         "원문 확인 없이 수치/인용을 재구성하거나 추정하지 마세요. "
         "Verification excerpts 섹션이 있으면 우선 인용 근거로 사용하세요. "
-        "인용 표기는 반드시 실제 URL/파일 경로를 포함한 대괄호 인용으로 작성하세요 "
-        "(예: [https://...], [./archive/...]). "
+        "인용 표기는 반드시 실제 URL/DOI를 우선한 대괄호 인용으로 작성하세요 "
+        "(예: [https://...], [https://doi.org/...]). "
         "'[source]' '[paper]' '[evidence]' 같은 일반 라벨은 금지합니다. "
         "일반적 배경 설명은 인용 없이 작성해도 됩니다. "
         "JSONL 인덱스 내용을 그대로 덤프하지 말고, 실제 문서/기사 내용을 분석하세요. "
         "JSONL 인덱스 파일을 인용하지 마세요(tavily_search.jsonl, openalex/works.jsonl 등). "
         "내부 인덱스 파일명(tavily_search.jsonl 등)을 본문 문장에 직접 노출하지 말고, "
         "독자가 이해 가능한 출처 유형(예: 웹 검색 결과, 공식 문서, 논문 원문)으로 표현하세요. "
-        "대신 실제 원문 URL과 추출 텍스트/PDF/트랜스크립트를 인용하세요. "
+        "대신 실제 원문 URL을 우선 인용하고, 추출 텍스트/PDF/트랜스크립트 경로는 URL이 없을 때만 보조 인용하세요. "
+        "특히 ./archive/tavily_extract/*.txt 같은 중간 추출 경로를 본문 서술에 직접 노출하지 마세요. "
         "외부 소스의 저작권/라이선스는 원 출처 정책을 따른다는 점을 전제로 작성하세요. "
         "긴 원문을 그대로 복제하지 말고, 분석 목적의 요약/재서술을 우선하세요. "
         "References 전체 목록은 작성하지 마세요. 스크립트가 Source Index를 자동으로 추가합니다. "
@@ -321,8 +373,13 @@ def build_writer_prompt(
         f"{rigidity_guidance}"
         f"{depth_guidance}"
         f"{evidence_layout_guidance}"
+        f"{method_transparency_guidance}"
+        f"{result_traceability_guidance}"
+        f"{uncertainty_guidance}"
+        f"{narrative_flow_guidance}"
         f"{figure_guidance}"
         f"{artwork_guidance}"
+        f"{visual_mandate_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
         f"{not_applicable_guidance}"
@@ -464,6 +521,7 @@ def build_evaluate_prompt(metrics: str, depth: str | None = None) -> str:
         "당신은 엄정한 보고서 평가자입니다. 보고서를 여러 차원에서 점수화하세요. "
         "(보고서 프롬프트 정합성, 톤/보이스 적합성, 출력 포맷 준수, 구조/가독성, 근거 적합성, "
         "환각 위험(낮을수록 높은 점수), 통찰 깊이, 미적/시각 완성도). "
+        "방법론 투명성(선정/제외 기준, 절차, 한계 공개)과 결과 추적성(주장-근거 연결)의 명확성도 강하게 평가하세요. "
         f"{depth_rule}"
         "근거 인용이 실제 URL/파일 경로인지 확인하고, '[source]' 같은 일반 라벨 인용은 감점하세요. "
         "다음 키만 포함한 JSON만 반환하세요:\n"
@@ -583,6 +641,8 @@ def build_artwork_prompt(output_format: str, language: str) -> str:
         "Create concise, professional diagrams that clarify structure, timeline, or process. "
         "Choose the tool by intent: Mermaid for simple process/timeline, D2 for dense architecture, "
         "and diagrams_render for Python-style architecture rendering. "
+        "For Mermaid flowcharts, always use quoted node labels (e.g., A[\"label text\"]) "
+        "when labels include punctuation/parentheses or mixed-language text. "
         "Keep labels short and factual. "
         "Only include visuals that improve reasoning fidelity; avoid decorative diagrams. "
         "When mermaid_render is available, you may export SVG/PNG/PDF artifacts for report embedding. "

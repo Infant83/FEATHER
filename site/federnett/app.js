@@ -101,6 +101,7 @@ const state = {
     studioFocusStage: "overview",
     runtimeNoticeDigest: "",
     stageOverrides: {},
+    stageOverrideStage: "scout",
     stageOverrideSyncTimer: null,
     stageOverridePath: "",
   },
@@ -1108,9 +1109,82 @@ function saveWorkflowStageOverrides() {
 }
 
 function activeWorkflowStageForOverrides() {
+  const preferred = String(state.workflow.stageOverrideStage || "").trim().toLowerCase();
+  if (WORKFLOW_STAGE_ORDER.includes(preferred)) return preferred;
   const token = String(state.pipeline.activeStageId || state.workflow.resumeStage || "scout").trim().toLowerCase();
-  if (WORKFLOW_STAGE_ORDER.includes(token)) return token;
+  if (WORKFLOW_STAGE_ORDER.includes(token)) {
+    state.workflow.stageOverrideStage = token;
+    return token;
+  }
+  state.workflow.stageOverrideStage = "scout";
   return "scout";
+}
+
+function summarizeStageOverrideStatus(entry) {
+  const normalized = normalizeStageOverrideEntry(entry || {});
+  const parts = [];
+  if (!normalized.enabled) parts.push("stage disabled");
+  if (normalized.model) parts.push(`model=${normalized.model}`);
+  if (normalized.tools) parts.push("tools override");
+  if (normalized.system_prompt) parts.push("prompt override");
+  return parts.length ? parts.join(" · ") : "기본 에이전트 설정 사용";
+}
+
+function renderWorkflowStageSelector(selectedStage = "") {
+  const selectEl = $("#wf-stage-select");
+  if (!selectEl) return;
+  const token = String(selectedStage || activeWorkflowStageForOverrides()).trim().toLowerCase();
+  const options = STAGE_DEFS.map((def) => `<option value="${escapeHtml(def.id)}">${escapeHtml(def.label)} (${escapeHtml(def.id)})</option>`).join("");
+  if (selectEl.innerHTML !== options) {
+    selectEl.innerHTML = options;
+  }
+  if (WORKFLOW_STAGE_ORDER.includes(token)) {
+    selectEl.value = token;
+  }
+}
+
+function renderWorkflowStageOverrideContext(stageId, entry) {
+  const host = $("#wf-stage-context");
+  if (!host) return;
+  const token = String(stageId || "").trim().toLowerCase();
+  const def = STAGE_DEFS.find((item) => item.id === token);
+  const normalized = normalizeStageOverrideEntry(entry || {});
+  const enabledChip = normalized.enabled
+    ? '<span class="workflow-stage-chip is-on">enabled</span>'
+    : '<span class="workflow-stage-chip is-off">disabled</span>';
+  host.innerHTML = `
+    <div class="workflow-stage-context-head">
+      <strong>${escapeHtml(def?.label || token || "stage")}</strong>
+      ${enabledChip}
+    </div>
+    <div class="workflow-stage-context-desc">${escapeHtml(def?.desc || "선택된 stage에 대한 세부 override를 설정합니다.")}</div>
+    <div class="workflow-stage-context-state">${escapeHtml(summarizeStageOverrideStatus(normalized))}</div>
+  `;
+}
+
+function renderWorkflowStagePromptPreview(stageId, entry) {
+  const host = $("#wf-stage-prompt-preview");
+  if (!host) return;
+  const token = String(stageId || "").trim().toLowerCase();
+  const def = STAGE_DEFS.find((item) => item.id === token);
+  const normalized = normalizeStageOverrideEntry(entry || {});
+  const lines = [
+    "[base prompt]",
+    `- stage: ${def?.label || token} (${token || "-"})`,
+    `- role intent: ${def?.desc || "runtime stage policy"}`,
+    "- source: federlicht runtime/profile 기본 system prompt",
+    "",
+    "[override]",
+    normalized.system_prompt || "(none)",
+    "",
+    "[effective]",
+    !normalized.enabled
+      ? "stage disabled: 이 stage는 실행 대상에서 제외됩니다."
+      : (normalized.system_prompt
+        ? "override prompt가 stage system prompt를 대체합니다."
+        : "기본 system prompt가 그대로 사용됩니다."),
+  ];
+  host.textContent = lines.join("\n");
 }
 
 function readWorkflowStageOverrideControls() {
@@ -1123,12 +1197,15 @@ function readWorkflowStageOverrideControls() {
   state.workflow.stageOverrides = state.workflow.stageOverrides || {};
   state.workflow.stageOverrides[stageId] = entry;
   saveWorkflowStageOverrides();
+  renderWorkflowStageOverrideContext(stageId, entry);
+  renderWorkflowStagePromptPreview(stageId, entry);
   return { stageId, entry };
 }
 
 function applyWorkflowStageOverrideControls(stageId) {
   const token = String(stageId || "").trim().toLowerCase();
   const normalized = WORKFLOW_STAGE_ORDER.includes(token) ? token : "scout";
+  state.workflow.stageOverrideStage = normalized;
   const entry = normalizeStageOverrideEntry(state.workflow.stageOverrides?.[normalized] || {});
   const enabledEl = $("#wf-stage-enabled");
   const modelEl = $("#wf-stage-model");
@@ -1138,6 +1215,9 @@ function applyWorkflowStageOverrideControls(stageId) {
   if (modelEl) modelEl.value = entry.model;
   if (promptEl) promptEl.value = entry.system_prompt;
   if (toolsEl) toolsEl.value = entry.tools;
+  renderWorkflowStageSelector(normalized);
+  renderWorkflowStageOverrideContext(normalized, entry);
+  renderWorkflowStagePromptPreview(normalized, entry);
 }
 
 function hasWorkflowStageOverrides() {
@@ -1291,52 +1371,52 @@ function syncWorkflowStudioBindings() {
       ? `${profile.label || profile.id} (${profile.id}/${profile.source || "builtin"})`
       : "default";
   }
+  const caps = normalizeAskCapabilities(state.ask.capabilities || ASK_CAPABILITY_FALLBACK);
+  const enabledCaps = [...(caps.tools || []), ...(caps.skills || []), ...(caps.mcp || [])]
+    .filter((entry) => entry?.enabled !== false)
+    .map((entry) => ({
+      id: String(entry?.id || "").trim(),
+      label: String(entry?.label || entry?.id || "").trim(),
+      description: String(entry?.description || "").trim(),
+    }))
+    .filter((entry) => Boolean(entry.id || entry.label));
   const toolsEl = $("#wf-feder-tools");
   if (toolsEl) {
-    const caps = normalizeAskCapabilities(state.ask.capabilities || ASK_CAPABILITY_FALLBACK);
-    const enabledCaps = [...(caps.tools || []), ...(caps.skills || []), ...(caps.mcp || [])]
-      .filter((entry) => entry?.enabled !== false)
-      .map((entry) => ({
-        id: String(entry?.id || "").trim(),
-        label: String(entry?.label || entry?.id || "").trim(),
-        description: String(entry?.description || "").trim(),
-      }))
-      .filter((entry) => Boolean(entry.id || entry.label));
     const labels = enabledCaps
       .map((entry) => String(entry.label || entry.id || "").trim())
       .filter(Boolean)
       .slice(0, 6);
     toolsEl.textContent = labels.length ? labels.join(", ") : "runtime tools (auto)";
-    const knownToolsEl = $("#wf-stage-tools-known");
-    if (knownToolsEl) {
-      const ids = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 10);
-      knownToolsEl.textContent = ids.length
-        ? `사용 가능 도구: ${ids.join(", ")}`
-        : "사용 가능 도구: runtime tools (auto)";
-    }
-    const toolHelpEl = $("#wf-stage-tool-help");
-    if (toolHelpEl) {
-      const rows = enabledCaps
-        .filter((entry) => entry.id || entry.label)
-        .slice(0, 8)
-        .map((entry) => {
-          const label = String(entry.label || entry.id || "").trim();
-          const desc = String(entry.description || "").trim();
-          return `
-            <div class="workflow-studio-tool-item" title="${escapeHtml(desc || label)}">
-              <code>${escapeHtml(entry.id || label)}</code>
-              <span>${escapeHtml(desc || label)}</span>
-            </div>
-          `;
-        });
-      toolHelpEl.innerHTML = rows.join("");
-      toolHelpEl.classList.toggle("is-empty", rows.length === 0);
-    }
-    const datalist = $("#wf-stage-tool-suggestions");
-    if (datalist) {
-      const options = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 30);
-      datalist.innerHTML = options.map((id) => `<option value="${escapeHtml(id)}"></option>`).join("");
-    }
+  }
+  const knownToolsEl = $("#wf-stage-tools-known");
+  if (knownToolsEl) {
+    const ids = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 12);
+    knownToolsEl.textContent = ids.length
+      ? `사용 가능 도구: ${ids.join(", ")}`
+      : "사용 가능 도구: 현재 활성화된 런타임 도구가 없습니다.";
+  }
+  const toolHelpEl = $("#wf-stage-tool-help");
+  if (toolHelpEl) {
+    const rows = enabledCaps
+      .filter((entry) => entry.id || entry.label)
+      .slice(0, 12)
+      .map((entry) => {
+        const label = String(entry.label || entry.id || "").trim();
+        const desc = String(entry.description || "").trim();
+        return `
+          <div class="workflow-studio-tool-item" title="${escapeHtml(desc || label)}">
+            <code>${escapeHtml(entry.id || label)}</code>
+            <span>${escapeHtml(desc || label)}</span>
+          </div>
+        `;
+      });
+    toolHelpEl.innerHTML = rows.join("");
+    toolHelpEl.classList.toggle("is-empty", rows.length === 0);
+  }
+  const datalist = $("#wf-stage-tool-suggestions");
+  if (datalist) {
+    const options = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 30);
+    datalist.innerHTML = options.map((id) => `<option value="${escapeHtml(id)}"></option>`).join("");
   }
 }
 
@@ -1376,10 +1456,10 @@ function renderWorkflowStudioPanel(stageId = "") {
   } else if (focusDef) {
     focusNodeLabel = `${focusDef.label} (${focusDef.id})`;
   }
-  const stageHeader = "Workflow Studio";
+  const stageHeader = `Workflow Studio · ${focusNodeLabel}`;
   setText("#stage-detail-title", stageHeader);
-  const body = $("#stage-detail-body");
-  if (body) {
+  const focusHint = $("#wf-focus-hint");
+  if (focusHint) {
     const focusHelp = focusDef
       ? focusDef.desc
       : (spotlightStage === "federhav"
@@ -1389,7 +1469,7 @@ function renderWorkflowStudioPanel(stageId = "") {
           : (spotlightStage === "result"
             ? "Result 단계는 현재 산출 파일 확인/재실행 전략 선택 지점입니다."
             : "전체 파이프라인을 한 화면에서 조정합니다.")));
-    body.textContent = `현재 선택 노드: ${focusNodeLabel}\n\n${focusHelp}\n\n아래 섹션에서 Pipeline 선택, Stage Override, FederHav Bridge를 조정할 수 있습니다.`;
+    focusHint.innerHTML = `<strong>현재 선택 노드:</strong> ${escapeHtml(focusNodeLabel)} <span class="workflow-focus-sep">·</span> ${escapeHtml(focusHelp)}`;
   }
   panel.querySelectorAll("[data-stage-scope]").forEach((section) => {
     const token = section.getAttribute("data-stage-scope") || "";
@@ -1403,6 +1483,7 @@ function renderWorkflowStudioPanel(stageId = "") {
     section.classList.remove("is-hidden");
     section.classList.toggle("is-focus", focused);
   });
+  renderWorkflowStageSelector(overrideStage);
   applyWorkflowStageOverrideControls(overrideStage);
   syncWorkflowStudioBindings();
 }
@@ -3780,6 +3861,7 @@ function renderAskAnswer(answerText) {
     .join("");
   bindAskInlineSourceButtons(answerEl);
   bindAskActionButtons(answerEl);
+  hydrateMarkdownBlocks(answerEl);
   if (state.ask.autoFollowAnswer) {
     scheduleAskScrollToBottom(true);
   } else {
@@ -4784,13 +4866,16 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   ]
     .filter(Boolean)
     .join("");
+  const summaryPrefix = String(options?.summaryPrefix || "").trim();
+  const showChips = options?.showChips !== false;
   const firstCommand = lines.find((line) => line.startsWith("$ "));
   const compactCommand = firstCommand
     ? firstCommand.slice(2).replace(/\s+/g, " ").trim()
     : "";
-  const summaryLabel = compactCommand
+  const baseSummaryLabel = compactCommand
     ? `Ran ${compactCommand.slice(0, 96)}${compactCommand.length > 96 ? "..." : ""}`
     : `작업 로그 ${lineCount}줄`;
+  const summaryLabel = summaryPrefix ? `${summaryPrefix} · ${baseSummaryLabel}` : baseSummaryLabel;
   if (lineCount <= 4 && !hasError) {
     const plainRows = lines
       .map((line) => `<div class="live-ask-process-line">${renderRawLineWithLinks(line)}</div>`)
@@ -4804,10 +4889,10 @@ function renderLiveAskProcessFold(processLog, options = {}) {
   }
   return `
     <section class="live-ask-process-wrap is-inline">
-      <details class="live-ask-process-fold" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
+      <details class="live-ask-process-fold ${options?.compact ? "is-compact" : ""}" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
         <summary>
           <span>${escapeHtml(summaryLabel)}</span>
-          ${chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
+          ${showChips && chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
         </summary>
         <div class="live-ask-process-body is-inline">
           ${renderStructuredLog(normalized)}
@@ -4924,27 +5009,15 @@ function renderLiveAskSystemLogCard() {
     stageLabel = agentName;
   }
   const badgeLabel = sourceLabel === "active" ? "실행 프로세스" : "로그 브릿지";
-  const chips = [
-    summary.commands ? `<span class="live-ask-process-chip">cmd ${summary.commands}</span>` : "",
-    summary.workflow ? `<span class="live-ask-process-chip">workflow ${summary.workflow}</span>` : "",
-    summary.activity ? `<span class="live-ask-process-chip">tool ${summary.activity}</span>` : "",
-    summary.errors ? `<span class="live-ask-process-chip is-error">error ${summary.errors}</span>` : "",
-  ]
-    .filter(Boolean)
-    .join("");
   const processBlock = renderLiveAskProcessFold(normalized, {
     open: Boolean(sourceLabel === "active" && (state.liveAsk.busy || state.ask.busy || state.activeJobId)),
+    summaryPrefix: `${stageLabel} ${badgeLabel}`,
+    compact: true,
+    showChips: false,
   });
   return `
     <section class="live-ask-turn live-ask-turn-system">
-      <article class="live-ask-message system">
-        <div class="live-ask-message-head">
-          <strong class="live-ask-role">${escapeHtml(stageLabel)}</strong>
-          <div class="live-ask-meta">
-            <span class="ask-badge">${escapeHtml(badgeLabel)}</span>
-          </div>
-        </div>
-        ${chips ? `<div class="live-ask-process-chips">${chips}</div>` : ""}
+      <article class="live-ask-message system is-log-only">
         ${processBlock}
       </article>
     </section>
@@ -5030,40 +5103,54 @@ function renderLiveAskThread() {
       ]
         .filter(Boolean)
         .join(" ");
+      const processLog = String(assistant?.process_log || turn?.process_log || "").trim();
+      const assistantText = String(assistant?.content || "").trim();
+      const isLogOnlyAssistant = Boolean(assistant && processLog && !assistantText && !assistant?.pending);
+      const processBlock = isLogOnlyAssistant
+        ? ""
+        : renderLiveAskProcessFold(processLog, {
+          open: Boolean(turn?.pending || /(error|failed|exception)/i.test(processLog)),
+        });
       const assistantBody = assistant?.pending
         ? escapeHtml(assistant?.content || "").replace(/\n/g, "<br />")
         : renderMarkdown(assistant?.content || "");
       const assistantBlock = assistant
-        ? `
-          <article class="${assistantClass}">
-            <div class="live-ask-message-head">
-              <strong class="live-ask-role">${escapeHtml(assistantRoleLabel)}</strong>
-              <div class="live-ask-meta">
-                ${ts ? `<time>${escapeHtml(ts)}</time>` : ""}
-                ${assistant?.pending ? '<span class="ask-badge">streaming</span>' : ""}
+        ? (isLogOnlyAssistant
+          ? `
+            <article class="${assistantClass} is-log-only">
+              ${renderLiveAskProcessFold(processLog, {
+                open: false,
+                summaryPrefix: `${assistantRoleLabel} backend log`,
+                compact: true,
+                showChips: false,
+              })}
+            </article>
+          `
+          : `
+            <article class="${assistantClass}">
+              <div class="live-ask-message-head">
+                <strong class="live-ask-role">${escapeHtml(assistantRoleLabel)}</strong>
+                <div class="live-ask-meta">
+                  ${ts ? `<time>${escapeHtml(ts)}</time>` : ""}
+                  ${assistant?.pending ? '<span class="ask-badge">streaming</span>' : ""}
+                </div>
               </div>
-            </div>
-            ${renderLiveAskMetaChips(assistantMeta)}
-            <div class="live-ask-message-body">${assistantBody}</div>
-            ${isSystemAssistant ? "" : renderAskMessageSources(assistantSources)}
-            ${assistant?.pending
-    ? ""
-    : isSystemAssistant
+              ${renderLiveAskMetaChips(assistantMeta)}
+              <div class="live-ask-message-body">${assistantBody}</div>
+              ${isSystemAssistant ? "" : renderAskMessageSources(assistantSources)}
+              ${assistant?.pending
       ? ""
-    : renderAskMessageActions(
-      assistantAction,
-      assistant?.content || "",
-      assistantSources,
-      { includeSelection: false, includeDerivedPaths: false },
-    )}
-          </article>
-        `
+      : isSystemAssistant
+        ? ""
+      : renderAskMessageActions(
+        assistantAction,
+        assistant?.content || "",
+        assistantSources,
+        { includeSelection: false, includeDerivedPaths: false },
+      )}
+            </article>
+          `)
         : "";
-
-      const processLog = String(assistant?.process_log || turn?.process_log || "").trim();
-      const processBlock = renderLiveAskProcessFold(processLog, {
-        open: Boolean(turn?.pending || /(error|failed|exception)/i.test(processLog)),
-      });
       return `
         <section class="live-ask-turn ${turn?.pending ? "is-pending" : ""}">
           ${userBlock}
@@ -5082,6 +5169,7 @@ function renderLiveAskThread() {
   bindAskInlineSourceButtons(host);
   bindLiveAskProcessFolds(host);
   bindAskActionButtons(host);
+  hydrateMarkdownBlocks(host);
   updateLiveAskThreadInset();
   if (state.liveAsk.autoFollowThread) {
     host.scrollTop = host.scrollHeight;
@@ -9149,6 +9237,9 @@ function renderMarkdown(text) {
     const body = codeBuffer.join("\n");
     if (codeLang === "mermaid") {
       html += `<div class="md-mermaid" data-mermaid-source="${encodeURIComponent(body)}"><pre><code class="language-mermaid">${escapeHtml(body)}</code></pre></div>`;
+    } else if ((codeLang === "markdown" || codeLang === "md") && /(^|\n)\|.*\|/.test(body)) {
+      // Some LLM replies wrap markdown tables in ```markdown fences. Render table-friendly markdown instead of raw code.
+      html += `<div class="md-fenced-markdown">${renderMarkdown(body)}</div>`;
     } else {
       const langClass = codeLang ? ` class="language-${escapeHtml(codeLang)}"` : "";
       html += `<pre><code${langClass}>${escapeHtml(body)}</code></pre>`;
@@ -9162,6 +9253,26 @@ function renderMarkdown(text) {
     const trimmed = value.trim().replace(/^\|/, "").replace(/\|$/, "");
     return trimmed.split("|").map((cell) => inline(cell.trim()));
   };
+  const parseTabTableCells = (value) => String(value || "")
+    .split("\t")
+    .map((cell) => inline(String(cell || "").trim()));
+  const tabTableColumnCount = (value) => String(value || "")
+    .split("\t")
+    .map((cell) => String(cell || "").trim())
+    .filter(Boolean)
+    .length;
+  const isTabTableRow = (value) => tabTableColumnCount(value) >= 2;
+  const parseSpaceTableCells = (value) => String(value || "")
+    .trim()
+    .split(/\s{2,}/)
+    .map((cell) => inline(String(cell || "").trim()));
+  const spaceTableColumnCount = (value) => String(value || "")
+    .trim()
+    .split(/\s{2,}/)
+    .map((cell) => String(cell || "").trim())
+    .filter(Boolean)
+    .length;
+  const isSpaceTableRow = (value) => /\s{2,}/.test(String(value || "").trim()) && spaceTableColumnCount(value) >= 2;
   const isTableSeparator = (value) => /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(value.trim());
   const inline = (value) => {
     const rawValue = String(value ?? "");
@@ -9169,6 +9280,30 @@ function renderMarkdown(text) {
       return renderRawLineWithLinks(rawValue);
     }
     let out = escapeHtml(rawValue);
+    out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, altRaw, href) => {
+      const alt = String(altRaw || "").trim();
+      const rawHref = String(href || "").trim();
+      if (!rawHref) return match;
+      const decodedHref = (() => {
+        try {
+          return decodeURIComponent(rawHref);
+        } catch (err) {
+          return rawHref;
+        }
+      })();
+      if (/^https?:\/\//i.test(decodedHref)) {
+        return `<figure class="md-inline-figure"><img class="md-inline-image" src="${escapeHtml(decodedHref)}" alt="${escapeHtml(alt)}" loading="lazy" /></figure>`;
+      }
+      const normalizedPath = normalizeLogPathCandidate(decodedHref);
+      if (!normalizedPath || !/\.(png|jpe?g|gif|svg|webp|bmp)$/i.test(normalizedPath)) {
+        return match;
+      }
+      return `<figure class="md-inline-figure"><a href="#" class="log-link md-inline-image-link" data-log-path="${escapeHtml(
+        normalizedPath,
+      )}" title="Open in File Preview"><img class="md-inline-image" src="${escapeHtml(
+        apiRawUrl(normalizedPath),
+      )}" alt="${escapeHtml(alt || normalizedPath)}" loading="lazy" /></a></figure>`;
+    });
     out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, href) => {
       const safeLabel = String(label || "");
       const rawHref = String(href || "").trim();
@@ -9233,6 +9368,74 @@ function renderMarkdown(text) {
       closeList();
       closeTable();
       continue;
+    }
+    if (!inTable && isTabTableRow(raw)) {
+      const baseCols = tabTableColumnCount(raw);
+      const rows = [raw];
+      let cursor = i + 1;
+      while (cursor < lines.length) {
+        const candidate = String(lines[cursor] || "");
+        if (!isTabTableRow(candidate)) break;
+        const cols = tabTableColumnCount(candidate);
+        if (cols < 2 || cols !== baseCols) break;
+        rows.push(candidate);
+        cursor += 1;
+      }
+      if (rows.length >= 2) {
+        closeList();
+        closeTable();
+        const headerCells = parseTabTableCells(rows[0]);
+        html += "<table><thead><tr>";
+        headerCells.forEach((cell) => {
+          html += `<th>${cell}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        rows.slice(1).forEach((row) => {
+          const rowCells = parseTabTableCells(row);
+          html += "<tr>";
+          rowCells.forEach((cell) => {
+            html += `<td>${cell}</td>`;
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+        i = cursor - 1;
+        continue;
+      }
+    }
+    if (!inTable && isSpaceTableRow(raw)) {
+      const baseCols = spaceTableColumnCount(raw);
+      const rows = [raw];
+      let cursor = i + 1;
+      while (cursor < lines.length) {
+        const candidate = String(lines[cursor] || "");
+        if (!isSpaceTableRow(candidate)) break;
+        const cols = spaceTableColumnCount(candidate);
+        if (cols < 2 || cols !== baseCols) break;
+        rows.push(candidate);
+        cursor += 1;
+      }
+      if (rows.length >= 2) {
+        closeList();
+        closeTable();
+        const headerCells = parseSpaceTableCells(rows[0]);
+        html += "<table><thead><tr>";
+        headerCells.forEach((cell) => {
+          html += `<th>${cell}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        rows.slice(1).forEach((row) => {
+          const rowCells = parseSpaceTableCells(row);
+          html += "<tr>";
+          rowCells.forEach((cell) => {
+            html += `<td>${cell}</td>`;
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+        i = cursor - 1;
+        continue;
+      }
     }
     if (line.includes("|")) {
       const next = i + 1 < lines.length ? String(lines[i + 1] || "").trim() : "";
@@ -9384,6 +9587,17 @@ function setRenderedMarkdown(host, markdownText) {
   if (host instanceof HTMLElement) host.dataset.mdToken = token;
   host.innerHTML = renderMarkdown(markdownText);
   renderMermaidBlocks(host, token).catch(() => {});
+}
+
+function hydrateMarkdownBlocks(root) {
+  if (!(root instanceof Element)) return;
+  root.querySelectorAll(".ask-message-body, .live-ask-message-body").forEach((el) => {
+    if (!(el instanceof HTMLElement)) return;
+    if (!el.querySelector(".md-mermaid[data-mermaid-source]")) return;
+    const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    el.dataset.mdToken = token;
+    renderMermaidBlocks(el, token).catch(() => {});
+  });
 }
 
 function previewModeForPath(relPath) {
@@ -13597,6 +13811,9 @@ function renderStageDetail(stageId) {
   const stage = String(stageId || "").trim().toLowerCase() || "overview";
   state.workflow.focusHintStage = stage;
   state.workflow.studioFocusStage = stage;
+  if (WORKFLOW_STAGE_ORDER.includes(stage)) {
+    state.workflow.stageOverrideStage = stage;
+  }
   renderWorkflowStudioPanel(stage);
 }
 
@@ -13692,6 +13909,7 @@ function initPipelineFromInputs() {
     setQualityIterations(stored.quality_iterations);
   }
   state.pipeline.activeStageId = defaultStages[0] || STAGE_DEFS[0]?.id || null;
+  state.workflow.stageOverrideStage = state.pipeline.activeStageId || "scout";
   renderPipelineChips();
   renderPipelineSelected();
   renderStageDetail(state.pipeline.activeStageId);
@@ -16803,6 +17021,14 @@ function handleWorkflowStudioPanel() {
     if (!control) return;
     const eventName = selector === "#wf-stage-enabled" ? "change" : "input";
     control.addEventListener(eventName, () => queueWorkflowStageOverrideSync());
+  });
+  $("#wf-stage-select")?.addEventListener("change", (ev) => {
+    const value = String(ev.target?.value || "").trim().toLowerCase();
+    if (!WORKFLOW_STAGE_ORDER.includes(value)) return;
+    state.workflow.stageOverrideStage = value;
+    state.pipeline.activeStageId = value;
+    renderStageDetail(value);
+    applyWorkflowStageOverrideControls(value);
   });
   toggleBtn?.addEventListener("click", () => {
     const next = !state.workflow.studioOpen;

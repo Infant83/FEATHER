@@ -6012,28 +6012,6 @@ body[data-logs-collapsed="true"] .preview-block {
   overscroll-behavior: contain;
 }
 
-.workflow-studio-detail {
-  min-height: 0;
-  padding: 10px;
-  max-height: 196px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  background: rgba(6, 11, 18, 0.52);
-}
-
-.workflow-studio-detail pre {
-  margin: 0;
-  font-family: "Manrope", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
 .workflow-studio-section {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
@@ -6189,6 +6167,148 @@ body[data-logs-collapsed="true"] .preview-block {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.workflow-focus-hint {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: rgba(10, 16, 24, 0.54);
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.workflow-focus-hint strong {
+  color: var(--ink);
+}
+
+.workflow-focus-sep {
+  opacity: 0.72;
+  margin: 0 5px;
+}
+
+.workflow-stage-select-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.workflow-stage-select-wrap label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.workflow-stage-select-wrap select {
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid var(--edge);
+  background: rgba(8, 14, 22, 0.84);
+  color: var(--ink);
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.workflow-stage-select-wrap select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.workflow-stage-context {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(8, 14, 22, 0.62);
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.workflow-stage-context-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-stage-context-head strong {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.workflow-stage-context-desc {
+  color: color-mix(in srgb, var(--muted) 90%, white 10%);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.workflow-stage-context-state {
+  color: color-mix(in srgb, var(--muted) 78%, white 22%);
+  font-size: 10.8px;
+}
+
+.workflow-stage-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.workflow-stage-chip.is-on {
+  border-color: color-mix(in srgb, var(--accent) 56%, white 10%);
+  color: color-mix(in srgb, var(--accent) 76%, white 24%);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.workflow-stage-chip.is-off {
+  border-color: rgba(255, 107, 129, 0.55);
+  color: #ffdce4;
+  background: rgba(255, 107, 129, 0.1);
+}
+
+.workflow-stage-policy {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: rgba(9, 14, 22, 0.52);
+}
+
+.workflow-stage-policy > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.workflow-stage-policy > summary::-webkit-details-marker {
+  display: none;
+}
+
+.workflow-stage-policy > summary::before {
+  content: "▸";
+  margin-right: 6px;
+}
+
+.workflow-stage-policy[open] > summary::before {
+  content: "▾";
+}
+
+#wf-stage-prompt-preview {
+  margin: 8px 0 0;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--muted) 90%, white 10%);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .workflow-studio-tool-help {
@@ -6687,6 +6807,12 @@ small.workflow-studio-note {
   content: "▾";
 }
 
+.live-ask-process-fold.is-compact > summary {
+  font-size: 10.8px;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--muted) 90%, white 10%);
+}
+
 .live-ask-process-chips {
   display: inline-flex;
   flex-wrap: wrap;
@@ -6888,6 +7014,55 @@ small.workflow-studio-note {
 .live-ask-message-body p,
 .live-ask-message-body li {
   margin: 0 0 6px;
+}
+
+.ask-message-body table,
+.live-ask-message-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 10px;
+  font-size: 12.4px;
+  table-layout: auto;
+}
+
+.ask-message-body th,
+.ask-message-body td,
+.live-ask-message-body th,
+.live-ask-message-body td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.ask-message-body th,
+.live-ask-message-body th {
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+}
+
+.md-inline-figure {
+  margin: 8px 0 10px;
+}
+
+.md-inline-image {
+  display: block;
+  max-width: min(100%, 980px);
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(10, 14, 22, 0.82);
+}
+
+.md-inline-image-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.live-ask-message.is-log-only {
+  padding: 6px 8px;
 }
 
 .live-ask-message-body a,

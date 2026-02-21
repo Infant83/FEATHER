@@ -8,3 +8,10 @@ dist/
 *.egg-info/
 
 .backup/
+runs/
+site/runs/
+site/report_hub/reports/
+node_modules/
+temp/
+artifacts/
+*.log

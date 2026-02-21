@@ -1,0 +1,43 @@
+stages:
+  - test
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+default:
+  image: python:3.12
+  before_script:
+    - python --version
+    - python -m pip install --upgrade pip
+    - python -m pip install -e ".[report-lite]"
+
+cache:
+  key: "$CI_PROJECT_PATH_SLUG"
+  paths:
+    - .cache/pip
+
+pytest_smoke:
+  stage: test
+  script:
+    - pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_commands.py tests/test_site_hub_separation.py tests/test_hub_publish.py tests/test_report_prompt_quality_policy.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+pages:
+  stage: deploy
+  needs:
+    - pytest_smoke
+  script:
+    - python -m federlicht.cli --site-refresh site/report_hub
+    - mkdir -p public/report_hub
+    - cp -a site/report_hub/. public/report_hub/
+    - printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./report_hub/index.html"><title>Federlicht Report Hub</title><a href="./report_hub/index.html">Go to Report Hub</a>' > public/index.html
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+

@@ -1,307 +1,195 @@
-# Codex Handoff - 2026-02-20 (Error-stop Recovery)
+# Codex Handoff - 2026-02-21 (Latest)
+
+Last updated: 2026-02-21
 
 ## 목적
-- 긴 세션 진행 중 중단된 상태를 **새 Codex 대화에서 즉시 재개**할 수 있도록,
-  - 현재까지 반영된 작업,
+- 중단된 세션을 다음 Codex 대화에서 **즉시 재개**할 수 있도록,
+  - 현재 반영된 변경,
   - 검증 상태,
-  - 미완/추가 TODO,
-  - 다음 실행 순서
-  를 한 문서로 정리한다.
+  - 미완 원인,
+  - 다음 실행 순서를 최신 기준으로 고정한다.
 
 ---
 
-## 1) 현재 진행 요약
+## 1) 현재 상태 요약
 
-### 1.1 FederHav agentic 전환 축
-- `help_agent`가 deepagent 런타임을 우선 시도하고, 실패 시 백엔드 폴백을 적용하는 구조로 강화됨.
-- safe-rule fallback은 기본 비활성(명시 opt-in)으로 변경됨.
-- instruction 품질 가드(짧은/모호한 실행 요청에 대해 `auto_instruction` 부여)가 들어가 있음.
+### 1.1 플랫폼 축
+- `Feather`: 소스 수집/아카이브
+- `Federlicht`: 다단계 보고서 생성/품질 루프
+- `Federnett`: 실행/검토/반복 UI
+- `FederHav`: 질의 보강 + 실행 제안 + 후속 수정 가이드
 
-관련 파일:
-- `src/federnett/help_agent.py`
-- `src/federhav/agentic_runtime.py`
-- `src/federhav/core.py`
-- `src/federhav/cli.py`
-
-핵심 포인트:
-- `create_deep_agent` 기반 경로 사용
-- planner/executor/quality subagent 개념 반영
-- `/plan`, `/act`, `/profile`, `/agent`, `/runtime` 운영 명령 흐름 반영
-
-### 1.2 Federnett Live Logs / Ask UI 개편 축
-- Live Logs에 FederHav 타임라인 중심 구조를 유지하면서,
-  - state-memory 기반 컨텍스트,
-  - 보조 로그 요약 길이 정책,
-  - 액션 실행 시 run-target 확인 UX
-  가 반영됨.
-- 액션에서 잘못된 run-target 문자열(예: `Run 전환: 대상에서/에서`)을 차단하는 정규화/검증 로직이 추가됨.
-- Workflow pipeline에 `federhav` 노드가 포함됨.
-- 테마에 `White`, `Black` 옵션이 추가됨.
-
-관련 파일:
-- `site/federnett/index.html`
-- `site/federnett/app.js`
-- `site/federnett/app.css`
-
-### 1.3 인증/권한 및 프로필 제어 축
-- 세션 인증 매니저 및 로그인 API 추가.
-- root/admin 계열 세션에 대한 built-in profile 편집 권한 경로 추가.
-- Root unlock UI와 session sign-in UI를 Agent Profiles 패널에 연결.
-
-관련 파일:
-- `src/federnett/auth.py`
-- `src/federnett/routes.py`
-- `src/federnett/agent_profiles.py`
-
-### 1.4 Report Hub 연동 축
-- report-hub post/comment/followup/link API 골격이 구현됨.
-- 인증 세션이 있으면 write payload에 `signed_by`, `signed_role` 자동 스탬핑.
-
-관련 파일:
-- `src/federnett/report_hub.py`
-- `src/federnett/routes.py`
-- `site/report_hub/*`
+### 1.2 이번 세션에서 반영된 핵심
+- Live Logs/Workflow Studio UI 안정화(표/mermaid 렌더, 로그 브릿지 compact, stage selector 가시성 개선).
+- run/site 분리 정책 정리 문서 보강(`docs/run_site_publish_strategy.md`).
+- 보고서 품질 규칙 강화(프롬프트 정책):
+  - 방법론 투명성(선정/제외 기준, 절차, 한계)
+  - 결과 추적성(evidence matrix)
+  - 불확실성 분리(확정/추정 구분 + 추가 검증 제안)
+- report hub 발행 전용 모듈 추가:
+  - `python -m federlicht.hub_publish --report ... --hub site/report_hub`
+  - run 산출물을 `site/report_hub/reports/<run>/...`로 복사 + manifest/index 갱신
+- GitLab Pages CI 추가(`.gitlab-ci.yml`): smoke test + pages 배포 파이프라인.
 
 ---
 
-## 2) 검증 스냅샷 (중단 직전 재확인)
-
-### 2.1 테스트
-실행 명령:
-
-```bash
-pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py tests/test_federhav_core.py tests/test_federhav_cli.py
-```
-
-결과:
-- `89 passed` (약 2분 56초)
-
-### 2.2 코드 규모(대략)
-- `src/**/*.py`: 약 `31,265` lines
-- `site/federnett/*.(js|css|html)`: 약 `27,273` lines
-- `tests/**/*.py`: 약 `3,517` lines
-
-### 2.3 워크트리 상태 주의
-- 현재 워크트리는 변경 파일이 매우 많음(코드 + run 산출물 + 문서 + 생성 파일 포함).
-- 새 세션에서 작업 재개 시 **불필요한 파일 정리 전략을 먼저 확정**해야 안전함.
-
-### 2.4 2026-02-21 추가 검증
-- 테스트 재실행:
-  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py tests/test_federhav_core.py tests/test_federhav_cli.py`
-  - 결과: `88 passed` (약 3분 36초)
-- Playwright 재현(로컬 서버 `http://127.0.0.1:53879/`):
-  - 해상도: `1366x768 / 1920x1080 / 2560x1440`
-  - Run Studio(`openclaw`, all view): section 4 / group 6 / item 18 확인
-  - 계층 칩 overflow: 0건
-  - workflow path overflow: 0건(경로 max-width 조정 후)
-  - workflow node state 배지 렌더링: 노드 수와 동일(8/8)
-- 추가 관찰:
-  - 일부 과거 run의 누락 파일(`report_full_1.html`)로 preview 404 콘솔 로그가 남을 수 있음(기능 회귀는 아님).
-
-### 2.5 2026-02-20 재검증 (Instruction Confirm Gate)
-- 테스트:
-  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py tests/test_federhav_core.py tests/test_federhav_cli.py`
-  - 결과: `88 passed` (약 3분 37초)
-- Playwright (로컬 서버 `http://127.0.0.1:8767/`):
-  - Action modal에서 `run_feather + require_instruction_confirm=true` payload 주입 케이스 검증
-  - `run-target`/`instruction` 체크 전 `확인 후 실행` 버튼 disabled 유지 확인
-  - 두 체크 완료 후 버튼 enabled 전환 확인
-  - 해상도 `1366x768 / 1920x1080 / 2560x1440`에서 모달 영역/체크박스 렌더링 이상 없음
-  - 브라우저 콘솔 error: `0`
-
-### 2.6 2026-02-21 재검증 (Clarify + Governor Trace)
-- 테스트:
-  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py`
-  - 결과: `76 passed` (약 2분 55초)
-- 추가 스모크:
-  - `pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py tests/test_federhav_core.py tests/test_federhav_cli.py`
-  - 결과: `89 passed` (약 2분 56초)
-- Playwright (로컬 서버 `http://127.0.0.1:8767/`):
-  - 입력 `실행해줘` 후 `질의 보강하기` 버튼 노출 확인
-  - Follow-up prompt 자동 삽입 텍스트 확인:
-    - `어떤 주제로 실행할까요? 예: '양자컴퓨터 최신 기술 동향을 분석해 보고서 작성해줘'`
-  - Live Ask 작업 로그에 tool trace 메타 노출 확인:
-    - `trace_id`, `tool_id`, `duration_ms`, `token_est`, `cache_hit`
-  - 실행 메타 칩에 `trace=<id>`, `tools=<N>` 노출 확인
-  - 브라우저 콘솔 error: `0`
-
----
-
-## 3) 반영 완료/부분완료/미완 상태표
-
-## 3.1 사용자 요구 대비 상태 (2026-02-21 최신)
+## 2) 완료/부분완료/미완 상태표 (2026-02-21)
 
 1. run root / site 정책 분리
-- 상태: **완료(2차)**
-- `DEFAULT_RUN_ROOTS=("runs","site/runs")`로 전환되어 신규 run은 `runs/*`를 우선 사용.
-- 기존 `site/runs/*`는 하위 호환으로 계속 스캔/열람 가능.
+- 상태: **완료**
+- 기본 run root: `runs,site/runs`
+- 신규 run은 `runs/*` 우선, `site/runs/*`는 레거시 호환
 
-2. 산출물(run)과 report hub 분리
-- 상태: **완료(1차)**
-- `run roots`와 `report_hub_root(site/report_hub)`를 분리 노출하고 메타 스트립에 병렬 표기.
-- report hub는 게시/공유 목적, run은 작업 아카이브 목적이라는 역할 분리 유지.
+2. 산출물(run) vs report hub 분리
+- 상태: **완료(2차)**
+- 정책 문서 고정: `docs/run_site_publish_strategy.md`
+- 발행 전용 모듈 추가: `src/federlicht/hub_publish.py`
 
 3. Sidebar 탭 UX 통일(Feather/Federlicht/Run Studio)
 - 상태: **완료**
-- Run Studio 탭 클릭 시 강제 포커스 이동(`focusPanel`) 제거.
-- Quick 버튼은 탭별 단일 버튼만 표시(`Run Feather` 또는 `Run Federlicht`), `Open Run Studio` 제거.
+- 강제 포커스 이동 제거, 탭별 단일 실행 버튼 유지
 
-4. Feather Run Folder 입력 가시성
-- 상태: **완료**
-- `Run Folder (Output)` 라벨로 명확화하고 run root 기준 resolved 경로 힌트를 실시간 표시.
-
-5. Workflow Result 상태 오표시(`RUNNING`) 수정
-- 상태: **완료**
-- `activeStep=result`만 남은 완료 상태에서 `running`으로 보이지 않도록 노드 상태 판정 분리.
-
-6. Live Ask 작업로그 표시 개선
+4. Live Logs 렌더 가독성
 - 상태: **완료(2차)**
-- 작업로그를 접힘형으로 바꾸고 summary에 `Ran <command>` 형태를 표시.
-- turn 로그가 없을 때 글로벌 로그 카드가 대화 하단에 붙도록 정리.
+- markdown 표/코드블록/이미지 렌더 강화
+- 로그 브릿지 카드 compact 요약(한 줄)
 
-7. Workflow Studio 중복 설정 정리
+5. Workflow Studio 가시성/직관성
+- 상태: **완료(2차)**
+- 작은 상단 frame 제거
+- Stage 선택 드롭다운 + 현재 선택 stage 힌트 + prompt override 미리보기
+- "사용 가능 도구: 로딩중" 고정 노출 문제 완화
+
+6. READY 노드 의미 정합성
+- 상태: **완료**
+- READY = 실행 가능(선행 조건 충족) 대기 상태
+
+7. Federlicht 보고서 품질(내용 중심)
+- 상태: **부분완료(강화 진행 중)**
+- 프롬프트 정책 강화는 반영 완료
+- 템플릿/평가 루프의 도메인별 고도화는 추가 스프린트 필요
+
+8. Report Hub 협업 write-flow UI(comment/followup/link)
+- 상태: **부분완료**
+- API는 구현됨(`src/federnett/report_hub.py`)
+- UI 플로우 완성/운영 규칙 노출은 잔여
+
+9. Playwright 회귀 자동화
+- 상태: **부분완료**
+- 수동/스크립트 스모크는 동작
+- CI에서 브라우저 기반 e2e 고정 스위트는 미완
+
+10. GitLab Pages 배포 실체화
 - 상태: **완료(1차)**
-- `Feather 설정`, `Federlicht 설정`, `Quality 루프 설정` 중복 섹션 제거.
-- Studio는 pipeline 선택/Stage override/FederHav bridge 중심으로 축소.
-
-8. Workflow Studio 패널 렌더링 가시성
-- 상태: **완료(1차)**
-- stagebar/detail frame의 배경/경계/z-index/overflow를 조정해 잘림/겹침 현상 완화.
-
-9. `READY` 노드 의미 정합성
-- 상태: **완료(정의 확인)**
-- 현재 구현에서 `READY`는 해당 노드가 실행 가능하며 선행 조건이 충족된 대기 상태를 의미.
-- 사용자 설명(“작업 수행 준비 상태”)과 구현 의미가 일치함.
-
-10. Federlicht 철학 반영(Feather -> Archive -> Federlicht)
-- 상태: **부분완료**
-- 질문 보강/근거 추적/run archive 재활용 흐름은 반영됨.
-- report hub의 토론/코멘트/follow-up write-flow UI 완성은 잔여.
-
-11. 계정/권한 운영 문서화
-- 상태: **부분완료**
-- auth API와 signed metadata는 반영.
-- 운영 정책(초기 root bootstrap, 권한 분기 가이드) 문서 정리는 추가 필요.
-
-12. Playwright 회귀 자동화
-- 상태: **부분완료**
-- 수동 회귀 시나리오는 안정화.
-- CI 고정 smoke 시나리오는 미완.
+- `.gitlab-ci.yml` 추가
+- smoke test + `site/report_hub` 배포 경로 고정
 
 ---
 
-## 4) 남은 핵심 TODO (새 대화 첫 스프린트 권장)
+## 3) 검증 스냅샷 (최신)
 
-## P0 (즉시 유지)
+### 3.1 테스트
+- `pytest -q tests/test_report_prompt_quality_policy.py tests/test_report_reasoning_policy.py tests/test_federnett_commands.py tests/test_federnett_routes.py`
+  - 결과: `58 passed`
+- `pytest -q tests/test_hub_publish.py tests/test_site_hub_separation.py tests/test_report_prompt_quality_policy.py tests/test_federnett_commands.py tests/test_federnett_routes.py`
+  - 결과: `57 passed`
 
-- [ ] 계정/권한 운영 문서화 마무리
-  - root/admin/user 권한표, root unlock/session auth 정책, built-in profile 편집 기준을 한 문서로 고정.
-
-- [ ] Report Hub write-flow UI 완성
-  - comment/followup/link API를 UI submit 플로우와 연결.
-  - 게시 승인(사용자 허락) 이후 hub 게시 흐름 명시.
-
-- [ ] Playwright 회귀셋 상시화
-  - 핵심 플로우(질문 -> 제안 -> run 전환 -> Feather/Federlicht 실행 -> 결과 확인)를 CI smoke로 고정.
-
-## P1 (개선)
-
-- [ ] 대형 run 성능 최적화
-  - Run Studio 트리(수백 파일)에서 렌더/필터 체감지연 계측 후 가상화/지연 렌더링 검토.
-
-- [ ] Workflow 관측 대시보드
-  - stage-level 비용/시간 집계를 run 단위 카드로 분리 노출.
-
-## 4.1 미완 원인 분석
-
-- 원인 A: 기능 구현이 문서화 속도를 앞질러 운영 가이드가 뒤처짐.
-  - 조치: 권한/게시 정책을 README+docs로 동기화.
-
-- 원인 B: Report Hub는 API 선구현, UI 연결은 후행이라 사용자 관점 completion이 낮음.
-  - 조치: write-flow 최소 UI를 먼저 붙여 운영 루프를 닫기.
-
-- 원인 C: Playwright는 수동 점검 중심이라 회귀 누락 위험이 남아 있음.
-  - 조치: smoke 시나리오를 스크립트화해 고정.
-
-## 4.2 목표 조정 (지금 굳이 완성하지 않아도 되는 항목)
-
-- `site/runs`의 즉시 물리적 대규모 마이그레이션은 보류 가능.
-  - 이유: 현재 `runs/*` 우선 + `site/runs/*` 호환으로 운영 리스크 없이 점진 이전 가능.
-
-- Federnett/Federlicht 코드베이스의 별도 리포 분리(완전 분기)는 당장 필수 아님.
-  - 이유: 경로/정책 분리와 산출물 분리만으로도 pages publish/git 관리 효율을 즉시 확보 가능.
-
-- Workflow Studio의 세부 시각효과(애니메이션/미세 타이포 튜닝)는 후순위.
-  - 이유: 현재 우선순위는 기능 일관성/오표시 제거/회귀 안정화.
+### 3.2 Playwright 스모크
+- 대상: `http://127.0.0.1:8767/`
+- 확인:
+  - Live Logs thread 표시
+  - Workflow Studio 패널 열림
+  - stage selector / focus hint 노출
+  - 도구 영역 "로딩중" 고정 비노출
 
 ---
 
-## 5) 새 Codex 대화에서 권장 실행 순서
+## 4) Playwright 실행 이슈 정리
 
-1. 워크트리 스냅샷 확인
+### 4.1 관측된 에러
+- Codex extension startup 중 MCP server `playwright`에서
+  - `resources/templates/list failed: Method not found(-32601)`
+  - 이후 Codex process unavailable
 
-```bash
-git status --short
-```
+### 4.2 원인(현재 판단)
+- 확장(클라이언트)과 Playwright MCP 서버 간 프로토콜 호환성 불일치.
+- 즉, extension이 호출하는 MCP 메서드와 서버 구현 버전이 안 맞는 상태.
 
+### 4.3 현재 안전 운영안
+- `C:\Users\angpa\.codex\config.toml`에서 playwright MCP를 비활성화한 상태 유지.
+- UI 검증은 Python Playwright 스모크로 수행.
+
+### 4.4 재활성화 시 체크
+1. `npx @playwright/mcp@latest --version`으로 실제 버전 확인
+2. `tools/playwright_mcp_recover.ps1` 실행(락/프로세스 정리)
+3. Codex extension reload 후 handshake 재확인
+4. 재발 시 MCP 비활성 + Python Playwright 경로 유지
+
+---
+
+## 5) on-prem + GitLab Pages 운영 전략
+
+### 5.1 권장 분기
+- 작업(run) 영역: `runs/*` (에이전트 작업, 임시 산출, 로그)
+- 발행(hub) 영역: `site/report_hub/*` (승인된 결과만)
+
+### 5.2 on-prem 발행 플로우
+1. on-prem Federlicht 실행으로 보고서 생성 (`runs/<run>/report_full.html`)
+2. 사용자 승인
+3. 발행 명령:
+   - `python -m federlicht.hub_publish --report ./runs/<run>/report_full.html --hub ./site/report_hub --run ./runs/<run>`
+4. `site/report_hub`만 GitLab remote로 push
+5. GitLab Pages에서 `public <- site/report_hub` 배포
+
+### 5.3 login/agent profile 연계 포인트
+- Federnett 세션 인증/프로필은 **운영 API 계층**에서 처리.
+- GitLab Pages는 정적 사이트이므로 인증 로직 직접 수행 불가.
+- 권장 이원화:
+  - 내부 Federnett(API): 인증/작성/승인
+  - Pages(정적): 승인된 결과 조회 전용
+
+---
+
+## 6) 미완 원인 및 우선 TODO
+
+### P0
+- [ ] Report Hub 협업 UI(write-flow) 완성
+  - 원인: API 선구현 후 UI 연결이 후행
+- [ ] Playwright e2e CI 고정
+  - 원인: 로컬 수동 검증 비중이 높음
+- [ ] 권한 운영 문서(root/admin/user + bootstrap) 확정
+
+### P1
+- [ ] 대형 run 렌더 성능 최적화(가상화/지연 렌더)
+- [ ] stage별 시간/비용 대시보드 강화
+- [ ] 보고서 품질 evaluator 지표 확장(방법론 투명성/결과 추적성 score 분리)
+
+### 보류 가능 항목
+- `site/runs` 대규모 즉시 마이그레이션
+  - 현재는 `runs` 우선 + 레거시 호환으로 리스크 낮음
+- UI 미세 애니메이션/시각효과 튜닝
+  - 기능 안정/운영성 대비 우선순위 낮음
+
+---
+
+## 7) 다음 세션 권장 실행 순서
+
+1. 워크트리/브랜치 확인
 2. 핵심 테스트 스모크
-
-```bash
-pytest -q tests/test_help_agent.py tests/test_federnett_routes.py tests/test_federnett_auth.py tests/test_report_hub_api.py
-```
-
-3. 서버 실행
-
-```bash
-federnett --root . --port 8765
-```
-
-4. Playwright로 Live Logs + Workflow Studio + Run Studio 재현
-- 긴 답변 표시
-- 제안 액션(run-target 포함)
-- 사이드바 폭/버튼 잘림
-- 테마 white/black 전환
-
-5. P0 항목부터 1개씩 패치 -> 테스트 -> Playwright 검증 반복
-
-권장 반복 루프(최소 4회):
-- 구현 -> 테스트 -> Playwright 검증 -> 회귀 수정 -> 리팩터링
+3. Federnett 실행 + Playwright 스모크
+4. P0 항목 1개 선택
+5. 구현 -> 테스트 -> Playwright -> 문서 업데이트 반복
 
 ---
 
-## 6) 현재 블로커/주의사항
-
-- 대화 컨텍스트가 매우 길어졌고, 워크트리 변경량이 큼.
-- run 산출물(`site/runs/*`)과 코드 변경이 섞여 있으므로,
-  - 기능 패치와 데이터 산출물을 분리해 관리하지 않으면 리뷰 난이도가 급상승함.
-- Windows/VS Code/Playwright 세션 락 이슈가 간헐적으로 발생할 수 있으므로,
-  - VS Code `Developer: Reload Window`
-  - 기존 Playwright 세션 종료 후 재접속
-  순서를 우선 적용.
-
----
-
-## 7) 참고 문서
-- `README.md`
-- `CHANGELOG.md`
+## 8) 참고 파일
+- `docs/run_site_publish_strategy.md`
 - `docs/federnett_remaining_tasks.md`
 - `docs/federhav_deepagent_transition_plan.md`
-- `docs/capability_governance_plan.md`
+- `README.md`
+- `CHANGELOG.md`
 
 ---
 
-## 7.1 Federlicht 철학 반영 점검
-
-- 반영됨:
-  - `Feather -> archive(run) -> Federlicht` 흐름이 UI/CLI/로그 문맥에서 유지됨.
-  - Live Ask가 `질의 보강 -> 실행 제안 -> 확인` 순서를 지원해 "즉답"보다 근거 기반 진행 흐름을 강화.
-  - governor trace(`trace/tool/duration/token/cache`)를 남겨 "무엇을 근거로 어떤 판단을 했는지"를 재검토 가능하게 함.
-  - run 아카이브 기반으로 재열람/재작성/추가 실행이 가능한 운영 형태를 유지.
-- 보강 필요:
-  - 철학 문장을 UI 온보딩(Help/tooltip)에 더 직관적으로 축약 노출할 필요.
-  - Report Hub 협업 write-flow(comment/followup/link) 완성 후, 토의/리비전 루프를 UI에서 직접 닫는 작업 필요.
-
----
-
-## 8) 인계 메모 (한 줄)
-현재 코드는 **agentic 전환 + 인증/권한 + UI P0 안정화(1차) + instruction 확인 게이트 + 질의 보강 플로우 + governor tool trace 가시화(2차)**가 반영된 상태이며, 다음 세션의 1순위는 **권한 운영 문서화 + Playwright 회귀 자동화 + Report Hub 협업 write-flow 완성**이다.
+## 9) 인계 한 줄
+현재 기준으로 **run/hub 분리 정책 + 허브 발행 모듈 + GitLab Pages CI + Live Logs/Workflow Studio 가시성 개선 + 보고서 품질 프롬프트 강화**가 반영되었고, 다음 1순위는 **Report Hub 협업 UI 완성과 Playwright e2e CI 고정**이다.

@@ -31,6 +31,14 @@ License note:
 You also need the LLM provider credentials required by `deepagents` (for example, the API key for the model you use).
 For OpenAI-compatible local models (e.g., `qwen3-*`), set `OPENAI_BASE_URL` (or `OPENAI_API_BASE`) and `OPENAI_API_KEY`.
 
+Codex CLI backend notes:
+- Set `FEDERLICHT_LLM_BACKEND=codex_cli` to run report stages through Codex CLI (`codex exec --json`) instead of OpenAI API.
+- Optional model override: `CODEX_MODEL=gpt-5.3-codex` (or another Codex-available model).
+- Optional tool-call bridge controls (Codex path):
+  - `FEDERLICHT_CODEX_TOOL_CALLS=1` (default on)
+  - `FEDERLICHT_CODEX_TOOL_MAX_CALLS=4`
+  - The bridge uses JSON tool protocol internally and can invoke registered report tools (including artwork tools) before final answer synthesis.
+
 Diagram tooling notes:
 - Mermaid rendering in HTML/report viewers works via client-side JavaScript (no local binary required).
 - Mermaid artifact export (`artwork_mermaid_render`) requires Mermaid CLI:
@@ -172,6 +180,14 @@ The script writes additional artifacts under the run folder:
 - `report_assets/figures/`: extracted PDF figures (PNG/JPG).
 - `report_views/`: HTML viewer pages for files (HTML output only).
 - `supporting/<timestamp>/`: web research outputs (when `--web-search` is enabled).
+
+Publish approved outputs into static report hub:
+```bash
+python -m federlicht.hub_publish \
+  --report ./runs/<run>/report_full.html \
+  --run ./runs/<run> \
+  --hub ./site/report_hub
+```
 
 The report output also appends a small `Miscellaneous` section with runtime metadata.
 

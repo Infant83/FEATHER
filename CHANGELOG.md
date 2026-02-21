@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.9.7
+- Federlicht report-quality policy uplift:
+  - strengthen planner instructions with explicit method/result/uncertainty tracks.
+  - strengthen evidence extraction instructions with an `Evidence Ledger` requirement (claim/evidence/source/strength/limits/recency).
+  - strengthen writer instructions for method transparency, result traceability (`evidence matrix`), and uncertainty disclosure.
+  - strengthen evaluator instructions to score method transparency and traceability quality.
+- Report hub publish implementation for run/site separation:
+  - add `python -m federlicht.hub_publish` module to publish approved run outputs into `site/report_hub/reports/*`.
+  - copy report (+ optional run overview/workflow notes) and update `manifest.json` + `index.html` in one step.
+  - add tests for publish path behavior (`tests/test_hub_publish.py`).
+- Deployment and operations:
+  - add baseline `.gitlab-ci.yml` with `pytest_smoke` and `pages` jobs (publishes `site/report_hub`).
+  - update handoff/strategy/docs for on-prem + GitLab Pages publish flow and Playwright MCP troubleshooting.
+  - add prompt-quality regression tests (`tests/test_report_prompt_quality_policy.py`).
+
 ## 1.9.6
 - Federnett run-root and hub separation hardening:
   - switch default run discovery roots to `runs,site/runs` (new runs prefer `runs/*`, legacy `site/runs/*` stays compatible).
