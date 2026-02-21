@@ -1,6 +1,6 @@
 # Codex Handoff - 2026-02-21 (Latest)
 
-Last updated: 2026-02-21
+Last updated: 2026-02-21 (prompt flexibility patch + local hub publish verified)
 
 ## 목적
 - 중단된 세션을 다음 Codex 대화에서 **즉시 재개**할 수 있도록,
@@ -26,6 +26,10 @@ Last updated: 2026-02-21
   - 방법론 투명성(선정/제외 기준, 절차, 한계)
   - 결과 추적성(evidence matrix)
   - 불확실성 분리(확정/추정 구분 + 추가 검증 제안)
+  - **유연화 1차 완료**: `depth + template_rigidity + free_format` 조합에 따라
+    - strict/deep: 강한 구조 요구
+    - balanced/deep: 권장 중심
+    - brief/free-format/loose: 목적 적합형 최소 구조
 - report hub 발행 전용 모듈 추가:
   - `python -m federlicht.hub_publish --report ... --hub site/report_hub`
   - run 산출물을 `site/report_hub/reports/<run>/...`로 복사 + manifest/index 갱신
@@ -65,9 +69,9 @@ Last updated: 2026-02-21
 - READY = 실행 가능(선행 조건 충족) 대기 상태
 
 7. Federlicht 보고서 품질(내용 중심)
-- 상태: **부분완료(강화 진행 중)**
-- 프롬프트 정책 강화는 반영 완료
-- 템플릿/평가 루프의 도메인별 고도화는 추가 스프린트 필요
+- 상태: **부분완료(유연화 1차 반영)**
+- 프롬프트 정책 강화 + 유연화 분기(강제/권장/요약형) 반영 완료
+- 템플릿/평가 루프의 도메인별 고도화(산업/의학/정책 등)는 추가 스프린트 필요
 
 8. Report Hub 협업 write-flow UI(comment/followup/link)
 - 상태: **부분완료**
@@ -84,6 +88,11 @@ Last updated: 2026-02-21
 - `.gitlab-ci.yml` 추가
 - smoke test + `site/report_hub` 배포 경로 고정
 
+11. PPT Writer 확장 전략
+- 상태: **부분완료(설계 명확화 단계)**
+- 현재 상태: PPT/PPTX 입력 파싱 및 figure 추출은 구현됨
+- 미완: 슬라이드 지향 출력 파이프라인(`slide plan -> component layout -> pptx render`)과 품질 루프
+
 ---
 
 ## 3) 검증 스냅샷 (최신)
@@ -93,6 +102,10 @@ Last updated: 2026-02-21
   - 결과: `58 passed`
 - `pytest -q tests/test_hub_publish.py tests/test_site_hub_separation.py tests/test_report_prompt_quality_policy.py tests/test_federnett_commands.py tests/test_federnett_routes.py`
   - 결과: `57 passed`
+- `pytest -q tests/test_report_prompt_quality_policy.py`
+  - 결과: `7 passed` (유연화 분기 회귀 테스트)
+- `pytest -q tests/test_report_reasoning_policy.py tests/test_hub_publish.py tests/test_site_hub_separation.py tests/test_federnett_commands.py tests/test_federnett_routes.py`
+  - 결과: `59 passed`
 
 ### 3.2 Playwright 스모크
 - 대상: `http://127.0.0.1:8767/`
@@ -101,6 +114,16 @@ Last updated: 2026-02-21
   - Workflow Studio 패널 열림
   - stage selector / focus hint 노출
   - 도구 영역 "로딩중" 고정 비노출
+  - `site/report_hub/index.html` 로컬 렌더 + 게시된 run(`openclaw`) 확인
+
+### 3.3 로컬 예제 실행/발행
+- 예제 검토 실행:
+  - `python -m feather --review ./site/runs/openclaw --format text`
+- report hub 발행:
+  - `python -m federlicht.hub_publish --report ./site/runs/openclaw/report_full.html --run ./site/runs/openclaw --hub ./site/report_hub`
+- 결과:
+  - `site/report_hub/reports/openclaw/report_full.html` 생성/갱신
+  - `site/report_hub/manifest.json`, `site/report_hub/index.html` 갱신
 
 ---
 
@@ -163,6 +186,8 @@ Last updated: 2026-02-21
 - [ ] 대형 run 렌더 성능 최적화(가상화/지연 렌더)
 - [ ] stage별 시간/비용 대시보드 강화
 - [ ] 보고서 품질 evaluator 지표 확장(방법론 투명성/결과 추적성 score 분리)
+- [ ] PPT Writer 파이프라인 설계 확정
+  - slide planner -> layout composer -> artifact pack(pptx/html/pdf) -> quality critic 루프
 
 ### 보류 가능 항목
 - `site/runs` 대규모 즉시 마이그레이션
@@ -184,6 +209,7 @@ Last updated: 2026-02-21
 
 ## 8) 참고 파일
 - `docs/run_site_publish_strategy.md`
+- `docs/ppt_writer_strategy.md` (신규 설계 문서)
 - `docs/federnett_remaining_tasks.md`
 - `docs/federhav_deepagent_transition_plan.md`
 - `README.md`

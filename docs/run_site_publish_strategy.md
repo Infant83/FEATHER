@@ -43,6 +43,17 @@ python -m federlicht.hub_publish \
 - `site/report_hub/*`만 GitLab Pages로 배포
 - run 원본(`runs/*`)은 내부 작업 저장소에 유지
 
+### 3.4 on-prem + GitLab 연동 절차(권장)
+1. on-prem 환경에서 제품 저장소 clone
+2. 내부 실행으로 `runs/<run>/...` 생성 (내부망 유지)
+3. 승인된 결과만 `federlicht.hub_publish`로 `site/report_hub`에 복사
+4. `site/report_hub/*`만 별도 remote(또는 별도 repo)로 push
+5. GitLab Pages는 허브 repo만 받아 정적 배포
+
+권장 remote 분리 예시:
+- `origin`: 제품 코드(repo main)
+- `hub-origin`: 허브 발행(repo pages)
+
 ## 4) Git 전략 권장안
 
 ### 옵션 A: 단일 저장소 + 분리 커밋

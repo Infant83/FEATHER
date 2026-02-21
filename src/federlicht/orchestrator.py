@@ -156,6 +156,29 @@ class ReportOrchestrator:
         artwork_log_jsonl = notes_dir / "artwork_tool_calls.jsonl"
         artwork_log_md = notes_dir / "artwork_tool_calls.md"
         artwork_tool_counter = {"n": 0}
+        stage_status: dict[str, dict[str, str]] = {}
+        artwork_log_context = {
+            "stage": "bootstrap",
+            "phase": "init",
+            "agent": "orchestrator",
+            "label": "",
+        }
+
+        def _set_artwork_log_context(
+            stage: str | None = None,
+            *,
+            phase: str | None = None,
+            agent: str | None = None,
+            label: str | None = None,
+        ) -> None:
+            if stage is not None:
+                artwork_log_context["stage"] = str(stage or "unknown")
+            if phase is not None:
+                artwork_log_context["phase"] = str(phase or "")
+            if agent is not None:
+                artwork_log_context["agent"] = str(agent or "")
+            if label is not None:
+                artwork_log_context["label"] = str(label or "")
 
         def _shorten(value: object, max_chars: int = 360) -> str:
             text = str(value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
@@ -175,14 +198,24 @@ class ReportOrchestrator:
                 artwork_tool_counter["n"] += 1
                 idx = artwork_tool_counter["n"]
                 ts = dt.datetime.now().isoformat(timespec="seconds")
+                stage_snapshot = {
+                    name: str(info.get("status") or "")
+                    for name, info in stage_status.items()
+                    if isinstance(info, dict)
+                }
                 payload = {
                     "index": idx,
                     "timestamp": ts,
+                    "stage": artwork_log_context.get("stage") or "",
+                    "phase": artwork_log_context.get("phase") or "",
+                    "agent": artwork_log_context.get("agent") or "",
+                    "label": artwork_log_context.get("label") or "",
                     "tool": tool_name,
                     "ok": bool(ok),
                     "params": params or {},
                     "output_preview": _shorten(output, 800),
                     "error": _shorten(error, 800),
+                    "stage_status": stage_snapshot,
                 }
                 artwork_log_jsonl.parent.mkdir(parents=True, exist_ok=True)
                 with artwork_log_jsonl.open("a", encoding="utf-8") as handle:
@@ -195,7 +228,25 @@ class ReportOrchestrator:
                     )
                 with artwork_log_md.open("a", encoding="utf-8") as handle:
                     handle.write(f"## {idx}. `{tool_name}` · {ts}\n")
+                    handle.write(f"- stage: `{payload['stage'] or '-'}`\n")
+                    if payload["phase"]:
+                        handle.write(f"- phase: `{payload['phase']}`\n")
+                    if payload["agent"]:
+                        handle.write(f"- agent: `{payload['agent']}`\n")
+                    if payload["label"]:
+                        handle.write(f"- call: `{payload['label']}`\n")
                     handle.write(f"- status: {'ok' if ok else 'error'}\n")
+                    if stage_snapshot:
+                        completed = sorted(
+                            name for name, status in stage_snapshot.items() if status in {"ran", "cached"}
+                        )
+                        running = sorted(
+                            name for name, status in stage_snapshot.items() if status in {"pending", "running"}
+                        )
+                        if completed:
+                            handle.write(f"- stage_status.done: `{','.join(completed)}`\n")
+                        if running:
+                            handle.write(f"- stage_status.active: `{','.join(running)}`\n")
                     if params:
                         params_text = json.dumps(params, ensure_ascii=False)
                         handle.write(f"- params: `{_shorten(params_text, 320)}`\n")
@@ -209,6 +260,7 @@ class ReportOrchestrator:
                     handle.write("\n")
                 print(
                     f"[artwork-tool] {tool_name} status={'ok' if ok else 'error'} "
+                    f"stage={payload['stage'] or '-'} "
                     f"index={idx} log={artwork_log_jsonl.relative_to(run_dir).as_posix()}"
                 )
             except Exception as exc:
@@ -1021,6 +1073,12 @@ class ReportOrchestrator:
 
         def record_stage(name: str, status: str, detail: str = "") -> None:
             workflow_stages.record_stage(stage_status, name=name, status=status, detail=detail)
+            _set_artwork_log_context(
+                name,
+                phase=f"stage_{status}",
+                agent="orchestrator",
+                label=name,
+            )
             detail_text = str(detail or "").strip()
             stage_events.append(
                 {
@@ -1411,6 +1469,34 @@ class ReportOrchestrator:
                 )
             return "\n".join(parts)
 
+        def infer_stage_from_label(label: str) -> str:
+            lowered = str(label or "").strip().lower()
+            if "alignment check" in lowered:
+                match = re.search(r"\(([^)]+)\)", lowered)
+                if match:
+                    token = re.sub(r"[^a-z_]", "", match.group(1).strip())
+                    if token in STAGE_INFO:
+                        return token
+                    if token in {"draft", "final"}:
+                        return "writer" if token == "draft" else "quality"
+            if any(token in lowered for token in ("scout",)):
+                return "scout"
+            if any(token in lowered for token in ("clarification", "clarifier")):
+                return "clarifier"
+            if "web" in lowered:
+                return "web"
+            if "plan check" in lowered:
+                return "plan_check"
+            if "plan" in lowered:
+                return "plan"
+            if "evidence" in lowered:
+                return "evidence"
+            if any(token in lowered for token in ("critique", "revision", "quality", "pairwise", "eval")):
+                return "quality"
+            if any(token in lowered for token in ("writer", "draft", "finalizer", "structural repair")):
+                return "writer"
+            return artwork_log_context.get("stage") or "orchestrator"
+
         def invoke_agent(
             label: str,
             agent: object,
@@ -1424,7 +1510,22 @@ class ReportOrchestrator:
                     backend.reset_stage_budget(label)
                 except Exception:
                     pass
-            return self._runner.run(label, agent, payload, show_progress=show_progress)
+            prev_context = dict(artwork_log_context)
+            _set_artwork_log_context(
+                infer_stage_from_label(label),
+                phase="agent_call",
+                agent="agent",
+                label=label,
+            )
+            try:
+                return self._runner.run(label, agent, payload, show_progress=show_progress)
+            finally:
+                _set_artwork_log_context(
+                    prev_context.get("stage"),
+                    phase=prev_context.get("phase"),
+                    agent=prev_context.get("agent"),
+                    label=prev_context.get("label"),
+                )
 
         def trim_to_sections(text: str) -> str:
             if not text:
@@ -1620,6 +1721,7 @@ class ReportOrchestrator:
                     figures_enabled=bool(args.extract_figures),
                     figures_mode=args.figures_mode,
                     artwork_enabled=writer_artwork_enabled,
+                    free_form=args.free_format,
                 ),
                 self._agent_overrides,
             )
@@ -2299,7 +2401,12 @@ class ReportOrchestrator:
 
         plan_prompt = agent_runtime.prompt(
             "planner",
-            prompts.build_plan_prompt(language),
+            prompts.build_plan_prompt(
+                language,
+                depth=depth,
+                template_rigidity=args.template_rigidity,
+                free_form=args.free_format,
+            ),
             self._agent_overrides,
         )
         plan_model = agent_runtime.model("planner", args.model, self._agent_overrides)
@@ -2604,7 +2711,12 @@ class ReportOrchestrator:
         if use_evidence:
             evidence_prompt = agent_runtime.prompt(
                 "evidence",
-                prompts.build_evidence_prompt(language),
+                prompts.build_evidence_prompt(
+                    language,
+                    depth=depth,
+                    template_rigidity=args.template_rigidity,
+                    free_form=args.free_format,
+                ),
                 self._agent_overrides,
             )
             evidence_model = agent_runtime.model("evidence", args.model, self._agent_overrides)
@@ -3108,6 +3220,7 @@ class ReportOrchestrator:
                 figures_enabled=bool(args.extract_figures),
                 figures_mode=args.figures_mode,
                 artwork_enabled=writer_artwork_enabled,
+                free_form=args.free_format,
             ),
             self._agent_overrides,
         )
@@ -3723,6 +3836,8 @@ class ReportOrchestrator:
                         eval_chars,
                         max_input_tokens=eval_max,
                         max_input_tokens_source=eval_max_source,
+                        template_rigidity=args.template_rigidity,
+                        free_form=args.free_format,
                     )
                 except Exception as exc:
                     if not is_context_overflow(exc):

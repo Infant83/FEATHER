@@ -1,0 +1,93 @@
+{
+  "revision": "2026-02-21T16:10:40.191726",
+  "generated_at": "2026-02-21T16:10:40.191726",
+  "items": [
+    {
+      "id": "zzzz_run_unknown_for_test",
+      "run": "zzzz_run_unknown_for_test",
+      "report_stem": "report_full_3",
+      "title": "보고서 개선 제안",
+      "author": "AI Governance Team",
+      "summary": "보고서 개선 제안 AI Governance Team assisted and prompted by \"AI Governance Team\" (AI Governance Office) — 2026-02-20 06:51 보고서의 각 섹션에 대한 피드백을 반영하여 개선된 내용을 아래와 같이 제안합니다. Abstract 본 보고서는 인공지능(AI) 기술의 현재 상태와 향후 방향에 대한 종합적인 분석을 제…",
+      "lang": "Korean",
+      "template": "acs_review",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [
+        "governance",
+        "team",
+        "개선",
+        "제안",
+        "대한"
+      ],
+      "date": "2026-02-20",
+      "timestamp": "2026-02-20T06:51:17.482972",
+      "source_mtime": 1771537877,
+      "source_size": 31550,
+      "paths": {
+        "report": "../runs/zzzz_run_unknown_for_test/report_full_3.html",
+        "overview": "../runs/zzzz_run_unknown_for_test/report/run_overview_report_full_3.md",
+        "workflow": "../runs/zzzz_run_unknown_for_test/report_notes/report_workflow.md",
+        "run": "../runs/zzzz_run_unknown_for_test"
+      }
+    },
+    {
+      "id": "양자컴퓨터 최신 기술소개",
+      "run": "양자컴퓨터 최신 기술소개",
+      "report_stem": "report_full",
+      "title": "양자컴퓨터 기술 발전 보고서",
+      "author": "AI Governance Team",
+      "summary": "양자컴퓨터 기술 발전 보고서 AI Governance Team assisted and prompted by \"AI Governance Team\" (AI Governance Office) — 2026-02-19 14:02 보고서를 다음과 같이 수정하겠습니다. Abstract 양자컴퓨터 기술은 최근 몇 년간 급속한 발전을 이루어 왔으며, 다양한 하드웨어 플랫폼과 오류 정정 기술이 개발되고 있다…",
+      "lang": "Korean",
+      "template": "acs_review",
+      "format": "html",
+      "model": "gpt-4o-mini",
+      "tags": [
+        "quantum",
+        "양자컴퓨터",
+        "governance",
+        "기술",
+        "범위"
+      ],
+      "date": "2026-02-19",
+      "timestamp": "2026-02-19T14:02:15.626249",
+      "source_mtime": 1771477336,
+      "source_size": 33917,
+      "paths": {
+        "report": "../runs/양자컴퓨터 최신 기술소개/report_full.html",
+        "overview": "../runs/양자컴퓨터 최신 기술소개/report/run_overview_report_full.md",
+        "workflow": "../runs/양자컴퓨터 최신 기술소개/report_notes/report_workflow.md",
+        "run": "../runs/양자컴퓨터 최신 기술소개"
+      }
+    },
+    {
+      "id": "openclaw",
+      "run": "openclaw",
+      "report_stem": "report_full",
+      "title": "OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토",
+      "author": "Hyun-Jung Kim / AI Governance Team",
+      "summary": "OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토 Federlicht assisted and prompted by \"Hyun-Jung Kim / AI Governance Team\" — 2026-02-03 22:14 Executive Summary Abstract 본 보고서는 OpenClaw(일부 문서에서 ClawdBot / Moltbot으로도 표기) 계열의 \"지속 실행형 개인/업…",
+      "lang": "Korean",
+      "template": "technical_deep_dive",
+      "format": "html",
+      "model": "gpt-5-mini-2025-08-07",
+      "tags": [
+        "지속",
+        "openclaw",
+        "실행형",
+        "에이전트",
+        "화학"
+      ],
+      "date": "2026-02-03",
+      "timestamp": "2026-02-03T22:14:40.894434",
+      "source_mtime": 1770124480,
+      "source_size": 74528,
+      "paths": {
+        "report": "reports/openclaw/report_full.html",
+        "overview": "reports/openclaw/run_overview_report_full.md",
+        "workflow": "reports/openclaw/report_workflow.md",
+        "run": "reports/openclaw"
+      }
+    }
+  ]
+}

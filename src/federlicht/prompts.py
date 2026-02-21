@@ -32,6 +32,55 @@ def _normalize_rigidity(template_rigidity: str | None) -> str:
     return "balanced"
 
 
+def _is_brief_mode(depth: str | None) -> bool:
+    return str(depth or "").strip().lower() == "brief"
+
+
+def _is_high_structure_mode(
+    *,
+    depth: str | None,
+    template_rigidity: str | None,
+    free_form: bool,
+) -> bool:
+    if free_form:
+        return False
+    if _is_brief_mode(depth):
+        return False
+    return _normalize_rigidity(template_rigidity) in {"strict", "balanced"}
+
+
+def _is_strict_structure_mode(
+    *,
+    depth: str | None,
+    template_rigidity: str | None,
+    free_form: bool,
+) -> bool:
+    if free_form:
+        return False
+    if _is_brief_mode(depth):
+        return False
+    return _normalize_rigidity(template_rigidity) == "strict"
+
+
+def _structure_flags(
+    *,
+    depth: str | None,
+    template_rigidity: str | None,
+    free_form: bool,
+) -> tuple[bool, bool]:
+    high_structure_mode = _is_high_structure_mode(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    strict_structure_mode = _is_strict_structure_mode(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    return high_structure_mode, strict_structure_mode
+
+
 def _template_guidance_block(template_guidance_text: str) -> str:
     if not template_guidance_text:
         return ""
@@ -77,15 +126,44 @@ def build_alignment_prompt(language: str) -> str:
     )
 
 
-def build_plan_prompt(language: str) -> str:
+def build_plan_prompt(
+    language: str,
+    *,
+    depth: str | None = None,
+    template_rigidity: str = "balanced",
+    free_form: bool = False,
+) -> str:
+    high_structure_mode, strict_structure_mode = _structure_flags(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    if strict_structure_mode:
+        scope_guidance = (
+            "계획에는 다음 축이 모두 포함되도록 작성하세요: "
+            "(1) 연구 질문/범위 정리, "
+            "(2) 방법론/소스 선정 기준 및 제외 기준, "
+            "(3) 핵심 결과/비교 분석 전개, "
+            "(4) 리스크/불확실성 및 추가 검증 계획. "
+        )
+    elif high_structure_mode:
+        scope_guidance = (
+            "가능하면 다음 축을 균형 있게 반영하세요: "
+            "(1) 연구 질문/범위 정리, "
+            "(2) 방법론/소스 선정 기준 및 제외 기준, "
+            "(3) 핵심 결과/비교 분석 전개, "
+            "(4) 리스크/불확실성 및 추가 검증 계획. "
+        )
+    else:
+        scope_guidance = (
+            "요청 목적에 따라 필요한 축만 선택하세요. "
+            "예: 짧은 의사결정 요약이면 핵심 결론/근거/리스크를 우선하고, "
+            "심층 연구형이면 방법론/비교 분석/추가 검증 계획까지 확장하세요. "
+        )
     return (
         "당신은 보고서 플래너입니다. 최종 보고서를 만들기 위한 간결한 순서형 계획(5~9단계)을 작성하세요. "
         "각 단계는 한 줄이며 체크박스 형식을 사용합니다. "
-        "계획에는 다음 축이 반드시 포함되어야 합니다: "
-        "(1) 연구 질문/범위 정리, "
-        "(2) 방법론/소스 선정 기준 및 제외 기준, "
-        "(3) 핵심 결과/비교 분석 전개, "
-        "(4) 리스크/불확실성 및 추가 검증 계획. "
+        f"{scope_guidance}"
         "형식:\n"
         "- [ ] Step title — short description\n"
         "가장 관련성 높은 소스를 읽고, 근거를 추출하고, 인사이트를 종합하는 데 초점을 맞추세요. "
@@ -122,7 +200,37 @@ def build_reducer_prompt(language: str) -> str:
     )
 
 
-def build_evidence_prompt(language: str) -> str:
+def build_evidence_prompt(
+    language: str,
+    *,
+    depth: str | None = None,
+    template_rigidity: str = "balanced",
+    free_form: bool = False,
+) -> str:
+    high_structure_mode, strict_structure_mode = _structure_flags(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    if strict_structure_mode:
+        ledger_guidance = (
+            "출력 마지막에는 Evidence Ledger를 추가하세요. "
+            "가능하면 표 형식(Claim | Evidence summary | Source URL/path | Strength(high/medium/low) | Limits | Recency)으로 작성하고, "
+            "표가 어려우면 같은 필드를 갖는 불릿 리스트로 대체하세요. "
+            "근거 강도(Strength)는 과장 없이 보수적으로 표시하세요. "
+        )
+    elif high_structure_mode:
+        ledger_guidance = (
+            "Evidence Ledger를 권장합니다. "
+            "가능하면 표 형식(Claim | Evidence summary | Source URL/path | Strength(high/medium/low) | Limits | Recency)으로 작성하고, "
+            "표가 어려우면 같은 필드를 갖는 불릿 리스트로 대체하세요. "
+            "근거 강도(Strength)는 과장 없이 보수적으로 표시하세요. "
+        )
+    else:
+        ledger_guidance = (
+            "요청이 brief/요약 중심이면 Evidence Ledger는 필요한 경우에만 짧게 추가하세요 "
+            "(핵심 주장 2~4개 수준). "
+        )
     return (
         "당신은 근거(증거) 추출자입니다. 스카우트 노트를 바탕으로 핵심 파일을 읽고 중요한 사실을 추출하세요. "
         "다음 JSONL 메타데이터 파일이 존재하면 먼저 열어 소스 커버리지를 파악하세요 "
@@ -143,10 +251,7 @@ def build_evidence_prompt(language: str) -> str:
         "read_document로 다시 열어 원문을 확인한 뒤 인용하세요. "
         "PDF의 뒷부분이 필요하면 read_document의 start_page를 사용해 필요한 페이지를 추가로 읽으세요. "
         "Verification excerpts 섹션이 있으면 우선 활용하고, 원문 확인 없이 수치/인용을 재구성하지 마세요. "
-        "출력 마지막에는 Evidence Ledger를 추가하세요. "
-        "가능하면 표 형식(Claim | Evidence summary | Source URL/path | Strength(high/medium/low) | Limits | Recency)으로 작성하고, "
-        "표가 어려우면 같은 필드를 갖는 불릿 리스트로 대체하세요. "
-        "근거 강도(Strength)는 과장 없이 보수적으로 표시하세요. "
+        f"{ledger_guidance}"
         f"소스 유형별로 묶은 간결한 불릿 리스트를 {language}로 출력하세요. "
         "고유명사와 소스 제목은 원문 언어를 유지하세요."
     )
@@ -164,6 +269,7 @@ def build_writer_prompt(
     figures_enabled: bool = False,
     figures_mode: str = "auto",
     artwork_enabled: bool = False,
+    free_form: bool = False,
 ) -> str:
     section_tokens = [str(section or "").strip().lower() for section in required_sections]
     has_method_section = any(
@@ -174,31 +280,48 @@ def build_writer_prompt(
         any(token in section for token in ("result", "results", "finding", "findings", "benchmark", "결과", "핵심"))
         for section in section_tokens
     )
-    if has_method_section:
+    high_structure_mode, strict_structure_mode = _structure_flags(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    if has_method_section and strict_structure_mode:
         method_transparency_guidance = (
             "방법론 투명성: Method 계열 섹션에서 소스 선정 기준, 제외 기준, 분석 절차, "
             "데이터 공백/한계를 명시하세요. "
         )
+    elif has_method_section and high_structure_mode:
+        method_transparency_guidance = (
+            "방법론 투명성: Method 계열 섹션에서 소스 선정 기준, 제외 기준, 분석 절차, "
+            "데이터 공백/한계를 우선적으로 드러내세요. "
+        )
     else:
         method_transparency_guidance = (
-            "방법론 투명성: Method 전용 섹션이 없더라도 초반 섹션(예: Executive Summary/Scope/Key Findings)에서 "
-            "소스 선정 기준, 제외 기준, 분석 절차, 한계를 짧게 공개하세요. "
+            "방법론 투명성: 요청 목적에 맞는 최소 수준으로만 공개하세요. "
+            "Method 전용 섹션이 없으면 초반 섹션(예: Executive Summary/Scope/Key Findings)에서 "
+            "짧게 공개해도 됩니다. "
         )
-    if has_result_section:
+    if has_result_section and strict_structure_mode:
         result_traceability_guidance = (
             "결과 추적성: Results/Findings 계열 섹션에서 최소 1개의 evidence matrix "
             "(Claim | Evidence | Source | Confidence | Limits)를 제시하세요. "
         )
+    elif has_result_section and high_structure_mode:
+        result_traceability_guidance = (
+            "결과 추적성: Results/Findings 계열 섹션에서 가능하면 evidence matrix "
+            "(Claim | Evidence | Source | Confidence | Limits)를 포함하세요. "
+        )
     else:
         result_traceability_guidance = (
-            "결과 추적성: 결과 전개 구간에서 최소 1개의 evidence matrix "
-            "(Claim | Evidence | Source | Confidence | Limits)를 포함하거나 동등한 구조로 정리하세요. "
+            "결과 추적성: brief/요약형 요청에서는 evidence matrix를 강제하지 않습니다. "
+            "대신 핵심 주장-근거 연결을 2~4개 불릿이나 짧은 표로 정리하세요. "
         )
     uncertainty_guidance = (
         "확정 사실과 불확실/추정 항목을 분리해 쓰고, 불확실 항목에는 왜 불확실한지와 추가 검증 방법을 함께 제시하세요. "
     )
     narrative_flow_guidance = (
-        "섹션 시작 문장과 끝 문장에서 이전/다음 섹션과의 논리 연결을 명시해 문단 간 단절을 줄이세요. "
+        "서술 연결성: 섹션 간 논리 전환을 자연스럽게 유지하세요. "
+        "심층형 보고서에서는 섹션 시작/끝 문장으로 연결을 명시하고, brief 모드에서는 과도한 연결 문구를 줄이세요. "
     )
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
@@ -320,11 +443,16 @@ def build_writer_prompt(
         else "다이어그램은 꼭 필요한 경우에만 간결하게 사용하세요. "
     )
     visual_mandate_guidance = ""
-    if depth in {"deep", "exhaustive"} and output_format != "tex":
+    if strict_structure_mode and depth in {"deep", "exhaustive"} and output_format != "tex":
         visual_mandate_guidance = (
             "깊이 있는 보고서 품질을 위해 최소 1개의 비교 표와 최소 1개의 다이어그램을 포함하세요. "
             "다이어그램은 Mermaid 코드블록 또는 artwork 도구 렌더 결과(SVG 경로) 중 하나로 제시하세요. "
             "표/다이어그램은 반드시 본문 해석 문장과 함께 배치해 장식적 삽입을 피하세요. "
+        )
+    elif high_structure_mode and depth in {"deep", "exhaustive"} and output_format != "tex":
+        visual_mandate_guidance = (
+            "깊이 있는 보고서에서는 가능하면 비교 표 또는 다이어그램을 활용해 주장-근거 연결을 강화하세요. "
+            "다만 요청이 요약/서술 중심이면 과도한 시각 요소를 강제하지 마세요. "
         )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
@@ -404,6 +532,7 @@ def build_writer_finalizer_prompt(
     figures_enabled: bool = False,
     figures_mode: str = "auto",
     artwork_enabled: bool = False,
+    free_form: bool = False,
 ) -> str:
     base_prompt = build_writer_prompt(
         format_instructions,
@@ -417,6 +546,7 @@ def build_writer_finalizer_prompt(
         figures_enabled,
         figures_mode,
         artwork_enabled,
+        free_form,
     )
     finalizer_guidance = (
         "이 단계는 선택된 초안에 대한 최종 정리 패스입니다. "
@@ -511,7 +641,30 @@ def build_revise_prompt(format_instructions: "FormatInstructions", output_format
     )
 
 
-def build_evaluate_prompt(metrics: str, depth: str | None = None) -> str:
+def build_evaluate_prompt(
+    metrics: str,
+    depth: str | None = None,
+    *,
+    template_rigidity: str = "balanced",
+    free_form: bool = False,
+) -> str:
+    high_structure_mode, strict_structure_mode = _structure_flags(
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
+    if strict_structure_mode:
+        quality_axis = (
+            "방법론 투명성(선정/제외 기준, 절차, 한계 공개)과 결과 추적성(주장-근거 연결)의 명확성도 강하게 평가하세요. "
+        )
+    elif high_structure_mode:
+        quality_axis = (
+            "방법론 투명성(선정/제외 기준, 절차, 한계 공개)과 결과 추적성(주장-근거 연결)을 주요 평가 축으로 포함하세요. "
+        )
+    else:
+        quality_axis = (
+            "요청이 brief/요약/자유형이면 간결성, 목적 적합성, 핵심 근거 연결의 명료성을 우선 평가하세요. "
+        )
     depth_rule = (
         f"요청 depth={depth}와 실제 보고서의 분량/분석 깊이 정합성을 반드시 평가하세요. "
         if depth
@@ -521,7 +674,7 @@ def build_evaluate_prompt(metrics: str, depth: str | None = None) -> str:
         "당신은 엄정한 보고서 평가자입니다. 보고서를 여러 차원에서 점수화하세요. "
         "(보고서 프롬프트 정합성, 톤/보이스 적합성, 출력 포맷 준수, 구조/가독성, 근거 적합성, "
         "환각 위험(낮을수록 높은 점수), 통찰 깊이, 미적/시각 완성도). "
-        "방법론 투명성(선정/제외 기준, 절차, 한계 공개)과 결과 추적성(주장-근거 연결)의 명확성도 강하게 평가하세요. "
+        f"{quality_axis}"
         f"{depth_rule}"
         "근거 인용이 실제 URL/파일 경로인지 확인하고, '[source]' 같은 일반 라벨 인용은 감점하세요. "
         "다음 키만 포함한 JSON만 반환하세요:\n"

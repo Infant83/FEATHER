@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-technical_deep_dive {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1b1d22;
+  --muted: #4d545f;
+  --accent: #3b5b77;
+  --link: #214e75;
+  --page-bg: linear-gradient(135deg, #f1f4f8 0%, #f7f4ee 55%, #ffffff 100%);
+  --body-font: "Iowan Old Style", "Charter", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --heading-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+  --ui-font: "Franklin Gothic Medium", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+body.template-technical_deep_dive .article {
+  border-radius: 12px;
+}
+
+body.template-technical_deep_dive .article h2 {
+  border-top: 2px solid var(--rule);
+}
+
+body.template-technical_deep_dive .article pre {
+  background: #eef2f6;
+}
+
+  </style>
+</head>
+<body class="theme-coral template-technical_deep_dive">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>OpenClaw 지속 실행형 에이전트 보안 및 거버넌스 검토</h1>
+<p>Federlicht assisted and prompted by "Hyun-Jung Kim / AI Governance Team" — 2026-02-03 22:14</p>
+<h2>Executive Summary</h2>
+<h3>Abstract</h3>
+<p>본 보고서는 OpenClaw(일부 문서에서 ClawdBot / Moltbot으로도 표기) 계열의 "지속 실행형 개인/업무용 AI 에이전트"가 주장하는 기능·아키텍처·설치 경로와, 기업·연구 환경(특히 화학·재료 연구 워크플로)에 적용할 때의 보안·거버넌스 리스크를 공개 자료 기반으로 정리한 기술검토이다. OpenClaw는 persistent memory(지속 메모리), 브라우저 제어, 파일·셸 명령 실행 등 광범위한 시스템 권한을 지원한다고 제품 문서에서 명시한다 (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>). 로컬 게이트웨이(예: 웹소켓 바인딩 ws://127.0.0.1:18789)와 온보드(onboard) 마법사, 외부 모델 연동(예: Google Gemini) 등 재현 가능한 설치·구성 경로가 커뮤니티·튜토리얼에 문서화되어 있다 (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>). 보안 분석 기사들은 게이트웨이 포트 노출, 권한 모델(시스템 액세스)의 결합, 공급망 이슈를 '치명적 조합'으로 지적하며 기업 환경에서 탐지·차단과 권한 최소화가 시급하다고 권고한다 (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>). 본 검토는 공개된 5개 주요 텍스트 추출물을 근거로 하며, Ox Security·Token Security 등 1차 보안 리포트 원문·GitHub 소스코드의 직접 검증은 일부 항목에서 아직 확보되지 않아 그 부분은 미검증 상태로 표기한다 (2차 요약: skywork.ai — 미검증 표기, <a href=".&lt;a href=" . archive tavily_extract 0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a>">.<a href="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-viewer="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-raw="archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt" class="viewer-link">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a></a>).</p>
+<h3>핵심 권고 (요약)</h3>
+<ul>
+<li>즉시 조치: 게이트웨이 기본 포트(보고상 18789)가 외부에 노출되지 않도록 방화벽/ACL을 확인하고, 탐지 규칙(포트 스캔, 비정상 웹소켓 연결)을 추가할 것 (커뮤니티: dev.to; 보안기사: Dark Reading) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>운영원칙: 에이전트에 부여되는 권한을 최소화하고 파일·셸 접근은 도커·차등화된 샌드박스 내부에서만 허용할 것 (커뮤니티 권고: dev.to) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>추가검증: Ox Security 원문, Pillar/Token Security 보고서, 그리고 공식 GitHub 리포지토리 코드(특히 gateway 구현·기본 auth·auto-update 동작)를 확보해 공급망·설정 관련 리스크를 코드 레벨에서 검증할 것 (보안기사 요약 지시, Dark Reading — 원문 확인 필요) (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).</li>
+</ul>
+<hr />
+<h2>Scope &amp; Methodology</h2>
+<h3>범위</h3>
+<p>본 검토는 다음 범주를 포함한다: (1) OpenClaw 계열 제품이 공개적으로 주장하는 기능과 아키텍처, (2) 설치·구성·온보딩 경로(Windows/WSL, Node.js 요구사항, API 키 연동), (3) 기업·연구 환경에서의 보안·거버넌스 이슈(네트워크 노출, 권한 모델, 공급망), (4) 화학·재료 연구 워크플로에의 적용 가능성 및 검증 요구사항. 사용 가능한 공개 자료는 OpenClaw 공식 페이지, Dev.to 심층 가이드, 한글 설치 튜토리얼(twofootdog), Dark Reading 보안 기사, Skywork.ai 2차 요약 등 5개 파일이다 (공식: openclaw.ai; 커뮤니티: dev.to; 현장 튜토리얼: twofootdog.tistory.com; 보안기사: Dark Reading; 2차 요약: skywork.ai) (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>; 커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>; 보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>; 2차 요약: skywork.ai, <a href=".&lt;a href=" . archive tavily_extract 0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a>">.<a href="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-viewer="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-raw="archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt" class="viewer-link">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a></a>).</p>
+<h3>방법론</h3>
+<ul>
+<li>문헌 스캐닝: 제공된 아카이브 추출물을 정독해 제품 주장·설치 스니펫·보안 논점을 식별·요약했다 (위 출처 목록 참조).  </li>
+<li>재현성 포맷화: 설치·구성 명령 및 구성 파일 필드를 재현 가능한 형태로 추출했다(예: install 원라이너, gateway 포트 예시, moltbot.json 샘플 필드) (공식·커뮤니티·튜토리얼 근거) (공식: openclaw.ai; 커뮤니티: dev.to; 현장 튜토리얼: twofootdog.tistory.com).  </li>
+<li>위험 분석: Dark Reading 등 보안 기사에서 제기된 사례·주장을 근거로 위험 항목을 분류하고, 미검증·1차 확인 필요 항목을 따로 열거했다 (보안기사: Dark Reading; 2차 요약의 미검증 항목 표기: skywork.ai) (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>; 2차 요약: skywork.ai, <a href=".&lt;a href=" . archive tavily_extract 0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a>">.<a href="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-viewer="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-raw="archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt" class="viewer-link">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a></a>).  </li>
+<li>명시적 한계 표기: 보안 리포트 원문·공식 GitHub 코드 등 추가 1차 자료가 확보되지 않은 항목은 '미검증'으로 표기하고 조치 우선순위를 제시했다 (evidence notes 기반).</li>
+</ul>
+<hr />
+<h2>Technical Background</h2>
+<h3>용어 정의</h3>
+<ul>
+<li>에이전트(Agent): 장기 실행 프로세스로서 외부 채널(메시징·이메일 등), 브라우저, 파일 시스템, 셸을 통해 동작을 자동화하는 소프트웨어 구성요소를 의미한다(일반적 정의). OpenClaw 계열은 "persistent memory"와 "skills/plugins" 개념을 통해 상태 유지와 기능 확장을 지원한다고 제품 문서에 명시한다 (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>Persistent memory(지속 메모리): 에이전트가 대화·컨텍스트를 장기 보관해 향후 세션에서 재활용할 수 있는 저장소 기능을 의미하며, OpenClaw 문서에 기능으로 표기되어 있다 (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>Gateway / WebSocket: 에이전트와 외부(클라이언트·채널) 간 통신을 중재하는 로컬 서비스로, 문서·가이드에선 웹소켓 바인딩(ws://127.0.0.1:18789) 예시와 포트 설정을 제시한다 (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>Hooks / Skills: 온보드 과정에서 활성화할 수 있는 확장 포인트(예: boot-md, command-logger, session-memory)로서, 이벤트 기반 동작과 외부 툴 호출을 가능하게 한다 (현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>).</li>
+</ul>
+<h3>접근법 비교: 로컬 퍼시스턴트 에이전트 vs 클라우드 서비스</h3>
+<ul>
+<li>로컬-first 에이전트: 로컬 게이트웨이·파일·브라우저에 직접 접근함으로써 지연을 줄이고 프라이버시 통제(데이터 지역화)를 주장하지만, 동시에 호스트 시스템 권한에 따라 공격 표면이 커진다 (공식 제품 주장과 커뮤니티 논의 종합) (공식: openclaw.ai; 커뮤니티: dev.to).  </li>
+<li>클라우드 호스티드 대리 서비스: 중앙 제어·정책 적용이 쉬운 반면 로컬 리소스(로컬 파일/장치)에 직접 접근하기 어렵다. OpenClaw 계열은 주로 로컬 에이전트 패러다임을 채택하는 사례로 분류된다 (커뮤니티·2차 요약) (커뮤니티: dev.to; 2차 요약: skywork.ai).</li>
+</ul>
+<hr />
+<h2>Methods &amp; Data</h2>
+<h3>설치·구성 워크플로 (재현 가능한 스니펫)</h3>
+<ul>
+<li>설치(공식 권장 원라이너):  </li>
+<li>curl -fsSL <a href="https://openclaw.ai/install.sh" target="_blank" rel="noopener">\[1\]</a> | bash; npm i -g openclaw; openclaw onboard — 온보드 마법사를 통해 모델·채널·hooks를 설정하도록 안내되어 있다 (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>Gateway 실행 예시:  </li>
+<li>moltbot gateway --port 18789 또는 기본 웹소켓 바인딩 ws://127.0.0.1:18789 같은 예시가 커뮤니티 문서에 제시되어 있다(네트워크 노출 경고 포함) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>구성 파일(샘플 필드):  </li>
+<li>예: ~/.clawdbot/moltbot.json에 agent.model(예: anthropic/claude-opus-4-5), channels.whatsapp.allowFrom, browser.enabled:true 등의 필드가 문서·가이드에 제시되어 재현 가능한 설정 스니펫으로 활용 가능하다 (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>외부 모델/API 연동:  </li>
+<li>Google Gemini API 키를 온보드에서 입력하는 방식으로 외부 LLM(예: google/gemini-3-flash-preview)을 연동하는 예시가 한글 튜토리얼에 상세히 설명되어 있다 (현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>).</li>
+</ul>
+<h3>로깅·훅·감사 워크플로</h3>
+<ul>
+<li>권장 활성화 훅: boot-md(부팅 시 문서 로드), command-logger(실행 명령 기록), session-memory(대화 세션 저장) 등은 온보드에서 활성화 가능한 항목으로, 감사·재현성 확보에 직접 활용할 수 있다 (현장 튜토리얼: twofootdog.tistory.com) (현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>).  </li>
+<li>권한 격리: Dev.to 가이드는 Docker sandbox 권장, allowlists·moltbot doctor 진단 활용을 통해 노출을 줄일 것을 제안한다 (커뮤니티 권고: dev.to) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).</li>
+</ul>
+<h3>데이터·증거의 한계</h3>
+<ul>
+<li>공개 데이터는 설치 스니펫·구성 예시·보안 기사 요약에 집중되어 있으며, 성능 벤치마크(예: LLM 응답속도, 작업 처리량), 포렌식 로그 샘플, 또는 공급망 공격의 구체적 커밋·해시와 같은 정량 증거는 제공되지 않는다 (공개자료 한계: evidence notes).</li>
+</ul>
+<hr />
+<h2>Results &amp; Evidence</h2>
+<h3>기능·아키텍처 근거</h3>
+<ul>
+<li>시스템 권한: OpenClaw는 브라우저 제어, 파일 읽기/쓰기, 셸 커맨드 실행 등 "full system access" 성격의 기능을 제품 문서에서 표준 기능으로 내세운다 (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>설치·온보딩 재현성: 설치 원라이너와 openclaw onboard 흐름, Node.js ≥ 22 요구사항 등은 커뮤니티·튜토리얼에서 반복적으로 문서화되어 있어 기본 설치 재현은 가능하다 (커뮤니티: dev.to; 현장 튜토리얼: twofootdog.tistory.com) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>).  </li>
+<li>네트워크 바인딩(관찰 가능 지점): 로컬 게이트웨이의 기본·권장 바인딩 예시로 포트 18789가 반복 언급되며, 이 포트가 외부 노출 시 스캔/공격 표적이 된 사례가 보안 기사에서 보고되었다 (커뮤니티: dev.to; 보안기사: Dark Reading) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).</li>
+</ul>
+<h3>보안·운영 증거(요지)</h3>
+<ul>
+<li>기업 리스크 사례: Dark Reading은 OpenClaw 계열의 게이트웨이 포트가 스캔·공격 대상이 되었고, 내부 사용(섀도우 IT) 비율을 인용하며 기업 환경 리스크를 분석했다 — 기사 내 Token Security / Pillar Security 인용 문구가 포함되어 있지만 해당 원자료(보고서 본문)는 추가 확인이 권장된다(미검증 항목) (보안기사: Dark Reading — 원문 인용 지적, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>공급망 우려: 다수 기여자·자동화된 PR 병합(일명 vibe-coding) 환경에서는 단일 악성 커밋이 빠르게 확산될 위험이 있다고 요약 보고되고 있으나, Ox Security의 상세 분석 원문(원자료)은 별도 확보·검증이 필요하다 (보안기사 요약 → 원문 확인 권장) (보안기사: Dark Reading; 2차 요약 권고: skywork.ai — 미검증 표기).</li>
+</ul>
+<h3>정량적·실험적 결과</h3>
+<ul>
+<li>공개자료에서는 성능·정량 벤치마크(예: 작업 완료율, 시간당 작업량, LLM 토큰 사용량)에 대한 실험적 수치는 제공되지 않는다(공개자료 한계) (evidence notes).  </li>
+<li>보안 관련 통계(예: "조직 내 약 22% 직원이 ClawdBot을 사용")는 Dark Reading이 Token Security를 인용해 보도했으나, Token Security 원문과 조사 방법론은 확인이 필요하므로 본 보고서에서는 미검증 수치로 표기한다 (보안기사: Dark Reading — 미검증 수치 표기, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).</li>
+</ul>
+<hr />
+<h2>Limitations &amp; Open Questions</h2>
+<h3>재현성과 검증 한계</h3>
+<ul>
+<li>코드 레벨 검토 부재: GitHub 공식 리포지토리(특히 gateway 구현·default config·auto-update 동작)에 대한 직접 소스코드 분석이 수행되지 않았으므로 일부 메커니즘(예: 기본 인증값, 업데이트 동작)은 문서화 주장 수준에서만 검토되었다(미검증). 추가로 리포지토리 클론·grep 기반 정밀 검증이 필요하다 (evidence notes).  </li>
+<li>보안 리포트 원문 미확보: Dark Reading이 요약한 Ox Security·Pillar Security·Token Security의 상세 보고서 원문이 일부 확보되지 않아 공급망·탐지 사례의 구체적 증거(로그·IOCs·커밋 해시 등)는 현재 보고서에서 제시할 수 없다 (보안기사: Dark Reading — 원문 확인 필요, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>실증적 적용 사례 부재(화학·재료): 화학·재료 분야에서 OpenClaw를 이용한 공개된 실증 연구(재현 가능한 실험 사례나 데이터 무결성 검증 사례)는 발견되지 않았다(공개자료 한계).</li>
+</ul>
+<h3>오픈 질문(우선 순위)</h3>
+<ul>
+<li>게이트웨이 기본 인증·권한 모델의 실제 디폴트 값은 무엇인가? (GitHub 코드·설정 파일 검증 필요)  </li>
+<li>스킬/플러그인 생태계의 서명·검증 체계는 존재하는가? (공급망 공격 표면을 줄이기 위한 메타데이터·서명 검토 필요)  </li>
+<li>에이전트가 외부 입력(이메일/웹 페이지 등)을 LLM에 전달할 때 프롬프트 인젝션·민감정보 유출을 방지하는 실무적 필터링 체계가 구현되어 있는가? (문서상 권고는 있으나 코드·설정 수준의 방어구조는 미검증) (보안기사·커뮤니티 권고) (보안기사: Dark Reading; 커뮤니티: dev.to).</li>
+</ul>
+<hr />
+<h2>Risks &amp; Gaps</h2>
+<ul>
+<li>네트워크 노출(우선·높음): 로컬 게이트웨이 포트(보고상 18789)가 외부에 노출되면 스캔·접근의 대상이 될 수 있다 — 해당 포트의 인터넷 노출 여부 확인과 방화벽 규칙 적용이 즉시 필요하다 (커뮤니티: dev.to; 보안기사: Dark Reading) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>; 보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>과도한 권한·데이터 유출(우선·높음): 에이전트가 파일·셸·브라우저를 제어하는 능력은 잘못된 구성이나 악성 스킬을 통해 민감 데이터(예: 시크릿, 실험 데이터, ELN 레코드)가 외부로 유출되는 경로를 제공할 수 있다 (공식 기능 명시 + 보안기사 권고) (공식: openclaw.ai; 보안기사: Dark Reading).  </li>
+<li>프롬프트 인젝션·정보 유출(우선·중): 외부 입력(이메일, 웹 페이지, 채팅 메시지)을 에이전트가 LLM로 전달할 때 프롬프트 인젝션이 발생할 수 있으며, 이를 통해 의도치 않은 명령 실행이나 시크릿 노출이 발생할 수 있다고 보안 기사에서 지적한다 (보안기사: Dark Reading) (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>공급망(스킬·플러그인) 위험(우선·중): 다중 기여·자동 PR 환경에서 악성 커밋·악성 스킬이 합류될 경우 대규모 확산이 발생할 수 있다는 우려가 제기되었다(요약 출처: Dark Reading → Ox Security 인용), 그러나 Ox Security 원문 분석이 필요하다(미검증) (보안기사: Dark Reading; 2차 요약: skywork.ai — 미검증 표기) (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>; 2차 요약: skywork.ai, <a href=".&lt;a href=" . archive tavily_extract 0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a>">.<a href="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-viewer="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-raw="archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt" class="viewer-link">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a></a>).  </li>
+<li>감사·재현성 공백(우선·중): 로깅·command-logger 등 기능은 존재하나, 표준화된 포렌식 로그 형식·원격 중앙 감사(immutable audit trail)가 문서화되어 있지 않아 규정 준수·역추적성 확보에 추가 작업이 필요하다 (현장 튜토리얼·커뮤니티 권고) (현장 튜토리얼: twofootdog.tistory.com; 커뮤니티: dev.to).</li>
+</ul>
+<p>요약: 증거 강도는 설치·구성 스니펫과 제품 기능 주장에 대해서는 중간 수준의 신뢰도를 확보했으나, 공급망 공격·조직 내 사용 통계·구체적 스캔 사례 등의 일부 핵심 보안 주장은 1차 소스(원문 보고서·코드)의 추가 검증이 필요하다 (보안기사 요약 지적).</p>
+<hr />
+<h2>Critics</h2>
+<p>Headline: "지속 실행형 에이전트는 연구·기업 거버넌스와 충돌할 소지가 크다"</p>
+<ul>
+<li>요지: 지속 실행형 에이전트는 작업 자동화에서 생산성 이점을 제공하나, 연구 데이터 무결성·감사 요구사항 및 규제 요건(특히 실험 기록의 비가역적 변경 가능성)과 충돌할 위험이 있다 (해석).  </li>
+<li>반대/대안 관점:  </li>
+<li>일부 연구자는 "로컬-first 에이전트가 프라이버시와 오프라인 작업에 유리"하다고 주장하며, 중앙화된 클라우드 서비스보다 데이터 국지성·응답속도 면에서 장점이 있다고 본다(대안) (커뮤니티·제품 주장) (커뮤니티: dev.to; 공식: openclaw.ai).  </li>
+<li>거버넌스 관점에서는 "에이전트 권한을 줄이고, 모든 외부 채널 인터랙션은 승인된 브리지(정책 적용 지점)를 통해서만 이루어져야 한다"는 보수적 접근을 권한다(대책).  </li>
+<li>핵심 비판 포인트(불릿):  </li>
+<li>권한 최소화 실패 시 민감 데이터 노출·무결성 손상 가능 (보안기사·커뮤니티 근거) (보안기사: Dark Reading; 커뮤니티: dev.to).  </li>
+<li>공급망·플러그인 생태계의 신뢰성 미검증 시 대규모 악성 확산 위험 (보안기사 요약; Ox Security 원문 검증 필요) (보안기사: Dark Reading; 2차 요약: skywork.ai — 미검증 표기).  </li>
+<li>규제·감사 요구(예: 연구 데이터 보존 규정)에 부합하도록 설계되지 않으면 연구기관 내부 도입이 어려움(해석).  </li>
+</ul>
+<p>간단 권고(비판자 관점): 도입 전 최소한(1) 게이트웨이 네트워크 분리(격리 VLAN), (2) 권한·시크릿 최소화, (3) 서명된 스킬만 허용, (4) 불변 로그(immutable audit) 구축을 요구한다(제안).</p>
+<hr />
+<h2>Appendix</h2>
+<h3>근거·아카이브 아티팩트 (주요 파일)</h3>
+<ul>
+<li>OpenClaw 공식 페이지(Quick Start · 기능 요약) — (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>Dev.to 심층 가이드(아키텍처·gateway·config 예시) — (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>Twofootdog 한글 설치 튜토리얼(Windows/WSL, Gemini 연동) — (현장 튜토리얼: twofootdog.tistory.com, <a href=".&lt;a href=" . archive tavily_extract 0001_https_twofootdog.tistory.com_555.txt">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a>">.<a href="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-viewer="report_views/archive_tavily_extract_0001_https_twofootdog.tistory.com_555.txt-791091af.html" data-raw="archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt" class="viewer-link">/archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt</a></a>).  </li>
+<li>Dark Reading 보안 기사(기업 환경 리스크 요약) — (보안기사: Dark Reading, <a href=".&lt;a href=" . archive tavily_extract 0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a>">.<a href="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-viewer="report_views/archive_tavily_extract_0005_https_www.darkreading.com_application-security_openc-97879b61.html" data-raw="archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt" class="viewer-link">/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt</a></a>).  </li>
+<li>Skywork.ai 기술보고(2차 요약 — 일부 항목 미검증) — (2차 요약: skywork.ai, <a href=".&lt;a href=" . archive tavily_extract 0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a>">.<a href="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-viewer="report_views/archive_tavily_extract_0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-ass-8f4d0c46.html" data-raw="archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt" class="viewer-link">/archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt</a></a>).</li>
+</ul>
+<h3>방법·재현성 체크리스트</h3>
+<ul>
+<li>사전(격리) 준비: VM/Docker 기반 격리 환경 준비 → 호스트와 네트워크 격리(VLAN 또는 호스트-only) 구성.  </li>
+<li>설치(재현): Node.js ≥ 22 설치 → curl -fsSL <a href="https://openclaw.ai/install.sh" target="_blank" rel="noopener">\[1\]</a> | bash; npm i -g openclaw → openclaw onboard (모의 API 키/로컬 mocks 사용) (공식 설치 스니펫) (공식: openclaw.ai, <a href=".&lt;a href=" . archive tavily_extract 0002_https_openclaw.ai.txt">/archive/tavily_extract/0002_https_openclaw.ai.txt</a>">.<a href="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-viewer="report_views/archive_tavily_extract_0002_https_openclaw.ai.txt-03118231.html" data-raw="archive/tavily_extract/0002_https_openclaw.ai.txt" class="viewer-link">/archive/tavily_extract/0002_https_openclaw.ai.txt</a></a>).  </li>
+<li>네트워크 관찰: moltbot gateway --port 18789로 실행 후 netstat/ss/tcpdump로 바인딩·소켓 연결 관찰; 외부 노출 여부를 방화벽에서 확인 (커뮤니티 예시) (커뮤니티: dev.to, <a href=".&lt;a href=" . archive tavily_extract 0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a>">.<a href="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-viewer="report_views/archive_tavily_extract_0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-2377350e.html" data-raw="archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt" class="viewer-link">/archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt</a></a>).  </li>
+<li>기능 검증: command-logger, session-memory, boot-md 훅 활성화 후 로그/파일·명령 실행 행위 기록을 캡처해 재현성·감사 가능성 검증 (현장 튜토리얼 권장) (현장 튜토리얼: twofootdog.tistory.com).  </li>
+<li>보안·공급망 점검: 스킬(plugin) 설치·병합 프로세스의 서명·검증 유무 확인 및 PR 병합 파이프라인(자동화된 CI 서명/검증) 점검(보안기사 권고) (보안기사: Dark Reading).</li>
+</ul>
+<h3>약어표</h3>
+<ul>
+<li>LLM: Large Language Model  </li>
+<li>ELN: Electronic Lab Notebook  </li>
+<li>IAM: Identity and Access Management  </li>
+<li>IOC: Indicator of Compromise</li>
+</ul>
+<p>(끝)</p>
+<h2>Report Prompt</h2>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>다음 보고서는 OpenClaw(일부 소스에서 ClawdBot/Moltbot로도 지칭) 기반의 “지속 실행형 개인/업무용 AI 에이전트”를 소재로, <strong>화학·재료 분야 연구자 관점에서 재현 가능한 시스템 구성, 작동 메커니즘(소프트웨어/데이터 흐름), 응용 가능성, 안전·거버넌스 리스크</strong>를 ACS-style review 구조로 정리하는 것을 목표로 한다. 범위는 (1) 제품/프로젝트가 주장하는 기능과 아키텍처, (2) 설치·운영 경로(Windows/WSL, Node, API 키 등), (3) 기업 환경에서의 보안·컴플라이언스 쟁점, (4) 연구 워크플로(문헌조사, 실험기획, 데이터 정리, ELN/LIMS 연계 등)로의 적용 가설까지 포함한다. 단, 본 런의 공개자료는 5개 웹 추출문에 제한되므로 화학·재료 “실증 사례/정량 성능/벤치마크”는 <strong>공개정보 한계</strong>로 명시한다.</p>
+<p>필수 섹션 작성 지시:<br />
+- Abstract(5–7문장): 다룬 범주(기능·메커니즘·응용·리스크)와 핵심 결론(가능/제약)을 요약.<br />
+- Introduction: 용어 정의(에이전트, persistent memory, heartbeats, comms integration 등)와 관련 연구/도구군 대비 문제의식.<br />
+- Current Landscape: 접근법을 “지속 실행/메모리/권한 접근/통합 채널” 기준으로 분류하고, 각 주장에 근거 소스를 연결.<br />
+- Mechanistic Insights: 에이전트의 권한 모델, 메모리/상태, 이벤트(heartbeats) 기반 동작, 외부툴 호출 흐름을 단계적으로 설명(추정은 ‘가설’ 표기).<br />
+- Applications: 재료·화학 연구에서 가능한 사용 시나리오와 필요한 검증(재현성, 데이터 무결성).<br />
+- Challenges: 설치 의존성, 운영 복잡도, 로깅/감사, 모델 키 관리 등.<br />
+- Outlook: 검증 실험/평가 프로토콜 제안(로그 기반 재현성, 권한 최소화, red-teaming).<br />
+- Risks &amp; Gaps: Dark Reading 등에서 제기된 IAM/시크릿/감사 공백을 중심으로, 미확인 항목은 “공개정보 한계”로 열거.<br />
+- Critics: “지속 실행형 에이전트는 기업/연구 거버넌스에 부적합” 등 반대 논지를 짧은 헤드라인+불릿으로 제시.<br />
+- Appendix: 사용 소스 목록과 인용 스니펫(필요 시), 약어표.</p>
+<p>증거/인용 정책: 각 핵심 주장마다 (공식: openclaw.ai / 보안기사: Dark Reading / 설치가이드: twofootdog.tistory.com / 2차 요약: skywork.ai, dev.to)로 <strong>출처를 문장 말미에 괄호로 표기</strong>하고, 2차 요약의 단정적 서술은 1차로 교차검증되지 않으면 “미검증”으로 표시한다. 언어는 한국어로 작성하되 고유명사/문서 제목/사이트명은 원문 표기를 유지하고, 합의된 사실과 추정(스페큘레이션)을 문단 내에서 분리한다.</p>
+<p>Language: Korean</p>
+<p>Template: acs_review<br />
+Depth: deep  </p>
+<p>다음 보고서는 OpenClaw(일부 소스에서 ClawdBot/Moltbot로도 지칭) 기반의 “지속 실행형 개인/업무용 AI 에이전트”를 소재로, <strong>화학·재료 분야 연구자 관점에서 재현 가능한 시스템 구성, 작동 메커니즘(소프트웨어/데이터 흐름), 응용 가능성, 안전·거버넌스 리스크</strong>를 ACS-style review 구조로 정리하는 것을 목표로 한다. 범위는 (1) 제품/프로젝트가 주장하는 기능과 아키텍처, (2) 설치·운영 경로(Windows/WSL, Node, API 키 등), (3) 기업 환경에서의 보안·컴플라이언스 쟁점, (4) 연구 워크플로(문헌조사, 실험기획, 데이터 정리, ELN/LIMS 연계 등)로의 적용 가설까지 포함한다. 단, 본 런의 공개자료는 5개 웹 추출문에 제한되므로 화학·재료 “실증 사례/정량 성능/벤치마크”는 <strong>공개정보 한계</strong>로 명시한다.</p>
+<p>필수 섹션 작성 지시:<br />
+- Abstract(5–7문장): 다룬 범주(기능·메커니즘·응용·리스크)와 핵심 결론(가능/제약)을 요약.<br />
+- Introduction: 용어 정의(에이전트, persistent memory, heartbeats, comms integration 등)와 관련 연구/도구군 대비 문제의식.<br />
+- Current Landscape: 접근법을 “지속 실행/메모리/권한 접근/통합 채널” 기준으로 분류하고, 각 주장에 근거 소스를 연결.<br />
+- Mechanistic Insights: 에이전트의 권한 모델, 메모리/상태, 이벤트(heartbeats) 기반 동작, 외부툴 호출 흐름을 단계적으로 설명(추정은 ‘가설’ 표기).<br />
+- Applications: 재료·화학 연구에서 가능한 사용 시나리오와 필요한 검증(재현성, 데이터 무결성).<br />
+- Challenges: 설치 의존성, 운영 복잡도, 로깅/감사, 모델 키 관리 등.<br />
+- Outlook: 검증 실험/평가 프로토콜 제안(로그 기반 재현성, 권한 최소화, red-teaming).<br />
+- Risks &amp; Gaps: Dark Reading 등에서 제기된 IAM/시크릿/감사 공백을 중심으로, 미확인 항목은 “공개정보 한계”로 열거.<br />
+- Critics: “지속 실행형 에이전트는 기업/연구 거버넌스에 부적합” 등 반대 논지를 짧은 헤드라인+불릿으로 제시.<br />
+- Appendix: 사용 소스 목록과 인용 스니펫(필요 시), 약어표.</p>
+<p>증거/인용 정책: 각 핵심 주장마다 (공식: openclaw.ai / 보안기사: Dark Reading / 설치가이드: twofootdog.tistory.com / 2차 요약: skywork.ai, dev.to)로 <strong>출처를 문장 말미에 괄호로 표기</strong>하고, 2차 요약의 단정적 서술은 1차로 교차검증되지 않으면 “미검증”으로 표시한다. 언어는 한국어로 작성하되 고유명사/문서 제목/사이트명은 원문 표기를 유지하고, 합의된 사실과 추정(스페큘레이션)을 문단 내에서 분리한다.</p>
+<h2>References</h2>
+<ol>
+<li><span id="ref-1"></span> openclaw.ai/install.sh — <a href="https://openclaw.ai/install.sh" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-03 22:14:40</li>
+<li>Duration: 00:10:31 (631.5s)</li>
+<li>Model: gpt-5-mini-2025-08-07</li>
+<li>Quality model: gpt-5-mini-2025-08-07</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 1</li>
+<li>Template: technical_deep_dive</li>
+<li>Language: Korean</li>
+<li>Tags: 지속, openclaw, 실행형, 에이전트, 화학</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-viewer="report_views/report_run_overview_report_full.md-d5c00cb8.html" data-raw="report/run_overview_report_full.md" class="viewer-link">./report/run_overview_report_full.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_openclaw-index.md-c45fc048.html" data-viewer="report_views/archive_openclaw-index.md-c45fc048.html" data-raw="archive/openclaw-index.md" class="viewer-link">./archive/openclaw-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_generated_prompt_openclaw.txt-218d0ed2.html" data-viewer="report_views/instruction_generated_prompt_openclaw.txt-218d0ed2.html" data-raw="instruction/generated_prompt_openclaw.txt" class="viewer-link">./instruction/generated_prompt_openclaw.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-viewer="report_views/instruction_report_prompt_report_full.txt-e0a852da.html" data-raw="instruction/report_prompt_report_full.txt" class="viewer-link">./instruction/report_prompt_report_full.txt</a></li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        const path = window.location.pathname.replace(/\\/g, '/');
+        const idx = path.lastIndexOf('/runs/');
+        if (idx !== -1) {
+          backLink.href = `${path.slice(0, idx)}/index.html`;
+          backLink.style.display = 'inline-flex';
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+    })();
+  </script>
+</body>
+</html>

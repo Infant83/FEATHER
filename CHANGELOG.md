@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.9.8
+- Federlicht prompt flexibility hardening (no rigid one-size-fits-all defaults):
+  - apply adaptive guidance by `depth + template_rigidity + free_format` across planner/evidence/writer/evaluator prompts.
+  - keep strict mode enforceable while balanced/brief/free-format paths use recommendation-first wording.
+  - soften deep-mode visual mandates outside strict mode to reduce over-constraint on review/brief requests.
+- Prompt policy wiring consistency:
+  - propagate `depth/template_rigidity/free_format` into planner/evidence/writer-finalizer/evaluator call paths.
+  - align evaluator prompt policy in runtime and agent-info defaults.
+- Documentation and operations:
+  - update `docs/codex_handoff_20260220.md` with latest status, validation snapshots, and open TODOs.
+  - add PPT expansion strategy draft: `docs/ppt_writer_strategy.md`.
+  - extend run/site separation guide with on-prem + GitLab remote split workflow (`docs/run_site_publish_strategy.md`).
+- Local verification:
+  - `python -m feather --review ./site/runs/openclaw --format text`
+  - `python -m federlicht.hub_publish --report ./site/runs/openclaw/report_full.html --run ./site/runs/openclaw --hub ./site/report_hub`
+  - Playwright local check passed for `site/report_hub/index.html` (`contains_openclaw=True`).
+
 ## 1.9.7
 - Federlicht report-quality policy uplift:
   - strengthen planner instructions with explicit method/result/uncertainty tracks.

@@ -16,16 +16,17 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html as html_lib
+import json
 import os
 import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-import json
 import sys
 import time  # noqa: F401
 import urllib.parse
+import uuid
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
@@ -73,6 +74,7 @@ STREAMING_ENABLED = False
 DEFAULT_AUTHOR = "Federlicht Writer"
 DEFAULT_TEMPLATE_NAME = "default"
 FEDERLICHT_LOG_PATH: Optional[Path] = None
+CODEX_BRIDGE_LOGGED = False
 DEFAULT_SECTIONS = [
     "Executive Summary",
     "Scope & Methodology",
@@ -146,7 +148,27 @@ TEMPERATURE_LEVELS = {
     "very_high": 0.7,
 }
 DEFAULT_TEMPERATURE_LEVEL = "balanced"
+REASONING_EFFORT_CHOICES = ("off", "none", "low", "medium", "high", "extra_high")
+REASONING_EFFORT_TO_OPENAI = {
+    "off": "",
+    "none": "",
+    "low": "low",
+    "medium": "medium",
+    "high": "high",
+    "extra_high": "high",
+}
+DEFAULT_REASONING_EFFORT = "off"
+_TRUE_LIKE = {"1", "true", "yes", "on"}
+_OPENAI_REASONING_MODEL_RE = re.compile(r"^(gpt-5|o1|o3|o4)", re.IGNORECASE)
+STYLE_PACK_PRESETS: dict[str, str] = {
+    "dark": "style_pack_dark.css",
+    "journal": "style_pack_journal.css",
+    "magazine": "style_pack_magazine.css",
+}
+STYLE_PACK_CHOICES = ("none", "dark", "journal", "magazine")
+STYLE_PACK_DEFAULT = "none"
 ACTIVE_AGENT_TEMPERATURE = TEMPERATURE_LEVELS[DEFAULT_TEMPERATURE_LEVEL]
+ACTIVE_AGENT_REASONING_EFFORT = DEFAULT_REASONING_EFFORT
 ACTIVE_AGENT_PROFILE: Optional[AgentProfile] = None
 ACTIVE_AGENT_PROFILE_CONTEXT = ""
 
@@ -178,6 +200,17 @@ def list_builtin_templates() -> list[str]:
     if DEFAULT_TEMPLATE_NAME not in names:
         names.insert(0, DEFAULT_TEMPLATE_NAME)
     return names
+
+
+def normalize_style_pack(value: object) -> str:
+    token = str(value or "").strip().lower()
+    if not token:
+        return STYLE_PACK_DEFAULT
+    if token in {"off", "false", "0"}:
+        return STYLE_PACK_DEFAULT
+    if token in STYLE_PACK_PRESETS:
+        return token
+    return STYLE_PACK_DEFAULT
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
@@ -886,10 +919,15 @@ def resolve_site_output(site_output: Optional[str]) -> Optional[Path]:
 def relpath_if_within(path: Optional[Path], root: Path) -> Optional[str]:
     if not path:
         return None
+    path_resolved = path.resolve()
+    root_resolved = root.resolve()
     try:
-        rel = path.resolve().relative_to(root.resolve())
+        rel = path_resolved.relative_to(root_resolved)
     except ValueError:
-        return None
+        try:
+            rel = Path(os.path.relpath(path_resolved, root_resolved))
+        except Exception:
+            return None
     return rel.as_posix()
 
 
@@ -1328,6 +1366,71 @@ def parse_temperature(value: object) -> Optional[float]:
     if parsed > 2.0:
         parsed = 2.0
     return round(parsed, 4)
+
+
+def normalize_reasoning_effort(value: object, default: str = DEFAULT_REASONING_EFFORT) -> str:
+    def _normalize_token(raw: object) -> str:
+        token = str(raw or "").strip().lower()
+        if not token:
+            return ""
+        token = token.replace("-", "_").replace(" ", "_")
+        if token in {"very_high", "veryhigh", "x_high", "extra"}:
+            token = "extra_high"
+        if token in {"off", "none", "false", "0", "disabled", "disable"}:
+            return ""
+        if token not in REASONING_EFFORT_CHOICES:
+            return ""
+        if token in {"off", "none"}:
+            return ""
+        return token
+
+    normalized = _normalize_token(value)
+    if normalized:
+        return normalized
+    return _normalize_token(default)
+
+
+def _openai_reasoning_api_supported(base_url: Optional[str] = None) -> bool:
+    force = str(os.getenv("FEDERLICHT_FORCE_REASONING_EFFORT") or "").strip().lower() in _TRUE_LIKE
+    if force:
+        return True
+    base = str(base_url or os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "").strip()
+    if not base:
+        return False
+    host = urllib.parse.urlparse(base).netloc.lower()
+    if not host:
+        return False
+    return host.endswith("openai.com") or host.endswith("openai.azure.com")
+
+
+def _supports_reasoning_effort_model(model_name: Optional[str]) -> bool:
+    token = str(model_name or "").strip().lower()
+    if not token:
+        return False
+    if "codex" in token:
+        return False
+    if _OPENAI_REASONING_MODEL_RE.match(token):
+        return True
+    return "reason" in token
+
+
+def _resolve_reasoning_effort_for_runtime(
+    requested_effort: str,
+    *,
+    backend: str,
+    model_name: Optional[str],
+    base_url: Optional[str] = None,
+) -> str:
+    normalized_backend = str(backend or "").strip().lower()
+    if normalized_backend in {"codex_cli", "codex-cli", "codex"}:
+        return requested_effort
+    if not requested_effort:
+        return ""
+    if not _openai_reasoning_api_supported(base_url=base_url):
+        return ""
+    if not _supports_reasoning_effort_model(model_name):
+        return ""
+    return requested_effort
 
 
 def choose_format(output: Optional[str]) -> str:
@@ -2005,9 +2108,16 @@ def evaluate_report(
     max_chars: int,
     max_input_tokens: Optional[int] = None,
     max_input_tokens_source: str = "none",
+    template_rigidity: str = "balanced",
+    free_form: bool = False,
 ) -> dict:
     metrics = ", ".join(QUALITY_WEIGHTS.keys())
-    evaluator_prompt = prompts.build_evaluate_prompt(metrics, depth=depth)
+    evaluator_prompt = prompts.build_evaluate_prompt(
+        metrics,
+        depth=depth,
+        template_rigidity=template_rigidity,
+        free_form=free_form,
+    )
     evaluator_agent = create_agent_with_fallback(
         create_deep_agent,
         model_name,
@@ -2944,18 +3054,20 @@ def build_format_instructions(
                 )
     if output_format != "tex":
         citation_instruction = pick(
-            "인용은 실제 URL/파일 경로를 대괄호로 직접 표기하세요 "
-            "(예: [https://example.com], [./archive/path.txt]). "
+            "인용은 원문 URL/DOI/공식 문서 링크를 우선 사용하세요 "
+            "(예: [https://example.com], [https://doi.org/...]). "
+            "중간 추출 파일 경로(예: ./archive/tavily_extract/*.txt, ./archive/*/text/*.txt)는 본문 출처로 직접 노출하지 말고 "
+            "가능하면 해당 원문 URL로 인용하세요. "
             "[source], [paper], [evidence] 같은 일반 라벨은 사용하지 마세요. "
-            "파일 경로는 클릭 가능하도록 마크다운 링크를 우선 사용하세요. "
-            "./archive/... 같은 파일 경로를 본문 설명 문장에 그대로 노출하지 말고, 인용으로만 남기세요. "
-            "인용은 문장 끝에 inline으로 붙이고, 인용만 단독 줄이나 단독 리스트 항목으로 두지 마세요. ",
-            "Citations must use concrete URL/file-path targets inside brackets "
-            "(for example [https://example.com], [./archive/path.txt]). "
+            "파일 경로는 원문 URL이 없을 때만 보조 인용으로 제한하고, 인용은 문장 끝 inline으로 붙이세요 "
+            "(인용만 단독 줄/단독 리스트 항목 금지). ",
+            "Prefer canonical source URLs/DOIs for citations "
+            "(e.g., [https://example.com], [https://doi.org/...]). "
+            "Do not cite intermediate extraction paths in prose (for example ./archive/tavily_extract/*.txt or ./archive/*/text/*.txt) "
+            "when a canonical source URL exists. "
             "Do not use generic labels like [source], [paper], or [evidence]. "
-            "Prefer markdown links for file paths so they are clickable. "
-            "Do not print archive file paths verbatim in prose; keep them as inline citations only. "
-            "Keep citations inline at the end of the sentence; do not place citations on their own line or as standalone list items. ",
+            "Use file-path citations only as a fallback when no canonical URL is available, "
+            "and keep citations inline at sentence end (no standalone citation lines/items). ",
         )
     else:
         citation_instruction = pick(
@@ -3047,6 +3159,7 @@ def normalize_config_overrides(raw: dict) -> dict:
         "template_adjust",
         "template_adjust_mode",
         "temperature_level",
+        "reasoning_effort",
         "quality_iterations",
         "quality_strategy",
         "web_search",
@@ -3058,6 +3171,7 @@ def normalize_config_overrides(raw: dict) -> dict:
         "repair_debug",
         "interactive",
         "free_format",
+        "style_pack",
         "max_input_tokens",
         "language",
         "lang",
@@ -3112,10 +3226,14 @@ def apply_config_overrides(args: argparse.Namespace, config: dict) -> None:
         args.interactive = config["interactive"]
     if isinstance(config.get("free_format"), bool):
         args.free_format = config["free_format"]
+    if "style_pack" in config:
+        args.style_pack = normalize_style_pack(config.get("style_pack"))
     if isinstance(config.get("temperature_level"), str):
         token = config["temperature_level"].strip().lower()
         if token in TEMPERATURE_LEVELS:
             args.temperature_level = token
+    if "reasoning_effort" in config:
+        args.reasoning_effort = normalize_reasoning_effort(config.get("reasoning_effort"))
     config_max_input = parse_max_input_tokens(config.get("max_input_tokens"))
     if config_max_input:
         args.max_input_tokens = config_max_input
@@ -3262,6 +3380,25 @@ def resolve_effective_temperature(args: argparse.Namespace) -> float:
     return effective
 
 
+def resolve_effective_reasoning_effort(args: argparse.Namespace) -> str:
+    effort = normalize_reasoning_effort(getattr(args, "reasoning_effort", DEFAULT_REASONING_EFFORT))
+    backend = str(getattr(args, "llm_backend", os.getenv("FEDERLICHT_LLM_BACKEND") or "openai_api")).strip().lower()
+    model_name = str(getattr(args, "check_model", "") or getattr(args, "model", "") or "").strip()
+    effective = _resolve_reasoning_effort_for_runtime(
+        effort,
+        backend=backend,
+        model_name=model_name,
+    )
+    if effort and not effective:
+        print(
+            "[runtime] reasoning_effort disabled for selected model/backend; continuing with reasoning=off.",
+            file=sys.stderr,
+        )
+    effort = effective
+    args.reasoning_effort = effort
+    return effort
+
+
 def prepare_runtime(
     args: argparse.Namespace,
     config_overrides: Optional[dict] = None,
@@ -3281,7 +3418,11 @@ def prepare_runtime(
         if not args.quality_model:
             args.quality_model = args.model
     apply_template_rigidity_policy(args, config_overrides=config_overrides, argv_flags=argv_flags)
+    args.style_pack = normalize_style_pack(getattr(args, "style_pack", STYLE_PACK_DEFAULT))
+    if not args.free_format:
+        args.style_pack = STYLE_PACK_DEFAULT
     effective_temperature = resolve_effective_temperature(args)
+    effective_reasoning_effort = resolve_effective_reasoning_effort(args)
     check_model = args.check_model.strip() if args.check_model else ""
     if not check_model:
         check_model = args.model
@@ -3290,9 +3431,11 @@ def prepare_runtime(
     global DEFAULT_MAX_INPUT_TOKENS
     global DEFAULT_MAX_INPUT_TOKENS_SOURCE
     global ACTIVE_AGENT_TEMPERATURE
+    global ACTIVE_AGENT_REASONING_EFFORT
     DEFAULT_MAX_INPUT_TOKENS = parse_max_input_tokens(args.max_input_tokens)
     DEFAULT_MAX_INPUT_TOKENS_SOURCE = getattr(args, "max_input_tokens_source", "none")
     ACTIVE_AGENT_TEMPERATURE = effective_temperature
+    ACTIVE_AGENT_REASONING_EFFORT = effective_reasoning_effort
     output_format = choose_format(args.output)
     args.output_format = output_format
     resolve_active_profile(args)
@@ -3576,6 +3719,24 @@ def resolve_template_css_path(spec: TemplateSpec) -> Optional[Path]:
 def load_template_css(spec: TemplateSpec) -> Optional[str]:
     path = resolve_template_css_path(spec)
     if not path or not path.exists():
+        return None
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
+def resolve_style_pack_css_path(style_pack: object) -> Optional[Path]:
+    pack = normalize_style_pack(style_pack)
+    css_name = STYLE_PACK_PRESETS.get(pack)
+    if not css_name:
+        return None
+    path = (templates_dir() / "styles" / css_name).resolve()
+    if not path.exists():
+        return None
+    return path
+
+
+def load_style_pack_css(style_pack: object) -> Optional[str]:
+    path = resolve_style_pack_css_path(style_pack)
+    if not path:
         return None
     return path.read_text(encoding="utf-8", errors="replace")
 
@@ -4583,6 +4744,9 @@ def collect_references(
         if not url:
             return
         url = url.strip()
+        normalized_url = normalize_reference_url(url)
+        if normalized_url:
+            url = normalized_url
         if not url or url in seen:
             return
         seen.add(url)
@@ -5609,18 +5773,52 @@ def scrub_internal_index_mentions(report_text: str) -> str:
     return cleaned
 
 
-def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str, list[dict]]:
+def rewrite_citations(
+    report_text: str,
+    output_format: str = "md",
+    text_meta_index: Optional[dict[str, dict]] = None,
+) -> tuple[str, list[dict]]:
     ref_map: dict[str, int] = {}
     refs: list[dict] = []
     citation_re = re.compile(r"\[([^\]]+)\]")
     md_link_re = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+    html_anchor_re = re.compile(
+        r"<a\s+[^>]*href=(['\"])(?P<href>[^\"']+)\1[^>]*>(?P<label>.*?)</a>",
+        re.IGNORECASE | re.DOTALL,
+    )
+    text_meta_index = text_meta_index or {}
+    extract_hints = (
+        "/archive/tavily_extract/",
+        "/archive/web/text/",
+        "/archive/openalex/text/",
+        "/archive/arxiv/text/",
+        "/archive/local/text/",
+        "/archive/youtube/transcripts/",
+        "/youtube/transcripts/",
+        "/supporting/web_text/",
+        "/archive/supporting/web_text/",
+    )
 
     def normalize_target(value: str, kind: str) -> str:
         if kind == "url":
-            return value
+            normalized_url = normalize_reference_url(value)
+            return normalized_url or value.strip()
         if value.startswith("./"):
             return value
         return f"./{value}"
+
+    def resolve_target_and_kind(value: str, kind: str) -> tuple[str, str]:
+        norm_target = normalize_target(value, kind)
+        resolved_kind = kind
+        if kind == "path":
+            norm_no_prefix = norm_target.lstrip("./")
+            meta = text_meta_index.get(norm_no_prefix) or text_meta_index.get(norm_target)
+            if isinstance(meta, dict):
+                source_url = normalize_reference_url(meta.get("source_url") or meta.get("url"))
+                lowered = norm_target.lower()
+                if source_url and any(hint in lowered for hint in extract_hints):
+                    return source_url, "url"
+        return norm_target, resolved_kind
 
     def add_ref(target: str, kind: str) -> int:
         key = f"{kind}:{target}"
@@ -5654,6 +5852,19 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
             return f"[\\[{idx}\\]](#ref-{idx})"
         return f"[\\[{idx}\\]]({target})"
 
+    def replace_html_anchor(match: re.Match[str]) -> str:
+        href = html_lib.unescape((match.group("href") or "").strip())
+        kind = None
+        if href.startswith(("http://", "https://")):
+            kind = "url"
+        elif _CITED_PATH_RE.match(href):
+            kind = "path"
+        if not kind:
+            return match.group(0)
+        resolved_target, resolved_kind = resolve_target_and_kind(href, kind)
+        idx = add_ref(resolved_target, resolved_kind)
+        return format_inline_citation(idx, resolved_target)
+
     def replace_md_link(match: re.Match[str]) -> str:
         target = match.group(2).strip()
         kind = None
@@ -5663,8 +5874,8 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
             kind = "path"
         if not kind:
             return match.group(0)
-        norm_target = normalize_target(target, kind)
-        idx = add_ref(norm_target, kind)
+        norm_target, resolved_kind = resolve_target_and_kind(target, kind)
+        idx = add_ref(norm_target, resolved_kind)
         if output_format == "tex":
             return format_inline_citation(idx, norm_target)
         return f"[\\[{idx}\\]]({norm_target})"
@@ -5682,16 +5893,17 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
         seen: set[str] = set()
         parts: list[str] = []
         for _, raw, kind in candidates:
-            target = normalize_target(raw.strip(), kind)
-            key = f"{kind}:{target}"
+            target, resolved_kind = resolve_target_and_kind(raw.strip(), kind)
+            key = f"{resolved_kind}:{target}"
             if key in seen:
                 continue
             seen.add(key)
-            idx = add_ref(target, kind)
+            idx = add_ref(target, resolved_kind)
             parts.append(format_inline_citation(idx, target))
         return ", ".join(parts) if parts else match.group(0)
 
     updated = md_link_re.sub(replace_md_link, report_text)
+    updated = html_anchor_re.sub(replace_html_anchor, updated)
     updated = citation_re.sub(replace_block, updated)
     if output_format != "tex":
         raw_url_re = re.compile(r"(?<!\]\()https?://[^\s<]+")
@@ -5727,8 +5939,8 @@ def rewrite_citations(report_text: str, output_format: str = "md") -> tuple[str,
             suffix = raw[len(trimmed) :]
             if not trimmed:
                 return raw
-            norm_target = normalize_target(trimmed, "path")
-            idx = add_ref(norm_target, "path")
+            norm_target, resolved_kind = resolve_target_and_kind(trimmed, "path")
+            idx = add_ref(norm_target, resolved_kind)
             return f"{format_inline_citation(idx, norm_target)}{suffix}"
 
         updated = raw_path_re.sub(replace_naked_path, updated)
@@ -5852,7 +6064,7 @@ def extract_year(value: object) -> Optional[str]:
 def normalize_reference_url(value: object) -> Optional[str]:
     if not value:
         return None
-    url = str(value).strip()
+    url = str(value).strip().rstrip(".,;:!?)]")
     if url.startswith(("http://", "https://")):
         return url
     return None
@@ -5927,7 +6139,14 @@ def render_reference_section(
     if not citations:
         return ""
     by_archive = {ref.get("archive", "").lstrip("./"): ref for ref in refs_meta}
-    by_url = {ref.get("url"): ref for ref in refs_meta if ref.get("url")}
+    by_url: dict[str, dict] = {}
+    for ref in refs_meta:
+        raw_url = ref.get("url")
+        if raw_url:
+            by_url[str(raw_url)] = ref
+        normalized_url = normalize_reference_url(raw_url)
+        if normalized_url:
+            by_url[normalized_url] = ref
     text_meta_index = text_meta_index or {}
     extract_hints = (
         "/archive/tavily_extract/",
@@ -5958,6 +6177,10 @@ def render_reference_section(
         idx = entry["index"]
         kind = entry["kind"]
         target = entry["target"]
+        if kind == "url":
+            normalized_target = normalize_reference_url(target)
+            if normalized_target:
+                target = normalized_target
         anchor = "" if output_format == "tex" else f"<span id=\"ref-{idx}\"></span>"
         if kind == "path":
             norm = target.lstrip("./")
@@ -6218,6 +6441,325 @@ def print_progress(label: str, content: str, enabled: bool, max_chars: int) -> N
     print(f"\n[{label}]\n{snippet}\n")
 
 
+def _resolve_federlicht_backend_token() -> str:
+    return str(os.getenv("FEDERLICHT_LLM_BACKEND") or "").strip().lower()
+
+
+def _is_codex_backend_enabled() -> bool:
+    return _resolve_federlicht_backend_token() in {"codex", "codex_cli", "codex-cli", "cli"}
+
+
+def _flatten_message_content(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("content") or item.get("value")
+                if text:
+                    parts.append(str(text))
+        return "".join(parts)
+    if isinstance(value, dict):
+        text = value.get("text") or value.get("content") or value.get("value")
+        return str(text) if text else ""
+    return str(value)
+
+
+def _render_codex_prompt_from_messages(messages: list[dict[str, object]], system_prompt: str = "") -> str:
+    lines: list[str] = []
+    system_text = str(system_prompt or "").strip()
+    if system_text:
+        lines.extend(["[SYSTEM]", system_text, ""])
+    for message in messages:
+        role = str(message.get("role") or "user").upper()
+        content = _flatten_message_content(message.get("content")).strip()
+        if not content:
+            continue
+        lines.append(f"[{role}]")
+        lines.append(content)
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _extract_codex_text_from_stdout(stdout_text: str) -> str:
+    if not stdout_text:
+        return ""
+    deltas: list[str] = []
+    completed = ""
+    plain_lines: list[str] = []
+    for raw_line in stdout_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        parsed: Optional[dict[str, Any]] = None
+        try:
+            obj = json.loads(line)
+            if isinstance(obj, dict):
+                parsed = obj
+        except Exception:
+            parsed = None
+        if not parsed:
+            plain_lines.append(line)
+            continue
+        event_type = str(parsed.get("type") or "").lower()
+        if not event_type:
+            continue
+        if event_type in {
+            "response.output_text.delta",
+            "assistant_message.delta",
+            "message.delta",
+            "output_text.delta",
+        }:
+            delta = parsed.get("delta") or parsed.get("text") or parsed.get("content")
+            delta_text = _flatten_message_content(delta)
+            if delta_text:
+                deltas.append(delta_text)
+            continue
+        if event_type in {
+            "response.completed",
+            "assistant_message.completed",
+            "message.completed",
+            "message",
+        }:
+            payload = parsed.get("message") or parsed.get("output") or parsed
+            if isinstance(payload, dict):
+                content = (
+                    payload.get("content")
+                    or payload.get("text")
+                    or payload.get("output_text")
+                    or payload.get("final")
+                )
+            else:
+                content = payload
+            content_text = _flatten_message_content(content)
+            if content_text:
+                completed = content_text
+            continue
+        if event_type == "item.completed":
+            item = parsed.get("item")
+            if isinstance(item, dict):
+                item_type = str(item.get("type") or "").lower()
+                if item_type in {"agent_message", "message", "output_text"}:
+                    content = item.get("text") or item.get("content") or item.get("output_text")
+                    content_text = _flatten_message_content(content)
+                    if content_text:
+                        completed = content_text
+    if deltas:
+        return "".join(deltas).strip()
+    if completed:
+        return completed.strip()
+    return "\n".join(plain_lines).strip()
+
+
+def _tool_name(tool_obj: Any, fallback_index: int) -> str:
+    name = getattr(tool_obj, "name", None) or getattr(tool_obj, "__name__", None) or ""
+    token = str(name or "").strip()
+    if not token:
+        token = f"tool_{fallback_index}"
+    return re.sub(r"[^A-Za-z0-9_]", "_", token)
+
+
+def _tool_description(tool_obj: Any) -> str:
+    text = getattr(tool_obj, "description", None) or getattr(tool_obj, "__doc__", None) or ""
+    desc = str(text or "").strip()
+    if not desc:
+        desc = "No description provided."
+    return " ".join(desc.split())
+
+
+def _safe_json_excerpt(value: Any, limit: int = 1600) -> str:
+    try:
+        text = json.dumps(value, ensure_ascii=False)
+    except Exception:
+        text = str(value)
+    text = text.strip()
+    if len(text) > limit:
+        return text[: limit - 1] + "…"
+    return text
+
+
+class _CodexCliBridgeAgent:
+    def __init__(
+        self,
+        model_name: str,
+        system_prompt: str,
+        tools: Optional[Iterable[Any]] = None,
+        reasoning_effort: Optional[str] = None,
+    ) -> None:
+        self._model_name = str(model_name or os.getenv("CODEX_MODEL") or "").strip()
+        self._system_prompt = str(system_prompt or "").strip()
+        env_effort = os.getenv("FEDERLICHT_CODEX_REASONING_EFFORT")
+        self._reasoning_effort = normalize_reasoning_effort(
+            reasoning_effort or env_effort or DEFAULT_REASONING_EFFORT
+        )
+        codex_bin = str(os.getenv("CODEX_CLI_BIN") or "codex").strip()
+        self._codex_bin = shutil.which(codex_bin) if codex_bin else None
+        if not self._codex_bin:
+            raise RuntimeError("codex CLI is not available in PATH (set CODEX_CLI_BIN or install codex)")
+        self._tools_enabled = str(os.getenv("FEDERLICHT_CODEX_TOOL_CALLS", "1")).strip().lower() not in {
+            "0",
+            "false",
+            "off",
+            "no",
+        }
+        self._max_tool_rounds = max(0, int(os.getenv("FEDERLICHT_CODEX_TOOL_MAX_CALLS", "4") or 4))
+        self._tool_registry: dict[str, Any] = {}
+        if tools:
+            for idx, tool_obj in enumerate(tools, start=1):
+                name = _tool_name(tool_obj, idx)
+                if name in self._tool_registry:
+                    continue
+                self._tool_registry[name] = tool_obj
+        if self._tool_registry and self._tools_enabled:
+            manifest = []
+            for name, tool_obj in self._tool_registry.items():
+                manifest.append(f"- {name}: {_tool_description(tool_obj)}")
+            self._tool_protocol = (
+                "Codex tool protocol:\n"
+                "If a tool is needed, reply with ONLY a JSON object in this exact shape:\n"
+                '{"tool_call":{"name":"<tool_name>","arguments":{...}}}\n'
+                "Do not add commentary around that JSON.\n"
+                "After TOOL_RESULT is provided, continue reasoning and produce the final answer.\n"
+                "Available tools:\n"
+                + "\n".join(manifest)
+            )
+        else:
+            self._tool_protocol = ""
+
+    def _run_cli_prompt(self, messages: list[dict[str, object]]) -> str:
+        system_prompt = self._system_prompt
+        if self._tool_protocol:
+            system_prompt = f"{system_prompt}\n\n{self._tool_protocol}".strip()
+        prompt = _render_codex_prompt_from_messages(messages, system_prompt)
+        if not prompt:
+            raise RuntimeError("codex bridge prompt is empty")
+        cmd = [self._codex_bin, "exec", "--json"]
+        if self._model_name:
+            cmd.extend(["--model", self._model_name])
+        if self._reasoning_effort:
+            cmd.extend(["-c", f'reasoning_effort="{self._reasoning_effort}"'])
+        proc = subprocess.run(
+            cmd,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        answer = _extract_codex_text_from_stdout(proc.stdout)
+        if proc.returncode != 0:
+            detail = (proc.stderr or proc.stdout or "").strip()
+            raise RuntimeError(f"codex bridge failed ({proc.returncode}){f': {detail}' if detail else ''}")
+        if not answer:
+            detail = (proc.stderr or "").strip()
+            raise RuntimeError(f"codex bridge returned empty output{f': {detail}' if detail else ''}")
+        return answer
+
+    def _extract_tool_call(self, answer: str) -> Optional[tuple[str, dict[str, Any]]]:
+        if not answer or "tool_call" not in answer:
+            return None
+        payload = extract_json_object(answer)
+        if not isinstance(payload, dict):
+            return None
+        call = payload.get("tool_call")
+        if isinstance(call, dict):
+            name = str(call.get("name") or "").strip()
+            args_obj = call.get("arguments")
+        else:
+            name = str(payload.get("tool") or "").strip()
+            args_obj = payload.get("arguments")
+        if not name:
+            return None
+        if isinstance(args_obj, dict):
+            args = dict(args_obj)
+        elif args_obj in (None, ""):
+            args = {}
+        else:
+            args = {"input": args_obj}
+        return name, args
+
+    def _invoke_tool(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        tool_obj = self._tool_registry.get(name)
+        if tool_obj is None:
+            return {"ok": False, "error": f"unknown_tool:{name}", "available_tools": sorted(self._tool_registry.keys())}
+        try:
+            if hasattr(tool_obj, "invoke"):
+                result = tool_obj.invoke(args)
+            elif callable(tool_obj):
+                try:
+                    result = tool_obj(**args)
+                except TypeError:
+                    if len(args) == 1 and "input" in args:
+                        result = tool_obj(args["input"])
+                    elif not args:
+                        result = tool_obj()
+                    else:
+                        raise
+            else:
+                return {"ok": False, "error": f"non_callable_tool:{name}"}
+            return {"ok": True, "result": result}
+        except Exception as exc:
+            return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    def _run_once(self, payload: dict) -> str:
+        messages = payload.get("messages")
+        if not isinstance(messages, list):
+            messages = [{"role": "user", "content": str(payload)}]
+        dialogue: list[dict[str, object]] = []
+        for item in messages:
+            if isinstance(item, dict):
+                role = str(item.get("role") or "user").strip().lower() or "user"
+                dialogue.append({"role": role, "content": _flatten_message_content(item.get("content"))})
+            else:
+                dialogue.append({"role": "user", "content": _flatten_message_content(item)})
+        if not (self._tool_registry and self._tools_enabled and self._max_tool_rounds > 0):
+            return self._run_cli_prompt(dialogue)
+
+        rounds = 0
+        while True:
+            answer = self._run_cli_prompt(dialogue)
+            tool_call = self._extract_tool_call(answer)
+            if not tool_call:
+                return answer
+            name, args = tool_call
+            invocation = self._invoke_tool(name, args)
+            dialogue.append({"role": "assistant", "content": answer})
+            dialogue.append(
+                {
+                    "role": "tool",
+                    "content": (
+                        f"TOOL_RESULT name={name} ok={str(bool(invocation.get('ok'))).lower()} "
+                        f"payload={_safe_json_excerpt(invocation)}"
+                    ),
+                }
+            )
+            rounds += 1
+            if rounds >= self._max_tool_rounds:
+                return (
+                    "Tool-call loop limit reached. "
+                    f"Last tool={name}, payload={_safe_json_excerpt(invocation, 600)}"
+                )
+
+    def invoke(self, payload: dict) -> dict:
+        answer = self._run_once(payload)
+        return {"messages": [{"role": "assistant", "content": answer}]}
+
+    def stream(self, payload: dict, stream_mode=None, subgraphs=False):  # noqa: D401
+        answer = self._run_once(payload)
+        message = type(
+            "CodexBridgeMessage",
+            (),
+            {"type": "ai", "id": f"codex-{uuid.uuid4().hex[:10]}", "content": answer},
+        )()
+        yield ("messages", (message, {}))
+        yield ("values", {"messages": [{"role": "assistant", "content": answer}]})
+
+
 _OPENAI_COMPAT_RE = re.compile(r"^qwen", re.IGNORECASE)
 _OPENAI_MODEL_RE = re.compile(r"^(gpt-|o\\d)", re.IGNORECASE)
 
@@ -6234,6 +6776,7 @@ def build_openai_compat_model(
     model_name: str,
     streaming: bool = False,
     temperature: Optional[float] = None,
+    reasoning_effort: Optional[str] = None,
 ):
     try:
         from langchain_openai import ChatOpenAI  # type: ignore
@@ -6245,6 +6788,18 @@ def build_openai_compat_model(
         kwargs["streaming"] = True
     if temperature is not None:
         kwargs["temperature"] = temperature
+    effort_token_raw = REASONING_EFFORT_TO_OPENAI.get(
+        normalize_reasoning_effort(reasoning_effort, default=""),
+        "",
+    )
+    effort_token = _resolve_reasoning_effort_for_runtime(
+        effort_token_raw,
+        backend="openai_api",
+        model_name=model_name,
+        base_url=base_url,
+    )
+    if effort_token:
+        kwargs["reasoning_effort"] = effort_token
     if base_url:
         try:
             return ChatOpenAI(**kwargs, base_url=base_url)
@@ -6256,8 +6811,12 @@ def build_openai_compat_model(
                 try:
                     return ChatOpenAI(**kwargs, openai_api_base=base_url)
                 except TypeError:
-                    kwargs.pop("temperature", None)
-                    return ChatOpenAI(**kwargs, openai_api_base=base_url)
+                    kwargs.pop("reasoning_effort", None)
+                    try:
+                        return ChatOpenAI(**kwargs, openai_api_base=base_url)
+                    except TypeError:
+                        kwargs.pop("temperature", None)
+                        return ChatOpenAI(**kwargs, openai_api_base=base_url)
     try:
         return ChatOpenAI(**kwargs)
     except TypeError:
@@ -6265,8 +6824,12 @@ def build_openai_compat_model(
         try:
             return ChatOpenAI(**kwargs)
         except TypeError:
-            kwargs.pop("temperature", None)
-            return ChatOpenAI(**kwargs)
+            kwargs.pop("reasoning_effort", None)
+            try:
+                return ChatOpenAI(**kwargs)
+            except TypeError:
+                kwargs.pop("temperature", None)
+                return ChatOpenAI(**kwargs)
 
 
 def build_vision_model(model_name: str):
@@ -6315,6 +6878,7 @@ def create_agent_with_fallback(
     max_input_tokens: Optional[int] = None,
     max_input_tokens_source: str = "none",
     temperature: Optional[float] = None,
+    reasoning_effort: Optional[str] = None,
     subagents: Optional[list[dict[str, Any]]] = None,
     middleware: Optional[list[Any]] = None,
 ):
@@ -6325,6 +6889,10 @@ def create_agent_with_fallback(
     effective_temperature = parse_temperature(temperature)
     if effective_temperature is None:
         effective_temperature = parse_temperature(ACTIVE_AGENT_TEMPERATURE)
+    effective_reasoning_effort = normalize_reasoning_effort(
+        reasoning_effort or ACTIVE_AGENT_REASONING_EFFORT,
+        default=DEFAULT_REASONING_EFFORT,
+    )
     kwargs = {"tools": tools, "system_prompt": system_prompt, "backend": backend}
     if middleware:
         kwargs["middleware"] = middleware
@@ -6332,6 +6900,33 @@ def create_agent_with_fallback(
         kwargs["subagents"] = subagents
     if effective_temperature is not None:
         kwargs["temperature"] = effective_temperature
+
+    if _is_codex_backend_enabled():
+        global CODEX_BRIDGE_LOGGED
+        bridge_model = str(model_name or os.getenv("CODEX_MODEL") or "").strip()
+        if not CODEX_BRIDGE_LOGGED:
+            print(
+                (
+                    "[backend] codex_cli bridge enabled for federlicht agents "
+                    f"(model={bridge_model or 'default'}; tool-calling middleware bypassed)"
+                ),
+                file=sys.stderr,
+            )
+            CODEX_BRIDGE_LOGGED = True
+        try:
+            return _CodexCliBridgeAgent(
+                bridge_model,
+                system_prompt,
+                tools=tools,
+                reasoning_effort=effective_reasoning_effort,
+            )
+        except TypeError:
+            # Backward compatibility for tests/mocks or older bridge signatures.
+            return _CodexCliBridgeAgent(
+                bridge_model,
+                system_prompt,
+                tools=tools,
+            )
 
     _NO_MODEL = object()
 
@@ -6375,6 +6970,7 @@ def create_agent_with_fallback(
                 model_name,
                 streaming=STREAMING_ENABLED,
                 temperature=effective_temperature,
+                reasoning_effort=effective_reasoning_effort,
             )
             if compat_model is None:
                 print(
@@ -6391,6 +6987,7 @@ def create_agent_with_fallback(
                 model_name,
                 streaming=True,
                 temperature=effective_temperature,
+                reasoning_effort=effective_reasoning_effort,
             )
             if compat_model is not None:
                 apply_model_profile_max_input_tokens(compat_model, max_input_tokens, force=force_override)

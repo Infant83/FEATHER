@@ -78,6 +78,7 @@ def build_agent_info(
         figures_enabled=bool(getattr(args, "extract_figures", False)),
         figures_mode=getattr(args, "figures_mode", "auto"),
         artwork_enabled=runtime.enabled("artwork", True, overrides),
+        free_form=args.free_format,
     )
     repair_default_prompt = prompts.build_repair_prompt(
         format_instructions,
@@ -108,7 +109,12 @@ def build_agent_info(
         "planner": build_agent_entry(
             "planner",
             default_model=args.model,
-            default_prompt=prompts.build_plan_prompt(language),
+            default_prompt=prompts.build_plan_prompt(
+                language,
+                depth=depth,
+                template_rigidity=args.template_rigidity,
+                free_form=args.free_format,
+            ),
         ),
         "plan_check": build_agent_entry(
             "plan_check",
@@ -124,7 +130,12 @@ def build_agent_info(
         "evidence": build_agent_entry(
             "evidence",
             default_model=args.model,
-            default_prompt=prompts.build_evidence_prompt(language),
+            default_prompt=prompts.build_evidence_prompt(
+                language,
+                depth=depth,
+                template_rigidity=args.template_rigidity,
+                free_form=args.free_format,
+            ),
         ),
         "reducer": build_agent_entry(
             "reducer",
@@ -162,7 +173,12 @@ def build_agent_info(
         "evaluator": build_agent_entry(
             "evaluator",
             default_model=quality_model,
-            default_prompt=prompts.build_evaluate_prompt(metrics, depth=depth),
+            default_prompt=prompts.build_evaluate_prompt(
+                metrics,
+                depth=depth,
+                template_rigidity=args.template_rigidity,
+                free_form=args.free_format,
+            ),
             default_enabled=quality_enabled,
         ),
         "pairwise_compare": build_agent_entry(
