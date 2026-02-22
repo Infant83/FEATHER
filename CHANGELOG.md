@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.9.19 (2026-02-22)
+- FederHav DeepAgent Phase B-1 progression:
+  - add deepagent action-planner runtime path in `src/federhav/agentic_runtime.py`:
+    - `try_deepagent_action_plan(...)`
+    - governor+executor subagent bridge for action JSON planning.
+  - add planner prompt/history/capability helpers:
+    - `_build_action_planner_messages(...)`
+    - `_normalize_history(...)`
+    - `_capability_digest(...)`
+    - `_extract_first_json_object(...)`
+- Federnett help-agent action path integration:
+  - add `_try_agentic_runtime_action_plan(...)` in `src/federnett/help_agent.py`.
+  - make `_infer_agentic_action(...)` deepagent-planner-first with legacy LLM planner fallback.
+  - keep run-content summary guardrails intact (content-analysis questions do not auto-escalate to run actions).
+- Tests:
+  - add deepagent planner priority/fallback regression tests in `tests/test_help_agent.py`.
+  - validation:
+    - `pytest -q tests/test_help_agent.py tests/test_federhav_core.py tests/test_federhav_cli.py` -> `67 passed`
+    - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `57 passed`
+    - `node --check site/federnett/app.js` passed.
+
 ## 1.9.18 (2026-02-22)
 - FederHav/help-agent behavior generalization (remove phrase-locked ad-hoc branch):
   - remove conditional prompt branch that changed reply policy via `_question_asks_run_content_summary(...)`.

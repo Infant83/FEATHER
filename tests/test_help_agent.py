@@ -628,6 +628,71 @@ def test_needs_agentic_action_planning_skips_general_content_query() -> None:
     assert help_agent._needs_agentic_action_planning("간단한 QC 관련 ppt 를 한장 만들 수 있을까. 양자컴퓨터 말야") is False
 
 
+def test_infer_agentic_action_prefers_deepagent_planner(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "1")
+    monkeypatch.setattr(
+        help_agent,
+        "_try_agentic_runtime_action_plan",
+        lambda **_kwargs: {
+            "type": "run_feather",
+            "label": "Feather 실행",
+            "summary": "deepagent planner",
+            "run_hint": "demo_run",
+            "create_if_missing": True,
+        },
+    )
+
+    def _fail_call_llm(*_args, **_kwargs):
+        raise AssertionError("_call_llm should not be called when deepagent planner returns action")
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fail_call_llm)
+    action = help_agent._infer_agentic_action(
+        tmp_path,
+        "run feather 실행해줘",
+        run_rel="runs/demo_run",
+        history=[],
+        state_memory="{}",
+        capabilities={},
+        execution_mode="act",
+        allow_artifacts=False,
+        model=None,
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        strict_model=False,
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_feather"
+    assert action.get("run_hint") == "demo_run"
+
+
+def test_infer_agentic_action_falls_back_to_llm_planner(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "1")
+    monkeypatch.setattr(help_agent, "_try_agentic_runtime_action_plan", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        help_agent,
+        "_call_llm",
+        lambda *_args, **_kwargs: ('{"type":"run_federlicht","label":"Federlicht 실행"}', "gpt-4o-mini"),
+    )
+    action = help_agent._infer_agentic_action(
+        tmp_path,
+        "federlicht 실행해줘",
+        run_rel="runs/demo_run",
+        history=[],
+        state_memory="{}",
+        capabilities={},
+        execution_mode="plan",
+        allow_artifacts=False,
+        model=None,
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        strict_model=False,
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_federlicht"
+
+
 def test_answer_help_question_runs_web_search_when_enabled(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 5))
     monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("웹검색 답변", "gpt-4o-mini"))

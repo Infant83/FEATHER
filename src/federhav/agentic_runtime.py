@@ -11,6 +11,18 @@ _DEFAULT_MODEL_FALLBACK = "gpt-4o-mini"
 _STATE_MEMORY_MAX_CHARS = 5200
 _RUN_FILE_MAX_CHARS = 3200
 _RUN_FILE_MAX_BYTES = 180_000
+_ACTION_ALLOWED_TYPES = (
+    "none",
+    "run_feather",
+    "run_federlicht",
+    "run_feather_then_federlicht",
+    "create_run_folder",
+    "switch_run",
+    "preset_resume_stage",
+    "focus_editor",
+    "set_action_mode",
+    "run_capability",
+)
 
 
 def normalize_runtime_mode(value: Any) -> str:
@@ -111,6 +123,48 @@ def _iter_chunks(text: str, target_chars: int = 42) -> Iterator[str]:
             yield f"{line}\n"
     if carry:
         yield carry
+
+
+def _extract_first_json_object(raw: str) -> dict[str, Any] | None:
+    text = str(raw or "")
+    if not text:
+        return None
+    start = text.find("{")
+    while start >= 0:
+        depth = 0
+        in_string = False
+        escaped = False
+        for idx in range(start, len(text)):
+            ch = text[idx]
+            if in_string:
+                if escaped:
+                    escaped = False
+                    continue
+                if ch == "\\":
+                    escaped = True
+                    continue
+                if ch == '"':
+                    in_string = False
+                continue
+            if ch == '"':
+                in_string = True
+                continue
+            if ch == "{":
+                depth += 1
+                continue
+            if ch == "}":
+                depth -= 1
+                if depth == 0:
+                    snippet = text[start : idx + 1]
+                    try:
+                        payload = json.loads(snippet)
+                    except Exception:
+                        break
+                    if isinstance(payload, dict):
+                        return payload
+                    break
+        start = text.find("{", start + 1)
+    return None
 
 
 def _safe_rel(path: Path, root: Path) -> str:
@@ -366,6 +420,79 @@ def _memory_tool_payload(state_memory: Any, sources: list[dict[str, Any]]) -> di
     return _compact_json_payload(memory, _STATE_MEMORY_MAX_CHARS)
 
 
+def _normalize_history(history: list[dict[str, str]] | None) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for row in history or []:
+        if not isinstance(row, dict):
+            continue
+        role = str(row.get("role") or "").strip().lower()
+        if role not in {"user", "assistant", "system"}:
+            continue
+        content = str(row.get("content") or "").strip()
+        if not content:
+            continue
+        rows.append({"role": role, "content": content[:1200]})
+    return rows
+
+
+def _capability_digest(capabilities: dict[str, Any] | None) -> str:
+    if not isinstance(capabilities, dict):
+        return "-"
+    out: list[str] = []
+    for key in ("tools", "skills", "packs"):
+        rows = capabilities.get(key)
+        if not isinstance(rows, list):
+            out.append(f"{key}=-")
+            continue
+        ids: list[str] = []
+        for item in rows:
+            if not isinstance(item, dict):
+                continue
+            token = str(item.get("id") or "").strip()
+            if token:
+                ids.append(token)
+        out.append(f"{key}={','.join(ids[:12]) if ids else '-'}")
+    return "; ".join(out)
+
+
+def _build_action_planner_messages(
+    *,
+    question: str,
+    run_rel: str,
+    history: list[dict[str, str]] | None,
+    state_memory: dict[str, Any],
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+) -> list[dict[str, str]]:
+    history_rows = _normalize_history(history)
+    history_brief = "\n".join(
+        f"- {row['role']}: {row['content'][:220]}"
+        for row in history_rows[-8:]
+    ) or "- (none)"
+    system = (
+        "You are FederHav governor+executor action planner.\n"
+        "Return exactly one JSON object and nothing else.\n"
+        "Only choose from allowed action types.\n"
+        "Prefer no-action when intent is unclear.\n"
+        "Never propose destructive/unbounded actions.\n"
+        f"allowed_types=[{','.join(_ACTION_ALLOWED_TYPES)}]\n"
+        "schema={type,label,summary,safety,run_hint,create_if_missing,auto_instruction,require_instruction_confirm,"
+        "instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id}\n"
+    )
+    user = (
+        f"question={question}\n"
+        f"run_rel={run_rel}\n"
+        f"execution_mode={execution_mode}\n"
+        f"allow_artifacts={str(bool(allow_artifacts)).lower()}\n"
+        f"capabilities={_capability_digest(capabilities)}\n"
+        f"recent_history:\n{history_brief}\n"
+        "state_memory_json:\n"
+        f"{json.dumps(state_memory, ensure_ascii=False)}\n"
+    )
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
 def _load_agent_factory():
     from federlicht import report as report_mod
 
@@ -512,3 +639,87 @@ def try_deepagent_stream(
         yield from _iter_chunks(answer, target_chars=48)
 
     return _iter(), used_model
+
+
+def try_deepagent_action_plan(
+    *,
+    question: str,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+    state_memory: Any,
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+    model: str | None,
+    llm_backend: str | None,
+    reasoning_effort: str | None,
+    runtime_mode: str | None = None,
+    root: Path | None = None,
+) -> dict[str, Any] | None:
+    mode = normalize_runtime_mode(runtime_mode or federhav_runtime_mode())
+    if mode == "off":
+        return None
+    backend = _resolve_backend(llm_backend)
+    model_hint = _resolve_model_hint(model, backend)
+    try:
+        report_mod, create_deep_agent = _load_agent_factory()
+        memory_snapshot = _memory_tool_payload(state_memory, [])
+        effective_run_rel = str(run_rel or "").strip().replace("\\", "/").strip("/")
+        if not effective_run_rel:
+            effective_run_rel = _extract_run_rel(memory_snapshot)
+        tools: Iterable[Any] = [
+            _MemorySnapshotTool(
+                name="memory_snapshot",
+                description="Read compact state memory and scope state.",
+                snapshot=memory_snapshot,
+            ),
+            _RunArtifactIndexTool(
+                name="run_artifacts",
+                description="Return run-scoped artifact index summary.",
+                snapshot=memory_snapshot,
+            ),
+            _RunFileReadTool(
+                name="read_run_file",
+                description="Read run-scoped file excerpt by relative path.",
+                root=root,
+                run_rel=effective_run_rel,
+            ),
+        ]
+        agent = report_mod.create_agent_with_fallback(
+            create_deep_agent,
+            model_hint,
+            list(tools),
+            _governor_prompt(),
+            backend,
+            reasoning_effort=reasoning_effort,
+            subagents=[
+                {
+                    "name": "orchestrator",
+                    "description": "Govern action routing from user intent to safe execution intent.",
+                },
+                {
+                    "name": "executor",
+                    "description": "Validate run/workflow actions with policy guardrails and return executable action JSON.",
+                },
+            ],
+        )
+        messages = _build_action_planner_messages(
+            question=question,
+            run_rel=effective_run_rel,
+            history=history,
+            state_memory=memory_snapshot,
+            capabilities=capabilities,
+            execution_mode=execution_mode,
+            allow_artifacts=allow_artifacts,
+        )
+        result = agent.invoke({"messages": messages, "question": question})
+        if isinstance(result, dict):
+            action_obj = result.get("action")
+            if isinstance(action_obj, dict):
+                return action_obj
+        answer_text = _extract_assistant_text(result)
+        return _extract_first_json_object(answer_text)
+    except Exception:
+        if mode == "deepagent":
+            raise
+        return None

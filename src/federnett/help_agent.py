@@ -2281,6 +2281,43 @@ def _try_agentic_runtime_stream(
     )
 
 
+def _try_agentic_runtime_action_plan(
+    *,
+    question: str,
+    run_rel: str | None,
+    history: list[dict[str, str]] | None,
+    state_memory: Any,
+    capabilities: dict[str, Any] | None,
+    execution_mode: str,
+    allow_artifacts: bool,
+    model: str | None,
+    llm_backend: str | None,
+    reasoning_effort: str | None,
+    runtime_mode: str | None,
+    root: Path,
+) -> dict[str, Any] | None:
+    try:
+        from federhav.agentic_runtime import runtime_enabled, try_deepagent_action_plan
+    except Exception:
+        return None
+    if not runtime_enabled(runtime_mode):
+        return None
+    return try_deepagent_action_plan(
+        question=question,
+        run_rel=run_rel,
+        history=history,
+        state_memory=state_memory,
+        capabilities=capabilities,
+        execution_mode=execution_mode,
+        allow_artifacts=allow_artifacts,
+        model=model,
+        llm_backend=llm_backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
+    )
+
+
 def _call_llm(
     question: str,
     sources: list[dict[str, Any]],
@@ -3087,32 +3124,47 @@ def _infer_agentic_action(
         return None
     if not _needs_agentic_action_planning(question):
         return None
-    planner_prompt = _build_agentic_action_prompt(
-        question,
+    payload = _try_agentic_runtime_action_plan(
+        question=question,
         run_rel=run_rel,
         history=history,
         state_memory=state_memory,
         capabilities=capabilities,
         execution_mode=execution_mode,
         allow_artifacts=allow_artifacts,
+        model=model,
+        llm_backend=llm_backend,
+        reasoning_effort=reasoning_effort,
+        runtime_mode=runtime_mode,
+        root=root,
     )
-    try:
-        planned, _planned_model = _call_llm(
-            planner_prompt,
-            [],
-            model=model,
-            history=None,
-            live_log_tail="",
+    if payload is None:
+        planner_prompt = _build_agentic_action_prompt(
+            question,
+            run_rel=run_rel,
+            history=history,
             state_memory=state_memory,
-            strict_model=bool(strict_model),
-            reasoning_effort=reasoning_effort,
-            runtime_mode=runtime_mode,
-            root=root,
-            llm_backend=llm_backend,
+            capabilities=capabilities,
+            execution_mode=execution_mode,
+            allow_artifacts=allow_artifacts,
         )
-    except Exception:
-        return None
-    payload = _extract_first_json_object(planned)
+        try:
+            planned, _planned_model = _call_llm(
+                planner_prompt,
+                [],
+                model=model,
+                history=None,
+                live_log_tail="",
+                state_memory=state_memory,
+                strict_model=bool(strict_model),
+                reasoning_effort=reasoning_effort,
+                runtime_mode=runtime_mode,
+                root=root,
+                llm_backend=llm_backend,
+            )
+        except Exception:
+            return None
+        payload = _extract_first_json_object(planned)
     action = _normalize_agentic_action(payload, run_rel=run_rel)
     if not action:
         return None
