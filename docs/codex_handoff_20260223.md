@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 00:50:38 +09:00  
+Last updated: 2026-02-23 01:02:41 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -548,3 +548,52 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-3 Validation Interface v1: `92%` (fallback 경로 계약형 필드 일관화)
 - P0-5 Benchmark Harness v1: `90%` (compare_markdown + rows bundle)
 - P0 전체: `82%` (이전 `76%` -> `+6%p`)
+
+## 18) Iteration Log (36~40 / 100)
+- Iter 상태: `40/100` 완료
+- 이번 배치 목표:
+- P0-2: section rewrite를 실제 입력 컨텍스트 축소에 반영해 부분 재작성 효율 강화
+- P0-3: 최종 품질 계약 산출물(`quality_contract.latest.json`) 고정
+- P0-5: benchmark+gate를 단일 실행(runbook)으로 자동화
+
+### Iter-36: rewrite task 힌트 필드 정합성 보정
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - 기존 task 필드 참조 오류(`section_title`/`claim_ids`)를 실제 구조(`title`/`claims[*].claim_id`)로 수정
+  - targeted rewrite 힌트 정확도 개선
+
+### Iter-37: Structural Repair focused context 적용
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - rewrite task 섹션만 `extract_named_section(...)`으로 추출해 repair 입력 컨텍스트를 축소
+  - runtime 로그에 `repair_context_chars`, `focused_context_applied` 추가
+  - 효과: section-level 보정 시 전체 본문 전달을 줄여 토큰/오버플로 리스크 감소
+
+### Iter-38: 최종 품질 계약 파일 추가
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `report_notes/quality_contract.latest.json` 산출 추가
+  - selected eval + final heuristic signals + required metric keys를 계약형으로 고정
+  - quality gate 사용 여부와 무관하게 최종 품질 메타 확보
+
+### Iter-39: 통합 품질 게이트 실행기 추가
+- 반영:
+- `tools/run_report_quality_gate.py` 추가
+  - benchmark + regression gate를 단일 커맨드로 실행
+  - markdown runbook(`gate result`, `summary`, `baseline`, `delta`, `compare table`) 자동 생성
+- 테스트:
+- `tests/test_report_quality_gate_runner.py` 추가
+
+### Iter-40: 회귀/실측 검증
+- 테스트:
+- `pytest -q tests/test_report_quality_gate_runner.py tests/test_report_quality_benchmark_tool.py tests/test_report_quality_regression_gate.py tests/test_report_quality_heuristics.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_tools_claim_packet.py` -> `27 passed`
+- 실측:
+- `python tools/run_report_quality_gate.py --input site/runs/openclaw/report_full.html --suite docs/report_quality_benchmark_suite_v1.json --baseline test-results/p0_quality_benchmark_openclaw_20260223_iter35.json --summary-output test-results/p0_quality_benchmark_openclaw_20260223_iter40.summary.json --benchmark-output test-results/p0_quality_benchmark_openclaw_20260223_iter40.json --report-md test-results/p0_quality_gate_report_20260223_iter40.md --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55`
+- 결과: `PASS`
+
+### P0 진행률 업데이트 (40/100 기준)
+- P0-1 Evidence Schema v1: `94%` (계약 산출물/검증 흐름 안정화)
+- P0-2 Structured Synthesis v1(AST): `80%` (focused section-context + runtime 추적)
+- P0-3 Validation Interface v1: `95%` (fallback/최종 계약 산출물 고정)
+- P0-5 Benchmark Harness v1: `94%` (suite+delta+gate runbook 자동화)
+- P0 전체: `86%` (이전 `82%` -> `+4%p`)

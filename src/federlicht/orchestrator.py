@@ -1654,6 +1654,8 @@ class ReportOrchestrator:
             rewrite_stats = build_rewrite_stats(report_text, len(rewrite_tasks))
             repair_started_at = dt.datetime.now()
             runtime_log_path = notes_dir / "section_rewrite_runtime.jsonl"
+            repair_context_chars = len(str(report_text or ""))
+            focused_context_applied = False
 
             def finalize(result_text: str, outcome: str) -> str:
                 elapsed_ms = int(max(0.0, (dt.datetime.now() - repair_started_at).total_seconds()) * 1000.0)
@@ -1666,6 +1668,8 @@ class ReportOrchestrator:
                     "targeted_task_count": len(rewrite_tasks),
                     "report_chars_before": len(str(report_text or "")),
                     "report_chars_after": len(str(result_text or "")),
+                    "repair_context_chars": repair_context_chars,
+                    "focused_context_applied": focused_context_applied,
                     "elapsed_ms": elapsed_ms,
                     "rewrite_stats": rewrite_stats,
                     "task_sections": [str(item.get("title") or "").strip() for item in rewrite_tasks if item],
@@ -1700,16 +1704,34 @@ class ReportOrchestrator:
                 max_input_tokens_source=repair_max_source,
             )
             targeted_rewrite_hint = "(none)"
+            current_report_context = str(report_text or "")
             if rewrite_tasks:
                 hint_lines: list[str] = []
+                focused_sections: list[str] = []
                 for task in rewrite_tasks[:8]:
-                    claim_ids = ", ".join(str(item) for item in list(task.get("claim_ids") or [])[:3]) or "-"
+                    claims = list(task.get("claims") or [])
+                    claim_ids = ", ".join(
+                        str(item.get("claim_id") or "").strip()
+                        for item in claims[:3]
+                        if str(item.get("claim_id") or "").strip()
+                    ) or "-"
                     objective = str(task.get("objective") or "").strip()
-                    section_title = str(task.get("section_title") or "").strip()
+                    section_title = str(task.get("title") or "").strip()
                     hint_lines.append(
                         f"- {section_title}: objective={objective or '-'} | claim_ids={claim_ids}"
                     )
+                    section_text = (
+                        helpers.extract_named_section(report_text, output_format, section_title)
+                        if section_title and hasattr(helpers, "extract_named_section")
+                        else None
+                    )
+                    if section_text:
+                        focused_sections.append(f"[{section_title}]\n{section_text}")
                 targeted_rewrite_hint = "\n".join(hint_lines)
+                if focused_sections:
+                    current_report_context = "\n\n".join(focused_sections)
+                    focused_context_applied = True
+                    repair_context_chars = len(current_report_context)
             repair_input = "\n".join(
                 [
                     "Required skeleton:",
@@ -1728,7 +1750,7 @@ class ReportOrchestrator:
                     report_prompt or "(none)",
                     "",
                     "Current report:",
-                    helpers.truncate_text_middle(report_text, args.quality_max_chars),
+                    helpers.truncate_text_middle(current_report_context, args.quality_max_chars),
                 ]
             )
             repair_text = invoke_agent(
@@ -4255,14 +4277,44 @@ class ReportOrchestrator:
         write_section_rewrite_tasks(missing_sections, "final", report_text=report)
         report = run_structural_repair(report, missing_sections, "Structural Repair (final)")
         align_final = run_alignment_check("final", report)
+        final_signals = helpers.compute_heuristic_quality_signals(
+            report,
+            required_sections,
+            output_format,
+            depth=depth,
+            report_intent=report_intent,
+        )
+        quality_contract_eval = dict(selected_eval or {})
+        quality_contract_eval.setdefault("overall", float(final_signals.get("overall", 0.0)))
+        quality_contract_eval.setdefault("evidence_density_score", float(final_signals.get("evidence_density_score", 0.0)))
+        quality_contract_eval.setdefault("claim_support_ratio", float(final_signals.get("claim_support_ratio", 0.0)))
+        quality_contract_eval.setdefault("unsupported_claim_count", float(final_signals.get("unsupported_claim_count", 0.0)))
+        quality_contract_eval.setdefault(
+            "section_coherence_score", float(final_signals.get("section_coherence_score", 0.0))
+        )
+        quality_contract = {
+            "selected_label": selected_label,
+            "quality_iterations_requested": quality_iterations,
+            "quality_iterations_effective": effective_quality_iterations,
+            "quality_passes_executed": quality_passes_executed,
+            "selected_eval": quality_contract_eval,
+            "final_signals": final_signals,
+            "missing_sections_after_final": list(
+                helpers.find_missing_sections(report, required_sections, output_format)
+            ),
+            "required_metric_keys": [
+                "overall",
+                "evidence_density_score",
+                "claim_support_ratio",
+                "unsupported_claim_count",
+                "section_coherence_score",
+            ],
+        }
+        (notes_dir / "quality_contract.latest.json").write_text(
+            json.dumps(quality_contract, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
         if quality_gate_enabled:
-            final_signals = helpers.compute_heuristic_quality_signals(
-                report,
-                required_sections,
-                output_format,
-                depth=depth,
-                report_intent=report_intent,
-            )
             final_failures = helpers.quality_gate_failures(final_signals, **quality_gate_args)
             gate_payload = {
                 "enabled": True,
