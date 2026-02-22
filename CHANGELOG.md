@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.9.20 (2026-02-22)
+- FederHav DeepAgent Phase B-2 completion (`action proposal -> execution handoff`):
+  - extend deepagent action planner schema in `src/federhav/agentic_runtime.py` with:
+    - `confidence`
+    - `intent_rationale`
+    - `execution_handoff`
+  - add deepagent executor preflight tool:
+    - `execution_preflight` (`_ActionPreflightTool`)
+    - run/instruction readiness checks via `_build_action_preflight(...)`.
+  - normalize planner payload/handoff in runtime:
+    - `_normalize_action_planner_payload(...)`
+    - `_sanitize_execution_handoff(...)`.
+  - parse JSON-string `state_memory` in runtime memory tool payload path (improves deepagent grounding).
+- Federnett help-agent trace/handoff wiring:
+  - preserve planner metadata (`planner`, `confidence`, `intent_rationale`, `execution_handoff`) in normalized actions.
+  - append structured `action_plan` trace step (`details` payload) in both sync and stream paths.
+  - emit `action_plan` activity event in stream mode.
+  - tighten rule fallback policy to emergency opt-in only (`FEDERNETT_HELP_RULE_FALLBACK=1|true|on|yes|emergency`).
+- Federnett UI action-preview contract update:
+  - action preview now reflects planner handoff/preflight metadata.
+  - run-target resolution prefers planner preflight hints (`resolved_run_rel`, `run_hint`) before heuristic inference.
+- Tests:
+  - add regressions in `tests/test_help_agent.py` for:
+    - deepagent handoff metadata preservation,
+    - structured `action_plan` trace details,
+    - emergency fallback opt-in behavior.
+  - validation:
+    - `python -m py_compile src/federhav/agentic_runtime.py src/federnett/help_agent.py tests/test_help_agent.py` passed
+    - `node --check site/federnett/app.js` passed
+    - `pytest -q tests/test_help_agent.py tests/test_federhav_core.py tests/test_federhav_cli.py tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `127 passed`
+
 ## 1.9.19 (2026-02-22)
 - FederHav DeepAgent Phase B-1 progression:
   - add deepagent action-planner runtime path in `src/federhav/agentic_runtime.py`:

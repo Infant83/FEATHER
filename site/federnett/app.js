@@ -8163,14 +8163,21 @@ function showAskActionRunTargetBox(plan) {
   }
   const override = normalizeAskActionOverride(type, plan?.actionOverride);
   const context = resolveAskActionContext(type, override);
+  const preflight = context?.execution_handoff?.preflight
+    && typeof context.execution_handoff.preflight === "object"
+    ? context.execution_handoff.preflight
+    : null;
+  const preflightResolvedRun = normalizePathString(preflight?.resolved_run_rel || "");
+  const preflightStatus = String(preflight?.status || "").trim().toLowerCase();
   const fallbackRun = stripSiteRunsPrefix(normalizePathString(selectedRunRel() || "")) || "";
   const suggestedRun = normalizeRunHint(
     override?.run_hint
     || context?.run_hint
     || "",
   );
+  const preflightRunHint = normalizeRunHint(preflight?.run_hint || preflightResolvedRun || "");
   const hinted = normalizeRunHint(
-    suggestedRun || (type === "switch_run" ? fallbackRun : ""),
+    suggestedRun || preflightRunHint || (type === "switch_run" ? fallbackRun : ""),
   );
   input.value = hinted || fallbackRun || "";
   box.dataset.suggestedRun = suggestedRun;
@@ -8195,6 +8202,10 @@ function showAskActionRunTargetBox(plan) {
     const selectedLabel = fallbackRun || "-";
     if (suggestedRun) {
       contextNote.textContent = `FederHav 제안 run: ${suggestedRun} · 현재 선택 run: ${selectedLabel}`;
+    } else if (preflightResolvedRun) {
+      const resolvedLabel = stripSiteRunsPrefix(preflightResolvedRun) || preflightResolvedRun;
+      const statusLabel = preflightStatus ? ` (${preflightStatus})` : "";
+      contextNote.textContent = `Planner preflight run: ${resolvedLabel}${statusLabel} · 현재 선택 run: ${selectedLabel}`;
     } else {
       contextNote.textContent = `현재 선택 run: ${selectedLabel}`;
     }
@@ -8764,8 +8775,99 @@ function shouldAutoRunCapabilityInPlan(plan) {
   return ASK_SAFE_CAPABILITY_EFFECTS.has(effect);
 }
 
+function normalizeActionExecutionHandoff(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const handoff = {};
+  const planner = String(raw.planner || "").trim().toLowerCase();
+  if (planner) handoff.planner = planner;
+  const intent = String(raw.intent || "").trim().toLowerCase();
+  if (intent) handoff.intent = intent;
+  const rationale = String(raw.intent_rationale || raw.rationale || "").trim();
+  if (rationale) handoff.intent_rationale = rationale.slice(0, 320);
+  const confidenceRaw = Number(raw.confidence);
+  if (Number.isFinite(confidenceRaw)) {
+    handoff.confidence = Math.max(0, Math.min(1, confidenceRaw));
+  }
+  const preflightRaw = raw.preflight;
+  if (preflightRaw && typeof preflightRaw === "object") {
+    const preflight = {};
+    const status = String(preflightRaw.status || "").trim().toLowerCase();
+    if (["ok", "missing_run", "missing_instruction", "needs_confirmation"].includes(status)) {
+      preflight.status = status;
+    }
+    ["ready_for_execute", "run_exists", "create_if_missing", "requires_run_confirmation", "requires_instruction_confirm"]
+      .forEach((key) => {
+        if (typeof preflightRaw[key] === "boolean") preflight[key] = Boolean(preflightRaw[key]);
+      });
+    ["run_rel", "run_hint", "resolved_run_rel"].forEach((key) => {
+      const token = String(preflightRaw[key] || "").trim();
+      if (token) preflight[key] = token.slice(0, 220);
+    });
+    const instructionRaw = preflightRaw.instruction;
+    if (instructionRaw && typeof instructionRaw === "object") {
+      const instruction = {};
+      if (typeof instructionRaw.required === "boolean") instruction.required = Boolean(instructionRaw.required);
+      if (typeof instructionRaw.available === "boolean") instruction.available = Boolean(instructionRaw.available);
+      const selected = String(instructionRaw.selected || "").trim();
+      if (selected) instruction.selected = selected.slice(0, 240);
+      if (Array.isArray(instructionRaw.candidates)) {
+        const candidates = instructionRaw.candidates
+          .map((item) => String(item || "").trim())
+          .filter(Boolean)
+          .slice(0, 8);
+        if (candidates.length) instruction.candidates = candidates;
+      }
+      if (Object.keys(instruction).length) preflight.instruction = instruction;
+    }
+    if (Array.isArray(preflightRaw.notes)) {
+      const notes = preflightRaw.notes.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+      if (notes.length) preflight.notes = notes;
+    }
+    if (Object.keys(preflight).length) handoff.preflight = preflight;
+  }
+  return Object.keys(handoff).length ? handoff : null;
+}
+
+function enrichAskActionPlanWithPlannerMeta(plan, action) {
+  const out = plan && typeof plan === "object" ? { ...plan } : {};
+  const actionObj = action && typeof action === "object" ? action : null;
+  if (!actionObj) return out;
+  const planner = String(actionObj.planner || "").trim().toLowerCase();
+  const confidenceRaw = Number(actionObj.confidence);
+  const confidence = Number.isFinite(confidenceRaw) ? Math.max(0, Math.min(1, confidenceRaw)) : null;
+  const rationale = String(actionObj.intent_rationale || "").trim();
+  const handoff = normalizeActionExecutionHandoff(actionObj.execution_handoff);
+  const metaParts = [];
+  if (planner) metaParts.push(`planner=${planner}`);
+  if (confidence !== null) metaParts.push(`confidence=${confidence.toFixed(2)}`);
+  if (handoff?.preflight?.status) metaParts.push(`preflight=${handoff.preflight.status}`);
+  if (rationale) metaParts.push(`rationale=${rationale.length > 90 ? `${rationale.slice(0, 89)}…` : rationale}`);
+  if (metaParts.length) {
+    const baseMeta = String(out.meta || "").trim();
+    out.meta = [baseMeta, metaParts.join(" · ")].filter(Boolean).join(" · ");
+  }
+  try {
+    const previewObj = JSON.parse(String(out.preview || "{}"));
+    if (previewObj && typeof previewObj === "object") {
+      previewObj.planner = planner || undefined;
+      previewObj.confidence = confidence === null ? undefined : confidence;
+      previewObj.intent_rationale = rationale || undefined;
+      previewObj.execution_handoff = handoff || undefined;
+      out.preview = JSON.stringify(previewObj, null, 2);
+    }
+  } catch (_err) {
+    // Keep original preview text if not JSON.
+  }
+  out.planner = planner || "";
+  out.confidence = confidence === null ? undefined : confidence;
+  out.intent_rationale = rationale || "";
+  out.execution_handoff = handoff;
+  return out;
+}
+
 async function buildAskActionPlan(actionType, options = {}) {
   if (String(actionType || "").startsWith("capability:")) {
+    const action = resolveAskActionContext(actionType, options?.actionOverride);
     const capId = String(actionType || "").slice("capability:".length).trim();
     if (!capId) throw new Error("capability id is required");
     const runRel = selectedRunRel();
@@ -8778,7 +8880,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         run: runRel || undefined,
       }),
     });
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: `${payload?.label || capId} 미리보기`,
       meta: `Capability action: ${payload?.action_kind || "none"}`,
@@ -8786,7 +8888,7 @@ async function buildAskActionPlan(actionType, options = {}) {
       effect: String(payload?.effect || "").trim().toLowerCase(),
       delegatedActionType: String(payload?.action_type || "").trim().toLowerCase(),
       actionKind: String(payload?.action_kind || "").trim().toLowerCase(),
-    };
+    }, action);
   }
   if (actionType === "run_feather") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -8804,7 +8906,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         ? `대상 run=${stripSiteRunsPrefix(resolvedRun) || resolvedRun}`
         : `대상 run=${runHint} (없으면 생성 예정)`)
       : "현재 Feather 폼 값을 사용해 수집 작업을 시작합니다.";
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "Feather 실행 미리보기",
       meta: runMeta,
@@ -8823,7 +8925,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "run_federlicht") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -8840,7 +8942,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         ? `대상 run=${stripSiteRunsPrefix(resolvedRun) || resolvedRun}`
         : `대상 run=${runHint} (없으면 생성 예정)`)
       : "현재 Federlicht 폼 값을 사용해 보고서 생성을 시작합니다.";
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "Federlicht 실행 미리보기",
       meta: runMeta,
@@ -8855,7 +8957,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "run_feather_then_federlicht") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -8879,7 +8981,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         ? `대상 run=${stripSiteRunsPrefix(resolvedRun) || resolvedRun}`
         : `대상 run=${runHint} (없으면 생성 후 실행)`)
       : "1) Feather 수집 완료 후 2) 동일 run에서 Federlicht를 자동 실행합니다.";
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "Feather -> Federlicht 실행 미리보기",
       meta: runMeta,
@@ -8900,7 +9002,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "create_run_folder") {
     const fallbackTopic = String(state.ask.pendingQuestion || state.liveAsk.pendingQuestion || "").trim();
@@ -8908,7 +9010,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     const topicHint = String(action?.topic_hint || fallbackTopic || "").trim();
     const runNameHint = String(action?.run_name_hint || action?.run_hint || "").trim();
     const runName = sanitizeRunNameHint(runNameHint || topicHint);
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "새 Run Folder 생성 미리보기",
       meta: `${siteRunsPrefix()} 하위에 run 폴더를 만들고 instruction 초안을 생성합니다.`,
@@ -8924,7 +9026,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "switch_run") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -8934,7 +9036,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     }
     const allowCreate = Boolean(action?.create_if_missing);
     const resolvedRunRel = resolveRunRelFromHint(runHint, { strict: true });
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "Run 전환 미리보기",
       meta: resolvedRunRel
@@ -8954,7 +9056,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "preset_resume_stage") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -8968,7 +9070,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     const selectedOrdered = ordered.filter((id) => activeSet.has(id));
     const startIdx = selectedOrdered.indexOf(stage);
     const resumeStages = startIdx >= 0 ? selectedOrdered.slice(startIdx) : [stage];
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: `${workflowLabel(stage)}부터 재시작 미리보기`,
       meta: "Federlicht stages/skip_stages 프리셋을 재구성합니다.",
@@ -8982,14 +9084,14 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "focus_editor") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
     const target = String(action?.target || "federlicht_prompt").trim().toLowerCase();
     const resolvedTarget = target === "feather_instruction" ? "feather_instruction" : "federlicht_prompt";
     const editorSelector = resolvedTarget === "feather_instruction" ? "#feather-query" : "#federlicht-prompt";
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "편집기 포커스 이동 미리보기",
       meta: "실행 없이 입력 편집기로 이동합니다.",
@@ -9003,7 +9105,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   if (actionType === "set_action_mode") {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
@@ -9011,7 +9113,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     const allowArtifacts = action && Object.prototype.hasOwnProperty.call(action, "allow_artifacts")
       ? Boolean(action.allow_artifacts)
       : undefined;
-    return {
+    return enrichAskActionPlanWithPlannerMeta({
       type: actionType,
       title: "Ask 실행 정책 미리보기",
       meta: "FederHav Plan/Act 모드 정책을 변경합니다.",
@@ -9024,7 +9126,7 @@ async function buildAskActionPlan(actionType, options = {}) {
         null,
         2,
       ),
-    };
+    }, action);
   }
   throw new Error(`unsupported action: ${actionType}`);
 }
@@ -10084,6 +10186,21 @@ function resolveActionOverrideWithRunHint(actionType, actionOverride) {
   const context = resolveAskActionContext(actionType, actionOverride);
   const explicitHint = normalizeRunHint(context?.run_hint || "");
   if (explicitHint && !isInvalidRunHint(explicitHint)) return { actionOverride, inferredRunHint: "" };
+  const preflight = context?.execution_handoff?.preflight
+    && typeof context.execution_handoff.preflight === "object"
+    ? context.execution_handoff.preflight
+    : null;
+  const handoffHint = normalizeRunHint(preflight?.run_hint || preflight?.resolved_run_rel || "");
+  if (handoffHint && !isInvalidRunHint(handoffHint)) {
+    const mergedFromHandoff = normalizeAskActionOverride(actionType, {
+      ...(context || {}),
+      run_hint: handoffHint,
+      create_if_missing: typeof preflight?.create_if_missing === "boolean"
+        ? Boolean(preflight.create_if_missing)
+        : Boolean(context?.create_if_missing),
+    });
+    return { actionOverride: mergedFromHandoff, inferredRunHint: handoffHint };
+  }
   const inferredRunHint = inferRunHintFromRecentContext();
   if (!inferredRunHint) return { actionOverride, inferredRunHint: "" };
   const merged = normalizeAskActionOverride(actionType, {

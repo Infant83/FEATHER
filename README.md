@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.19
+Version: 1.9.20
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -174,8 +174,9 @@ Key points:
   - `state-memory`: run/workflow/artifact/dialogue 상태 요약 메모리
   - `recent-log tail summary`: 직전 실행 로그 끝부분 보조 컨텍스트 요약 (길이 선택값 기준)
 - FederHav action policy defaults to agentic runtime (`auto/deepagent`) and does not use safe-rule fallback unless explicitly enabled with `FEDERNETT_HELP_RULE_FALLBACK=1`.
-- FederHav deepagent runtime uses run-scoped tools (`memory_snapshot`, `run_artifacts`, `read_run_file`, `source_digest`) to ground answers in current run artifacts.
-- FederHav action proposal path now uses deepagent planner first (governor+executor), with legacy LLM planner kept as fallback during Phase B migration.
+- FederHav deepagent runtime uses run-scoped tools (`memory_snapshot`, `run_artifacts`, `read_run_file`, `source_digest`) and action preflight tool (`execution_preflight`) to ground answers/actions in current run artifacts.
+- FederHav action proposal path now runs deepagent planner-first with structured handoff metadata (`confidence`, `intent_rationale`, `execution_handoff.preflight`) and keeps legacy LLM planner as migration fallback.
+- Ask trace includes structured `action_plan` step details so planner intent/confidence/preflight can be audited in logs.
 - Path/file questions are handled with run-context source selection + tool grounding (not per-phrase hardcoded reply templates).
 - Run-internal file/folder summary requests are treated as content-analysis tasks by default (no automatic Feather/Federlicht run action suggestion unless explicit execution intent exists).
 - If `run` is omitted in help payload, FederHav recovers run context from `state_memory.scope.run_rel`/`state_memory.run.run_rel` to keep run-scoped analysis stable.

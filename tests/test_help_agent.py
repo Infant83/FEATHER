@@ -693,6 +693,113 @@ def test_infer_agentic_action_falls_back_to_llm_planner(tmp_path, monkeypatch) -
     assert action.get("type") == "run_federlicht"
 
 
+def test_infer_agentic_action_keeps_deepagent_handoff_metadata(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "1")
+    monkeypatch.setattr(
+        help_agent,
+        "_try_agentic_runtime_action_plan",
+        lambda **_kwargs: {
+            "type": "run_feather",
+            "label": "Feather 실행",
+            "run_hint": "demo_run",
+            "confidence": 82,
+            "intent_rationale": "사용자 요청이 명시 실행 의도이며 run 힌트가 존재합니다.",
+            "execution_handoff": {
+                "planner": "deepagent",
+                "preflight": {
+                    "status": "needs_confirmation",
+                    "ready_for_execute": False,
+                    "resolved_run_rel": "runs/demo_run",
+                    "run_exists": True,
+                    "requires_instruction_confirm": True,
+                    "instruction": {
+                        "required": True,
+                        "available": True,
+                        "selected": "runs/demo_run/instruction/demo.txt",
+                        "candidates": ["runs/demo_run/instruction/demo.txt"],
+                    },
+                    "notes": ["instruction confirmation is required before execution."],
+                },
+            },
+        },
+    )
+    monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("{}", "gpt-4o-mini"))
+    action = help_agent._infer_agentic_action(
+        tmp_path,
+        "run feather 실행해줘",
+        run_rel="runs/demo_run",
+        history=[],
+        state_memory="{}",
+        capabilities={},
+        execution_mode="act",
+        allow_artifacts=False,
+        model=None,
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        strict_model=False,
+    )
+    assert isinstance(action, dict)
+    assert action.get("planner") == "deepagent"
+    assert action.get("confidence") == 0.82
+    assert "intent_rationale" in action
+    handoff = action.get("execution_handoff")
+    assert isinstance(handoff, dict)
+    preflight = handoff.get("preflight")
+    assert isinstance(preflight, dict)
+    assert preflight.get("status") == "needs_confirmation"
+    assert preflight.get("requires_instruction_confirm") is True
+
+
+def test_answer_help_question_trace_includes_action_plan_details(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 4))
+    monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("ok", "gpt-4o-mini"))
+    monkeypatch.setattr(
+        help_agent,
+        "_infer_governed_action",
+        lambda *_args, **_kwargs: {
+            "type": "run_federlicht",
+            "planner": "deepagent",
+            "confidence": 0.91,
+            "intent_rationale": "보고서 생성 실행 요청으로 판단.",
+            "execution_handoff": {
+                "preflight": {
+                    "status": "ok",
+                    "ready_for_execute": True,
+                    "resolved_run_rel": "runs/demo",
+                }
+            },
+        },
+    )
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "federlicht 실행해줘",
+        run_rel="runs/demo",
+    )
+    trace = result.get("trace")
+    assert isinstance(trace, dict)
+    steps = trace.get("steps")
+    assert isinstance(steps, list)
+    action_step = next((row for row in steps if isinstance(row, dict) and row.get("id") == "action_plan"), None)
+    assert isinstance(action_step, dict)
+    assert action_step.get("status") == "done"
+    details = action_step.get("details")
+    assert isinstance(details, dict)
+    assert details.get("planner") == "deepagent"
+    assert details.get("type") == "run_federlicht"
+
+
+def test_allow_rule_fallback_requires_emergency_opt_in(monkeypatch) -> None:
+    monkeypatch.delenv("FEDERNETT_HELP_RULE_FALLBACK", raising=False)
+    assert help_agent._allow_rule_fallback("auto") is False
+    monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "2")
+    assert help_agent._allow_rule_fallback("auto") is False
+    monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "1")
+    assert help_agent._allow_rule_fallback("auto") is True
+    monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "emergency")
+    assert help_agent._allow_rule_fallback("auto") is True
+
+
 def test_answer_help_question_runs_web_search_when_enabled(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 5))
     monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("웹검색 답변", "gpt-4o-mini"))

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,7 @@ _ACTION_ALLOWED_TYPES = (
     "set_action_mode",
     "run_capability",
 )
+_ACTION_ALLOWED_SET = set(_ACTION_ALLOWED_TYPES)
 
 
 def normalize_runtime_mode(value: Any) -> str:
@@ -224,6 +226,295 @@ def _extract_run_rel(memory: dict[str, Any]) -> str:
     return ""
 
 
+def _normalize_action_type(value: Any) -> str:
+    token = str(value or "").strip().lower()
+    if token in _ACTION_ALLOWED_SET:
+        return token
+    return ""
+
+
+def _normalize_run_hint(value: Any) -> str:
+    token = str(value or "").strip().replace("\\", "/").strip("/")
+    if not token:
+        return ""
+    lowered = token.lower()
+    if lowered.startswith("site/runs/"):
+        token = token[len("site/runs/") :]
+    elif lowered.startswith("runs/"):
+        token = token[len("runs/") :]
+    token = token.strip("/").split("/", 1)[0].strip()
+    if not token:
+        return ""
+    return token[:160]
+
+
+def _run_root_prefix_from_run_rel(run_rel: str) -> str:
+    token = str(run_rel or "").strip().replace("\\", "/").strip("/")
+    lowered = token.lower()
+    if lowered.startswith("site/runs/"):
+        return "site/runs"
+    if lowered.startswith("runs/"):
+        return "runs"
+    if "/" in token:
+        return token.rsplit("/", 1)[0]
+    return ""
+
+
+def _candidate_run_rel_paths(run_hint: str, run_rel: str) -> list[str]:
+    out: list[str] = []
+
+    def _push(raw: str) -> None:
+        token = str(raw or "").strip().replace("\\", "/").strip("/")
+        if not token:
+            return
+        if token not in out:
+            out.append(token)
+
+    normalized_run = str(run_rel or "").strip().replace("\\", "/").strip("/")
+    _push(normalized_run)
+    hint = _normalize_run_hint(run_hint)
+    if hint:
+        _push(hint)
+        _push(f"runs/{hint}")
+        _push(f"site/runs/{hint}")
+        prefix = _run_root_prefix_from_run_rel(normalized_run)
+        if prefix:
+            _push(f"{prefix}/{hint}")
+    return out
+
+
+def _resolve_existing_run_rel(root: Path | None, run_hint: str, run_rel: str) -> tuple[str, bool]:
+    if root is None:
+        return "", False
+    root_resolved = root.resolve()
+    for candidate in _candidate_run_rel_paths(run_hint, run_rel):
+        target = (root_resolved / candidate).resolve()
+        try:
+            target.relative_to(root_resolved)
+        except Exception:
+            continue
+        if target.exists() and target.is_dir():
+            return _safe_rel(target, root_resolved), True
+    return "", False
+
+
+def _collect_instruction_candidates(root: Path | None, resolved_run_rel: str) -> list[str]:
+    if root is None:
+        return []
+    run_token = str(resolved_run_rel or "").strip().replace("\\", "/").strip("/")
+    if not run_token:
+        return []
+    root_resolved = root.resolve()
+    run_dir = (root_resolved / run_token).resolve()
+    try:
+        run_dir.relative_to(root_resolved)
+    except Exception:
+        return []
+    instruction_dir = run_dir / "instruction"
+    if not instruction_dir.exists() or not instruction_dir.is_dir():
+        return []
+    rows: list[tuple[float, str]] = []
+    for pattern in ("*.txt", "*.md", "*.markdown"):
+        for path in instruction_dir.glob(pattern):
+            if not path.is_file():
+                continue
+            try:
+                mtime = float(path.stat().st_mtime)
+            except Exception:
+                mtime = 0.0
+            rows.append((mtime, _safe_rel(path, root_resolved)))
+    rows.sort(key=lambda item: (-item[0], item[1]))
+    out: list[str] = []
+    seen: set[str] = set()
+    for _mtime, rel in rows:
+        if rel and rel not in seen:
+            seen.add(rel)
+            out.append(rel)
+    return out[:8]
+
+
+def _build_action_preflight(action: dict[str, Any], *, root: Path | None, run_rel: str) -> dict[str, Any]:
+    action_type = _normalize_action_type(action.get("type"))
+    base_run_rel = str(run_rel or action.get("run_rel") or "").strip().replace("\\", "/").strip("/")
+    run_hint = _normalize_run_hint(action.get("run_hint") or action.get("run_name_hint") or "")
+    create_if_missing = bool(action.get("create_if_missing"))
+    auto_instruction = bool(action.get("auto_instruction"))
+    require_instruction_confirm = bool(action.get("require_instruction_confirm"))
+
+    resolved_run_rel, run_exists = _resolve_existing_run_rel(root, run_hint, base_run_rel)
+    if not resolved_run_rel and base_run_rel:
+        resolved_run_rel = base_run_rel
+        if root is not None:
+            target = (root.resolve() / resolved_run_rel).resolve()
+            try:
+                target.relative_to(root.resolve())
+                run_exists = target.exists() and target.is_dir()
+            except Exception:
+                run_exists = False
+
+    if not resolved_run_rel and run_hint:
+        prefix = _run_root_prefix_from_run_rel(base_run_rel) or "runs"
+        resolved_run_rel = f"{prefix}/{run_hint}".replace("//", "/").strip("/")
+
+    run_actions = {
+        "run_feather",
+        "run_federlicht",
+        "run_feather_then_federlicht",
+        "switch_run",
+        "focus_editor",
+    }
+    instruction_required = action_type in {"run_feather", "run_feather_then_federlicht", "focus_editor"}
+    instruction_candidates = _collect_instruction_candidates(root, resolved_run_rel)
+    selected_instruction = instruction_candidates[0] if instruction_candidates else ""
+    instruction_available = bool(selected_instruction)
+
+    requires_run_confirmation = bool(
+        run_hint and resolved_run_rel and base_run_rel and resolved_run_rel != base_run_rel
+    )
+    notes: list[str] = []
+    status = "ok"
+    ready_for_execute = True
+
+    if action_type in run_actions:
+        if not resolved_run_rel:
+            status = "missing_run"
+            ready_for_execute = False
+            notes.append("run target could not be resolved from run_hint/run_rel.")
+        elif not run_exists and not create_if_missing:
+            status = "missing_run"
+            ready_for_execute = False
+            notes.append("target run does not exist and create_if_missing is false.")
+
+    if instruction_required:
+        if not instruction_available and not auto_instruction:
+            if status == "ok":
+                status = "missing_instruction"
+            ready_for_execute = False
+            notes.append("no instruction file found under run/instruction.")
+        if require_instruction_confirm:
+            if status == "ok":
+                status = "needs_confirmation"
+            ready_for_execute = False
+            notes.append("instruction confirmation is required before execution.")
+
+    if action_type in {"create_run_folder", "set_action_mode", "run_capability"} and status == "ok":
+        ready_for_execute = True
+
+    return {
+        "status": status,
+        "ready_for_execute": bool(ready_for_execute),
+        "run_rel": base_run_rel,
+        "run_hint": run_hint,
+        "resolved_run_rel": resolved_run_rel,
+        "run_exists": bool(run_exists),
+        "create_if_missing": bool(create_if_missing),
+        "requires_run_confirmation": bool(requires_run_confirmation),
+        "requires_instruction_confirm": bool(require_instruction_confirm),
+        "instruction": {
+            "required": bool(instruction_required),
+            "available": bool(instruction_available),
+            "selected": selected_instruction,
+            "candidates": instruction_candidates,
+        },
+        "notes": notes[:6],
+    }
+
+
+def _normalize_confidence(value: Any) -> float | None:
+    try:
+        token = float(value)
+    except Exception:
+        return None
+    if not math.isfinite(token):
+        return None
+    if token > 1.0 and token <= 100.0:
+        token = token / 100.0
+    token = max(0.0, min(token, 1.0))
+    return round(token, 3)
+
+
+def _sanitize_execution_handoff(
+    raw: Any,
+    *,
+    action: dict[str, Any],
+    root: Path | None,
+    run_rel: str,
+) -> dict[str, Any]:
+    handoff = dict(raw) if isinstance(raw, dict) else {}
+    preflight = _build_action_preflight(action, root=root, run_rel=run_rel)
+    provided_preflight = handoff.get("preflight")
+    if isinstance(provided_preflight, dict):
+        status = str(provided_preflight.get("status") or "").strip().lower()
+        if status in {"ok", "missing_run", "missing_instruction", "needs_confirmation"}:
+            preflight["status"] = status
+        if isinstance(provided_preflight.get("ready_for_execute"), bool):
+            preflight["ready_for_execute"] = bool(provided_preflight.get("ready_for_execute"))
+        provided_notes = provided_preflight.get("notes")
+        if isinstance(provided_notes, list):
+            notes = [str(item or "").strip() for item in provided_notes if str(item or "").strip()]
+            if notes:
+                preflight["notes"] = notes[:6]
+    rationale = str(
+        handoff.get("intent_rationale")
+        or handoff.get("rationale")
+        or action.get("intent_rationale")
+        or action.get("rationale")
+        or ""
+    ).strip()
+    confidence = _normalize_confidence(
+        handoff.get("confidence")
+        if isinstance(handoff, dict) and "confidence" in handoff
+        else action.get("confidence")
+    )
+    intent = str(handoff.get("intent") or "").strip().lower()[:80]
+    planner = str(handoff.get("planner") or "deepagent").strip().lower()[:40] or "deepagent"
+    out: dict[str, Any] = {
+        "planner": planner,
+        "preflight": preflight,
+    }
+    if intent:
+        out["intent"] = intent
+    if rationale:
+        out["intent_rationale"] = rationale[:320]
+    if confidence is not None:
+        out["confidence"] = confidence
+    return out
+
+
+def _normalize_action_planner_payload(
+    raw: Any,
+    *,
+    root: Path | None,
+    run_rel: str,
+) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    action_type = _normalize_action_type(raw.get("type") or raw.get("action_type"))
+    if not action_type:
+        return None
+    payload = dict(raw)
+    payload["type"] = action_type
+    run_hint = _normalize_run_hint(payload.get("run_hint") or payload.get("run_name_hint") or "")
+    if run_hint:
+        payload["run_hint"] = run_hint
+    confidence = _normalize_confidence(payload.get("confidence"))
+    if confidence is not None:
+        payload["confidence"] = confidence
+    else:
+        payload.pop("confidence", None)
+    rationale = str(payload.get("intent_rationale") or payload.get("rationale") or "").strip()
+    if rationale:
+        payload["intent_rationale"] = rationale[:320]
+    payload["execution_handoff"] = _sanitize_execution_handoff(
+        payload.get("execution_handoff"),
+        action=payload,
+        root=root,
+        run_rel=run_rel,
+    )
+    payload["planner"] = "deepagent"
+    return payload
+
+
 @dataclass
 class _MemorySnapshotTool:
     name: str
@@ -382,6 +673,23 @@ class _SourceDigestTool:
         return self.invoke(payload)
 
 
+@dataclass
+class _ActionPreflightTool:
+    name: str
+    description: str
+    root: Path | None
+    run_rel: str
+
+    def invoke(self, payload: Any = None) -> dict[str, Any]:
+        action = payload if isinstance(payload, dict) else {"type": str(payload or "")}
+        if "run_rel" not in action and self.run_rel:
+            action = {**action, "run_rel": self.run_rel}
+        return _build_action_preflight(action, root=self.root, run_rel=self.run_rel)
+
+    def __call__(self, payload: Any = None) -> dict[str, Any]:
+        return self.invoke(payload)
+
+
 def _governor_prompt() -> str:
     return (
         "You are FederHav, the governing agent for Federnett.\n"
@@ -414,6 +722,12 @@ def _memory_tool_payload(state_memory: Any, sources: list[dict[str, Any]]) -> di
         )
     if isinstance(state_memory, dict):
         memory = dict(state_memory)
+    elif isinstance(state_memory, str):
+        try:
+            parsed = json.loads(state_memory)
+        except Exception:
+            parsed = {}
+        memory = dict(parsed) if isinstance(parsed, dict) else {}
     else:
         memory = {}
     memory["sources_hint"] = normalized_sources
@@ -478,7 +792,10 @@ def _build_action_planner_messages(
         "Never propose destructive/unbounded actions.\n"
         f"allowed_types=[{','.join(_ACTION_ALLOWED_TYPES)}]\n"
         "schema={type,label,summary,safety,run_hint,create_if_missing,auto_instruction,require_instruction_confirm,"
-        "instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id}\n"
+        "instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id,"
+        "confidence,intent_rationale,execution_handoff}\n"
+        "For run/switch actions, call execution_preflight tool first and copy result into execution_handoff.preflight.\n"
+        "Set confidence in [0,1] and add intent_rationale in 1-2 concise sentences.\n"
     )
     user = (
         f"question={question}\n"
@@ -684,6 +1001,12 @@ def try_deepagent_action_plan(
                 root=root,
                 run_rel=effective_run_rel,
             ),
+            _ActionPreflightTool(
+                name="execution_preflight",
+                description="Validate action run target and instruction readiness before execution.",
+                root=root,
+                run_rel=effective_run_rel,
+            ),
         ]
         agent = report_mod.create_agent_with_fallback(
             create_deep_agent,
@@ -716,9 +1039,27 @@ def try_deepagent_action_plan(
         if isinstance(result, dict):
             action_obj = result.get("action")
             if isinstance(action_obj, dict):
-                return action_obj
+                normalized = _normalize_action_planner_payload(
+                    action_obj,
+                    root=root,
+                    run_rel=effective_run_rel,
+                )
+                if normalized is not None:
+                    return normalized
+            normalized = _normalize_action_planner_payload(
+                result,
+                root=root,
+                run_rel=effective_run_rel,
+            )
+            if normalized is not None:
+                return normalized
         answer_text = _extract_assistant_text(result)
-        return _extract_first_json_object(answer_text)
+        parsed = _extract_first_json_object(answer_text)
+        return _normalize_action_planner_payload(
+            parsed,
+            root=root,
+            run_rel=effective_run_rel,
+        )
     except Exception:
         if mode == "deepagent":
             raise

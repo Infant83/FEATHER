@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-22
 
-Last updated: 2026-02-22 16:02:46 +09:00  
+Last updated: 2026-02-22 16:35:46 +09:00  
 Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/ppt_writer_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `docs/federlicht_report.md`, `docs/playwright_mcp_troubleshooting.md`
 
 ## 1) 목적
@@ -10,7 +10,7 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
 ## 2) 현재 적용도 요약
 - Federlicht 보고서 파이프라인: **고도화 진행 중 (부분완료)**
 - Federnett 실행/운영 UI: **핵심 기능 완료 + UX 정리 잔여**
-- FederHav deepagent 전환: **Phase A + Phase B-1(액션 플래너 연결) 반영, Phase B-2~D 미완**
+- FederHav deepagent 전환: **Phase A + Phase B-2(액션 handoff/preflight/trace) 반영, Phase B-3~D 미완**
 - Run/Hub 분리 및 publish: **엔진 완료, 협업/승인 UI 미완**
 - LLM 정책 일원화: **전역 정책 중심으로 완료**
 - Playwright 검증체계: **로컬 스모크 안정, CI E2E 미완**
@@ -97,7 +97,7 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
 - 테마별 semantic chip 대비 점검 상시화(Run Studio/Workflow/Runtime warning chip 포함, white/black 우선).
 
 ### P1 (단기)
-- FederHav DeepAgent Phase B-2 진행(`action proposal -> execution handoff` 경로를 deepagent planner 중심으로 이관).
+- FederHav DeepAgent Phase B-3 진행(LLM fallback 축소 + CLI 품질 회귀셋 + planner 계약 테스트 확장).
 - 계정/권한 운영 문서화(root/admin/user, bootstrap, session revoke 정책).
 - Agent profile ownership UI 명시화(built-in/private/org-shared).
 - Stage 비용/시간 대시보드(run 단위 elapsed/token/cache 집계).
@@ -526,3 +526,38 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
       3) safe-rule fallback 기본 off 고정 + emergency fallback 플래그 최소화
       4) planner->UI action preview 스키마 안정화(테스트/계약서화)
       5) federhav CLI(`chat --runtime-mode deepagent`)에서 action 제안 품질 회귀셋 추가
+- 추가 수정(16:35 KST, Phase B-2 Complete):
+  - `src/federhav/agentic_runtime.py`
+    - action planner 스키마 확장: `confidence`, `intent_rationale`, `execution_handoff`.
+    - `execution_preflight` deepagent tool 추가(런/인스트럭션 준비상태 검사).
+    - planner 결과 정규화:
+      - `_normalize_action_planner_payload(...)`
+      - `_sanitize_execution_handoff(...)`
+      - `_build_action_preflight(...)`
+    - state-memory JSON 문자열 입력도 deepagent 메모리 툴에서 파싱하도록 보정.
+  - `src/federnett/help_agent.py`
+    - action 정규화에 planner 메타/신뢰도/intent rationale/handoff 스키마 반영.
+    - trace에 `action_plan` 단계를 구조화(details 포함)로 저장.
+    - stream 경로에서도 `action_plan` activity 이벤트 추가.
+    - safe-rule fallback은 emergency opt-in(`FEDERNETT_HELP_RULE_FALLBACK=1|true|on|yes|emergency`)에서만 허용.
+  - `site/federnett/app.js`
+    - action preview에 planner meta + execution_handoff(preflight) 반영.
+    - run-target 추론 시 planner preflight(`resolved_run_rel/run_hint`)를 우선 반영.
+    - action preview schema를 실행 전 확인 데이터로 일관화.
+  - 테스트:
+    - `tests/test_help_agent.py`
+      - deepagent handoff metadata 보존 회귀
+      - answer trace의 `action_plan` structured details 회귀
+      - emergency fallback opt-in 정책 회귀
+  - 검증:
+    - `python -m py_compile src/federhav/agentic_runtime.py src/federnett/help_agent.py tests/test_help_agent.py` -> passed
+    - `node --check site/federnett/app.js` -> passed
+    - `pytest -q tests/test_help_agent.py tests/test_federhav_core.py tests/test_federhav_cli.py tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `127 passed`
+- Phase B 진행도 갱신:
+  - 현재: **Phase B-2 완료**
+    - action proposal -> execution handoff 경로를 deepagent planner 중심으로 이관.
+    - handoff preflight(run/instruction 확인) + trace 구조화 + UI preview 연계 완료.
+  - 다음: **Phase B-3**
+    1) rule fallback 제거/격리(운영 긴급 플래그 외 기본 경로 완전 차단)
+    2) federhav CLI deepagent action 품질 회귀셋 확장
+    3) planner/output 계약 테스트를 federnett route 계층까지 확장

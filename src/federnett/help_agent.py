@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -2711,7 +2712,7 @@ def _allow_rule_fallback(runtime_mode: str | None) -> bool:
     """
     override = str(os.getenv("FEDERNETT_HELP_RULE_FALLBACK") or "").strip().lower()
     if override:
-        return override not in {"0", "false", "no", "off", "disable", "disabled"}
+        return override in {"1", "true", "on", "yes", "emergency"}
     _ = runtime_mode
     return False
 
@@ -2758,6 +2759,80 @@ def _extract_first_json_object(raw: str) -> dict[str, Any] | None:
     return None
 
 
+def _normalize_action_confidence(value: Any) -> float | None:
+    try:
+        token = float(value)
+    except Exception:
+        return None
+    if not math.isfinite(token):
+        return None
+    if token > 1.0 and token <= 100.0:
+        token = token / 100.0
+    token = max(0.0, min(token, 1.0))
+    return round(token, 3)
+
+
+def _normalize_execution_handoff(raw: Any) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    planner = str(raw.get("planner") or "").strip().lower()
+    if planner:
+        out["planner"] = planner[:40]
+    intent = str(raw.get("intent") or "").strip().lower()
+    if intent:
+        out["intent"] = intent[:80]
+    rationale = str(raw.get("intent_rationale") or raw.get("rationale") or "").strip()
+    if rationale:
+        out["intent_rationale"] = rationale[:320]
+    confidence = _normalize_action_confidence(raw.get("confidence"))
+    if confidence is not None:
+        out["confidence"] = confidence
+    preflight_raw = raw.get("preflight")
+    if isinstance(preflight_raw, dict):
+        preflight: dict[str, Any] = {}
+        status = str(preflight_raw.get("status") or "").strip().lower()
+        if status in {"ok", "missing_run", "missing_instruction", "needs_confirmation"}:
+            preflight["status"] = status
+        for key in (
+            "ready_for_execute",
+            "run_exists",
+            "create_if_missing",
+            "requires_run_confirmation",
+            "requires_instruction_confirm",
+        ):
+            if isinstance(preflight_raw.get(key), bool):
+                preflight[key] = bool(preflight_raw.get(key))
+        for key in ("run_rel", "run_hint", "resolved_run_rel"):
+            token = str(preflight_raw.get(key) or "").strip()
+            if token:
+                preflight[key] = token[:180]
+        instruction_raw = preflight_raw.get("instruction")
+        if isinstance(instruction_raw, dict):
+            instruction: dict[str, Any] = {}
+            for key in ("required", "available"):
+                if isinstance(instruction_raw.get(key), bool):
+                    instruction[key] = bool(instruction_raw.get(key))
+            selected = str(instruction_raw.get("selected") or "").strip()
+            if selected:
+                instruction["selected"] = selected[:220]
+            candidates_raw = instruction_raw.get("candidates")
+            if isinstance(candidates_raw, list):
+                candidates = [str(item or "").strip() for item in candidates_raw if str(item or "").strip()]
+                if candidates:
+                    instruction["candidates"] = candidates[:8]
+            if instruction:
+                preflight["instruction"] = instruction
+        notes_raw = preflight_raw.get("notes")
+        if isinstance(notes_raw, list):
+            notes = [str(item or "").strip() for item in notes_raw if str(item or "").strip()]
+            if notes:
+                preflight["notes"] = notes[:8]
+        if preflight:
+            out["preflight"] = preflight
+    return out or None
+
+
 def _normalize_agentic_action(raw: Any, *, run_rel: str | None) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         return None
@@ -2779,6 +2854,18 @@ def _normalize_agentic_action(raw: Any, *, run_rel: str | None) -> dict[str, Any
         action["summary"] = summary[:220]
     if safety:
         action["safety"] = safety[:220]
+    planner = str(raw.get("planner") or raw.get("planner_source") or "").strip().lower()
+    if planner:
+        action["planner"] = planner[:40]
+    confidence = _normalize_action_confidence(raw.get("confidence"))
+    if confidence is not None:
+        action["confidence"] = confidence
+    rationale = str(raw.get("intent_rationale") or raw.get("rationale") or "").strip()
+    if rationale:
+        action["intent_rationale"] = rationale[:320]
+    execution_handoff = _normalize_execution_handoff(raw.get("execution_handoff"))
+    if execution_handoff:
+        action["execution_handoff"] = execution_handoff
 
     if action_type in {
         "run_feather",
@@ -3138,6 +3225,8 @@ def _infer_agentic_action(
         runtime_mode=runtime_mode,
         root=root,
     )
+    if isinstance(payload, dict):
+        payload = {**payload, "planner": str(payload.get("planner") or "deepagent").strip() or "deepagent"}
     if payload is None:
         planner_prompt = _build_agentic_action_prompt(
             question,
@@ -3165,6 +3254,8 @@ def _infer_agentic_action(
         except Exception:
             return None
         payload = _extract_first_json_object(planned)
+        if isinstance(payload, dict):
+            payload = {**payload, "planner": str(payload.get("planner") or "llm_fallback").strip() or "llm_fallback"}
     action = _normalize_agentic_action(payload, run_rel=run_rel)
     if not action:
         return None
@@ -3265,6 +3356,16 @@ def _infer_governed_action(
     )
     if action is None and _allow_rule_fallback(runtime_mode):
         action = _infer_safe_action(root, question, run_rel=run_rel, history=history)
+        if isinstance(action, dict):
+            action = {
+                **action,
+                "planner": "rule_fallback",
+                "confidence": action.get("confidence", 0.41),
+                "intent_rationale": str(
+                    action.get("intent_rationale")
+                    or "Emergency safe-rule fallback used because FEDERNETT_HELP_RULE_FALLBACK=1."
+                ).strip(),
+            }
     return _apply_instruction_quality_guard(
         action,
         question=question,
@@ -3644,6 +3745,7 @@ def _trace_step(
     duration_ms: float | int | None = None,
     token_est: int | None = None,
     cache_hit: bool | None = None,
+    details: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {
         "id": str(step_id or "").strip() or "unknown",
@@ -3665,6 +3767,8 @@ def _trace_step(
             pass
     if cache_hit is not None:
         out["cache_hit"] = bool(cache_hit)
+    if isinstance(details, dict) and details:
+        out["details"] = details
     return out
 
 
@@ -3710,6 +3814,41 @@ def _clarify_prompt_from_action(action: dict[str, Any] | None) -> tuple[bool, st
     if required and prompt:
         return True, prompt[:220]
     return False, ""
+
+
+def _action_trace_details(action: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(action, dict):
+        return None
+    action_type = str(action.get("type") or "").strip().lower()
+    if not action_type:
+        return None
+    details: dict[str, Any] = {"type": action_type}
+    planner = str(action.get("planner") or "").strip().lower()
+    if planner:
+        details["planner"] = planner
+    confidence = _normalize_action_confidence(action.get("confidence"))
+    if confidence is not None:
+        details["confidence"] = confidence
+    rationale = str(action.get("intent_rationale") or "").strip()
+    if rationale:
+        details["intent_rationale"] = rationale[:220]
+    handoff = _normalize_execution_handoff(action.get("execution_handoff"))
+    if handoff:
+        details["execution_handoff"] = handoff
+    return details
+
+
+def _action_trace_status_and_message(action: dict[str, Any] | None) -> tuple[str, str, dict[str, Any] | None]:
+    details = _action_trace_details(action)
+    if not details:
+        return "skipped", "no executable action suggested", None
+    planner = str(details.get("planner") or "-")
+    confidence = details.get("confidence")
+    confidence_text = ""
+    if isinstance(confidence, (float, int)):
+        confidence_text = f" confidence={float(confidence):.2f}"
+    message = f"action={details.get('type')} planner={planner}{confidence_text}".strip()
+    return "done", message, details
 
 
 def answer_help_question(
@@ -3865,6 +4004,19 @@ def answer_help_question(
         reasoning_effort=resolved_reasoning_effort,
         runtime_mode=resolved_runtime_mode,
         strict_model=bool(strict_model),
+    )
+    action_status, action_message, action_details = _action_trace_status_and_message(action)
+    trace_steps.append(
+        _trace_step(
+            "action_plan",
+            action_status,
+            message=action_message,
+            tool_id="action_planner",
+            duration_ms=0,
+            token_est=0,
+            cache_hit=False,
+            details=action_details,
+        )
     )
     clarify_required, clarify_question = _clarify_prompt_from_action(action)
     return {
@@ -4159,6 +4311,29 @@ def stream_help_question(
         reasoning_effort=resolved_reasoning_effort,
         runtime_mode=resolved_runtime_mode,
         strict_model=bool(strict_model),
+    )
+    action_status, action_message, action_details = _action_trace_status_and_message(action)
+    trace_steps.append(
+        _trace_step(
+            "action_plan",
+            action_status,
+            message=action_message,
+            tool_id="action_planner",
+            duration_ms=0,
+            token_est=0,
+            cache_hit=False,
+            details=action_details,
+        )
+    )
+    yield _trace_activity_event(
+        trace_id=trace_id,
+        step_id="action_plan",
+        status=action_status,
+        message=action_message,
+        tool_id="action_planner",
+        duration_ms=0,
+        token_est=0,
+        cache_hit=False,
     )
     clarify_required, clarify_question = _clarify_prompt_from_action(action)
     yield {
