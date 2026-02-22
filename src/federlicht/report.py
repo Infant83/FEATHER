@@ -1020,6 +1020,87 @@ def extract_section_summary_md(report: str, targets: set[str]) -> Optional[str]:
     return None
 
 
+def _normalize_section_title_token(value: str) -> str:
+    token = re.sub(r"[^a-zA-Z0-9가-힣\s]", " ", str(value or ""))
+    token = re.sub(r"\s+", " ", token).strip().lower()
+    return token
+
+
+def extract_named_section(report: str, output_format: str, section_title: str) -> Optional[str]:
+    title_token = _normalize_section_title_token(section_title)
+    if not title_token:
+        return None
+    if output_format == "html":
+        return extract_named_section_html(report, title_token)
+    if output_format == "tex":
+        return extract_named_section_tex(report, title_token)
+    return extract_named_section_md(report, title_token)
+
+
+def extract_named_section_html(report: str, title_token: str) -> Optional[str]:
+    if not report:
+        return None
+    pattern = re.compile(r"(?is)<h([1-6])[^>]*>(.*?)</h\1>")
+    headings = list(pattern.finditer(report))
+    for idx, match in enumerate(headings):
+        level = int(match.group(1))
+        heading = _normalize_section_title_token(html_to_text(match.group(2)))
+        if heading != title_token:
+            continue
+        start = match.end()
+        end = len(report)
+        for next_match in headings[idx + 1 :]:
+            next_level = int(next_match.group(1))
+            if next_level <= level:
+                end = next_match.start()
+                break
+        body = html_to_text(report[start:end]).strip()
+        body = re.sub(r"\s+", " ", body).strip()
+        if not body:
+            continue
+        return body
+    return None
+
+
+def extract_named_section_md(report: str, title_token: str) -> Optional[str]:
+    if not report:
+        return None
+    lines = report.splitlines()
+    heading_entries: list[tuple[int, int, str]] = []
+    for index, line in enumerate(lines):
+        heading = re.match(r"^(#{1,6})\s+(.+)", line)
+        if not heading:
+            continue
+        level = len(heading.group(1))
+        token = _normalize_section_title_token(heading.group(2))
+        heading_entries.append((index, level, token))
+    for pos, (line_index, level, token) in enumerate(heading_entries):
+        if token != title_token:
+            continue
+        end_index = len(lines)
+        for next_index, next_level, _next_token in heading_entries[pos + 1 :]:
+            if next_level <= level:
+                end_index = next_index
+                break
+        body = "\n".join(lines[line_index + 1 : end_index]).strip()
+        if body and len(re.sub(r"\s+", " ", body)) >= 16:
+            return body
+    return None
+
+
+def extract_named_section_tex(report: str, title_token: str) -> Optional[str]:
+    if not report:
+        return None
+    pattern = re.compile(r"(?ms)^\\section\*?\{([^}]+)\}(.*?)(?=^\\section\*?\{|\Z)")
+    for match in pattern.finditer(report):
+        heading = _normalize_section_title_token(match.group(1))
+        if heading != title_token:
+            continue
+        body = match.group(2).strip()
+        return body or None
+    return None
+
+
 def build_site_manifest_entry(
     site_root: Path,
     run_dir: Path,
@@ -1949,6 +2030,366 @@ def compute_overall_score(evaluation: dict) -> float:
     return round(total, 2)
 
 
+def _normalize_report_intent(report_intent: object) -> str:
+    token = str(report_intent or "").strip().lower()
+    if not token:
+        return "generic"
+    if token in {"research", "research_report", "study", "scientific"}:
+        return "research"
+    if token in {"review", "review_article", "literature_review", "survey"}:
+        return "review"
+    if token in {"decision", "decision_brief", "decision_memo", "policy"}:
+        return "decision"
+    if token in {"brief", "briefing", "summary", "short"}:
+        return "briefing"
+    if token in {"explainer", "education", "tutorial"}:
+        return "explainer"
+    if token in {"slide", "slides", "ppt", "deck"}:
+        return "slide"
+    if token in {"narrative", "magazine", "story"}:
+        return "narrative"
+    return "generic"
+
+
+def _quality_plain_text(report_text: str, output_format: str) -> str:
+    text = report_text or ""
+    if output_format == "html":
+        return html_to_text(text)
+    return text
+
+
+def _extract_section_headings_for_quality(report_text: str, output_format: str) -> list[str]:
+    if output_format == "html":
+        headings: list[str] = []
+        for match in re.finditer(r"<h2[^>]*>(.*?)</h2>", report_text or "", re.IGNORECASE | re.DOTALL):
+            raw = re.sub(r"<[^>]+>", " ", str(match.group(1) or ""))
+            text = re.sub(r"\s+", " ", raw).strip()
+            if text:
+                headings.append(text)
+        return headings
+    if output_format == "tex":
+        return [match.group(1).strip() for match in re.finditer(r"^\\section\\*?\\{([^}]+)\\}", report_text, re.MULTILINE)]
+    return [match.group(1).strip() for match in re.finditer(r"^##\s+(.+)$", report_text, re.MULTILINE)]
+
+
+def _required_section_coverage_score(report_text: str, required_sections: list[str], output_format: str) -> float:
+    if not required_sections:
+        return 100.0
+    headings = _extract_section_headings_for_quality(report_text, output_format)
+    covered = 0
+    for section in required_sections:
+        if any(str(heading).lower().startswith(str(section).lower()) for heading in headings):
+            covered += 1
+    return round((covered / max(1, len(required_sections))) * 100.0, 2)
+
+
+def _citation_density_score(report_text: str, output_format: str) -> float:
+    raw = report_text or ""
+    text = _quality_plain_text(raw, output_format)
+    word_count = max(1, len(re.findall(r"\S+", text)))
+    citation_count = _count_citations(raw, text, output_format=output_format)
+    # Target roughly >= 1 grounded citation per ~220 words in evidence-dependent sections.
+    target = max(1.0, word_count / 220.0)
+    density = min(1.0, citation_count / target)
+    return round(density * 100.0, 2)
+
+
+def _count_citations(raw: str, plain_text: str, *, output_format: str) -> int:
+    citation_count = len(re.findall(r"\[(https?://[^\]\s]+|\.?/?[^\]\n]+\.(?:md|txt|pdf|html|csv|jsonl?))\]", raw))
+    citation_count += len(
+        re.findall(r"\[[^\]]+\]\((https?://[^)\s]+|\.?/?[^)\n]+\.(?:md|txt|pdf|html|csv|jsonl?))\)", raw)
+    )
+    citation_count += len(re.findall(r"https?://[^\s<>\"]+", raw))
+    citation_count += len(re.findall(r"(\./[^\s<>\"]+\.(?:md|txt|pdf|html|csv|jsonl?))", raw))
+    if output_format == "html":
+        citation_count += len(re.findall(r"href=\"https?://[^\"]+\"", raw, re.IGNORECASE))
+    citation_count += len(re.findall(r"\[\d{1,3}\]", plain_text))
+    return citation_count
+
+
+def _evidence_density_score(report_text: str, output_format: str) -> float:
+    raw = report_text or ""
+    text = _quality_plain_text(raw, output_format)
+    word_count = max(1, len(re.findall(r"\S+", text)))
+    citation_count = _count_citations(raw, text, output_format=output_format)
+    target = max(1.0, word_count / 180.0)
+    return round(min(100.0, (citation_count / target) * 100.0), 2)
+
+
+def _iter_quality_claim_candidates(report_text: str, output_format: str) -> list[tuple[str, str]]:
+    raw = report_text or ""
+    candidates: list[tuple[str, str]] = []
+    if output_format == "html":
+        for match in re.finditer(r"<(p|li|tr)[^>]*>(.*?)</\1>", raw, re.IGNORECASE | re.DOTALL):
+            raw_block = str(match.group(2) or "")
+            plain = re.sub(r"<[^>]+>", " ", raw_block)
+            plain = re.sub(r"\s+", " ", plain).strip()
+            if plain:
+                candidates.append((plain, raw_block))
+        return candidates
+    for line in raw.splitlines():
+        plain = str(line).strip()
+        if plain:
+            candidates.append((plain, line))
+    return candidates
+
+
+def _is_substantive_claim_candidate(line: str) -> bool:
+    text = str(line or "").strip()
+    if not text:
+        return False
+    if text.startswith(("## ", "### ", "\\section", "|", "---")):
+        return False
+    if len(re.findall(r"\w+|[\uac00-\ud7a3]", text)) < 12:
+        return False
+    if len(text) < 42:
+        return False
+    return True
+
+
+def _iter_substantive_claim_candidates(report_text: str, output_format: str) -> Iterable[tuple[str, str]]:
+    for plain, raw in _iter_quality_claim_candidates(report_text, output_format):
+        if _is_substantive_claim_candidate(plain):
+            yield plain, raw
+
+
+def _claim_support_metrics(report_text: str, output_format: str) -> tuple[float, int]:
+    total_claims = 0
+    supported_claims = 0
+    for plain, raw in _iter_substantive_claim_candidates(report_text, output_format):
+        total_claims += 1
+        cited = _count_citations(raw, plain, output_format=output_format) > 0
+        if cited:
+            supported_claims += 1
+    if total_claims <= 0:
+        return 50.0, 0
+    unsupported = max(0, total_claims - supported_claims)
+    ratio = round((supported_claims / total_claims) * 100.0, 2)
+    return ratio, unsupported
+
+
+def _unsupported_claim_examples(report_text: str, output_format: str, max_items: int = 8) -> list[str]:
+    examples: list[str] = []
+    for plain, raw in _iter_substantive_claim_candidates(report_text, output_format):
+        if _count_citations(raw, plain, output_format=output_format) > 0:
+            continue
+        excerpt = plain[:220] if len(plain) > 220 else plain
+        examples.append(excerpt)
+        if len(examples) >= max_items:
+            break
+    return examples
+
+
+def _section_coherence_score(report_text: str, output_format: str) -> float:
+    raw = report_text or ""
+    spans: list[str] = []
+    if output_format == "html":
+        matches = list(re.finditer(r"<h2[^>]*>.*?</h2>", raw, re.IGNORECASE | re.DOTALL))
+        if matches:
+            for idx, match in enumerate(matches):
+                start = match.end()
+                end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+                spans.append(raw[start:end])
+    elif output_format == "tex":
+        matches = list(re.finditer(r"^\\section\\*?\\{[^}]+\\}", raw, re.MULTILINE))
+        if matches:
+            for idx, match in enumerate(matches):
+                start = match.end()
+                end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+                spans.append(raw[start:end])
+    else:
+        matches = list(re.finditer(r"^##\s+.+$", raw, re.MULTILINE))
+        if matches:
+            for idx, match in enumerate(matches):
+                start = match.end()
+                end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+                spans.append(raw[start:end])
+    if not spans:
+        return 55.0
+    counts = [len(re.findall(r"\S+", _quality_plain_text(span, output_format))) for span in spans]
+    if not counts:
+        return 55.0
+    short_sections = sum(1 for count in counts if count < 55)
+    empty_sections = sum(1 for count in counts if count < 20)
+    min_count = min(counts)
+    max_count = max(counts)
+    imbalance = float(max_count / max(1, min_count))
+    score = 100.0
+    score -= float(short_sections * 6)
+    score -= float(empty_sections * 14)
+    if imbalance > 6.0:
+        score -= 14.0
+    elif imbalance > 4.0:
+        score -= 8.0
+    if len(counts) < 3:
+        score -= 6.0
+    return round(max(25.0, min(100.0, score)), 2)
+
+
+def _keyword_signal_score(
+    report_text: str,
+    keywords: list[str],
+    *,
+    default_score: float = 55.0,
+    output_format: str = "md",
+) -> float:
+    text = _quality_plain_text(str(report_text or ""), output_format).lower()
+    if not text:
+        return 0.0
+    hit_count = sum(1 for keyword in keywords if keyword and keyword in text)
+    if hit_count <= 0:
+        return default_score
+    return round(min(100.0, 62.0 + (hit_count * 12.0)), 2)
+
+
+def compute_heuristic_quality_signals(
+    report_text: str,
+    required_sections: list[str],
+    output_format: str,
+    *,
+    depth: Optional[str] = None,
+    report_intent: Optional[str] = None,
+) -> dict[str, float]:
+    intent = _normalize_report_intent(report_intent)
+    normalized_depth = normalize_depth_choice(depth)
+    section_coverage = _required_section_coverage_score(report_text, required_sections, output_format)
+    citation_density = _citation_density_score(report_text, output_format)
+    evidence_density = _evidence_density_score(report_text, output_format)
+    claim_support_ratio, unsupported_claim_count = _claim_support_metrics(report_text, output_format)
+    section_coherence = _section_coherence_score(report_text, output_format)
+    method_keywords = [
+        "method",
+        "methodology",
+        "scope",
+        "approach",
+        "selection criteria",
+        "exclusion criteria",
+        "dataset",
+        "방법",
+        "방법론",
+        "선정 기준",
+        "제외 기준",
+    ]
+    traceability_keywords = [
+        "evidence ledger",
+        "claim | evidence",
+        "claim | evidence summary",
+        "confidence |",
+        "source url",
+        "strength(",
+        "근거",
+        "증거",
+    ]
+    uncertainty_keywords = [
+        "risk",
+        "risks",
+        "limitation",
+        "limitations",
+        "uncertainty",
+        "uncertain",
+        "gap",
+        "gaps",
+        "리스크",
+        "한계",
+        "불확실",
+        "공백",
+    ]
+    method_transparency = _keyword_signal_score(
+        report_text,
+        method_keywords,
+        default_score=45.0,
+        output_format=output_format,
+    )
+    traceability = _keyword_signal_score(
+        report_text,
+        traceability_keywords,
+        default_score=50.0,
+        output_format=output_format,
+    )
+    uncertainty = _keyword_signal_score(
+        report_text,
+        uncertainty_keywords,
+        default_score=58.0,
+        output_format=output_format,
+    )
+
+    if intent in {"briefing", "slide"} or normalized_depth == "brief":
+        weights = {
+            "section_coverage": 0.22,
+            "citation_density": 0.20,
+            "method_transparency": 0.10,
+            "traceability": 0.12,
+            "uncertainty": 0.12,
+            "claim_support_ratio": 0.14,
+            "section_coherence": 0.10,
+        }
+    elif intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}:
+        weights = {
+            "section_coverage": 0.14,
+            "citation_density": 0.18,
+            "method_transparency": 0.18,
+            "traceability": 0.18,
+            "uncertainty": 0.10,
+            "claim_support_ratio": 0.12,
+            "section_coherence": 0.10,
+        }
+    else:
+        weights = {
+            "section_coverage": 0.18,
+            "citation_density": 0.18,
+            "method_transparency": 0.14,
+            "traceability": 0.14,
+            "uncertainty": 0.10,
+            "claim_support_ratio": 0.14,
+            "section_coherence": 0.12,
+        }
+    overall = (
+        (section_coverage * weights["section_coverage"])
+        + (citation_density * weights["citation_density"])
+        + (method_transparency * weights["method_transparency"])
+        + (traceability * weights["traceability"])
+        + (uncertainty * weights["uncertainty"])
+        + (claim_support_ratio * weights["claim_support_ratio"])
+        + (section_coherence * weights["section_coherence"])
+    )
+    return {
+        "section_coverage": round(section_coverage, 2),
+        "citation_density": round(citation_density, 2),
+        "evidence_density_score": round(evidence_density, 2),
+        "claim_support_ratio": round(claim_support_ratio, 2),
+        "unsupported_claim_count": float(unsupported_claim_count),
+        "section_coherence_score": round(section_coherence, 2),
+        "method_transparency": round(method_transparency, 2),
+        "traceability": round(traceability, 2),
+        "uncertainty_handling": round(uncertainty, 2),
+        "overall": round(overall, 2),
+    }
+
+
+def quality_gate_failures(
+    signals: dict[str, Any],
+    *,
+    min_overall: float = 0.0,
+    min_claim_support: float = 0.0,
+    max_unsupported: float = -1.0,
+    min_section_coherence: float = 0.0,
+) -> list[str]:
+    failures: list[str] = []
+    overall = float(signals.get("overall", 0.0) or 0.0)
+    claim_support = float(signals.get("claim_support_ratio", 0.0) or 0.0)
+    unsupported = float(signals.get("unsupported_claim_count", 0.0) or 0.0)
+    coherence = float(signals.get("section_coherence_score", 0.0) or 0.0)
+    if min_overall > 0 and overall < min_overall:
+        failures.append(f"overall {overall:.2f} < {min_overall:.2f}")
+    if min_claim_support > 0 and claim_support < min_claim_support:
+        failures.append(f"claim_support_ratio {claim_support:.2f} < {min_claim_support:.2f}")
+    if max_unsupported >= 0 and unsupported > max_unsupported:
+        failures.append(f"unsupported_claim_count {unsupported:.2f} > {max_unsupported:.2f}")
+    if min_section_coherence > 0 and coherence < min_section_coherence:
+        failures.append(f"section_coherence_score {coherence:.2f} < {min_section_coherence:.2f}")
+    return failures
+
+
 def format_duration(seconds: float) -> str:
     total = int(seconds)
     hours, remainder = divmod(total, 3600)
@@ -2110,6 +2551,7 @@ def evaluate_report(
     max_input_tokens_source: str = "none",
     template_rigidity: str = "balanced",
     free_form: bool = False,
+    report_intent: Optional[str] = None,
 ) -> dict:
     metrics = ", ".join(QUALITY_WEIGHTS.keys())
     evaluator_prompt = prompts.build_evaluate_prompt(
@@ -2117,6 +2559,7 @@ def evaluate_report(
         depth=depth,
         template_rigidity=template_rigidity,
         free_form=free_form,
+        report_intent=report_intent,
     )
     evaluator_agent = create_agent_with_fallback(
         create_deep_agent,
@@ -2158,9 +2601,32 @@ def evaluate_report(
     evaluation: dict = {"raw": raw}
     for key in QUALITY_WEIGHTS.keys():
         evaluation[key] = normalize_score(parsed.get(key))
-    evaluation["overall"] = normalize_score(parsed.get("overall")) if parsed else 0.0
-    if evaluation["overall"] <= 0:
-        evaluation["overall"] = compute_overall_score(evaluation)
+    llm_overall = normalize_score(parsed.get("overall")) if parsed else 0.0
+    if llm_overall <= 0:
+        llm_overall = compute_overall_score(evaluation)
+    heuristic = compute_heuristic_quality_signals(
+        report_text,
+        required_sections,
+        output_format,
+        depth=depth,
+        report_intent=report_intent,
+    )
+    heuristic_overall = normalize_score(heuristic.get("overall"))
+    blend_ratio = 0.2 if normalize_depth_choice(depth) in {"deep", "exhaustive"} else 0.14
+    evaluation["llm_overall"] = llm_overall
+    evaluation["heuristic_overall"] = heuristic_overall
+    evaluation["heuristic"] = heuristic
+    for metric_key in (
+        "evidence_density_score",
+        "claim_support_ratio",
+        "unsupported_claim_count",
+        "section_coherence_score",
+    ):
+        if metric_key in heuristic:
+            evaluation[metric_key] = heuristic.get(metric_key)
+    unsupported_examples = _unsupported_claim_examples(report_text, output_format, max_items=6)
+    evaluation["unsupported_claim_examples"] = unsupported_examples
+    evaluation["overall"] = round((llm_overall * (1.0 - blend_ratio)) + (heuristic_overall * blend_ratio), 2)
     for key in ("strengths", "weaknesses", "fixes"):
         value = parsed.get(key, [])
         if isinstance(value, list):
@@ -2169,6 +2635,10 @@ def evaluate_report(
             evaluation[key] = [str(value)]
         else:
             evaluation[key] = []
+    if unsupported_examples:
+        fixes = list(evaluation.get("fixes") or [])
+        fixes.append("Add inline citations for unsupported claims listed in unsupported_claim_examples.")
+        evaluation["fixes"] = fixes
     return evaluation
 
 

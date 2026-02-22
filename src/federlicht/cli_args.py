@@ -9,9 +9,13 @@ from typing import Optional
 from .report import (
     DEFAULT_CHECK_MODEL,
     DEFAULT_MODEL,
+    STYLE_PACK_CHOICES,
+    STYLE_PACK_DEFAULT,
     DEFAULT_TEMPLATE_RIGIDITY,
     DEFAULT_TEMPERATURE_LEVEL,
+    DEFAULT_REASONING_EFFORT,
     MAX_INPUT_TOKENS_ENV,
+    REASONING_EFFORT_CHOICES,
     STAGE_ORDER,
     TEMPLATE_RIGIDITY_POLICIES,
     TEMPERATURE_LEVELS,
@@ -60,19 +64,20 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     ap.add_argument(
         "--site-output",
-        default="site",
+        default="site/report_hub",
         help=(
-            "Write/update a static report index in this directory (default: site). "
+            "Write/update a static report hub in this directory (default: site/report_hub). "
             "Use 'none' to disable."
         ),
     )
     ap.add_argument(
         "--site-refresh",
         nargs="?",
-        const="site",
+        const="site/report_hub",
         help=(
-            "Rebuild the site manifest/index by scanning <site>/runs for report*.html. "
-            "Optionally pass the site root path (default: site)."
+            "Rebuild the report hub manifest/index by scanning runs for report*.html. "
+            "When <hub>/runs is missing, sibling ../runs is used. "
+            "Optionally pass the hub root path (default: site/report_hub)."
         ),
     )
     ap.add_argument(
@@ -167,6 +172,15 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Use free-form structure without enforcing a section skeleton (default: disabled).",
+    )
+    ap.add_argument(
+        "--style-pack",
+        default=STYLE_PACK_DEFAULT,
+        choices=list(STYLE_PACK_CHOICES),
+        help=(
+            "Visual style preset for HTML output when --free-format is enabled. "
+            "Choices: none, dark, journal, magazine."
+        ),
     )
     ap.add_argument(
         "--agent-info",
@@ -281,6 +295,39 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Max chars passed to critique/revision (default: 12000).",
     )
     ap.add_argument(
+        "--quality-min-overall",
+        type=float,
+        default=0.0,
+        help="Optional quality gate: minimum overall heuristic score (0 disables gate).",
+    )
+    ap.add_argument(
+        "--quality-min-claim-support",
+        type=float,
+        default=0.0,
+        help="Optional quality gate: minimum claim_support_ratio (0 disables gate).",
+    )
+    ap.add_argument(
+        "--quality-max-unsupported-claims",
+        type=float,
+        default=-1.0,
+        help="Optional quality gate: maximum unsupported_claim_count (-1 disables gate).",
+    )
+    ap.add_argument(
+        "--quality-min-section-coherence",
+        type=float,
+        default=0.0,
+        help="Optional quality gate: minimum section_coherence_score (0 disables gate).",
+    )
+    ap.add_argument(
+        "--quality-auto-extra-iterations",
+        type=int,
+        default=0,
+        help=(
+            "When quality gate is configured, allow this many extra revise passes "
+            "after --quality-iterations if gate is not met."
+        ),
+    )
+    ap.add_argument(
         "--model",
         default=DEFAULT_MODEL,
         help=(
@@ -296,6 +343,16 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help=(
             "Agent creativity level (very_low=0.0, low=0.1, balanced=0.2, high=0.4, very_high=0.7). "
             f"Default: {DEFAULT_TEMPERATURE_LEVEL}."
+        ),
+    )
+    ap.add_argument(
+        "--reasoning-effort",
+        default=os.getenv("FEDERLICHT_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT,
+        choices=list(REASONING_EFFORT_CHOICES),
+        help=(
+            "Reasoning effort preference for reasoning-capable models "
+            "(off|low|medium|high|extra_high; extra_high maps to high where needed). "
+            f"Default: {DEFAULT_REASONING_EFFORT}."
         ),
     )
     env_model_vision = os.getenv("OPENAI_MODEL_VISION") or None

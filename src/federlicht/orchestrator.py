@@ -15,6 +15,7 @@ from federlicht import tools as feder_tools
 
 from . import artwork as feder_artwork
 from . import prompts, workflow_stages
+from . import section_ast as feder_section_ast
 from .agent_runtime import AgentRuntime
 from .agents import AgentRunner
 from .verification_tools import parse_verification_requests
@@ -1207,7 +1208,45 @@ class ReportOrchestrator:
                 style = "influencer"
             elif any(token in text for token in ("journal", "논문", "academic", "학술", "리뷰")):
                 style = "journal"
-            return {"depth": prompt_depth, "wants_web": wants_web, "style": style}
+            intent = "generic"
+            if any(token in text for token in ("ppt", "slide", "deck", "슬라이드", "발표자료", "발표 자료")):
+                intent = "slide"
+            elif any(
+                token in text
+                for token in (
+                    "의사결정",
+                    "의사 결정",
+                    "decision",
+                    "recommend",
+                    "권고",
+                    "go/no-go",
+                    "투자 판단",
+                    "정책 판단",
+                )
+            ):
+                intent = "decision"
+            elif any(
+                token in text
+                for token in (
+                    "review",
+                    "survey",
+                    "literature",
+                    "state of the art",
+                    "동향 보고",
+                    "문헌",
+                    "비교 리뷰",
+                )
+            ):
+                intent = "review"
+            elif any(token in text for token in ("brief", "one-pager", "요약", "한장", "한 장", "간단")):
+                intent = "briefing"
+            elif any(token in text for token in ("explain", "explainer", "설명", "원리", "튜토리얼", "입문")):
+                intent = "explainer"
+            elif any(token in text for token in ("magazine", "narrative", "스토리", "서사", "quanta")):
+                intent = "narrative"
+            elif style == "journal" or prompt_depth in {"deep", "exhaustive"}:
+                intent = "research"
+            return {"depth": prompt_depth, "wants_web": wants_web, "style": style, "intent": intent}
 
         def infer_context_depth(template: object, style: str) -> str:
             if style == "journal" or template.name in prompts.FORMAL_TEMPLATES:
@@ -1722,6 +1761,7 @@ class ReportOrchestrator:
                     figures_mode=args.figures_mode,
                     artwork_enabled=writer_artwork_enabled,
                     free_form=args.free_format,
+                    report_intent=report_intent,
                 ),
                 self._agent_overrides,
             )
@@ -1951,6 +1991,7 @@ class ReportOrchestrator:
         prompt_depth = normalize_depth(policy["depth"])
         style = policy["style"]
         wants_web = policy["wants_web"]
+        report_intent = str(policy.get("intent") or "generic")
         depth = infer_context_depth(template_spec, style)
         if prompt_depth:
             depth = prompt_depth
@@ -1979,6 +2020,7 @@ class ReportOrchestrator:
             style_hint = "Style hint: Write in a concise, engaging LinkedIn-style explanatory tone."
         if state and state.style_hint:
             style_hint = state.style_hint
+        context_lines.append(f"Report intent: {report_intent}")
 
         reducer_prompt = agent_runtime.prompt(
             "reducer",
@@ -2406,6 +2448,7 @@ class ReportOrchestrator:
                 depth=depth,
                 template_rigidity=args.template_rigidity,
                 free_form=args.free_format,
+                report_intent=report_intent,
             ),
             self._agent_overrides,
         )
@@ -2707,6 +2750,8 @@ class ReportOrchestrator:
         condensed = ""
         evidence_for_writer = evidence_notes
         claim_packet_text = ""
+        section_ast_outline_text = ""
+        section_ast_payload: Optional[dict] = None
         claim_packet_stats: dict[str, object] = {}
         if use_evidence:
             evidence_prompt = agent_runtime.prompt(
@@ -2716,6 +2761,7 @@ class ReportOrchestrator:
                     depth=depth,
                     template_rigidity=args.template_rigidity,
                     free_form=args.free_format,
+                    report_intent=report_intent,
                 ),
                 self._agent_overrides,
             )
@@ -3064,6 +3110,14 @@ class ReportOrchestrator:
                 max_refs_per_claim=3,
                 include_index_only=False,
             )
+            claim_packet = feder_tools.normalize_claim_evidence_packet(claim_packet)
+            claim_packet_errors = feder_tools.validate_claim_evidence_packet_v1(claim_packet)
+            if claim_packet_errors:
+                error_report = "\n".join(f"- {item}" for item in claim_packet_errors)
+                (notes_dir / "claim_evidence_map.errors.txt").write_text(error_report, encoding="utf-8")
+                raise ValueError(
+                    "claim_evidence_packet schema validation failed before quality stage:\n" + error_report
+                )
             claim_packet_stats = dict(claim_packet.get("stats") or {})
             claim_packet_text = feder_tools.format_claim_evidence_packet(claim_packet)
             (notes_dir / "claim_evidence_map.json").write_text(
@@ -3071,6 +3125,19 @@ class ReportOrchestrator:
                 encoding="utf-8",
             )
             (notes_dir / "claim_evidence_map.md").write_text(claim_packet_text, encoding="utf-8")
+            section_ast = feder_section_ast.build_section_ast(
+                required_sections=required_sections,
+                claim_packet=claim_packet,
+                report_intent=report_intent,
+                depth=depth,
+            )
+            section_ast_payload = dict(section_ast)
+            section_ast_outline_text = feder_section_ast.format_section_ast_outline(section_ast)
+            (notes_dir / "section_ast.json").write_text(
+                json.dumps(section_ast, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            (notes_dir / "section_ast.md").write_text(section_ast_outline_text, encoding="utf-8")
             plan_text = feder_tools.attach_evidence_to_plan(plan_text, claim_map, max_evidence=2)
             (notes_dir / "report_plan.md").write_text(plan_text, encoding="utf-8")
             gap_text = feder_tools.build_gap_report(plan_text, claim_map)
@@ -3117,6 +3184,55 @@ class ReportOrchestrator:
                 evidence_for_writer = condensed
             elif not evidence_for_writer:
                 evidence_for_writer = evidence_notes
+
+        def write_section_rewrite_tasks(
+            missing_sections: list[str], label: str, *, report_text: str = ""
+        ) -> None:
+            if not missing_sections or not section_ast_payload:
+                return
+            tasks = feder_section_ast.build_rewrite_tasks(
+                section_ast_payload,
+                missing_sections=missing_sections,
+                max_claims=3,
+            )
+            if not tasks:
+                return
+            report_word_count = len(re.findall(r"\S+", str(report_text or "")))
+            total_sections = len(list(section_ast_payload.get("sections") or []))
+            target_sections = len(tasks)
+            avg_words_per_section = (
+                (report_word_count / total_sections) if total_sections > 0 else float(report_word_count)
+            )
+            estimated_full_tokens = int(report_word_count * 1.35) if report_word_count > 0 else 0
+            estimated_target_tokens = (
+                int(max(0.0, avg_words_per_section * target_sections) * 1.35)
+                if report_word_count > 0 and target_sections > 0
+                else 0
+            )
+            estimated_savings_pct = (
+                round(
+                    max(0.0, 1.0 - (estimated_target_tokens / max(1, estimated_full_tokens))) * 100.0,
+                    2,
+                )
+                if estimated_full_tokens > 0
+                else 0.0
+            )
+            payload = {
+                "label": label,
+                "missing_sections": list(missing_sections),
+                "tasks": tasks,
+                "rewrite_stats": {
+                    "total_sections": total_sections,
+                    "target_sections": target_sections,
+                    "report_word_count": report_word_count,
+                    "estimated_full_tokens": estimated_full_tokens,
+                    "estimated_target_tokens": estimated_target_tokens,
+                    "estimated_savings_pct": estimated_savings_pct,
+                },
+            }
+            path = notes_dir / f"section_rewrite_tasks_{label}.json"
+            path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
         evidence_for_quality = claim_packet_text or condensed or helpers.truncate_text_middle(
             evidence_notes,
             max(1400, min(args.quality_max_chars, pack_limit or args.quality_max_chars)),
@@ -3221,6 +3337,7 @@ class ReportOrchestrator:
                 figures_mode=args.figures_mode,
                 artwork_enabled=writer_artwork_enabled,
                 free_form=args.free_format,
+                report_intent=report_intent,
             ),
             self._agent_overrides,
         )
@@ -3372,6 +3489,18 @@ class ReportOrchestrator:
                         max_lines=supporting_line_limit,
                     )
                 )
+            if section_ast_outline_text:
+                sections.append(
+                    make_section(
+                        "section_ast",
+                        "Section AST outline:",
+                        section_ast_outline_text,
+                        priority="medium",
+                        base_limit=guidance_limit,
+                        min_limit=400,
+                        max_lines=120,
+                    )
+                )
             return sections
 
         evidence_payload_base = evidence_for_writer or evidence_notes
@@ -3381,6 +3510,7 @@ class ReportOrchestrator:
             report = helpers.normalize_report_paths(state.report, run_dir)
             report = coerce_required_headings(report, required_sections)
             missing_sections = helpers.find_missing_sections(report, required_sections, output_format)
+            write_section_rewrite_tasks(missing_sections, "state_report", report_text=report)
             report = run_structural_repair(report, missing_sections, "Structural Repair")
             record_stage("writer", "skipped", "state_report")
             align_draft = run_alignment_check("draft", report)
@@ -3432,6 +3562,7 @@ class ReportOrchestrator:
                 report = helpers.normalize_report_paths(report, run_dir)
                 report = coerce_required_headings(report, required_sections)
             missing_sections = helpers.find_missing_sections(report, required_sections, output_format)
+            write_section_rewrite_tasks(missing_sections, "draft", report_text=report)
             report = run_structural_repair(report, missing_sections, "Structural Repair")
             align_draft = run_alignment_check("draft", report)
         candidates = [{"label": "draft", "text": report}]
@@ -3454,9 +3585,39 @@ class ReportOrchestrator:
                 "High index-only evidence ratio detected. "
                 "Treat weak claims as tentative and prioritize direct source-backed revisions."
             )
-        if quality_iterations > 0:
+        min_overall_target = getattr(args, "quality_min_overall", 0.0)
+        min_claim_support_target = getattr(args, "quality_min_claim_support", 0.0)
+        max_unsupported_target = getattr(args, "quality_max_unsupported_claims", -1.0)
+        min_section_coherence_target = getattr(args, "quality_min_section_coherence", 0.0)
+        quality_gate_args = {
+            "min_overall": float(0.0 if min_overall_target is None else min_overall_target),
+            "min_claim_support": float(
+                0.0 if min_claim_support_target is None else min_claim_support_target
+            ),
+            "max_unsupported": float(-1.0 if max_unsupported_target is None else max_unsupported_target),
+            "min_section_coherence": float(
+                0.0 if min_section_coherence_target is None else min_section_coherence_target
+            ),
+        }
+        quality_gate_enabled = any(
+            (
+                quality_gate_args["min_overall"] > 0.0,
+                quality_gate_args["min_claim_support"] > 0.0,
+                quality_gate_args["max_unsupported"] >= 0.0,
+                quality_gate_args["min_section_coherence"] > 0.0,
+            )
+        )
+        auto_extra_iterations = max(0, int(getattr(args, "quality_auto_extra_iterations", 0) or 0))
+        if quality_iterations <= 0 and quality_gate_enabled and auto_extra_iterations > 0:
+            quality_iterations = 1
+        effective_quality_iterations = quality_iterations + (
+            auto_extra_iterations if quality_gate_enabled else 0
+        )
+        quality_passes_executed = 0
+        if effective_quality_iterations > 0:
             previous_report = ""
-            for idx in range(quality_iterations):
+            for idx in range(effective_quality_iterations):
+                quality_passes_executed = idx + 1
                 critic_prompt = agent_runtime.prompt(
                     "critic",
                     prompts.build_critic_prompt(language, required_sections),
@@ -3627,6 +3788,25 @@ class ReportOrchestrator:
                         )
                         critique = "no_changes"
                 if "no_changes" in critique.lower():
+                    if idx + 1 < quality_iterations:
+                        break
+                    if quality_gate_enabled and idx + 1 < effective_quality_iterations:
+                        gate_signals = helpers.compute_heuristic_quality_signals(
+                            report,
+                            required_sections,
+                            output_format,
+                            depth=depth,
+                            report_intent=report_intent,
+                        )
+                        gate_failures = helpers.quality_gate_failures(gate_signals, **quality_gate_args)
+                        if gate_failures:
+                            helpers.print_progress(
+                                f"Quality Pass {idx + 1}",
+                                "[quality-gate] unmet after no_changes; continuing auto extra pass.",
+                                args.progress,
+                                args.progress_chars,
+                            )
+                            continue
                     break
 
                 revise_prompt = agent_runtime.prompt(
@@ -3808,10 +3988,40 @@ class ReportOrchestrator:
                         report = previous_report
                         break
                 candidates.append({"label": f"rev_{idx + 1}", "text": report})
-            record_stage("quality", "ran", f"iterations={quality_iterations}")
+                if quality_gate_enabled and idx + 1 >= quality_iterations:
+                    gate_signals = helpers.compute_heuristic_quality_signals(
+                        report,
+                        required_sections,
+                        output_format,
+                        depth=depth,
+                        report_intent=report_intent,
+                    )
+                    gate_failures = helpers.quality_gate_failures(gate_signals, **quality_gate_args)
+                    if gate_failures and idx + 1 < effective_quality_iterations:
+                        helpers.print_progress(
+                            f"Quality Pass {idx + 1}",
+                            f"[quality-gate] unmet ({'; '.join(gate_failures[:2])}); extending pass.",
+                            args.progress,
+                            args.progress_chars,
+                        )
+                        continue
+                    if gate_failures and idx + 1 >= effective_quality_iterations:
+                        helpers.print_progress(
+                            "Quality Gate",
+                            "[warn] quality gate unmet after max passes; keeping best candidate selection.",
+                            args.progress,
+                            args.progress_chars,
+                        )
+                    if not gate_failures:
+                        break
+            record_stage(
+                "quality",
+                "ran",
+                f"iterations={quality_passes_executed}/{effective_quality_iterations}",
+            )
         elif stage_enabled("quality"):
             record_stage("quality", "skipped", "iterations=0")
-        if quality_iterations > 0 and len(candidates) > 1:
+        if effective_quality_iterations > 0:
             eval_path = notes_dir / "quality_evals.jsonl"
             pairwise_path = notes_dir / "quality_pairwise.jsonl"
             evaluations: list[dict] = []
@@ -3838,6 +4048,7 @@ class ReportOrchestrator:
                         max_input_tokens_source=eval_max_source,
                         template_rigidity=args.template_rigidity,
                         free_form=args.free_format,
+                        report_intent=report_intent,
                     )
                 except Exception as exc:
                     if not is_context_overflow(exc):
@@ -3949,7 +4160,7 @@ class ReportOrchestrator:
                 selected_report = candidates[best_idx]["text"]
                 selected_label = candidates[best_idx]["label"]
                 selected_eval = evaluations[best_idx]
-        if quality_iterations > 0:
+        if effective_quality_iterations > 0:
             use_finalizer = bool(secondary_report) or selected_label != "draft"
             if use_finalizer:
                 report = run_writer_finalizer(
@@ -3964,6 +4175,7 @@ class ReportOrchestrator:
             else:
                 report = selected_report
         missing_sections = helpers.find_missing_sections(report, required_sections, output_format)
+        write_section_rewrite_tasks(missing_sections, "final", report_text=report)
         report = run_structural_repair(report, missing_sections, "Structural Repair (final)")
         align_final = run_alignment_check("final", report)
 
