@@ -147,6 +147,16 @@ def test_is_file_context_question_detects_path_queries() -> None:
     assert help_agent._is_file_context_question("Feather 실행해줘") is False
 
 
+def test_is_file_context_question_detects_folder_query_without_slash() -> None:
+    assert help_agent._is_file_context_question("archive 폴더에 있는 파일을 정리해줘") is True
+
+
+def test_is_run_content_summary_request_detects_archive_summary() -> None:
+    assert help_agent._is_run_content_summary_request("archive/youtube 의 videos.jsonl 을 정리해줘") is True
+    assert help_agent._is_run_content_summary_request("archive 폴더 내용을 요약해줘") is True
+    assert help_agent._is_run_content_summary_request("archive/youtube 기반으로 feather 실행해줘") is False
+
+
 def test_needs_agentic_action_planning_skips_archive_summary_questions() -> None:
     assert help_agent._needs_agentic_action_planning("archive/youtube 의 videos.jsonl 을 정리해줘") is False
     assert help_agent._needs_agentic_action_planning("run feather 실행해줘") is True
@@ -220,6 +230,32 @@ def test_answer_help_question_uses_archive_sources_for_archive_summary(tmp_path,
         tmp_path,
         "archive/youtube 의 videos.jsonl 을 정리해줘",
         run_rel="runs/QC_ppt",
+    )
+    assert result["answer"] == "요약 완료"
+    source_paths = [str(item.get("path") or "").replace("\\", "/") for item in captured.get("sources", [])]
+    assert "runs/QC_ppt/archive/youtube/videos.jsonl" in source_paths
+
+
+def test_answer_help_question_uses_run_rel_from_state_memory_when_run_missing(tmp_path, monkeypatch) -> None:
+    run_dir = tmp_path / "runs" / "QC_ppt"
+    (run_dir / "archive" / "youtube").mkdir(parents=True, exist_ok=True)
+    (run_dir / "archive" / "youtube" / "videos.jsonl").write_text(
+        '{"title":"demo","summary":"line"}\n',
+        encoding="utf-8",
+    )
+    captured: dict[str, Any] = {}
+
+    def _fake_call_llm(question, sources, **kwargs):
+        captured["question"] = question
+        captured["sources"] = list(sources or [])
+        return "요약 완료", "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fake_call_llm)
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "archive/youtube 의 videos.jsonl 을 정리해줘",
+        run_rel=None,
+        state_memory={"scope": {"run_rel": "runs/QC_ppt"}},
     )
     assert result["answer"] == "요약 완료"
     source_paths = [str(item.get("path") or "").replace("\\", "/") for item in captured.get("sources", [])]
@@ -380,6 +416,15 @@ def test_infer_safe_action_skips_non_workspace_analysis_prompt(tmp_path) -> None
     assert action is None
 
 
+def test_infer_safe_action_skips_run_action_for_run_content_summary(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "archive/youtube 의 videos.jsonl 을 정리해줘",
+        run_rel="runs/QC_ppt",
+    )
+    assert action is None
+
+
 def test_infer_safe_action_binds_run_hint_for_run_execution(tmp_path) -> None:
     action = help_agent._infer_safe_action(
         tmp_path,
@@ -390,6 +435,11 @@ def test_infer_safe_action_binds_run_hint_for_run_execution(tmp_path) -> None:
     assert action.get("type") == "run_feather"
     assert action.get("run_hint") == "test_my_run"
     assert action.get("create_if_missing") is True
+
+
+def test_extract_run_hint_trims_nested_artifact_path_to_run_name() -> None:
+    hint = help_agent._extract_run_hint("runs/QC_ppt/archive/youtube/videos.jsonl 파일을 정리해줘")
+    assert hint == "QC_ppt"
 
 
 def test_infer_safe_action_detects_switch_run(tmp_path) -> None:
@@ -497,6 +547,27 @@ def test_infer_safe_action_detects_action_mode_switch(tmp_path) -> None:
     assert action.get("type") == "set_action_mode"
     assert action.get("mode") == "act"
     assert action.get("allow_artifacts") is True
+
+
+def test_infer_governed_action_skips_content_summary_even_with_rule_fallback(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "1")
+    monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "0")
+    action = help_agent._infer_governed_action(
+        tmp_path,
+        "archive/youtube 의 내용을 정리해줘",
+        run_rel="runs/QC_ppt",
+        history=[],
+        state_memory="{}",
+        capabilities={},
+        execution_mode="plan",
+        allow_artifacts=False,
+        model=None,
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        strict_model=False,
+    )
+    assert action is None
 
 
 def test_instruction_quality_guard_keeps_run_action_and_enables_auto_instruction() -> None:

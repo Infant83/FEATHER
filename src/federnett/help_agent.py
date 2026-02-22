@@ -184,6 +184,39 @@ def _extract_path_hints(question: str) -> list[str]:
     return deduped
 
 
+def _has_run_content_path_reference(question: str) -> bool:
+    text = str(question or "").strip().replace("\\", "/")
+    if not text:
+        return False
+    lowered = text.lower()
+    if _extract_path_hints(lowered):
+        return True
+    marker_tokens = (
+        "archive/",
+        "instruction/",
+        "report_notes/",
+        "report/",
+        "supporting/",
+        "archive 폴더",
+        "instruction 폴더",
+        "report 폴더",
+        "report_notes 폴더",
+        "archive 파일",
+        "instruction 파일",
+        "report 파일",
+        "report_notes 파일",
+    )
+    if any(token in lowered for token in marker_tokens):
+        return True
+    return bool(
+        re.search(
+            r"(archive|instruction|report[_\s]?notes?|supporting)\s*(폴더|파일|folder|file|dir|directory)",
+            lowered,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
 def _matches_path_hints(rel_path: str, run_scoped_rel_path: str, path_hints: list[str]) -> bool:
     if not path_hints:
         return True
@@ -1325,7 +1358,7 @@ def _help_user_prompt(
         f"{state_memory_block}"
         "출력 지침:\n"
         "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
-        "- 실행/생성/수정 요청이면 먼저 `실행할 작업`과 `예상 결과`를 2~4줄로 제시.\n"
+        "- 실행/생성/수정 요청이라도 파일/폴더/경로 해석 질문이면 예고문 없이 결과를 먼저 제시하고 필요 시 실행 계획을 덧붙이세요.\n"
         "- 질문에 특정 파일/폴더/경로가 포함되면 해당 경로를 우선 분석해 결과를 즉시 제시하고, 참조 경로를 함께 명시하세요.\n"
         "- 설명형 질문이면 핵심 답변 -> 절차 -> 주의사항 -> 근거 순서로 간결하게 답변.\n"
         "- 과도한 장문 템플릿 답변은 피하고, 작업 중심으로 답변.\n"
@@ -2495,6 +2528,8 @@ def _extract_run_hint(raw: str, *, strict: bool = False) -> str:
         if not match:
             continue
         candidate = _normalize_run_hint(match.group(1))
+        if "/" in candidate:
+            candidate = candidate.split("/", 1)[0].strip()
         if not candidate:
             continue
         if _is_invalid_run_hint(candidate, blocked=blocked):
@@ -2511,6 +2546,8 @@ def _extract_run_hint(raw: str, *, strict: bool = False) -> str:
         flags=re.IGNORECASE,
     ):
         candidate = _normalize_run_hint(token)
+        if "/" in candidate:
+            candidate = candidate.split("/", 1)[0].strip()
         if not candidate:
             continue
         if _is_invalid_run_hint(candidate, blocked=blocked):
@@ -2571,6 +2608,40 @@ def _infer_recent_execution_target(history: list[dict[str, str]] | None) -> str:
         if "feather" in content or any(token in content for token in ("자료 수집", "검색", "크롤링", "아카이브")):
             return "feather"
     return ""
+
+
+def _extract_run_rel_from_state_memory(state_memory: Any) -> str:
+    memory = state_memory
+    if isinstance(memory, str):
+        text = memory.strip()
+        if text:
+            try:
+                memory = json.loads(text)
+            except Exception:
+                memory = {}
+        else:
+            memory = {}
+    if not isinstance(memory, dict):
+        return ""
+    scope = memory.get("scope")
+    if isinstance(scope, dict):
+        token = str(scope.get("run_rel") or "").strip().replace("\\", "/").strip("/")
+        if token:
+            return token
+    run = memory.get("run")
+    if isinstance(run, dict):
+        token = str(run.get("run_rel") or "").strip().replace("\\", "/").strip("/")
+        if token:
+            return token
+    return ""
+
+
+def _effective_run_rel(run_rel: str | None, state_memory: Any) -> str | None:
+    explicit = str(run_rel or "").strip().replace("\\", "/").strip("/")
+    if explicit:
+        return explicit
+    inferred = _extract_run_rel_from_state_memory(state_memory)
+    return inferred or None
 
 
 def _infer_stage_hint(raw: str) -> str:
@@ -2769,11 +2840,41 @@ def _is_file_context_question(question: str) -> bool:
     q = str(question or "").strip().lower().replace("\\", "/")
     if not q:
         return False
-    if not _extract_path_hints(q):
+    if not _has_run_content_path_reference(q):
         return False
     if _has_explicit_execution_intent(q):
         return False
     return True
+
+
+def _is_run_content_summary_request(question: str) -> bool:
+    q = str(question or "").strip().lower().replace("\\", "/")
+    if not q:
+        return False
+    if _has_explicit_execution_intent(q):
+        return False
+    if not _has_run_content_path_reference(q):
+        return False
+    summary_tokens = (
+        "정리",
+        "요약",
+        "무슨 내용",
+        "내용 알려",
+        "내용 설명",
+        "읽어",
+        "읽고",
+        "분석",
+        "요점",
+        "summarize",
+        "summary",
+        "what's in",
+        "what is in",
+        "show me",
+        "explain",
+    )
+    if any(token in q for token in summary_tokens):
+        return True
+    return bool(re.search(r"(무슨|어떤).*(내용|파일|폴더)", q))
 
 
 def _has_explicit_execution_intent(question: str) -> bool:
@@ -2821,6 +2922,8 @@ def _extract_topic_hint_from_question_or_history(
 def _needs_agentic_action_planning(question: str) -> bool:
     q = str(question or "").strip().lower()
     if not q:
+        return False
+    if _is_run_content_summary_request(q):
         return False
     if _is_file_context_question(q):
         return False
@@ -2978,6 +3081,8 @@ def _infer_agentic_action(
     runtime_mode: str | None,
     strict_model: bool,
 ) -> dict[str, Any] | None:
+    if _is_run_content_summary_request(question):
+        return None
     if not _agentic_actions_enabled():
         return None
     if not _needs_agentic_action_planning(question):
@@ -3089,6 +3194,8 @@ def _infer_governed_action(
     runtime_mode: str | None,
     strict_model: bool,
 ) -> dict[str, Any] | None:
+    if _is_run_content_summary_request(question):
+        return None
     action = _infer_agentic_action(
         root,
         question,
@@ -3122,6 +3229,8 @@ def _infer_safe_action(
 ) -> dict[str, Any] | None:
     q = (question or "").strip().lower()
     if not q:
+        return None
+    if _is_run_content_summary_request(q):
         return None
     workspace_request = _is_workspace_operation_request(q)
     generic_followup = _is_generic_execution_question(q)
@@ -3573,6 +3682,7 @@ def answer_help_question(
     q = (question or "").strip()
     if not q:
         raise ValueError("question is required")
+    effective_run_rel = _effective_run_rel(run_rel, state_memory)
     trace_id = _new_governor_trace_id()
     trace_steps: list[dict[str, Any]] = []
     resolved_mode = _normalize_execution_mode(execution_mode)
@@ -3587,7 +3697,7 @@ def answer_help_question(
     if web_search:
         web_started = time.perf_counter()
         if _should_run_help_web_search(q, history):
-            web_note = _run_help_web_research(root, question=q, run_rel=run_rel, history=history)
+            web_note = _run_help_web_research(root, question=q, run_rel=effective_run_rel, history=history)
         else:
             web_note = "web_search enabled: skipped (query does not require web lookup)."
         web_elapsed_ms = (time.perf_counter() - web_started) * 1000.0
@@ -3617,7 +3727,7 @@ def answer_help_question(
         root,
         q,
         max_sources=max(3, min(max_sources, 16)),
-        run_rel=run_rel,
+        run_rel=effective_run_rel,
     )
     source_index_elapsed_ms = (time.perf_counter() - source_index_started) * 1000.0
     trace_steps.append(
@@ -3692,7 +3802,7 @@ def answer_help_question(
     action = _infer_governed_action(
         root,
         q,
-        run_rel=run_rel,
+        run_rel=effective_run_rel,
         history=history,
         state_memory=normalized_state_memory,
         capabilities=capabilities,
@@ -3758,6 +3868,7 @@ def stream_help_question(
     q = (question or "").strip()
     if not q:
         raise ValueError("question is required")
+    effective_run_rel = _effective_run_rel(run_rel, state_memory)
     trace_id = _new_governor_trace_id()
     trace_steps: list[dict[str, Any]] = []
     resolved_mode = _normalize_execution_mode(execution_mode)
@@ -3786,7 +3897,7 @@ def stream_help_question(
         )
         web_started = time.perf_counter()
         if _should_run_help_web_search(q, history):
-            web_note = _run_help_web_research(root, question=q, run_rel=run_rel, history=history)
+            web_note = _run_help_web_research(root, question=q, run_rel=effective_run_rel, history=history)
         else:
             web_note = "web_search enabled: skipped (query does not require web lookup)."
         web_elapsed_ms = (time.perf_counter() - web_started) * 1000.0
@@ -3836,7 +3947,7 @@ def stream_help_question(
         root,
         q,
         max_sources=max(3, min(max_sources, 16)),
-        run_rel=run_rel,
+        run_rel=effective_run_rel,
     )
     source_index_elapsed_ms = (time.perf_counter() - source_index_started) * 1000.0
     source_index_message = f"근거 후보 {indexed_files}개 인덱스 완료"
@@ -3985,7 +4096,7 @@ def stream_help_question(
     action = _infer_governed_action(
         root,
         q,
-        run_rel=run_rel,
+        run_rel=effective_run_rel,
         history=history,
         state_memory=normalized_state_memory,
         capabilities=capabilities,

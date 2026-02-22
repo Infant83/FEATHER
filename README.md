@@ -2,7 +2,7 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.16
+Version: 1.9.18
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -176,6 +176,8 @@ Key points:
 - FederHav action policy defaults to agentic runtime (`auto/deepagent`) and does not use safe-rule fallback unless explicitly enabled with `FEDERNETT_HELP_RULE_FALLBACK=1`.
 - FederHav deepagent runtime uses run-scoped tools (`memory_snapshot`, `run_artifacts`, `read_run_file`, `source_digest`) to ground answers in current run artifacts.
 - Path/file questions are handled with run-context source selection + tool grounding (not per-phrase hardcoded reply templates).
+- Run-internal file/folder summary requests are treated as content-analysis tasks by default (no automatic Feather/Federlicht run action suggestion unless explicit execution intent exists).
+- If `run` is omitted in help payload, FederHav recovers run context from `state_memory.scope.run_rel`/`state_memory.run.run_rel` to keep run-scoped analysis stable.
 - Forward roadmap for account/profile/hub collaboration: `docs/federnett_roadmap.md`.
 - Playwright MCP troubleshooting and fallback validation path: `docs/playwright_mcp_troubleshooting.md`.
 

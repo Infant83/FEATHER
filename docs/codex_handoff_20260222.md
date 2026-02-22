@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-22
 
-Last updated: 2026-02-22 15:16:34 +09:00  
+Last updated: 2026-02-22 15:45:35 +09:00  
 Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/ppt_writer_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `docs/federlicht_report.md`, `docs/playwright_mcp_troubleshooting.md`
 
 ## 1) 목적
@@ -435,3 +435,54 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
     - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `57 passed`
     - `pytest -q tests/test_federhav_core.py tests/test_federhav_cli.py` -> `7 passed`
     - `node --check site/federnett/app.js` -> passed
+- 추가 수정(15:28 KST, Iter-9):
+  - `src/federnett/help_agent.py`
+    - run-콘텐츠 요약 의도 감지기 추가:
+      - `_has_run_content_path_reference(...)`
+      - `_is_run_content_summary_request(...)`
+    - 파일/폴더 해석 요청은 실행 액션 제안으로 승격되지 않도록 가드 추가:
+      - `_infer_agentic_action(...)` early return
+      - `_infer_governed_action(...)` early return
+      - `_infer_safe_action(...)` early return
+    - `_is_file_context_question(...)`를 path-hint 전용에서 folder/path 문맥까지 확장.
+  - 의도:
+    - `archive/youtube`, `archive 폴더` 같은 run 내부 자료 해석 요청에 대해
+      Feather/Federlicht 실행 제안(run 생성 포함)이 뜨지 않도록 정책 고정.
+- 추가 수정(15:31 KST, Iter-10):
+  - `src/federnett/help_agent.py`
+    - `run_rel` 누락 시 `state_memory.scope.run_rel` / `state_memory.run.run_rel`에서 자동 복구:
+      - `_extract_run_rel_from_state_memory(...)`
+      - `_effective_run_rel(...)`
+    - `answer_help_question(...)`, `stream_help_question(...)`에서
+      web research / source select / action inference 모두 `effective_run_rel` 사용.
+  - 의도:
+    - UI payload에서 run 값이 누락돼도 현재 선택 run 컨텍스트를 유지해
+      archive 파일 질의가 코드 전역 소스로 새는 문제를 완화.
+- 추가 수정(15:34 KST, Iter-11):
+  - `src/federnett/help_agent.py`
+    - `_extract_run_hint(...)` 강화:
+      - `runs/<run>/archive/...`처럼 artifact 경로가 들어와도 run hint는 첫 세그먼트(run 이름)만 사용.
+      - 중첩 경로 전체가 run 이름으로 오인되는 문제 방지.
+  - 의도:
+    - 과도한 run 힌트/액션 오탐을 줄여 "파일 해석 요청 -> 실행 제안"으로 튀는 확률 축소.
+- 추가 수정(15:39 KST, Iter-12):
+  - 테스트 추가/강화:
+    - `tests/test_help_agent.py`
+      - run-content summary 판별 테스트
+      - folder-query(file path 미포함) 판별 테스트
+      - safe/governed action이 run-content summary에서 `None`을 반환하는 회귀 테스트
+      - nested artifact path run-hint trim 테스트
+      - `state_memory` 기반 run_rel 복구 소스선택 테스트
+  - 검증:
+    - `python -m py_compile src/federnett/help_agent.py src/federnett/capabilities.py` -> passed
+    - `pytest -q tests/test_help_agent.py tests/test_capabilities.py` -> `63 passed`
+    - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py tests/test_federhav_core.py tests/test_federhav_cli.py` -> `64 passed`
+    - `node --check site/federnett/app.js` -> passed
+- 추가 수정(15:45 KST, Iter-13):
+  - 정책 동작 스모크 확인(로컬):
+    - `archive/youtube 의 videos.jsonl 을 정리해줘` -> suggested action `None`
+    - `archive 폴더에 있는 파일들을 정리해서 알려줘` -> suggested action `None`
+    - `archive/youtube 기반으로 feather 실행해줘` -> suggested action `run_feather`
+  - 결론:
+    - run 내부 파일 해석/요약 요청과 실행 요청의 경계를 분리해,
+      FederHav가 불필요한 run 생성/Feather 실행으로 흐르는 현상을 1차 차단.

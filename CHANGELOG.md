@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (2026-02-22)
+## 1.9.18 (2026-02-22)
 - FederHav/help-agent behavior generalization (remove phrase-locked ad-hoc branch):
   - remove conditional prompt branch that changed reply policy via `_question_asks_run_content_summary(...)`.
   - switch to a single, generic path-first analysis rule in `_help_user_prompt(...)`.
@@ -17,11 +17,24 @@
   - preserve preview open behavior when filter chips narrow the view.
 - White theme markdown preview consistency:
   - add white-theme specific styles for `.file-preview-markdown` (background/text/code/pre) to match other preview surfaces.
+- FederHav run-content interaction policy hardening (5-iter patch set):
+  - add run-content summary intent detector (`_is_run_content_summary_request`) and path-reference detector
+    (`_has_run_content_path_reference`) to separate file interpretation requests from workflow execution requests.
+  - enforce no-action guard for run-content summary questions in all action inference paths:
+    - `_infer_agentic_action`, `_infer_governed_action`, `_infer_safe_action`.
+  - improve run hint extraction safety:
+    - trim nested artifact paths (`runs/<run>/archive/...`) to run name only and prevent nested-path run creation drift.
+  - improve run context recovery for FederHav:
+    - infer effective `run_rel` from `state_memory.scope.run_rel`/`state_memory.run.run_rel`
+      when explicit payload run is missing in both sync/stream help paths.
 - Validation:
   - `node --check site/federnett/app.js` passed.
   - `pytest -q tests/test_help_agent.py -k "path_first or file_context or archive or run_context or path_hint or needs_agentic_action_planning"` -> passed.
   - `pytest -q tests/test_federnett_routes.py -k "preview or run_map or run_files or live"` -> passed.
   - `pytest -q tests/test_federnett_commands.py -k "run or prompt or preview"` -> passed.
+  - `python -m py_compile src/federnett/help_agent.py src/federnett/capabilities.py` -> passed.
+  - `pytest -q tests/test_help_agent.py tests/test_capabilities.py` -> `63 passed`.
+  - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py tests/test_federhav_core.py tests/test_federhav_cli.py` -> `64 passed`.
   - Playwright artifacts:
     - `test-results/ui-iter17-preview-theme-after-fix.json`
     - `test-results/ui-iter17-preview-theme-after-fix.png`
