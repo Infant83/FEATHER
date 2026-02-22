@@ -1,5 +1,183 @@
 # Changelog
 
+## Unreleased (2026-02-22)
+- FederHav/help-agent behavior generalization (remove phrase-locked ad-hoc branch):
+  - remove conditional prompt branch that changed reply policy via `_question_asks_run_content_summary(...)`.
+  - switch to a single, generic path-first analysis rule in `_help_user_prompt(...)`.
+  - replace path-summary specific action-planning bypass with generic file-context detection (`_is_file_context_question`).
+- Run-context evidence grounding improvement:
+  - extend text source extensions to include `.jsonl/.ndjson/.csv/.tsv`.
+  - allow archive-scoped run context inclusion for file/path-oriented questions.
+  - keep run-file prioritization based on explicit path hints without hardcoded question phrase mapping.
+- Deepagent runtime guidance hardening:
+  - strengthen governor prompt in `federhav.agentic_runtime` to prefer `read_run_file` for concrete path/file questions.
+  - require finding-first responses before action proposals to reduce placeholder-only replies.
+- Run Studio file preview reliability:
+  - fix filtered-view branch in `renderRunFiles(...)` where `data-file-open` buttons were not bound in `visibleGroups=0` state.
+  - preserve preview open behavior when filter chips narrow the view.
+- White theme markdown preview consistency:
+  - add white-theme specific styles for `.file-preview-markdown` (background/text/code/pre) to match other preview surfaces.
+- Validation:
+  - `node --check site/federnett/app.js` passed.
+  - `pytest -q tests/test_help_agent.py -k "path_first or file_context or archive or run_context or path_hint or needs_agentic_action_planning"` -> passed.
+  - `pytest -q tests/test_federnett_routes.py -k "preview or run_map or run_files or live"` -> passed.
+  - `pytest -q tests/test_federnett_commands.py -k "run or prompt or preview"` -> passed.
+  - Playwright artifacts:
+    - `test-results/ui-iter17-preview-theme-after-fix.json`
+    - `test-results/ui-iter17-preview-theme-after-fix.png`
+    - `test-results/ui-iter18-preview-post-ad-hoc-removal.json`
+    - `test-results/ui-iter18-preview-post-ad-hoc-removal.png`
+
+## 1.9.17
+- Federnett UI/UX refresh (layout openness + readability):
+  - remove sticky behavior from sidebar/logs columns (`control`, `telemetry`) so page scroll remains natural.
+  - expand Live Logs usable area (`#logs-wrap`, `live-ask-dock`, thread height) to better use viewport height.
+  - simplify FederHav composer into sticky floating-style input dock with cleaner prompt/status presentation.
+  - tighten workflow strip readability (chip sizing, contrast, spacing, state badge legibility).
+- Theme/contrast hardening (especially White theme):
+  - fix workspace settings panel dark residual backgrounds under white theme.
+  - improve white-theme agent profile panel contrast (`readonly` hint, apply chips, status cards, tab/title visibility).
+  - add white-theme danger-button contrast override (remove low-contrast pink-on-light issue).
+- FederHav input micro-copy cleanup:
+  - simplify input placeholder/label wording in Live Logs.
+  - keep runtime/model metadata visible in compact form beneath input.
+- Validation:
+  - `pytest -q tests/test_federnett_routes.py` -> `39 passed`
+  - `pytest -q tests/test_help_agent.py` -> `44 passed`
+  - `pytest -q tests/test_federnett_commands.py tests/test_federnett_auth.py` -> `22 passed`
+  - Python Playwright audit:
+    - `test-results/theme-ui-refresh-audit-20260222.json` (`min_contrast=6.07`, `page_errors=0`, `topbar_scroll_follow_delta=818.0`, `thread_h=1000.34`)
+    - `test-results/white-theme-workspace-contrast-20260222.json` (workspace/agent contrast checks improved)
+
+## 1.9.16
+- Federlicht report-quality upgrade (intent-aware 2nd pass):
+  - add `report_intent` policy axis (`research/review/decision/briefing/explainer/slide/narrative/generic`).
+  - propagate intent-aware guidance across planner/evidence/writer/writer-finalizer/evaluator prompts.
+  - add quality-loop anti-regression guardrails so revision/finalizer does not weaken evidence density or methodology/limits disclosure.
+- Quality evaluation hardening:
+  - blend LLM evaluation with deterministic heuristic signals (`section_coverage`, `citation_density`, `method_transparency`, `traceability`, `uncertainty_handling`).
+  - keep intent/depth-aware weighting in heuristic overall score.
+- Heuristic parser reliability:
+  - support HTML heading extraction (`<h2>`), HTML link citations (`href="https://..."`), markdown links (`[](...)`), and numeric bracket citations (`[1]`).
+  - reduce scoring distortion between markdown/html outputs.
+- Validation and examples:
+  - `pytest -q tests/test_report_prompt_quality_policy.py tests/test_report_quality_heuristics.py tests/test_report_reasoning_policy.py tests/test_federnett_commands.py tests/test_federnett_routes.py tests/test_help_agent.py` -> `116 passed`
+  - generated local iterative examples:
+    - `site/runs/openclaw/report_full_iter_brief_example.html`
+    - `site/runs/openclaw/report_full_iter_brief_quality.html`
+    - `site/runs/openclaw/report_full_iter_brief_base.md`
+
+## 1.9.15
+- Run Folder single-entry policy (2nd pass):
+  - remove editable Run Name/Run Folder controls from Feather/Federlicht panels.
+  - keep run target changes only through top `Run Folder` modal.
+  - add in-panel shortcut buttons to open the shared Run Folder modal.
+- Run root expansion UX:
+  - add `Add Run Root` control in Run Folder modal workspace settings.
+  - support sanitize/save/reload flow for custom run roots.
+  - keep run-folder creation input sanitized to no-space naming.
+- Path consistency hardening:
+  - remove Feather submit heuristic that rewrote run-folder output to parent root.
+  - force Federlicht output path to selected run + filename leaf only.
+- Live Logs compact v2:
+  - unify Live Ask run/stop into single toggle button.
+  - move workflow strip below thread area and compact node/badge footprint.
+  - raise default auto log-tail preset to `2.2k` and reflect adaptive context wording.
+- Validation:
+  - `node --check site/federnett/app.js` passed
+  - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py tests/test_help_agent.py` -> `101 passed`
+  - Python Playwright smoke (`http://127.0.0.1:8877/`): pageerror 0, readonly/hidden run controls + single live-run button + custom run-root controls confirmed.
+
+## 1.9.14
+- Global LLM policy unification (2nd pass):
+  - remove duplicated backend/model/reasoning controls from Feather/Federlicht/Live Ask/Workflow Studio panels.
+  - keep `LLM Settings` as the only editable control point for backend/model/check/vision/reasoning.
+  - sync runtime payload fallbacks to global model policy to avoid panel-level drift.
+- White theme UX contrast patch:
+  - add explicit white-theme overrides for top bar, major panels, form inputs/selects, dropdown options, and log cards.
+  - reduce dark hardcoded backgrounds under `Theme=White` and improve readability.
+- FederHav action-intent guardrail hardening:
+  - tighten action planning trigger to workspace-operation intent (run/workflow/stage/instruction/prompt) and short generic follow-up execution only.
+  - remove planner bias that forced short generic queries toward `run_feather`.
+  - prevent safe fallback from auto-running pipeline on content-only analysis requests.
+- Validation:
+  - `node --check site/federnett/app.js` passed
+  - `pytest -q tests/test_help_agent.py` -> `44 passed`
+  - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `57 passed`
+
+## 1.9.13
+- Workspace/run-root global control hardening:
+  - add server-side workspace settings API:
+    - `GET /api/workspace/settings`
+    - `POST /api/workspace/settings` (root unlock required when root auth is enabled)
+  - add persistent workspace settings file:
+    - `site/federnett/workspace_settings.json`
+  - apply persisted workspace roots on Federnett startup (`run_roots`, `site_root`, `report_hub_root`).
+- Run Folder UX refactor:
+  - move run-folder control out of Federlicht panel into top action bar (`Run Folder`).
+  - remove in-panel `Open Run Folder` button.
+  - extend run picker modal with unified `Load / Open / Create` actions.
+  - support `run_root` targeting on run creation via `/api/runs/create`.
+  - add workspace root settings block in run picker modal (reload/save).
+- Model policy UX unification:
+  - add top action `LLM Settings` modal as a single global entry point.
+  - add global sync lock (`Global Sync Lock`) to propagate backend/model policy across Feather/Federlicht/FederHav.
+  - split model catalogs by backend (`openai-model-options`, `codex-model-options`).
+  - bind model inputs to backend-specific datalists dynamically.
+  - allow blank model input persistence in panel UX (no forced immediate refill while editing).
+- Workflow pipeline readability:
+  - reduce badge clutter by suppressing quiet `READY` display in node chips.
+  - keep signal-focused badges (`running/queued/off/resume/error`, plus result/history done signals).
+- Validation:
+  - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `56 passed`
+  - `node --check site/federnett/app.js` passed
+  - `python -m compileall -q src` passed
+  - Python Playwright smoke (ephemeral local Federnett server):
+    - top buttons order verified (`Reload Runs`, `Run Folder`, `LLM Settings`, `Agent Workspace Settings`)
+    - run-folder modal workspace controls visible
+    - global model datalist switches `openai-model-options` -> `codex-model-options`
+    - Federlicht model keeps blank value after manual clear.
+
+## 1.9.12
+- Federlicht prompt-path root consistency fix (`site/runs` vs `runs`):
+  - resolve prompt/report default paths from the selected run folder path (not only run name).
+  - update run-relative expansion logic to prefer the selected run root (`site/runs/*` or `runs/*`) instead of global-first root fallback.
+  - ensure `Generate Prompt` payload keeps `run` and `output` under the same selected run root.
+- Federnett UX:
+  - rename Federlicht prompt action button text from `Generate` to `Generate Prompt`.
+- Validation:
+  - Playwright check confirms for `site/runs/20260221_QC_report`:
+    - prompt field defaults to `site/runs/.../instruction/generated_prompt_...txt`
+    - `POST /api/federlicht/generate_prompt` payload `output` stays in `site/runs/...`.
+
+## 1.9.11
+- Codex backend model-token reliability fix:
+  - normalize Codex model tokens to lowercase across Federnett UI/runtime and command builders.
+  - prevent uppercase model values (for example `GPT-5.3-Codex-Spark`) from reaching `codex exec` unchanged.
+  - add runtime normalization notes in Federlicht model policy logs (`Codex backend selected: model normalized -> ...`).
+- Federnett/API alignment:
+  - normalize Codex defaults/options in `/api/info.llm_defaults.codex_model_options`.
+  - keep Feather agentic model payload normalized when backend is `codex_cli`.
+- Validation:
+  - `pytest -q tests/test_federnett_routes.py tests/test_federnett_commands.py` -> `53 passed`
+  - live API check (`/api/federlicht/generate_prompt`) confirms command model arg normalized to `gpt-5.3-codex-spark`.
+
+## 1.9.10
+- Report hub publish flow hardening:
+  - add local linked-asset publish policy in `federlicht.hub_publish` for HTML reports.
+  - preserve report subpath under run when publishing (for relative-link stability).
+  - expose publish diagnostics: `published_asset_paths`, `skipped_asset_refs`.
+- Federnett publish UX wiring:
+  - add Run Studio `Publish to Report Hub` button.
+  - add `POST /api/report-hub/publish` endpoint to bridge Federnett -> `federlicht.hub_publish`.
+  - include publish result payload (`published_asset_rels`, `skipped_asset_refs`, manifest/index paths).
+- Docs:
+  - refresh handoff status and publish coverage notes (`docs/codex_handoff_20260220.md`).
+  - update run/site strategy with linked-assets policy and Federnett publish wiring (`docs/run_site_publish_strategy.md`).
+- Validation:
+  - `pytest -q tests/test_hub_publish.py tests/test_federnett_routes.py` -> `37 passed`
+  - Playwright smoke: Run Studio publish button visibility and run-with-report enable state confirmed.
+
 ## 1.9.9
 - Federnett UI policy update (Feather/Federlicht):
   - remove collapsible `Advanced` sections in both side panels and keep execution options visible by default.

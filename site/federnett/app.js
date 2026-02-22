@@ -39,6 +39,8 @@ const state = {
     items: [],
     filtered: [],
     selected: "",
+    root: "",
+    query: "",
   },
   instructionModal: {
     items: [],
@@ -101,6 +103,7 @@ const state = {
     studioFocusStage: "overview",
     runtimeNoticeDigest: "",
     stageOverrides: {},
+    stageOverrideWarnings: {},
     stageOverrideStage: "scout",
     stageOverrideSyncTimer: null,
     stageOverridePath: "",
@@ -194,7 +197,7 @@ const state = {
     streamChunksLogged: 0,
     autoFollowThread: true,
     autoLogContext: true,
-    autoLogChars: 1200,
+    autoLogChars: 2200,
     abortController: null,
     activeLogStartIndex: -1,
     jobLogStartIndex: -1,
@@ -207,10 +210,32 @@ const state = {
     open: false,
     tab: "templates",
   },
+  workspaceSettings: {
+    effective: null,
+    stored: null,
+    path: "",
+    canEdit: false,
+  },
   runFiles: {
     view: "core",
     filter: "",
     filterLoaded: false,
+  },
+  modelCatalog: {
+    all: [],
+    openai: [],
+    codex: [],
+  },
+  modelPolicy: {
+    lock: true,
+    backend: "openai_api",
+    model: "",
+    checkModel: "",
+    visionModel: "",
+    reasoningEffort: "off",
+    federhavRuntimeMode: "auto",
+    liveAutoLogContext: true,
+    liveAutoLogChars: 2200,
   },
 };
 
@@ -231,6 +256,7 @@ const ASK_GEOM_KEY = askStorageKey("geom-v2");
 const LIVE_ASK_DRAFT_KEY = askStorageKey("live-draft-v1");
 const LIVE_ASK_PREF_KEY = askStorageKey("live-pref-v1");
 const LIVE_ASK_LOG_TAIL_CHOICES = [1200, 2200, 3600, 5200];
+const LIVE_ASK_LOG_TAIL_DEFAULT = 2200;
 const LIVE_ASK_PROCESS_MAX_LINES = 84;
 const LIVE_ASK_PROCESS_MAX_CHARS = 9000;
 const LIVE_ASK_GLOBAL_LOG_TAIL_LINES = 84;
@@ -245,6 +271,7 @@ const CONTROL_PANEL_WIDTH_KEY = "federnett-control-panel-width-v1";
 const WORKFLOW_STAGE_OVERRIDE_KEY = "federnett-workflow-stage-overrides-v1";
 const RUN_FILE_VIEW_KEY = "federnett-run-file-view-v1";
 const RUN_FILE_FILTER_KEY = "federnett-run-file-filter-v1";
+const GLOBAL_MODEL_POLICY_KEY = "federnett-global-model-policy-v1";
 const ASK_CAPABILITY_FALLBACK = {
   term: "Capability Packs",
   tools: [
@@ -277,6 +304,10 @@ let askScrollRafId = 0;
 let askGeomMemory = null;
 let liveAskComposerResizeObserver = null;
 let liveAskStatusClearTimer = null;
+let globalModelSyncGuard = false;
+let overlayEscapeBound = false;
+let popupDragBindingsBound = false;
+let modalOpenSequence = 0;
 
 const STAGE_DEFS = [
   {
@@ -332,15 +363,16 @@ const WORKFLOW_SPOT_LABELS = {
 };
 const WORKFLOW_SPOT_TTL_MS = 7000;
 const WORKFLOW_LOOPBACK_PULSE_MS = 1200;
+const STAGE_TOOL_TOKEN_RE = /^[a-zA-Z][a-zA-Z0-9_:.+-]*$/;
 const MODEL_PRESET_OPTIONS = [
   "$OPENAI_MODEL",
   "$CODEX_MODEL",
-  "GPT-5.3-Codex",
-  "GPT-5.3-Codex-Spark",
-  "GPT-5.2-Codex",
-  "GPT-5.1-Codex-Max",
-  "GPT-5.2",
-  "GPT-5.1-Codex-Mini",
+  "gpt-5.3-codex",
+  "gpt-5.3-codex-spark",
+  "gpt-5.2-codex",
+  "gpt-5.1-codex-max",
+  "gpt-5.2",
+  "gpt-5.1-codex-mini",
   "gpt-4o-mini",
   "gpt-4o",
 ];
@@ -511,21 +543,20 @@ function isMissingFileError(err) {
 }
 
 function applyTheme(theme) {
+  const normalizedTheme = String(theme || "").trim().toLowerCase() || "white";
+  const nextTheme = normalizedTheme === "default" ? "white" : normalizedTheme;
   const root = document.documentElement;
-  if (!theme || theme === "default") {
-    root.removeAttribute("data-theme");
-  } else {
-    root.setAttribute("data-theme", theme);
-  }
-  localStorage.setItem("federnett-theme", theme || "default");
+  root.setAttribute("data-theme", nextTheme);
+  localStorage.setItem("federnett-theme", nextTheme);
   const select = $("#theme-select");
-  if (select && select.value !== theme) {
-    select.value = theme || "default";
+  if (select && select.value !== nextTheme) {
+    select.value = nextTheme;
   }
 }
 
 function initTheme() {
-  const saved = localStorage.getItem("federnett-theme") || "default";
+  const savedRaw = String(localStorage.getItem("federnett-theme") || "").trim().toLowerCase();
+  const saved = !savedRaw || savedRaw === "default" ? "white" : savedRaw;
   applyTheme(saved);
   $("#theme-select")?.addEventListener("change", (e) => {
     applyTheme(e.target.value);
@@ -952,6 +983,365 @@ function openPath(relPath) {
   }
 }
 
+function modalElementById(modalId) {
+  const token = String(modalId || "").trim().replace(/^#/, "");
+  if (!token) return null;
+  return document.getElementById(token);
+}
+
+function modalCardElement(modalOrId) {
+  const modal = typeof modalOrId === "string" ? modalElementById(modalOrId) : modalOrId;
+  if (!(modal instanceof Element)) return null;
+  return modal.querySelector(".modal-card");
+}
+
+function readDragOffset(surface) {
+  if (!(surface instanceof Element)) return { x: 0, y: 0 };
+  const x = Number(surface.dataset.dragX || 0);
+  const y = Number(surface.dataset.dragY || 0);
+  return {
+    x: Number.isFinite(x) ? x : 0,
+    y: Number.isFinite(y) ? y : 0,
+  };
+}
+
+function writeDragOffset(surface, x = 0, y = 0) {
+  if (!(surface instanceof Element)) return;
+  const nx = Math.round(Number.isFinite(Number(x)) ? Number(x) : 0);
+  const ny = Math.round(Number.isFinite(Number(y)) ? Number(y) : 0);
+  surface.dataset.dragX = String(nx);
+  surface.dataset.dragY = String(ny);
+  surface.style.setProperty("--drag-x", `${nx}px`);
+  surface.style.setProperty("--drag-y", `${ny}px`);
+}
+
+function resetDragOffset(surface) {
+  if (!(surface instanceof Element)) return;
+  delete surface.dataset.dragX;
+  delete surface.dataset.dragY;
+  surface.style.removeProperty("--drag-x");
+  surface.style.removeProperty("--drag-y");
+}
+
+function clampDragOffset(surface, nextX, nextY) {
+  if (!(surface instanceof Element)) return { x: nextX, y: nextY };
+  const rect = surface.getBoundingClientRect();
+  const current = readDragOffset(surface);
+  let x = Number.isFinite(Number(nextX)) ? Number(nextX) : current.x;
+  let y = Number.isFinite(Number(nextY)) ? Number(nextY) : current.y;
+  const dx = x - current.x;
+  const dy = y - current.y;
+  let left = rect.left + dx;
+  let right = rect.right + dx;
+  let top = rect.top + dy;
+  let bottom = rect.bottom + dy;
+  const pad = 10;
+  const maxRight = window.innerWidth - pad;
+  const maxBottom = window.innerHeight - pad;
+  if (left < pad) {
+    const shift = pad - left;
+    x += shift;
+    left += shift;
+    right += shift;
+  }
+  if (right > maxRight) {
+    const shift = right - maxRight;
+    x -= shift;
+    right -= shift;
+    left -= shift;
+  }
+  if (top < pad) {
+    const shift = pad - top;
+    y += shift;
+    top += shift;
+    bottom += shift;
+  }
+  if (bottom > maxBottom) {
+    const shift = bottom - maxBottom;
+    y -= shift;
+    bottom -= shift;
+    top -= shift;
+  }
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+function bindDraggableSurface(surface, handle) {
+  if (!(surface instanceof HTMLElement) || !(handle instanceof HTMLElement)) return;
+  if (handle.dataset.dragBound === "true") return;
+  handle.dataset.dragBound = "true";
+  let dragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let startOffset = { x: 0, y: 0 };
+  const move = (ev) => {
+    if (!dragging) return;
+    const deltaX = ev.clientX - startX;
+    const deltaY = ev.clientY - startY;
+    const rawX = startOffset.x + deltaX;
+    const rawY = startOffset.y + deltaY;
+    const clamped = clampDragOffset(surface, rawX, rawY);
+    writeDragOffset(surface, clamped.x, clamped.y);
+  };
+  const stop = () => {
+    if (!dragging) return;
+    dragging = false;
+    surface.classList.remove("is-dragging");
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", stop);
+    window.removeEventListener("pointercancel", stop);
+    window.removeEventListener("blur", stop);
+  };
+  handle.addEventListener(
+    "pointerdown",
+    (ev) => {
+      if (ev.button !== 0) return;
+      const target = ev.target;
+      if (target instanceof Element) {
+        const interactive = target.closest(
+          "button,select,input,textarea,a,label,summary,[contenteditable='true']",
+        );
+        if (interactive) return;
+      }
+      dragging = true;
+      pointerId = ev.pointerId;
+      startX = ev.clientX;
+      startY = ev.clientY;
+      startOffset = readDragOffset(surface);
+      surface.classList.add("is-dragging");
+      try {
+        handle.setPointerCapture(pointerId);
+      } catch (err) {
+        // ignore
+      }
+      window.addEventListener("pointermove", move, { passive: true });
+      window.addEventListener("pointerup", stop, { passive: true });
+      window.addEventListener("pointercancel", stop, { passive: true });
+      window.addEventListener("blur", stop, { passive: true });
+      ev.preventDefault();
+    },
+    { passive: false },
+  );
+  window.addEventListener(
+    "resize",
+    () => {
+      if (surface.getClientRects().length <= 0) return;
+      const current = readDragOffset(surface);
+      const clamped = clampDragOffset(surface, current.x, current.y);
+      if (clamped.x !== current.x || clamped.y !== current.y) {
+        writeDragOffset(surface, clamped.x, clamped.y);
+      }
+    },
+    { passive: true },
+  );
+}
+
+function initPopupDragBindings() {
+  if (popupDragBindingsBound) return;
+  popupDragBindingsBound = true;
+  document.querySelectorAll(".modal .modal-card").forEach((card) => {
+    const handle = card.querySelector(".modal-header");
+    if (handle instanceof HTMLElement) {
+      bindDraggableSurface(card, handle);
+    }
+  });
+  const workspacePanel = $("#workspace-panel");
+  const workspaceHead = workspacePanel?.querySelector(".workspace-panel-head");
+  if (workspacePanel instanceof HTMLElement && workspaceHead instanceof HTMLElement) {
+    bindDraggableSurface(workspacePanel, workspaceHead);
+  }
+  const workflowPanel = $("#workflow-studio-panel");
+  const workflowHead = workflowPanel?.querySelector(".workflow-studio-head");
+  if (workflowPanel instanceof HTMLElement && workflowHead instanceof HTMLElement) {
+    bindDraggableSurface(workflowPanel, workflowHead);
+  }
+}
+
+function openOverlayModal(modalId) {
+  const modal = modalElementById(modalId);
+  if (!modal) return false;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  modal.dataset.modalOpenSeq = String(++modalOpenSequence);
+  resetDragOffset(modalCardElement(modal));
+  return true;
+}
+
+function closeOverlayModal(modalId) {
+  const modal = modalElementById(modalId);
+  if (!modal) return false;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  delete modal.dataset.modalOpenSeq;
+  resetDragOffset(modalCardElement(modal));
+  return true;
+}
+
+function isOverlayModalOpen(modalId) {
+  const modal = modalElementById(modalId);
+  return Boolean(modal && modal.classList.contains("open"));
+}
+
+function closeKnownModalById(modalId) {
+  const token = String(modalId || "").trim();
+  if (!token) return false;
+  if (token === "ask-action-modal") {
+    closeAskActionModal();
+    return true;
+  }
+  if (token === "instruction-modal") {
+    closeInstructionModal();
+    return true;
+  }
+  if (token === "run-picker-modal") {
+    closeRunPickerModal();
+    return true;
+  }
+  if (token === "model-policy-modal") {
+    closeModelPolicyModal();
+    return true;
+  }
+  if (token === "jobs-modal") {
+    closeJobsModal();
+    return true;
+  }
+  if (token === "template-modal") {
+    closeTemplateModal();
+    return true;
+  }
+  if (token === "saveas-modal") {
+    closeSaveAsModal();
+    return true;
+  }
+  if (token === "help-modal") {
+    closeHelpModal();
+    return true;
+  }
+  return closeOverlayModal(token);
+}
+
+function topOpenModalElement() {
+  const openModals = [...document.querySelectorAll(".modal.open")];
+  if (!openModals.length) return null;
+  openModals.sort((a, b) => {
+    const seqA = Number(a.dataset.modalOpenSeq || 0);
+    const seqB = Number(b.dataset.modalOpenSeq || 0);
+    return seqB - seqA;
+  });
+  return openModals[0] || null;
+}
+
+function closeTopOverlayLayer() {
+  const topModal = topOpenModalElement();
+  if (topModal?.id) {
+    return closeKnownModalById(topModal.id);
+  }
+  if (state.previewPopup.open) {
+    return requestClosePreviewPopup({ persist: true, reason: "escape" });
+  }
+  if (state.workflow.studioOpen) {
+    setWorkflowStudioOpen(false);
+    return true;
+  }
+  if (state.workspace.open) {
+    setWorkspacePanelOpen(false);
+    return true;
+  }
+  if (state.ask.open) {
+    setAskOpen(false, { persist: true });
+    return true;
+  }
+  const wrap = $("#logs-wrap");
+  if (wrap?.classList.contains("is-maximized")) {
+    setLogsMaximized(false, { persist: true });
+    return true;
+  }
+  return false;
+}
+
+function bindGlobalOverlayEscape() {
+  if (overlayEscapeBound) return;
+  overlayEscapeBound = true;
+  document.addEventListener(
+    "keydown",
+    (ev) => {
+      if (ev.key !== "Escape") return;
+      const closed = closeTopOverlayLayer();
+      if (!closed) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+    },
+    true,
+  );
+}
+
+function isWheelEditableTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      "textarea,input,select,option,[contenteditable='true'],.cm-editor,.monaco-editor,pre code",
+    ),
+  );
+}
+
+function isVerticallyScrollable(el) {
+  if (!(el instanceof HTMLElement)) return false;
+  const style = window.getComputedStyle(el);
+  const overflowY = style.overflowY || style.overflow;
+  const allow = /(auto|scroll|overlay)/i.test(overflowY);
+  return allow && el.scrollHeight > el.clientHeight + 2;
+}
+
+function canScrollByDelta(el, deltaY) {
+  if (!(el instanceof HTMLElement)) return false;
+  const current = Number(el.scrollTop || 0);
+  const max = Math.max(0, Number(el.scrollHeight || 0) - Number(el.clientHeight || 0));
+  if (max <= 0) return false;
+  if (deltaY > 0) return current < max - 1;
+  if (deltaY < 0) return current > 1;
+  return false;
+}
+
+function nearestScrollableElement(target, stopAt) {
+  let node = target instanceof Element ? target : null;
+  while (node && node !== stopAt && node !== document.body) {
+    if (node instanceof HTMLElement && isVerticallyScrollable(node)) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  if (stopAt instanceof HTMLElement && isVerticallyScrollable(stopAt)) {
+    return stopAt;
+  }
+  return null;
+}
+
+function bindWheelScrollAssist(rootSelector, fallbackSelector) {
+  const root = typeof rootSelector === "string" ? document.querySelector(rootSelector) : rootSelector;
+  if (!(root instanceof HTMLElement)) return;
+  if (root.dataset.wheelAssistBound === "true") return;
+  root.dataset.wheelAssistBound = "true";
+  root.addEventListener(
+    "wheel",
+    (ev) => {
+      if (ev.defaultPrevented || ev.ctrlKey || ev.metaKey) return;
+      const target = ev.target;
+      if (!(target instanceof Element)) return;
+      if (isWheelEditableTarget(target)) return;
+      const scroller = nearestScrollableElement(target, root);
+      if (scroller && canScrollByDelta(scroller, ev.deltaY)) return;
+      const fallback = fallbackSelector
+        ? root.querySelector(fallbackSelector)
+        : root;
+      if (!(fallback instanceof HTMLElement) || !isVerticallyScrollable(fallback)) return;
+      if (!canScrollByDelta(fallback, ev.deltaY)) return;
+      fallback.scrollTop += ev.deltaY;
+      ev.preventDefault();
+    },
+    { passive: false },
+  );
+}
+
 function openSaveAsModal(initialPath, mode = "preview") {
   const modal = $("#saveas-modal");
   const list = $("#saveas-list");
@@ -965,30 +1355,23 @@ function openSaveAsModal(initialPath, mode = "preview") {
   } else {
     state.saveAs.path = "";
   }
-  modal.classList.add("open");
+  openOverlayModal("saveas-modal");
   loadSaveAsDir(state.saveAs.path || "");
   filenameInput.value = "";
 }
 
 function closeSaveAsModal() {
-  const modal = $("#saveas-modal");
-  if (modal) modal.classList.remove("open");
+  closeOverlayModal("saveas-modal");
   state.saveAs.open = false;
   state.saveAs.mode = "preview";
 }
 
 function openHelpModal() {
-  const modal = $("#help-modal");
-  if (!modal) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("help-modal");
 }
 
 function closeHelpModal() {
-  const modal = $("#help-modal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("help-modal");
 }
 
 function compactLiveAskStatus(message) {
@@ -1069,13 +1452,38 @@ function workflowStudioScopeForStage(stageId) {
 
 function normalizeStageOverrideEntry(raw) {
   if (!raw || typeof raw !== "object") {
-    return { enabled: true, model: "", system_prompt: "", tools: "" };
+    return { enabled: true, system_prompt: "", tools: "" };
   }
   return {
     enabled: raw.enabled !== false,
-    model: String(raw.model || "").trim(),
     system_prompt: String(raw.system_prompt || "").trim(),
     tools: String(raw.tools || "").trim(),
+  };
+}
+
+function normalizeWorkflowStageToolsInput(rawText) {
+  const raw = String(rawText || "");
+  const tokens = raw
+    .split(/[,\n]/)
+    .map((token) => String(token || "").trim())
+    .filter(Boolean);
+  const unique = [];
+  const seen = new Set();
+  const invalid = [];
+  for (const token of tokens) {
+    const normalized = token.toLowerCase();
+    if (!STAGE_TOOL_TOKEN_RE.test(normalized)) {
+      invalid.push(token);
+      continue;
+    }
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    unique.push(normalized);
+  }
+  return {
+    value: unique.join(","),
+    tokens: unique,
+    invalidTokens: invalid,
   };
 }
 
@@ -1124,7 +1532,6 @@ function summarizeStageOverrideStatus(entry) {
   const normalized = normalizeStageOverrideEntry(entry || {});
   const parts = [];
   if (!normalized.enabled) parts.push("stage disabled");
-  if (normalized.model) parts.push(`model=${normalized.model}`);
   if (normalized.tools) parts.push("tools override");
   if (normalized.system_prompt) parts.push("prompt override");
   return parts.length ? parts.join(" · ") : "기본 에이전트 설정 사용";
@@ -1143,7 +1550,7 @@ function renderWorkflowStageSelector(selectedStage = "") {
   }
 }
 
-function renderWorkflowStageOverrideContext(stageId, entry) {
+function renderWorkflowStageOverrideContext(stageId, entry, warningText = "") {
   const host = $("#wf-stage-context");
   if (!host) return;
   const token = String(stageId || "").trim().toLowerCase();
@@ -1159,6 +1566,8 @@ function renderWorkflowStageOverrideContext(stageId, entry) {
     </div>
     <div class="workflow-stage-context-desc">${escapeHtml(def?.desc || "선택된 stage에 대한 세부 override를 설정합니다.")}</div>
     <div class="workflow-stage-context-state">${escapeHtml(summarizeStageOverrideStatus(normalized))}</div>
+    <div class="workflow-stage-context-priority">priority: global settings → stage override → runtime temp</div>
+    ${warningText ? `<div class="workflow-stage-context-warning">${escapeHtml(warningText)}</div>` : ""}
   `;
   const selectedPill = $("#wf-selected-stage-pill");
   if (selectedPill) {
@@ -1208,13 +1617,31 @@ function readWorkflowStageOverrideControls() {
   const stageId = activeWorkflowStageForOverrides();
   const entry = normalizeStageOverrideEntry(state.workflow.stageOverrides?.[stageId] || {});
   entry.enabled = Boolean($("#wf-stage-enabled")?.checked ?? entry.enabled);
-  entry.model = String($("#wf-stage-model")?.value || "").trim();
   entry.system_prompt = String($("#wf-stage-prompt")?.value || "").trim();
-  entry.tools = String($("#wf-stage-tools")?.value || "").trim();
+  const toolsEl = $("#wf-stage-tools");
+  const parsedTools = normalizeWorkflowStageToolsInput(toolsEl?.value || "");
+  entry.tools = parsedTools.value;
+  if (toolsEl && String(toolsEl.value || "") !== entry.tools) {
+    toolsEl.value = entry.tools;
+  }
+  state.workflow.stageOverrideWarnings = state.workflow.stageOverrideWarnings || {};
+  const warningText = parsedTools.invalidTokens.length
+    ? `무시된 도구 토큰: ${parsedTools.invalidTokens.slice(0, 5).join(", ")}`
+    : "";
+  if (warningText) {
+    state.workflow.stageOverrideWarnings[stageId] = warningText;
+  } else {
+    delete state.workflow.stageOverrideWarnings[stageId];
+  }
   state.workflow.stageOverrides = state.workflow.stageOverrides || {};
-  state.workflow.stageOverrides[stageId] = entry;
+  const isDefault = entry.enabled && !entry.system_prompt && !entry.tools;
+  if (isDefault) {
+    delete state.workflow.stageOverrides[stageId];
+  } else {
+    state.workflow.stageOverrides[stageId] = entry;
+  }
   saveWorkflowStageOverrides();
-  renderWorkflowStageOverrideContext(stageId, entry);
+  renderWorkflowStageOverrideContext(stageId, entry, warningText);
   renderWorkflowStagePromptPreview(stageId, entry);
   return { stageId, entry };
 }
@@ -1225,23 +1652,56 @@ function applyWorkflowStageOverrideControls(stageId) {
   state.workflow.stageOverrideStage = normalized;
   const entry = normalizeStageOverrideEntry(state.workflow.stageOverrides?.[normalized] || {});
   const enabledEl = $("#wf-stage-enabled");
-  const modelEl = $("#wf-stage-model");
   const promptEl = $("#wf-stage-prompt");
   const toolsEl = $("#wf-stage-tools");
   if (enabledEl) enabledEl.checked = entry.enabled;
-  if (modelEl) modelEl.value = entry.model;
   if (promptEl) promptEl.value = entry.system_prompt;
   if (toolsEl) toolsEl.value = entry.tools;
+  const warningText = String(state.workflow.stageOverrideWarnings?.[normalized] || "").trim();
   renderWorkflowStageSelector(normalized);
-  renderWorkflowStageOverrideContext(normalized, entry);
+  renderWorkflowStageOverrideContext(normalized, entry, warningText);
   renderWorkflowStagePromptPreview(normalized, entry);
+}
+
+function resetWorkflowStageOverrideControls(stageId = "") {
+  const token = String(stageId || activeWorkflowStageForOverrides()).trim().toLowerCase();
+  const normalized = WORKFLOW_STAGE_ORDER.includes(token) ? token : activeWorkflowStageForOverrides();
+  const enabledEl = $("#wf-stage-enabled");
+  const promptEl = $("#wf-stage-prompt");
+  const toolsEl = $("#wf-stage-tools");
+  if (enabledEl) enabledEl.checked = true;
+  if (promptEl) promptEl.value = "";
+  if (toolsEl) toolsEl.value = "";
+  if (state.workflow.stageOverrideWarnings) {
+    delete state.workflow.stageOverrideWarnings[normalized];
+  }
+  state.workflow.stageOverrideStage = normalized;
+  readWorkflowStageOverrideControls();
+  queueWorkflowStageOverrideSync();
+}
+
+function focusWorkflowStageOverrideToActive() {
+  const activeToken = String(
+    state.pipeline.activeStageId
+    || state.workflow.activeStep
+    || state.workflow.focusHintStage
+    || "",
+  )
+    .trim()
+    .toLowerCase();
+  if (!WORKFLOW_STAGE_ORDER.includes(activeToken)) return false;
+  state.workflow.stageOverrideStage = activeToken;
+  state.pipeline.activeStageId = activeToken;
+  renderStageDetail(activeToken);
+  applyWorkflowStageOverrideControls(activeToken);
+  return true;
 }
 
 function hasWorkflowStageOverrides() {
   const bag = state.workflow.stageOverrides || {};
   return Object.values(bag).some((entry) => {
     const normalized = normalizeStageOverrideEntry(entry);
-    return !normalized.enabled || normalized.model || normalized.system_prompt || normalized.tools;
+    return !normalized.enabled || normalized.system_prompt || normalized.tools;
   });
 }
 
@@ -1251,10 +1711,9 @@ function buildWorkflowStageOverrideConfig() {
   const toolMapping = {};
   WORKFLOW_STAGE_ORDER.forEach((stageId) => {
     const entry = normalizeStageOverrideEntry(overrides[stageId] || {});
-    if (!entry.enabled || entry.model || entry.system_prompt) {
+    if (!entry.enabled || entry.system_prompt) {
       agents[stageId] = pruneEmpty({
         enabled: entry.enabled,
-        model: entry.model,
         system_prompt: entry.system_prompt,
       });
     }
@@ -1313,28 +1772,34 @@ function queueWorkflowStageOverrideSync() {
 
 function setWorkflowStudioOpen(open, { stageId = "" } = {}) {
   const panel = $("#workflow-studio-panel");
-  const toggleBtn = $("#workflow-studio-toggle");
+  const toggleButtons = [
+    $("#workflow-studio-toggle"),
+    $("#workflow-studio-toggle-global"),
+  ].filter(Boolean);
   const wrap = $("#logs-wrap");
   if (!panel || !wrap) return;
+  const wasOpen = Boolean(state.workflow.studioOpen);
   const next = Boolean(open);
   state.workflow.studioOpen = next;
-  if (next) {
+  if (next && !wasOpen) {
     panel.hidden = false;
+    resetDragOffset(panel);
   }
   panel.classList.toggle("open", next);
   panel.setAttribute("aria-hidden", next ? "false" : "true");
   if ("inert" in panel) {
     panel.inert = !next;
   }
-  if (!next) {
+  if (!next && wasOpen) {
     panel.hidden = true;
+    resetDragOffset(panel);
   }
   wrap.classList.toggle("workflow-studio-open", next);
-  if (toggleBtn) {
-    toggleBtn.textContent = next ? "Studio 접기" : "Workflow Studio 열기";
+  toggleButtons.forEach((toggleBtn) => {
+    toggleBtn.textContent = next ? "Studio 닫기" : "Workflow Studio";
     toggleBtn.classList.toggle("is-active", next);
     toggleBtn.setAttribute("aria-pressed", next ? "true" : "false");
-  }
+  });
   if (next) {
     const stage = String(
       stageId
@@ -1434,6 +1899,18 @@ function syncWorkflowStudioBindings() {
   if (datalist) {
     const options = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 30);
     datalist.innerHTML = options.map((id) => `<option value="${escapeHtml(id)}"></option>`).join("");
+  }
+  const qualitySelect = $("#wf-quality-iterations");
+  if (qualitySelect instanceof HTMLSelectElement) {
+    const current = String(getQualityIterations());
+    if (qualitySelect.value !== current) {
+      qualitySelect.value = current;
+    }
+    const qualitySelected = workflowIsStageSelected("quality");
+    qualitySelect.disabled = Boolean(state.workflow.running);
+    qualitySelect.title = qualitySelected
+      ? "Quality stage 반복 횟수(critic/reviser/evaluator)를 설정합니다."
+      : "Quality stage가 비활성화되어 현재 값은 저장되며 활성화 시 적용됩니다.";
   }
 }
 
@@ -1552,6 +2029,28 @@ function normalizeModelToken(value) {
   return String(value || "").trim();
 }
 
+function normalizeCodexModelToken(value) {
+  const token = normalizeModelToken(value);
+  if (!token) return "";
+  const lowered = token.toLowerCase();
+  if (
+    lowered === "$openai_model"
+    || lowered === "${openai_model}"
+    || lowered === "%openai_model%"
+    || lowered === "$openai_model_vision"
+    || lowered === "${openai_model_vision}"
+  ) {
+    return token;
+  }
+  if (token.startsWith("$") || (token.startsWith("${") && token.endsWith("}"))) {
+    return token;
+  }
+  if (token.startsWith("%") && token.endsWith("%")) {
+    return token;
+  }
+  return lowered;
+}
+
 function isCodexModelToken(value) {
   const token = String(value || "").trim().toLowerCase();
   return Boolean(token) && token.includes("codex");
@@ -1598,12 +2097,278 @@ function openaiVisionModelHint() {
 }
 
 function codexModelHint() {
-  const hint = normalizeModelToken(
+  const hint = normalizeCodexModelToken(
     llmDefaults().codex_model
     || window?.FEDERNETT_CODEX_MODEL_HINT
     || "$CODEX_MODEL",
   );
   return hint || "$CODEX_MODEL";
+}
+
+function uniqueTokens(values) {
+  const out = [];
+  const seen = new Set();
+  (values || []).forEach((item) => {
+    const token = String(item || "").trim();
+    if (!token) return;
+    if (seen.has(token)) return;
+    seen.add(token);
+    out.push(token);
+  });
+  return out;
+}
+
+function openaiModelPresetOptions() {
+  const defaults = [openaiModelHint(), openaiVisionModelHint(), "$OPENAI_MODEL", "$OPENAI_MODEL_VISION"];
+  const presets = MODEL_PRESET_OPTIONS.filter((token) => {
+    const normalized = normalizeModelToken(token).toLowerCase();
+    if (!normalized) return false;
+    if (normalized.includes("codex")) return false;
+    return true;
+  });
+  return uniqueTokens([...defaults, ...presets]);
+}
+
+function codexModelPresetOptions() {
+  const codexDefaults = [
+    codexModelHint(),
+    "$CODEX_MODEL",
+    "${CODEX_MODEL}",
+    "%CODEX_MODEL%",
+  ];
+  const codexPresets = MODEL_PRESET_OPTIONS.filter((token) => {
+    const normalized = normalizeModelToken(token).toLowerCase();
+    return Boolean(normalized && normalized.includes("codex"));
+  });
+  const codexFromInfo = Array.isArray(state.info?.llm_defaults?.codex_model_options)
+    ? state.info.llm_defaults.codex_model_options
+    : [];
+  return uniqueTokens(
+    [...codexDefaults, ...codexFromInfo, ...codexPresets].map((token) => {
+      const raw = normalizeModelToken(token);
+      if (!raw) return "";
+      if (raw.startsWith("$") || (raw.startsWith("%") && raw.endsWith("%"))) return raw;
+      return normalizeCodexModelToken(raw);
+    }),
+  );
+}
+
+function modelCatalogForBackend(backend) {
+  const resolved = normalizeAskLlmBackend(backend);
+  if (resolved === "codex_cli") {
+    return state.modelCatalog.codex?.length
+      ? state.modelCatalog.codex
+      : codexModelPresetOptions();
+  }
+  return state.modelCatalog.openai?.length
+    ? state.modelCatalog.openai
+    : openaiModelPresetOptions();
+}
+
+function bindModelInputCatalog(inputEl, backend) {
+  if (!inputEl) return;
+  const resolved = normalizeAskLlmBackend(backend);
+  const listId = resolved === "codex_cli" ? "codex-model-options" : "openai-model-options";
+  inputEl.setAttribute("list", listId);
+  const defaultPlaceholder = resolved === "codex_cli" ? "$CODEX_MODEL" : "$OPENAI_MODEL";
+  inputEl.placeholder = defaultPlaceholder;
+}
+
+function normalizeGlobalModelPolicy(raw = {}, fallbackBackend = "openai_api") {
+  const backend = normalizeAskLlmBackend(raw.backend || fallbackBackend || "openai_api");
+  const normalizeByBackend = (value) =>
+    backend === "codex_cli" ? normalizeCodexModelToken(value) : normalizeModelToken(value);
+  const runtimeDefault = normalizeAskRuntimeMode(llmDefaults().federhav_runtime_mode || "auto");
+  const policy = {
+    lock: raw.lock !== false,
+    backend,
+    model: normalizeByBackend(raw.model),
+    checkModel: normalizeByBackend(raw.checkModel ?? raw.check_model),
+    visionModel: normalizeByBackend(raw.visionModel ?? raw.vision_model),
+    reasoningEffort: normalizeAskReasoningEffort(
+      raw.reasoningEffort ?? raw.reasoning_effort,
+      "off",
+    ),
+    federhavRuntimeMode: normalizeAskRuntimeMode(
+      raw.federhavRuntimeMode ?? raw.federhav_runtime_mode ?? runtimeDefault,
+    ),
+    liveAutoLogContext: (raw.liveAutoLogContext ?? raw.live_auto_log_context) !== false,
+    liveAutoLogChars: normalizeLiveAskLogTailChars(
+      raw.liveAutoLogChars ?? raw.live_auto_log_chars,
+      LIVE_ASK_LOG_TAIL_DEFAULT,
+    ),
+  };
+  return policy;
+}
+
+function persistGlobalModelPolicy() {
+  try {
+    localStorage.setItem(
+      GLOBAL_MODEL_POLICY_KEY,
+      JSON.stringify({
+        lock: Boolean(state.modelPolicy.lock),
+        backend: state.modelPolicy.backend,
+        model: state.modelPolicy.model,
+        checkModel: state.modelPolicy.checkModel,
+        visionModel: state.modelPolicy.visionModel,
+        reasoningEffort: state.modelPolicy.reasoningEffort || "off",
+        federhavRuntimeMode: state.modelPolicy.federhavRuntimeMode || "auto",
+        liveAutoLogContext: state.modelPolicy.liveAutoLogContext !== false,
+        liveAutoLogChars: normalizeLiveAskLogTailChars(
+          state.modelPolicy.liveAutoLogChars,
+          LIVE_ASK_LOG_TAIL_DEFAULT,
+        ),
+      }),
+    );
+  } catch (err) {
+    // ignore
+  }
+}
+
+function loadGlobalModelPolicy() {
+  let stored = null;
+  try {
+    const raw = localStorage.getItem(GLOBAL_MODEL_POLICY_KEY);
+    stored = raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    stored = null;
+  }
+  const backendFallback = normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api");
+  state.modelPolicy = normalizeGlobalModelPolicy(stored || state.modelPolicy, backendFallback);
+}
+
+function renderGlobalModelPolicyControls() {
+  const backendEl = $("#global-llm-backend");
+  const modelEl = $("#global-model");
+  const checkEl = $("#global-check-model");
+  const visionEl = $("#global-vision-model");
+  const reasoningEl = $("#global-reasoning-effort");
+  const runtimeEl = $("#global-federhav-runtime-mode");
+  const autoLogEl = $("#global-live-auto-log");
+  const logTailEl = $("#global-live-log-tail-size");
+  const lockEl = $("#global-model-lock");
+  if (backendEl) backendEl.value = state.modelPolicy.backend;
+  if (modelEl && modelEl.value !== state.modelPolicy.model) modelEl.value = state.modelPolicy.model || "";
+  if (checkEl && checkEl.value !== state.modelPolicy.checkModel) checkEl.value = state.modelPolicy.checkModel || "";
+  if (visionEl && visionEl.value !== state.modelPolicy.visionModel) visionEl.value = state.modelPolicy.visionModel || "";
+  if (reasoningEl) reasoningEl.value = state.modelPolicy.reasoningEffort || "off";
+  if (runtimeEl) runtimeEl.value = normalizeAskRuntimeMode(state.modelPolicy.federhavRuntimeMode || "auto");
+  if (autoLogEl) autoLogEl.checked = state.modelPolicy.liveAutoLogContext !== false;
+  if (logTailEl) {
+    const token = String(
+      normalizeLiveAskLogTailChars(state.modelPolicy.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT),
+    );
+    if (logTailEl.value !== token) logTailEl.value = token;
+  }
+  if (lockEl) lockEl.checked = Boolean(state.modelPolicy.lock);
+  syncModelInputCatalogBindings();
+}
+
+function readGlobalModelPolicyControls() {
+  return normalizeGlobalModelPolicy(
+    {
+      lock: $("#global-model-lock")?.checked ?? state.modelPolicy.lock,
+      backend: $("#global-llm-backend")?.value || state.modelPolicy.backend,
+      model: $("#global-model")?.value || "",
+      checkModel: $("#global-check-model")?.value || "",
+      visionModel: $("#global-vision-model")?.value || "",
+      reasoningEffort: $("#global-reasoning-effort")?.value || "off",
+      federhavRuntimeMode: $("#global-federhav-runtime-mode")?.value || state.modelPolicy.federhavRuntimeMode || "auto",
+      liveAutoLogContext: $("#global-live-auto-log")?.checked ?? state.modelPolicy.liveAutoLogContext,
+      liveAutoLogChars: $("#global-live-log-tail-size")?.value ?? state.modelPolicy.liveAutoLogChars,
+    },
+    state.modelPolicy.backend,
+  );
+}
+
+function policySnapshotFromSource(source = "") {
+  const token = String(source || "").trim().toLowerCase();
+  if (token === "ask") {
+    return normalizeGlobalModelPolicy(
+      {
+        ...state.modelPolicy,
+        backend: normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api"),
+        model: normalizeModelToken(state.modelPolicy.model || ""),
+        reasoningEffort: normalizeAskReasoningEffort(state.modelPolicy.reasoningEffort || "off", "off"),
+      },
+      state.modelPolicy.backend,
+    );
+  }
+  return normalizeGlobalModelPolicy(
+    {
+      ...state.modelPolicy,
+      backend: normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api"),
+      model: normalizeModelToken(state.modelPolicy.model || ""),
+      checkModel: normalizeModelToken(state.modelPolicy.checkModel || ""),
+      visionModel: normalizeModelToken(state.modelPolicy.visionModel || ""),
+      reasoningEffort: normalizeAskReasoningEffort(state.modelPolicy.reasoningEffort || "off", "off"),
+    },
+    state.modelPolicy.backend,
+  );
+}
+
+function applyGlobalModelPolicy(rawPolicy = {}, options = {}) {
+  if (globalModelSyncGuard) return state.modelPolicy;
+  const persist = options.persist !== false;
+  const announce = Boolean(options.announce);
+  const next = normalizeGlobalModelPolicy(rawPolicy, state.modelPolicy.backend);
+  globalModelSyncGuard = true;
+  try {
+    state.modelPolicy = next;
+    if (persist) persistGlobalModelPolicy();
+    renderGlobalModelPolicyControls();
+
+    const featherBackend = $("#feather-llm-backend");
+    const featherModel = $("#feather-model");
+    if (featherBackend) featherBackend.value = next.backend;
+    if (featherModel) featherModel.value = next.model || "";
+    bindModelInputCatalog(featherModel, next.backend);
+    $("#feather-agentic-policy-note")?.classList.remove("is-error");
+
+    const federBackend = $("#federlicht-llm-backend");
+    const federModel = $("#federlicht-model");
+    const federCheck = $("#federlicht-check-model");
+    const federVision = $("#federlicht-model-vision");
+    const federReasoning = $("#federlicht-reasoning-effort");
+    if (federBackend) federBackend.value = next.backend;
+    if (federModel) federModel.value = next.model || "";
+    if (federCheck) federCheck.value = next.checkModel || "";
+    if (federVision) federVision.value = next.visionModel || "";
+    if (federReasoning) federReasoning.value = next.reasoningEffort || "off";
+    syncFederlichtModelControls({ announce: false });
+
+    state.ask.llmBackend = next.backend;
+    state.ask.reasoningEffort = next.reasoningEffort || "off";
+    state.ask.runtimeMode = normalizeAskRuntimeMode(next.federhavRuntimeMode || "auto");
+    state.liveAsk.autoLogContext = next.liveAutoLogContext !== false;
+    state.liveAsk.autoLogChars = normalizeLiveAskLogTailChars(
+      next.liveAutoLogChars,
+      LIVE_ASK_LOG_TAIL_DEFAULT,
+    );
+    setAskModelInputValue(next.model || "");
+    saveAskActionPrefs();
+    saveLiveAskPrefs();
+    syncLiveAskPrefsInputs();
+    syncAskActionPolicyInputs();
+
+    syncModelInputCatalogBindings();
+    document.dispatchEvent(new CustomEvent("federnett:model-policy-updated"));
+    if (announce) {
+      appendLog(
+        `[model-policy] applied backend=${next.backend} model=${next.model || "-"} lock=${next.lock ? "on" : "off"}\n`,
+      );
+    }
+    return state.modelPolicy;
+  } finally {
+    globalModelSyncGuard = false;
+  }
+}
+
+function maybeSyncGlobalModelPolicyFromSource(source = "") {
+  if (!state.modelPolicy.lock) return;
+  if (globalModelSyncGuard) return;
+  const snapshot = policySnapshotFromSource(source);
+  applyGlobalModelPolicy(snapshot, { persist: true, announce: false });
 }
 
 function isCommonOpenaiDefaultModel(value) {
@@ -1709,6 +2474,21 @@ function sanitizeFederlichtModelConfig(raw = {}) {
       notes.push(`OpenAI backend vision model을 ${defaultOpenaiVision}로 자동 조정했습니다.`);
     }
   } else {
+    const modelBefore = model;
+    const checkBefore = checkModel;
+    const visionBefore = visionModel;
+    model = normalizeCodexModelToken(model);
+    checkModel = normalizeCodexModelToken(checkModel);
+    visionModel = normalizeCodexModelToken(visionModel);
+    if (model && modelBefore && model !== modelBefore) {
+      notes.push(`Codex backend model normalized -> ${model}`);
+    }
+    if (checkModel && checkBefore && checkModel !== checkBefore) {
+      notes.push(`Codex backend check model normalized -> ${checkModel}`);
+    }
+    if (visionModel && visionBefore && visionModel !== visionBefore) {
+      notes.push(`Codex backend vision model normalized -> ${visionModel}`);
+    }
     if (
       !model
       || isOpenaiModelToken(model)
@@ -1775,11 +2555,11 @@ function renderWorkflowRuntimeConfig(configOverride = null) {
   const host = $("#workflow-runtime");
   if (!host) return;
   const current = configOverride || sanitizeFederlichtModelConfig({
-    backend: $("#federlicht-llm-backend")?.value,
-    model: $("#federlicht-model")?.value,
-    checkModel: $("#federlicht-check-model")?.value,
-    visionModel: $("#federlicht-model-vision")?.value,
-    reasoningEffort: $("#federlicht-reasoning-effort")?.value,
+    backend: $("#federlicht-llm-backend")?.value || state.modelPolicy.backend,
+    model: $("#federlicht-model")?.value || state.modelPolicy.model,
+    checkModel: $("#federlicht-check-model")?.value || state.modelPolicy.checkModel,
+    visionModel: $("#federlicht-model-vision")?.value || state.modelPolicy.visionModel,
+    reasoningEffort: $("#federlicht-reasoning-effort")?.value || state.modelPolicy.reasoningEffort,
   });
   const chip = (label, value, extraClass = "") =>
     `<span class="workflow-runtime-chip ${extraClass}"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "-")}</span>`;
@@ -1830,11 +2610,11 @@ function renderFederlichtRuntimeSummary(configOverride = null) {
   const gatewayChip = $("#federlicht-runtime-gateway");
   if (!host) return;
   const current = configOverride || sanitizeFederlichtModelConfig({
-    backend: $("#federlicht-llm-backend")?.value,
-    model: $("#federlicht-model")?.value,
-    checkModel: $("#federlicht-check-model")?.value,
-    visionModel: $("#federlicht-model-vision")?.value,
-    reasoningEffort: $("#federlicht-reasoning-effort")?.value,
+    backend: $("#federlicht-llm-backend")?.value || state.modelPolicy.backend,
+    model: $("#federlicht-model")?.value || state.modelPolicy.model,
+    checkModel: $("#federlicht-check-model")?.value || state.modelPolicy.checkModel,
+    visionModel: $("#federlicht-model-vision")?.value || state.modelPolicy.visionModel,
+    reasoningEffort: $("#federlicht-reasoning-effort")?.value || state.modelPolicy.reasoningEffort,
   });
   const chip = (label, value, extraClass = "") =>
     `<span class="runtime-summary-chip ${extraClass}"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "-")}</span>`;
@@ -1876,17 +2656,28 @@ function syncFederlichtModelControls(options = {}) {
   const checkModelEl = $("#federlicht-check-model");
   const visionModelEl = $("#federlicht-model-vision");
   const reasoningEl = $("#federlicht-reasoning-effort");
+  const policyFallback = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+  const rawModel = normalizeModelToken(modelEl?.value);
+  const rawCheckModel = normalizeModelToken(checkModelEl?.value);
+  const rawVisionModel = normalizeModelToken(visionModelEl?.value);
   const next = sanitizeFederlichtModelConfig({
-    backend: backendEl?.value,
-    model: modelEl?.value,
-    checkModel: checkModelEl?.value,
-    visionModel: visionModelEl?.value,
-    reasoningEffort: reasoningEl?.value,
+    backend: backendEl?.value || policyFallback.backend,
+    model: modelEl?.value || policyFallback.model,
+    checkModel: checkModelEl?.value || policyFallback.checkModel,
+    visionModel: visionModelEl?.value || policyFallback.visionModel,
+    reasoningEffort: reasoningEl?.value || policyFallback.reasoningEffort,
   });
   if (backendEl && backendEl.value !== next.backend) backendEl.value = next.backend;
-  if (modelEl && modelEl.value !== next.model) modelEl.value = next.model;
-  if (checkModelEl && checkModelEl.value !== next.checkModel) checkModelEl.value = next.checkModel;
-  if (visionModelEl && visionModelEl.value !== next.visionModel) visionModelEl.value = next.visionModel;
+  const keepModelBlank = !forceBackendDefaults && !rawModel;
+  const keepCheckBlank = !forceBackendDefaults && !rawCheckModel;
+  const keepVisionBlank = !forceBackendDefaults && !rawVisionModel;
+  if (modelEl && !(keepModelBlank && next.model) && modelEl.value !== next.model) modelEl.value = next.model;
+  if (checkModelEl && !(keepCheckBlank && next.checkModel) && checkModelEl.value !== next.checkModel) {
+    checkModelEl.value = next.checkModel;
+  }
+  if (visionModelEl && !(keepVisionBlank && next.visionModel) && visionModelEl.value !== next.visionModel) {
+    visionModelEl.value = next.visionModel;
+  }
   if (forceBackendDefaults) {
     if (next.backend === "codex_cli") {
       const forcedCodex = codexModelHint();
@@ -1910,6 +2701,9 @@ function syncFederlichtModelControls(options = {}) {
       }
     }
   }
+  bindModelInputCatalog(modelEl, next.backend);
+  bindModelInputCatalog(checkModelEl, next.backend);
+  bindModelInputCatalog(visionModelEl, next.backend);
   if (reasoningEl) {
     reasoningEl.disabled = !next.reasoningCompatible;
     reasoningEl.title = next.reasoningCompatible
@@ -2212,15 +3006,17 @@ function setAskReasoningEffort(value, { persist = true } = {}) {
 
 function askBackendInputValue() {
   return normalizeAskLlmBackend(
-    $("#live-ask-backend")?.value
-    || $("#ask-backend")?.value
+    state.modelPolicy.backend
     || state.ask.llmBackend
     || "openai_api",
   );
 }
 
 function askModelInputValue() {
-  return String($("#live-ask-model")?.value || $("#ask-model")?.value || "").trim();
+  return String(
+    state.modelPolicy.model
+    || "",
+  ).trim();
 }
 
 function askRuntimeModeInputValue() {
@@ -2234,8 +3030,7 @@ function askRuntimeModeInputValue() {
 
 function askReasoningInputValue() {
   return normalizeAskReasoningEffort(
-    $("#live-ask-reasoning-effort")?.value
-    || $("#ask-reasoning-effort")?.value
+    state.modelPolicy.reasoningEffort
     || state.ask.reasoningEffort,
     state.ask.reasoningEffort,
   );
@@ -2898,7 +3693,13 @@ function syncAskActionPolicyInputs() {
     liveAllowWrap.title = writeHint;
     liveAllowWrap.setAttribute("aria-label", writeHint);
   }
-  const backend = normalizeAskLlmBackend(state.ask.llmBackend);
+  const globalPolicy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+  const backend = normalizeAskLlmBackend(globalPolicy.backend || "openai_api");
+  state.ask.llmBackend = backend;
+  const globalModelToken = normalizeModelToken(globalPolicy.model || "")
+    || (backend === "codex_cli" ? codexModelHint() : openaiModelHint());
+  setAskModelInputValue(globalModelToken);
+  state.ask.reasoningEffort = normalizeAskReasoningEffort(globalPolicy.reasoningEffort || "off", "off");
   const runtimeMode = normalizeAskRuntimeMode(state.ask.runtimeMode);
   state.ask.runtimeMode = runtimeMode;
   const backendSelect = $("#ask-backend");
@@ -2926,7 +3727,7 @@ function syncAskActionPolicyInputs() {
     }
   } else if (
     backend === "codex_cli"
-    && (!modelTokenRaw || isOpenaiModelToken(modelTokenRaw) || isOpenaiVisionModelToken(modelTokenRaw))
+    && (isOpenaiModelToken(modelTokenRaw) || isOpenaiVisionModelToken(modelTokenRaw))
     && modelTokenRaw !== "$CODEX_MODEL"
   ) {
     setAskModelInputValue("$CODEX_MODEL");
@@ -2964,14 +3765,13 @@ function syncAskActionPolicyInputs() {
   const liveModelInput = $("#live-ask-model");
   const applyModelInputUi = (modelInput) => {
     if (!modelInput) return;
+    bindModelInputCatalog(modelInput, backend);
     if (backend === "codex_cli") {
       modelInput.placeholder = "$CODEX_MODEL";
       modelInput.title = "Codex CLI Auth: 프리셋/직접입력 모두 가능합니다. 비워두면 로컬 Codex 기본 모델을 사용합니다.";
-      modelInput.setAttribute("list", "model-options");
     } else {
       modelInput.placeholder = "$OPENAI_MODEL";
       modelInput.title = "OpenAI API model override (optional)";
-      modelInput.setAttribute("list", "model-options");
     }
   };
   applyModelInputUi(askModelInput);
@@ -2981,9 +3781,9 @@ function syncAskActionPolicyInputs() {
     const reasoningLabel = policy.displayEffort || "off";
     const modelLabel = modelToken || (backend === "codex_cli" ? "$CODEX_MODEL" : openaiModelHint());
     const reasoningToken = policy.compatible ? reasoningLabel : "off";
-    liveRuntimeNote.textContent = `실행 설정: runtime=${runtimeMode} · backend=${backend} · model=${modelLabel} · reasoning=${reasoningToken}`;
+    liveRuntimeNote.textContent = `runtime=${runtimeMode} · backend=${backend} · model=${modelLabel} · reasoning=${reasoningToken}`;
     liveRuntimeNote.title = "runtime=auto는 deepagent 우선 + 실패 시 기본 경로로 fallback합니다.";
-    liveRuntimeNote.hidden = true;
+    liveRuntimeNote.hidden = false;
   }
   const runtimeFold = $("#live-ask-runtime-fold");
   if (
@@ -3341,7 +4141,10 @@ function renderLiveAskContextChips() {
   const mode = state.ask.actionMode === "act" ? "act" : "plan";
   const backend = normalizeAskLlmBackend(state.ask.llmBackend || "openai_api");
   const reasoning = normalizeAskReasoningEffort(state.ask.reasoningEffort, "off");
-  const logChars = normalizeLiveAskLogTailChars(state.liveAsk.autoLogChars, 1200).toLocaleString();
+  const logChars = normalizeLiveAskLogTailChars(
+    state.liveAsk.autoLogChars,
+    LIVE_ASK_LOG_TAIL_DEFAULT,
+  ).toLocaleString();
   if (runChip) {
     runChip.textContent = `run: ${runLabel}`;
     runChip.title = runRel || "선택된 run이 없습니다.";
@@ -3370,28 +4173,41 @@ function renderLiveAskContextChips() {
 
 function setAskRunButtonState(runButton, busy) {
   if (!runButton) return;
-  runButton.disabled = Boolean(busy);
   const isLiveButton = runButton.id === "live-ask-run";
+  if (isLiveButton) {
+    runButton.disabled = false;
+    runButton.dataset.busy = busy ? "1" : "0";
+    runButton.classList.toggle("is-running", Boolean(busy));
+    runButton.classList.toggle("is-stop", Boolean(busy));
+    runButton.innerHTML = busy
+      ? '<span class="ask-run-icon" aria-hidden="true">■</span><span class="ask-run-spinner" aria-hidden="true"></span>'
+      : '<span class="ask-run-icon" aria-hidden="true">➤</span><span class="ask-run-spinner" aria-hidden="true"></span>';
+    runButton.title = busy ? "진행 중... (클릭 시 중단)" : "질문 실행";
+    runButton.setAttribute("aria-pressed", busy ? "true" : "false");
+    return;
+  }
+  runButton.disabled = Boolean(busy);
   if (busy) {
     runButton.classList.add("is-running");
-    runButton.innerHTML = isLiveButton
-      ? "<span>질문 중...</span><small>실시간 스트리밍</small>"
-      : "<span>질문 중...</span><small>처리 중</small>";
+    runButton.innerHTML = "<span>질문 중...</span><small>처리 중</small>";
     return;
   }
   runButton.classList.remove("is-running");
-  runButton.innerHTML = isLiveButton
-    ? "<span>질문 실행</span><small>Enter</small>"
-    : "<span>질문 실행</span><small>Ctrl+Enter</small>";
+  runButton.innerHTML = "<span>질문 실행</span><small>Ctrl+Enter</small>";
 }
 
 function syncLiveAskBusyControls() {
   const stopBtn = $("#live-ask-stop");
-  if (!stopBtn) return;
   const busy = Boolean(state.liveAsk.busy);
   const abortable = Boolean(state.liveAsk.abortController);
-  stopBtn.disabled = !(busy && abortable);
-  stopBtn.classList.toggle("is-active", busy && abortable);
+  if (stopBtn) {
+    stopBtn.disabled = !(busy && abortable);
+    stopBtn.classList.toggle("is-active", busy && abortable);
+  }
+  const liveBtn = $("#live-ask-run");
+  if (liveBtn) {
+    liveBtn.classList.toggle("is-abortable", busy && abortable);
+  }
 }
 
 function isLiveAskAbortError(err) {
@@ -3976,7 +4792,7 @@ function saveLiveAskDraft(text) {
   }
 }
 
-function normalizeLiveAskLogTailChars(value, fallback = 1200) {
+function normalizeLiveAskLogTailChars(value, fallback = LIVE_ASK_LOG_TAIL_DEFAULT) {
   const parsed = Number.parseInt(String(value ?? "").trim(), 10);
   if (Number.isFinite(parsed) && LIVE_ASK_LOG_TAIL_CHOICES.includes(parsed)) {
     return parsed;
@@ -3985,7 +4801,7 @@ function normalizeLiveAskLogTailChars(value, fallback = 1200) {
   if (Number.isFinite(fallbackInt) && LIVE_ASK_LOG_TAIL_CHOICES.includes(fallbackInt)) {
     return fallbackInt;
   }
-  return 1200;
+  return LIVE_ASK_LOG_TAIL_DEFAULT;
 }
 
 function loadLiveAskPrefs() {
@@ -3994,7 +4810,10 @@ function loadLiveAskPrefs() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     state.liveAsk.autoLogContext = parsed?.auto_log_context !== false;
-    state.liveAsk.autoLogChars = normalizeLiveAskLogTailChars(parsed?.auto_log_chars, 1200);
+    state.liveAsk.autoLogChars = normalizeLiveAskLogTailChars(
+      parsed?.auto_log_chars,
+      LIVE_ASK_LOG_TAIL_DEFAULT,
+    );
     const sourceFold = parsed?.source_fold_state;
     if (sourceFold && typeof sourceFold === "object") {
       state.liveAsk.sourceFoldState = Object.fromEntries(
@@ -4021,7 +4840,7 @@ function loadLiveAskPrefs() {
     }
   } catch (err) {
     state.liveAsk.autoLogContext = true;
-    state.liveAsk.autoLogChars = 1200;
+    state.liveAsk.autoLogChars = LIVE_ASK_LOG_TAIL_DEFAULT;
   }
 }
 
@@ -4031,7 +4850,10 @@ function saveLiveAskPrefs() {
       LIVE_ASK_PREF_KEY,
       JSON.stringify({
         auto_log_context: Boolean(state.liveAsk.autoLogContext),
-        auto_log_chars: normalizeLiveAskLogTailChars(state.liveAsk.autoLogChars, 1200),
+        auto_log_chars: normalizeLiveAskLogTailChars(
+          state.liveAsk.autoLogChars,
+          LIVE_ASK_LOG_TAIL_DEFAULT,
+        ),
         source_fold_state: Object.fromEntries(
           Object.entries(state.liveAsk.sourceFoldState || {})
             .filter(([key, value]) => String(key || "").trim() && Boolean(value))
@@ -4061,7 +4883,9 @@ function syncLiveAskPrefsInputs() {
   }
   const sizeSelect = $("#live-ask-log-tail-size");
   if (sizeSelect) {
-    const token = String(normalizeLiveAskLogTailChars(state.liveAsk.autoLogChars, 1200));
+    const token = String(
+      normalizeLiveAskLogTailChars(state.liveAsk.autoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT),
+    );
     if (sizeSelect.value !== token) {
       sizeSelect.value = token;
     }
@@ -4314,7 +5138,7 @@ function applyLiveAskScope(scopeKey, options = {}) {
 function buildLiveAskLogTail(chars = state.liveAsk.autoLogChars) {
   const merged = reflowLogTextForDisplay(state.logBuffer.join("")).trim();
   if (!merged) return "";
-  const limit = normalizeLiveAskLogTailChars(chars, 1200);
+  const limit = normalizeLiveAskLogTailChars(chars, LIVE_ASK_LOG_TAIL_DEFAULT);
   return merged.slice(-limit);
 }
 
@@ -4324,7 +5148,7 @@ function estimateLiveAskHistoryChars(limit = 14) {
 }
 
 function resolveLiveAskEffectiveLogChars(requested = state.liveAsk.autoLogChars) {
-  const configured = normalizeLiveAskLogTailChars(requested, 1200);
+  const configured = normalizeLiveAskLogTailChars(requested, LIVE_ASK_LOG_TAIL_DEFAULT);
   const historyChars = estimateLiveAskHistoryChars(14);
   const contextBudget = 18000;
   const reserve = 2800;
@@ -4333,9 +5157,12 @@ function resolveLiveAskEffectiveLogChars(requested = state.liveAsk.autoLogChars)
 }
 
 function liveAskContextPolicyText() {
-  const tailChars = normalizeLiveAskLogTailChars(state.liveAsk.autoLogChars, 1200);
+  const tailChars = normalizeLiveAskLogTailChars(
+    state.liveAsk.autoLogChars,
+    LIVE_ASK_LOG_TAIL_DEFAULT,
+  );
   if (!state.liveAsk.autoLogContext) return "state-memory only";
-  return `state-memory + 보조로그 요약 ${tailChars.toLocaleString()}자`;
+  return `state-memory + 보조로그 적응형 요약(최대 ${tailChars.toLocaleString()}자)`;
 }
 
 function updateLiveAskThreadInset() {
@@ -4370,13 +5197,18 @@ function ensureLiveAskLayoutObserver() {
 function updateLiveAskInputMeta() {
   const input = $("#live-ask-input");
   const meta = $("#live-ask-input-meta");
+  const runtimeNote = $("#live-ask-runtime-note");
   if (!input || !meta) return;
   const len = String(input.value || "").length;
   const contextHint = liveAskContextPolicyText();
   meta.textContent = `${len.toLocaleString()}자 · Enter 실행 · Shift+Enter 줄바꿈`;
   meta.title = `컨텍스트 정책: ${contextHint}`;
   const agentName = currentAskAgentDisplayName();
-  input.placeholder = `Live Logs/근거/결과를 바탕으로 ${agentName}에게 질문하세요.\n예: run을 새로 만들고 instruction 자동 작성 후 Feather 실행해줘\n안내: ${contextHint}`;
+  input.placeholder = `${agentName}에게 질문하거나 작업을 요청하세요. 예: QC 핵심 이슈를 표로 요약해줘`;
+  if (runtimeNote instanceof HTMLElement) {
+    runtimeNote.hidden = false;
+    runtimeNote.textContent = `컨텍스트 정책: ${contextHint}`;
+  }
   window.requestAnimationFrame(() => updateLiveAskThreadInset());
 }
 
@@ -4942,7 +5774,12 @@ function renderLiveAskProcessFold(processLog, options = {}) {
     .filter(Boolean)
     .join("");
   const summaryPrefix = String(options?.summaryPrefix || "").trim();
+  const summaryPrefixCompact = summaryPrefix
+    ? `${summaryPrefix.slice(0, 42)}${summaryPrefix.length > 42 ? "..." : ""}`
+    : "";
   const showChips = options?.showChips === true;
+  const oneLine = Boolean(options?.oneLine);
+  const forceFold = Boolean(options?.forceFold);
   const firstCommand = lines.find((line) => line.startsWith("$ "));
   const compactCommand = firstCommand
     ? firstCommand.slice(2).replace(/\s+/g, " ").trim()
@@ -4952,19 +5789,23 @@ function renderLiveAskProcessFold(processLog, options = {}) {
     : `작업 로그 ${lineCount}줄`;
   const explicitToolCountRaw = Number(options?.toolCount || 0);
   const explicitToolCount = Number.isFinite(explicitToolCountRaw) ? Math.max(0, Math.round(explicitToolCountRaw)) : 0;
+  const toolToken = explicitToolCount > 0
+    ? `tool ${explicitToolCount}`
+    : (summary.activity > 0 ? `tool ${summary.activity}` : "");
   const summaryParts = [];
-  if (summaryPrefix) summaryParts.push(summaryPrefix);
-  if (explicitToolCount > 0) {
-    summaryParts.push(`tool ${explicitToolCount}`);
-  } else if (summary.activity > 0) {
-    summaryParts.push(`tool ${summary.activity}`);
-  }
+  if (summaryPrefixCompact) summaryParts.push(summaryPrefixCompact);
+  if (toolToken) summaryParts.push(toolToken);
   summaryParts.push(baseSummaryLabel);
-  const summaryLabel = summaryParts.join(" · ");
+  const oneLineBaseLabel = compactCommand
+    ? `Ran ${compactCommand.slice(0, 78)}${compactCommand.length > 78 ? "..." : ""}`
+    : `log ${lineCount} lines`;
+  const summaryLabel = oneLine
+    ? [summaryPrefixCompact, toolToken, oneLineBaseLabel].filter(Boolean).join(" · ")
+    : summaryParts.join(" · ");
   const summaryTitle = [summaryPrefix, compactCommand || `lines=${lineCount}`, summary.errors ? `errors=${summary.errors}` : ""]
     .filter(Boolean)
     .join(" | ");
-  if (lineCount <= 4 && !hasError) {
+  if (!oneLine && !forceFold && lineCount <= 4 && !hasError) {
     const plainRows = lines
       .map((line) => `<div class="live-ask-process-line">${renderRawLineWithLinks(line)}</div>`)
       .join("");
@@ -4976,14 +5817,20 @@ function renderLiveAskProcessFold(processLog, options = {}) {
     `;
   }
   return `
-    <section class="live-ask-process-wrap is-inline">
-      <details class="live-ask-process-fold ${options?.compact ? "is-compact" : ""}" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
+    <section class="live-ask-process-wrap is-inline ${oneLine ? "is-one-line" : ""}">
+      <details class="live-ask-process-fold ${options?.compact ? "is-compact" : ""} ${oneLine ? "is-one-line" : ""}" data-process-fold="${escapeHtml(foldKey)}"${opened ? " open" : ""}>
         <summary title="${escapeHtml(summaryTitle || summaryLabel)}">
           <span>${escapeHtml(summaryLabel)}</span>
           ${showChips && chips ? `<span class="live-ask-process-chips">${chips}</span>` : ""}
         </summary>
         <div class="live-ask-process-body is-inline">
+          <div class="live-ask-process-actions">
+            <button type="button" class="ghost mini live-ask-process-collapse" data-process-fold-close="${escapeHtml(foldKey)}" aria-label="로그 브릿지 접기">접기</button>
+          </div>
           ${renderStructuredLog(normalized)}
+          <div class="live-ask-process-actions is-tail">
+            <button type="button" class="ghost mini live-ask-process-collapse" data-process-fold-close="${escapeHtml(foldKey)}" aria-label="로그 브릿지 접기">접기</button>
+          </div>
         </div>
       </details>
     </section>
@@ -5103,6 +5950,8 @@ function renderLiveAskSystemLogCard() {
     toolCount: summary.activity,
     compact: true,
     showChips: false,
+    oneLine: true,
+    forceFold: true,
   });
   return `
     <section class="live-ask-turn live-ask-turn-system">
@@ -5127,6 +5976,22 @@ function bindLiveAskProcessFolds(root) {
       saveLiveAskPrefs();
     });
   });
+  root.querySelectorAll("button[data-process-fold-close]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const detailsEl = btn.closest("details[data-process-fold]");
+      if (!(detailsEl instanceof HTMLDetailsElement)) return;
+      const key = String(detailsEl.getAttribute("data-process-fold") || "").trim();
+      detailsEl.open = false;
+      if (!key) return;
+      if (!state.liveAsk.processFoldState || typeof state.liveAsk.processFoldState !== "object") {
+        state.liveAsk.processFoldState = {};
+      }
+      state.liveAsk.processFoldState[key] = false;
+      saveLiveAskPrefs();
+    });
+  });
 }
 
 function renderLiveAskThread() {
@@ -5138,9 +6003,10 @@ function renderLiveAskThread() {
   const turns = buildLiveAskTurnsForRender();
   const globalLogCard = renderLiveAskSystemLogCard();
   const hasTurnProcessLog = turns.some((turn) => String(turn?.process_log || "").trim());
-  const showGlobalLogCard = Boolean(globalLogCard) && !hasTurnProcessLog;
+  const showGlobalLogCard = Boolean(globalLogCard) && !hasTurnProcessLog && turns.length === 0;
   if (!turns.length && !globalLogCard) {
     host.classList.add("is-empty");
+    host.classList.remove("is-short");
     host.innerHTML = "아직 대화가 없습니다. Live Logs/결과를 바탕으로 질문해보세요.";
     state.liveAsk.autoFollowThread = true;
     syncLiveAskJumpLatestVisibility();
@@ -5148,6 +6014,7 @@ function renderLiveAskThread() {
   }
 
   host.classList.remove("is-empty");
+  host.classList.toggle("is-short", turns.length <= 2 && !state.liveAsk.busy);
   let lastAssistantTurnIndex = -1;
   turns.forEach((turn, idx) => {
     if (turn?.assistant && !turn.pending) lastAssistantTurnIndex = idx;
@@ -5195,11 +6062,16 @@ function renderLiveAskThread() {
       const processLog = String(assistant?.process_log || turn?.process_log || "").trim();
       const assistantText = String(assistant?.content || "").trim();
       const isLogOnlyAssistant = Boolean(assistant && processLog && !assistantText && !assistant?.pending);
-      const processBlock = isLogOnlyAssistant
-        ? ""
-        : renderLiveAskProcessFold(processLog, {
-          open: Boolean(turn?.pending || /(error|failed|exception)/i.test(processLog)),
-        });
+      const processSummaryPrefix = `${assistantRoleLabel} 로그 브릿지`;
+      const perTurnProcessBlock = renderLiveAskProcessFold(processLog, {
+        open: Boolean((turn?.pending && !assistant) || /(error|failed|exception)/i.test(processLog)),
+        summaryPrefix: processSummaryPrefix,
+        toolCount: Number(assistantMeta?.trace_steps || 0),
+        compact: true,
+        showChips: false,
+        oneLine: true,
+        forceFold: true,
+      });
       const assistantBody = assistant?.pending
         ? escapeHtml(assistant?.content || "").replace(/\n/g, "<br />")
         : renderMarkdown(assistant?.content || "");
@@ -5207,13 +6079,7 @@ function renderLiveAskThread() {
         ? (isLogOnlyAssistant
           ? `
             <article class="${assistantClass} is-log-only">
-              ${renderLiveAskProcessFold(processLog, {
-                open: false,
-                summaryPrefix: `${assistantRoleLabel} backend`,
-                toolCount: Number(assistantMeta?.trace_steps || 0),
-                compact: true,
-                showChips: false,
-              })}
+              ${perTurnProcessBlock}
             </article>
           `
           : `
@@ -5228,6 +6094,7 @@ function renderLiveAskThread() {
               ${renderLiveAskMetaChips(assistantMeta)}
               <div class="live-ask-message-body">${assistantBody}</div>
               ${isSystemAssistant ? "" : renderAskMessageSources(assistantSources)}
+              ${perTurnProcessBlock || ""}
               ${assistant?.pending
       ? ""
       : isSystemAssistant
@@ -5241,11 +6108,18 @@ function renderLiveAskThread() {
             </article>
           `)
         : "";
+      const pendingProcessOnlyBlock = !assistant && perTurnProcessBlock
+        ? `
+            <article class="live-ask-message system is-log-inline">
+              ${perTurnProcessBlock}
+            </article>
+          `
+        : "";
       return `
         <section class="live-ask-turn ${turn?.pending ? "is-pending" : ""}">
           ${userBlock}
-          ${processBlock}
           ${assistantBlock}
+          ${pendingProcessOnlyBlock}
         </section>
       `;
     })
@@ -5541,15 +6415,23 @@ async function runLiveAskQuestion() {
     setAskStatus("질문을 입력하세요.");
     return;
   }
+  const explicitExecutionIntent = hasExplicitExecutionIntent(question);
   if (liveInput) {
     liveInput.value = "";
     saveLiveAskDraft("");
     updateLiveAskInputMeta();
   }
+  if (await tryRunExplicitExecutionShortcut(question)) {
+    return;
+  }
   const model = askModelInputValue();
   const backend = askBackendInputValue();
   const runtimeMode = askRuntimeModeInputValue();
   const reasoningEffort = askReasoningInputValue();
+  const effectiveActionMode = explicitExecutionIntent ? "act" : state.ask.actionMode;
+  if (explicitExecutionIntent && state.ask.actionMode !== "act") {
+    appendLog("[run-agent:mode] explicit execution intent detected -> temporary act for this turn\n");
+  }
   const modelToken = model || (backend === "codex_cli" ? "$CODEX_MODEL" : openaiModelHint());
   const reasoningPolicy = resolveAskReasoningPolicy({
     backend,
@@ -5599,7 +6481,7 @@ async function runLiveAskQuestion() {
     const requestPayload = {
       question,
       agent: resolveAskAgentLabel(),
-      execution_mode: state.ask.actionMode === "act" ? "act" : "plan",
+      execution_mode: effectiveActionMode === "act" ? "act" : "plan",
       model: model || undefined,
       llm_backend: backend,
       runtime_mode: runtimeMode,
@@ -5610,7 +6492,9 @@ async function runLiveAskQuestion() {
       run: runRel || undefined,
       profile_id: askHistoryProfileId(),
       web_search: Boolean($("#federlicht-web-search")?.checked),
-      allow_artifacts: state.ask.actionMode === "act" ? Boolean(state.ask.allowArtifactWrites) : false,
+      allow_artifacts: effectiveActionMode === "act"
+        ? Boolean(state.ask.allowArtifactWrites || explicitExecutionIntent)
+        : false,
       live_log_tail: liveLogTail || undefined,
       state_memory: stateMemoryPayload,
     };
@@ -5735,16 +6619,28 @@ async function runLiveAskQuestion() {
       const requiresRunTargetConfirm = isRunTargetActionType(suggestedAction);
       const actionOverride = normalizeAskActionOverride(suggestedAction, result?.action || null);
       const requiresInstructionConfirm = actionRequiresInstructionConfirm(suggestedAction, actionOverride);
+      const instructionConfirmReason = actionInstructionConfirmReason(suggestedAction, actionOverride);
       const requiresClarification = Boolean(actionOverride?.clarify_required);
+      const bypassRunTargetConfirm = explicitExecutionIntent;
+      const bypassInstructionConfirm =
+        explicitExecutionIntent
+        && instructionConfirmReason === "short_generic_request";
       const canAutoRun =
-        state.ask.actionMode === "act"
-        && !requiresRunTargetConfirm
-        && !requiresInstructionConfirm
+        (state.ask.actionMode === "act" || explicitExecutionIntent)
+        && (!requiresRunTargetConfirm || bypassRunTargetConfirm)
+        && (!requiresInstructionConfirm || bypassInstructionConfirm)
         && !requiresClarification
-        && (!isWriteAction || state.ask.allowArtifactWrites);
+        && (!isWriteAction || state.ask.allowArtifactWrites || explicitExecutionIntent);
       if (canAutoRun) {
-        appendLog(`[run-agent:action] auto-run=${suggestedAction}\n`);
-        await executeAskSuggestedAction(suggestedAction, { allowWhileBusy: true, actionOverride });
+        const autoReason = explicitExecutionIntent && state.ask.actionMode !== "act"
+          ? "explicit_execute_intent"
+          : "act_mode";
+        appendLog(`[run-agent:action] auto-run=${suggestedAction} (${autoReason})\n`);
+        await executeAskSuggestedAction(suggestedAction, {
+          allowWhileBusy: true,
+          actionOverride,
+          instructionConfirmed: bypassInstructionConfirm,
+        });
       } else if (state.ask.actionMode === "act" && (requiresRunTargetConfirm || requiresInstructionConfirm)) {
         const reasons = [
           requiresRunTargetConfirm ? "run-target" : "",
@@ -5863,8 +6759,13 @@ async function runAskQuestion() {
     setAskStatus("질문을 입력하세요.");
     return;
   }
+  const explicitExecutionIntent = hasExplicitExecutionIntent(question);
   if (askInput) {
     askInput.value = "";
+  }
+  const effectiveActionMode = explicitExecutionIntent ? "act" : state.ask.actionMode;
+  if (explicitExecutionIntent && state.ask.actionMode !== "act") {
+    appendLog("[ask:mode] explicit execution intent detected -> temporary act for this turn\n");
   }
   state.ask.busy = true;
   state.ask.lastAction = null;
@@ -5877,9 +6778,7 @@ async function runAskQuestion() {
   state.ask.autoFollowAnswer = true;
   syncAskJumpLatestVisibility();
   const runButton = $("#ask-run");
-  const liveRunButton = $("#live-ask-run");
   setAskRunButtonState(runButton, true);
-  setAskRunButtonState(liveRunButton, true);
   setAskStatus("코드/문서를 분석 중입니다...");
   resetAskActivityState();
   setAskActivity("source_index", "running", "근거 탐색 준비 중...");
@@ -5895,7 +6794,7 @@ async function runAskQuestion() {
     const requestPayload = {
       question,
       agent: resolveAskAgentLabel(),
-      execution_mode: state.ask.actionMode === "act" ? "act" : "plan",
+      execution_mode: effectiveActionMode === "act" ? "act" : "plan",
       model: model || undefined,
       llm_backend: backend,
       runtime_mode: runtimeMode,
@@ -5910,7 +6809,9 @@ async function runAskQuestion() {
       run: runRel || undefined,
       profile_id: askHistoryProfileId(),
       web_search: Boolean($("#federlicht-web-search")?.checked),
-      allow_artifacts: state.ask.actionMode === "act" ? Boolean(state.ask.allowArtifactWrites) : false,
+      allow_artifacts: effectiveActionMode === "act"
+        ? Boolean(state.ask.allowArtifactWrites || explicitExecutionIntent)
+        : false,
       state_memory: buildAskStateMemory({
         runRel,
         maxChars: 3200,
@@ -6010,7 +6911,6 @@ async function runAskQuestion() {
     state.ask.busy = false;
     state.ask.pendingQuestion = "";
     setAskRunButtonState(runButton, false);
-    setAskRunButtonState(liveRunButton, false);
   }
 }
 
@@ -6065,6 +6965,9 @@ function handleAskPanel() {
     setAskPanelOpen(true, { anchor });
   });
   $("#ask-close")?.addEventListener("click", () => setAskPanelOpen(false));
+  $("#ask-open-llm-settings")?.addEventListener("click", () => {
+    openModelPolicyModal();
+  });
   $("#ask-reset")?.addEventListener("click", () => {
     clearAskHistoryAndUi().catch((err) => {
       setAskStatus(`Reset failed: ${err}`);
@@ -6103,30 +7006,38 @@ function handleAskPanel() {
   });
   $("#ask-backend")?.addEventListener("change", (ev) => {
     setAskLlmBackend(ev?.target?.value, { persist: true });
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#live-ask-backend")?.addEventListener("change", (ev) => {
     setAskLlmBackend(ev?.target?.value, { persist: true });
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#live-ask-runtime-mode")?.addEventListener("change", (ev) => {
     setAskRuntimeMode(ev?.target?.value, { persist: true });
   });
   $("#ask-model")?.addEventListener("input", () => {
     syncAskActionPolicyInputs();
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#ask-model")?.addEventListener("change", () => {
     syncAskActionPolicyInputs();
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#live-ask-model")?.addEventListener("input", () => {
     syncAskActionPolicyInputs();
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#live-ask-model")?.addEventListener("change", () => {
     syncAskActionPolicyInputs();
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#ask-reasoning-effort")?.addEventListener("change", (ev) => {
     setAskReasoningEffort(ev?.target?.value, { persist: true });
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#live-ask-reasoning-effort")?.addEventListener("change", (ev) => {
     setAskReasoningEffort(ev?.target?.value, { persist: true });
+    maybeSyncGlobalModelPolicyFromSource("ask");
   });
   $("#ask-allow-artifacts")?.addEventListener("change", (ev) => {
     state.ask.allowArtifactWrites = Boolean(ev?.target?.checked);
@@ -6149,7 +7060,13 @@ function handleAskPanel() {
     updateLiveAskInputMeta();
   });
   $("#ask-run")?.addEventListener("click", () => runAskQuestion());
-  $("#live-ask-run")?.addEventListener("click", () => runLiveAskQuestion());
+  $("#live-ask-run")?.addEventListener("click", () => {
+    if (state.liveAsk.busy) {
+      cancelLiveAskQuestion();
+      return;
+    }
+    runLiveAskQuestion();
+  });
   $("#live-ask-stop")?.addEventListener("click", () => cancelLiveAskQuestion());
   $("#live-ask-copy")?.addEventListener("click", () => {
     copyLiveAskTranscript().catch((err) => setAskStatus(`대화 복사 실패: ${err}`));
@@ -6270,10 +7187,35 @@ function handleAskPanel() {
     });
   });
   $("#ask-action-run-target")?.addEventListener("input", () => {
+    const input = $("#ask-action-run-target");
+    if (input) {
+      const raw = String(input.value || "");
+      const normalized = raw.replace(/\s+/g, "_").replace(/_+/g, "_");
+      if (raw !== normalized) {
+        input.value = normalized;
+      }
+    }
     const box = $("#ask-action-run-target-box");
     const confirmCheck = $("#ask-action-run-target-confirm");
     if (box?.dataset?.requireRunConfirm === "1" && confirmCheck) {
       confirmCheck.checked = false;
+    }
+    updateAskActionRunTargetNote();
+  });
+  $("#ask-action-run-target")?.addEventListener("change", () => {
+    const input = $("#ask-action-run-target");
+    const createCheck = $("#ask-action-run-create");
+    if (!input || !createCheck?.checked) {
+      updateAskActionRunTargetNote();
+      return;
+    }
+    const hinted = normalizeRunHint(input.value || "");
+    const resolved = hinted ? resolveRunRelFromHint(hinted, { strict: true }) : "";
+    if (!resolved && hinted) {
+      const sanitized = sanitizeRunNameHint(hinted);
+      if (sanitized) {
+        input.value = sanitized;
+      }
     }
     updateAskActionRunTargetNote();
   });
@@ -6610,10 +7552,12 @@ function setWorkspacePanelOpen(open, tabKey) {
   panel.setAttribute("aria-hidden", state.workspace.open ? "false" : "true");
   panel.style.display = state.workspace.open ? "block" : "none";
   if (state.workspace.open) {
+    resetDragOffset(panel);
     setWorkspaceTab(tabKey || state.workspace.tab || "templates");
   } else {
     $("#workspace-open-settings")?.classList.remove("is-active");
     $("#live-ask-settings-open")?.classList.remove("is-active");
+    resetDragOffset(panel);
   }
 }
 
@@ -7316,8 +8260,9 @@ function updateAskActionRunTargetNote() {
       : "";
     noteText = `확정 대상: ${resolvedLabel}${resolved === selected ? " (현재 선택 run)" : ""}${byHint}`;
   } else if (createCheck.checked && hinted) {
+    const sanitized = sanitizeRunNameHint(hinted);
     stateToken = "warning";
-    noteText = `현재 일치 run 없음 · 실행 시 "${hinted}" run을 생성 후 진행합니다.`;
+    noteText = `현재 일치 run 없음 · 실행 시 "${sanitized || hinted}" run을 생성 후 진행합니다.`;
   } else if (hinted) {
     canProceed = false;
     stateToken = "error";
@@ -7353,7 +8298,13 @@ function collectAskActionRunTargetOverride() {
   };
   const input = $("#ask-action-run-target");
   const createCheck = $("#ask-action-run-create");
-  const hinted = normalizeRunHint(input?.value || "");
+  const rawHint = normalizeRunHint(input?.value || "");
+  const resolvedFromHint = rawHint ? resolveRunRelFromHint(rawHint, { strict: true }) : "";
+  const shouldCreate = Boolean(createCheck?.checked);
+  const hinted = (!resolvedFromHint && shouldCreate) ? sanitizeRunNameHint(rawHint) : rawHint;
+  if (input && hinted && input.value !== hinted && shouldCreate && !resolvedFromHint) {
+    input.value = hinted;
+  }
   if (hinted) {
     const resolved = resolveRunRelFromHint(hinted, { strict: true });
     base.run_hint = stripSiteRunsPrefix(resolved) || resolved || hinted;
@@ -7394,15 +8345,13 @@ function openAskActionModal(plan) {
       }, 0);
     }
   }
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("ask-action-modal");
 }
 
 function closeAskActionModal() {
   const modal = $("#ask-action-modal");
   if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("ask-action-modal");
   const box = $("#ask-action-run-target-box");
   const note = $("#ask-action-run-target-note");
   const contextNote = $("#ask-action-run-target-context");
@@ -7432,8 +8381,7 @@ function closeAskActionModal() {
 }
 
 function isAskActionModalOpen() {
-  const modal = $("#ask-action-modal");
-  return Boolean(modal && modal.classList.contains("open"));
+  return isOverlayModalOpen("ask-action-modal");
 }
 
 function renderAskActions(action, answerText = "", sources = []) {
@@ -7585,9 +8533,28 @@ function sanitizeRunNameHint(rawValue) {
   const base = token.split("/").filter(Boolean).pop() || token;
   return String(base || "")
     .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[_\-.]+|[_\-.]+$/g, "")
     .slice(0, 96);
+}
+
+function syncFeatherRunTargetFields(runRel) {
+  const normalized = normalizePathString(runRel || "");
+  if (!normalized) return;
+  const runName = runBaseName(normalized);
+  const runNameInput = $("#feather-run-name");
+  const outputInput = $("#feather-output");
+  const instructionInput = $("#feather-input");
+  if (runNameInput) runNameInput.value = runName;
+  if (outputInput) {
+    outputInput.value = normalized;
+    featherOutputTouched = false;
+  }
+  if (instructionInput && !featherInputTouched) {
+    instructionInput.value = `${normalized}/instruction/${runName}.txt`;
+  }
+  syncFeatherOutputHint();
 }
 
 async function applyRunSelection(runRel) {
@@ -7678,6 +8645,118 @@ function isAskPlanInstantActionType(actionType) {
   return ASK_PLAN_INSTANT_ACTION_TYPES.has(normalizeAskActionType(actionType));
 }
 
+function hasExplicitExecutionIntent(text) {
+  const raw = String(text || "").trim().toLowerCase();
+  if (!raw) return false;
+  const compact = raw.replace(/\s+/g, "");
+  const directTokens = [
+    "작업하자",
+    "실행하자",
+    "진행하자",
+    "바로실행",
+    "지금실행",
+    "실행해",
+    "실행해줘",
+    "진행해",
+    "진행해줘",
+    "돌려줘",
+    "run it",
+    "run now",
+    "execute",
+    "go ahead",
+  ];
+  if (directTokens.some((token) => compact.includes(token.replace(/\s+/g, "")))) {
+    return true;
+  }
+  const hasRunVerb = /(실행|진행|돌려|run|execute|start)/i.test(raw);
+  const hasExplainVerb = /(설명|차이|이유|왜|방법|가이드|how|what|difference)/i.test(raw);
+  return hasRunVerb && !hasExplainVerb;
+}
+
+function isAskExecutableActionType(actionType) {
+  const type = normalizeAskActionType(actionType);
+  if (!type) return false;
+  if (type.startsWith("capability:")) return true;
+  if (isAskWriteActionType(type)) return true;
+  if (isRunTargetActionType(type)) return true;
+  if (isAskPlanInstantActionType(type)) return true;
+  return type === "set_action_mode";
+}
+
+function latestExecutableLiveAskAction() {
+  const seen = new Set();
+  const candidates = [];
+  const pushCandidate = (action) => {
+    const normalized = normalizeLiveAskAction(action);
+    if (!normalized) return;
+    const actionType = normalizeAskActionType(normalized.type);
+    if (!isAskExecutableActionType(actionType)) return;
+    const key = `${actionType}|${String(normalized.run_hint || "").trim().toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push(normalized);
+  };
+  pushCandidate(state.liveAsk.lastAction);
+  pushCandidate(state.ask.lastAction);
+  const pending = state.ask.pendingAction;
+  if (pending && typeof pending === "object") {
+    pushCandidate(normalizeAskActionOverride(pending.type || "", pending.actionOverride || pending));
+  }
+  const history = Array.isArray(state.liveAsk.history) ? state.liveAsk.history : [];
+  for (let idx = history.length - 1; idx >= 0 && candidates.length < 8; idx -= 1) {
+    const row = history[idx];
+    if (!row || row.role !== "assistant") continue;
+    pushCandidate(row.action);
+  }
+  const preferred = candidates.find((action) => {
+    const type = normalizeAskActionType(action?.type || "");
+    return type.startsWith("capability:") || isAskWriteActionType(type) || isRunTargetActionType(type);
+  });
+  return preferred || candidates[0] || null;
+}
+
+async function tryRunExplicitExecutionShortcut(question) {
+  if (!hasExplicitExecutionIntent(question)) return false;
+  const action = latestExecutableLiveAskAction();
+  if (!action) return false;
+  const actionType = normalizeAskActionType(action.type);
+  if (!actionType) return false;
+  const needsInstructionConfirm = actionRequiresInstructionConfirm(actionType, action);
+  const instructionReason = actionInstructionConfirmReason(actionType, action);
+  const canBypassInstructionConfirm =
+    needsInstructionConfirm
+    && instructionReason === "short_generic_request";
+  appendLog(`[run-agent:action] shortcut-execute=${actionType} (explicit_execute_intent)\n`);
+  appendLiveAskSystemEntry(
+    `[시스템] 명시 실행 요청을 감지해 최근 제안 액션(${actionType})을 바로 실행합니다.`,
+  );
+  await executeAskSuggestedAction(actionType, {
+    allowWhileBusy: true,
+    actionOverride: action,
+    instructionConfirmed: canBypassInstructionConfirm,
+  });
+  const stamp = new Date().toISOString();
+  state.liveAsk.history.push({ role: "user", content: question, ts: stamp });
+  state.liveAsk.history.push({
+    role: "assistant",
+    content: "명시 실행 요청을 확인하여 최근 제안 액션을 즉시 실행했습니다. 진행 로그는 시스템 메시지에서 확인하세요.",
+    ts: stamp,
+    action,
+    meta: normalizeLiveAskMeta({
+      backend: askBackendInputValue(),
+      model: askModelInputValue() || "",
+      reasoning: state.ask.reasoningEffort || "off",
+    }),
+  });
+  if (state.liveAsk.history.length > 80) {
+    state.liveAsk.history = state.liveAsk.history.slice(-80);
+  }
+  saveLiveAskHistory();
+  renderLiveAskThread();
+  setAskStatus("명시 실행 요청에 따라 최근 제안 액션을 바로 실행했습니다.");
+  return true;
+}
+
 function shouldAutoRunCapabilityInPlan(plan) {
   const delegated = normalizeAskActionType(plan?.delegatedActionType);
   if (delegated) return isAskPlanInstantActionType(delegated);
@@ -7713,11 +8792,12 @@ async function buildAskActionPlan(actionType, options = {}) {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
     const runHint = normalizeRunHint(action?.run_hint || "");
     const resolvedRun = runHint ? resolveRunRelFromHint(runHint, { strict: true }) : "";
+    const createRunName = sanitizeRunNameHint(runHint);
     const payload = buildFeatherPayload({ fallbackQuery: latestAskFallbackQuery() });
     if (resolvedRun) {
       payload.output = resolvedRun;
     } else if (runHint) {
-      payload.output = joinPath(siteRunsPrefix(), runHint);
+      payload.output = joinPath(siteRunsPrefix(), createRunName || runHint);
     }
     const runMeta = runHint
       ? (resolvedRun
@@ -7781,11 +8861,12 @@ async function buildAskActionPlan(actionType, options = {}) {
     const action = resolveAskActionContext(actionType, options?.actionOverride);
     const runHint = normalizeRunHint(action?.run_hint || "");
     const resolvedRun = runHint ? resolveRunRelFromHint(runHint, { strict: true }) : "";
+    const createRunName = sanitizeRunNameHint(runHint);
     const featherPayload = buildFeatherPayload({ fallbackQuery: latestAskFallbackQuery() });
     if (resolvedRun) {
       featherPayload.output = resolvedRun;
     } else if (runHint) {
-      featherPayload.output = joinPath(siteRunsPrefix(), runHint);
+      featherPayload.output = joinPath(siteRunsPrefix(), createRunName || runHint);
     }
     const federPayload = buildFederlichtPayload();
     if (resolvedRun) {
@@ -7995,8 +9076,8 @@ async function executeAskSuggestedAction(actionType, options = {}) {
       appendLog(`[run-agent:action] run_feather unresolved run_hint=${targetRun.runHint}\n`);
       return;
     }
-    if (targetRun.runRel && $("#feather-output")) {
-      $("#feather-output").value = targetRun.runRel;
+    if (targetRun.runRel) {
+      syncFeatherRunTargetFields(targetRun.runRel);
     }
     if (targetRun.created) {
       appendLog(`[run-agent:action] run target created -> ${targetRun.runRel}\n`);
@@ -8068,8 +9149,8 @@ async function executeAskSuggestedAction(actionType, options = {}) {
         appendLog(`[run-agent:action] run_pipeline unresolved run_hint=${targetRun.runHint}\n`);
         return;
       }
-      if (targetRun.runRel && $("#feather-output")) {
-        $("#feather-output").value = targetRun.runRel;
+      if (targetRun.runRel) {
+        syncFeatherRunTargetFields(targetRun.runRel);
       }
       if (targetRun.created) {
         appendLog(`[run-agent:action] run target created -> ${targetRun.runRel}\n`);
@@ -8425,8 +9506,7 @@ function openJobsModal() {
   if (!modal) return;
   const runRel = selectedRunRel();
   if (!runRel) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("jobs-modal");
   const subtitle = $("#jobs-modal-subtitle");
   if (subtitle) {
     subtitle.textContent = runRel
@@ -8437,10 +9517,7 @@ function openJobsModal() {
 }
 
 function closeJobsModal() {
-  const modal = $("#jobs-modal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("jobs-modal");
 }
 
 async function loadSaveAsDir(relPath) {
@@ -8495,6 +9572,7 @@ function updateHeroStats() {
   const selected = selectedRunRel();
   const badge = selected ? runBaseName(selected) : "-";
   setText("#run-roots-badge", badge);
+  renderRunContextSummary();
   updateRecentJobsCard();
 }
 
@@ -8557,9 +9635,17 @@ function updateRecentJobsSummary() {
   if (openBtn) openBtn.disabled = false;
 }
 
-function setMetaStrip() {
+function runFolderContextLabel() {
+  const selected = normalizePathString(selectedRunRel() || "");
+  if (selected) return stripSiteRunsPrefix(selected) || selected;
+  const recent = normalizePathString(state.runs?.[0]?.run_rel || "");
+  if (recent) return stripSiteRunsPrefix(recent) || recent;
+  return "-";
+}
+
+function renderRunContextSummary() {
+  if (!state.info) return;
   const strip = $("#meta-strip");
-  if (!strip || !state.info) return;
   const { run_roots: runRoots } = state.info;
   const runRootsLabel = formatRunRoots(runRoots || []);
   const pills = [];
@@ -8571,9 +9657,137 @@ function setMetaStrip() {
   if (hub && hub !== siteRoot) {
     pills.push(`report hub: ${hub}`);
   }
-  strip.innerHTML = pills.map((p) => `<span class="meta-pill">${p}</span>`).join("");
-  strip.classList.toggle("is-empty", pills.length === 0);
-  updateHeroStats();
+  pills.push(`run folder: ${runFolderContextLabel()}`);
+  if (strip) {
+    strip.innerHTML = pills.map((p) => `<span class="meta-pill">${p}</span>`).join("");
+    strip.classList.toggle("is-empty", pills.length === 0);
+  }
+  const sidebarSummary = $("#sidebar-run-context-text");
+  if (sidebarSummary) {
+    sidebarSummary.textContent = pills.join(" · ");
+    sidebarSummary.title = pills.join(" | ");
+  }
+}
+
+function setMetaStrip() {
+  renderRunContextSummary();
+}
+
+function setWorkspaceSettingsStatus(message, isError = false) {
+  const el = $("#workspace-settings-status");
+  if (!el) return;
+  el.textContent = String(message || "");
+  el.classList.toggle("is-error", Boolean(isError));
+}
+
+function parseRunRootsInputValue(rawValue) {
+  return String(rawValue || "")
+    .split(",")
+    .map((token) => normalizePathString(token))
+    .filter(Boolean);
+}
+
+function appendRunRootTokenToWorkspaceInput(rootToken) {
+  const input = $("#workspace-run-roots");
+  if (!input) return false;
+  const root = normalizePathString(rootToken || "");
+  if (!root) return false;
+  const merged = uniqueTokens([
+    ...parseRunRootsInputValue(input.value || ""),
+    root,
+  ]);
+  input.value = merged.join(", ");
+  return true;
+}
+
+function applyWorkspaceSettingsEffectiveToInfo(effective) {
+  if (!state.info || !effective || typeof effective !== "object") return;
+  const runRoots = Array.isArray(effective.run_roots)
+    ? effective.run_roots.map((item) => normalizePathString(item)).filter(Boolean)
+    : [];
+  if (runRoots.length) {
+    state.info.run_roots = runRoots;
+  }
+  const siteRoot = normalizePathString(effective.site_root || "");
+  const hubRoot = normalizePathString(effective.report_hub_root || "");
+  if (siteRoot) state.info.site_root = siteRoot;
+  if (hubRoot) state.info.report_hub_root = hubRoot;
+}
+
+function renderWorkspaceSettingsControls(payload = null) {
+  const runRootsInput = $("#workspace-run-roots");
+  const siteRootInput = $("#workspace-site-root");
+  const hubRootInput = $("#workspace-report-hub-root");
+  const saveBtn = $("#workspace-settings-save");
+  const data = payload || state.workspaceSettings || {};
+  const effective = data.effective && typeof data.effective === "object"
+    ? data.effective
+    : {};
+  const runRoots = Array.isArray(effective.run_roots) ? effective.run_roots : [];
+  if (runRootsInput) runRootsInput.value = runRoots.join(", ");
+  if (siteRootInput) siteRootInput.value = String(effective.site_root || state.info?.site_root || "site");
+  if (hubRootInput) {
+    hubRootInput.value = String(
+      effective.report_hub_root
+      || state.info?.report_hub_root
+      || reportHubBase(),
+    );
+  }
+  const canEdit = data.can_edit !== undefined ? Boolean(data.can_edit) : Boolean(state.workspaceSettings.canEdit);
+  state.workspaceSettings.canEdit = canEdit;
+  if (saveBtn) {
+    saveBtn.disabled = !canEdit;
+    saveBtn.title = canEdit
+      ? "Workspace root settings를 저장합니다."
+      : "Root unlock 후 저장할 수 있습니다.";
+  }
+  if (!canEdit) {
+    setWorkspaceSettingsStatus("workspace settings: root unlock required for save");
+  }
+}
+
+async function loadWorkspaceSettings() {
+  try {
+    const payload = await fetchJSON("/api/workspace/settings");
+    state.workspaceSettings = {
+      effective: payload?.effective || null,
+      stored: payload?.stored || null,
+      path: String(payload?.path || ""),
+      canEdit: Boolean(payload?.can_edit),
+    };
+    applyWorkspaceSettingsEffectiveToInfo(payload?.effective || {});
+    renderWorkspaceSettingsControls(payload);
+    const pathLabel = String(payload?.path || "site/federnett/workspace_settings.json");
+    setWorkspaceSettingsStatus(`workspace settings loaded · ${pathLabel}`);
+    setMetaStrip();
+    syncFeatherOutputHint();
+    return payload;
+  } catch (err) {
+    setWorkspaceSettingsStatus(`workspace settings load failed: ${err}`, true);
+    throw err;
+  }
+}
+
+async function saveWorkspaceSettingsFromControls() {
+  const runRootsRaw = String($("#workspace-run-roots")?.value || "").trim();
+  const siteRoot = String($("#workspace-site-root")?.value || "").trim();
+  const reportHubRoot = String($("#workspace-report-hub-root")?.value || "").trim();
+  const runRoots = runRootsRaw ? parseRunRootsInputValue(runRootsRaw) : null;
+  const payload = pruneEmpty({
+    run_roots: runRoots || undefined,
+    site_root: siteRoot || undefined,
+    report_hub_root: reportHubRoot || undefined,
+  });
+  const saved = await fetchJSON("/api/workspace/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  applyWorkspaceSettingsEffectiveToInfo(saved?.effective || {});
+  setMetaStrip();
+  await loadRuns();
+  await loadWorkspaceSettings();
+  appendLog("[workspace] settings saved and runs reloaded\n");
 }
 
 function bindHeroCards() {
@@ -8616,7 +9830,9 @@ async function loadInfo() {
   if (siteOutputInput && !String(siteOutputInput.value || "").trim()) {
     siteOutputInput.value = reportHubBase();
   }
-  setMetaStrip();
+  await loadWorkspaceSettings().catch(() => {
+    setMetaStrip();
+  });
   syncFeatherOutputHint();
 }
 
@@ -8657,22 +9873,25 @@ function ensureRunSelection(selectEl, fallbackRel) {
 
 function defaultReportPath(runRel) {
   if (!runRel) return "";
-  const runName = runBaseName(runRel);
-  return `${runName}/report_full.html`;
+  const normalizedRun = normalizePathString(runRel);
+  if (!normalizedRun) return "";
+  return `${normalizedRun}/report_full.html`;
 }
 
 function defaultPromptPath(runRel) {
   if (!runRel) return "";
-  const runName = runBaseName(runRel);
-  return `${runName}/instruction/generated_prompt_${runName}.txt`;
+  const normalizedRun = normalizePathString(runRel);
+  if (!normalizedRun) return "";
+  const runName = runBaseName(normalizedRun);
+  return `${normalizedRun}/instruction/generated_prompt_${runName}.txt`;
 }
 
 function siteRunsBase() {
   const roots = Array.isArray(state.info?.run_roots) ? state.info.run_roots : [];
-  const preferred = roots
+  const normalizedRoots = roots
     .map((entry) => normalizePathString(entry))
-    .find((entry) => entry && /(?:^|\/)runs$/i.test(entry));
-  if (preferred) return preferred.replace(/\/+$/, "");
+    .filter(Boolean);
+  if (normalizedRoots.length) return normalizedRoots[0].replace(/\/+$/, "");
   const siteRoot = state.info?.site_root ? String(state.info.site_root) : "";
   if (!siteRoot) return "runs";
   return `${siteRoot.replace(/\/+$/, "")}/runs`;
@@ -8689,10 +9908,41 @@ function siteRunsPrefix() {
   return siteRunsBase().replace(/\/+$/, "");
 }
 
-function expandSiteRunsPath(value) {
+function runRootFromRunRel(runRel) {
+  const normalizedRun = normalizePathString(runRel || "");
+  if (!normalizedRun) return "";
+  const parent = parentPath(normalizedRun);
+  return normalizePathString(parent || "");
+}
+
+function preferredRunRoot(options = {}) {
+  const explicitRun = normalizePathString(options?.runRel || "");
+  if (explicitRun) {
+    const root = runRootFromRunRel(explicitRun);
+    if (root) return root;
+  }
+  const selected = normalizePathString(selectedRunRel() || "");
+  if (selected) {
+    const root = runRootFromRunRel(selected);
+    if (root) return root;
+  }
+  const promptRun = normalizePathString($("#prompt-run-select")?.value || "");
+  if (promptRun) {
+    const root = runRootFromRunRel(promptRun);
+    if (root) return root;
+  }
+  const instructionRun = normalizePathString($("#instruction-run-select")?.value || "");
+  if (instructionRun) {
+    const root = runRootFromRunRel(instructionRun);
+    if (root) return root;
+  }
+  return siteRunsPrefix();
+}
+
+function expandSiteRunsPath(value, options = {}) {
   const cleaned = normalizePathString(value);
   if (!cleaned) return "";
-  const base = siteRunsPrefix();
+  const base = preferredRunRoot(options);
   if (cleaned.startsWith(`${base}/`)) return cleaned;
   const blockedPrefixes = ["site/", "examples/", "runs/", "instruction/"];
   if (blockedPrefixes.some((prefix) => cleaned.startsWith(prefix))) return cleaned;
@@ -8702,9 +9952,15 @@ function expandSiteRunsPath(value) {
 function stripSiteRunsPrefix(value) {
   const cleaned = normalizePathString(value);
   if (!cleaned) return "";
-  const base = siteRunsPrefix();
-  if (cleaned === base) return "";
-  if (cleaned.startsWith(`${base}/`)) return cleaned.slice(base.length + 1);
+  const roots = uniqueTokens([
+    siteRunsPrefix(),
+    ...(Array.isArray(state.info?.run_roots) ? state.info.run_roots : []),
+  ].map((token) => normalizePathString(token)));
+  for (const base of roots) {
+    if (!base) continue;
+    if (cleaned === base) return "";
+    if (cleaned.startsWith(`${base}/`)) return cleaned.slice(base.length + 1);
+  }
   return cleaned;
 }
 
@@ -8748,11 +10004,16 @@ function findRunSummary(runRel) {
 
 function syncRunSelectionHint() {
   const hint = $("#federlicht-run-hint");
+  const display = $("#federlicht-run-display");
   if (!hint) return;
   const runRel = normalizePathString($("#run-select")?.value || "");
   if (!runRel) {
     hint.textContent = "선택된 run: -";
     hint.removeAttribute("title");
+    if (display) {
+      display.value = "";
+      display.removeAttribute("title");
+    }
     return;
   }
   const summary = findRunSummary(runRel);
@@ -8767,6 +10028,10 @@ function syncRunSelectionHint() {
   if (summary?.updated_at) titleParts.push(`updated: ${formatDate(summary.updated_at)}`);
   hint.textContent = textParts.join(" | ");
   hint.setAttribute("title", titleParts.join("\n"));
+  if (display) {
+    display.value = runRel;
+    display.setAttribute("title", runRel);
+  }
 }
 
 function inferRunHintFromText(text) {
@@ -8960,16 +10225,18 @@ function defaultInstructionPath(runRel) {
 
 function ensureOutputPathForRun(rawOutputPath, runRel, fallbackLeaf = "report_full.html") {
   const normalizedRun = normalizePathString(runRel || "");
-  const expanded = normalizePathString(expandSiteRunsPath(rawOutputPath || ""));
-  if (!normalizedRun) return expanded;
-  if (expanded && expanded.startsWith(`${normalizedRun}/`)) {
-    return expanded;
-  }
-  const leaf = (
-    (expanded ? expanded.split("/").filter(Boolean).pop() : "")
-    || String(fallbackLeaf || "").trim()
-    || "report_full.html"
+  const expanded = normalizePathString(
+    expandSiteRunsPath(rawOutputPath || "", { runRel: normalizedRun }),
   );
+  if (!normalizedRun) return expanded;
+  const leafRaw =
+    (expanded ? expanded.split("/").filter(Boolean).pop() : "")
+    || String(rawOutputPath || "").trim()
+    || String(fallbackLeaf || "").trim()
+    || "report_full.html";
+  const leafNormalized = normalizePathString(leafRaw);
+  const leaf = (leafNormalized ? leafNormalized.split("/").filter(Boolean).pop() : "")
+    || "report_full.html";
   return normalizePathString(`${normalizedRun}/${leaf}`);
 }
 
@@ -8984,7 +10251,7 @@ let federlichtOutputHintSeq = 0;
 function toFederlichtOutputFieldPath(rawPath) {
   const normalized = normalizePathString(rawPath);
   if (!normalized) return "";
-  return stripSiteRunsPrefix(normalized) || normalized;
+  return normalized.split("/").filter(Boolean).pop() || normalized;
 }
 
 async function fetchFederlichtOutputSuggestion(rawOutputPath, runRel = "") {
@@ -9016,8 +10283,8 @@ async function refreshFederlichtOutputHint(options = {}) {
     }
     return null;
   }
-  const expanded = expandSiteRunsPath(entered);
   const runRel = normalizePathString($("#run-select")?.value || "");
+  const expanded = expandSiteRunsPath(entered, { runRel });
   const suggestion = await fetchFederlichtOutputSuggestion(expanded, runRel);
   if (requestId !== federlichtOutputHintSeq) return suggestion;
   if (!suggestion) {
@@ -9109,8 +10376,14 @@ function refreshRunDependentFields() {
   const output = $("#federlicht-output");
   const promptOutput = $("#prompt-output");
   const promptFile = $("#federlicht-prompt-file");
+  if (runRel) {
+    const featherOutput = normalizePathString($("#feather-output")?.value || "");
+    if (!featherOutput || !featherOutputTouched) {
+      syncFeatherRunTargetFields(runRel);
+    }
+  }
   if (runRel && output && !reportOutputTouched) {
-    output.value = defaultReportPath(runRel);
+    output.value = toFederlichtOutputFieldPath(defaultReportPath(runRel));
   }
   if (runRel && promptFile && !promptFileTouched) {
     promptFile.value = defaultPromptPath(runRel);
@@ -10695,6 +11968,24 @@ function renderRunFiles(summary) {
       });
     });
   };
+  const bindRunFileOpenButtons = () => {
+    host.querySelectorAll("button[data-file-open]").forEach((btn) => {
+      btn.addEventListener("click", () => loadFilePreview(btn.dataset.fileOpen, { focusPanel: false }));
+    });
+  };
+  const bindRunFileDeleteButtons = () => {
+    host.querySelectorAll("button[data-file-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const relPath = btn.getAttribute("data-file-delete") || "";
+        if (!relPath) return;
+        try {
+          await deleteRunFile(relPath);
+        } catch (err) {
+          appendLog(`[files] delete failed: ${err}\n`);
+        }
+      });
+    });
+  };
   if (!visibleGroups.length) {
     host.innerHTML = `
       ${renderOverview()}
@@ -10702,6 +11993,7 @@ function renderRunFiles(summary) {
         조건에 맞는 파일이 없습니다. 필터를 지우거나 <strong>전체</strong> 보기로 전환하세요.
       </p>
     `;
+    bindRunFileOpenButtons();
     bindRunFileOverviewControls();
     return;
   }
@@ -10788,21 +12080,9 @@ function renderRunFiles(summary) {
       `;
     })
     .join("")}`;
-  host.querySelectorAll("button[data-file-open]").forEach((btn) => {
-    btn.addEventListener("click", () => loadFilePreview(btn.dataset.fileOpen, { focusPanel: false }));
-  });
+  bindRunFileOpenButtons();
   bindRunFileOverviewControls();
-  host.querySelectorAll("button[data-file-delete]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const relPath = btn.getAttribute("data-file-delete") || "";
-      if (!relPath) return;
-      try {
-        await deleteRunFile(relPath);
-      } catch (err) {
-        appendLog(`[files] delete failed: ${err}\n`);
-      }
-    });
-  });
+  bindRunFileDeleteButtons();
 }
 
 function parseJsonlObjects(content, maxItems = 120) {
@@ -11153,6 +12433,16 @@ function renderRunSummary(summary) {
       trashRun(summary.run_rel);
     };
   }
+  const publishBtn = $("#run-publish-hub");
+  if (publishBtn) {
+    const canPublish = Boolean(summary?.run_rel && summary?.latest_report_rel);
+    publishBtn.disabled = !canPublish;
+    publishBtn.textContent = "Publish to Report Hub";
+    publishBtn.onclick = () => {
+      if (!canPublish) return;
+      publishRunToHub(summary, publishBtn);
+    };
+  }
   const linesHost = $("#run-summary-lines");
   if (linesHost) {
     const counts = summary?.counts && typeof summary.counts === "object"
@@ -11196,6 +12486,11 @@ function renderRunSummary(summary) {
     if (summary?.run_rel) {
       const url = toFileUrlFromRel(summary.run_rel);
       if (url) links.push(`<a href="${url}" target="_blank" rel="noreferrer">Run Folder</a>`);
+    }
+    const hubIndexRel = joinPath(reportHubBase(), "index.html");
+    const hubUrl = toFileUrlFromRel(hubIndexRel);
+    if (hubUrl) {
+      links.push(`<a href="${hubUrl}" target="_blank" rel="noreferrer">Report Hub</a>`);
     }
     if (summary?.latest_report_rel) {
       const name = summary.latest_report_rel.split("/").pop() || summary.latest_report_rel;
@@ -11365,6 +12660,55 @@ async function loadInstructionFiles(runRel) {
   }
 }
 
+async function publishRunToHub(summary, button) {
+  const runRel = String(summary?.run_rel || "").trim();
+  const reportRel = String(summary?.latest_report_rel || "").trim();
+  if (!runRel || !reportRel) {
+    appendLog("[hub] publish skipped: run/report not selected.\n");
+    return;
+  }
+  const targetBtn = button || $("#run-publish-hub");
+  const idleLabel = "Publish to Report Hub";
+  if (targetBtn) {
+    targetBtn.disabled = true;
+    targetBtn.textContent = "Publishing...";
+  }
+  try {
+    const result = await fetchJSON("/api/report-hub/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        run: runRel,
+        report: reportRel,
+        include_linked_assets: true,
+        copy_overview: true,
+        copy_workflow: true,
+        overwrite: true,
+      }),
+    });
+    const published = String(result?.published_report_rel || reportRel);
+    const assetCount = Array.isArray(result?.published_asset_rels)
+      ? result.published_asset_rels.length
+      : 0;
+    const skippedCount = Array.isArray(result?.skipped_asset_refs)
+      ? result.skipped_asset_refs.length
+      : 0;
+    appendLog(
+      `[hub] published ${published} (linked assets: ${assetCount}, skipped refs: ${skippedCount})\n`,
+    );
+    if (result?.index_rel) {
+      appendLog(`[hub] index refreshed: ${result.index_rel}\n`);
+    }
+  } catch (err) {
+    appendLog(`[hub] publish failed: ${err}\n`);
+  } finally {
+    if (targetBtn) {
+      targetBtn.disabled = !(summary?.run_rel && summary?.latest_report_rel);
+      targetBtn.textContent = idleLabel;
+    }
+  }
+}
+
 async function fetchRunInstructionFiles(runRel, options = {}) {
   const normalizedRun = normalizePathString(runRel || "");
   if (!normalizedRun) return [];
@@ -11486,9 +12830,9 @@ function setPromptSnapshot(pathRel, content) {
   promptInlineTouched = false;
 }
 
-function normalizePromptPath(rawPath) {
-  const runRel = $("#run-select")?.value;
-  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath || ""));
+function normalizePromptPath(rawPath, options = {}) {
+  const runRel = options?.runRel || $("#run-select")?.value;
+  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath || ""), { runRel });
   let cleaned = (rawPath || "").trim().replaceAll("\\", "/");
   if (!cleaned) cleaned = "instruction/prompt.txt";
   cleaned = cleaned.replace(/^\/+/, "");
@@ -11560,16 +12904,16 @@ function normalizeInstructionPath(runRel, rawPath) {
 }
 
 function pickInstructionRunRel() {
-  const explicit = $("#feather-output")?.value?.trim();
-  if (explicit) return normalizePathString(explicit);
   const selected = $("#run-select")?.value;
   if (selected) return selected;
+  const explicit = $("#feather-output")?.value?.trim();
+  if (explicit) return normalizePathString(explicit);
   return state.runs[0]?.run_rel || "";
 }
 
 function normalizeFeatherInstructionPath(rawPath) {
   const runRel = pickInstructionRunRel();
-  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath));
+  if (runRel) return expandSiteRunsPath(normalizeInstructionPath(runRel, rawPath), { runRel });
   let cleaned = (rawPath || "").trim().replaceAll("\\", "/");
   if (!cleaned) cleaned = "instruction/new_instruction.txt";
   cleaned = cleaned.replace(/^\/+/, "");
@@ -11600,31 +12944,28 @@ async function saveInstructionContent(pathRel, content) {
 
 function openInstructionModal(mode = "feather") {
   state.instructionModal.mode = mode;
-  const modal = $("#instruction-modal");
-  if (!modal) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("instruction-modal");
 }
 
 function openRunPickerModal() {
-  const modal = $("#run-picker-modal");
-  if (!modal) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("run-picker-modal");
 }
 
 function closeRunPickerModal() {
-  const modal = $("#run-picker-modal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("run-picker-modal");
+}
+
+function openModelPolicyModal() {
+  renderGlobalModelPolicyControls();
+  openOverlayModal("model-policy-modal");
+}
+
+function closeModelPolicyModal() {
+  closeOverlayModal("model-policy-modal");
 }
 
 function closeInstructionModal() {
-  const modal = $("#instruction-modal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("instruction-modal");
 }
 
 function renderInstructionModalList() {
@@ -11662,27 +13003,38 @@ function renderInstructionModalList() {
 }
 
 function runPickerItems() {
-  return state.runs || [];
+  const all = Array.isArray(state.runs) ? state.runs : [];
+  const root = normalizePathString(state.runPicker.root || $("#run-picker-root")?.value || "");
+  if (!root) return all;
+  return all.filter((item) => {
+    const runRoot = normalizePathString(item?.run_root_rel || "");
+    if (runRoot) return runRoot === root;
+    const runRel = normalizePathString(item?.run_rel || "");
+    return runRootFromRunRel(runRel) === root;
+  });
 }
 
 function renderRunPickerList() {
   const host = $("#run-picker-list");
   if (!host) return;
-  const items = state.runPicker.filtered.length
-    ? state.runPicker.filtered
-    : state.runPicker.items;
+  const useFiltered = Boolean(String(state.runPicker.query || "").trim());
+  const items = useFiltered ? state.runPicker.filtered : state.runPicker.items;
   if (!items.length) {
-    host.innerHTML = `<div class="modal-item"><strong>No runs found</strong><small>Use Feather to create a run in ${escapeHtml(siteRunsPrefix())}.</small></div>`;
+    const rootLabel = state.runPicker.root || siteRunsPrefix();
+    host.innerHTML = `<div class="modal-item"><strong>No runs found</strong><small>Use Feather to create a run in ${escapeHtml(rootLabel)}.</small></div>`;
     return;
   }
   host.innerHTML = items
     .map((item) => {
-      const active = item.run_rel === state.runPicker.selected ? "active" : "";
+      const isActive = item.run_rel === state.runPicker.selected;
+      const active = isActive ? "active is-selected" : "";
       const label = item.run_rel || item.run_name || "";
+      const root = normalizePathString(item?.run_root_rel || "");
+      const badge = isActive ? `<span class="modal-item-badge">Selected</span>` : "";
       return `
-        <div class="modal-item ${active}" data-runpicker-item="${label}">
-          <strong>${escapeHtml(item.run_name || label)}</strong>
-          <small>${escapeHtml(label)}</small>
+        <div class="modal-item ${active}" data-runpicker-item="${label}" role="option" aria-selected="${isActive ? "true" : "false"}">
+          <strong>${escapeHtml(item.run_name || label)}${badge}</strong>
+          <small>${escapeHtml(label)}${root ? ` · root=${escapeHtml(root)}` : ""}</small>
         </div>
       `;
     })
@@ -11698,9 +13050,38 @@ function renderRunPickerList() {
 }
 
 async function loadRunPickerItems() {
+  const rootSelect = $("#run-picker-root");
+  const availableRoots = uniqueTokens([
+    ...(Array.isArray(state.info?.run_roots) ? state.info.run_roots : []),
+    ...(Array.isArray(state.runs) ? state.runs.map((item) => item.run_root_rel) : []),
+    ...parseRunRootsInputValue($("#workspace-run-roots")?.value || ""),
+  ].map((item) => normalizePathString(item || "")));
+  if (!availableRoots.length) {
+    availableRoots.push(siteRunsPrefix());
+  }
+  if (rootSelect) {
+    rootSelect.innerHTML = availableRoots
+      .map((root) => `<option value="${escapeHtml(root)}">${escapeHtml(root)}</option>`)
+      .join("");
+    const inferredRoot = runRootFromRunRel(selectedRunRel() || "");
+    const preferredRoot = normalizePathString(state.runPicker.root || inferredRoot || availableRoots[0] || "");
+    if (preferredRoot) {
+      rootSelect.value = preferredRoot;
+      state.runPicker.root = preferredRoot;
+    }
+  }
   state.runPicker.items = runPickerItems();
   state.runPicker.filtered = [];
-  state.runPicker.selected = state.runPicker.items[0]?.run_rel || "";
+  state.runPicker.query = "";
+  const search = $("#run-picker-search");
+  if (search) search.value = "";
+  const current = normalizePathString(selectedRunRel() || "");
+  if (current && state.runPicker.items.some((item) => item.run_rel === current)) {
+    state.runPicker.selected = current;
+  } else {
+    state.runPicker.selected = state.runPicker.items[0]?.run_rel || "";
+  }
+  renderWorkspaceSettingsControls();
   renderRunPickerList();
 }
 
@@ -12207,15 +13588,11 @@ function openTemplateModal(name) {
         appendLog(`[templates] preview failed: ${err}\n`);
       });
   }
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
+  openOverlayModal("template-modal");
 }
 
 function closeTemplateModal() {
-  const modal = $("#template-modal");
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+  closeOverlayModal("template-modal");
 }
 
 async function loadTemplateDetails(names) {
@@ -13521,6 +14898,14 @@ function renderWorkflow() {
   const nodeOrder = workflowNodeOrder();
   const federhavBusy = Boolean(state.ask.busy || state.liveAsk.busy || state.activeJobPending);
   const federhavTouched = federhavBusy || normalizeLiveAskStoredHistory(state.liveAsk.history, 6).length > 0;
+  const opsWrapNode = $("#workflow-ops-wrap");
+  const opsOpen = opsWrapNode instanceof HTMLDetailsElement && opsWrapNode.open;
+  const shouldCompactStrip = (
+    !state.workflow.historyMode
+    && !state.workflow.hasError
+    && !opsOpen
+  );
+  strip.classList.toggle("is-idle-compact", shouldCompactStrip);
   const activeToolHint = latestActiveToolHint();
   host.innerHTML = nodeOrder.map((stepId, idx) => {
     const classes = ["workflow-node"];
@@ -13593,9 +14978,17 @@ function renderWorkflow() {
       resume: "resume",
       error: "error",
     };
-    const stateBadge = `<span class="workflow-node-state is-${stateToken}" title="${escapeHtml(
-      `state: ${stateLabelMap[stateToken] || stateToken}`,
-    )}">${escapeHtml(stateLabelMap[stateToken] || stateToken)}</span>`;
+    const showStateBadge = (
+      stateToken === "running"
+      || stateToken === "resume"
+      || stateToken === "error"
+      || (stepId === "result" && (stateToken === "done" || state.workflow.hasError))
+    );
+    const stateBadge = showStateBadge
+      ? `<span class="workflow-node-state is-${stateToken}" title="${escapeHtml(
+        `state: ${stateLabelMap[stateToken] || stateToken}`,
+      )}">${escapeHtml(stateLabelMap[stateToken] || stateToken)}</span>`
+      : "";
     const isQualityNode = stepId === "quality";
     const qualityIterations = getQualityIterations();
     const showLoop =
@@ -15062,7 +16455,12 @@ function renderRunHistory() {
 function setJobStatus(text, running = false) {
   const el = $("#job-status");
   if (!el) return;
-  el.textContent = text;
+  const statusText = String(text || "").trim();
+  const runningHint = running ? " · 로그: 타임라인 + 로그 브릿지" : "";
+  el.textContent = `${statusText}${runningHint}`;
+  el.title = running
+    ? "실시간 실행 로그는 Live Logs 타임라인 카드와 답변 카드의 로그 브릿지에서 확인할 수 있습니다."
+    : "";
   el.classList.toggle("is-running", !!running);
 }
 
@@ -15253,7 +16651,7 @@ function setPromptGenerateEnabled(enabled) {
   if (!button) return;
   button.disabled = !enabled;
   button.classList.toggle("is-running", !enabled);
-  button.textContent = enabled ? "Generate" : "Generating...";
+  button.textContent = enabled ? "Generate Prompt" : "Generating Prompt...";
 }
 
 function describeJobKind(kind) {
@@ -15270,6 +16668,11 @@ function describeJobKind(kind) {
     default:
       return "작업";
   }
+}
+
+function isSystemExecutionKind(kind) {
+  const token = String(kind || "").trim().toLowerCase();
+  return token === "feather" || token === "federlicht" || token === "prompt" || token === "generate_prompt";
 }
 
 function closeActiveSource() {
@@ -15332,7 +16735,7 @@ function attachToJob(jobId, opts = {}) {
       if (payload.returncode === 0 && opts.onSuccess) opts.onSuccess(payload);
       completeWorkflow(finishedKind, payload.returncode, status);
       setJobStatus(`Job ${shortId(jobId)} ${status}${code}`, false);
-      if (finishedKind === "federlicht" || finishedKind === "feather") {
+      if (isSystemExecutionKind(finishedKind)) {
         const label = describeJobKind(finishedKind);
         const statusLabel = payload.returncode === 0 ? "완료" : `실패${code}`;
         const processSummary = summarizeLiveAskProcess(doneProcessLog);
@@ -15343,7 +16746,9 @@ function attachToJob(jobId, opts = {}) {
           ? (
             finishedKind === "feather"
               ? "다음 단계: Federlicht 실행 또는 instruction 보강 후 재수집"
-              : "다음 단계: run_overview/claim_map/gap_finder 확인"
+              : finishedKind === "prompt" || finishedKind === "generate_prompt"
+                ? "다음 단계: 생성된 prompt 확인 후 Federlicht 실행"
+                : "다음 단계: run_overview/claim_map/gap_finder 확인"
           )
           : "다음 단계: 모델/권한/입력 경로와 로그 오류를 확인 후 재실행";
         appendLiveAskSystemEntry(
@@ -15356,7 +16761,7 @@ function attachToJob(jobId, opts = {}) {
       appendLog(`[done] failed to parse event: ${err}\n`);
     } finally {
       state.activeJobPending = false;
-      if (!completionReported && (finishedKind === "federlicht" || finishedKind === "feather")) {
+      if (!completionReported && isSystemExecutionKind(finishedKind)) {
         const label = describeJobKind(finishedKind);
         appendLiveAskSystemEntry(`[시스템] ${label} 실행이 종료되었습니다. (상세 상태 파싱 실패)`);
       }
@@ -15399,7 +16804,7 @@ function attachToJob(jobId, opts = {}) {
     }
     if (failedKind) {
       completeWorkflow(failedKind, -1, "stream_error");
-      if (failedKind === "federlicht" || failedKind === "feather") {
+      if (isSystemExecutionKind(failedKind)) {
         const label = describeJobKind(failedKind);
         appendLiveAskSystemEntry(
           `[시스템] ${label} 실행 중 이벤트 스트림이 비정상 종료되었습니다.`,
@@ -15433,7 +16838,7 @@ async function startJob(endpoint, payload, meta = {}) {
   }
   const body = JSON.stringify(payload || {});
   appendLog(`\n[start] POST ${endpoint}\n`);
-  if (kind === "federlicht" || kind === "feather") {
+  if (isSystemExecutionKind(kind)) {
     const runHint = normalizePathString(
       payload?.run
       || payload?.output
@@ -15491,7 +16896,7 @@ async function startJob(endpoint, payload, meta = {}) {
       appendLog(
         `[${kind}:start-info] another job is already running (${runningKind}:${runningJobId}) → 기존 실행 로그에 자동 연결합니다.\n`,
       );
-      if (kind === "federlicht" || kind === "feather") {
+      if (isSystemExecutionKind(kind)) {
         const label = describeJobKind(kind);
         appendLiveAskSystemEntry(
           `[시스템] ${label}은 이미 실행 중인 작업에 연결되었습니다. (${shortId(runningJobId)})`,
@@ -15562,7 +16967,7 @@ async function startJob(endpoint, payload, meta = {}) {
       });
       completeWorkflowSpot(kind, -1, "start_failed");
     }
-    if (kind === "federlicht" || kind === "feather") {
+    if (isSystemExecutionKind(kind)) {
       const label = describeJobKind(kind);
       appendLiveAskSystemEntry(`[시스템] ${label} 시작 실패: ${compactError || String(err)}`);
     }
@@ -15615,7 +17020,7 @@ async function startJob(endpoint, payload, meta = {}) {
   if (kind === "federlicht") {
     appendLog("[federlicht:run] job accepted and streaming started\n");
   }
-  if (kind === "federlicht" || kind === "feather") {
+  if (isSystemExecutionKind(kind)) {
     const label = describeJobKind(kind);
     appendLiveAskSystemEntry(`[시스템] ${label} 실행이 시작되었습니다. (job=${shortId(jobId)})`);
   }
@@ -15661,22 +17066,23 @@ function pruneEmpty(obj) {
 
 function buildFeatherPayload(options = {}) {
   const fallbackQuery = String(options?.fallbackQuery || "").trim();
+  const selectedRun = normalizePathString(selectedRunRel() || "");
   const inputValueRaw = $("#feather-input")?.value?.trim();
-  const inputValue = inputValueRaw ? expandSiteRunsPath(inputValueRaw) : inputValueRaw;
+  const inputValue = inputValueRaw ? expandSiteRunsPath(inputValueRaw, { runRel: selectedRun }) : inputValueRaw;
   const queryValue = String($("#feather-query")?.value || "").trim();
   const resolvedQuery = queryValue || fallbackQuery;
   const outputRaw = String($("#feather-output")?.value || "").trim();
   const outputFallback = outputRaw || ensureAskRunRel() || selectedRunRel() || "";
-  const backend = normalizeAskLlmBackend($("#feather-llm-backend")?.value || "openai_api");
+  const globalPolicy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+  const backend = normalizeAskLlmBackend(globalPolicy.backend || "openai_api");
   const payload = {
     input: inputValue,
     query: inputValue ? undefined : resolvedQuery,
-    output: expandSiteRunsPath(outputFallback),
+    output: expandSiteRunsPath(outputFallback, { runRel: selectedRun }),
     lang: $("#feather-lang")?.value,
     days: Number.parseInt($("#feather-days")?.value || "", 10),
     max_results: Number.parseInt($("#feather-max-results")?.value || "", 10),
     agentic_search: $("#feather-agentic-search")?.checked,
-    model: $("#feather-model")?.value,
     max_iter: Number.parseInt($("#feather-max-iter")?.value || "", 10),
     download_pdf: $("#feather-download-pdf")?.checked,
     openalex: $("#feather-openalex")?.checked,
@@ -15685,6 +17091,7 @@ function buildFeatherPayload(options = {}) {
     update_run: $("#feather-update-run")?.checked,
     yt_order: $("#feather-yt-order")?.value,
     llm_backend: backend,
+    model: globalPolicy.model || "",
     extra_args: $("#feather-extra-args")?.value,
   };
   if (!payload.input && !payload.query) {
@@ -15705,6 +17112,9 @@ function buildFeatherPayload(options = {}) {
       || (backendToken === "openai_api" && (isCodexModelToken(modelToken) || isCodexModelPlaceholderToken(modelToken)))
     ) {
       payload.model = backendToken === "codex_cli" ? codexModelHint() : openaiModelHint();
+    }
+    if (backendToken === "codex_cli") {
+      payload.model = normalizeCodexModelToken(payload.model || codexModelHint());
     }
   }
   if (!payload.agentic_search) {
@@ -15730,12 +17140,16 @@ function buildFederlichtPayload() {
   const agentSource = activeProfile?.source || "builtin";
   const agentProfileDir =
     agentSource === "site" ? joinPath(state.info?.site_root || "site", "agent_profiles") : "";
-  const promptFileValue = expandSiteRunsPath($("#federlicht-prompt-file")?.value);
+  const runRel = normalizePathString($("#run-select")?.value || "");
+  const rawPromptFile = String($("#federlicht-prompt-file")?.value || "").trim();
+  const promptFileValue = rawPromptFile
+    ? expandSiteRunsPath(rawPromptFile, { runRel })
+    : "";
   const promptValue = $("#federlicht-prompt")?.value;
   const includeInlinePrompt = isPromptDirty() || !promptFileValue;
   const payload = {
-    run: $("#run-select")?.value,
-    output: expandSiteRunsPath($("#federlicht-output")?.value),
+    run: runRel,
+    output: ensureOutputPathForRun($("#federlicht-output")?.value, runRel),
     template: freeFormat ? undefined : $("#template-select")?.value,
     free_format: freeFormat ? true : undefined,
     style_pack: freeFormat && stylePack && stylePack !== "none" ? stylePack : undefined,
@@ -15743,14 +17157,14 @@ function buildFederlichtPayload() {
     depth: $("#federlicht-depth")?.value,
     prompt: includeInlinePrompt ? promptValue : undefined,
     prompt_file: promptFileValue,
-    model: normalizedModelConfig.model || $("#federlicht-model")?.value,
+    model: normalizedModelConfig.model,
     reasoning_effort:
       normalizedModelConfig.reasoningEffort
       && normalizedModelConfig.reasoningEffort !== "off"
         ? normalizedModelConfig.reasoningEffort
         : undefined,
-    check_model: normalizedModelConfig.checkModel || $("#federlicht-check-model")?.value,
-    model_vision: normalizedModelConfig.visionModel || $("#federlicht-model-vision")?.value,
+    check_model: normalizedModelConfig.checkModel,
+    model_vision: normalizedModelConfig.visionModel,
     template_rigidity: freeFormat ? undefined : $("#federlicht-template-rigidity")?.value,
     temperature_level: $("#federlicht-temperature-level")?.value,
     stages: selectedStages.join(","),
@@ -15797,7 +17211,9 @@ function buildPromptPayload() {
   }
   const payload = {
     run,
-    output: expandSiteRunsPath(output),
+    output: run
+      ? normalizePromptPath(output || defaultPromptPath(run), { runRel: run })
+      : expandSiteRunsPath(output),
     template: $("#prompt-template-select")?.value,
     depth: $("#prompt-depth")?.value,
     model: normalizeModelToken($("#prompt-model")?.value) || normalizedModelConfig.model,
@@ -15828,12 +17244,12 @@ function buildPromptPayloadFromFederlicht() {
   }
   const payload = {
     run,
-    output: expandSiteRunsPath(output),
+    output: normalizePromptPath(output || defaultPromptPath(run), { runRel: run }),
     template: freeFormat ? undefined : $("#template-select")?.value,
     free_format: freeFormat ? true : undefined,
     style_pack: freeFormat && stylePack && stylePack !== "none" ? stylePack : undefined,
     depth: $("#federlicht-depth")?.value,
-    model: normalizedModelConfig.model || $("#federlicht-model")?.value,
+    model: normalizedModelConfig.model,
     reasoning_effort:
       normalizedModelConfig.reasoningEffort
       && normalizedModelConfig.reasoningEffort !== "off"
@@ -15929,40 +17345,21 @@ function syncFeatherOutputHint() {
   const base = siteRunsPrefix();
   const current = normalizePathString(output.value || "");
   if (!current) {
-    const example = joinPath(base, "my_run");
-    hint.innerHTML = `Run root: <code>${escapeHtml(base)}</code> · 예: <code>${escapeHtml(example)}</code>`;
+    hint.innerHTML = `Run Folder에서 대상을 선택하세요. 현재 run root: <code>${escapeHtml(base)}</code>`;
     return;
   }
   const resolved = normalizePathString(expandSiteRunsPath(current));
-  hint.innerHTML = `Run root: <code>${escapeHtml(base)}</code> · resolved: <code>${escapeHtml(resolved || current)}</code>`;
+  hint.innerHTML = `선택 run: <code>${escapeHtml(resolved || current)}</code>`;
 }
 
 function handleFeatherRunName() {
   const runName = $("#feather-run-name");
   const output = $("#feather-output");
   const input = $("#feather-input");
-  if (!runName || !output) return;
-  runName.addEventListener("input", () => {
-    if (featherOutputTouched) return;
-    const value = runName.value.trim();
-    if (!value) return;
-    output.value = value;
-    syncFeatherOutputHint();
-    if (input && !featherInputTouched) {
-      input.value = `${value}/instruction/${value}.txt`;
-    }
-  });
-  output.addEventListener("input", () => {
-    featherOutputTouched = true;
-    syncFeatherOutputHint();
-    if (input && !featherInputTouched) {
-      const cleaned = normalizePathString(output.value || "");
-      if (cleaned) {
-        const name = cleaned.split("/").pop() || "run";
-        input.value = `${cleaned}/instruction/${name}.txt`;
-      }
-    }
-  });
+  if (!output) return;
+  if (runName) runName.setAttribute("readonly", "readonly");
+  output.setAttribute("readonly", "readonly");
+  output.classList.add("readonly-field");
   input?.addEventListener("input", () => {
     featherInputTouched = true;
   });
@@ -15971,62 +17368,27 @@ function handleFeatherRunName() {
 
 function handleFeatherAgenticControls() {
   const toggle = $("#feather-agentic-search");
-  const modelInput = $("#feather-model");
   const iterInput = $("#feather-max-iter");
-  const backendSelect = $("#feather-llm-backend");
   const policyNote = $("#feather-agentic-policy-note");
   if (!toggle) return;
-  const modelForBackend = (backend) =>
-    normalizeAskLlmBackend(backend) === "codex_cli" ? codexModelHint() : openaiModelHint();
-  const shouldSwitchModel = (current, backend) => {
-    const token = normalizeModelToken(current);
-    if (!token) return true;
-    if (normalizeAskLlmBackend(backend) === "codex_cli") {
-      return isOpenaiModelToken(token) || isCommonOpenaiDefaultModel(token);
-    }
-    return isCodexModelToken(token) || isCodexModelPlaceholderToken(token);
-  };
-  const syncModelByBackend = ({ force = false } = {}) => {
-    if (!modelInput || !backendSelect) return;
-    const backend = normalizeAskLlmBackend(backendSelect.value);
-    if (force || shouldSwitchModel(modelInput.value, backend)) {
-      modelInput.value = modelForBackend(backend);
-    }
-  };
   const updatePolicyNote = () => {
-    if (!policyNote || !backendSelect || !modelInput) return;
-    const backend = normalizeAskLlmBackend(backendSelect.value);
+    if (!policyNote) return;
+    const policy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+    const backend = normalizeAskLlmBackend(policy.backend || "openai_api");
     const backendLabel = backend === "codex_cli" ? "Codex CLI Auth" : "OpenAI API";
+    const modelLabel = normalizeModelToken(policy.model || (backend === "codex_cli" ? codexModelHint() : openaiModelHint()));
     if (!toggle.checked) {
-      policyNote.textContent = "Agentic Search OFF: planner model/backend 설정은 저장되지만 실행에는 사용되지 않습니다.";
+      policyNote.textContent = `Agentic Search OFF · 전역 LLM 설정 유지 (backend=${backendLabel}, model=${modelLabel || "-"})`;
       return;
     }
-    const defaultLabel = backend === "codex_cli" ? "Codex CLI Auth" : "OpenAI API";
-    policyNote.textContent = `Agentic Search ON · backend=${backendLabel} (default: ${defaultLabel}) · model=${normalizeModelToken(modelInput.value) || modelForBackend(backend)}`;
+    policyNote.textContent = `Agentic Search ON · backend=${backendLabel} · model=${modelLabel || "-"}`;
   };
   const applyState = () => {
-    const enabled = Boolean(toggle.checked);
-    if (modelInput) modelInput.disabled = false;
     if (iterInput) iterInput.disabled = false;
-    if (backendSelect) backendSelect.disabled = false;
-    if (enabled && backendSelect) {
-      if (!backendSelect.value) backendSelect.value = "openai_api";
-      syncModelByBackend();
-    }
     updatePolicyNote();
   };
   toggle.addEventListener("change", applyState);
-  backendSelect?.addEventListener("change", () => {
-    const backend = normalizeAskLlmBackend(backendSelect.value);
-    syncModelByBackend();
-    if (backend === "codex_cli") {
-      appendLog("[feather] Agentic planner backend: codex_cli\n");
-    } else {
-      appendLog("[feather] Agentic planner backend: openai_api\n");
-    }
-    updatePolicyNote();
-  });
-  modelInput?.addEventListener("input", updatePolicyNote);
+  document.addEventListener("federnett:model-policy-updated", updatePolicyNote);
   applyState();
 }
 
@@ -16046,17 +17408,49 @@ function handlePipelineBackendControls() {
   federBackend?.addEventListener("change", () => {
     syncFederlichtModelControls({ announce: true, forceBackendDefaults: true });
     appendLog(`[federlicht] backend: ${normalizeAskLlmBackend(federBackend.value)}\n`);
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
   });
-  modelInput?.addEventListener("input", () => syncFederlichtModelControls({ announce: false }));
-  checkModelInput?.addEventListener("input", () => syncFederlichtModelControls({ announce: false }));
-  visionInput?.addEventListener("input", () => syncFederlichtModelControls({ announce: false }));
-  modelInput?.addEventListener("change", () => syncAndAnnounce("model"));
-  checkModelInput?.addEventListener("change", () => syncAndAnnounce("check"));
-  visionInput?.addEventListener("change", () => syncAndAnnounce("vision"));
-  reasoningSelect?.addEventListener("change", () => syncAndAnnounce("reasoning"));
-  if (federBackend || modelInput || checkModelInput || visionInput || reasoningSelect) {
+  modelInput?.addEventListener("input", () => {
     syncFederlichtModelControls({ announce: false });
-  }
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  checkModelInput?.addEventListener("input", () => {
+    syncFederlichtModelControls({ announce: false });
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  visionInput?.addEventListener("input", () => {
+    syncFederlichtModelControls({ announce: false });
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  modelInput?.addEventListener("change", () => {
+    syncAndAnnounce("model");
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  checkModelInput?.addEventListener("change", () => {
+    syncAndAnnounce("check");
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  visionInput?.addEventListener("change", () => {
+    syncAndAnnounce("vision");
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  reasoningSelect?.addEventListener("change", () => {
+    syncAndAnnounce("reasoning");
+    maybeSyncGlobalModelPolicyFromSource("federlicht");
+  });
+  syncFederlichtModelControls({ announce: false });
+}
+
+function syncModelInputCatalogBindings() {
+  const globalBackend = normalizeAskLlmBackend(
+    $("#global-llm-backend")?.value || state.modelPolicy.backend || "openai_api",
+  );
+  bindModelInputCatalog($("#ask-model"), globalBackend);
+  bindModelInputCatalog($("#live-ask-model"), globalBackend);
+  bindModelInputCatalog($("#global-model"), globalBackend);
+  bindModelInputCatalog($("#global-check-model"), globalBackend);
+  bindModelInputCatalog($("#global-vision-model"), globalBackend);
+  bindModelInputCatalog($("#template-gen-model"), "openai_api");
 }
 
 function handleRunOutputTouch() {
@@ -16175,10 +17569,18 @@ function handleRunChanges() {
 }
 
 function handleRunOpen() {
-  $("#run-open")?.addEventListener("click", () => {
+  const openRunPickerFromUi = () => {
     openRunPickerModal();
-    loadRunPickerItems();
-  });
+    loadWorkspaceSettings()
+      .catch(() => null)
+      .finally(() => {
+        loadRunPickerItems();
+      });
+  };
+  $("#workspace-run-folder")?.addEventListener("click", openRunPickerFromUi);
+  $("#sidebar-open-run-folder")?.addEventListener("click", openRunPickerFromUi);
+  $("#feather-open-run-folder")?.addEventListener("click", openRunPickerFromUi);
+  $("#federlicht-open-run-folder")?.addEventListener("click", openRunPickerFromUi);
 }
 
 function handleInstructionEditor() {
@@ -17011,34 +18413,212 @@ function handleFederlichtPromptEditor() {
 function handleRunPicker() {
   const modal = $("#run-picker-modal");
   const search = $("#run-picker-search");
+  const rootSelect = $("#run-picker-root");
   const useBtn = $("#run-picker-use");
-  modal?.querySelectorAll("[data-runpicker-close]")?.forEach((el) => {
-    el.addEventListener("click", () => closeRunPickerModal());
-  });
-  search?.addEventListener("input", () => {
-    const query = search.value.trim().toLowerCase();
+  const openBtn = $("#run-picker-open");
+  const createBtn = $("#run-picker-create");
+  const createNameInput = $("#run-picker-create-name");
+  const reloadBtn = $("#run-picker-reload");
+  const runRootAddInput = $("#workspace-run-root-add");
+  const runRootAddBtn = $("#workspace-run-root-add-btn");
+  const settingsReloadBtn = $("#workspace-settings-reload");
+  const settingsSaveBtn = $("#workspace-settings-save");
+  const applySelection = async (runRel) => {
+    const resolved = normalizePathString(runRel || "");
+    if (!resolved) return;
+    const runSelect = $("#run-select");
+    if (runSelect) runSelect.value = resolved;
+    applyRunFolderSelection(resolved);
+    refreshRunDependentFields();
+    await updateRunStudio(resolved).catch((err) => {
+      appendLog(`[studio] failed to refresh run studio: ${err}\n`);
+    });
+  };
+  const filterRunPickerByQuery = () => {
+    const query = String(search?.value || "").trim().toLowerCase();
+    state.runPicker.query = query;
     if (!query) {
       state.runPicker.filtered = [];
     } else {
       state.runPicker.filtered = state.runPicker.items.filter((item) => {
-        const rel = (item.run_rel || "").toLowerCase();
-        const name = (item.run_name || "").toLowerCase();
+        const rel = String(item.run_rel || "").toLowerCase();
+        const name = String(item.run_name || "").toLowerCase();
         return rel.includes(query) || name.includes(query);
       });
     }
     renderRunPickerList();
+  };
+  const reloadRunPicker = () => {
+    state.runPicker.items = runPickerItems();
+    if (!state.runPicker.items.some((item) => item.run_rel === state.runPicker.selected)) {
+      state.runPicker.selected = state.runPicker.items[0]?.run_rel || "";
+    }
+    filterRunPickerByQuery();
+  };
+  modal?.querySelectorAll("[data-runpicker-close]")?.forEach((el) => {
+    el.addEventListener("click", () => closeRunPickerModal());
+  });
+  search?.addEventListener("input", filterRunPickerByQuery);
+  rootSelect?.addEventListener("change", () => {
+    state.runPicker.root = normalizePathString(rootSelect.value || "");
+    reloadRunPicker();
+  });
+  createNameInput?.addEventListener("input", () => {
+    const raw = String(createNameInput.value || "");
+    const normalized = raw.replace(/\s+/g, "_").replace(/_+/g, "_");
+    if (raw !== normalized) {
+      createNameInput.value = normalized;
+    }
+  });
+  const addRunRootFromInput = async () => {
+    const raw = String(runRootAddInput?.value || "").trim();
+    const sanitized = normalizePathString(raw.replace(/\s+/g, "_"));
+    if (!sanitized) {
+      setWorkspaceSettingsStatus("run root 입력값이 비어 있습니다.", true);
+      return;
+    }
+    if (runRootAddInput && raw !== sanitized) {
+      runRootAddInput.value = sanitized;
+      appendLog(`[run-root] sanitized: ${raw} -> ${sanitized}\n`);
+    }
+    const appended = appendRunRootTokenToWorkspaceInput(sanitized);
+    if (!appended) return;
+    try {
+      setWorkspaceSettingsStatus(`workspace settings saving... (add root: ${sanitized})`);
+      await saveWorkspaceSettingsFromControls();
+      await loadRunPickerItems();
+      if (rootSelect) rootSelect.value = sanitized;
+      state.runPicker.root = sanitized;
+      if (runRootAddInput) runRootAddInput.value = "";
+      setWorkspaceSettingsStatus(`run root added: ${sanitized}`);
+      appendLog(`[run-root] added: ${sanitized}\n`);
+    } catch (err) {
+      const errText = String(err || "");
+      const legacyHint = /unknown_endpoint|404/i.test(errText)
+        ? " · 실행 중 Federnett가 구버전일 수 있습니다(서버 재시작 필요)"
+        : "";
+      setWorkspaceSettingsStatus(`run root add failed: ${err}${legacyHint}`, true);
+      appendLog(`[run-root] add failed: ${err}${legacyHint}\n`);
+    }
+  };
+  runRootAddBtn?.addEventListener("click", () => {
+    addRunRootFromInput();
+  });
+  runRootAddInput?.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    addRunRootFromInput();
+  });
+  reloadBtn?.addEventListener("click", async () => {
+    try {
+      await loadRuns();
+      await loadRunPickerItems();
+      setWorkspaceSettingsStatus("run folders reloaded");
+    } catch (err) {
+      appendLog(`[runs] reload failed: ${err}\n`);
+      setWorkspaceSettingsStatus(`run folders reload failed: ${err}`, true);
+    }
   });
   useBtn?.addEventListener("click", async () => {
     const runRel = state.runPicker.selected;
     if (!runRel) return;
-    const runSelect = $("#run-select");
-    if (runSelect) runSelect.value = runRel;
-    applyRunFolderSelection(runRel);
-    refreshRunDependentFields();
-    await updateRunStudio(runRel).catch((err) => {
-      appendLog(`[studio] failed to refresh run studio: ${err}\n`);
-    });
+    await applySelection(runRel);
+    appendLog(`[run-folder] loaded: ${runRel}\n`);
     closeRunPickerModal();
+  });
+  openBtn?.addEventListener("click", async () => {
+    const runRel = state.runPicker.selected;
+    if (!runRel) return;
+    await applySelection(runRel);
+    openPath(runRel);
+    appendLog(`[run-folder] opened: ${runRel}\n`);
+    closeRunPickerModal();
+  });
+  createBtn?.addEventListener("click", async () => {
+    const runNameRaw = String(createNameInput?.value || "").trim();
+    const runNameNoSpaces = runNameRaw.replace(/\s+/g, "_");
+    const runName = sanitizeRunNameHint(runNameNoSpaces);
+    const root = normalizePathString(rootSelect?.value || state.runPicker.root || "");
+    if (runNameRaw && !runName) {
+      appendLog("[run-folder] create failed: run name is empty after sanitization\n");
+      return;
+    }
+    if (createNameInput && runNameRaw && runName && runNameRaw !== runNameNoSpaces) {
+      createNameInput.value = runName;
+      appendLog(`[run-folder] sanitized run name: ${runNameRaw} -> ${runName}\n`);
+    } else if (createNameInput && runNameRaw && runName && runNameRaw !== runName) {
+      createNameInput.value = runName;
+      appendLog(`[run-folder] normalized run name: ${runNameRaw} -> ${runName}\n`);
+    }
+    const payload = {
+      run_name: runName || undefined,
+      run_root: root || undefined,
+    };
+    try {
+      const created = await fetchJSON("/api/runs/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      await loadRuns();
+      const runRel = normalizePathString(created?.run_rel || "");
+      if (runRel) {
+        await applySelection(runRel);
+        appendLog(`[run-folder] created: ${runRel}\n`);
+      }
+      if (createNameInput) createNameInput.value = "";
+      await loadRunPickerItems();
+      closeRunPickerModal();
+    } catch (err) {
+      appendLog(`[run-folder] create failed: ${err}\n`);
+    }
+  });
+  settingsReloadBtn?.addEventListener("click", () => {
+    loadWorkspaceSettings()
+      .then(() => setWorkspaceSettingsStatus("workspace settings reloaded"))
+      .catch((err) => {
+        const errText = String(err || "");
+        const legacyHint = /unknown_endpoint|404/i.test(errText)
+          ? " · 실행 중 Federnett가 구버전일 수 있습니다(서버 재시작 필요)"
+          : "";
+        setWorkspaceSettingsStatus(`workspace settings reload failed: ${err}${legacyHint}`, true);
+        appendLog(`[workspace] settings reload failed: ${err}${legacyHint}\n`);
+      });
+  });
+  settingsSaveBtn?.addEventListener("click", async () => {
+    try {
+      setWorkspaceSettingsStatus("workspace settings saving...");
+      await saveWorkspaceSettingsFromControls();
+      setWorkspaceSettingsStatus("workspace settings saved");
+    } catch (err) {
+      const errText = String(err || "");
+      const legacyHint = /unknown_endpoint|404/i.test(errText)
+        ? " · 실행 중 Federnett가 구버전일 수 있습니다(서버 재시작 필요)"
+        : "";
+      setWorkspaceSettingsStatus(`workspace settings save failed: ${err}${legacyHint}`, true);
+      appendLog(`[workspace] settings save failed: ${err}${legacyHint}\n`);
+    }
+  });
+}
+
+function handleModelPolicyModal() {
+  $("#workspace-model-settings")?.addEventListener("click", () => {
+    openModelPolicyModal();
+  });
+  $("#global-llm-backend")?.addEventListener("change", () => {
+    syncModelInputCatalogBindings();
+  });
+  $("#model-policy-apply")?.addEventListener("click", () => {
+    const policy = readGlobalModelPolicyControls();
+    applyGlobalModelPolicy(policy, { persist: true, announce: true });
+    closeModelPolicyModal();
+  });
+  $("#global-model-lock")?.addEventListener("change", (ev) => {
+    state.modelPolicy.lock = Boolean(ev?.target?.checked);
+    persistGlobalModelPolicy();
+  });
+  document.querySelectorAll("[data-modelpolicy-close]").forEach((el) => {
+    el.addEventListener("click", () => closeModelPolicyModal());
   });
 }
 
@@ -17117,10 +18697,16 @@ function handleWorkflowHistoryControls() {
 function handleWorkflowStudioPanel() {
   const panel = $("#workflow-studio-panel");
   if (!panel) return;
+  if (panel.parentElement !== document.body) {
+    document.body.appendChild(panel);
+  }
   panel.querySelectorAll("#pipeline-selected, .pipeline-selected").forEach((legacy) => {
     legacy.remove();
   });
-  const toggleBtn = $("#workflow-studio-toggle");
+  const toggleButtons = [
+    $("#workflow-studio-toggle"),
+    $("#workflow-studio-toggle-global"),
+  ].filter(Boolean);
   const closeBtn = $("#workflow-studio-close");
   const applyBoundValue = (control) => {
     const targetSel = control.getAttribute("data-bind-target") || "";
@@ -17146,7 +18732,7 @@ function handleWorkflowStudioPanel() {
     const eventName = control.getAttribute("data-bind-event") || "input";
     control.addEventListener(eventName, () => applyBoundValue(control));
   });
-  ["#wf-stage-enabled", "#wf-stage-model", "#wf-stage-prompt", "#wf-stage-tools"].forEach((selector) => {
+  ["#wf-stage-enabled", "#wf-stage-prompt", "#wf-stage-tools"].forEach((selector) => {
     const control = $(selector);
     if (!control) return;
     const eventName = selector === "#wf-stage-enabled" ? "change" : "input";
@@ -17160,9 +18746,29 @@ function handleWorkflowStudioPanel() {
     renderStageDetail(value);
     applyWorkflowStageOverrideControls(value);
   });
-  toggleBtn?.addEventListener("click", () => {
-    const next = !state.workflow.studioOpen;
-    setWorkflowStudioOpen(next, { stageId: "overview" });
+  $("#wf-stage-focus-active")?.addEventListener("click", () => {
+    const ok = focusWorkflowStageOverrideToActive();
+    if (!ok) {
+      appendLog("[workflow] 활성 pipeline stage를 찾지 못했습니다. stage를 직접 선택하세요.\n");
+    }
+  });
+  $("#wf-stage-reset")?.addEventListener("click", () => {
+    const stageId = activeWorkflowStageForOverrides();
+    resetWorkflowStageOverrideControls(stageId);
+    appendLog(`[workflow] stage override reset: ${stageId}\n`);
+  });
+  $("#wf-quality-iterations")?.addEventListener("change", (ev) => {
+    const value = Number.parseInt(String(ev.target?.value || "").trim(), 10);
+    if (!Number.isFinite(value)) return;
+    setQualityIterations(value);
+    syncWorkflowQualityControls();
+    renderWorkflow();
+  });
+  toggleButtons.forEach((toggleBtn) => {
+    toggleBtn.addEventListener("click", () => {
+      const next = !state.workflow.studioOpen;
+      setWorkflowStudioOpen(next, { stageId: "overview" });
+    });
   });
   closeBtn?.addEventListener("click", () => {
     setWorkflowStudioOpen(false);
@@ -18437,32 +20043,11 @@ function bindForms() {
         return;
       }
       const payload = buildFeatherPayload();
-      const runRel = payload.output;
-      const runName = $("#feather-run-name")?.value?.trim();
-      const outputPath = normalizePathString(payload.output);
-      const inputPath = normalizePathString(payload.input);
-      const outputIsRunFolder =
-        outputPath &&
-        ((runName && outputPath.endsWith(`/${runName}`)) ||
-          outputPath.includes("/runs/"));
-      const inputInsideOutput =
-        inputPath && outputPath && inputPath.startsWith(`${outputPath}/`);
-      if (outputIsRunFolder && inputInsideOutput) {
-        const derivedName = runName || outputPath.split("/").pop() || "run";
-        const outputRoot = parentPath(outputPath) || ".";
-        const instructionPath = `${outputPath}/instruction/${derivedName}.txt`;
-        payload.output = outputRoot;
-        payload.input = instructionPath;
-        $("#feather-input").value = instructionPath;
-        const content = $("#feather-query")?.value || "";
-        if (content.trim()) {
-          await saveInstructionContent(instructionPath, content);
-          setFeatherInstructionSnapshot(instructionPath, content);
-        }
-        appendLog(
-          `[feather] output looks like a run folder, using output root ${outputRoot} and instruction ${instructionPath}\n`,
-        );
-      } else if (payload.input) {
+      const runRel = normalizePathString(payload.output || "");
+      if (runRel) {
+        payload.output = runRel;
+      }
+      if (payload.input) {
         const normalized = normalizeFeatherInstructionPath(payload.input);
         payload.input = normalized;
         const content = $("#feather-query")?.value || "";
@@ -18586,40 +20171,63 @@ function handleTemplatesPanelToggle() {
 }
 
 async function loadModelOptions() {
-  const datalist = $("#model-options");
-  if (!datalist) return;
-  const codexOptions = Array.isArray(state.info?.llm_defaults?.codex_model_options)
-    ? state.info.llm_defaults.codex_model_options
-    : [];
+  const allList = $("#model-options");
+  const openaiList = $("#openai-model-options");
+  const codexList = $("#codex-model-options");
+  if (!allList && !openaiList && !codexList) return;
+  const codexOptions = codexModelPresetOptions();
+  const openaiPresets = openaiModelPresetOptions();
   try {
     const models = await fetchJSON("/api/models");
-    const seen = new Set();
-    const merged = [];
-    const pushModel = (token) => {
-      const value = String(token || "").trim();
-      if (!value || seen.has(value)) return;
-      seen.add(value);
-      merged.push(value);
+    const openaiRemote = Array.isArray(models)
+      ? models.filter((token) => !isCodexModelToken(token))
+      : [];
+    const openaiMerged = uniqueTokens([...openaiPresets, ...openaiRemote]);
+    const codexMerged = uniqueTokens(codexOptions);
+    const merged = uniqueTokens([...MODEL_PRESET_OPTIONS, ...openaiMerged, ...codexMerged]);
+    state.modelCatalog = {
+      all: merged,
+      openai: openaiMerged,
+      codex: codexMerged,
     };
-    MODEL_PRESET_OPTIONS.forEach(pushModel);
-    codexOptions.forEach(pushModel);
-    if (Array.isArray(models)) {
-      models.forEach(pushModel);
+    if (allList) allList.innerHTML = merged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    if (openaiList) {
+      openaiList.innerHTML = openaiMerged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
     }
-    datalist.innerHTML = merged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    if (codexList) codexList.innerHTML = codexMerged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
   } catch (err) {
-    const fallback = [...MODEL_PRESET_OPTIONS, ...codexOptions]
-      .filter((value, idx, arr) => arr.indexOf(value) === idx)
-      .map((m) => `<option value="${escapeHtml(m)}"></option>`)
-      .join("");
-    datalist.innerHTML = fallback;
+    const openaiMerged = uniqueTokens(openaiPresets);
+    const codexMerged = uniqueTokens(codexOptions);
+    const merged = uniqueTokens([...MODEL_PRESET_OPTIONS, ...openaiMerged, ...codexMerged]);
+    state.modelCatalog = {
+      all: merged,
+      openai: openaiMerged,
+      codex: codexMerged,
+    };
+    if (allList) {
+      allList.innerHTML = merged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    }
+    if (openaiList) {
+      openaiList.innerHTML = openaiMerged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    }
+    if (codexList) {
+      codexList.innerHTML = codexMerged.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+    }
     appendLog(`[models] ${err}\n`);
   }
+  syncModelInputCatalogBindings();
 }
 
 async function bootstrap() {
   initTheme();
   applyFieldTooltips();
+  bindGlobalOverlayEscape();
+  initPopupDragBindings();
+  bindWheelScrollAssist("#logs-wrap", "#live-ask-thread");
+  bindWheelScrollAssist("#control-panel", "#control-panel");
+  bindWheelScrollAssist("#workflow-studio-panel", ".workflow-studio-scroll");
+  bindWheelScrollAssist("#workspace-panel", "#workspace-panel");
+  bindWheelScrollAssist("#run-picker-modal", "#run-picker-list");
   loadWorkflowStageOverrides();
   handleAskPanel();
   handleWorkspacePanel();
@@ -18640,6 +20248,7 @@ async function bootstrap() {
   handleFederlichtPromptEditor();
   handlePromptExpandControl();
   handleRunPicker();
+  handleModelPolicyModal();
   handleJobsModal();
   handleReloadRuns();
   handleLogControls();
@@ -18691,6 +20300,14 @@ async function bootstrap() {
       appendLog(`[workflow] stage override sync failed: ${err}\n`);
     });
     syncFederlichtModelControls({ announce: false });
+    loadGlobalModelPolicy();
+    const hasStoredModelSignal = Boolean(
+      state.modelPolicy.model
+      || state.modelPolicy.checkModel
+      || state.modelPolicy.visionModel,
+    );
+    const startupPolicy = hasStoredModelSignal ? state.modelPolicy : policySnapshotFromSource("federlicht");
+    applyGlobalModelPolicy(startupPolicy, { persist: false, announce: false });
   } catch (err) {
     appendLog(`[init] ${err}\n`);
   }

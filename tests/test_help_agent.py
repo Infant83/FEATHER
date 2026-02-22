@@ -133,10 +133,97 @@ def test_help_user_prompt_contains_ui_first_operating_rules() -> None:
     assert "execution_mode(plan/act) 전환을 기본 제안하지 말 것." in prompt
 
 
+def test_help_user_prompt_includes_path_first_analysis_rule() -> None:
+    prompt = help_agent._help_user_prompt(
+        "archive/youtube 의 videos.jsonl 을 정리해줘",
+        "[S1] runs/QC_ppt/archive/youtube/videos.jsonl:1-40",
+    )
+    assert "특정 파일/폴더/경로" in prompt
+    assert "해당 경로를 우선 분석" in prompt
+
+
+def test_is_file_context_question_detects_path_queries() -> None:
+    assert help_agent._is_file_context_question("archive/youtube 의 내용을 정리해줘") is True
+    assert help_agent._is_file_context_question("Feather 실행해줘") is False
+
+
+def test_needs_agentic_action_planning_skips_archive_summary_questions() -> None:
+    assert help_agent._needs_agentic_action_planning("archive/youtube 의 videos.jsonl 을 정리해줘") is False
+    assert help_agent._needs_agentic_action_planning("run feather 실행해줘") is True
+
+
 def test_chat_completion_urls_with_v1_base() -> None:
     urls = help_agent._chat_completion_urls("http://localhost:8080/v1")
     assert "http://localhost:8080/v1/chat/completions" in urls
     assert "http://localhost:8080/chat/completions" in urls
+
+
+def test_iter_run_context_files_includes_archive_jsonl_for_archive_question(tmp_path) -> None:
+    run_dir = tmp_path / "runs" / "QC_ppt"
+    (run_dir / "instruction").mkdir(parents=True, exist_ok=True)
+    (run_dir / "archive" / "youtube").mkdir(parents=True, exist_ok=True)
+    (run_dir / "instruction" / "QC_ppt.txt").write_text("instruction", encoding="utf-8")
+    (run_dir / "archive" / "youtube" / "videos.jsonl").write_text(
+        '{"title":"A"}\n{"title":"B"}\n',
+        encoding="utf-8",
+    )
+
+    files = help_agent._iter_run_context_files(
+        tmp_path,
+        "runs/QC_ppt",
+        question="archive/youtube 의 videos.jsonl 을 정리해줘",
+    )
+    rels = {help_agent.safe_rel(path, tmp_path).replace("\\", "/") for path in files}
+    assert "runs/QC_ppt/archive/youtube/videos.jsonl" in rels
+
+
+def test_select_sources_prioritizes_explicit_archive_path_hint(tmp_path) -> None:
+    run_dir = tmp_path / "runs" / "QC_ppt"
+    (run_dir / "instruction").mkdir(parents=True, exist_ok=True)
+    (run_dir / "archive" / "youtube").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "src" / "feather").mkdir(parents=True, exist_ok=True)
+    (run_dir / "instruction" / "QC_ppt.txt").write_text("archive 요약 요청", encoding="utf-8")
+    (run_dir / "archive" / "youtube" / "videos.jsonl").write_text(
+        '{"title":"D-Wave case","summary":"industrial use"}\n{"title":"pilot","summary":"manufacturing"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "src" / "feather" / "review.py").write_text(
+        "def summarize():\n    return '정리 정리 정리 정리 정리'\n",
+        encoding="utf-8",
+    )
+    sources, _indexed = help_agent._select_sources(
+        tmp_path,
+        "archive/youtube 의 videos.jsonl 을 정리해줘",
+        max_sources=5,
+        run_rel="runs/QC_ppt",
+    )
+    assert sources
+    assert sources[0]["path"].replace("\\", "/") == "runs/QC_ppt/archive/youtube/videos.jsonl"
+
+
+def test_answer_help_question_uses_archive_sources_for_archive_summary(tmp_path, monkeypatch) -> None:
+    run_dir = tmp_path / "runs" / "QC_ppt"
+    (run_dir / "archive" / "youtube").mkdir(parents=True, exist_ok=True)
+    (run_dir / "archive" / "youtube" / "videos.jsonl").write_text(
+        '{"title":"demo","summary":"line"}\n',
+        encoding="utf-8",
+    )
+    captured: dict[str, Any] = {}
+
+    def _fake_call_llm(question, sources, **kwargs):
+        captured["question"] = question
+        captured["sources"] = list(sources or [])
+        return "요약 완료", "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fake_call_llm)
+    result = help_agent.answer_help_question(
+        tmp_path,
+        "archive/youtube 의 videos.jsonl 을 정리해줘",
+        run_rel="runs/QC_ppt",
+    )
+    assert result["answer"] == "요약 완료"
+    source_paths = [str(item.get("path") or "").replace("\\", "/") for item in captured.get("sources", [])]
+    assert "runs/QC_ppt/archive/youtube/videos.jsonl" in source_paths
 
 
 def test_call_llm_retries_token_budget_parameter(monkeypatch) -> None:
@@ -284,14 +371,13 @@ def test_infer_safe_action_detects_create_run_folder(tmp_path) -> None:
     assert "양자컴퓨터" in str(action.get("topic_hint") or "")
 
 
-def test_infer_safe_action_detects_analysis_intent_as_run(tmp_path) -> None:
+def test_infer_safe_action_skips_non_workspace_analysis_prompt(tmp_path) -> None:
     action = help_agent._infer_safe_action(
         tmp_path,
         "양자컴퓨터 관련된 최신 기술동향을 파악해보자.",
         run_rel="site/runs/demo",
     )
-    assert isinstance(action, dict)
-    assert action.get("type") == "run_feather_then_federlicht"
+    assert action is None
 
 
 def test_infer_safe_action_binds_run_hint_for_run_execution(tmp_path) -> None:
@@ -338,6 +424,23 @@ def test_infer_safe_action_uses_recent_run_hint_for_followup_execute(tmp_path) -
     action = help_agent._infer_safe_action(
         tmp_path,
         "실행해줘",
+        run_rel="site/runs/demo",
+        history=history,
+    )
+    assert isinstance(action, dict)
+    assert action.get("type") == "run_feather"
+    assert action.get("run_hint") == "test_my_run"
+    assert action.get("create_if_missing") is True
+
+
+def test_infer_safe_action_detects_work_phrase_as_explicit_execute(tmp_path) -> None:
+    history = [
+        {"role": "user", "content": "feather run folder를 test_my_run으로 설정하고 예제를 만들어보자"},
+        {"role": "assistant", "content": "좋아요. run을 맞춰두고 feather 실행 준비했습니다."},
+    ]
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "작업하자",
         run_rel="site/runs/demo",
         history=history,
     )
@@ -436,8 +539,22 @@ def test_instruction_quality_guard_requests_clarification_when_topic_missing() -
     assert "어떤 주제로 실행할까요" in str(guarded.get("clarify_question") or "")
 
 
+def test_has_explicit_execution_intent_supports_work_phrase() -> None:
+    assert help_agent._has_explicit_execution_intent("작업하자")
+    assert help_agent._has_explicit_execution_intent("바로 진행해줘")
+    assert help_agent._has_explicit_execution_intent("run it now")
+    assert help_agent._has_explicit_execution_intent("실행해")
+    assert help_agent._has_explicit_execution_intent("지금 시작")
+    assert help_agent._has_explicit_execution_intent("go ahead")
+    assert not help_agent._has_explicit_execution_intent("차이점을 설명해줘")
+
+
 def test_needs_agentic_action_planning_for_actionable_query() -> None:
     assert help_agent._needs_agentic_action_planning("run folder를 demo로 바꾸고 feather 실행해줘") is True
+
+
+def test_needs_agentic_action_planning_skips_general_content_query() -> None:
+    assert help_agent._needs_agentic_action_planning("간단한 QC 관련 ppt 를 한장 만들 수 있을까. 양자컴퓨터 말야") is False
 
 
 def test_answer_help_question_runs_web_search_when_enabled(monkeypatch, tmp_path) -> None:

@@ -60,6 +60,10 @@ _TEXT_EXTS = {
     ".js",
     ".ts",
     ".json",
+    ".jsonl",
+    ".ndjson",
+    ".csv",
+    ".tsv",
     ".toml",
     ".yml",
     ".yaml",
@@ -156,6 +160,52 @@ def _mentions_run_root_token(text: str) -> bool:
     if not lowered:
         return False
     return any(f"{prefix}/" in lowered for prefix in _KNOWN_RUN_ROOT_PREFIXES)
+
+
+def _extract_path_hints(question: str) -> list[str]:
+    text = str(question or "").strip().replace("\\", "/")
+    if not text:
+        return []
+    lowered = text.lower()
+    candidates: list[str] = []
+    candidates.extend(re.findall(r"(?:[a-z0-9_가-힣.\-]+/){1,}[a-z0-9_가-힣.\-]+", lowered))
+    candidates.extend(re.findall(r"[a-z0-9_가-힣.\-]+\.(?:jsonl|ndjson|json|md|txt|csv|tsv|log)", lowered))
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for raw in candidates:
+        token = str(raw or "").strip().strip("`'\".,;:!?()[]{}")
+        token = token.strip("/")
+        if not token:
+            continue
+        if token in seen:
+            continue
+        seen.add(token)
+        deduped.append(token)
+    return deduped
+
+
+def _matches_path_hints(rel_path: str, run_scoped_rel_path: str, path_hints: list[str]) -> bool:
+    if not path_hints:
+        return True
+    rel_l = str(rel_path or "").strip().lower()
+    scoped_l = str(run_scoped_rel_path or "").strip().lower()
+    rel_leaf = rel_l.rsplit("/", 1)[-1]
+    scoped_leaf = scoped_l.rsplit("/", 1)[-1]
+    for hint in path_hints:
+        token = str(hint or "").strip().lower().strip("/")
+        if not token:
+            continue
+        if "/" in token:
+            if token in rel_l or token in scoped_l:
+                return True
+            if scoped_l.startswith(token):
+                return True
+        else:
+            if token in rel_l or token in scoped_l:
+                return True
+            if token == rel_leaf or token == scoped_leaf:
+                return True
+    return False
 _RUN_CONTEXT_PATTERNS = (
     "instruction/*.txt",
     "instruction/*.md",
@@ -167,6 +217,16 @@ _RUN_CONTEXT_PATTERNS = (
     "supporting/help_agent/web_text/*.txt",
     "README.md",
 )
+_RUN_CONTEXT_ARCHIVE_PATTERNS = (
+    "archive/**/*.md",
+    "archive/**/*.txt",
+    "archive/**/*.json",
+    "archive/**/*.jsonl",
+    "archive/**/*.ndjson",
+    "archive/**/*.csv",
+    "archive/**/*.tsv",
+)
+_MAX_RUN_CONTEXT_FILES = 80
 _HELP_LLM_BACKENDS = {"openai_api", "codex_cli"}
 _HELP_REASONING_EFFORT_CHOICES = ("off", "none", "low", "medium", "high", "extra_high")
 _HELP_REASONING_EFFORT_TO_OPENAI = {
@@ -201,6 +261,22 @@ _GENERIC_EXECUTION_TOKENS = (
     "해 줘",
     "시작",
 )
+_EXECUTION_INTENT_EXPLICIT_TOKENS = (
+    "작업하자",
+    "작업해",
+    "진행하자",
+    "진행해",
+    "진행해줘",
+    "실행하자",
+    "실행해줘",
+    "바로실행",
+    "지금실행",
+    "돌려줘",
+    "run it",
+    "run now",
+    "execute",
+    "go ahead",
+)
 _TOPIC_SIGNAL_TOKENS = (
     "분석",
     "동향",
@@ -217,6 +293,30 @@ _TOPIC_SIGNAL_TOKENS = (
     "전망",
     "한계",
     "리스크",
+)
+_WORKSPACE_ACTION_TOKENS = (
+    "feather",
+    "federlicht",
+    "federhav",
+    "workflow",
+    "pipeline",
+    "run folder",
+    "run ",
+    "run=",
+    "런 ",
+    "런폴더",
+    "스테이지",
+    "stage",
+    "resume",
+    "재시작",
+    "instruction",
+    "prompt",
+    "inline prompt",
+    "실행",
+    "start",
+    "switch run",
+    "mode",
+    "모드",
 )
 
 
@@ -460,20 +560,34 @@ def _resolve_run_dir(root: Path, run_rel: str | None) -> Path | None:
     return run_dir
 
 
-def _iter_run_context_files(root: Path, run_rel: str | None) -> list[Path]:
+def _iter_run_context_files(root: Path, run_rel: str | None, *, question: str = "") -> list[Path]:
     run_dir = _resolve_run_dir(root, run_rel)
     if run_dir is None:
         return []
+    normalized_question = str(question or "").strip().lower().replace("\\", "/")
+    path_hints = _extract_path_hints(normalized_question)
+    include_archive = any("archive" in hint for hint in path_hints) or any(
+        token in normalized_question for token in ("archive", "아카이브", ".jsonl", ".ndjson")
+    )
+    patterns: list[str] = list(_RUN_CONTEXT_PATTERNS)
+    if include_archive:
+        patterns.extend(_RUN_CONTEXT_ARCHIVE_PATTERNS)
+    run_rel_norm = (run_rel or "").strip().replace("\\", "/").strip("/").lower()
+    run_prefix = f"{run_rel_norm}/" if run_rel_norm else ""
     files: list[Path] = []
     seen: set[str] = set()
-    for pattern in _RUN_CONTEXT_PATTERNS:
+    for pattern in patterns:
         for path in run_dir.glob(pattern):
             if not path.is_file():
                 continue
             rel = safe_rel(path, root)
             if rel in seen or not _is_path_allowed(rel, allow_run_prefixes=True):
                 continue
-            if "/archive/" in rel.replace("\\", "/").lower():
+            rel_l = rel.replace("\\", "/").lower()
+            run_scoped_rel = rel_l
+            if run_prefix and rel_l.startswith(run_prefix):
+                run_scoped_rel = rel_l[len(run_prefix) :]
+            if path_hints and not _matches_path_hints(rel_l, run_scoped_rel, path_hints):
                 continue
             try:
                 if path.stat().st_size > _MAX_FILE_BYTES:
@@ -482,6 +596,8 @@ def _iter_run_context_files(root: Path, run_rel: str | None) -> list[Path]:
                 continue
             seen.add(rel)
             files.append(path)
+            if len(files) >= _MAX_RUN_CONTEXT_FILES:
+                return files
     return files
 
 
@@ -489,13 +605,15 @@ def _score_run_context_sources(
     root: Path,
     run_rel: str | None,
     *,
+    question: str,
     tokens: list[str],
     question_l: str,
     max_sources: int,
 ) -> list[dict[str, Any]]:
     scored: list[dict[str, Any]] = []
     run_rel_l = (run_rel or "").strip().replace("\\", "/").strip("/").lower()
-    for path in _iter_run_context_files(root, run_rel):
+    path_hint_bonus = 8.0 if _extract_path_hints(question) else 0.0
+    for path in _iter_run_context_files(root, run_rel, question=question):
         doc = _read_doc(path, root)
         if doc is None or not doc.lines:
             continue
@@ -511,7 +629,7 @@ def _score_run_context_sources(
                     "path": doc.rel_path,
                     "start_line": start,
                     "end_line": end,
-                    "score": round(score + 3.0, 3),
+                    "score": round(score + 3.0 + path_hint_bonus, 3),
                     "excerpt": excerpt,
                 }
             )
@@ -557,6 +675,7 @@ def _select_sources(
     run_context_scored = _score_run_context_sources(
         root,
         run_rel,
+        question=question,
         tokens=tokens,
         question_l=question_l,
         max_sources=max(2, min(6, max_sources)),
@@ -1207,6 +1326,7 @@ def _help_user_prompt(
         "출력 지침:\n"
         "- 인사/잡담이면 1~2문장으로 짧게 답하고 형식 목록은 생략.\n"
         "- 실행/생성/수정 요청이면 먼저 `실행할 작업`과 `예상 결과`를 2~4줄로 제시.\n"
+        "- 질문에 특정 파일/폴더/경로가 포함되면 해당 경로를 우선 분석해 결과를 즉시 제시하고, 참조 경로를 함께 명시하세요.\n"
         "- 설명형 질문이면 핵심 답변 -> 절차 -> 주의사항 -> 근거 순서로 간결하게 답변.\n"
         "- 과도한 장문 템플릿 답변은 피하고, 작업 중심으로 답변.\n"
         "- 코드블록은 반드시 마크다운 fenced code block(```)을 사용.\n"
@@ -2640,9 +2760,41 @@ def _is_generic_execution_question(question: str) -> bool:
     compact = re.sub(r"\s+", "", q)
     if any(compact == token for token in ("실행해줘", "돌려줘", "해줘", "start", "run", "go")):
         return True
-    has_exec = any(token in q for token in _GENERIC_EXECUTION_TOKENS)
+    has_exec = _has_explicit_execution_intent(q) or any(token in q for token in _GENERIC_EXECUTION_TOKENS)
     has_topic = any(token in q for token in _TOPIC_SIGNAL_TOKENS)
     return has_exec and not has_topic and len(compact) <= 18
+
+
+def _is_file_context_question(question: str) -> bool:
+    q = str(question or "").strip().lower().replace("\\", "/")
+    if not q:
+        return False
+    if not _extract_path_hints(q):
+        return False
+    if _has_explicit_execution_intent(q):
+        return False
+    return True
+
+
+def _has_explicit_execution_intent(question: str) -> bool:
+    q = str(question or "").strip().lower()
+    if not q:
+        return False
+    compact = re.sub(r"\s+", "", q)
+    if any(token.replace(" ", "") in compact for token in _EXECUTION_INTENT_EXPLICIT_TOKENS):
+        return True
+    has_exec = bool(re.search(r"(실행|진행|작업|돌려|시작|run|execute|start)", q, flags=re.IGNORECASE))
+    has_explain = bool(re.search(r"(설명|차이|이유|왜|방법|가이드|how|what|difference)", q, flags=re.IGNORECASE))
+    return has_exec and not has_explain
+
+
+def _is_workspace_operation_request(question: str) -> bool:
+    q = str(question or "").strip().lower()
+    if not q:
+        return False
+    if _mentions_run_root_token(q):
+        return True
+    return any(token in q for token in _WORKSPACE_ACTION_TOKENS)
 
 
 def _extract_topic_hint_from_question_or_history(
@@ -2670,6 +2822,8 @@ def _needs_agentic_action_planning(question: str) -> bool:
     q = str(question or "").strip().lower()
     if not q:
         return False
+    if _is_file_context_question(q):
+        return False
     trivial_tokens = {
         "/help",
         "help",
@@ -2690,9 +2844,12 @@ def _needs_agentic_action_planning(question: str) -> bool:
     if compact.startswith("/"):
         command = compact.split(" ", 1)[0]
         return command in {"/plan", "/act", "/profile", "/agent", "/runtime"}
+    workspace_request = _is_workspace_operation_request(q)
     if _is_generic_execution_question(q):
         if not any(token in q for token in ("알려", "설명", "방법", "가이드", "guide", "how", "why")):
             return True
+    if not workspace_request:
+        return False
     action_hints = (
         "실행",
         "run",
@@ -2704,13 +2861,9 @@ def _needs_agentic_action_planning(question: str) -> bool:
         "열어",
         "open",
         "focus",
-        "만들",
-        "생성",
         "create",
         "설정",
-        "수정",
         "적용",
-        "작성",
         "launch",
     )
     if not any(token in q for token in action_hints):
@@ -2739,8 +2892,6 @@ def _needs_agentic_action_planning(question: str) -> bool:
         "돌려",
         "전환해",
         "switch run",
-        "만들어",
-        "생성해",
         "열어줘",
         "해줘",
     )
@@ -2796,10 +2947,10 @@ def _build_agentic_action_prompt(
         "rules:\n"
         "- avoid destructive/unbounded actions.\n"
         "- if intent is unclear, type=none.\n"
+        "- use run_* actions only when the question clearly requests workspace execution(run/workflow/Feather/Federlicht).\n"
         "- if user asks run switch/create explicitly, fill run_hint or run_name_hint.\n"
         "- use set_action_mode only when user explicitly asks policy mode.\n"
         "- prefer focus_editor when instruction/prompt editing intent is explicit.\n"
-        "- if question is short generic execution request, prefer run_feather or run_feather_then_federlicht with auto_instruction=true.\n"
         "- execution_mode and allow_artifacts are policy hints, not mandatory action.\n\n"
         f"question={question}\n"
         f"run_rel={run_rel or ''}\n"
@@ -2861,6 +3012,10 @@ def _infer_agentic_action(
     if not action:
         return None
     action_type = str(action.get("type") or "")
+    if action_type in {"run_feather", "run_federlicht", "run_feather_then_federlicht"}:
+        q = str(question or "").strip().lower()
+        if not _is_workspace_operation_request(q) and not _is_generic_execution_question(q):
+            return None
     if action_type in {"run_feather", "run_federlicht", "run_feather_then_federlicht", "switch_run"}:
         run_hint = _normalize_run_hint(str(action.get("run_hint") or ""))
         if run_hint and _is_invalid_run_hint(run_hint):
@@ -2968,7 +3123,9 @@ def _infer_safe_action(
     q = (question or "").strip().lower()
     if not q:
         return None
-    followup_execution_like = any(token in q for token in ("실행", "start", "run", "돌려", "시작", "해줘", "해 줘"))
+    workspace_request = _is_workspace_operation_request(q)
+    generic_followup = _is_generic_execution_question(q)
+    followup_execution_like = _has_explicit_execution_intent(q)
     custom = infer_capability_action(root, q, run_rel=run_rel)
     if custom:
         action_type = str(custom.get("type") or "").strip().lower()
@@ -3209,7 +3366,7 @@ def _infer_safe_action(
             ),
         }
 
-    execution_intent_like = any(token in q for token in ("실행", "start", "돌려", "시작", "run해", "run 해"))
+    execution_intent_like = _has_explicit_execution_intent(q)
     if run_binding_like and run_hint and not execution_intent_like:
         action = {
             "type": "switch_run",
@@ -3223,9 +3380,8 @@ def _infer_safe_action(
         action["summary"] = f"대상 run으로 전환 (없으면 생성): {run_hint}"
         return action
 
-    explicit_run = any(
-        token in q
-        for token in ("실행", "run", "start", "돌려", "해줘", "해 줘", "시작", "재작성", "다시 작성")
+    explicit_run = _has_explicit_execution_intent(q) or any(
+        token in q for token in ("재작성", "다시 작성")
     )
     analysis_like = any(
         token in q
@@ -3241,7 +3397,9 @@ def _infer_safe_action(
             "리포트 작성",
         )
     )
-    explicit_run = explicit_run or analysis_like
+    explicit_run = explicit_run or (analysis_like and workspace_request)
+    if analysis_like and not workspace_request and not generic_followup:
+        return None
     if not explicit_run:
         return None
     if any(token in q for token in ("feather부터", "연속", "end-to-end", "파이프라인")):
