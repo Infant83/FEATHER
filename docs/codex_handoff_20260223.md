@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 07:06:51 +09:00  
+Last updated: 2026-02-23 08:34:06 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -96,6 +96,19 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - 수용 기준:
 - 변경 전/후 품질 비교표 자동 생성
 - P0 범위 PR에서 벤치마크를 기본 실행 가능
+
+### P0+ (실측 기반 품질 상향, world-class 기준 재검증)
+- P0Q-1. 코히런스/방법론 서술 강화
+- 목표: `section_coherence_score >= 70`, `method_transparency >= 65`
+- 조치: writer/finalizer에 섹션 연결 문장 + 방법론/선정·제외 기준 명시를 기본 요구로 반영
+
+- P0Q-2. 품질 루프 안정성 강화(Quota/Recursion/Timeout)
+- 목표: 생성 파이프라인이 recoverable 오류에서 중단 없이 fallback 경로로 완료
+- 조치: template_adjust / alignment / quality 단계의 recoverable 오류 처리 통일
+
+- P0Q-3. 품질 지표 일관성 정합
+- 목표: runtime `quality_contract.latest.json`와 benchmark `signals`의 핵심 필드 차이(coverage/coherence) 원인 제거
+- 조치: required_sections 전달 및 섹션 추출 기준을 비교/검증 테스트로 고정
 
 ### P1 (DeepAgent/운영 고도화)
 - P1-1. FederHav DeepAgent Phase C 본격화 (M4 연계)
@@ -704,3 +717,69 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-4 Writer 정책 최적화: `100%` (intent/depth/rigidity 정책 체계 + quality 루프 연계 유지)
 - P0-5 Benchmark Harness v1: `100%` (suite/delta/gate/runbook 일체화 + 연속 PASS)
 - P0 전체: `100%` (이전 `89%` -> `+11%p`)
+
+## 21) Iteration Log (51~55 / 100)
+- Iter 상태: `55/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 08:34:06 +09:00`
+- 이번 배치 목표:
+- P0 완료판의 실제 생성 품질을 실측해 “원하는 수준(world-class)” 통과 여부 판정
+- 실패 시 P0+ 품질 상향 목표 재설정, 통과 시 P1 착수
+
+### Iter-51: P0 완료판 실제 생성 실험(성공)
+- 실행:
+- `python -m federlicht.report --run site/runs/20260221_QC_report --output site/runs/20260221_QC_report/report_full_iter51.html --template quanta_magazine --depth deep --quality-iterations 2 --quality-auto-extra-iterations 1 --quality-min-overall 75 --quality-min-claim-support 6 --quality-max-unsupported-claims 45 --quality-min-section-coherence 72 ...`
+- 결과:
+- 보고서 생성 성공(`report_full_iter51.html`)
+- 내부 품질 루프에서 gate 미충족 로그 확인(`section_coherence_score` 낮음)
+
+### Iter-52: 생성품질 정량 판정(world-class 게이트)
+- 실행:
+- `python tools/report_quality_benchmark.py --input site/runs/20260221_QC_report/report_full_iter51.html ...`
+- 결과(요약):
+- `overall=74.92`
+- `claim_support_ratio=47.50`
+- `unsupported_claim_count=21`
+- `section_coherence_score=60.00`
+- 엄격 게이트 판정:
+- `python tools/report_quality_regression_gate.py --input test-results/p0_quality_benchmark_qc_iter51.summary.json --min-overall 80 --min-claim-support 55 --max-unsupported 15 --min-section-coherence 70`
+- `FAIL` (world-class 기준 미달)
+
+### Iter-53: deep 런의 read 예산 상향 패치
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - depth가 `deep/exhaustive`일 때 auto `tool_char_limit`, `fs_read_cap`, `fs_total_cap` 상향
+  - 목적: evidence 단계 `read budget exhausted` 완화로 품질 저하 방지
+- 검증:
+- `pytest -q tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py` -> `11 passed`
+
+### Iter-54: recoverable 런타임 오류 복구 강화
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - recoverable 오류 탐지에 `Graph recursion limit` 계열 토큰 추가
+- `src/federlicht/report.py`
+  - `adjust_template_spec(...)`에서 recoverable 오류(429/quota/context/recursion) 시 템플릿 조정 단계를 fallback 처리하고 파이프라인 중단 방지
+- 테스트:
+- `tests/test_template_adjust_fallback.py` 추가
+- `pytest -q tests/test_template_adjust_fallback.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py` -> `13 passed`
+
+### Iter-55: 재실행 리스크 확인 및 충돌사항 정리
+- 관찰:
+- `openai_api` 경로는 계정 쿼터(429 insufficient_quota)로 중단 가능
+- `codex_cli` 경로는 장시간 실행/타임아웃 발생 가능(운영 타임아웃 정책 필요)
+- 결론:
+- P0(core)는 유지 완료 상태이나, “원하는 수준(world-class)” 기준에서는 미통과
+- 따라서 즉시 P1 착수 대신 `P0+ 품질 상향`을 먼저 수행
+
+### 진행률 업데이트 (51~55 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `20%` (신규 재정의/실측/안정성 패치 착수)
+- P1: `0%` (P0+ 통과 후 착수)
+
+### 충돌/결정 필요 항목 업데이트
+- 충돌 1: `P0 완료 선언` vs `world-class 실측 미통과`
+  - 결정: P0를 `core 완료`와 `quality 목표`로 분리해 관리(P0+ 신설)
+- 충돌 2: 백엔드 의존성 리스크(`openai_api` quota, `codex_cli` 장시간)
+  - 결정: recoverable fallback + 런타임 타임아웃/백엔드 우선순위 정책을 다음 배치에서 명시
+- 충돌 3: runtime quality_contract와 benchmark signals 일부 차이 가능성
+  - 결정: 동일 report/required_sections 기준 비교 테스트를 추가해 지표 정합을 강제

@@ -279,12 +279,15 @@ class ReportOrchestrator:
                 return 32000
             return 36000
 
+        depth_for_budget = helpers.normalize_depth_choice(getattr(args, "depth", ""))
+        deep_budget_mode = depth_for_budget in {"deep", "exhaustive"}
         configured_tool_char_limit = int(getattr(args, "max_tool_chars", 0) or 0)
         tool_budget_source = "cli" if configured_tool_char_limit > 0 else "auto"
         if configured_tool_char_limit > 0:
             tool_char_limit = configured_tool_char_limit
         else:
-            # Default conservatively to avoid silent context blowups in scout/evidence.
+            # Auto budget scales with model/depth. Deep runs need wider source reads;
+            # payload truncation later still prevents prompt overflow.
             lang_for_budget = helpers.normalize_lang(args.lang)
             char_ratio = 2 if helpers.is_korean_language(lang_for_budget) else 4
             token_cap = int(
@@ -298,9 +301,19 @@ class ReportOrchestrator:
                 min_tool_chars = 10000
             else:
                 min_tool_chars = 16000
-            tool_char_limit = max(min_tool_chars, min(48000, int(token_cap * char_ratio * 0.14)))
-        fs_read_cap = max(1500, min(4000, max(2000, tool_char_limit // 8)))
-        fs_total_cap = max(8000, min(tool_char_limit, int(tool_char_limit * 0.35)))
+            if deep_budget_mode:
+                min_tool_chars = max(min_tool_chars, 24000)
+                auto_multiplier = 0.28 if token_cap >= 24000 else 0.22
+                tool_char_limit = max(min_tool_chars, min(96000, int(token_cap * char_ratio * auto_multiplier)))
+            else:
+                auto_multiplier = 0.18 if depth_for_budget == "normal" else 0.14
+                tool_char_limit = max(min_tool_chars, min(64000, int(token_cap * char_ratio * auto_multiplier)))
+        if deep_budget_mode:
+            fs_read_cap = max(2400, min(9000, max(2600, tool_char_limit // 6)))
+            fs_total_cap = max(12000, min(tool_char_limit, int(tool_char_limit * 0.55)))
+        else:
+            fs_read_cap = max(1500, min(4000, max(2000, tool_char_limit // 8)))
+            fs_total_cap = max(8000, min(tool_char_limit, int(tool_char_limit * 0.35)))
         # Keep run_dir as backend root so built-in file tools can resolve archive paths reliably.
         # Bound filesystem-tool reads/list payloads in the backend to prevent context blowups.
         backend = helpers.SafeFilesystemBackend(
@@ -1440,6 +1453,10 @@ class ReportOrchestrator:
                     "prompt is too long",
                     "input is too long",
                     "too many tokens",
+                    "recursion limit",
+                    "graph_recursion_limit",
+                    "without hitting a stop condition",
+                    "maximum recursion depth",
                 )
             )
 

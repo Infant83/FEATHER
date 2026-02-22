@@ -3109,6 +3109,26 @@ def infer_required_sections_from_prompt(report_prompt: Optional[str], template_s
     return normalize_section_list(required)
 
 
+def _is_recoverable_agent_failure(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(
+        token in message
+        for token in (
+            "insufficient_quota",
+            "rate limit",
+            "429",
+            "context_length_exceeded",
+            "maximum context length",
+            "context window",
+            "too many tokens",
+            "recursion limit",
+            "graph_recursion_limit",
+            "maximum recursion depth",
+            "without hitting a stop condition",
+        )
+    )
+
+
 def merge_required_sections(
     adjusted_sections: list[str],
     required_sections: list[str],
@@ -3235,7 +3255,21 @@ def adjust_template_spec(
         max_input_tokens=max_input_tokens,
         max_input_tokens_source=max_input_tokens_source,
     )
-    result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
+    try:
+        result = agent.invoke({"messages": [{"role": "user", "content": "\n".join(user_parts)}]})
+    except Exception as exc:
+        if not _is_recoverable_agent_failure(exc):
+            raise
+        fallback_adjustment = {
+            "rationale": "fallback: template_adjust skipped due recoverable agent error",
+            "sections": base_sections,
+            "section_guidance": {},
+            "writer_guidance": [],
+            "required_sections": required_sections,
+            "adjust_mode": adjust_mode,
+            "error": str(exc),
+        }
+        return template_spec, fallback_adjustment
     text = extract_agent_text(result)
     parsed = extract_json_object(text)
     if not isinstance(parsed, dict):
