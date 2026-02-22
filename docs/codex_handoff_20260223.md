@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 00:39:12 +09:00  
+Last updated: 2026-02-23 00:50:38 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -498,3 +498,53 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-3 Validation Interface v1: `88%` (eval/gate 산출물 계약형 기록)
 - P0-5 Benchmark Harness v1: `86%` (suite JSON + 분포 검증 + summary 연계)
 - P0 전체: `76%` (이전 `72%` -> `+4%p`)
+
+## 17) Iteration Log (31~35 / 100)
+- Iter 상태: `35/100` 완료
+- 이번 배치 목표:
+- P0-2: section-level rewrite 실행 효율을 시간/절감 통계로 기록
+- P0-3: quality fallback 경로에서도 검증 계약 필드 유지
+- P0-5: benchmark summary를 비교표/rows 포함 번들로 고정
+
+### Iter-31: section rewrite 통계 함수 분리(중복 감소)
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `build_section_rewrite_tasks(...)` / `build_rewrite_stats(...)` 내부 헬퍼 도입
+  - `write_section_rewrite_tasks(...)`와 repair 단계에서 동일 통계 계산 로직 재사용
+
+### Iter-32: Structural Repair runtime 로그 계약화
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `section_rewrite_runtime.jsonl` 추가 기록:
+  - `mode`, `outcome`, `missing_count`, `targeted_task_count`, `elapsed_ms`, `rewrite_stats`
+  - section-level 보정이 전체 재생성 대비 얼마나 절감되는지 추적 가능
+
+### Iter-33: Quality Eval fallback 계약형 보강
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - evaluator overflow fallback에서도 heuristic 계산을 결합
+  - `llm_overall`, `heuristic_overall`, `heuristic`, `evidence_density_score`, `claim_support_ratio`, `unsupported_claim_count`, `section_coherence_score`, `unsupported_claim_examples`를 포함해 계약 필드 일관성 확보
+
+### Iter-34: Benchmark summary 비교표 내장
+- 반영:
+- `tools/report_quality_benchmark.py`
+  - `compare_markdown` 생성 함수 추가
+  - summary bundle에 `rows`와 `compare_markdown` 포함
+  - 이후 회귀 보고서/CI에서 별도 후처리 없이 비교표 사용 가능
+
+### Iter-35: 테스트 + 실측 검증
+- 반영:
+- `tests/test_report_quality_benchmark_tool.py`
+  - 비교표 렌더 테스트(`_render_compare_markdown`) 추가
+- 테스트:
+- `pytest -q tests/test_report_quality_benchmark_tool.py tests/test_report_quality_regression_gate.py tests/test_report_quality_heuristics.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_tools_claim_packet.py` -> `26 passed`
+- 실측:
+- `python tools/report_quality_benchmark.py --input site/runs/openclaw/report_full.html --suite docs/report_quality_benchmark_suite_v1.json --baseline test-results/p0_quality_benchmark_openclaw_20260223_iter30.json --output test-results/p0_quality_benchmark_openclaw_20260223_iter35.json --summary-output test-results/p0_quality_benchmark_openclaw_20260223_iter35.summary.json`
+- `python tools/report_quality_regression_gate.py --input test-results/p0_quality_benchmark_openclaw_20260223_iter35.summary.json --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55` -> `PASS`
+
+### P0 진행률 업데이트 (35/100 기준)
+- P0-1 Evidence Schema v1: `93%` (스키마 산출물 고정 유지)
+- P0-2 Structured Synthesis v1(AST): `74%` (runtime 효율 통계 로그 추가)
+- P0-3 Validation Interface v1: `92%` (fallback 경로 계약형 필드 일관화)
+- P0-5 Benchmark Harness v1: `90%` (compare_markdown + rows bundle)
+- P0 전체: `82%` (이전 `76%` -> `+6%p`)

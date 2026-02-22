@@ -136,6 +136,25 @@ def _load_suite(path: Path) -> dict:
     }
 
 
+def _render_compare_markdown(
+    current: dict[str, float],
+    baseline: dict[str, float] | None,
+    delta: dict[str, float] | None,
+) -> str:
+    if not baseline or not delta:
+        return ""
+    lines = [
+        "| metric | current | baseline | delta |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for key in METRIC_FIELDS:
+        lines.append(
+            f"| {key} | {float(current.get(key, 0.0)):.2f} | "
+            f"{float(baseline.get(key, 0.0)):.2f} | {float(delta.get(key, 0.0)):+.2f} |"
+        )
+    return "\n".join(lines)
+
+
 def _print_table(rows: list[dict]) -> dict[str, float]:
     if not rows:
         print("No report files matched.")
@@ -236,11 +255,14 @@ def main() -> int:
     if args.summary_output:
         summary_path = Path(args.summary_output)
         summary_path.parent.mkdir(parents=True, exist_ok=True)
+        compare_markdown = _render_compare_markdown(summary, baseline_summary, delta_summary)
         bundle = {
+            "rows": rows,
             "rows_count": len(rows),
             "summary": summary,
             "baseline_summary": baseline_summary,
             "delta_summary": delta_summary,
+            "compare_markdown": compare_markdown,
             "suite": suite_meta,
             "required_sections": required_sections,
             "depth": str(args.depth or "deep"),

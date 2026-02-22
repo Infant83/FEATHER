@@ -104,3 +104,30 @@ def test_load_suite_counts(tmp_path: Path) -> None:
     assert meta["suite_size"] == 3
     assert meta["intent_counts"]["research"] == 2
     assert meta["depth_counts"]["brief"] == 1
+
+
+def test_render_compare_markdown_table() -> None:
+    current = {
+        "overall": 72.0,
+        "claim_support_ratio": 58.0,
+        "unsupported_claim_count": 16.0,
+        "evidence_density_score": 64.0,
+        "section_coherence_score": 69.0,
+    }
+    baseline = {
+        "overall": 70.0,
+        "claim_support_ratio": 55.0,
+        "unsupported_claim_count": 18.0,
+        "evidence_density_score": 60.0,
+        "section_coherence_score": 66.0,
+    }
+    delta = {
+        "overall": 2.0,
+        "claim_support_ratio": 3.0,
+        "unsupported_claim_count": -2.0,
+        "evidence_density_score": 4.0,
+        "section_coherence_score": 3.0,
+    }
+    table = bench._render_compare_markdown(current, baseline, delta)
+    assert "| metric | current | baseline | delta |" in table
+    assert "| overall | 72.00 | 70.00 | +2.00 |" in table

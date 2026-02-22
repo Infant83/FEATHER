@@ -1650,13 +1650,28 @@ class ReportOrchestrator:
             if not missing_sections or args.repair_mode == "off":
                 return report_text
             repair_mode = args.repair_mode
-            rewrite_tasks: list[dict] = []
-            if section_ast_payload:
-                rewrite_tasks = feder_section_ast.build_rewrite_tasks(
-                    section_ast_payload,
-                    missing_sections=missing_sections,
-                    max_claims=3,
-                )
+            rewrite_tasks = build_section_rewrite_tasks(missing_sections, max_claims=3)
+            rewrite_stats = build_rewrite_stats(report_text, len(rewrite_tasks))
+            repair_started_at = dt.datetime.now()
+            runtime_log_path = notes_dir / "section_rewrite_runtime.jsonl"
+
+            def finalize(result_text: str, outcome: str) -> str:
+                elapsed_ms = int(max(0.0, (dt.datetime.now() - repair_started_at).total_seconds()) * 1000.0)
+                runtime_payload = {
+                    "label": label,
+                    "mode": repair_mode,
+                    "outcome": outcome,
+                    "missing_sections": list(missing_sections),
+                    "missing_count": len(missing_sections),
+                    "targeted_task_count": len(rewrite_tasks),
+                    "report_chars_before": len(str(report_text or "")),
+                    "report_chars_after": len(str(result_text or "")),
+                    "elapsed_ms": elapsed_ms,
+                    "rewrite_stats": rewrite_stats,
+                    "task_sections": [str(item.get("title") or "").strip() for item in rewrite_tasks if item],
+                }
+                helpers.append_jsonl(runtime_log_path, runtime_payload)
+                return result_text
             repair_skeleton = helpers.build_report_skeleton(
                 missing_sections if repair_mode == "append" else required_sections,
                 output_format,
@@ -1745,18 +1760,18 @@ class ReportOrchestrator:
                             f"[repair-debug] {label}: no matching headings in repair output; skipping append",
                             file=sys.stderr,
                         )
-                    return report_text
-                return append_missing_sections(report_text, repair_text)
+                    return finalize(report_text, "append_skipped_no_matching")
+                return finalize(append_missing_sections(report_text, repair_text), "append_applied")
             candidate = repair_text.strip()
             if not candidate:
-                return report_text
+                return finalize(report_text, "empty_candidate")
             min_len = max(400, int(len(report_text) * 0.5))
             candidate_missing = helpers.find_missing_sections(candidate, required_sections, output_format)
             if not extract_section_headings(candidate):
-                return report_text
+                return finalize(report_text, "invalid_candidate_no_headings")
             if len(candidate) < min_len or (candidate_missing and len(candidate_missing) >= len(missing_sections)):
-                return append_missing_sections(report_text, candidate)
-            return candidate
+                return finalize(append_missing_sections(report_text, candidate), "append_fallback_short_or_missing")
+            return finalize(candidate, "replace_candidate")
 
         def run_writer_finalizer(
             primary_report: str,
@@ -3215,21 +3230,19 @@ class ReportOrchestrator:
             elif not evidence_for_writer:
                 evidence_for_writer = evidence_notes
 
-        def write_section_rewrite_tasks(
-            missing_sections: list[str], label: str, *, report_text: str = ""
-        ) -> None:
+        def build_section_rewrite_tasks(missing_sections: list[str], *, max_claims: int = 3) -> list[dict]:
             if not missing_sections or not section_ast_payload:
-                return
+                return []
             tasks = feder_section_ast.build_rewrite_tasks(
                 section_ast_payload,
                 missing_sections=missing_sections,
-                max_claims=3,
+                max_claims=max_claims,
             )
-            if not tasks:
-                return
+            return list(tasks or [])
+
+        def build_rewrite_stats(report_text: str, target_sections: int) -> dict[str, object]:
             report_word_count = len(re.findall(r"\S+", str(report_text or "")))
             total_sections = len(list(section_ast_payload.get("sections") or []))
-            target_sections = len(tasks)
             avg_words_per_section = (
                 (report_word_count / total_sections) if total_sections > 0 else float(report_word_count)
             )
@@ -3247,18 +3260,27 @@ class ReportOrchestrator:
                 if estimated_full_tokens > 0
                 else 0.0
             )
+            return {
+                "total_sections": total_sections,
+                "target_sections": target_sections,
+                "report_word_count": report_word_count,
+                "estimated_full_tokens": estimated_full_tokens,
+                "estimated_target_tokens": estimated_target_tokens,
+                "estimated_savings_pct": estimated_savings_pct,
+            }
+
+        def write_section_rewrite_tasks(
+            missing_sections: list[str], label: str, *, report_text: str = ""
+        ) -> None:
+            tasks = build_section_rewrite_tasks(missing_sections, max_claims=3)
+            if not tasks:
+                return
+            rewrite_stats = build_rewrite_stats(report_text, len(tasks))
             payload = {
                 "label": label,
                 "missing_sections": list(missing_sections),
                 "tasks": tasks,
-                "rewrite_stats": {
-                    "total_sections": total_sections,
-                    "target_sections": target_sections,
-                    "report_word_count": report_word_count,
-                    "estimated_full_tokens": estimated_full_tokens,
-                    "estimated_target_tokens": estimated_target_tokens,
-                    "estimated_savings_pct": estimated_savings_pct,
-                },
+                "rewrite_stats": rewrite_stats,
             }
             path = notes_dir / f"section_rewrite_tasks_{label}.json"
             path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -4097,8 +4119,20 @@ class ReportOrchestrator:
                     )
                     if missing_sections_eval:
                         fallback_overall -= min(20.0, float(len(missing_sections_eval) * 4))
+                    heuristic = helpers.compute_heuristic_quality_signals(
+                        candidate["text"],
+                        required_sections,
+                        output_format,
+                        depth=depth,
+                        report_intent=report_intent,
+                    )
+                    unsupported_examples = (
+                        helpers._unsupported_claim_examples(candidate["text"], output_format, max_items=6)
+                        if hasattr(helpers, "_unsupported_claim_examples")
+                        else []
+                    )
                     evaluation = {
-                        "overall": max(0.0, fallback_overall),
+                        "overall": round(max(0.0, (fallback_overall * 0.7) + (float(heuristic.get("overall", 0.0)) * 0.3)), 2),
                         "coverage": max(0.0, fallback_overall - 2.0),
                         "evidence_use": max(0.0, fallback_overall - 6.0),
                         "analysis_depth": max(0.0, fallback_overall - 4.0),
@@ -4109,6 +4143,14 @@ class ReportOrchestrator:
                         "strengths": ["Fallback evaluation used due to context overflow."],
                         "weaknesses": ["Manual review recommended for this candidate."],
                         "fixes": ["Lower quality_max_chars or reduce evidence packet density."],
+                        "llm_overall": max(0.0, fallback_overall),
+                        "heuristic_overall": float(heuristic.get("overall", 0.0)),
+                        "heuristic": heuristic,
+                        "evidence_density_score": float(heuristic.get("evidence_density_score", 0.0)),
+                        "claim_support_ratio": float(heuristic.get("claim_support_ratio", 0.0)),
+                        "unsupported_claim_count": float(heuristic.get("unsupported_claim_count", 0.0)),
+                        "section_coherence_score": float(heuristic.get("section_coherence_score", 0.0)),
+                        "unsupported_claim_examples": unsupported_examples,
                         "raw": f"context_overflow: {exc}",
                     }
                 evaluation["label"] = candidate["label"]
