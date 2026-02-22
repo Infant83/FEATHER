@@ -1647,6 +1647,7 @@ class ReportOrchestrator:
             return f"{cleaned}\n"
 
         def run_structural_repair(report_text: str, missing_sections: list[str], label: str) -> str:
+            nonlocal section_ast_payload, section_ast_outline_text
             if not missing_sections or args.repair_mode == "off":
                 return report_text
             repair_mode = args.repair_mode
@@ -1676,6 +1677,53 @@ class ReportOrchestrator:
                 }
                 helpers.append_jsonl(runtime_log_path, runtime_payload)
                 return result_text
+
+            def merge_targeted_sections(current_report: str, repair_report: str) -> tuple[str, int]:
+                if not hasattr(helpers, "upsert_named_section"):
+                    return current_report, 0
+                merged = str(current_report or "")
+                merged_count = 0
+                section_id_by_title: dict[str, str] = {}
+                if section_ast_payload:
+                    for item in list(section_ast_payload.get("sections") or []):
+                        if not isinstance(item, dict):
+                            continue
+                        title_key = str(item.get("title") or "").strip().lower()
+                        section_id = str(item.get("section_id") or "").strip()
+                        if title_key and section_id:
+                            section_id_by_title[title_key] = section_id
+                for section_title in missing_sections:
+                    section_body = helpers.extract_named_section(
+                        repair_report,
+                        output_format,
+                        section_title,
+                    )
+                    if not section_body:
+                        continue
+                    merged = helpers.upsert_named_section(
+                        merged,
+                        output_format,
+                        section_title,
+                        section_body,
+                    )
+                    merged_count += 1
+                    if section_ast_payload:
+                        section_id = section_id_by_title.get(str(section_title).strip().lower(), "")
+                        if section_id:
+                            section_ast_payload = feder_section_ast.apply_section_rewrite(
+                                section_ast_payload,
+                                section_id=section_id,
+                                revised_text=str(section_body or ""),
+                            )
+                if merged_count and section_ast_payload:
+                    section_ast_outline_text = feder_section_ast.format_section_ast_outline(section_ast_payload)
+                    (notes_dir / "section_ast.json").write_text(
+                        json.dumps(section_ast_payload, ensure_ascii=False, indent=2),
+                        encoding="utf-8",
+                    )
+                    (notes_dir / "section_ast.md").write_text(section_ast_outline_text, encoding="utf-8")
+                return merged, merged_count
+
             repair_skeleton = helpers.build_report_skeleton(
                 missing_sections if repair_mode == "append" else required_sections,
                 output_format,
@@ -1775,6 +1823,11 @@ class ReportOrchestrator:
                     f"headings={repair_headings}",
                     file=sys.stderr,
                 )
+            merged_report, merged_count = merge_targeted_sections(report_text, repair_text)
+            if merged_count > 0:
+                merged_missing = helpers.find_missing_sections(merged_report, required_sections, output_format)
+                if len(merged_missing) < len(missing_sections):
+                    return finalize(merged_report, f"targeted_upsert_applied_{merged_count}")
             if repair_mode == "append":
                 if not matching:
                     if args.repair_debug:
@@ -3189,6 +3242,10 @@ class ReportOrchestrator:
             )
             (notes_dir / "evidence_packet.latest.json").write_text(
                 json.dumps(claim_packet, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            (notes_dir / "evidence_packet.v1.schema.json").write_text(
+                json.dumps(feder_tools.evidence_packet_schema_v1(), ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
             (notes_dir / "claim_evidence_map.md").write_text(claim_packet_text, encoding="utf-8")

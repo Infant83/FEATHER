@@ -1101,6 +1101,111 @@ def extract_named_section_tex(report: str, title_token: str) -> Optional[str]:
     return None
 
 
+def _strip_section_heading_prefix(section_content: str, output_format: str, section_title: str) -> str:
+    text = str(section_content or "").strip()
+    if not text:
+        return ""
+    if output_format == "html":
+        return re.sub(r"(?is)^\s*<h[1-6][^>]*>.*?</h[1-6]>\s*", "", text, count=1).strip()
+    if output_format == "tex":
+        return re.sub(r"(?ms)^\s*\\section\*?\{[^}]+\}\s*", "", text, count=1).strip()
+    lines = text.splitlines()
+    if lines:
+        heading = re.match(r"^\s*#{1,6}\s+(.+)$", lines[0].strip())
+        if heading:
+            heading_token = _normalize_section_title_token(heading.group(1))
+            if heading_token == _normalize_section_title_token(section_title):
+                lines = lines[1:]
+    return "\n".join(lines).strip()
+
+
+def _upsert_named_section_md(report: str, section_title: str, section_content: str) -> str:
+    lines = str(report or "").splitlines()
+    title_token = _normalize_section_title_token(section_title)
+    body = _strip_section_heading_prefix(section_content, "md", section_title)
+    if not body:
+        return report
+    heading_entries: list[tuple[int, int, str]] = []
+    for index, line in enumerate(lines):
+        heading = re.match(r"^(#{1,6})\s+(.+)", line)
+        if not heading:
+            continue
+        heading_entries.append((index, len(heading.group(1)), _normalize_section_title_token(heading.group(2))))
+    block_lines = [f"## {section_title}", "", body]
+    for pos, (line_index, level, token) in enumerate(heading_entries):
+        if token != title_token:
+            continue
+        end_index = len(lines)
+        for next_index, next_level, _next_token in heading_entries[pos + 1 :]:
+            if next_level <= level:
+                end_index = next_index
+                break
+        merged = lines[:line_index] + block_lines + lines[end_index:]
+        return "\n".join(merged).strip() + "\n"
+    if report.strip():
+        return report.rstrip() + "\n\n" + "\n".join(block_lines) + "\n"
+    return "\n".join(block_lines).strip() + "\n"
+
+
+def _upsert_named_section_html(report: str, section_title: str, section_content: str) -> str:
+    source = str(report or "")
+    title_token = _normalize_section_title_token(section_title)
+    body = _strip_section_heading_prefix(section_content, "html", section_title)
+    if not body:
+        return report
+    if re.search(r"(?is)<[a-z][^>]*>", body):
+        body_html = body
+    else:
+        escaped = html_lib.escape(body).replace("\n", "<br/>")
+        body_html = f"<p>{escaped}</p>"
+    block = f"<h2>{html_lib.escape(section_title)}</h2>\n{body_html.strip()}\n"
+    pattern = re.compile(r"(?is)<h([1-6])[^>]*>(.*?)</h\1>")
+    headings = list(pattern.finditer(source))
+    for idx, match in enumerate(headings):
+        level = int(match.group(1))
+        heading_token = _normalize_section_title_token(html_to_text(match.group(2)))
+        if heading_token != title_token:
+            continue
+        end = len(source)
+        for next_match in headings[idx + 1 :]:
+            next_level = int(next_match.group(1))
+            if next_level <= level:
+                end = next_match.start()
+                break
+        return (source[: match.start()] + block + source[end:]).strip() + "\n"
+    if source.strip():
+        return source.rstrip() + "\n\n" + block
+    return block
+
+
+def _upsert_named_section_tex(report: str, section_title: str, section_content: str) -> str:
+    source = str(report or "")
+    body = _strip_section_heading_prefix(section_content, "tex", section_title)
+    if not body:
+        return report
+    block = f"\\section{{{section_title}}}\n{body.strip()}\n"
+    pattern = re.compile(r"(?ms)^\\section\*?\{([^}]+)\}(.*?)(?=^\\section\*?\{|\Z)")
+    title_token = _normalize_section_title_token(section_title)
+    for match in pattern.finditer(source):
+        heading_token = _normalize_section_title_token(match.group(1))
+        if heading_token != title_token:
+            continue
+        return (source[: match.start()] + block + source[match.end() :]).strip() + "\n"
+    if source.strip():
+        return source.rstrip() + "\n\n" + block
+    return block
+
+
+def upsert_named_section(report: str, output_format: str, section_title: str, section_content: str) -> str:
+    if not str(section_title or "").strip() or not str(section_content or "").strip():
+        return report
+    if output_format == "html":
+        return _upsert_named_section_html(report, section_title, section_content)
+    if output_format == "tex":
+        return _upsert_named_section_tex(report, section_title, section_content)
+    return _upsert_named_section_md(report, section_title, section_content)
+
+
 def build_site_manifest_entry(
     site_root: Path,
     run_dir: Path,

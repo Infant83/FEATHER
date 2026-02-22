@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://federlicht.local/schema/evidence_packet_v1.schema.json",
+  "title": "Federlicht Claim-Evidence Packet v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "stats",
+    "focus",
+    "claims",
+    "evidence_registry"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "v1"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "stats": {
+      "type": "object"
+    },
+    "focus": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "claim_text",
+          "section_hint",
+          "evidence_ids",
+          "strength",
+          "limits",
+          "recency",
+          "source_kind"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string"
+          },
+          "claim_text": {
+            "type": "string"
+          },
+          "section_hint": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strength": {
+            "type": "string"
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recency": {
+            "type": "string"
+          },
+          "source_kind": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "evidence_registry": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "ref",
+          "source_kind"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "source_kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

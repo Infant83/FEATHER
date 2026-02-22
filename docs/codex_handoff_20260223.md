@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 01:18:09 +09:00  
+Last updated: 2026-02-23 07:06:51 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -647,3 +647,60 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-3 Validation Interface v1: `96%` (fallback/contract 일관성 유지)
 - P0-5 Benchmark Harness v1: `95%` (runbook 연속 회귀 PASS)
 - P0 전체: `89%` (이전 `86%` -> `+3%p`)
+
+## 20) Iteration Log (46~50 / 100)
+- Iter 상태: `50/100` 완료
+- 상태: `P0완료`
+- 이번 배치 목표:
+- P0-1: evidence schema의 machine-readable 계약 파일 + validator 실연동 마무리
+- P0-2: section-level rewrite 결과를 실제 본문 병합(upsert) 경로로 연결
+- P0-3/P0-5: 통합 회귀 + 품질 게이트 재검증
+
+### Iter-46: Evidence Packet JSON Schema 계약 파일 추가
+- 반영:
+- `src/federlicht/schemas/evidence_packet_v1.schema.json` 추가
+  - packet 필수 키/claim 필수 키/evidence registry 필수 키 및 타입 명시
+- `src/federlicht/tools.py`
+  - `load_evidence_packet_schema_v1()`, `evidence_packet_schema_v1()` 추가
+  - 스키마 파일 기반 required/type 검증 로직을 `validate_claim_evidence_packet_v1(...)`에 반영
+
+### Iter-47: claim packet 생성 품질 보정(섹션 힌트 자동 추론)
+- 반영:
+- `src/federlicht/tools.py`
+  - `_infer_section_hint(...)` 추가
+  - `build_claim_evidence_packet(...)`의 `section_hint`를 claim/focus/ref 기반으로 자동 추론
+- 효과:
+- 기존 `"unspecified"` 고정 비율을 낮추고 section-level 합성 단서 밀도 개선
+
+### Iter-48: Section-level rewrite를 본문 병합 경로로 승격
+- 반영:
+- `src/federlicht/report.py`
+  - `upsert_named_section(...)` 추가 (md/html/tex 공통 지원)
+  - 기존 보고서의 특정 섹션을 부분 교체/추가 가능
+- `src/federlicht/orchestrator.py`
+  - `run_structural_repair(...)`에 targeted section merge 경로 추가
+  - repair 출력에서 missing section만 추출해 `upsert_named_section(...)`으로 병합
+  - 적용 성공 시 `targeted_upsert_applied_*` outcome으로 runtime 기록
+  - section AST revision 반영 후 `section_ast.json/md` 갱신
+
+### Iter-49: 계약 산출물 trace 강화
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - run 산출물에 `report_notes/evidence_packet.v1.schema.json` 자동 기록
+- 효과:
+- evidence packet 본문(`evidence_packet.v1.json`)과 계약 스키마를 동일 run에서 함께 추적 가능
+
+### Iter-50: 테스트/게이트 회귀 검증
+- 테스트:
+- `pytest -q tests/test_tools_claim_packet.py tests/test_section_ast.py tests/test_report_section_upsert.py` -> `15 passed`
+- `pytest -q tests/test_help_agent.py tests/test_report_quality_gate_runner.py tests/test_report_quality_benchmark_tool.py tests/test_report_quality_regression_gate.py tests/test_report_quality_heuristics.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_tools_claim_packet.py tests/test_section_ast.py tests/test_report_section_upsert.py` -> `105 passed`
+- 품질 게이트:
+- `python tools/run_report_quality_gate.py --input site/runs/openclaw/report_full.html --suite docs/report_quality_benchmark_suite_v1.json --baseline test-results/p0_quality_benchmark_openclaw_20260223_iter45.json --summary-output test-results/p0_quality_benchmark_openclaw_20260223_iter50.summary.json --benchmark-output test-results/p0_quality_benchmark_openclaw_20260223_iter50.json --report-md test-results/p0_quality_gate_report_20260223_iter50.md --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55` -> `PASS`
+
+### P0 진행률 업데이트 (50/100 기준)
+- P0-1 Evidence Schema v1: `100%` (스키마 파일 + validator 연동 + run trace 산출물)
+- P0-2 Structured Synthesis v1(AST): `100%` (section-level rewrite upsert 적용 + AST revision 동기화)
+- P0-3 Validation Interface v1: `100%` (계약형 지표 + 회귀 검증 유지)
+- P0-4 Writer 정책 최적화: `100%` (intent/depth/rigidity 정책 체계 + quality 루프 연계 유지)
+- P0-5 Benchmark Harness v1: `100%` (suite/delta/gate/runbook 일체화 + 연속 PASS)
+- P0 전체: `100%` (이전 `89%` -> `+11%p`)

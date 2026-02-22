@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import re
 import urllib.parse
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -33,6 +34,53 @@ _CLAIM_STRENGTH_WEIGHT = {
     "low": 0.42,
     "none": 0.2,
 }
+EVIDENCE_PACKET_SCHEMA_VERSION = "v1"
+_SCHEMA_DIR = Path(__file__).resolve().parent / "schemas"
+_EVIDENCE_PACKET_SCHEMA_PATH = _SCHEMA_DIR / "evidence_packet_v1.schema.json"
+
+
+@lru_cache(maxsize=1)
+def load_evidence_packet_schema_v1() -> dict:
+    fallback = {
+        "required": [
+            "schema_version",
+            "created_at",
+            "stats",
+            "focus",
+            "claims",
+            "evidence_registry",
+        ],
+        "properties": {
+            "claims": {
+                "items": {
+                    "required": [
+                        "claim_id",
+                        "claim_text",
+                        "section_hint",
+                        "evidence_ids",
+                        "strength",
+                        "limits",
+                        "recency",
+                        "source_kind",
+                    ]
+                }
+            },
+            "evidence_registry": {"items": {"required": ["evidence_id", "ref", "source_kind"]}},
+        },
+    }
+    try:
+        raw = json.loads(_EVIDENCE_PACKET_SCHEMA_PATH.read_text(encoding="utf-8"))
+        return raw if isinstance(raw, dict) else fallback
+    except Exception:
+        return fallback
+
+
+def evidence_packet_schema_v1() -> dict:
+    return json.loads(json.dumps(load_evidence_packet_schema_v1()))
+
+
+def evidence_packet_schema_path_v1() -> Path:
+    return _EVIDENCE_PACKET_SCHEMA_PATH
 
 
 def iter_jsonl(path: Path) -> Iterable[dict]:
@@ -489,6 +537,67 @@ def _classify_flags(refs: list[str]) -> list[str]:
     return flags
 
 
+def _infer_source_kind(ref: str) -> str:
+    token = str(ref or "").strip().lower()
+    if not token:
+        return "unknown"
+    if token.startswith("https://doi.org/"):
+        return "doi"
+    if "arxiv.org" in token:
+        return "arxiv"
+    if token.startswith("http://") or token.startswith("https://"):
+        return "web"
+    if token.endswith(".pdf"):
+        return "pdf"
+    if token.endswith(".jsonl"):
+        return "index"
+    if token.endswith(".md"):
+        return "markdown"
+    if token.endswith(".txt"):
+        return "text"
+    return "path"
+
+
+def _infer_recency(refs: list[str]) -> str:
+    years: list[int] = []
+    current_year = dt.datetime.now().year
+    for ref in refs:
+        match = YEAR_RE.search(str(ref or ""))
+        if not match:
+            continue
+        try:
+            years.append(int(match.group(0)))
+        except Exception:
+            continue
+    if not years:
+        return "unknown"
+    latest = max(years)
+    delta = max(0, current_year - latest)
+    if delta <= 2:
+        return "new"
+    if delta <= 6:
+        return "recent"
+    return "old"
+
+
+def _infer_section_hint(claim_text: str, refs: list[str], focus_text: str = "") -> str:
+    token = " ".join((claim_text or "").lower().split())
+    focus = " ".join((focus_text or "").lower().split())
+    if any(word in token for word in ("method", "methodology", "scope", "approach", "방법", "방법론")):
+        return "scope_methodology"
+    if any(word in token for word in ("risk", "limit", "uncertain", "gap", "한계", "리스크", "불확실")):
+        return "risks_gaps"
+    if any(word in token for word in ("result", "finding", "benchmark", "성과", "결과", "핵심")):
+        return "key_findings"
+    if any(str(ref).strip().lower().endswith(".jsonl") for ref in refs):
+        return "evidence_index"
+    if any(word in focus for word in ("decision", "recommend", "선택", "의사결정")):
+        return "decision_recommendation"
+    if any(word in focus for word in ("brief", "summary", "요약", "브리핑")):
+        return "executive_summary"
+    return "unspecified"
+
+
 def format_claim_map(claims: list[dict]) -> str:
     if not claims:
         return "(no claims extracted)"
@@ -542,14 +651,29 @@ def build_claim_evidence_packet(
         strength_score = _CLAIM_STRENGTH_WEIGHT.get(strength, 0.2)
         ref_score = min(1.0, len(refs) / 3.0)
         score = (overlap * 0.55) + (strength_score * 0.35) + (ref_score * 0.1)
+        source_kind_set = {_infer_source_kind(ref) for ref in refs}
+        source_kind_set.discard("unknown")
+        if not source_kind_set:
+            source_kind = "unknown"
+        elif len(source_kind_set) == 1:
+            source_kind = next(iter(source_kind_set))
+        else:
+            source_kind = "mixed"
+        recency = _infer_recency(refs)
         scored.append(
             (
                 score,
                 {
                     "claim_id": f"C{idx:03d}",
-                    "claim": claim,
-                    "evidence_strength": strength,
+                    "claim": claim,  # legacy
+                    "claim_text": claim,
+                    "section_hint": _infer_section_hint(claim, refs, focus_text),
+                    "evidence_strength": strength,  # legacy
+                    "strength": strength,
                     "flags": flags,
+                    "limits": flags,
+                    "recency": recency,
+                    "source_kind": source_kind,
                     "refs": refs[:max(1, max_refs_per_claim)],
                     "score": round(score, 4),
                 },
@@ -569,12 +693,19 @@ def build_claim_evidence_packet(
                 evidence_id = f"E{next_ev:03d}"
                 next_ev += 1
                 evidence_ids[ref] = evidence_id
-                evidence_registry.append({"evidence_id": evidence_id, "ref": ref})
+                evidence_registry.append(
+                    {
+                        "evidence_id": evidence_id,
+                        "ref": ref,
+                        "source_kind": _infer_source_kind(ref),
+                    }
+                )
             mapped_ids.append(evidence_ids[ref])
         claim["evidence_ids"] = mapped_ids
 
     selected_index_only = sum(1 for entry in selected if "index_only" in (entry.get("flags") or []))
     packet = {
+        "schema_version": EVIDENCE_PACKET_SCHEMA_VERSION,
         "created_at": dt.datetime.now().isoformat(timespec="seconds"),
         "stats": {
             "total_claims": total_claims,
@@ -593,6 +724,185 @@ def build_claim_evidence_packet(
     return packet
 
 
+def normalize_claim_evidence_packet(packet: dict, schema_version: str = EVIDENCE_PACKET_SCHEMA_VERSION) -> dict:
+    raw = dict(packet or {})
+    out = {
+        "schema_version": schema_version,
+        "created_at": raw.get("created_at") or dt.datetime.now().isoformat(timespec="seconds"),
+        "stats": dict(raw.get("stats") or {}),
+        "focus": str(raw.get("focus") or ""),
+        "claims": [],
+        "evidence_registry": [],
+    }
+    registry: list[dict] = []
+    for entry in list(raw.get("evidence_registry") or []):
+        if not isinstance(entry, dict):
+            continue
+        evidence_id = str(entry.get("evidence_id") or "").strip()
+        ref = str(entry.get("ref") or "").strip()
+        if not evidence_id or not ref:
+            continue
+        registry.append(
+            {
+                "evidence_id": evidence_id,
+                "ref": ref,
+                "source_kind": str(entry.get("source_kind") or _infer_source_kind(ref)),
+            }
+        )
+    out["evidence_registry"] = registry
+    known_ids = {item["evidence_id"] for item in registry}
+    claims: list[dict] = []
+    for idx, entry in enumerate(list(raw.get("claims") or []), start=1):
+        if not isinstance(entry, dict):
+            continue
+        claim_id = str(entry.get("claim_id") or f"C{idx:03d}").strip()
+        claim_text = str(entry.get("claim_text") or entry.get("claim") or "").strip()
+        strength = str(entry.get("strength") or entry.get("evidence_strength") or "none").strip().lower()
+        limits = entry.get("limits")
+        if not isinstance(limits, list):
+            flags = entry.get("flags")
+            if isinstance(flags, list):
+                limits = [str(item).strip() for item in flags if str(item).strip()]
+            else:
+                limits = []
+        evidence_ids = [str(item).strip() for item in (entry.get("evidence_ids") or []) if str(item).strip()]
+        if known_ids and evidence_ids:
+            evidence_ids = [item for item in evidence_ids if item in known_ids]
+        source_kind = str(entry.get("source_kind") or "unknown").strip().lower() or "unknown"
+        recency = str(entry.get("recency") or "unknown").strip().lower() or "unknown"
+        section_hint = str(entry.get("section_hint") or "unspecified").strip() or "unspecified"
+        claims.append(
+            {
+                "claim_id": claim_id,
+                "claim_text": claim_text,
+                "section_hint": section_hint,
+                "evidence_ids": evidence_ids,
+                "strength": strength,
+                "limits": limits,
+                "recency": recency,
+                "source_kind": source_kind,
+                # legacy compatibility
+                "claim": claim_text,
+                "evidence_strength": strength,
+                "flags": limits,
+                "refs": entry.get("refs") or [],
+                "score": entry.get("score"),
+            }
+        )
+    out["claims"] = claims
+    return out
+
+
+def _matches_json_type(value: object, expected_type: str) -> bool:
+    token = str(expected_type or "").strip().lower()
+    if token == "object":
+        return isinstance(value, dict)
+    if token == "array":
+        return isinstance(value, list)
+    if token == "string":
+        return isinstance(value, str)
+    if token == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if token == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if token == "boolean":
+        return isinstance(value, bool)
+    if token == "null":
+        return value is None
+    return True
+
+
+def _validate_types_by_schema(
+    payload: dict,
+    schema_properties: dict,
+    *,
+    prefix: str,
+    errors: list[str],
+) -> None:
+    for key, spec in schema_properties.items():
+        if key not in payload:
+            continue
+        if not isinstance(spec, dict):
+            continue
+        expected_type = str(spec.get("type") or "").strip()
+        if expected_type and not _matches_json_type(payload.get(key), expected_type):
+            errors.append(f"{prefix}{key} must be {expected_type}")
+
+
+def validate_claim_evidence_packet_v1(packet: dict) -> list[str]:
+    errors: list[str] = []
+    data = packet if isinstance(packet, dict) else {}
+    schema = load_evidence_packet_schema_v1()
+    schema_required = list(schema.get("required") or [])
+    schema_properties = dict(schema.get("properties") or {})
+
+    for key in schema_required:
+        if key not in data:
+            errors.append(f"missing packet key: {key}")
+    _validate_types_by_schema(data, schema_properties, prefix="", errors=errors)
+
+    if str(data.get("schema_version") or "").strip() != EVIDENCE_PACKET_SCHEMA_VERSION:
+        errors.append(f"schema_version must be {EVIDENCE_PACKET_SCHEMA_VERSION}")
+
+    claims = data.get("claims")
+    if not isinstance(claims, list):
+        errors.append("claims must be a list")
+        claims = []
+    registry = data.get("evidence_registry")
+    if not isinstance(registry, list):
+        errors.append("evidence_registry must be a list")
+        registry = []
+
+    claim_schema = dict((schema_properties.get("claims") or {}).get("items") or {})
+    claim_required = list(claim_schema.get("required") or [])
+    claim_properties = dict(claim_schema.get("properties") or {})
+    evidence_schema = dict((schema_properties.get("evidence_registry") or {}).get("items") or {})
+    evidence_required = list(evidence_schema.get("required") or [])
+    evidence_properties = dict(evidence_schema.get("properties") or {})
+
+    known_ids: set[str] = set()
+    for idx, entry in enumerate(registry, start=1):
+        if not isinstance(entry, dict):
+            errors.append(f"evidence_registry[{idx}] must be object")
+            continue
+        for key in evidence_required:
+            if key not in entry:
+                errors.append(f"evidence_registry[{idx}] missing key: {key}")
+        _validate_types_by_schema(entry, evidence_properties, prefix=f"evidence_registry[{idx}].", errors=errors)
+        evidence_id = str(entry.get("evidence_id") or "").strip()
+        ref = str(entry.get("ref") or "").strip()
+        if not evidence_id:
+            errors.append(f"evidence_registry[{idx}] missing evidence_id")
+        if not ref:
+            errors.append(f"evidence_registry[{idx}] missing ref")
+        if evidence_id:
+            known_ids.add(evidence_id)
+
+    for idx, entry in enumerate(claims, start=1):
+        if not isinstance(entry, dict):
+            errors.append(f"claims[{idx}] must be object")
+            continue
+        for key in claim_required:
+            if key not in entry:
+                errors.append(f"claims[{idx}] missing key: {key}")
+        _validate_types_by_schema(entry, claim_properties, prefix=f"claims[{idx}].", errors=errors)
+        claim_text = str(entry.get("claim_text") or "").strip()
+        if not claim_text:
+            errors.append(f"claims[{idx}] empty claim_text")
+        evidence_ids = entry.get("evidence_ids")
+        if not isinstance(evidence_ids, list):
+            errors.append(f"claims[{idx}] evidence_ids must be list")
+            continue
+        for evidence_id in evidence_ids:
+            token = str(evidence_id).strip()
+            if not token:
+                errors.append(f"claims[{idx}] has empty evidence_id")
+                continue
+            if known_ids and token not in known_ids:
+                errors.append(f"claims[{idx}] references unknown evidence_id: {token}")
+    return errors
+
+
 def format_claim_evidence_packet(packet: dict, max_items: int = 24) -> str:
     claims = list(packet.get("claims") or [])
     evidence_registry = list(packet.get("evidence_registry") or [])
@@ -609,12 +919,15 @@ def format_claim_evidence_packet(packet: dict, max_items: int = 24) -> str:
     ]
     for entry in claims[:max_items]:
         claim_id = entry.get("claim_id") or "-"
-        claim_text = entry.get("claim") or ""
-        strength = entry.get("evidence_strength") or "none"
-        flags = ",".join(entry.get("flags") or []) or "-"
+        claim_text = entry.get("claim_text") or entry.get("claim") or ""
+        strength = entry.get("strength") or entry.get("evidence_strength") or "none"
+        limits = entry.get("limits")
+        flags = ",".join(limits if isinstance(limits, list) else (entry.get("flags") or [])) or "-"
         ev_ids = ", ".join(entry.get("evidence_ids") or []) or "(none)"
         lines.append(f"- {claim_id} [{strength}] {claim_text}")
-        lines.append(f"  refs: {ev_ids} | flags: {flags}")
+        source_kind = str(entry.get("source_kind") or "unknown")
+        recency = str(entry.get("recency") or "unknown")
+        lines.append(f"  refs: {ev_ids} | source={source_kind} | recency={recency} | limits: {flags}")
     lines.extend(["", "Evidence registry:"])
     for item in evidence_registry:
         lines.append(f"- {item.get('evidence_id')}: {item.get('ref')}")
