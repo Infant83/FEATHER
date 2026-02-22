@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 01:02:41 +09:00  
+Last updated: 2026-02-23 01:18:09 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -597,3 +597,53 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-3 Validation Interface v1: `95%` (fallback/최종 계약 산출물 고정)
 - P0-5 Benchmark Harness v1: `94%` (suite+delta+gate runbook 자동화)
 - P0 전체: `86%` (이전 `82%` -> `+4%p`)
+
+## 19) Iteration Log (41~45 / 100)
+- Iter 상태: `45/100` 완료
+- 이번 배치 목표:
+- P0 품질 루프 유지 + 과도한 legacy/ad-hoc 실행 강제 규칙 완화
+- rule fallback 경로에서 run 강제 오탐(run path 문자열의 `run`) 제거
+- 품질 벤치/게이트 회귀 확인
+
+### Iter-41: Legacy 과잉 실행 강제 포인트 식별
+- 점검:
+- `src/federnett/help_agent.py`의 `_infer_safe_action` 경로 점검
+- `docs/codex_handoff_20260223.md`의 ad-hoc 정리 항목(`_extract_run_hint`, `_infer_safe_action` 분기 축소)과 대조
+- 발견:
+- run 경로 문자열(`runs/...`)의 `run` 토큰이 명시 실행 의도로 오인될 수 있는 경로 존재
+- file-context 질의에서도 workspace 토큰 조합으로 실행 액션이 반환될 수 있는 조건 확인
+
+### Iter-42: 실행 의도 판별 정밀화(legacy 완화)
+- 반영:
+- `src/federnett/help_agent.py`
+  - `_has_explicit_execution_intent(...)`에서 영어 실행 토큰을 단어 경계 기반(`\\brun\\b`, `\\bexecute\\b`, `\\bstart\\b`)으로 제한
+  - path 문자열의 `runs/...`가 실행 의도로 오인되는 문제 차단
+
+### Iter-43: file-context 질문에서 안전한 비실행 기본값 강화
+- 반영:
+- `src/federnett/help_agent.py`
+  - `_infer_safe_action(...)` 초반에 `_is_file_context_question(...)` 가드 추가
+  - run/artifact 내용 해석 요청은 실행 제안 대신 대화 응답 경로로 유지
+- 정책 효과:
+- “파일/폴더 내용 정리” 요청이 실행 액션으로 강제되는 legacy 규칙을 축소
+
+### Iter-44: 회귀 테스트 확장 (legacy 완화 검증)
+- 반영:
+- `tests/test_help_agent.py`
+  - file-context + workspace token 혼합 질의에서도 실행 액션 미생성 테스트 추가
+  - workspace 분석 질의(`federlicht 보고서 품질 동향 정리`) 자동 실행 금지 테스트 추가
+  - explicit execution intent에서 path `runs/...` 오탐 방지 테스트 추가
+
+### Iter-45: 통합 테스트 + 품질 게이트 재검증
+- 테스트:
+- `pytest -q tests/test_help_agent.py -k "infer_safe_action or file_context or explicit_execution_intent"` -> `17 passed`
+- `pytest -q tests/test_help_agent.py tests/test_report_quality_gate_runner.py tests/test_report_quality_benchmark_tool.py tests/test_report_quality_regression_gate.py tests/test_report_quality_heuristics.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_tools_claim_packet.py` -> `95 passed`
+- 실측:
+- `python tools/run_report_quality_gate.py --input site/runs/openclaw/report_full.html --suite docs/report_quality_benchmark_suite_v1.json --baseline test-results/p0_quality_benchmark_openclaw_20260223_iter40.json --summary-output test-results/p0_quality_benchmark_openclaw_20260223_iter45.summary.json --benchmark-output test-results/p0_quality_benchmark_openclaw_20260223_iter45.json --report-md test-results/p0_quality_gate_report_20260223_iter45.md --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55` -> `PASS`
+
+### P0 진행률 업데이트 (45/100 기준)
+- P0-1 Evidence Schema v1: `94%` (유지)
+- P0-2 Structured Synthesis v1(AST): `82%` (유지 + 실행 경로 안정성 보강)
+- P0-3 Validation Interface v1: `96%` (fallback/contract 일관성 유지)
+- P0-5 Benchmark Harness v1: `95%` (runbook 연속 회귀 PASS)
+- P0 전체: `89%` (이전 `86%` -> `+3%p`)

@@ -346,8 +346,6 @@ _WORKSPACE_ACTION_TOKENS = (
     "instruction",
     "prompt",
     "inline prompt",
-    "실행",
-    "start",
     "switch run",
     "mode",
     "모드",
@@ -2708,9 +2706,28 @@ def _allow_rule_fallback(runtime_mode: str | None) -> bool:
     """
     Keep safe-rule fallback as explicit opt-in.
     Default behavior is agentic-first for all runtime modes.
-    Override with FEDERNETT_HELP_RULE_FALLBACK=1 to re-enable rule fallback.
+    Override with FEDERNETT_HELP_RULE_FALLBACK=1 to re-enable rule fallback
+    only when runtime_mode is explicitly off. Use FEDERNETT_HELP_RULE_FALLBACK=emergency
+    to force-enable regardless of runtime_mode.
     """
     override = str(os.getenv("FEDERNETT_HELP_RULE_FALLBACK") or "").strip().lower()
+    if override:
+        if override == "emergency":
+            return True
+        if override not in {"1", "true", "on", "yes"}:
+            return False
+        mode = _normalize_runtime_mode(runtime_mode)
+        return mode == "off"
+    return False
+
+
+def _allow_llm_action_planner_fallback(runtime_mode: str | None) -> bool:
+    """
+    DeepAgent planner is the default action-planning path.
+    LLM action-planner fallback is explicit opt-in only.
+    Override with FEDERNETT_HELP_ACTION_LLM_FALLBACK=1 to enable fallback.
+    """
+    override = str(os.getenv("FEDERNETT_HELP_ACTION_LLM_FALLBACK") or "").strip().lower()
     if override:
         return override in {"1", "true", "on", "yes", "emergency"}
     _ = runtime_mode
@@ -3008,7 +3025,7 @@ def _has_explicit_execution_intent(question: str) -> bool:
     compact = re.sub(r"\s+", "", q)
     if any(token.replace(" ", "") in compact for token in _EXECUTION_INTENT_EXPLICIT_TOKENS):
         return True
-    has_exec = bool(re.search(r"(실행|진행|작업|돌려|시작|run|execute|start)", q, flags=re.IGNORECASE))
+    has_exec = bool(re.search(r"(실행|진행|작업|돌려|시작|\brun\b|\bexecute\b|\bstart\b)", q, flags=re.IGNORECASE))
     has_explain = bool(re.search(r"(설명|차이|이유|왜|방법|가이드|how|what|difference)", q, flags=re.IGNORECASE))
     return has_exec and not has_explain
 
@@ -3051,82 +3068,18 @@ def _needs_agentic_action_planning(question: str) -> bool:
         return False
     if _is_file_context_question(q):
         return False
-    trivial_tokens = {
-        "/help",
-        "help",
-        "hi",
-        "hello",
-        "thanks",
-        "thank you",
-        "고마워",
-        "감사",
-        "ㅇㅋ",
-        "ok",
-    }
     compact = re.sub(r"\s+", " ", q).strip()
-    if compact in trivial_tokens:
-        return False
-    if re.fullmatch(r"[\W_]+", compact):
+    if not compact or re.fullmatch(r"[\W_]+", compact):
         return False
     if compact.startswith("/"):
         command = compact.split(" ", 1)[0]
         return command in {"/plan", "/act", "/profile", "/agent", "/runtime"}
-    workspace_request = _is_workspace_operation_request(q)
+    explicit_execution = _has_explicit_execution_intent(q)
     if _is_generic_execution_question(q):
-        if not any(token in q for token in ("알려", "설명", "방법", "가이드", "guide", "how", "why")):
-            return True
-    if not workspace_request:
+        return explicit_execution
+    if not _is_workspace_operation_request(q):
         return False
-    action_hints = (
-        "실행",
-        "run",
-        "start",
-        "전환",
-        "switch",
-        "resume",
-        "재시작",
-        "열어",
-        "open",
-        "focus",
-        "create",
-        "설정",
-        "적용",
-        "launch",
-    )
-    if not any(token in q for token in action_hints):
-        return False
-    explanation_tokens = (
-        "설명",
-        "알려",
-        "방법",
-        "가이드",
-        "guide",
-        "how",
-        "why",
-        "요약",
-        "정리",
-        "review",
-        "계획을 알려",
-    )
-    direct_action_tokens = (
-        "실행해",
-        "run해",
-        "run 해",
-        "바로 실행",
-        "지금 실행",
-        "재실행",
-        "start now",
-        "돌려",
-        "전환해",
-        "switch run",
-        "열어줘",
-        "해줘",
-    )
-    asks_explanation = any(token in q for token in explanation_tokens)
-    asks_direct_action = any(token in q for token in direct_action_tokens)
-    if asks_explanation and not asks_direct_action:
-        return False
-    return True
+    return explicit_execution
 
 
 def _capability_prompt_digest(capabilities: dict[str, Any] | None) -> str:
@@ -3227,7 +3180,7 @@ def _infer_agentic_action(
     )
     if isinstance(payload, dict):
         payload = {**payload, "planner": str(payload.get("planner") or "deepagent").strip() or "deepagent"}
-    if payload is None:
+    if payload is None and _allow_llm_action_planner_fallback(runtime_mode):
         planner_prompt = _build_agentic_action_prompt(
             question,
             run_rel=run_rel,
@@ -3384,6 +3337,8 @@ def _infer_safe_action(
     if not q:
         return None
     if _is_run_content_summary_request(q):
+        return None
+    if _is_file_context_question(q):
         return None
     workspace_request = _is_workspace_operation_request(q)
     generic_followup = _is_generic_execution_question(q)
@@ -3659,7 +3614,6 @@ def _infer_safe_action(
             "리포트 작성",
         )
     )
-    explicit_run = explicit_run or (analysis_like and workspace_request)
     if analysis_like and not workspace_request and not generic_followup:
         return None
     if not explicit_run:

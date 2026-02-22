@@ -425,6 +425,24 @@ def test_infer_safe_action_skips_run_action_for_run_content_summary(tmp_path) ->
     assert action is None
 
 
+def test_infer_safe_action_skips_file_context_with_workspace_tokens(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "runs/QC_ppt/archive 폴더 내용을 federlicht 관점에서 정리해줘",
+        run_rel="runs/QC_ppt",
+    )
+    assert action is None
+
+
+def test_infer_safe_action_does_not_auto_run_on_workspace_analysis_without_execute(tmp_path) -> None:
+    action = help_agent._infer_safe_action(
+        tmp_path,
+        "federlicht 보고서 품질 동향을 정리해줘",
+        run_rel="site/runs/demo",
+    )
+    assert action is None
+
+
 def test_infer_safe_action_binds_run_hint_for_run_execution(tmp_path) -> None:
     action = help_agent._infer_safe_action(
         tmp_path,
@@ -618,6 +636,7 @@ def test_has_explicit_execution_intent_supports_work_phrase() -> None:
     assert help_agent._has_explicit_execution_intent("지금 시작")
     assert help_agent._has_explicit_execution_intent("go ahead")
     assert not help_agent._has_explicit_execution_intent("차이점을 설명해줘")
+    assert not help_agent._has_explicit_execution_intent("runs/QC_ppt/archive 폴더 내용을 정리해줘")
 
 
 def test_needs_agentic_action_planning_for_actionable_query() -> None:
@@ -668,6 +687,7 @@ def test_infer_agentic_action_prefers_deepagent_planner(tmp_path, monkeypatch) -
 
 def test_infer_agentic_action_falls_back_to_llm_planner(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "1")
+    monkeypatch.setenv("FEDERNETT_HELP_ACTION_LLM_FALLBACK", "1")
     monkeypatch.setattr(help_agent, "_try_agentic_runtime_action_plan", lambda **_kwargs: None)
     monkeypatch.setattr(
         help_agent,
@@ -691,6 +711,33 @@ def test_infer_agentic_action_falls_back_to_llm_planner(tmp_path, monkeypatch) -
     )
     assert isinstance(action, dict)
     assert action.get("type") == "run_federlicht"
+
+
+def test_infer_agentic_action_does_not_fallback_to_llm_planner_by_default(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_AGENTIC_ACTIONS", "1")
+    monkeypatch.delenv("FEDERNETT_HELP_ACTION_LLM_FALLBACK", raising=False)
+    monkeypatch.setattr(help_agent, "_try_agentic_runtime_action_plan", lambda **_kwargs: None)
+
+    def _fail_call_llm(*_args, **_kwargs):
+        raise AssertionError("_call_llm should not be called when planner fallback is disabled")
+
+    monkeypatch.setattr(help_agent, "_call_llm", _fail_call_llm)
+    action = help_agent._infer_agentic_action(
+        tmp_path,
+        "federlicht 실행해줘",
+        run_rel="runs/demo_run",
+        history=[],
+        state_memory="{}",
+        capabilities={},
+        execution_mode="plan",
+        allow_artifacts=False,
+        model=None,
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        strict_model=False,
+    )
+    assert action is None
 
 
 def test_infer_agentic_action_keeps_deepagent_handoff_metadata(tmp_path, monkeypatch) -> None:
@@ -795,7 +842,8 @@ def test_allow_rule_fallback_requires_emergency_opt_in(monkeypatch) -> None:
     monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "2")
     assert help_agent._allow_rule_fallback("auto") is False
     monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "1")
-    assert help_agent._allow_rule_fallback("auto") is True
+    assert help_agent._allow_rule_fallback("auto") is False
+    assert help_agent._allow_rule_fallback("off") is True
     monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "emergency")
     assert help_agent._allow_rule_fallback("auto") is True
 
@@ -1194,3 +1242,16 @@ def test_allow_rule_fallback_defaults_to_false(monkeypatch) -> None:
 def test_allow_rule_fallback_can_be_enabled_by_env(monkeypatch) -> None:
     monkeypatch.setenv("FEDERNETT_HELP_RULE_FALLBACK", "1")
     assert help_agent._allow_rule_fallback("off") is True
+
+
+def test_allow_llm_action_planner_fallback_defaults_by_runtime_mode(monkeypatch) -> None:
+    monkeypatch.delenv("FEDERNETT_HELP_ACTION_LLM_FALLBACK", raising=False)
+    assert help_agent._allow_llm_action_planner_fallback("deepagent") is False
+    assert help_agent._allow_llm_action_planner_fallback("auto") is False
+    assert help_agent._allow_llm_action_planner_fallback("off") is False
+
+
+def test_allow_llm_action_planner_fallback_can_be_enabled_by_env(monkeypatch) -> None:
+    monkeypatch.setenv("FEDERNETT_HELP_ACTION_LLM_FALLBACK", "1")
+    assert help_agent._allow_llm_action_planner_fallback("off") is True
+    assert help_agent._allow_llm_action_planner_fallback("auto") is True
