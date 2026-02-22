@@ -1650,6 +1650,13 @@ class ReportOrchestrator:
             if not missing_sections or args.repair_mode == "off":
                 return report_text
             repair_mode = args.repair_mode
+            rewrite_tasks: list[dict] = []
+            if section_ast_payload:
+                rewrite_tasks = feder_section_ast.build_rewrite_tasks(
+                    section_ast_payload,
+                    missing_sections=missing_sections,
+                    max_claims=3,
+                )
             repair_skeleton = helpers.build_report_skeleton(
                 missing_sections if repair_mode == "append" else required_sections,
                 output_format,
@@ -1677,6 +1684,17 @@ class ReportOrchestrator:
                 max_input_tokens=repair_max,
                 max_input_tokens_source=repair_max_source,
             )
+            targeted_rewrite_hint = "(none)"
+            if rewrite_tasks:
+                hint_lines: list[str] = []
+                for task in rewrite_tasks[:8]:
+                    claim_ids = ", ".join(str(item) for item in list(task.get("claim_ids") or [])[:3]) or "-"
+                    objective = str(task.get("objective") or "").strip()
+                    section_title = str(task.get("section_title") or "").strip()
+                    hint_lines.append(
+                        f"- {section_title}: objective={objective or '-'} | claim_ids={claim_ids}"
+                    )
+                targeted_rewrite_hint = "\n".join(hint_lines)
             repair_input = "\n".join(
                 [
                     "Required skeleton:",
@@ -1684,6 +1702,9 @@ class ReportOrchestrator:
                     "",
                     "Missing sections:",
                     ", ".join(missing_sections),
+                    "",
+                    "Targeted section rewrite tasks:",
+                    targeted_rewrite_hint,
                     "",
                     "Evidence notes:",
                     helpers.truncate_text_middle(evidence_for_quality or evidence_notes, args.quality_max_chars),
@@ -3124,6 +3145,15 @@ class ReportOrchestrator:
                 json.dumps(claim_packet, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
+            schema_version = str(claim_packet.get("schema_version") or "v1").strip().lower()
+            (notes_dir / f"evidence_packet.{schema_version}.json").write_text(
+                json.dumps(claim_packet, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            (notes_dir / "evidence_packet.latest.json").write_text(
+                json.dumps(claim_packet, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
             (notes_dir / "claim_evidence_map.md").write_text(claim_packet_text, encoding="utf-8")
             section_ast = feder_section_ast.build_section_ast(
                 required_sections=required_sections,
@@ -4083,6 +4113,11 @@ class ReportOrchestrator:
                     }
                 evaluation["label"] = candidate["label"]
                 evaluation["index"] = idx
+                if quality_gate_enabled:
+                    gate_failures_eval = helpers.quality_gate_failures(evaluation, **quality_gate_args)
+                    evaluation["quality_gate_enabled"] = True
+                    evaluation["quality_gate_pass"] = len(gate_failures_eval) == 0
+                    evaluation["quality_gate_failures"] = gate_failures_eval
                 evaluations.append(evaluation)
                 helpers.append_jsonl(eval_path, evaluation)
             if args.quality_strategy == "pairwise":
@@ -4178,6 +4213,31 @@ class ReportOrchestrator:
         write_section_rewrite_tasks(missing_sections, "final", report_text=report)
         report = run_structural_repair(report, missing_sections, "Structural Repair (final)")
         align_final = run_alignment_check("final", report)
+        if quality_gate_enabled:
+            final_signals = helpers.compute_heuristic_quality_signals(
+                report,
+                required_sections,
+                output_format,
+                depth=depth,
+                report_intent=report_intent,
+            )
+            final_failures = helpers.quality_gate_failures(final_signals, **quality_gate_args)
+            gate_payload = {
+                "enabled": True,
+                "targets": quality_gate_args,
+                "quality_iterations_requested": quality_iterations,
+                "quality_iterations_effective": effective_quality_iterations,
+                "quality_passes_executed": quality_passes_executed,
+                "selected_label": selected_label,
+                "selected_eval": selected_eval or {},
+                "final_signals": final_signals,
+                "final_pass": len(final_failures) == 0,
+                "final_failures": final_failures,
+            }
+            (notes_dir / "quality_gate.json").write_text(
+                json.dumps(gate_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
 
         workflow_summary, workflow_path = write_workflow_summary(
             stage_status=stage_status,

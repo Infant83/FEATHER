@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 00:24:18 +09:00  
+Last updated: 2026-02-23 00:39:12 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -439,3 +439,62 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0-3 Validation Interface v1: `84%` (게이트 파라미터+루프 연계)
 - P0-5 Benchmark Harness v1: `82%` (baseline delta + summary 자동 산출)
 - P0 전체: `72%` (이전 `66%` -> `+6%p`)
+
+## 16) Iteration Log (26~30 / 100)
+- Iter 상태: `30/100` 완료
+- 이번 배치 목표:
+- P0-1: evidence packet 계약 산출물 고정
+- P0-2: section-level rewrite 단서를 structural repair 입력으로 연결
+- P0-3: quality gate 결과를 평가 산출물에 계약형으로 기록
+- P0-5: benchmark suite를 기계가 읽는 형식으로 고정
+
+### Iter-26: Evidence Packet 계약 파일 이중화
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - 기존 `claim_evidence_map.json` 외에 아래 산출물 추가 저장:
+  - `report_notes/evidence_packet.v1.json`
+  - `report_notes/evidence_packet.latest.json`
+  - 목적: 스키마 버전 고정 계약과 하위 호환 경로를 동시에 유지
+
+### Iter-27: Structural Repair에 section rewrite task 입력 연계
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `run_structural_repair(...)`에서 누락 섹션별 rewrite task(`section_title/objective/claim_ids`)를 생성해 입력 프롬프트에 포함
+  - 전체 리라이트 fallback은 유지하면서 section-targeted 보정 힌트 강화
+
+### Iter-28: Quality Eval 기록에 Gate 결과 포함
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `quality_evals.jsonl` 각 항목에 다음 필드 추가:
+  - `quality_gate_enabled`
+  - `quality_gate_pass`
+  - `quality_gate_failures`
+  - 최종 리포트 기준 `report_notes/quality_gate.json` 추가:
+  - targets / executed/effective iterations / selected label / final signals / final pass/fail
+
+### Iter-29: Benchmark Suite v1 기계판독 자산 추가
+- 반영:
+- `docs/report_quality_benchmark_suite_v1.json` 추가
+  - 12개 프롬프트를 `id/intent/depth/prompt` 구조로 정규화
+- `tools/report_quality_benchmark.py`
+  - `--suite` 지원
+  - suite의 intent/depth 분포를 summary에 기록
+
+### Iter-30: Harness/테스트/실측 회귀 확인
+- 반영:
+- `tools/report_quality_benchmark.py`
+  - suite 로더(`_load_suite`) 및 summary bundle 출력 보강
+- `tests/test_report_quality_benchmark_tool.py`
+  - suite 분포 집계 테스트 추가
+- 테스트:
+- `pytest -q tests/test_report_quality_benchmark_tool.py tests/test_report_quality_regression_gate.py tests/test_report_quality_heuristics.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_tools_claim_packet.py` -> `25 passed`
+- 실측:
+- `python tools/report_quality_benchmark.py --input site/runs/openclaw/report_full.html --suite docs/report_quality_benchmark_suite_v1.json --baseline test-results/p0_quality_benchmark_openclaw_20260223_iter25.json --output test-results/p0_quality_benchmark_openclaw_20260223_iter30.json --summary-output test-results/p0_quality_benchmark_openclaw_20260223_iter30.summary.json`
+- `python tools/report_quality_regression_gate.py --input test-results/p0_quality_benchmark_openclaw_20260223_iter30.summary.json --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55` -> `PASS`
+
+### P0 진행률 업데이트 (30/100 기준)
+- P0-1 Evidence Schema v1: `92%` (계약 파일 경로 고정 + 버전/최신 동시 제공)
+- P0-2 Structured Synthesis v1(AST): `68%` (section task를 repair 실행 입력으로 연결)
+- P0-3 Validation Interface v1: `88%` (eval/gate 산출물 계약형 기록)
+- P0-5 Benchmark Harness v1: `86%` (suite JSON + 분포 검증 + summary 연계)
+- P0 전체: `76%` (이전 `72%` -> `+4%p`)

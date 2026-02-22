@@ -112,6 +112,30 @@ def _load_rows(path: Path) -> list[dict]:
     return []
 
 
+def _load_suite(path: Path) -> dict:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return {"suite_id": "unknown", "prompts": [], "intent_counts": {}, "depth_counts": {}}
+    prompts = payload.get("prompts")
+    if not isinstance(prompts, list):
+        prompts = []
+    intent_counts: dict[str, int] = {}
+    depth_counts: dict[str, int] = {}
+    for item in prompts:
+        if not isinstance(item, dict):
+            continue
+        intent = str(item.get("intent") or "unknown").strip().lower()
+        depth = str(item.get("depth") or "unknown").strip().lower()
+        intent_counts[intent] = intent_counts.get(intent, 0) + 1
+        depth_counts[depth] = depth_counts.get(depth, 0) + 1
+    return {
+        "suite_id": str(payload.get("suite_id") or path.stem),
+        "suite_size": len(prompts),
+        "intent_counts": intent_counts,
+        "depth_counts": depth_counts,
+    }
+
+
 def _print_table(rows: list[dict]) -> dict[str, float]:
     if not rows:
         print("No report files matched.")
@@ -161,6 +185,7 @@ def main() -> int:
     )
     parser.add_argument("--output", default="", help="Optional JSON output path.")
     parser.add_argument("--summary-output", default="", help="Optional JSON path for summary and delta metadata.")
+    parser.add_argument("--suite", default="", help="Optional benchmark suite JSON path.")
     parser.add_argument(
         "--baseline",
         default="",
@@ -179,6 +204,14 @@ def main() -> int:
     summary = _print_table(rows)
     baseline_summary: dict[str, float] | None = None
     delta_summary: dict[str, float] | None = None
+    suite_meta: dict | None = None
+    if args.suite:
+        suite_meta = _load_suite(Path(args.suite))
+        print("")
+        print(
+            f"suite | id={suite_meta.get('suite_id')} | size={suite_meta.get('suite_size')} | "
+            f"intents={suite_meta.get('intent_counts')} | depths={suite_meta.get('depth_counts')}"
+        )
     if args.baseline:
         baseline_rows = _load_rows(Path(args.baseline))
         baseline_summary = _compute_summary(baseline_rows)
@@ -208,6 +241,7 @@ def main() -> int:
             "summary": summary,
             "baseline_summary": baseline_summary,
             "delta_summary": delta_summary,
+            "suite": suite_meta,
             "required_sections": required_sections,
             "depth": str(args.depth or "deep"),
             "intent": str(args.intent or "research"),

@@ -86,3 +86,21 @@ def test_compute_summary_and_load_rows_bundle(tmp_path: Path) -> None:
     bundle_path.write_text(json.dumps({"rows": rows}, ensure_ascii=False), encoding="utf-8")
     loaded_rows = bench._load_rows(bundle_path)
     assert len(loaded_rows) == 2
+
+
+def test_load_suite_counts(tmp_path: Path) -> None:
+    suite = {
+        "suite_id": "demo",
+        "prompts": [
+            {"id": "a", "intent": "research", "depth": "deep", "prompt": "x"},
+            {"id": "b", "intent": "briefing", "depth": "brief", "prompt": "y"},
+            {"id": "c", "intent": "research", "depth": "normal", "prompt": "z"},
+        ],
+    }
+    path = tmp_path / "suite.json"
+    path.write_text(json.dumps(suite, ensure_ascii=False), encoding="utf-8")
+    meta = bench._load_suite(path)
+    assert meta["suite_id"] == "demo"
+    assert meta["suite_size"] == 3
+    assert meta["intent_counts"]["research"] == 2
+    assert meta["depth_counts"]["brief"] == 1
