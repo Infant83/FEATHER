@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.9.29 (2026-02-23)
+- Version consistency policy hardening:
+  - align versions across `pyproject.toml`, `README.md`, `CHANGELOG.md`, and `src/federlicht/versioning.py`.
+  - add `tools/check_version_consistency.py` to validate cross-file version consistency.
+  - add `tests/test_version_consistency_tool.py`.
+- Quality loop optimization (iter 91~100):
+  - add `src/federlicht/quality_iteration.py` gate-distance ranking helpers for candidate selection under quality targets.
+  - integrate gate-distance-aware candidate ranking in `src/federlicht/orchestrator.py`:
+    - prefer gate pass first, then smaller failure count/distance, then overall.
+    - persist candidate evaluations in `quality_contract.latest.json`.
+  - add profile compare utility:
+    - `tools/report_quality_profile_compare.py`
+    - outputs profile matrix for `smoke/baseline/professional/world_class`.
+  - add/expand tests:
+    - `tests/test_quality_iteration.py`
+    - `tests/test_report_quality_profile_compare_tool.py`
+- Documentation and workflow:
+  - update `docs/codex_handoff_20260223.md` (iter logs/progress).
+  - update `docs/report_quality_threshold_policy.md` with profile compare usage.
+  - update README quality tooling examples.
+
 ## 1.9.28 (2026-02-23)
 - Quality-loop optimization for profile-driven report refinement:
   - add `src/federlicht/quality_iteration.py` with:

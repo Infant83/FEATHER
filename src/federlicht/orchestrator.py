@@ -4420,9 +4420,15 @@ class ReportOrchestrator:
                 evaluation["index"] = idx
                 if quality_gate_enabled:
                     gate_failures_eval = helpers.quality_gate_failures(evaluation, **quality_gate_args)
+                    gate_distance_eval = feder_quality_iteration.quality_gate_distance(
+                        evaluation,
+                        quality_gate_args,
+                    )
                     evaluation["quality_gate_enabled"] = True
                     evaluation["quality_gate_pass"] = len(gate_failures_eval) == 0
                     evaluation["quality_gate_failures"] = gate_failures_eval
+                    evaluation["quality_gate_distance"] = float(gate_distance_eval.get("distance", 0.0))
+                    evaluation["quality_gate_failure_count"] = int(gate_distance_eval.get("failure_count", 0.0))
                 evaluations.append(evaluation)
                 helpers.append_jsonl(eval_path, evaluation)
             if args.quality_strategy == "pairwise":
@@ -4481,7 +4487,11 @@ class ReportOrchestrator:
                             wins[j] += 0.5
                 ranked = sorted(
                     range(len(candidates)),
-                    key=lambda idx: (wins.get(idx, 0.0), evaluations[idx].get("overall", 0.0)),
+                    key=lambda idx: (
+                        feder_quality_iteration.candidate_rank_tuple(evaluations[idx], quality_gate_args),
+                        wins.get(idx, 0.0),
+                        evaluations[idx].get("overall", 0.0),
+                    ),
                     reverse=True,
                 )
                 top_indices = ranked[:2]
@@ -4496,7 +4506,12 @@ class ReportOrchestrator:
                         secondary_label = candidates[secondary_idx]["label"]
                         secondary_eval = evaluations[secondary_idx]
             else:
-                best_idx = max(range(len(candidates)), key=lambda idx: evaluations[idx].get("overall", 0.0))
+                best_idx = max(
+                    range(len(candidates)),
+                    key=lambda idx: feder_quality_iteration.candidate_rank_tuple(
+                        evaluations[idx], quality_gate_args
+                    ),
+                )
                 selected_report = candidates[best_idx]["text"]
                 selected_label = candidates[best_idx]["label"]
                 selected_eval = evaluations[best_idx]
@@ -4553,6 +4568,7 @@ class ReportOrchestrator:
             "selected_eval_legacy": selected_eval_legacy,
             "selected_eval": quality_contract_eval,
             "final_signals": final_signals,
+            "candidate_evaluations": evaluations if effective_quality_iterations > 0 else [],
             "missing_sections_after_final": list(
                 helpers.find_missing_sections(report, required_sections, output_format)
             ),

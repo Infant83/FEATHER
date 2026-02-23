@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from federlicht.quality_iteration import (
     build_focus_directives,
+    candidate_rank_tuple,
     compute_delta,
     is_plateau_delta,
     policy_for_profile,
+    quality_gate_distance,
     resolve_iteration_plan,
 )
 
@@ -88,3 +90,30 @@ def test_build_focus_directives_includes_priority_hints() -> None:
     assert "Improve section coherence" in text
     assert "Unsupported claim examples" in text
 
+
+def test_quality_gate_distance_and_rank_tuple() -> None:
+    targets = {
+        "min_overall": 82.0,
+        "min_claim_support": 60.0,
+        "max_unsupported": 12.0,
+        "min_section_coherence": 75.0,
+    }
+    eval_a = {
+        "overall": 79.0,
+        "claim_support_ratio": 58.0,
+        "unsupported_claim_count": 14.0,
+        "section_coherence_score": 74.0,
+        "quality_gate_pass": False,
+    }
+    eval_b = {
+        "overall": 80.0,
+        "claim_support_ratio": 59.0,
+        "unsupported_claim_count": 13.0,
+        "section_coherence_score": 75.0,
+        "quality_gate_pass": False,
+    }
+    da = quality_gate_distance(eval_a, targets)
+    db = quality_gate_distance(eval_b, targets)
+    assert db["distance"] < da["distance"]
+    assert db["failure_count"] <= da["failure_count"]
+    assert candidate_rank_tuple(eval_b, targets) > candidate_rank_tuple(eval_a, targets)

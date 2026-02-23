@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 23:02:05 +09:00  
+Last updated: 2026-02-24 04:35:28 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -1137,4 +1137,90 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 ### 진행률 업데이트 (86~90 기준)
 - P0(core): `100%` 유지
 - P0+(quality uplift): `64%` (이전 `60%` -> `+4%p`)
+- P1: `0%`
+
+## 31) Iteration Log (91~95 / 100)
+- Iter 상태: `95/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-24 04:35:28 +09:00`
+- 이번 배치 목표:
+- quality loop 후보 선택을 gate 정합 중심으로 개선하고 버전 일관성 검증 정책을 코드화
+
+### Iter-91: gate distance 기반 후보 정렬 도입
+- 반영:
+- `src/federlicht/quality_iteration.py`
+  - `quality_gate_distance(...)` 추가
+  - `candidate_rank_tuple(...)` 추가
+- `src/federlicht/orchestrator.py`
+  - evaluation 단계에 `quality_gate_distance`, `quality_gate_failure_count` 메타 저장
+  - `pairwise/best_of` 최종 선택 시 gate pass/거리 우선 정렬 적용
+
+### Iter-92: quality contract 후보 평가 추적 강화
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `quality_contract.latest.json`에 `candidate_evaluations` 포함
+  - 이후 분석에서 “왜 이 후보가 선택되었는지” 추적 가능하도록 개선
+
+### Iter-93: 버전 일관성 체크 도구 추가
+- 반영:
+- `tools/check_version_consistency.py` 추가
+  - 검사 대상: `README.md`, `pyproject.toml`, `CHANGELOG.md`, `src/federlicht/versioning.py`
+  - 불일치 시 non-zero 종료
+- `tests/test_version_consistency_tool.py` 추가
+
+### Iter-94: 개발 워크플로우에 버전 체크 규칙 편입
+- 반영:
+- `docs/development_workflow_guide.md`
+  - 버전 변경 시 consistency check 명시
+
+### Iter-95: 버전 통합 업데이트
+- 반영:
+- `pyproject.toml`: `1.9.29`
+- `README.md`: `Version: 1.9.29`
+- `src/federlicht/versioning.py`: `DEFAULT_VERSION = "1.9.29"`
+- `CHANGELOG.md`: `1.9.29` 항목 추가
+
+### 진행률 업데이트 (91~95 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `68%` (이전 `64%` -> `+4%p`)
+- P1: `0%`
+
+## 32) Iteration Log (96~100 / 100)
+- Iter 상태: `100/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-24 04:35:28 +09:00`
+- 이번 배치 목표:
+- profile 진단 루프를 실측 산출물로 고정하고 회귀 스위트를 확장
+
+### Iter-96: 프로파일 비교 도구 확장/회귀 연결
+- 반영:
+- `tools/report_quality_profile_compare.py`
+  - benchmark summary 기준 전 프로파일 판정 매트릭스 출력
+- `tests/test_report_quality_profile_compare_tool.py` 추가
+
+### Iter-97: quality iteration 회귀 테스트 보강
+- 반영:
+- `tests/test_quality_iteration.py` 확장
+  - gate distance / rank tuple 동작 검증 추가
+
+### Iter-98: 정합성/품질 회귀 통합 실행
+- 검증:
+- `python tools/check_version_consistency.py` -> `PASS`
+- `python -m py_compile src/federlicht/orchestrator.py src/federlicht/quality_iteration.py tools/report_quality_profile_compare.py tools/check_version_consistency.py`
+- `pytest -q tests/test_quality_iteration.py tests/test_quality_profiles.py tests/test_version_consistency_tool.py tests/test_report_quality_profile_compare_tool.py tests/test_report_quality_contract_consistency_tool.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `37 passed`
+
+### Iter-99: QC 샘플 프로파일 매트릭스 재실측
+- 실행:
+- `python tools/report_quality_profile_compare.py --input test-results/p0_quality_benchmark_qc_iter80.summary.json --output-json test-results/p0_quality_profile_compare_qc_iter100.json --output-md test-results/p0_quality_profile_compare_qc_iter100.md`
+- 결과:
+- `smoke/baseline/professional/world_class` 모두 FAIL (현재 샘플 baseline 미달 유지)
+
+### Iter-100: 배치 결론
+- 결론:
+- 점수 기준/버전 기준의 일관성은 코드·문서·테스트로 고정 완료
+- 다음 배치는 baseline 미달 원인(unsupported/coherence)을 실제 생성 텍스트 레벨에서 개선하는 writer/evidence loop 튜닝이 핵심
+
+### 진행률 업데이트 (96~100 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `72%` (이전 `68%` -> `+4%p`)
 - P1: `0%`

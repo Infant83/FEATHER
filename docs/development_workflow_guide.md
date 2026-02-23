@@ -41,5 +41,6 @@ Last updated: 2026-02-23
 - confirm no accidental temp/debug files
 - ensure handoff has updated progress/time
 - validate key tests used in iter
+- if version changed, run `python tools/check_version_consistency.py` and ensure `README.md` + `CHANGELOG.md` + `pyproject.toml` + `src/federlicht/versioning.py` are aligned
 - After push:
 - verify branch tip and clean working tree

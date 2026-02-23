@@ -184,3 +184,51 @@ def build_focus_directives(
             lines.append(f"- {item[:220]}")
     return "\n".join(lines).strip()
 
+
+def quality_gate_distance(signals: dict[str, Any], targets: dict[str, float]) -> dict[str, float]:
+    def _to_float(value: Any, default: float = 0.0) -> float:
+        try:
+            return float(value)
+        except Exception:
+            return default
+
+    overall = _to_float(signals.get("overall"))
+    support = _to_float(signals.get("claim_support_ratio"))
+    unsupported = _to_float(signals.get("unsupported_claim_count"))
+    coherence = _to_float(signals.get("section_coherence_score"))
+    min_overall = _to_float(targets.get("min_overall"))
+    min_support = _to_float(targets.get("min_claim_support"))
+    max_unsupported = _to_float(targets.get("max_unsupported"), -1.0)
+    min_coherence = _to_float(targets.get("min_section_coherence"))
+    deficits = {
+        "overall": max(0.0, min_overall - overall) if min_overall > 0 else 0.0,
+        "claim_support_ratio": max(0.0, min_support - support) if min_support > 0 else 0.0,
+        "unsupported_claim_count": (
+            max(0.0, unsupported - max_unsupported) if max_unsupported >= 0 else 0.0
+        ),
+        "section_coherence_score": max(0.0, min_coherence - coherence) if min_coherence > 0 else 0.0,
+    }
+    weighted = (
+        deficits["overall"] * 1.0
+        + deficits["claim_support_ratio"] * 0.7
+        + deficits["unsupported_claim_count"] * 1.1
+        + deficits["section_coherence_score"] * 0.9
+    )
+    failure_count = sum(1 for _, value in deficits.items() if value > 0.0)
+    deficits["distance"] = round(weighted, 4)
+    deficits["failure_count"] = float(failure_count)
+    return deficits
+
+
+def candidate_rank_tuple(evaluation: dict[str, Any], targets: dict[str, float]) -> tuple[float, float, float, float]:
+    gate_pass = bool(evaluation.get("quality_gate_pass"))
+    deficits = quality_gate_distance(evaluation, targets)
+    distance = float(deficits.get("distance", 0.0))
+    failure_count = float(deficits.get("failure_count", 0.0))
+    overall = float(evaluation.get("overall", 0.0) or 0.0)
+    return (
+        1.0 if gate_pass else 0.0,
+        -failure_count,
+        -distance,
+        overall,
+    )
