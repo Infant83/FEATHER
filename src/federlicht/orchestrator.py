@@ -390,6 +390,7 @@ class ReportOrchestrator:
         supporting_dir: Optional[Path] = None
         supporting_summary: Optional[str] = None
         evidence_for_quality = ""
+        analysis_notes = ""
         alignment_max_chars = min(args.quality_max_chars, 8000)
         pack_limit = min(args.quality_max_chars, 6000)
         report_prompt_limit = 4000 if pack_limit <= 0 else min(4000, pack_limit)
@@ -3367,6 +3368,107 @@ class ReportOrchestrator:
                 evidence_for_writer = condensed or helpers.truncate_text_middle(evidence_notes, pack_limit)
             else:
                 evidence_for_writer = claim_packet_text or claim_map_text or evidence_notes
+            run_data_scientist = (
+                report_intent in {"research", "review", "decision", "narrative"}
+                or depth in {"deep", "exhaustive"}
+            )
+            if run_data_scientist and stage_enabled("evidence"):
+                data_scientist_prompt = agent_runtime.prompt(
+                    "data_scientist",
+                    prompts.build_data_scientist_prompt(
+                        language,
+                        depth=depth,
+                        report_intent=report_intent,
+                    ),
+                    self._agent_overrides,
+                )
+                data_scientist_model = agent_runtime.model(
+                    "data_scientist",
+                    check_model or args.model,
+                    self._agent_overrides,
+                )
+                ds_max, ds_max_source = agent_max_tokens("data_scientist")
+                data_scientist_agent = helpers.create_agent_with_fallback(
+                    self._create_deep_agent,
+                    data_scientist_model,
+                    tools,
+                    data_scientist_prompt,
+                    backend,
+                    max_input_tokens=ds_max,
+                    max_input_tokens_source=ds_max_source,
+                )
+                ds_sections = [
+                    context_section(context_lines),
+                    make_section(
+                        "evidence",
+                        "Evidence notes:",
+                        evidence_notes,
+                        priority="high",
+                        base_limit=pack_limit,
+                        min_limit=1000,
+                    ),
+                    make_section(
+                        "claim_map",
+                        "Claim-evidence map:",
+                        claim_packet_text or claim_map_text,
+                        priority="high",
+                        base_limit=pack_limit,
+                        min_limit=900,
+                    ),
+                    make_section(
+                        "source_triage",
+                        "Source triage:",
+                        source_triage_text,
+                        priority="medium",
+                        base_limit=triage_limit,
+                        min_limit=400,
+                        max_lines=triage_line_limit,
+                    ),
+                ]
+                ds_budget = resolve_stage_budget(
+                    ds_max,
+                    reserve=2200,
+                    min_budget=1800,
+                    max_budget=max(2400, pack_limit),
+                    model_name=data_scientist_model,
+                )
+                ds_input, _, _ = build_stage_payload(
+                    ds_sections,
+                    ds_budget,
+                    fallback_map={"evidence": condensed or evidence_for_writer} if (condensed or evidence_for_writer) else None,
+                )
+                try:
+                    analysis_notes = invoke_agent(
+                        "Data Scientist",
+                        data_scientist_agent,
+                        {"messages": [{"role": "user", "content": ds_input}]},
+                    )
+                except Exception as exc:
+                    if is_context_overflow(exc):
+                        helpers.print_progress(
+                            "Data Scientist",
+                            "[warn] context overflow; retrying with reduced payload.",
+                            args.progress,
+                            args.progress_chars,
+                        )
+                        reduced_budget = max(1400, (ds_budget // 2) if ds_budget else 1400)
+                        reduced_input, _, _ = build_stage_payload(
+                            ds_sections,
+                            reduced_budget,
+                            fallback_map={"evidence": condensed or evidence_for_writer}
+                            if (condensed or evidence_for_writer)
+                            else None,
+                        )
+                        analysis_notes = invoke_agent(
+                            "Data Scientist",
+                            data_scientist_agent,
+                            {"messages": [{"role": "user", "content": reduced_input}]},
+                        )
+                    else:
+                        raise
+                analysis_notes = str(analysis_notes or "").strip()
+                if analysis_notes:
+                    (notes_dir / "analysis_notes.md").write_text(analysis_notes, encoding="utf-8")
         else:
             evidence_for_writer = evidence_notes
             if stage_enabled("evidence"):
@@ -3451,6 +3553,12 @@ class ReportOrchestrator:
             evidence_notes,
             max(1400, min(args.quality_max_chars, pack_limit or args.quality_max_chars)),
         )
+        if analysis_notes:
+            evidence_for_quality = "\n\n".join(
+                part
+                for part in [evidence_for_quality, "Data scientist notes:", analysis_notes]
+                if str(part or "").strip()
+            )
         reuse_state_report_for_quality = bool(
             stage_set
             and "writer" not in stage_set
@@ -3589,6 +3697,18 @@ class ReportOrchestrator:
                     min_limit=800,
                 ),
             ]
+            if analysis_notes:
+                sections.append(
+                    make_section(
+                        "analysis_notes",
+                        "Data scientist analysis notes:",
+                        analysis_notes,
+                        priority="high" if is_deep else "medium",
+                        base_limit=triage_limit,
+                        min_limit=500,
+                        max_lines=guidance_line_limit,
+                    )
+                )
             if source_triage_text:
                 sections.append(
                     make_section(

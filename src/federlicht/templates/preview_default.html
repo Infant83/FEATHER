@@ -510,21 +510,29 @@ This is placeholder content to visualize section flow and expected narrative den
       }
       const backLink = document.getElementById('back-link');
       if (backLink) {
-        const path = window.location.pathname.replace(/\\/g, '/');
-        const idx = path.lastIndexOf('/runs/');
-        if (idx !== -1) {
-          const base = path.slice(0, idx);
-          const preferred = `${base}/report_hub/index.html`;
-          const fallback = `${base}/index.html`;
-          backLink.href = preferred;
-          backLink.style.display = 'inline-flex';
-          fetch(preferred, { method: 'HEAD' })
-            .then((resp) => {
-              if (!resp || !resp.ok) backLink.href = fallback;
-            })
-            .catch(() => {
-              backLink.href = fallback;
-            });
+        const candidates = [
+          '../../report_hub/index.html',
+          '/report_hub/index.html',
+          '/site/report_hub/index.html',
+          '../index.html',
+          '/index.html',
+        ];
+        backLink.style.display = 'inline-flex';
+        backLink.href = candidates[0];
+        const canProbe = String(window.location.protocol || '').startsWith('http');
+        if (canProbe) {
+          const probe = async () => {
+            for (const href of candidates) {
+              try {
+                const resp = await fetch(href, { method: 'HEAD' });
+                if (resp && resp.ok) {
+                  backLink.href = href;
+                  return;
+                }
+              } catch (_) {}
+            }
+          };
+          probe();
         }
       }
       const panel = document.getElementById('viewer-panel');

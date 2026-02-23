@@ -1,5 +1,45 @@
 # Changelog
 
+## Unreleased (2026-02-24)
+- P0+ document-quality uplift batch (iter 121):
+  - add data-scientist analysis path for report generation:
+    - new prompt contract `prompts.build_data_scientist_prompt(...)` with anti-hallucination rules,
+      source-grounded numeric interpretation, and narrative-style provenance guidance.
+    - integrate `Data Scientist` analysis after evidence mapping and before writer finalization in
+      `src/federlicht/orchestrator.py`.
+    - persist analysis artifact to `report_notes/analysis_notes.md` and inject into writer/quality context.
+  - extend agent registry/stage map:
+    - add `data_scientist` agent entry and evidence-stage mapping in `src/federlicht/agent_info_impl.py`.
+  - report hub back-link stabilization:
+    - replace fragile `/runs/` path slicing with robust candidate resolution
+      (`../../report_hub/index.html` first) in:
+      - `src/federlicht/render/html.py`
+      - `src/federlicht/templates/preview_default.html`
+    - patch current QC sample report back-link script:
+      - `site/runs/20260221_QC_report/report_full_iter51.html`
+  - tests:
+    - add `tests/test_render_back_link.py`
+    - extend `tests/test_report_prompt_quality_policy.py` for data-scientist prompt policy
+    - regression subset passed (agent/pipeline/quality/render suites).
+- P0+ quality calibration batch (iter 101~120):
+  - improve heuristic section coverage robustness for flexible report styles:
+    - semantic heading alias support (`Lede`, `How It Works`, `The Story So Far`, `Open Questions`, etc.).
+    - heading normalization for numbering/punctuation/case variations.
+  - reduce false unsupported-claim counts by excluding non-content HTML sections:
+    - `Report Prompt`, `References`, `Miscellaneous`, `Appendix`, `Source Index`, metadata-like sections.
+  - improve section coherence scoring stability by skipping non-content sections in HTML span analysis.
+  - expand methodology signal keywords (`workflow`, `pipeline`, `how it works`, `QUBO`, `Ising`, etc.).
+  - add quality heuristic tests:
+    - semantic section coverage alias check (HTML).
+    - unsupported claim detector exclusion for non-content sections.
+  - validation snapshot:
+    - QC sample (`site/runs/20260221_QC_report/report_full_iter51.html`) world-class gate PASS.
+    - quality regression-related test suite pass (`31 passed`).
+- Workflow docs hygiene:
+  - reinforce temporary-output policy in `docs/development_workflow_guide.md`:
+    - limit root transient dirs to `temp/`, `test-results/`, `node_modules/`, `artifacts/`.
+    - add explicit safe cleanup commands for local ephemeral dirs.
+
 ## 1.9.29 (2026-02-23)
 - Version consistency policy hardening:
   - align versions across `pyproject.toml`, `README.md`, `CHANGELOG.md`, and `src/federlicht/versioning.py`.
@@ -17,7 +57,7 @@
     - `tests/test_quality_iteration.py`
     - `tests/test_report_quality_profile_compare_tool.py`
 - Documentation and workflow:
-  - update `docs/codex_handoff_20260223.md` (iter logs/progress).
+  - update `docs/dev_history/handoffs/codex_handoff_20260223.md` (iter logs/progress).
   - update `docs/report_quality_threshold_policy.md` with profile compare usage.
   - update README quality tooling examples.
 
@@ -440,7 +480,7 @@
   - add `POST /api/report-hub/publish` endpoint to bridge Federnett -> `federlicht.hub_publish`.
   - include publish result payload (`published_asset_rels`, `skipped_asset_refs`, manifest/index paths).
 - Docs:
-  - refresh handoff status and publish coverage notes (`docs/codex_handoff_20260220.md`).
+  - refresh handoff status and publish coverage notes (`docs/dev_history/handoffs/codex_handoff_20260220.md`).
   - update run/site strategy with linked-assets policy and Federnett publish wiring (`docs/run_site_publish_strategy.md`).
 - Validation:
   - `pytest -q tests/test_hub_publish.py tests/test_federnett_routes.py` -> `37 passed`
@@ -461,7 +501,7 @@
   - improve stage prompt chain preview wording and stage-context readability.
   - replace initial tools placeholder with non-loading guidance text.
 - Docs:
-  - update handoff state and remaining items (`docs/codex_handoff_20260220.md`).
+  - update handoff state and remaining items (`docs/dev_history/handoffs/codex_handoff_20260220.md`).
   - extend PPT writer strategy for partial artifact patch/edit via FederHav (`docs/ppt_writer_strategy.md`).
 
 ## 1.9.8
@@ -473,7 +513,7 @@
   - propagate `depth/template_rigidity/free_format` into planner/evidence/writer-finalizer/evaluator call paths.
   - align evaluator prompt policy in runtime and agent-info defaults.
 - Documentation and operations:
-  - update `docs/codex_handoff_20260220.md` with latest status, validation snapshots, and open TODOs.
+  - update `docs/dev_history/handoffs/codex_handoff_20260220.md` with latest status, validation snapshots, and open TODOs.
   - add PPT expansion strategy draft: `docs/ppt_writer_strategy.md`.
   - extend run/site separation guide with on-prem + GitLab remote split workflow (`docs/run_site_publish_strategy.md`).
 - Local verification:

@@ -10,7 +10,7 @@ STAGE_AGENT_MAP = {
     "scout": ["scout", "clarifier", "alignment", "template_adjuster"],
     "plan": ["planner", "alignment"],
     "web": ["web_query"],
-    "evidence": ["evidence", "plan_check", "alignment", "reducer"],
+    "evidence": ["evidence", "plan_check", "alignment", "reducer", "data_scientist"],
     "writer": ["writer", "structural_editor", "artwork"],
     "quality": ["critic", "reviser", "evaluator", "pairwise_compare", "synthesizer"],
     "figures": ["image_analyst"],
@@ -141,6 +141,15 @@ def build_agent_info(
             "reducer",
             default_model=args.check_model or args.model,
             default_prompt=prompts.build_reducer_prompt(language),
+        ),
+        "data_scientist": build_agent_entry(
+            "data_scientist",
+            default_model=args.check_model or args.model,
+            default_prompt=prompts.build_data_scientist_prompt(
+                language,
+                depth=depth,
+            ),
+            default_enabled=True,
         ),
         "writer": build_agent_entry(
             "writer",

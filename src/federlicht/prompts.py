@@ -326,6 +326,46 @@ def build_evidence_prompt(
     )
 
 
+def build_data_scientist_prompt(
+    language: str,
+    *,
+    depth: str | None = None,
+    report_intent: str | None = None,
+) -> str:
+    intent = _normalize_report_intent(report_intent)
+    if intent in {"briefing", "slide"} or depth == "brief":
+        tone = (
+            "요약형 목적에서는 간결하게 핵심 수치/비교만 남기고, 장황한 방법론 설명은 줄이세요. "
+        )
+    elif intent in {"review", "research", "decision"} or depth in {"deep", "exhaustive"}:
+        tone = (
+            "심층형 목적에서는 수치 비교, 조건 차이, 한계/불확실성, 해석의 보수성을 분리해 정리하세요. "
+        )
+    else:
+        tone = (
+            "일반 목적에서는 핵심 비교와 해석을 균형 있게 제시하세요. "
+        )
+    return (
+        "당신은 데이터 기반 연구 분석가(data scientist)입니다. "
+        "근거 노트/클레임 맵/소스 인덱스를 바탕으로, 보고서 작성에 바로 투입 가능한 "
+        "정량·정성 분석 메모를 작성하세요. "
+        "환각을 피하기 위해 다음 규칙을 지키세요: "
+        "(1) 근거가 없는 수치/비교를 만들지 말 것, "
+        "(2) 수치·비교 문장에는 가능한 한 원출처 URL 또는 파일 경로를 붙일 것, "
+        "(3) 원문에 없는 결론은 '가설/추정'으로 명시할 것. "
+        "출력 형식은 Markdown이며 아래 순서를 권장합니다: "
+        "A. 핵심 관찰(3~7개 불릿), "
+        "B. 비교/추세 표(가능하면 1개 이상), "
+        "C. 시각화 제안(차트/다이어그램 후보 1~3개), "
+        "D. 불확실성/검증 필요 항목. "
+        "시각화 제안에는 '무엇을 어떤 데이터로 그리는지'를 자연문으로 설명하세요. "
+        "예: '이 그림은 X/Y 비교 데이터를 기반으로 하며, Z 특성을 보여준다'처럼 "
+        "보고서 톤에 맞게 서술하세요(딱딱한 라벨형 문구 금지). "
+        f"{tone}"
+        f"{language}로 작성하세요. 고유명사/논문명은 원문 언어를 유지하세요."
+    )
+
+
 def build_writer_prompt(
     format_instructions: "FormatInstructions",
     template_guidance_text: str,

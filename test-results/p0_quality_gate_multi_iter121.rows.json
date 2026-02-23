@@ -1,0 +1,65 @@
+[
+  {
+    "path": "site/runs/20260221_QC_report/report_full_iter51.html",
+    "format": "html",
+    "overall": 91.05,
+    "claim_support_ratio": 72.73,
+    "unsupported_claim_count": 6.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 92.0,
+    "signals": {
+      "section_coverage": 100.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 100.0,
+      "claim_support_ratio": 72.73,
+      "unsupported_claim_count": 6.0,
+      "section_coherence_score": 92.0,
+      "method_transparency": 100.0,
+      "traceability": 74.0,
+      "uncertainty_handling": 98.0,
+      "overall": 91.05
+    }
+  },
+  {
+    "path": "site/runs/openclaw/report_full.html",
+    "format": "html",
+    "overall": 85.73,
+    "claim_support_ratio": 2.08,
+    "unsupported_claim_count": 47.0,
+    "evidence_density_score": 98.44,
+    "section_coherence_score": 100.0,
+    "signals": {
+      "section_coverage": 100.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 98.44,
+      "claim_support_ratio": 2.08,
+      "unsupported_claim_count": 47.0,
+      "section_coherence_score": 100.0,
+      "method_transparency": 100.0,
+      "traceability": 86.0,
+      "uncertainty_handling": 100.0,
+      "overall": 85.73
+    }
+  },
+  {
+    "path": "site/runs/physical_ai_insight/report_full.html",
+    "format": "html",
+    "overall": 92.28,
+    "claim_support_ratio": 76.34,
+    "unsupported_claim_count": 22.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 80.0,
+    "signals": {
+      "section_coverage": 100.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 100.0,
+      "claim_support_ratio": 76.34,
+      "unsupported_claim_count": 22.0,
+      "section_coherence_score": 80.0,
+      "method_transparency": 98.0,
+      "traceability": 86.0,
+      "uncertainty_handling": 100.0,
+      "overall": 92.28
+    }
+  }
+]

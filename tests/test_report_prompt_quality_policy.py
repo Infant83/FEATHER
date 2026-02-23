@@ -145,3 +145,15 @@ def test_prompt_intent_guidance_adapts_to_decision_mode() -> None:
     assert "의도=decision" in plan_prompt
     assert "옵션별 근거" in evidence_prompt
     assert "실행 가능성" in evaluate_prompt
+
+
+def test_data_scientist_prompt_enforces_grounded_narrative_provenance() -> None:
+    prompt = prompts.build_data_scientist_prompt(
+        "Korean",
+        depth="deep",
+        report_intent="research",
+    )
+    assert "환각을 피하기 위해" in prompt
+    assert "근거가 없는 수치/비교를 만들지 말 것" in prompt
+    assert "원출처 URL 또는 파일 경로" in prompt
+    assert "딱딱한 라벨형 문구 금지" in prompt
