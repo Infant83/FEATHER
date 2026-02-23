@@ -64,8 +64,15 @@ python tools/run_report_quality_gate.py \
   --quality-profile world_class
 ```
 
+Profile compare (same summary, all profiles):
+```bash
+python tools/report_quality_profile_compare.py \
+  --input test-results/qc.summary.json \
+  --output-json test-results/qc.profile_compare.json \
+  --output-md test-results/qc.profile_compare.md
+```
+
 ## 6) Design Principle
 - Do not hard-code one template shape for every request.
 - Keep flexible intent/depth handling.
 - Raise quality through better agentic decomposition (scout/plan/evidence/writer/quality), evidence contracts, and section-level revision, not via rigid section forcing.
-

@@ -15,6 +15,7 @@ import sys
 from federlicht import tools as feder_tools
 
 from . import artwork as feder_artwork
+from . import quality_iteration as feder_quality_iteration
 from . import prompts, workflow_stages
 from . import quality_profiles as feder_quality_profiles
 from . import section_ast as feder_section_ast
@@ -3801,14 +3802,44 @@ class ReportOrchestrator:
         auto_extra_iterations = max(0, int(getattr(args, "quality_auto_extra_iterations", 0) or 0))
         if quality_iterations <= 0 and quality_gate_enabled and auto_extra_iterations > 0:
             quality_iterations = 1
-        effective_quality_iterations = quality_iterations + (
-            auto_extra_iterations if quality_gate_enabled else 0
+        quality_iteration_plan = feder_quality_iteration.resolve_iteration_plan(
+            profile=quality_gate_profile,
+            gate_enabled=quality_gate_enabled,
+            requested_iterations=quality_iterations,
+            auto_extra_iterations=auto_extra_iterations,
         )
+        quality_policy_payload = dict(quality_iteration_plan.get("policy") or {})
+        effective_quality_iterations = int(quality_iteration_plan.get("effective_iterations", 0) or 0)
+        if quality_gate_enabled:
+            quality_iterations = int(quality_iteration_plan.get("base_iterations", quality_iterations) or quality_iterations)
+        plateau_delta = float(quality_policy_payload.get("plateau_delta", 1.0) or 1.0)
+        plateau_patience = max(1, int(quality_policy_payload.get("plateau_patience", 1) or 1))
+        policy_min_iterations = max(0, int(quality_policy_payload.get("min_iterations", 0) or 0))
         quality_passes_executed = 0
+        quality_pass_trace: list[dict] = []
+        quality_plateau_streak = 0
         if effective_quality_iterations > 0:
             previous_report = ""
             for idx in range(effective_quality_iterations):
                 quality_passes_executed = idx + 1
+                pre_signals = helpers.compute_heuristic_quality_signals(
+                    report,
+                    required_sections,
+                    output_format,
+                    depth=depth,
+                    report_intent=report_intent,
+                )
+                unsupported_examples_pre = (
+                    helpers._unsupported_claim_examples(report, output_format, max_items=6)
+                    if hasattr(helpers, "_unsupported_claim_examples")
+                    else []
+                )
+                quality_focus_directives = feder_quality_iteration.build_focus_directives(
+                    profile_label=quality_gate_profile_band,
+                    targets=quality_gate_args,
+                    current_signals=pre_signals,
+                    unsupported_examples=unsupported_examples_pre,
+                )
                 critic_prompt = agent_runtime.prompt(
                     "critic",
                     prompts.build_critic_prompt(language, required_sections),
@@ -3869,6 +3900,17 @@ class ReportOrchestrator:
                             priority="high",
                             base_limit=600,
                             min_limit=220,
+                        )
+                    )
+                if quality_focus_directives:
+                    critic_sections.append(
+                        make_section(
+                            "quality_focus",
+                            "Quality focus directives:",
+                            quality_focus_directives,
+                            priority="high",
+                            base_limit=1800,
+                            min_limit=700,
                         )
                     )
                 critic_budget = resolve_stage_budget(
@@ -3979,17 +4021,41 @@ class ReportOrchestrator:
                         )
                         critique = "no_changes"
                 if "no_changes" in critique.lower():
+                    gate_signals = pre_signals
                     if idx + 1 < quality_iterations:
+                        quality_pass_trace.append(
+                            {
+                                "pass": idx + 1,
+                                "mode": "no_changes",
+                                "pre_signals": pre_signals,
+                                "post_signals": pre_signals,
+                                "delta": {
+                                    "overall": 0.0,
+                                    "claim_support_ratio": 0.0,
+                                    "unsupported_claim_count": 0.0,
+                                    "section_coherence_score": 0.0,
+                                },
+                                "quality_gate_failures": [],
+                            }
+                        )
                         break
                     if quality_gate_enabled and idx + 1 < effective_quality_iterations:
-                        gate_signals = helpers.compute_heuristic_quality_signals(
-                            report,
-                            required_sections,
-                            output_format,
-                            depth=depth,
-                            report_intent=report_intent,
-                        )
                         gate_failures = helpers.quality_gate_failures(gate_signals, **quality_gate_args)
+                        quality_pass_trace.append(
+                            {
+                                "pass": idx + 1,
+                                "mode": "no_changes",
+                                "pre_signals": pre_signals,
+                                "post_signals": pre_signals,
+                                "delta": {
+                                    "overall": 0.0,
+                                    "claim_support_ratio": 0.0,
+                                    "unsupported_claim_count": 0.0,
+                                    "section_coherence_score": 0.0,
+                                },
+                                "quality_gate_failures": gate_failures,
+                            }
+                        )
                         if gate_failures:
                             helpers.print_progress(
                                 f"Quality Pass {idx + 1}",
@@ -4067,6 +4133,17 @@ class ReportOrchestrator:
                             priority="high",
                             base_limit=600,
                             min_limit=220,
+                        )
+                    )
+                if quality_focus_directives:
+                    revise_sections.append(
+                        make_section(
+                            "quality_focus",
+                            "Quality focus directives:",
+                            quality_focus_directives,
+                            priority="high",
+                            base_limit=1800,
+                            min_limit=700,
                         )
                     )
                 revise_budget = resolve_stage_budget(
@@ -4179,15 +4256,37 @@ class ReportOrchestrator:
                         report = previous_report
                         break
                 candidates.append({"label": f"rev_{idx + 1}", "text": report})
+                gate_signals = helpers.compute_heuristic_quality_signals(
+                    report,
+                    required_sections,
+                    output_format,
+                    depth=depth,
+                    report_intent=report_intent,
+                )
+                gate_failures = (
+                    helpers.quality_gate_failures(gate_signals, **quality_gate_args)
+                    if quality_gate_enabled
+                    else []
+                )
+                delta_signals = feder_quality_iteration.compute_delta(pre_signals, gate_signals)
+                quality_pass_trace.append(
+                    {
+                        "pass": idx + 1,
+                        "mode": "revision",
+                        "pre_signals": pre_signals,
+                        "post_signals": gate_signals,
+                        "delta": delta_signals,
+                        "quality_gate_failures": gate_failures,
+                    }
+                )
+                if feder_quality_iteration.is_plateau_delta(
+                    delta_signals,
+                    plateau_delta=plateau_delta,
+                ):
+                    quality_plateau_streak += 1
+                else:
+                    quality_plateau_streak = 0
                 if quality_gate_enabled and idx + 1 >= quality_iterations:
-                    gate_signals = helpers.compute_heuristic_quality_signals(
-                        report,
-                        required_sections,
-                        output_format,
-                        depth=depth,
-                        report_intent=report_intent,
-                    )
-                    gate_failures = helpers.quality_gate_failures(gate_signals, **quality_gate_args)
                     if gate_failures and idx + 1 < effective_quality_iterations:
                         helpers.print_progress(
                             f"Quality Pass {idx + 1}",
@@ -4195,6 +4294,20 @@ class ReportOrchestrator:
                             args.progress,
                             args.progress_chars,
                         )
+                        if (
+                            quality_plateau_streak >= plateau_patience
+                            and idx + 1 >= policy_min_iterations
+                        ):
+                            helpers.print_progress(
+                                "Quality Convergence",
+                                (
+                                    "[warn] quality loop plateau detected under active gate; "
+                                    "stopping early and keeping best candidate selection."
+                                ),
+                                args.progress,
+                                args.progress_chars,
+                            )
+                            break
                         continue
                     if gate_failures and idx + 1 >= effective_quality_iterations:
                         helpers.print_progress(
@@ -4205,6 +4318,17 @@ class ReportOrchestrator:
                         )
                     if not gate_failures:
                         break
+                elif (
+                    quality_plateau_streak >= plateau_patience
+                    and idx + 1 >= policy_min_iterations
+                ):
+                    helpers.print_progress(
+                        "Quality Convergence",
+                        "[quality-loop] plateau detected; stopping additional passes.",
+                        args.progress,
+                        args.progress_chars,
+                    )
+                    break
             record_stage(
                 "quality",
                 "ran",
@@ -4421,6 +4545,7 @@ class ReportOrchestrator:
             "quality_iterations_requested": quality_iterations,
             "quality_iterations_effective": effective_quality_iterations,
             "quality_passes_executed": quality_passes_executed,
+            "quality_iteration_plan": quality_iteration_plan,
             "quality_gate_profile": quality_gate_profile,
             "quality_gate_effective_band": quality_gate_profile_band,
             "quality_gate_policy": quality_gate_policy,
@@ -4439,6 +4564,21 @@ class ReportOrchestrator:
                 "section_coherence_score",
             ],
         }
+        quality_pass_trace_path: Optional[Path] = None
+        if quality_pass_trace:
+            quality_pass_trace_path = notes_dir / "quality_pass_trace.json"
+            quality_pass_trace_payload = {
+                "profile": quality_gate_profile,
+                "effective_band": quality_gate_profile_band,
+                "iteration_plan": quality_iteration_plan,
+                "gate_targets": quality_gate_args,
+                "passes": quality_pass_trace,
+            }
+            quality_pass_trace_path.write_text(
+                json.dumps(quality_pass_trace_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            quality_contract["quality_pass_trace_path"] = quality_pass_trace_path.relative_to(run_dir).as_posix()
         (notes_dir / "quality_contract.latest.json").write_text(
             json.dumps(quality_contract, ensure_ascii=False, indent=2),
             encoding="utf-8",
@@ -4460,6 +4600,8 @@ class ReportOrchestrator:
                 "final_pass": len(final_failures) == 0,
                 "final_failures": final_failures,
             }
+            if quality_pass_trace_path:
+                gate_payload["quality_pass_trace_path"] = quality_pass_trace_path.relative_to(run_dir).as_posix()
             (notes_dir / "quality_gate.json").write_text(
                 json.dumps(gate_payload, ensure_ascii=False, indent=2),
                 encoding="utf-8",

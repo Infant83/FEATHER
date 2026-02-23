@@ -334,6 +334,13 @@ federlicht --run ./runs/demo --output ./runs/demo/report_full.html \
 ```
 
 For benchmark/regression tooling, see `docs/report_quality_threshold_policy.md`.
+Quick profile matrix compare:
+```bash
+python tools/report_quality_profile_compare.py \
+  --input test-results/qc.summary.json \
+  --output-json test-results/qc.profile_compare.json \
+  --output-md test-results/qc.profile_compare.md
+```
 
 ### Figures (PDF extraction & selection)
 Federlicht can extract figures from referenced PDFs and insert them into the report. Candidates are derived from

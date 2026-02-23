@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.9.28 (2026-02-23)
+- Quality-loop optimization for profile-driven report refinement:
+  - add `src/federlicht/quality_iteration.py` with:
+    - profile-aware iteration policy (`min/max`, plateau delta/patience),
+    - iteration-plan resolver,
+    - quality delta and plateau detection helpers,
+    - metric-driven focus-directive builder for critic/reviser prompts.
+  - integrate quality iteration policy into `src/federlicht/orchestrator.py`:
+    - profile-based effective quality pass calculation,
+    - pass-level focus directives injected into critique/revision context,
+    - convergence-aware early stop on plateau,
+    - pass trace artifact `report_notes/quality_pass_trace.json`.
+  - persist iteration-plan/trace metadata to:
+    - `report_notes/quality_contract.latest.json`
+    - `report_notes/quality_gate.json`
+- Profile-level gate diagnostics:
+  - add `tools/report_quality_profile_compare.py` to evaluate one benchmark summary across:
+    - `smoke`, `baseline`, `professional`, `world_class`.
+  - output supports JSON + Markdown matrix for quick level diagnostics.
+- Tests:
+  - add `tests/test_quality_iteration.py`.
+  - add `tests/test_report_quality_profile_compare_tool.py`.
+  - regression run:
+    - `pytest -q tests/test_quality_iteration.py tests/test_quality_profiles.py tests/test_report_quality_profile_compare_tool.py tests/test_report_quality_contract_consistency_tool.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `35 passed`.
+- Diagnostics artifact:
+  - run profile matrix on QC sample summary:
+    - `test-results/p0_quality_profile_compare_qc_iter90.json`
+    - `test-results/p0_quality_profile_compare_qc_iter90.md`
+
 ## 1.9.27 (2026-02-23)
 - Report quality gate threshold policy normalization:
   - add shared quality profile module `src/federlicht/quality_profiles.py`:

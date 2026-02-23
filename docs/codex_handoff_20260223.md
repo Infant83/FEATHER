@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 22:43:16 +09:00  
+Last updated: 2026-02-23 23:02:05 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -1053,4 +1053,88 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 ### 진행률 업데이트 (81 기준)
 - P0(core): `100%` 유지
 - P0+(quality uplift): `55%` (이전 `52%` -> `+3%p`)
+- P1: `0%`
+
+## 29) Iteration Log (82~85 / 100)
+- Iter 상태: `85/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 23:02:05 +09:00`
+- 이번 배치 목표:
+- world-class 품질 향상을 위해 quality loop를 점수 기반 cowork 루프로 고도화
+
+### Iter-82: quality iteration 정책 모듈화
+- 반영:
+- `src/federlicht/quality_iteration.py` 추가
+  - profile별 반복 정책(`min/max iterations`, `plateau delta`, `plateau patience`) 정의
+  - `resolve_iteration_plan(...)`으로 gate/profile/requested iteration을 단일 계산
+  - `compute_delta(...)`, `is_plateau_delta(...)` 제공
+
+### Iter-83: 품질 개선 지시문(focus directives) 도입
+- 반영:
+- `src/federlicht/quality_iteration.py`
+  - 현재 신호 vs 목표치 비교 기반의 generic 개선 지시문 생성
+  - unsupported claim 예시를 함께 전달해 reviser가 구체 수정 가능하게 지원
+
+### Iter-84: orchestrator quality loop 연동
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - profile 기반 iteration plan을 quality 루프에 연결
+  - critic/reviser payload에 `Quality focus directives` 섹션 추가
+  - pass별 pre/post signal + delta 계산 및 plateau 수렴 탐지 연결
+  - 수렴 시 불필요한 반복 pass를 조기 종료(게이트 상태와 함께 판단)
+
+### Iter-85: quality pass trace 산출물 추가
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `report_notes/quality_pass_trace.json` 기록 추가
+  - `quality_contract.latest.json` / `quality_gate.json`에 trace path와 iteration plan 메타 연결
+
+### 진행률 업데이트 (82~85 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `60%` (이전 `55%` -> `+5%p`)
+- P1: `0%`
+
+## 30) Iteration Log (86~90 / 100)
+- Iter 상태: `90/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 23:02:05 +09:00`
+- 이번 배치 목표:
+- quality level 판정을 즉시 가시화하고 회귀 검증을 확장
+
+### Iter-86: 프로파일 비교 도구 추가
+- 반영:
+- `tools/report_quality_profile_compare.py` 추가
+  - 하나의 benchmark summary를 `smoke/baseline/professional/world_class`로 동시 판정
+  - JSON/Markdown 출력 지원
+
+### Iter-87: 프로파일 비교 도구 테스트 추가
+- 반영:
+- `tests/test_report_quality_profile_compare_tool.py` 추가
+  - 중간 품질 요약에서 baseline pass / higher profile fail 회귀 검증
+  - markdown 렌더 구조 검증
+
+### Iter-88: 품질 정책 문서 사용 예 확장
+- 반영:
+- `docs/report_quality_threshold_policy.md`
+  - `report_quality_profile_compare.py` 실행 예시 추가
+
+### Iter-89: 회귀 테스트 재실행
+- 검증:
+- `python -m py_compile src/federlicht/orchestrator.py src/federlicht/quality_iteration.py tools/report_quality_profile_compare.py`
+- `pytest -q tests/test_quality_iteration.py tests/test_quality_profiles.py tests/test_report_quality_profile_compare_tool.py tests/test_report_quality_contract_consistency_tool.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `35 passed`
+
+### Iter-90: QC 샘플 프로파일 매트릭스 실측
+- 실행:
+- `python tools/report_quality_profile_compare.py --input test-results/p0_quality_benchmark_qc_iter80.summary.json --output-json test-results/p0_quality_profile_compare_qc_iter90.json --output-md test-results/p0_quality_profile_compare_qc_iter90.md`
+- 결과 요약:
+- `smoke`: FAIL (`overall 60.92 < 65.00`)
+- `baseline`: FAIL (`overall 60.92 < 70.00`)
+- `professional`: FAIL (overall/support/unsupported/coherence 모두 미달)
+- `world_class`: FAIL (전체 축 미달)
+- 해석:
+- 현재 QC 샘플은 profile 체계상 baseline 미달이며, 다음 배치에서 evidence grounding + coherence 개선이 필수
+
+### 진행률 업데이트 (86~90 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `64%` (이전 `60%` -> `+4%p`)
 - P1: `0%`
