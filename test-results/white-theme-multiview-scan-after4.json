@@ -1,0 +1,41 @@
+[
+  {
+    "view": "main",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "tab-feather",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "tab-federlicht",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "tab-runstudio",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "workflow-studio-open",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "workflow-studio-close",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "run-folder-modal",
+    "dark_count": 0,
+    "dark_samples": []
+  },
+  {
+    "view": "llm-settings-modal",
+    "error": "Locator.click: Timeout 2500ms exceeded.\nCall log:\n  - waiting for locator(\"#workspace-model-settings\").first\n    - locator resolved to <button class=\"ghost\" id=\"workspace-model-settings\">LLM Settings</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <details class=\"run-picker-workspace-settings\">…</details> from <div role=\"dialog\" class=\"modal open\" aria-hidden=\"false\" id=\"run-picker-modal\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <details class=\"run-picker-workspace-settings\">…</details> from <div role=\"dialog\" class=\"modal open\" aria-hidden=\"false\" id=\"run-picker-modal\">…</div> subtree intercepts pointer events\n  2 × retrying click action\n      - waiting 100ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"modal-backdrop\" data-runpicker-close=\"\"></div> from <div role=\"dialog\" class=\"modal open\" aria-hidden=\"false\" id=\"run-picker-modal\">…</div> subtree intercepts pointer events\n  2 × retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <details class=\"run-picker-workspace-settings\">…</details> from <div role=\"dialog\" class=\"modal open\" aria-hidden=\"false\" id=\"run-picker-modal\">…</div> subtree intercepts pointer events\n  2 × retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"modal-backdrop\" data-runpicker-close=\"\"></div> from <div role=\"dialog\" class=\"modal open\" aria-hidden=\"false\" id=\"run-picker-modal\">…</div> subtree intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n"
+  }
+]

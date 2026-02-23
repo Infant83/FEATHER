@@ -6,6 +6,60 @@ from typing import Any
 from .utils import extra_args, expand_env_reference, parse_bool, resolve_under_root
 from .config import FedernettConfig
 
+_CODEX_BACKENDS = {"codex_cli", "codex-cli", "codex", "cli"}
+
+
+def _normalize_backend(value: Any) -> str:
+    return str(value or "openai_api").strip().lower()
+
+
+def _canonicalize_model_for_codex_backend(token: str) -> str:
+    raw = str(token or "").strip()
+    if not raw:
+        return ""
+    lowered = raw.lower()
+    if lowered in {"$openai_model", "${openai_model}", "%openai_model%"}:
+        return raw
+    if lowered in {"$openai_model_vision", "${openai_model_vision}"}:
+        return raw
+    if raw.startswith("$") or (raw.startswith("${") and raw.endswith("}")):
+        return raw
+    if raw.startswith("%") and raw.endswith("%"):
+        return raw
+    return lowered
+
+
+def _resolve_model_arg(value: Any, *, backend: str = "openai_api") -> str:
+    token = expand_env_reference(value)
+    if token is None:
+        return ""
+    raw = str(token).strip()
+    if not raw:
+        return ""
+    lowered = raw.lower()
+    if lowered.startswith("${") and lowered.endswith("}"):
+        return ""
+    if raw.startswith("$"):
+        return ""
+    if raw.startswith("%") and raw.endswith("%"):
+        return ""
+    if _normalize_backend(backend) in _CODEX_BACKENDS:
+        return _canonicalize_model_for_codex_backend(raw)
+    return raw
+
+
+def _supports_reasoning_effort_arg(payload: dict[str, Any]) -> bool:
+    backend = str(payload.get("llm_backend") or "openai_api").strip().lower()
+    if backend in {"codex_cli", "codex-cli", "codex"}:
+        return True
+    model = _resolve_model_arg(payload.get("check_model")) or _resolve_model_arg(payload.get("model"))
+    token = model.strip().lower()
+    if not token:
+        return False
+    if "codex" in token:
+        return False
+    return token.startswith(("gpt-5", "o1", "o3", "o4")) or "reason" in token
+
 
 def _build_feather_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list[str]:
     input_path = payload.get("input")
@@ -16,7 +70,8 @@ def _build_feather_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list[st
     if not input_path and not query:
         raise ValueError("Feather requires either input or query.")
 
-    cmd: list[str] = [sys.executable, "-m", "feather"]
+    backend = _normalize_backend(payload.get("llm_backend"))
+    cmd: list[str] = [sys.executable, "-u", "-m", "feather"]
     if input_path:
         resolved_input = resolve_under_root(cfg.root, str(input_path))
         cmd.extend(["--input", str(resolved_input)])
@@ -32,7 +87,7 @@ def _build_feather_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list[st
         cmd.extend(["--max-results", str(payload.get("max_results"))])
     if parse_bool(payload, "agentic_search"):
         cmd.append("--agentic-search")
-        model = expand_env_reference(payload.get("model"))
+        model = _resolve_model_arg(payload.get("model"), backend=backend)
         if model:
             cmd.extend(["--model", str(model)])
         if payload.get("max_iter") is not None and str(payload.get("max_iter")) != "":
@@ -73,7 +128,8 @@ def _build_federlicht_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list
         raise ValueError("Federlicht requires a run path.")
     resolved_run = resolve_under_root(cfg.root, str(run_dir))
 
-    cmd: list[str] = [sys.executable, "-m", "federlicht.report", "--run", str(resolved_run)]
+    backend = _normalize_backend(payload.get("llm_backend"))
+    cmd: list[str] = [sys.executable, "-u", "-m", "federlicht.report", "--run", str(resolved_run)]
     output_path = payload.get("output")
     if output_path:
         resolved_output = resolve_under_root(cfg.root, str(output_path))
@@ -81,6 +137,10 @@ def _build_federlicht_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list
     free_format = parse_bool(payload, "free_format")
     if free_format:
         cmd.append("--free-format")
+    style_pack = payload.get("style_pack")
+    style_pack_value = str(style_pack).strip().lower() if style_pack is not None else ""
+    if free_format and style_pack_value and style_pack_value not in {"none", "off", "false", "0"}:
+        cmd.extend(["--style-pack", style_pack_value])
     template = payload.get("template")
     if template and not free_format:
         cmd.extend(["--template", str(template)])
@@ -99,25 +159,35 @@ def _build_federlicht_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list
     prompt_file = payload.get("prompt_file")
     if prompt_file:
         resolved_prompt = resolve_under_root(cfg.root, str(prompt_file))
-        cmd.extend(["--prompt-file", str(resolved_prompt)])
+        # FederHav suggested actions may carry stale prompt_file paths.
+        # Skip non-existent files and let Federlicht fall back to inline/default prompt resolution.
+        if resolved_prompt.exists():
+            cmd.extend(["--prompt-file", str(resolved_prompt)])
     stages = payload.get("stages")
     if stages:
         cmd.extend(["--stages", str(stages)])
     skip_stages = payload.get("skip_stages")
     if skip_stages:
         cmd.extend(["--skip-stages", str(skip_stages)])
-    model = expand_env_reference(payload.get("model"))
+    model = _resolve_model_arg(payload.get("model"), backend=backend)
     if model:
         cmd.extend(["--model", str(model)])
-    check_model = expand_env_reference(payload.get("check_model"))
+    check_model = _resolve_model_arg(payload.get("check_model"), backend=backend)
     if check_model:
         cmd.extend(["--check-model", str(check_model)])
-    model_vision = expand_env_reference(payload.get("model_vision"))
+    model_vision = _resolve_model_arg(payload.get("model_vision"), backend=backend)
     if model_vision:
         cmd.extend(["--model-vision", str(model_vision)])
     temperature_level = payload.get("temperature_level")
     if temperature_level:
         cmd.extend(["--temperature-level", str(temperature_level)])
+    reasoning_effort = str(payload.get("reasoning_effort") or "").strip().lower()
+    if (
+        reasoning_effort
+        and reasoning_effort not in {"off", "none", "false", "0", "disabled"}
+        and _supports_reasoning_effort_arg(payload)
+    ):
+        cmd.extend(["--reasoning-effort", reasoning_effort])
     quality_iterations = payload.get("quality_iterations")
     if quality_iterations is not None and str(quality_iterations) != "":
         cmd.extend(["--quality-iterations", str(quality_iterations)])
@@ -180,8 +250,10 @@ def _build_generate_prompt_cmd(cfg: FedernettConfig, payload: dict[str, Any]) ->
         raise ValueError("Prompt generation requires a run path.")
     resolved_run = resolve_under_root(cfg.root, str(run_dir))
 
+    backend = _normalize_backend(payload.get("llm_backend"))
     cmd: list[str] = [
         sys.executable,
+        "-u",
         "-m",
         "federlicht.report",
         "--run",
@@ -195,6 +267,10 @@ def _build_generate_prompt_cmd(cfg: FedernettConfig, payload: dict[str, Any]) ->
     free_format = parse_bool(payload, "free_format")
     if free_format:
         cmd.append("--free-format")
+    style_pack = payload.get("style_pack")
+    style_pack_value = str(style_pack).strip().lower() if style_pack is not None else ""
+    if free_format and style_pack_value and style_pack_value not in {"none", "off", "false", "0"}:
+        cmd.extend(["--style-pack", style_pack_value])
     template = payload.get("template")
     if template and not free_format:
         cmd.extend(["--template", str(template)])
@@ -207,10 +283,10 @@ def _build_generate_prompt_cmd(cfg: FedernettConfig, payload: dict[str, Any]) ->
     template_rigidity = payload.get("template_rigidity")
     if template_rigidity and not free_format:
         cmd.extend(["--template-rigidity", str(template_rigidity)])
-    model = expand_env_reference(payload.get("model"))
+    model = _resolve_model_arg(payload.get("model"), backend=backend)
     if model:
         cmd.extend(["--model", str(model)])
-    check_model = expand_env_reference(payload.get("check_model"))
+    check_model = _resolve_model_arg(payload.get("check_model"), backend=backend)
     if check_model:
         cmd.extend(["--check-model", str(check_model)])
     agent_config = payload.get("agent_config")
@@ -220,6 +296,13 @@ def _build_generate_prompt_cmd(cfg: FedernettConfig, payload: dict[str, Any]) ->
     temperature_level = payload.get("temperature_level")
     if temperature_level:
         cmd.extend(["--temperature-level", str(temperature_level)])
+    reasoning_effort = str(payload.get("reasoning_effort") or "").strip().lower()
+    if (
+        reasoning_effort
+        and reasoning_effort not in {"off", "none", "false", "0", "disabled"}
+        and _supports_reasoning_effort_arg(payload)
+    ):
+        cmd.extend(["--reasoning-effort", reasoning_effort])
     cmd.extend(extra_args(payload.get("extra_args")))
     return cmd
 
@@ -232,7 +315,7 @@ def _build_generate_template_cmd(cfg: FedernettConfig, payload: dict[str, Any]) 
     if not name:
         raise ValueError("Template generation requires a template name.")
     store = payload.get("store") or "run"
-    cmd: list[str] = [sys.executable, "-m", "federlicht.report", "--generate-template"]
+    cmd: list[str] = [sys.executable, "-u", "-m", "federlicht.report", "--generate-template"]
     if payload.get("run"):
         resolved_run = resolve_under_root(cfg.root, str(payload.get("run")))
         if resolved_run:
@@ -240,7 +323,7 @@ def _build_generate_template_cmd(cfg: FedernettConfig, payload: dict[str, Any]) 
     cmd.extend(["--template-name", str(name)])
     cmd.extend(["--template-prompt", str(prompt)])
     cmd.extend(["--template-store", str(store)])
-    model = expand_env_reference(payload.get("model"))
+    model = _resolve_model_arg(payload.get("model"))
     if model:
         cmd.extend(["--model", str(model)])
     lang = payload.get("lang")

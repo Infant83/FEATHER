@@ -1,0 +1,16 @@
+{
+  "url": "http://127.0.0.1:8881/",
+  "checks": {
+    "assistant_count": 1,
+    "turn_count": 2,
+    "process_inside_assistant_count": 0,
+    "process_outside_assistant_count": 0,
+    "source_process_order": {
+      "hasSources": false,
+      "sourceBeforeProcess": null,
+      "sourceIdx": -1,
+      "processIdx": -1
+    }
+  },
+  "page_errors": []
+}

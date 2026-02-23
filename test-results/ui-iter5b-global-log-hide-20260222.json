@@ -1,0 +1,9 @@
+{
+  "url": "http://127.0.0.1:8882/",
+  "checks": {
+    "assistant_count": 1,
+    "global_log_card_count": 0,
+    "inline_log_card_count": 0
+  },
+  "page_errors": []
+}

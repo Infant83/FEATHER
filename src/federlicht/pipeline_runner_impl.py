@@ -357,7 +357,12 @@ def run_pipeline(
     report = remove_placeholder_citations(report)
     report = scrub_internal_index_mentions(report)
     report = smooth_writer_meta_labels(report)
-    report_body, citation_refs = rewrite_citations(report.rstrip(), output_format)
+    text_meta_index = build_text_meta_index(run_dir, archive_dir, supporting_dir)
+    report_body, citation_refs = rewrite_citations(
+        report.rstrip(),
+        output_format,
+        text_meta_index=text_meta_index,
+    )
     if output_format != "tex":
         report_body = merge_orphan_citations(report_body)
     if figure_entries:
@@ -370,7 +375,6 @@ def run_pipeline(
     refs = collect_references(archive_dir, run_dir, args.max_refs, supporting_dir)
     refs = filter_references(refs, report_prompt, evidence_notes, args.max_refs)
     openalex_meta = load_openalex_meta(archive_dir)
-    text_meta_index = build_text_meta_index(run_dir, archive_dir, supporting_dir)
     report = ensure_appendix_contents(report, output_format, refs, run_dir, notes_dir, language)
     report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format)}"
     if clarification_questions and "no_questions" not in clarification_questions.lower():
@@ -421,6 +425,7 @@ def run_pipeline(
         "duration_hms": format_duration(elapsed),
         "model": args.model,
         "temperature_level": args.temperature_level,
+        "reasoning_effort": getattr(args, "reasoning_effort", core.DEFAULT_REASONING_EFFORT) or "off",
         "model_vision": args.model_vision,
         "quality_model": quality_model if args.quality_iterations > 0 else None,
         "quality_iterations": args.quality_iterations,
@@ -440,6 +445,7 @@ def run_pipeline(
         "organization": author_organization or None,
         "tags": tags_list,
         "free_format": args.free_format,
+        "style_pack": core.normalize_style_pack(getattr(args, "style_pack", core.STYLE_PACK_DEFAULT)),
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
     }
     if core.ACTIVE_AGENT_PROFILE:
@@ -499,6 +505,7 @@ def run_pipeline(
         f"Source: {template_spec.source or 'builtin/default'}",
         f"Latex: {template_spec.latex or 'default.tex'}",
         f"Layout: {template_spec.layout or 'single_column'}",
+        f"Style pack: {meta.get('style_pack') or core.STYLE_PACK_DEFAULT}",
         "Sections:",
         *([f"- {section}" for section in required_sections] if required_sections else ["- (free-form)"]),
     ]
@@ -517,14 +524,21 @@ def run_pipeline(
 
     theme_css = None
     extra_body_class = None
+    style_pack = core.normalize_style_pack(getattr(args, "style_pack", core.STYLE_PACK_DEFAULT))
     if output_format == "html":
-        css_path = resolve_template_css_path(template_spec)
-        if css_path and css_path.exists():
-            theme_css = css_path.read_text(encoding="utf-8", errors="replace")
-            css_slug = slugify_label(css_path.stem)
-            template_slug = slugify_label(template_spec.name or "")
-            if css_slug and css_slug != template_slug:
-                extra_body_class = f"template-{css_slug}"
+        if args.free_format and style_pack != core.STYLE_PACK_DEFAULT:
+            style_css = core.load_style_pack_css(style_pack)
+            if style_css:
+                theme_css = style_css
+                extra_body_class = f"style-pack-{slugify_label(style_pack)}"
+        if not theme_css:
+            css_path = resolve_template_css_path(template_spec)
+            if css_path and css_path.exists():
+                theme_css = css_path.read_text(encoding="utf-8", errors="replace")
+                css_slug = slugify_label(css_path.stem)
+                template_slug = slugify_label(template_spec.name or "")
+                if css_slug and css_slug != template_slug:
+                    extra_body_class = f"template-{css_slug}"
     rendered = report
     if output_format == "html":
         viewer_dir = run_dir / "report_views"

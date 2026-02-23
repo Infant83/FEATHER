@@ -1,0 +1,161 @@
+{
+  "url": "http://127.0.0.1:8765",
+  "results": {
+    "white": {
+      "runMapRows": [
+        {
+          "selector": ".run-file-required-chip.is-ok",
+          "color": "rgb(18, 83, 63)",
+          "backgroundColor": "rgb(232, 248, 240)",
+          "contrast": 8.19,
+          "text": "Instruction: ok"
+        },
+        {
+          "selector": ".run-file-required-chip.is-missing",
+          "color": "rgb(122, 39, 54)",
+          "backgroundColor": "rgb(253, 239, 242)",
+          "contrast": 8.66,
+          "text": "Report: missing"
+        },
+        {
+          "selector": ".run-file-scope-chip.is-input",
+          "color": "rgb(18, 83, 63)",
+          "backgroundColor": "rgb(232, 248, 240)",
+          "contrast": 8.19,
+          "text": "입력 파일 · 1"
+        },
+        {
+          "selector": ".run-file-tree-chip.is-essential",
+          "color": "rgb(18, 83, 63)",
+          "backgroundColor": "rgb(232, 248, 240)",
+          "contrast": 8.19,
+          "text": "필수 입력 · instruction (1)"
+        },
+        {
+          "selector": ".run-file-tree-chip.is-support",
+          "color": "rgb(58, 85, 107)",
+          "backgroundColor": "rgb(245, 249, 253)",
+          "contrast": 7.38,
+          "text": "아카이브 인덱스 (1)"
+        },
+        {
+          "selector": ".file-group-kind.is-essential",
+          "color": "rgb(18, 83, 63)",
+          "backgroundColor": "rgb(232, 248, 240)",
+          "contrast": 8.19,
+          "text": "필수"
+        }
+      ],
+      "runtimeRows": [
+        {
+          "selector": ".runtime-summary-pill.is-warning",
+          "color": "rgb(106, 67, 23)",
+          "backgroundColor": "rgb(255, 243, 226)",
+          "contrast": 7.9,
+          "text": "pill warning"
+        },
+        {
+          "selector": ".runtime-summary-chip.is-warning",
+          "color": "rgb(106, 67, 23)",
+          "backgroundColor": "rgb(255, 243, 226)",
+          "contrast": 7.9,
+          "text": "reasoningoff"
+        },
+        {
+          "selector": ".workflow-runtime-chip.is-warning",
+          "color": "rgb(106, 67, 23)",
+          "backgroundColor": "rgb(255, 243, 226)",
+          "contrast": 7.9,
+          "text": "reasoningoff"
+        },
+        {
+          "selector": ".ask-action-run-target-box.is-warning",
+          "color": "rgb(106, 67, 23)",
+          "backgroundColor": "rgb(255, 243, 226)",
+          "contrast": 7.9,
+          "text": "ask warning"
+        }
+      ],
+      "minRunMap": 7.38,
+      "minRuntime": 7.9
+    },
+    "black": {
+      "runMapRows": [
+        {
+          "selector": ".run-file-required-chip.is-ok",
+          "color": "rgb(217, 255, 242)",
+          "backgroundColor": "rgba(78, 224, 181, 0.12)",
+          "contrast": 14,
+          "text": "Instruction: ok"
+        },
+        {
+          "selector": ".run-file-required-chip.is-missing",
+          "color": "rgb(255, 216, 216)",
+          "backgroundColor": "rgba(255, 132, 132, 0.14)",
+          "contrast": 11.76,
+          "text": "Report: missing"
+        },
+        {
+          "selector": ".run-file-scope-chip.is-input",
+          "color": "rgb(220, 255, 240)",
+          "backgroundColor": "rgba(255, 255, 255, 0.03)",
+          "contrast": 16.59,
+          "text": "입력 파일 · 1"
+        },
+        {
+          "selector": ".run-file-tree-chip.is-essential",
+          "color": "rgb(217, 255, 242)",
+          "backgroundColor": "rgba(75, 198, 156, 0.14)",
+          "contrast": 13.91,
+          "text": "필수 입력 · instruction (1)"
+        },
+        {
+          "selector": ".run-file-tree-chip.is-support",
+          "color": "rgba(215, 228, 242, 0.84)",
+          "backgroundColor": "rgba(255, 255, 255, 0.05)",
+          "contrast": 13.11,
+          "text": "아카이브 인덱스 (1)"
+        },
+        {
+          "selector": ".file-group-kind.is-essential",
+          "color": "rgb(217, 255, 242)",
+          "backgroundColor": "rgba(78, 224, 181, 0.14)",
+          "contrast": 13.33,
+          "text": "필수"
+        }
+      ],
+      "runtimeRows": [
+        {
+          "selector": ".runtime-summary-pill.is-warning",
+          "color": "rgb(255, 223, 183)",
+          "backgroundColor": "rgba(255, 169, 77, 0.12)",
+          "contrast": 12.13,
+          "text": "pill warning"
+        },
+        {
+          "selector": ".runtime-summary-chip.is-warning",
+          "color": "rgb(255, 223, 183)",
+          "backgroundColor": "rgba(255, 169, 77, 0.1)",
+          "contrast": 12.64,
+          "text": "reasoningoff"
+        },
+        {
+          "selector": ".workflow-runtime-chip.is-warning",
+          "color": "rgb(255, 229, 184)",
+          "backgroundColor": "rgba(255, 173, 92, 0.12)",
+          "contrast": 12.55,
+          "text": "reasoningoff"
+        },
+        {
+          "selector": ".ask-action-run-target-box.is-warning",
+          "color": "rgb(238, 245, 255)",
+          "backgroundColor": "rgba(255, 184, 107, 0.08)",
+          "contrast": 15.07,
+          "text": "ask warning"
+        }
+      ],
+      "minRunMap": 11.76,
+      "minRuntime": 12.13
+    }
+  }
+}

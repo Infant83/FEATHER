@@ -1,2 +1,0 @@
-Gaps Summary
-- None detected.

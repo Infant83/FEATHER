@@ -1,0 +1,33 @@
+body.style-pack-journal {
+  --site-ink: #1f1b16;
+  --site-muted: rgba(57, 49, 39, 0.74);
+  --ink: #1f1b16;
+  --muted: #5f574d;
+  --accent: #2f66c3;
+  --accent-2: #8e6a3f;
+  --accent-soft: rgba(47, 102, 195, 0.12);
+  --page-bg: linear-gradient(180deg, #f6f2ea 0%, #fdfbf7 52%, #f6f2ea 100%);
+  --masthead-bg: #f0e6d6;
+  --masthead-border: rgba(64, 52, 39, 0.22);
+  --masthead-title: #1f1b16;
+  --masthead-deck: rgba(43, 36, 29, 0.8);
+  --masthead-kicker: rgba(66, 54, 41, 0.66);
+  --masthead-link: #2f66c3;
+  --masthead-link-border: rgba(47, 102, 195, 0.24);
+  --masthead-link-bg: rgba(47, 102, 195, 0.08);
+  --paper: #fffdfa;
+  --paper-alt: #f7f1e6;
+  --rule: rgba(64, 52, 39, 0.18);
+  --shadow: 0 20px 48px rgba(42, 35, 27, 0.2);
+  --body-font: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --heading-font: "Fraunces", "Iowan Old Style", Georgia, serif;
+}
+
+body.style-pack-journal .report-shell {
+  border-top: 5px solid rgba(47, 102, 195, 0.36);
+}
+
+body.style-pack-journal h2 {
+  letter-spacing: 0.01em;
+}
+

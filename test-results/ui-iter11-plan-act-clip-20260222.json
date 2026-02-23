@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8765",
+  "ok": true,
+  "error": "",
+  "side_actions": {
+    "x": 1148,
+    "y": 852.171875,
+    "width": 68,
+    "height": 98
+  },
+  "run_button": {
+    "x": 1148,
+    "y": 852.171875,
+    "width": 40,
+    "height": 40
+  },
+  "plan_button": {
+    "x": 1148,
+    "y": 897.171875,
+    "width": 68,
+    "height": 24
+  },
+  "act_button": {
+    "x": 1148,
+    "y": 926.171875,
+    "width": 68,
+    "height": 24
+  },
+  "artifact_policy": null,
+  "plan_inside_side": true,
+  "act_inside_side": true,
+  "run_inside_side": true,
+  "plan_height": 24,
+  "act_height": 24,
+  "side_width": 68
+}

@@ -15,12 +15,14 @@ from typing import Any, Iterable, Optional
 
 from federlicht.versioning import VERSION as FEDERLICHT_VERSION
 
+from .auth import RootAuthManager, SessionAuthManager
 from .config import FedernettConfig
-from .constants import DEFAULT_RUN_ROOTS, DEFAULT_STATIC_DIR, DEFAULT_SITE_ROOT
+from .constants import DEFAULT_REPORT_HUB_ROOT, DEFAULT_RUN_ROOTS, DEFAULT_SITE_ROOT, DEFAULT_STATIC_DIR
 from .jobs import Job, JobRegistry
 from .routes import handle_api_get as _dispatch_api_get, handle_api_post as _dispatch_api_post
 from .templates import read_template_style
 from .utils import json_bytes as _json_bytes
+from .workspace_settings import load_and_apply_workspace_settings
 
 
 def _resolve_federnett_server_version() -> str:
@@ -35,6 +37,12 @@ class FedernettHandler(BaseHTTPRequestHandler):
 
     def _jobs(self) -> JobRegistry:
         return self.server.jobs  # type: ignore[attr-defined]
+
+    def _root_auth(self) -> RootAuthManager:
+        return self.server.root_auth  # type: ignore[attr-defined]
+
+    def _session_auth(self) -> SessionAuthManager:
+        return self.server.session_auth  # type: ignore[attr-defined]
 
     def log_message(self, format: str, *args: Any) -> None:
         # Keep server logs compact; job logs stream separately.
@@ -314,6 +322,8 @@ def build_parser() -> argparse.ArgumentParser:
   federnett --root . --run-roots examples/runs,site/runs,data/runs
   # Custom UI location + site root (still under --root).
   federnett --root . --static-dir site/federnett --site-root site
+  # Separate report hub publishing root.
+  federnett --root . --site-root site --report-hub-root site/report_hub
   # Headless server: do not open a browser.
   federnett --root . --no-open-browser
   # Module entrypoint.
@@ -357,6 +367,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     ap.add_argument(
+        "--report-hub-root",
+        default=DEFAULT_REPORT_HUB_ROOT,
+        help=(
+            "Report hub root under --root (manifest/index publishing target). "
+            "Federnett keeps run roots separate."
+        ),
+    )
+    ap.add_argument(
         "--open-browser",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -370,18 +388,39 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     root = Path(args.root).resolve()
     static_dir = (root / args.static_dir).resolve()
     site_root = (root / args.site_root).resolve()
+    report_hub_root = (root / args.report_hub_root).resolve()
     run_roots = _parse_run_roots(root, args.run_roots)
 
-    cfg = FedernettConfig(root=root, static_dir=static_dir, run_roots=run_roots, site_root=site_root)
+    cfg = FedernettConfig(
+        root=root,
+        static_dir=static_dir,
+        run_roots=run_roots,
+        site_root=site_root,
+        report_hub_root=report_hub_root,
+    )
+    workspace_settings = load_and_apply_workspace_settings(cfg)
     jobs = JobRegistry()
+    root_auth = RootAuthManager()
+    session_auth = SessionAuthManager()
 
     server = FedernettHTTPServer((args.host, args.port), FedernettHandler)
     server.cfg = cfg  # type: ignore[attr-defined]
     server.jobs = jobs  # type: ignore[attr-defined]
+    server.root_auth = root_auth  # type: ignore[attr-defined]
+    server.session_auth = session_auth  # type: ignore[attr-defined]
 
     url = f"http://{args.host}:{args.port}/"
     print(f"[federnett] Serving {url}")
     print(f"[federnett] Root: {root}")
+    try:
+        run_roots_msg = ", ".join(workspace_settings.get("run_roots") or [])
+        site_root_msg = str(workspace_settings.get("site_root") or "")
+        hub_root_msg = str(workspace_settings.get("report_hub_root") or "")
+        print(f"[federnett] Run roots: {run_roots_msg}")
+        print(f"[federnett] Site root: {site_root_msg}")
+        print(f"[federnett] Report hub: {hub_root_msg}")
+    except Exception:
+        pass
     if not static_dir.exists():
         print(f"[federnett] Static dir missing: {static_dir}", file=sys.stderr)
     if args.open_browser:

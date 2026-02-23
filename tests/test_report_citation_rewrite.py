@@ -80,3 +80,62 @@ def test_smooth_writer_meta_labels_removes_inline_and_prefix_tags() -> None:
     assert "(해석)" not in cleaned
     assert "(리스크)" not in cleaned
     assert "이 문장은 의미를 전달한다." in cleaned
+
+
+def test_rewrite_citations_prefers_source_url_for_extract_path() -> None:
+    text = "핵심 근거 [./archive/tavily_extract/0001_example.txt]"
+    rewritten, refs = report.rewrite_citations(
+        text,
+        output_format="md",
+        text_meta_index={
+            "archive/tavily_extract/0001_example.txt": {
+                "source_url": "https://example.com/whitepaper"
+            }
+        },
+    )
+
+    assert refs
+    assert refs[0]["kind"] == "url"
+    assert refs[0]["target"] == "https://example.com/whitepaper"
+    assert "[\\[1\\]](https://example.com/whitepaper)" in rewritten
+
+
+def test_rewrite_citations_converts_html_anchor_to_numeric_citation() -> None:
+    text = '출처: <a href="./archive/tavily_extract/0001_example.txt">/archive/tavily_extract/0001_example.txt</a>'
+    rewritten, refs = report.rewrite_citations(
+        text,
+        output_format="md",
+        text_meta_index={
+            "archive/tavily_extract/0001_example.txt": {
+                "source_url": "https://example.com/whitepaper"
+            }
+        },
+    )
+
+    assert refs
+    assert refs[0]["target"] == "https://example.com/whitepaper"
+    assert "<a href=" not in rewritten
+    assert "[\\[1\\]](https://example.com/whitepaper)" in rewritten
+
+
+def test_rewrite_citations_strips_trailing_semicolon_from_bracket_url() -> None:
+    text = "근거 [https://arxiv.org/abs/2504.05180;] 확인."
+    rewritten, refs = report.rewrite_citations(text, output_format="md")
+
+    assert refs
+    assert refs[0]["kind"] == "url"
+    assert refs[0]["target"] == "https://arxiv.org/abs/2504.05180"
+    assert "[\\[1\\]](https://arxiv.org/abs/2504.05180)" in rewritten
+
+
+def test_render_reference_section_normalizes_url_target_suffix() -> None:
+    rendered = report.render_reference_section(
+        citations=[{"index": 1, "kind": "url", "target": "https://arxiv.org/abs/2504.05180;"}],
+        refs_meta=[],
+        openalex_meta={},
+        output_format="md",
+        text_meta_index={},
+    )
+
+    assert "(https://arxiv.org/abs/2504.05180)" in rendered
+    assert "(https://arxiv.org/abs/2504.05180;)" not in rendered

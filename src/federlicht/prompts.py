@@ -25,6 +25,27 @@ def _is_korean(language: str) -> bool:
     return language.strip().lower() in {"korean", "ko", "kor", "kr"}
 
 
+def _normalize_report_intent(report_intent: str | None) -> str:
+    token = str(report_intent or "").strip().lower()
+    if not token or token in {"auto", "default"}:
+        return "generic"
+    if token in {"research", "research_report", "study", "scientific"}:
+        return "research"
+    if token in {"review", "review_article", "literature_review", "survey"}:
+        return "review"
+    if token in {"decision", "decision_brief", "decision_memo", "policy"}:
+        return "decision"
+    if token in {"brief", "briefing", "summary", "short"}:
+        return "briefing"
+    if token in {"explainer", "education", "tutorial"}:
+        return "explainer"
+    if token in {"slide", "slides", "ppt", "deck"}:
+        return "slide"
+    if token in {"narrative", "magazine", "story"}:
+        return "narrative"
+    return "generic"
+
+
 def _normalize_rigidity(template_rigidity: str | None) -> str:
     token = (template_rigidity or "").strip().lower()
     if token in {"strict", "balanced", "relaxed", "loose", "off"}:
@@ -132,7 +153,9 @@ def build_plan_prompt(
     depth: str | None = None,
     template_rigidity: str = "balanced",
     free_form: bool = False,
+    report_intent: str | None = None,
 ) -> str:
+    intent = _normalize_report_intent(report_intent)
     high_structure_mode, strict_structure_mode = _structure_flags(
         depth=depth,
         template_rigidity=template_rigidity,
@@ -160,10 +183,33 @@ def build_plan_prompt(
             "예: 짧은 의사결정 요약이면 핵심 결론/근거/리스크를 우선하고, "
             "심층 연구형이면 방법론/비교 분석/추가 검증 계획까지 확장하세요. "
         )
+    if intent == "research":
+        intent_guidance = (
+            "의도=research: 연구 질문, 데이터/소스 기준, 분석 절차, 검증 한계를 단계에 명시하세요. "
+        )
+    elif intent == "review":
+        intent_guidance = (
+            "의도=review: 핵심 문헌 축(합의/불일치/공백)과 비교 프레임을 계획에 포함하세요. "
+        )
+    elif intent == "decision":
+        intent_guidance = (
+            "의도=decision: 옵션 비교, 의사결정 기준, 권고안과 조건부 가정(when/if)을 계획에 포함하세요. "
+        )
+    elif intent in {"briefing", "slide"}:
+        intent_guidance = (
+            "의도=briefing/slide: 단계 수를 최소화하고, 핵심 메시지-근거-리스크를 짧게 배치하세요. "
+        )
+    elif intent in {"explainer", "narrative"}:
+        intent_guidance = (
+            "의도=explainer/narrative: 개념 이해 순서(문제 -> 메커니즘 -> 의미 -> 한계)를 먼저 정의하세요. "
+        )
+    else:
+        intent_guidance = "의도=generic: 요청 목표와 근거 수준에 맞게 계획 밀도를 조정하세요. "
     return (
         "당신은 보고서 플래너입니다. 최종 보고서를 만들기 위한 간결한 순서형 계획(5~9단계)을 작성하세요. "
         "각 단계는 한 줄이며 체크박스 형식을 사용합니다. "
         f"{scope_guidance}"
+        f"{intent_guidance}"
         "형식:\n"
         "- [ ] Step title — short description\n"
         "가장 관련성 높은 소스를 읽고, 근거를 추출하고, 인사이트를 종합하는 데 초점을 맞추세요. "
@@ -206,7 +252,9 @@ def build_evidence_prompt(
     depth: str | None = None,
     template_rigidity: str = "balanced",
     free_form: bool = False,
+    report_intent: str | None = None,
 ) -> str:
+    intent = _normalize_report_intent(report_intent)
     high_structure_mode, strict_structure_mode = _structure_flags(
         depth=depth,
         template_rigidity=template_rigidity,
@@ -231,6 +279,26 @@ def build_evidence_prompt(
             "요청이 brief/요약 중심이면 Evidence Ledger는 필요한 경우에만 짧게 추가하세요 "
             "(핵심 주장 2~4개 수준). "
         )
+    if intent == "decision":
+        intent_evidence_guidance = (
+            "의도=decision: 옵션별 근거를 분리하고, 의사결정 기준(비용/효과/리스크/시간)을 소스와 함께 매핑하세요. "
+        )
+    elif intent == "review":
+        intent_evidence_guidance = (
+            "의도=review: 상충 근거와 연구 공백을 별도 표기하고, 연구 설계 차이(데이터·방법·범위)를 추적하세요. "
+        )
+    elif intent in {"briefing", "slide"}:
+        intent_evidence_guidance = (
+            "의도=briefing/slide: 핵심 주장 수를 줄이고, 각 주장에 가장 강한 근거 1~2개만 연결하세요. "
+        )
+    elif intent in {"explainer", "narrative"}:
+        intent_evidence_guidance = (
+            "의도=explainer/narrative: 개념 설명을 뒷받침하는 대표 근거와 반례/한계를 짝지어 정리하세요. "
+        )
+    else:
+        intent_evidence_guidance = (
+            "의도=research/generic: 주장-근거-한계가 추적되도록 근거를 구조화하세요. "
+        )
     return (
         "당신은 근거(증거) 추출자입니다. 스카우트 노트를 바탕으로 핵심 파일을 읽고 중요한 사실을 추출하세요. "
         "다음 JSONL 메타데이터 파일이 존재하면 먼저 열어 소스 커버리지를 파악하세요 "
@@ -252,6 +320,7 @@ def build_evidence_prompt(
         "PDF의 뒷부분이 필요하면 read_document의 start_page를 사용해 필요한 페이지를 추가로 읽으세요. "
         "Verification excerpts 섹션이 있으면 우선 활용하고, 원문 확인 없이 수치/인용을 재구성하지 마세요. "
         f"{ledger_guidance}"
+        f"{intent_evidence_guidance}"
         f"소스 유형별로 묶은 간결한 불릿 리스트를 {language}로 출력하세요. "
         "고유명사와 소스 제목은 원문 언어를 유지하세요."
     )
@@ -270,7 +339,9 @@ def build_writer_prompt(
     figures_mode: str = "auto",
     artwork_enabled: bool = False,
     free_form: bool = False,
+    report_intent: str | None = None,
 ) -> str:
+    intent = _normalize_report_intent(report_intent)
     section_tokens = [str(section or "").strip().lower() for section in required_sections]
     has_method_section = any(
         any(token in section for token in ("method", "methodology", "scope", "approach", "방법", "방법론"))
@@ -323,6 +394,30 @@ def build_writer_prompt(
         "서술 연결성: 섹션 간 논리 전환을 자연스럽게 유지하세요. "
         "심층형 보고서에서는 섹션 시작/끝 문장으로 연결을 명시하고, brief 모드에서는 과도한 연결 문구를 줄이세요. "
     )
+    if intent == "research":
+        intent_writer_guidance = (
+            "의도=research: 주장마다 재현 가능한 근거 경로와 한계를 분리해 기술하고, 방법-결과-해석 순서를 우선하세요. "
+        )
+    elif intent == "review":
+        intent_writer_guidance = (
+            "의도=review: 연구 지형(합의/불일치/공백)을 비교 중심으로 전개하고, 단순 나열을 피하세요. "
+        )
+    elif intent == "decision":
+        intent_writer_guidance = (
+            "의도=decision: 옵션별 장단점, 실행 조건, 실패 시 리스크를 분명히 구분하고 권고안을 조건부로 제시하세요. "
+        )
+    elif intent in {"briefing", "slide"}:
+        intent_writer_guidance = (
+            "의도=briefing/slide: 문단을 짧게 유지하고 핵심 메시지-근거-한계를 압축해 전달하세요. "
+        )
+    elif intent in {"explainer", "narrative"}:
+        intent_writer_guidance = (
+            "의도=explainer/narrative: 비유는 절제하고, 개념 정의와 메커니즘 설명을 쉬운 언어로 연결하세요. "
+        )
+    else:
+        intent_writer_guidance = (
+            "의도=generic: 사용자 목적(탐색/요약/설득)에 맞춰 분석 밀도와 서술 톤을 조절하세요. "
+        )
     critics_guidance = ""
     if any(section.lower().startswith("critics") for section in required_sections):
         critics_guidance = (
@@ -505,6 +600,7 @@ def build_writer_prompt(
         f"{result_traceability_guidance}"
         f"{uncertainty_guidance}"
         f"{narrative_flow_guidance}"
+        f"{intent_writer_guidance}"
         f"{figure_guidance}"
         f"{artwork_guidance}"
         f"{visual_mandate_guidance}"
@@ -533,6 +629,7 @@ def build_writer_finalizer_prompt(
     figures_mode: str = "auto",
     artwork_enabled: bool = False,
     free_form: bool = False,
+    report_intent: str | None = None,
 ) -> str:
     base_prompt = build_writer_prompt(
         format_instructions,
@@ -547,6 +644,7 @@ def build_writer_finalizer_prompt(
         figures_mode,
         artwork_enabled,
         free_form,
+        report_intent,
     )
     finalizer_guidance = (
         "이 단계는 선택된 초안에 대한 최종 정리 패스입니다. "
@@ -612,6 +710,7 @@ def build_critic_prompt(language: str, required_sections: list[str]) -> str:
     return (
         "당신은 엄격한 저널 편집자입니다. 보고서의 명확성, 서술 흐름, 통찰 깊이, 근거 사용, "
         "보고서 포커스와의 정합성을 비판적으로 검토하세요. "
+        "Revision/Finalizer 단계에서 내용이 과도하게 축약되어 근거 밀도나 방법론/한계 설명이 약화되었는지도 반드시 점검하세요. "
         "JSONL 인덱스 데이터를 원문 대신 사용했는지, 또는 JSONL을 인용했는지 여부도 지적하세요. "
         "사실/수치/출처 의존 주장에 인용이 있는지 확인하세요. "
         "일반 라벨 인용('[source]' '[paper]')이 남아 있으면 반드시 지적하세요. "
@@ -631,6 +730,7 @@ def build_revise_prompt(format_instructions: "FormatInstructions", output_format
         "당신은 시니어 에디터입니다. 비판 내용을 반영해 보고서를 수정하세요. "
         f"{section_rule}"
         "서술 흐름, 종합성, 기술적 엄밀성을 개선하세요. "
+        "수정 과정에서 근거 밀도(문장 단위 인용)와 방법론/한계 설명이 기존보다 약화되지 않게 유지하거나 강화하세요. "
         "사실/수치/출처 의존 주장은 인용을 추가해 보강하세요. "
         "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')는 쓰지 말고 문맥으로 표현하세요. "
         "일반 라벨 인용('[source]' '[paper]')을 실제 URL/파일 경로 인용으로 교체하세요. "
@@ -647,7 +747,9 @@ def build_evaluate_prompt(
     *,
     template_rigidity: str = "balanced",
     free_form: bool = False,
+    report_intent: str | None = None,
 ) -> str:
+    intent = _normalize_report_intent(report_intent)
     high_structure_mode, strict_structure_mode = _structure_flags(
         depth=depth,
         template_rigidity=template_rigidity,
@@ -670,12 +772,33 @@ def build_evaluate_prompt(
         if depth
         else "요청 depth 정보가 제공되지 않으면 일반적인 심층성 기준으로 평가하세요. "
     )
+    if intent == "decision":
+        intent_quality_axis = (
+            "의도=decision: 실행 가능성, 옵션 비교 선명도, 권고안의 조건부 가정 명확성을 강하게 평가하세요. "
+        )
+    elif intent == "review":
+        intent_quality_axis = (
+            "의도=review: 합의/불일치/공백 비교의 균형성과 문헌 연결성을 강하게 평가하세요. "
+        )
+    elif intent in {"briefing", "slide"}:
+        intent_quality_axis = (
+            "의도=briefing/slide: 간결성, 정보 밀도, 핵심 메시지의 즉시성(빠른 파악 가능성)을 우선 평가하세요. "
+        )
+    elif intent in {"explainer", "narrative"}:
+        intent_quality_axis = (
+            "의도=explainer/narrative: 개념 설명의 명료성, 독자 친화적 흐름, 과장 없는 서술을 우선 평가하세요. "
+        )
+    else:
+        intent_quality_axis = (
+            "의도=research/generic: 방법론 투명성과 결과 추적성, 해석의 보수성을 균형 있게 평가하세요. "
+        )
     return (
         "당신은 엄정한 보고서 평가자입니다. 보고서를 여러 차원에서 점수화하세요. "
         "(보고서 프롬프트 정합성, 톤/보이스 적합성, 출력 포맷 준수, 구조/가독성, 근거 적합성, "
         "환각 위험(낮을수록 높은 점수), 통찰 깊이, 미적/시각 완성도). "
         f"{quality_axis}"
         f"{depth_rule}"
+        f"{intent_quality_axis}"
         "근거 인용이 실제 URL/파일 경로인지 확인하고, '[source]' 같은 일반 라벨 인용은 감점하세요. "
         "다음 키만 포함한 JSON만 반환하세요:\n"
         f"{metrics}, overall, strengths, weaknesses, fixes\n"

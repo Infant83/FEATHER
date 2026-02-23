@@ -1,41 +1,41 @@
 {
-  "created_at": "2026-02-03T22:14:30.299931",
+  "created_at": "2026-02-22T02:09:12.934799",
   "stages": {
     "scout": {
-      "status": "ran",
+      "status": "cached",
       "detail": ""
     },
     "clarifier": {
       "status": "skipped",
-      "detail": "disabled"
+      "detail": "no_questions"
     },
     "template_adjust": {
       "status": "skipped",
-      "detail": "disabled"
+      "detail": "depth=brief"
     },
     "plan": {
-      "status": "disabled",
+      "status": "cached",
       "detail": ""
     },
     "web": {
-      "status": "disabled",
-      "detail": ""
+      "status": "skipped",
+      "detail": "policy"
     },
     "evidence": {
-      "status": "ran",
-      "detail": ""
+      "status": "skipped",
+      "detail": "depth=brief"
     },
     "plan_check": {
-      "status": "disabled",
-      "detail": ""
+      "status": "skipped",
+      "detail": "missing_evidence"
     },
     "writer": {
       "status": "ran",
       "detail": ""
     },
     "quality": {
-      "status": "disabled",
-      "detail": ""
+      "status": "ran",
+      "detail": "iterations=1"
     }
   },
   "order": [
@@ -48,5 +48,125 @@
     "plan_check",
     "writer",
     "quality"
-  ]
+  ],
+  "timeline": [
+    {
+      "index": "1",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "template_adjust",
+      "status": "skipped",
+      "detail": "depth=brief"
+    },
+    {
+      "index": "2",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "scout",
+      "status": "cached",
+      "detail": ""
+    },
+    {
+      "index": "3",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "clarifier",
+      "status": "skipped",
+      "detail": "no_questions"
+    },
+    {
+      "index": "4",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "plan",
+      "status": "cached",
+      "detail": ""
+    },
+    {
+      "index": "5",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "web",
+      "status": "skipped",
+      "detail": "policy"
+    },
+    {
+      "index": "6",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "plan_check",
+      "status": "skipped",
+      "detail": "missing_evidence"
+    },
+    {
+      "index": "7",
+      "timestamp": "2026-02-22T01:54:04",
+      "stage": "evidence",
+      "status": "skipped",
+      "detail": "depth=brief"
+    },
+    {
+      "index": "8",
+      "timestamp": "2026-02-22T01:57:35",
+      "stage": "writer",
+      "status": "ran",
+      "detail": ""
+    },
+    {
+      "index": "9",
+      "timestamp": "2026-02-22T02:05:26",
+      "stage": "quality",
+      "status": "ran",
+      "detail": "iterations=1"
+    }
+  ],
+  "artifacts": {
+    "scout": [
+      {
+        "label": "Scout notes",
+        "path": "./report_notes/scout_notes.md"
+      }
+    ],
+    "plan": [
+      {
+        "label": "Plan update",
+        "path": "./report_notes/report_plan.md"
+      }
+    ],
+    "evidence": [
+      {
+        "label": "Evidence notes",
+        "path": "./report_notes/evidence_notes.md"
+      },
+      {
+        "label": "Source triage",
+        "path": "./report_notes/source_triage.md"
+      },
+      {
+        "label": "Source index",
+        "path": "./report_notes/source_index.jsonl"
+      },
+      {
+        "label": "Claim map",
+        "path": "./report_notes/claim_map.md"
+      },
+      {
+        "label": "Claim-evidence map",
+        "path": "./report_notes/claim_evidence_map.md"
+      },
+      {
+        "label": "Claim-evidence map (json)",
+        "path": "./report_notes/claim_evidence_map.json"
+      },
+      {
+        "label": "Gap report",
+        "path": "./report_notes/gap_finder.md"
+      }
+    ],
+    "quality": [
+      {
+        "label": "Quality evaluations",
+        "path": "./report_notes/quality_evals.jsonl"
+      },
+      {
+        "label": "Quality pairwise",
+        "path": "./report_notes/quality_pairwise.jsonl"
+      }
+    ]
+  },
+  "diagram_mermaid": "flowchart LR\n    scout[\"scout\\ncached\"]\n    clarifier[\"clarifier\\nskipped\"]\n    template_adjust[\"template_adjust\\nskipped\"]\n    plan[\"plan\\ncached\"]\n    web[\"web\\nskipped\"]\n    evidence[\"evidence\\nskipped\"]\n    plan_check[\"plan_check\\nskipped\"]\n    writer[\"writer\\nran\"]\n    quality[\"quality\\nran\"]\n    scout --> clarifier\n    clarifier --> template_adjust\n    template_adjust --> plan\n    plan --> web\n    web --> evidence\n    evidence --> plan_check\n    plan_check --> writer\n    writer --> quality\n    quality -. feedback .-> writer"
 }

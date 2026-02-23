@@ -1,0 +1,204 @@
+{
+  "timestamp": "2026-02-22 07:58:45",
+  "base": "http://127.0.0.1:8875/",
+  "page_errors": [],
+  "themes": {
+    "default": {
+      "theme": "default",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "wsBox": {
+        "top": 383.125,
+        "left": 309,
+        "right": 1131,
+        "bottom": 433.59375,
+        "width": 822,
+        "height": 50.46875
+      },
+      "listBox": {
+        "top": 445.59375,
+        "left": 309,
+        "right": 1131,
+        "bottom": 665.59375,
+        "width": 822,
+        "height": 220
+      },
+      "activeBackground": "color(srgb 0.0745098 0.0980392 0.133333 / 0.739608)",
+      "activeBorderLeftColor": "color(srgb 0.335529 0.889255 0.726275)",
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "color(srgb 0.963922 0.971137 0.985569)"
+    },
+    "white": {
+      "theme": "white",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "wsBox": {
+        "top": 383.125,
+        "left": 309,
+        "right": 1131,
+        "bottom": 433.59375,
+        "width": 822,
+        "height": 50.46875
+      },
+      "listBox": {
+        "top": 445.59375,
+        "left": 309,
+        "right": 1131,
+        "bottom": 665.59375,
+        "width": 822,
+        "height": 220
+      },
+      "activeBackground": "rgba(0, 0, 0, 0)",
+      "activeBorderLeftColor": "color(srgb 0.0849412 0.495529 0.717098)",
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "rgb(15, 55, 85)"
+    },
+    "black": {
+      "theme": "black",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "wsBox": {
+        "top": 383.125,
+        "left": 309,
+        "right": 1131,
+        "bottom": 433.59375,
+        "width": 822,
+        "height": 50.46875
+      },
+      "listBox": {
+        "top": 445.59375,
+        "left": 309,
+        "right": 1131,
+        "bottom": 665.59375,
+        "width": 822,
+        "height": 220
+      },
+      "activeBackground": "color(srgb 0.0352941 0.0509804 0.0784314 / 0.755686)",
+      "activeBorderLeftColor": "color(srgb 0.321726 0.865098 0.757333)",
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "color(srgb 0.938667 0.963922 1)"
+    }
+  },
+  "layout": {
+    "topbar_scroll": {
+      "before_top": 307.28125,
+      "after_top": -98.71875,
+      "delta": -406.0,
+      "non_sticky": true
+    },
+    "main": {
+      "logs": {
+        "top": 385.28125,
+        "left": 432.796875,
+        "width": 976.796875,
+        "height": 790,
+        "bottom": 1175.28125,
+        "right": 1409.59375
+      },
+      "dock": {
+        "top": 483.328125,
+        "left": 449.796875,
+        "width": 942.796875,
+        "height": 674.953125,
+        "bottom": 1158.28125,
+        "right": 1392.59375
+      },
+      "thread": {
+        "top": 492.328125,
+        "left": 460.796875,
+        "width": 920.796875,
+        "height": 296.5,
+        "bottom": 788.828125,
+        "right": 1381.59375
+      },
+      "workflow": {
+        "top": 1077.28125,
+        "left": 460.796875,
+        "width": 920.796875,
+        "height": 72,
+        "bottom": 1149.28125,
+        "right": 1381.59375
+      },
+      "control": {
+        "top": 385.28125,
+        "left": 32,
+        "width": 388.796875,
+        "height": 810,
+        "bottom": 1195.28125,
+        "right": 420.796875
+      },
+      "composer": {
+        "top": 798.828125,
+        "left": 460.796875,
+        "width": 920.796875,
+        "height": 268.453125,
+        "bottom": 1067.28125,
+        "right": 1381.59375
+      },
+      "workflow_below_thread_start": true,
+      "thread_taller_than_280": true,
+      "logs_uses_viewport": true
+    },
+    "llm_modal": {
+      "top": 308.625,
+      "left": 360,
+      "right": 1080,
+      "bottom": 651.359375,
+      "width": 720,
+      "height": 342.734375,
+      "withinViewport": true
+    },
+    "workflow_studio": {
+      "panel": {
+        "top": 64.28125,
+        "left": 547.40625,
+        "width": 835.1875,
+        "height": 678
+      },
+      "head": {
+        "top": 77.28125,
+        "bottom": 120,
+        "height": 42.71875
+      },
+      "stagebar": {
+        "top": 128,
+        "bottom": 187,
+        "height": 59
+      },
+      "head_stagebar_overlap": false
+    }
+  },
+  "responsive": {
+    "1280x800": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "hasHorizontalOverflow": false,
+      "logsHeight": 630,
+      "threadHeight": 55.5
+    },
+    "1024x768": {
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "hasHorizontalOverflow": false,
+      "logsHeight": 620,
+      "threadHeight": 45.5
+    },
+    "768x1024": {
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalOverflow": false,
+      "logsHeight": 876,
+      "threadHeight": 277.546875
+    },
+    "540x960": {
+      "scrollWidth": 543,
+      "clientWidth": 540,
+      "hasHorizontalOverflow": true,
+      "logsHeight": 812,
+      "threadHeight": 115.5
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "run_roots": [
+    "runs",
+    "site/runs"
+  ],
+  "site_root": "site",
+  "report_hub_root": "site/report_hub",
+  "updated_at": "2026-02-22T12:38:37.967408+00:00"
+}

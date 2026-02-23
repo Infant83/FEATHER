@@ -10,3 +10,4 @@ class FedernettConfig:
     static_dir: Path
     run_roots: list[Path]
     site_root: Path
+    report_hub_root: Path | None = None

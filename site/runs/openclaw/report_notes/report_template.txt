@@ -1,32 +1,32 @@
-Template: technical_deep_dive
-Source: C:\Users\angpa\myProjects\FEATHER\scripts\templates\technical_deep_dive.md
+Template: quanta_magazine
+Source: C:\Users\angpa\myProjects\FEATHER\src\federlicht\templates\quanta_magazine.md
 Latex: default.tex
+Layout: sidebar_toc
+Style pack: none
 Sections:
-- Executive Summary
-- Scope & Methodology
-- Technical Background
-- Methods & Data
-- Results & Evidence
-- Limitations & Open Questions
-- Risks & Gaps
-- Critics
+- Lede
+- Central Question
+- The Story So Far
+- How It Works
+- Why It Matters
+- Open Questions
 - Appendix
 
 Guidance:
-Template description: Deep technical review with methods and evidence focus.
+Template description: Quanta Magazine-style narrative explainer.
 
-Template tone: Technical, precise, method-oriented.
+Template tone: Narrative, conceptual, evidence-anchored.
 
-Template audience: R&D leaders and domain experts.
+Template audience: Broad technical readership.
 
 Section guidance:
-- Technical Background: define key terms and compare approaches.
-- Methods & Data: detail algorithms, datasets, and workflows.
-- Results & Evidence: highlight quantitative or experimental results.
-- Limitations & Open Questions: include reproducibility and scale issues.
-- Risks & Gaps: highlight missing evidence, constraints, unknowns, and validation needs. If not applicable, state Not applicable and give a brief reason; scale depth to evidence strength and context.
-- Critics: short headline + brief paragraphs + bullets; include contrarian views. If not applicable, state Not applicable and give a brief reason; scale depth to evidence strength and context.
+- Lede: 2-3 paragraphs; narrative hook; no bullets.
+- Central Question: 2-4 sentences framing the mystery.
+- The Story So Far: chronological narrative; key papers/actors.
+- How It Works: conceptual mechanism; one equation only if clarifying.
+- Why It Matters: scientific and human implications; cite sources.
+- Open Questions: 3-5 questions; be explicit about uncertainty.
 
 Template writing guidance:
-Use equations or notation when it improves clarity.
-Prefer primary sources; separate empirical results from speculation.
+Use metaphors sparingly; avoid hype.
+Keep warm, magazine tone without losing rigor.

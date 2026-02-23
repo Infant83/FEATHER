@@ -30,17 +30,33 @@
   <main><h1>Report Workflow</h1>
 <h2>Stages</h2>
 <ol>
-<li>scout: ran</li>
-<li>clarifier: skipped (disabled)</li>
-<li>template_adjust: skipped (disabled)</li>
-<li>plan: disabled</li>
-<li>web: disabled</li>
-<li>evidence: ran</li>
-<li>plan_check: disabled</li>
+<li>scout: cached</li>
+<li>clarifier: skipped (no_questions)</li>
+<li>template_adjust: skipped (depth=brief)</li>
+<li>plan: cached</li>
+<li>web: skipped (policy)</li>
+<li>evidence: skipped (depth=brief)</li>
+<li>plan_check: skipped (missing_evidence)</li>
 <li>writer: ran</li>
-<li>quality: disabled</li>
+<li>quality: ran (iterations=1)</li>
+</ol>
+<h2>Timeline</h2>
+<ol>
+<li>[2026-02-22T01:03:46] template_adjust: skipped (depth=brief)</li>
+<li>[2026-02-22T01:03:46] scout: cached</li>
+<li>[2026-02-22T01:03:46] clarifier: skipped (no_questions)</li>
+<li>[2026-02-22T01:03:46] plan: cached</li>
+<li>[2026-02-22T01:03:46] web: skipped (policy)</li>
+<li>[2026-02-22T01:03:46] plan_check: skipped (missing_evidence)</li>
+<li>[2026-02-22T01:03:46] evidence: skipped (depth=brief)</li>
+<li>[2026-02-22T01:07:23] writer: ran</li>
+<li>[2026-02-22T01:10:42] quality: ran (iterations=1)</li>
 </ol>
 <h2>Artifacts</h2>
+<h3>scout</h3>
+<ul>
+<li>Scout notes: <a href="../report_notes/scout_notes.md">./report_notes/scout_notes.md</a></li>
+</ul>
 <h3>plan</h3>
 <ul>
 <li>Plan update: <a href="../report_notes/report_plan.md">./report_notes/report_plan.md</a></li>
@@ -51,12 +67,37 @@
 <li>Source triage: <a href="../report_notes/source_triage.md">./report_notes/source_triage.md</a></li>
 <li>Source index: <a href="../report_notes/source_index.jsonl">./report_notes/source_index.jsonl</a></li>
 <li>Claim map: <a href="../report_notes/claim_map.md">./report_notes/claim_map.md</a></li>
+<li>Claim-evidence map: <a href="../report_notes/claim_evidence_map.md">./report_notes/claim_evidence_map.md</a></li>
+<li>Claim-evidence map (json): <a href="../report_notes/claim_evidence_map.json">./report_notes/claim_evidence_map.json</a></li>
 <li>Gap report: <a href="../report_notes/gap_finder.md">./report_notes/gap_finder.md</a></li>
 </ul>
+<h2>Diagram</h2>
+<pre><code class="language-mermaid">flowchart LR
+    scout[&quot;scout\ncached&quot;]
+    clarifier[&quot;clarifier\nskipped&quot;]
+    template_adjust[&quot;template_adjust\nskipped&quot;]
+    plan[&quot;plan\ncached&quot;]
+    web[&quot;web\nskipped&quot;]
+    evidence[&quot;evidence\nskipped&quot;]
+    plan_check[&quot;plan_check\nskipped&quot;]
+    writer[&quot;writer\nran&quot;]
+    quality[&quot;quality\nran&quot;]
+    scout --&gt; clarifier
+    clarifier --&gt; template_adjust
+    template_adjust --&gt; plan
+    plan --&gt; web
+    web --&gt; evidence
+    evidence --&gt; plan_check
+    plan_check --&gt; writer
+    writer --&gt; quality
+    quality -. feedback .-&gt; writer
+</code></pre>
 <h2>Outputs</h2>
 <ul>
-<li>Report overview: <a href="../report/run_overview_report_full.md">./report/run_overview_report_full.md</a></li>
-<li>Report prompt copy: <a href="../instruction/report_prompt_report_full.txt">./instruction/report_prompt_report_full.txt</a></li>
+<li>Report overview: <a href="../report/run_overview_report_full_iter_brief_quality.md">./report/run_overview_report_full_iter_brief_quality.md</a></li>
+<li>Report meta: <a href="../report_notes/report_meta.json">./report_notes/report_meta.json</a></li>
+<li>Report prompt copy: <a href="../instruction/report_prompt_report_full_iter_brief_quality.txt">./instruction/report_prompt_report_full_iter_brief_quality.txt</a></li>
+<li>Template summary: <a href="../report_notes/report_template.txt">./report_notes/report_template.txt</a></li>
 </ul></main>
   <script>
     document.querySelectorAll('a').forEach((link) => {

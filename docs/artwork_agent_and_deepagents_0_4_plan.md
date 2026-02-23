@@ -58,3 +58,53 @@
 - Citation validity pass rate.
 - Index-only evidence ratio.
 - Figure usage quality (caption completeness + source linkage).
+
+## Current Diagram Tooling Status (Repository Reality)
+- Federlicht writer already has an internal `artwork_agent` subagent path.
+- Built-in artwork tools now cover:
+  - `artwork_mermaid_flowchart` (inline Mermaid snippet)
+  - `artwork_mermaid_timeline` (inline Mermaid snippet)
+  - `artwork_mermaid_render` (Mermaid source -> SVG/PNG/PDF artifact via `mmdc`)
+  - `artwork_d2_render` (D2 source -> SVG artifact via `d2` CLI)
+- Generated files are run-local under `report_assets/artwork/` and logged in `report_notes/artwork_tool_calls.*`.
+
+## Integration with External Mermaid Subagent Prototype
+Reference prototype:
+- `C:/Users/angpa/myProjects/myMCP/documentations/create_mermaid/mermaid_subagent_tools.py`
+- It already implements `render_mermaid_diagram`, `render_mermaid_from_markdown`, `render_all_mermaid_from_markdown`.
+
+Recommended bridge strategy:
+1. Keep Federlicht built-ins as the default stable path.
+2. Add optional adapter that imports the external toolset when available and exposes the same contract.
+3. Gate by capability check:
+   - `mmdc` installed -> enable render path.
+   - external package importable -> enable markdown-batch render path.
+   - otherwise fallback to inline Mermaid snippets.
+
+## Capability Studio Mapping
+Add/manage these as explicit capabilities in Workspace Settings:
+- `artwork.artwork_mermaid_flowchart`
+- `artwork.artwork_mermaid_timeline`
+- `artwork.artwork_mermaid_render`
+- `artwork.artwork_d2_render`
+
+Operational policy:
+- Enable by default for writer stage only.
+- Keep evidence/scout stages read-heavy; avoid heavy renderer calls there.
+- Require caption + source refs for every generated figure.
+
+## Report Usage Policy (Practical)
+- Use Mermaid inline for:
+  - workflow overview
+  - stage timeline
+  - simple process maps
+- Use D2 render for:
+  - architecture diagrams with many nodes/edges
+  - reusable SVG assets
+- Use markdown-batch Mermaid render (external prototype) for:
+  - pre-authored report templates with many Mermaid blocks
+
+Acceptance criteria:
+- Figure has argumentative purpose (not decorative).
+- Figure caption includes claim/evidence implication.
+- Figure provenance links to source refs (`[S#]` + path in manifest/log).

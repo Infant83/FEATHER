@@ -44,6 +44,33 @@ def test_list_agent_profiles_normalizes_existing_apply_to(tmp_path: Path) -> Non
     listed = list_agent_profiles(root)
     site_profile = next(item for item in listed if item["id"] == "718006")
     assert site_profile["apply_to"] == ["writer", "critic", "reviser", "planner", "alignment"]
+    assert site_profile["ownership"] == "private"
+
+
+def test_list_agent_profiles_marks_org_shared_when_organization_exists(tmp_path: Path) -> None:
+    root = tmp_path
+    profile_dir = root / "site" / "agent_profiles"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    (profile_dir / "registry.json").write_text(
+        json.dumps({"718006": {"file": "718006.json"}}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (profile_dir / "718006.json").write_text(
+        json.dumps(
+            {
+                "id": "718006",
+                "name": "Team Profile",
+                "organization": "AI Governance Office",
+                "apply_to": ["writer"],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    listed = list_agent_profiles(root)
+    site_profile = next(item for item in listed if item["id"] == "718006")
+    assert site_profile["ownership"] == "org-shared"
 
 
 def test_federlicht_load_profile_normalizes_apply_to_fragments(tmp_path: Path) -> None:

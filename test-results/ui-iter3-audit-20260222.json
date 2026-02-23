@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-02-22 08:15:24",
+  "base": "http://127.0.0.1:8875/",
+  "page_errors": [],
+  "themes": {
+    "default": {
+      "theme": "default",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "color(srgb 0.963922 0.971137 0.985569)"
+    },
+    "white": {
+      "theme": "white",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "rgb(15, 55, 85)"
+    },
+    "black": {
+      "theme": "black",
+      "selectedCount": 1,
+      "badgeCount": 1,
+      "overlap": false,
+      "activeBorderLeftWidth": "4px",
+      "activeStrongColor": "color(srgb 0.938667 0.963922 1)"
+    }
+  },
+  "layout": {
+    "topbar_scroll": {
+      "before_top": 307.28125,
+      "after_top": -122.71875,
+      "delta": -430.0,
+      "non_sticky": true
+    },
+    "main": {
+      "logs": {
+        "top": 385.28125,
+        "left": 432.796875,
+        "width": 975.203125,
+        "height": 834,
+        "bottom": 1219.28125,
+        "right": 1408
+      },
+      "thread": {
+        "top": 492.328125,
+        "left": 460.796875,
+        "width": 919.203125,
+        "height": 406.953125,
+        "bottom": 899.28125,
+        "right": 1380
+      },
+      "workflow": {
+        "top": 1139.28125,
+        "left": 460.796875,
+        "width": 919.203125,
+        "height": 54,
+        "bottom": 1193.28125,
+        "right": 1380
+      },
+      "composer": {
+        "top": 909.28125,
+        "left": 460.796875,
+        "width": 919.203125,
+        "height": 220,
+        "bottom": 1129.28125,
+        "right": 1380
+      },
+      "workflowIdleCompact": true
+    }
+  },
+  "responsive": {
+    "1280x800": {
+      "hasHorizontalOverflow": false,
+      "threadHeight": 246.953125,
+      "workflowHeight": 54,
+      "workflowIdleCompact": true
+    },
+    "1024x768": {
+      "hasHorizontalOverflow": false,
+      "threadHeight": 228.953125,
+      "workflowHeight": 54,
+      "workflowIdleCompact": true
+    },
+    "768x1024": {
+      "hasHorizontalOverflow": false,
+      "threadHeight": 461,
+      "workflowHeight": 54,
+      "workflowIdleCompact": true
+    },
+    "540x960": {
+      "hasHorizontalOverflow": false,
+      "threadHeight": 326.953125,
+      "workflowHeight": 54,
+      "workflowIdleCompact": true
+    }
+  }
+}

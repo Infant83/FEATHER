@@ -1,0 +1,32 @@
+{
+  "rows_count": 1,
+  "summary": {
+    "overall": 71.95,
+    "claim_support_ratio": 3.08,
+    "unsupported_claim_count": 63.0,
+    "evidence_density_score": 98.44,
+    "section_coherence_score": 66.0
+  },
+  "baseline_summary": {
+    "overall": 70.7267,
+    "claim_support_ratio": 48.9067,
+    "unsupported_claim_count": 26.6667,
+    "evidence_density_score": 99.48,
+    "section_coherence_score": 58.0
+  },
+  "delta_summary": {
+    "overall": 1.2233,
+    "claim_support_ratio": -45.8267,
+    "unsupported_claim_count": 36.3333,
+    "evidence_density_score": -1.04,
+    "section_coherence_score": 8.0
+  },
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

@@ -1,0 +1,35 @@
+{
+  "url": "http://127.0.0.1:8765",
+  "theme": "white",
+  "jobs_button_disabled": false,
+  "jobs_modal_open": true,
+  "run_button": {
+    "x": 1167,
+    "y": 919.078125,
+    "width": 36,
+    "height": 36
+  },
+  "plan_button": {
+    "x": 1154,
+    "y": 959.078125,
+    "width": 62,
+    "height": 20
+  },
+  "act_button": {
+    "x": 1154,
+    "y": 983.078125,
+    "width": 62,
+    "height": 20
+  },
+  "side_actions": {
+    "x": 1154,
+    "y": 919.078125,
+    "width": 62,
+    "height": 91.09375
+  },
+  "jobs_item_bg": "linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96)), none | rgba(255, 255, 255, 0.96)",
+  "jobs_item_title_color": "rgb(23, 54, 77)",
+  "jobs_list_bg": "linear-gradient(155deg, rgba(255, 255, 255, 0.92), rgba(246, 251, 255, 0.9)), none | rgba(255, 255, 255, 0.88)",
+  "process_fold_count": 1,
+  "process_fold_close_from_tail": true
+}

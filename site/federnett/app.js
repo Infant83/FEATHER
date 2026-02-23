@@ -15,6 +15,20 @@ const state = {
     css: "",
   },
   runSummary: null,
+  runHub: {
+    loading: false,
+    runRel: "",
+    postId: "",
+    post: null,
+    comments: [],
+    followups: [],
+    link: null,
+    approval: null,
+  },
+  runMetrics: {
+    historyByRun: {},
+    digestByRun: {},
+  },
   instructionFiles: {},
   filePreview: {
     path: "",
@@ -104,6 +118,7 @@ const state = {
     runtimeNoticeDigest: "",
     stageOverrides: {},
     stageOverrideWarnings: {},
+    stageKnownTools: [],
     stageOverrideStage: "scout",
     stageOverrideSyncTimer: null,
     stageOverridePath: "",
@@ -237,6 +252,30 @@ const state = {
     liveAutoLogContext: true,
     liveAutoLogChars: 2200,
   },
+  modelOverrides: {
+    feather: {
+      mode: "inherit",
+      backend: "",
+      model: "",
+    },
+    federlicht: {
+      mode: "custom",
+      backend: "openai_api",
+      model: "$OPENAI_MODEL",
+      checkModel: "$OPENAI_MODEL",
+      visionModel: "$OPENAI_MODEL_VISION",
+      reasoningEffort: "off",
+    },
+    federhav: {
+      mode: "custom",
+      backend: "openai_api",
+      model: "gpt-4o-mini",
+      reasoningEffort: "off",
+      runtimeMode: "auto",
+      liveAutoLogContext: true,
+      liveAutoLogChars: 2200,
+    },
+  },
 };
 
 const LOG_LINE_LIMIT = 1400;
@@ -272,6 +311,8 @@ const WORKFLOW_STAGE_OVERRIDE_KEY = "federnett-workflow-stage-overrides-v1";
 const RUN_FILE_VIEW_KEY = "federnett-run-file-view-v1";
 const RUN_FILE_FILTER_KEY = "federnett-run-file-filter-v1";
 const GLOBAL_MODEL_POLICY_KEY = "federnett-global-model-policy-v1";
+const RUN_METRICS_HISTORY_KEY_PREFIX = "federnett-run-metrics-history-v1:";
+const RUN_METRICS_HISTORY_LIMIT = 36;
 const ASK_CAPABILITY_FALLBACK = {
   term: "Capability Packs",
   tools: [
@@ -364,6 +405,8 @@ const WORKFLOW_SPOT_LABELS = {
 const WORKFLOW_SPOT_TTL_MS = 7000;
 const WORKFLOW_LOOPBACK_PULSE_MS = 1200;
 const STAGE_TOOL_TOKEN_RE = /^[a-zA-Z][a-zA-Z0-9_:.+-]*$/;
+const STAGE_OVERRIDE_MAX_TOOLS = 24;
+const STAGE_OVERRIDE_MAX_PROMPT_CHARS = 6000;
 const MODEL_PRESET_OPTIONS = [
   "$OPENAI_MODEL",
   "$CODEX_MODEL",
@@ -1617,17 +1660,39 @@ function readWorkflowStageOverrideControls() {
   const stageId = activeWorkflowStageForOverrides();
   const entry = normalizeStageOverrideEntry(state.workflow.stageOverrides?.[stageId] || {});
   entry.enabled = Boolean($("#wf-stage-enabled")?.checked ?? entry.enabled);
-  entry.system_prompt = String($("#wf-stage-prompt")?.value || "").trim();
+  const warningParts = [];
+  const promptEl = $("#wf-stage-prompt");
+  entry.system_prompt = String(promptEl?.value || "").trim();
+  if (entry.system_prompt.length > STAGE_OVERRIDE_MAX_PROMPT_CHARS) {
+    entry.system_prompt = entry.system_prompt.slice(0, STAGE_OVERRIDE_MAX_PROMPT_CHARS).trimEnd();
+    if (promptEl) promptEl.value = entry.system_prompt;
+    warningParts.push(`system prompt 길이가 길어 ${STAGE_OVERRIDE_MAX_PROMPT_CHARS}자로 제한했습니다.`);
+  }
   const toolsEl = $("#wf-stage-tools");
   const parsedTools = normalizeWorkflowStageToolsInput(toolsEl?.value || "");
-  entry.tools = parsedTools.value;
+  let toolTokens = parsedTools.tokens.slice();
+  if (toolTokens.length > STAGE_OVERRIDE_MAX_TOOLS) {
+    toolTokens = toolTokens.slice(0, STAGE_OVERRIDE_MAX_TOOLS);
+    warningParts.push(`도구 토큰은 최대 ${STAGE_OVERRIDE_MAX_TOOLS}개까지 허용합니다.`);
+  }
+  const knownTools = Array.isArray(state.workflow.stageKnownTools)
+    ? state.workflow.stageKnownTools.map((token) => String(token || "").trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (knownTools.length) {
+    const unknownTools = toolTokens.filter((token) => !knownTools.includes(String(token || "").trim().toLowerCase()));
+    if (unknownTools.length) {
+      warningParts.push(`runtime에 없는 도구 토큰: ${unknownTools.slice(0, 5).join(", ")}`);
+    }
+  }
+  entry.tools = toolTokens.join(",");
   if (toolsEl && String(toolsEl.value || "") !== entry.tools) {
     toolsEl.value = entry.tools;
   }
   state.workflow.stageOverrideWarnings = state.workflow.stageOverrideWarnings || {};
-  const warningText = parsedTools.invalidTokens.length
-    ? `무시된 도구 토큰: ${parsedTools.invalidTokens.slice(0, 5).join(", ")}`
-    : "";
+  if (parsedTools.invalidTokens.length) {
+    warningParts.push(`무시된 도구 토큰: ${parsedTools.invalidTokens.slice(0, 5).join(", ")}`);
+  }
+  const warningText = warningParts.join(" · ");
   if (warningText) {
     state.workflow.stageOverrideWarnings[stageId] = warningText;
   } else {
@@ -1873,6 +1938,13 @@ function syncWorkflowStudioBindings() {
   const knownToolsEl = $("#wf-stage-tools-known");
   if (knownToolsEl) {
     const ids = Array.from(new Set(enabledCaps.map((entry) => entry.id).filter(Boolean))).slice(0, 12);
+    state.workflow.stageKnownTools = Array.from(
+      new Set(
+        enabledCaps
+          .map((entry) => String(entry.id || "").trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
     knownToolsEl.textContent = ids.length
       ? `사용 가능 도구: ${ids.join(", ")}`
       : "사용 가능 도구: 현재 활성화된 런타임 도구가 없습니다.";
@@ -2201,24 +2273,218 @@ function normalizeGlobalModelPolicy(raw = {}, fallbackBackend = "openai_api") {
   return policy;
 }
 
+function federlichtDefaultModelHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().federlicht_default_model
+    || llmDefaults().openai_model
+    || "$OPENAI_MODEL",
+  );
+  return hint || "$OPENAI_MODEL";
+}
+
+function federlichtDefaultVisionHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().federlicht_default_model_vision
+    || llmDefaults().openai_model_vision
+    || llmDefaults().federlicht_default_model
+    || "$OPENAI_MODEL_VISION",
+  );
+  return hint || "$OPENAI_MODEL_VISION";
+}
+
+function defaultModelOverrides() {
+  return {
+    feather: {
+      mode: "inherit",
+      backend: "",
+      model: "",
+    },
+    federlicht: {
+      mode: "custom",
+      backend: "openai_api",
+      model: federlichtDefaultModelHint(),
+      checkModel: federlichtDefaultModelHint(),
+      visionModel: federlichtDefaultVisionHint(),
+      reasoningEffort: "off",
+    },
+    federhav: {
+      mode: "custom",
+      backend: normalizeAskLlmBackend(llmDefaults().federhav_default_backend || "openai_api"),
+      model: normalizeModelToken(llmDefaults().federhav_default_model || "gpt-4o-mini") || "gpt-4o-mini",
+      reasoningEffort: "off",
+      runtimeMode: normalizeAskRuntimeMode(llmDefaults().federhav_runtime_mode || "auto"),
+      liveAutoLogContext: true,
+      liveAutoLogChars: LIVE_ASK_LOG_TAIL_DEFAULT,
+    },
+  };
+}
+
+function normalizeScopedOverride(scope, raw = {}, globalPolicy = null) {
+  const baseGlobal = normalizeGlobalModelPolicy(
+    globalPolicy || state.modelPolicy,
+    state.modelPolicy.backend || "openai_api",
+  );
+  const defaults = defaultModelOverrides();
+  const fallback = defaults[scope] || { mode: "inherit" };
+  const modeToken = String(raw.mode || fallback.mode || "inherit").trim().toLowerCase();
+  const mode = modeToken === "custom" ? "custom" : "inherit";
+  const backendValue = normalizeAskLlmBackend(
+    raw.backend
+    || fallback.backend
+    || baseGlobal.backend
+    || "openai_api",
+  );
+  const normalizeByBackend = (value) =>
+    backendValue === "codex_cli" ? normalizeCodexModelToken(value) : normalizeModelToken(value);
+
+  if (scope === "feather") {
+    return {
+      mode,
+      backend: mode === "custom" ? backendValue : "",
+      model: mode === "custom" ? normalizeByBackend(raw.model ?? fallback.model ?? "") : "",
+    };
+  }
+  if (scope === "federlicht") {
+    return {
+      mode,
+      backend: mode === "custom" ? backendValue : "",
+      model: mode === "custom" ? normalizeByBackend(raw.model ?? fallback.model ?? "") : "",
+      checkModel: mode === "custom" ? normalizeByBackend(raw.checkModel ?? raw.check_model ?? fallback.checkModel ?? "") : "",
+      visionModel: mode === "custom" ? normalizeByBackend(raw.visionModel ?? raw.vision_model ?? fallback.visionModel ?? "") : "",
+      reasoningEffort: normalizeAskReasoningEffort(
+        raw.reasoningEffort ?? raw.reasoning_effort ?? fallback.reasoningEffort ?? "off",
+        "off",
+      ),
+    };
+  }
+  if (scope === "federhav") {
+    return {
+      mode,
+      backend: mode === "custom" ? backendValue : "",
+      model: mode === "custom" ? normalizeByBackend(raw.model ?? fallback.model ?? "") : "",
+      reasoningEffort: normalizeAskReasoningEffort(
+        raw.reasoningEffort ?? raw.reasoning_effort ?? fallback.reasoningEffort ?? "off",
+        "off",
+      ),
+      runtimeMode: normalizeAskRuntimeMode(raw.runtimeMode ?? raw.runtime_mode ?? fallback.runtimeMode ?? "auto"),
+      liveAutoLogContext: (raw.liveAutoLogContext ?? raw.live_auto_log_context ?? fallback.liveAutoLogContext) !== false,
+      liveAutoLogChars: normalizeLiveAskLogTailChars(
+        raw.liveAutoLogChars ?? raw.live_auto_log_chars ?? fallback.liveAutoLogChars,
+        LIVE_ASK_LOG_TAIL_DEFAULT,
+      ),
+    };
+  }
+  return { ...fallback };
+}
+
+function normalizeModelOverrides(rawOverrides = {}, globalPolicy = null) {
+  const source = rawOverrides && typeof rawOverrides === "object" ? rawOverrides : {};
+  return {
+    feather: normalizeScopedOverride("feather", source.feather || {}, globalPolicy),
+    federlicht: normalizeScopedOverride("federlicht", source.federlicht || {}, globalPolicy),
+    federhav: normalizeScopedOverride("federhav", source.federhav || {}, globalPolicy),
+  };
+}
+
+function resolveScopedModelPolicyFrom(globalPolicyInput, overridesInput, scope = "global") {
+  const globalPolicy = normalizeGlobalModelPolicy(globalPolicyInput, globalPolicyInput?.backend || "openai_api");
+  const overrides = normalizeModelOverrides(overridesInput, globalPolicy);
+  const token = String(scope || "").trim().toLowerCase();
+  if (token === "global") {
+    return {
+      scope: "global",
+      mode: "global",
+      ...globalPolicy,
+      runtimeMode: normalizeAskRuntimeMode(globalPolicy.federhavRuntimeMode || "auto"),
+      liveAutoLogContext: globalPolicy.liveAutoLogContext !== false,
+      liveAutoLogChars: normalizeLiveAskLogTailChars(globalPolicy.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT),
+    };
+  }
+  const entry = overrides[token] || { mode: "inherit" };
+  const useCustom = entry.mode === "custom";
+  const backend = normalizeAskLlmBackend(
+    useCustom
+      ? (entry.backend || globalPolicy.backend)
+      : globalPolicy.backend,
+  );
+  const normalizeByBackend = (value) =>
+    backend === "codex_cli" ? normalizeCodexModelToken(value) : normalizeModelToken(value);
+  const baseModel = normalizeByBackend(globalPolicy.model || "");
+  const baseCheck = normalizeByBackend(globalPolicy.checkModel || "");
+  const baseVision = normalizeByBackend(globalPolicy.visionModel || "");
+  const model = normalizeByBackend(useCustom ? (entry.model || baseModel) : baseModel);
+  const checkModel = normalizeByBackend(
+    token === "federlicht" && useCustom
+      ? (entry.checkModel || baseCheck || model)
+      : (baseCheck || model),
+  );
+  const visionModel = normalizeByBackend(
+    token === "federlicht" && useCustom
+      ? (entry.visionModel || baseVision)
+      : baseVision,
+  );
+  const reasoningEffort = normalizeAskReasoningEffort(
+    useCustom
+      ? (entry.reasoningEffort || globalPolicy.reasoningEffort || "off")
+      : (globalPolicy.reasoningEffort || "off"),
+    "off",
+  );
+  const runtimeMode = normalizeAskRuntimeMode(
+    token === "federhav"
+      ? (entry.runtimeMode || globalPolicy.federhavRuntimeMode || "auto")
+      : (globalPolicy.federhavRuntimeMode || "auto"),
+  );
+  const liveAutoLogContext = token === "federhav"
+    ? (entry.liveAutoLogContext !== false)
+    : (globalPolicy.liveAutoLogContext !== false);
+  const liveAutoLogChars = token === "federhav"
+    ? normalizeLiveAskLogTailChars(entry.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT)
+    : normalizeLiveAskLogTailChars(globalPolicy.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT);
+  return {
+    scope: token,
+    mode: useCustom ? "custom" : "inherit",
+    backend,
+    model,
+    checkModel,
+    visionModel,
+    reasoningEffort,
+    runtimeMode,
+    liveAutoLogContext,
+    liveAutoLogChars,
+  };
+}
+
+function resolveScopedModelPolicy(scope = "global") {
+  const globalPolicy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend || "openai_api");
+  const overrides = normalizeModelOverrides(state.modelOverrides, globalPolicy);
+  return resolveScopedModelPolicyFrom(globalPolicy, overrides, scope);
+}
+
+function currentLlmPolicyPayload() {
+  return {
+    global: {
+      lock: Boolean(state.modelPolicy.lock),
+      backend: state.modelPolicy.backend,
+      model: state.modelPolicy.model || "",
+      checkModel: state.modelPolicy.checkModel || "",
+      visionModel: state.modelPolicy.visionModel || "",
+      reasoningEffort: state.modelPolicy.reasoningEffort || "off",
+      federhavRuntimeMode: state.modelPolicy.federhavRuntimeMode || "auto",
+      liveAutoLogContext: state.modelPolicy.liveAutoLogContext !== false,
+      liveAutoLogChars: normalizeLiveAskLogTailChars(
+        state.modelPolicy.liveAutoLogChars,
+        LIVE_ASK_LOG_TAIL_DEFAULT,
+      ),
+    },
+    overrides: normalizeModelOverrides(state.modelOverrides, state.modelPolicy),
+  };
+}
+
 function persistGlobalModelPolicy() {
   try {
     localStorage.setItem(
       GLOBAL_MODEL_POLICY_KEY,
-      JSON.stringify({
-        lock: Boolean(state.modelPolicy.lock),
-        backend: state.modelPolicy.backend,
-        model: state.modelPolicy.model,
-        checkModel: state.modelPolicy.checkModel,
-        visionModel: state.modelPolicy.visionModel,
-        reasoningEffort: state.modelPolicy.reasoningEffort || "off",
-        federhavRuntimeMode: state.modelPolicy.federhavRuntimeMode || "auto",
-        liveAutoLogContext: state.modelPolicy.liveAutoLogContext !== false,
-        liveAutoLogChars: normalizeLiveAskLogTailChars(
-          state.modelPolicy.liveAutoLogChars,
-          LIVE_ASK_LOG_TAIL_DEFAULT,
-        ),
-      }),
+      JSON.stringify(currentLlmPolicyPayload()),
     );
   } catch (err) {
     // ignore
@@ -2226,6 +2492,7 @@ function persistGlobalModelPolicy() {
 }
 
 function loadGlobalModelPolicy() {
+  const storedWorkspacePolicy = state.workspaceSettings?.stored?.llm_policy;
   let stored = null;
   try {
     const raw = localStorage.getItem(GLOBAL_MODEL_POLICY_KEY);
@@ -2233,8 +2500,22 @@ function loadGlobalModelPolicy() {
   } catch (err) {
     stored = null;
   }
+  const source = (
+    stored && typeof stored === "object"
+      ? stored
+      : (
+        storedWorkspacePolicy && typeof storedWorkspacePolicy === "object"
+          ? storedWorkspacePolicy
+          : null
+      )
+  ) || {};
+  const globalSource = source.global && typeof source.global === "object" ? source.global : source;
   const backendFallback = normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api");
-  state.modelPolicy = normalizeGlobalModelPolicy(stored || state.modelPolicy, backendFallback);
+  state.modelPolicy = normalizeGlobalModelPolicy(globalSource || state.modelPolicy, backendFallback);
+  state.modelOverrides = normalizeModelOverrides(
+    source.overrides || source.model_overrides || {},
+    state.modelPolicy,
+  );
 }
 
 function renderGlobalModelPolicyControls() {
@@ -2243,29 +2524,151 @@ function renderGlobalModelPolicyControls() {
   const checkEl = $("#global-check-model");
   const visionEl = $("#global-vision-model");
   const reasoningEl = $("#global-reasoning-effort");
-  const runtimeEl = $("#global-federhav-runtime-mode");
-  const autoLogEl = $("#global-live-auto-log");
-  const logTailEl = $("#global-live-log-tail-size");
   const lockEl = $("#global-model-lock");
   if (backendEl) backendEl.value = state.modelPolicy.backend;
   if (modelEl && modelEl.value !== state.modelPolicy.model) modelEl.value = state.modelPolicy.model || "";
   if (checkEl && checkEl.value !== state.modelPolicy.checkModel) checkEl.value = state.modelPolicy.checkModel || "";
   if (visionEl && visionEl.value !== state.modelPolicy.visionModel) visionEl.value = state.modelPolicy.visionModel || "";
   if (reasoningEl) reasoningEl.value = state.modelPolicy.reasoningEffort || "off";
-  if (runtimeEl) runtimeEl.value = normalizeAskRuntimeMode(state.modelPolicy.federhavRuntimeMode || "auto");
-  if (autoLogEl) autoLogEl.checked = state.modelPolicy.liveAutoLogContext !== false;
-  if (logTailEl) {
-    const token = String(
-      normalizeLiveAskLogTailChars(state.modelPolicy.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT),
-    );
-    if (logTailEl.value !== token) logTailEl.value = token;
-  }
   if (lockEl) lockEl.checked = Boolean(state.modelPolicy.lock);
+
+  const overrides = normalizeModelOverrides(state.modelOverrides, state.modelPolicy);
+  state.modelOverrides = overrides;
+
+  const featherModeEl = $("#policy-feather-mode");
+  const featherBackendEl = $("#policy-feather-backend");
+  const featherModelEl = $("#policy-feather-model");
+  if (featherModeEl) featherModeEl.value = overrides.feather.mode || "inherit";
+  if (featherBackendEl) featherBackendEl.value = overrides.feather.backend || state.modelPolicy.backend;
+  if (featherModelEl) featherModelEl.value = overrides.feather.model || "";
+
+  const federModeEl = $("#policy-federlicht-mode");
+  const federBackendEl = $("#policy-federlicht-backend");
+  const federModelEl = $("#policy-federlicht-model");
+  const federCheckEl = $("#policy-federlicht-check-model");
+  const federVisionEl = $("#policy-federlicht-vision-model");
+  const federReasoningEl = $("#policy-federlicht-reasoning-effort");
+  if (federModeEl) federModeEl.value = overrides.federlicht.mode || "inherit";
+  if (federBackendEl) federBackendEl.value = overrides.federlicht.backend || state.modelPolicy.backend;
+  if (federModelEl) federModelEl.value = overrides.federlicht.model || "";
+  if (federCheckEl) federCheckEl.value = overrides.federlicht.checkModel || "";
+  if (federVisionEl) federVisionEl.value = overrides.federlicht.visionModel || "";
+  if (federReasoningEl) federReasoningEl.value = overrides.federlicht.reasoningEffort || "off";
+
+  const havModeEl = $("#policy-federhav-mode");
+  const havBackendEl = $("#policy-federhav-backend");
+  const havModelEl = $("#policy-federhav-model");
+  const havReasoningEl = $("#policy-federhav-reasoning-effort");
+  const havRuntimeEl = $("#policy-federhav-runtime-mode");
+  const havAutoLogEl = $("#policy-federhav-live-auto-log");
+  const havLogTailEl = $("#policy-federhav-live-log-tail-size");
+  if (havModeEl) havModeEl.value = overrides.federhav.mode || "custom";
+  if (havBackendEl) havBackendEl.value = overrides.federhav.backend || "openai_api";
+  if (havModelEl) havModelEl.value = overrides.federhav.model || "gpt-4o-mini";
+  if (havReasoningEl) havReasoningEl.value = overrides.federhav.reasoningEffort || "off";
+  if (havRuntimeEl) havRuntimeEl.value = normalizeAskRuntimeMode(overrides.federhav.runtimeMode || "auto");
+  if (havAutoLogEl) havAutoLogEl.checked = overrides.federhav.liveAutoLogContext !== false;
+  if (havLogTailEl) {
+    const token = String(normalizeLiveAskLogTailChars(overrides.federhav.liveAutoLogChars, LIVE_ASK_LOG_TAIL_DEFAULT));
+    if (havLogTailEl.value !== token) havLogTailEl.value = token;
+  }
+
   syncModelInputCatalogBindings();
+  updateScopedPolicyControlState();
+  renderModelPolicyEffectiveHints({ global: state.modelPolicy, overrides });
+}
+
+function setScopedPolicyFieldState(scope, mode, selectorList = []) {
+  const enabled = mode === "custom";
+  selectorList.forEach((selector) => {
+    const el = $(selector);
+    if (!el) return;
+    el.disabled = !enabled;
+    const wrap = el.closest("label");
+    if (wrap) wrap.classList.toggle("is-disabled", !enabled);
+  });
+  const hint = $(`#policy-${scope}-hint`);
+  if (hint) {
+    hint.textContent = enabled
+      ? "Custom: 이 스코프 전용 설정이 적용됩니다."
+      : "Inherit: Global LLM Settings를 그대로 사용합니다.";
+  }
+}
+
+function updateScopedPolicyControlState() {
+  const featherMode = String($("#policy-feather-mode")?.value || state.modelOverrides?.feather?.mode || "inherit")
+    .trim()
+    .toLowerCase();
+  const federlichtMode = String($("#policy-federlicht-mode")?.value || state.modelOverrides?.federlicht?.mode || "inherit")
+    .trim()
+    .toLowerCase();
+  const federhavMode = String($("#policy-federhav-mode")?.value || state.modelOverrides?.federhav?.mode || "custom")
+    .trim()
+    .toLowerCase();
+
+  setScopedPolicyFieldState("feather", featherMode, [
+    "#policy-feather-backend",
+    "#policy-feather-model",
+  ]);
+  setScopedPolicyFieldState("federlicht", federlichtMode, [
+    "#policy-federlicht-backend",
+    "#policy-federlicht-model",
+    "#policy-federlicht-check-model",
+    "#policy-federlicht-vision-model",
+    "#policy-federlicht-reasoning-effort",
+  ]);
+  setScopedPolicyFieldState("federhav", federhavMode, [
+    "#policy-federhav-backend",
+    "#policy-federhav-model",
+    "#policy-federhav-reasoning-effort",
+    "#policy-federhav-runtime-mode",
+    "#policy-federhav-live-auto-log",
+    "#policy-federhav-live-log-tail-size",
+  ]);
+  renderModelPolicyEffectiveHints(readGlobalModelPolicyControls());
+}
+
+function summarizeScopedPolicyLine(policy, scope = "global") {
+  if (!policy || typeof policy !== "object") return "적용값: -";
+  if (scope === "global") {
+    return `적용값: ${policy.backend} · model=${policy.model || "-"} · check=${policy.checkModel || "-"} · vision=${policy.visionModel || "-"} · reasoning=${policy.reasoningEffort || "off"} · runtime=${policy.runtimeMode || "auto"}`;
+  }
+  const modeText = policy.mode === "custom" ? "custom" : "inherit→global";
+  if (scope === "federlicht") {
+    return `적용값: ${modeText} · ${policy.backend} · model=${policy.model || "-"} · check=${policy.checkModel || "-"} · vision=${policy.visionModel || "-"} · reasoning=${policy.reasoningEffort || "off"}`;
+  }
+  if (scope === "federhav") {
+    return `적용값: ${modeText} · ${policy.backend} · model=${policy.model || "-"} · reasoning=${policy.reasoningEffort || "off"} · runtime=${policy.runtimeMode || "auto"} · log=${policy.liveAutoLogChars || LIVE_ASK_LOG_TAIL_DEFAULT}`;
+  }
+  return `적용값: ${modeText} · ${policy.backend} · model=${policy.model || "-"}`;
+}
+
+function renderModelPolicyEffectiveHints(source = null) {
+  const sourceObj = source && typeof source === "object" ? source : {};
+  const globalPolicy = normalizeGlobalModelPolicy(
+    sourceObj.global || state.modelPolicy,
+    state.modelPolicy.backend || "openai_api",
+  );
+  const overrides = normalizeModelOverrides(
+    sourceObj.overrides || sourceObj.model_overrides || state.modelOverrides,
+    globalPolicy,
+  );
+  const globalResolved = resolveScopedModelPolicyFrom(globalPolicy, overrides, "global");
+  const featherResolved = resolveScopedModelPolicyFrom(globalPolicy, overrides, "feather");
+  const federlichtResolved = resolveScopedModelPolicyFrom(globalPolicy, overrides, "federlicht");
+  const federhavResolved = resolveScopedModelPolicyFrom(globalPolicy, overrides, "federhav");
+  const setText = (selector, text) => {
+    const el = $(selector);
+    if (el) el.textContent = text;
+  };
+  setText("#policy-global-effective", summarizeScopedPolicyLine(globalResolved, "global"));
+  setText("#policy-feather-effective", summarizeScopedPolicyLine(featherResolved, "feather"));
+  setText("#policy-federlicht-effective", summarizeScopedPolicyLine(federlichtResolved, "federlicht"));
+  setText("#policy-federhav-effective", summarizeScopedPolicyLine(federhavResolved, "federhav"));
 }
 
 function readGlobalModelPolicyControls() {
-  return normalizeGlobalModelPolicy(
+  const nextGlobal = normalizeGlobalModelPolicy(
     {
       lock: $("#global-model-lock")?.checked ?? state.modelPolicy.lock,
       backend: $("#global-llm-backend")?.value || state.modelPolicy.backend,
@@ -2273,79 +2676,85 @@ function readGlobalModelPolicyControls() {
       checkModel: $("#global-check-model")?.value || "",
       visionModel: $("#global-vision-model")?.value || "",
       reasoningEffort: $("#global-reasoning-effort")?.value || "off",
-      federhavRuntimeMode: $("#global-federhav-runtime-mode")?.value || state.modelPolicy.federhavRuntimeMode || "auto",
-      liveAutoLogContext: $("#global-live-auto-log")?.checked ?? state.modelPolicy.liveAutoLogContext,
-      liveAutoLogChars: $("#global-live-log-tail-size")?.value ?? state.modelPolicy.liveAutoLogChars,
     },
     state.modelPolicy.backend,
   );
+  const overrides = normalizeModelOverrides(
+    {
+      feather: {
+        mode: $("#policy-feather-mode")?.value || state.modelOverrides?.feather?.mode || "inherit",
+        backend: $("#policy-feather-backend")?.value || state.modelOverrides?.feather?.backend || "",
+        model: $("#policy-feather-model")?.value || state.modelOverrides?.feather?.model || "",
+      },
+      federlicht: {
+        mode: $("#policy-federlicht-mode")?.value || state.modelOverrides?.federlicht?.mode || "inherit",
+        backend: $("#policy-federlicht-backend")?.value || state.modelOverrides?.federlicht?.backend || "",
+        model: $("#policy-federlicht-model")?.value || state.modelOverrides?.federlicht?.model || "",
+        checkModel: $("#policy-federlicht-check-model")?.value || state.modelOverrides?.federlicht?.checkModel || "",
+        visionModel: $("#policy-federlicht-vision-model")?.value || state.modelOverrides?.federlicht?.visionModel || "",
+        reasoningEffort: $("#policy-federlicht-reasoning-effort")?.value || state.modelOverrides?.federlicht?.reasoningEffort || "off",
+      },
+      federhav: {
+        mode: $("#policy-federhav-mode")?.value || state.modelOverrides?.federhav?.mode || "custom",
+        backend: $("#policy-federhav-backend")?.value || state.modelOverrides?.federhav?.backend || "openai_api",
+        model: $("#policy-federhav-model")?.value || state.modelOverrides?.federhav?.model || "gpt-4o-mini",
+        reasoningEffort: $("#policy-federhav-reasoning-effort")?.value || state.modelOverrides?.federhav?.reasoningEffort || "off",
+        runtimeMode: $("#policy-federhav-runtime-mode")?.value || state.modelOverrides?.federhav?.runtimeMode || "auto",
+        liveAutoLogContext:
+          $("#policy-federhav-live-auto-log")?.checked
+          ?? state.modelOverrides?.federhav?.liveAutoLogContext
+          ?? true,
+        liveAutoLogChars:
+          $("#policy-federhav-live-log-tail-size")?.value
+          ?? state.modelOverrides?.federhav?.liveAutoLogChars
+          ?? LIVE_ASK_LOG_TAIL_DEFAULT,
+      },
+    },
+    nextGlobal,
+  );
+  return {
+    global: nextGlobal,
+    overrides,
+  };
 }
 
 function policySnapshotFromSource(source = "") {
-  const token = String(source || "").trim().toLowerCase();
-  if (token === "ask") {
-    return normalizeGlobalModelPolicy(
-      {
-        ...state.modelPolicy,
-        backend: normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api"),
-        model: normalizeModelToken(state.modelPolicy.model || ""),
-        reasoningEffort: normalizeAskReasoningEffort(state.modelPolicy.reasoningEffort || "off", "off"),
-      },
-      state.modelPolicy.backend,
-    );
-  }
-  return normalizeGlobalModelPolicy(
-    {
-      ...state.modelPolicy,
-      backend: normalizeAskLlmBackend(state.modelPolicy.backend || "openai_api"),
-      model: normalizeModelToken(state.modelPolicy.model || ""),
-      checkModel: normalizeModelToken(state.modelPolicy.checkModel || ""),
-      visionModel: normalizeModelToken(state.modelPolicy.visionModel || ""),
-      reasoningEffort: normalizeAskReasoningEffort(state.modelPolicy.reasoningEffort || "off", "off"),
-    },
-    state.modelPolicy.backend,
-  );
+  return currentLlmPolicyPayload();
 }
 
 function applyGlobalModelPolicy(rawPolicy = {}, options = {}) {
   if (globalModelSyncGuard) return state.modelPolicy;
   const persist = options.persist !== false;
   const announce = Boolean(options.announce);
-  const next = normalizeGlobalModelPolicy(rawPolicy, state.modelPolicy.backend);
+  const globalSource =
+    rawPolicy && typeof rawPolicy.global === "object"
+      ? rawPolicy.global
+      : rawPolicy;
+  const overridesSource =
+    rawPolicy && typeof rawPolicy.overrides === "object"
+      ? rawPolicy.overrides
+      : (rawPolicy?.model_overrides || {});
+  const next = normalizeGlobalModelPolicy(globalSource || state.modelPolicy, state.modelPolicy.backend);
+  const nextOverrides = normalizeModelOverrides(overridesSource || state.modelOverrides, next);
   globalModelSyncGuard = true;
   try {
     state.modelPolicy = next;
+    state.modelOverrides = nextOverrides;
     if (persist) persistGlobalModelPolicy();
     renderGlobalModelPolicyControls();
 
-    const featherBackend = $("#feather-llm-backend");
-    const featherModel = $("#feather-model");
-    if (featherBackend) featherBackend.value = next.backend;
-    if (featherModel) featherModel.value = next.model || "";
-    bindModelInputCatalog(featherModel, next.backend);
-    $("#feather-agentic-policy-note")?.classList.remove("is-error");
-
-    const federBackend = $("#federlicht-llm-backend");
-    const federModel = $("#federlicht-model");
-    const federCheck = $("#federlicht-check-model");
-    const federVision = $("#federlicht-model-vision");
-    const federReasoning = $("#federlicht-reasoning-effort");
-    if (federBackend) federBackend.value = next.backend;
-    if (federModel) federModel.value = next.model || "";
-    if (federCheck) federCheck.value = next.checkModel || "";
-    if (federVision) federVision.value = next.visionModel || "";
-    if (federReasoning) federReasoning.value = next.reasoningEffort || "off";
     syncFederlichtModelControls({ announce: false });
 
-    state.ask.llmBackend = next.backend;
-    state.ask.reasoningEffort = next.reasoningEffort || "off";
-    state.ask.runtimeMode = normalizeAskRuntimeMode(next.federhavRuntimeMode || "auto");
-    state.liveAsk.autoLogContext = next.liveAutoLogContext !== false;
+    const askPolicy = resolveScopedModelPolicy("federhav");
+    state.ask.llmBackend = askPolicy.backend;
+    state.ask.reasoningEffort = askPolicy.reasoningEffort || "off";
+    state.ask.runtimeMode = normalizeAskRuntimeMode(askPolicy.runtimeMode || "auto");
+    state.liveAsk.autoLogContext = askPolicy.liveAutoLogContext !== false;
     state.liveAsk.autoLogChars = normalizeLiveAskLogTailChars(
-      next.liveAutoLogChars,
+      askPolicy.liveAutoLogChars,
       LIVE_ASK_LOG_TAIL_DEFAULT,
     );
-    setAskModelInputValue(next.model || "");
+    setAskModelInputValue(askPolicy.model || "");
     saveAskActionPrefs();
     saveLiveAskPrefs();
     syncLiveAskPrefsInputs();
@@ -2354,8 +2763,10 @@ function applyGlobalModelPolicy(rawPolicy = {}, options = {}) {
     syncModelInputCatalogBindings();
     document.dispatchEvent(new CustomEvent("federnett:model-policy-updated"));
     if (announce) {
+      const featherPolicy = resolveScopedModelPolicy("feather");
+      const federlichtPolicy = resolveScopedModelPolicy("federlicht");
       appendLog(
-        `[model-policy] applied backend=${next.backend} model=${next.model || "-"} lock=${next.lock ? "on" : "off"}\n`,
+        `[model-policy] applied global=${next.backend}/${next.model || "-"} feather=${featherPolicy.backend}/${featherPolicy.model || "-"} federlicht=${federlichtPolicy.backend}/${federlichtPolicy.model || "-"} federhav=${askPolicy.backend}/${askPolicy.model || "-"}\n`,
       );
     }
     return state.modelPolicy;
@@ -2554,12 +2965,13 @@ function latestActiveToolHint() {
 function renderWorkflowRuntimeConfig(configOverride = null) {
   const host = $("#workflow-runtime");
   if (!host) return;
+  const federlichtPolicy = resolveScopedModelPolicy("federlicht");
   const current = configOverride || sanitizeFederlichtModelConfig({
-    backend: $("#federlicht-llm-backend")?.value || state.modelPolicy.backend,
-    model: $("#federlicht-model")?.value || state.modelPolicy.model,
-    checkModel: $("#federlicht-check-model")?.value || state.modelPolicy.checkModel,
-    visionModel: $("#federlicht-model-vision")?.value || state.modelPolicy.visionModel,
-    reasoningEffort: $("#federlicht-reasoning-effort")?.value || state.modelPolicy.reasoningEffort,
+    backend: $("#federlicht-llm-backend")?.value || federlichtPolicy.backend,
+    model: $("#federlicht-model")?.value || federlichtPolicy.model,
+    checkModel: $("#federlicht-check-model")?.value || federlichtPolicy.checkModel,
+    visionModel: $("#federlicht-model-vision")?.value || federlichtPolicy.visionModel,
+    reasoningEffort: $("#federlicht-reasoning-effort")?.value || federlichtPolicy.reasoningEffort,
   });
   const chip = (label, value, extraClass = "") =>
     `<span class="workflow-runtime-chip ${extraClass}"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "-")}</span>`;
@@ -2609,12 +3021,13 @@ function renderFederlichtRuntimeSummary(configOverride = null) {
   const notesHost = $("#federlicht-runtime-notes");
   const gatewayChip = $("#federlicht-runtime-gateway");
   if (!host) return;
+  const federlichtPolicy = resolveScopedModelPolicy("federlicht");
   const current = configOverride || sanitizeFederlichtModelConfig({
-    backend: $("#federlicht-llm-backend")?.value || state.modelPolicy.backend,
-    model: $("#federlicht-model")?.value || state.modelPolicy.model,
-    checkModel: $("#federlicht-check-model")?.value || state.modelPolicy.checkModel,
-    visionModel: $("#federlicht-model-vision")?.value || state.modelPolicy.visionModel,
-    reasoningEffort: $("#federlicht-reasoning-effort")?.value || state.modelPolicy.reasoningEffort,
+    backend: $("#federlicht-llm-backend")?.value || federlichtPolicy.backend,
+    model: $("#federlicht-model")?.value || federlichtPolicy.model,
+    checkModel: $("#federlicht-check-model")?.value || federlichtPolicy.checkModel,
+    visionModel: $("#federlicht-model-vision")?.value || federlichtPolicy.visionModel,
+    reasoningEffort: $("#federlicht-reasoning-effort")?.value || federlichtPolicy.reasoningEffort,
   });
   const chip = (label, value, extraClass = "") =>
     `<span class="runtime-summary-chip ${extraClass}"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "-")}</span>`;
@@ -2656,7 +3069,7 @@ function syncFederlichtModelControls(options = {}) {
   const checkModelEl = $("#federlicht-check-model");
   const visionModelEl = $("#federlicht-model-vision");
   const reasoningEl = $("#federlicht-reasoning-effort");
-  const policyFallback = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+  const policyFallback = resolveScopedModelPolicy("federlicht");
   const rawModel = normalizeModelToken(modelEl?.value);
   const rawCheckModel = normalizeModelToken(checkModelEl?.value);
   const rawVisionModel = normalizeModelToken(visionModelEl?.value);
@@ -3005,32 +3418,30 @@ function setAskReasoningEffort(value, { persist = true } = {}) {
 }
 
 function askBackendInputValue() {
-  return normalizeAskLlmBackend(
-    state.modelPolicy.backend
-    || state.ask.llmBackend
-    || "openai_api",
-  );
+  const policy = resolveScopedModelPolicy("federhav");
+  return normalizeAskLlmBackend(policy.backend || state.ask.llmBackend || "openai_api");
 }
 
 function askModelInputValue() {
-  return String(
-    state.modelPolicy.model
-    || "",
-  ).trim();
+  const policy = resolveScopedModelPolicy("federhav");
+  return String(policy.model || "").trim();
 }
 
 function askRuntimeModeInputValue() {
+  const policy = resolveScopedModelPolicy("federhav");
   return normalizeAskRuntimeMode(
     $("#live-ask-runtime-mode")?.value
     || state.ask.runtimeMode
+    || policy.runtimeMode
     || llmDefaults().federhav_runtime_mode
     || "auto",
   );
 }
 
 function askReasoningInputValue() {
+  const policy = resolveScopedModelPolicy("federhav");
   return normalizeAskReasoningEffort(
-    state.modelPolicy.reasoningEffort
+    policy.reasoningEffort
     || state.ask.reasoningEffort,
     state.ask.reasoningEffort,
   );
@@ -3693,14 +4104,14 @@ function syncAskActionPolicyInputs() {
     liveAllowWrap.title = writeHint;
     liveAllowWrap.setAttribute("aria-label", writeHint);
   }
-  const globalPolicy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
-  const backend = normalizeAskLlmBackend(globalPolicy.backend || "openai_api");
+  const askPolicy = resolveScopedModelPolicy("federhav");
+  const backend = normalizeAskLlmBackend(askPolicy.backend || "openai_api");
   state.ask.llmBackend = backend;
-  const globalModelToken = normalizeModelToken(globalPolicy.model || "")
+  const globalModelToken = normalizeModelToken(askPolicy.model || "")
     || (backend === "codex_cli" ? codexModelHint() : openaiModelHint());
   setAskModelInputValue(globalModelToken);
-  state.ask.reasoningEffort = normalizeAskReasoningEffort(globalPolicy.reasoningEffort || "off", "off");
-  const runtimeMode = normalizeAskRuntimeMode(state.ask.runtimeMode);
+  state.ask.reasoningEffort = normalizeAskReasoningEffort(askPolicy.reasoningEffort || "off", "off");
+  const runtimeMode = normalizeAskRuntimeMode(askPolicy.runtimeMode || state.ask.runtimeMode);
   state.ask.runtimeMode = runtimeMode;
   const backendSelect = $("#ask-backend");
   const liveBackendSelect = $("#live-ask-backend");
@@ -5033,6 +5444,12 @@ function normalizeLiveAskProcessLog(rawText, options = {}) {
   return tail.trim();
 }
 
+function normalizeLiveAskLogIndex(value, fallback = -1) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(-1, Math.floor(parsed));
+}
+
 function extractLiveAskProcessLog(startIndex = 0, endIndex = null) {
   const start = Number.isFinite(Number(startIndex)) ? Math.max(0, Number(startIndex)) : 0;
   const resolvedEnd = Number.isFinite(Number(endIndex))
@@ -5059,6 +5476,16 @@ function normalizeLiveAskStoredHistory(items, limit = 80) {
         content,
         ts: String(item?.ts || ""),
       };
+      const logStart = normalizeLiveAskLogIndex(
+        item?.log_start ?? item?.process_log_start ?? item?.logStart,
+        -1,
+      );
+      const logEnd = normalizeLiveAskLogIndex(
+        item?.log_end ?? item?.process_log_end ?? item?.logEnd,
+        -1,
+      );
+      if (logStart >= 0) row.log_start = logStart;
+      if (logEnd >= 0) row.log_end = logEnd;
       if (role === "assistant" || role === "system") {
         const sources = normalizeAskSourceList(item?.sources || []);
         const action = normalizeLiveAskAction(item?.action || null);
@@ -5498,6 +5925,14 @@ function useRecentLogsAsLiveAskPrompt() {
 function appendLiveAskSystemEntry(content, options = {}) {
   const text = String(content || "").trim();
   if (!text) return;
+  const logStart = normalizeLiveAskLogIndex(
+    options.logStart ?? options.log_start ?? options.processLogStart ?? options.process_log_start,
+    -1,
+  );
+  const logEnd = normalizeLiveAskLogIndex(
+    options.logEnd ?? options.log_end ?? options.processLogEnd ?? options.process_log_end,
+    state.logBuffer.length,
+  );
   const row = {
     role: "system",
     content: text.slice(0, 12000),
@@ -5507,10 +5942,15 @@ function appendLiveAskSystemEntry(content, options = {}) {
   if (meta) {
     row.meta = meta;
   }
-  const processLog = normalizeLiveAskProcessLog(options.processLog || options.process_log || "", {
+  let processLog = normalizeLiveAskProcessLog(options.processLog || options.process_log || "", {
     maxLines: LIVE_ASK_PROCESS_MAX_LINES,
     maxChars: LIVE_ASK_PROCESS_MAX_CHARS,
   });
+  if (!processLog && logStart >= 0) {
+    processLog = extractLiveAskProcessLog(logStart, logEnd >= logStart ? logEnd : null);
+  }
+  if (logStart >= 0) row.log_start = logStart;
+  if (logEnd >= logStart && logEnd >= 0) row.log_end = logEnd;
   if (processLog) {
     row.process_log = processLog;
   }
@@ -5758,7 +6198,10 @@ function renderLiveAskProcessFold(processLog, options = {}) {
     .filter(Boolean);
   const lineCount = lines.length;
   const hasError = summary.errors > 0 || /(error|failed|exception)/i.test(normalized);
-  const foldKey = `proc:${hashFoldToken(normalized.slice(0, 4200))}`;
+  const requestedFoldKey = String(options?.foldKey || "").trim();
+  const foldKey = requestedFoldKey
+    ? `proc:${hashFoldToken(requestedFoldKey)}`
+    : `proc:${hashFoldToken(normalized.slice(0, 4200))}`;
   const storedOpen = Object.prototype.hasOwnProperty.call(state.liveAsk.processFoldState || {}, foldKey)
     ? Boolean(state.liveAsk.processFoldState?.[foldKey])
     : null;
@@ -5875,6 +6318,9 @@ function buildLiveAskTurnsForRender() {
 
   const pendingQuestion = String(state.liveAsk.pendingQuestion || "").trim();
   const pendingAnswer = String(state.liveAsk.liveAnswer || "").trim();
+  const pendingLogStart = Number.isFinite(Number(state.liveAsk.activeLogStartIndex))
+    ? Math.max(0, Math.floor(Number(state.liveAsk.activeLogStartIndex)))
+    : -1;
   const pendingProcess = state.liveAsk.busy
     ? extractLiveAskProcessLog(state.liveAsk.activeLogStartIndex)
     : "";
@@ -5892,6 +6338,8 @@ function buildLiveAskTurnsForRender() {
         : null,
       pending: true,
       process_log: pendingProcess,
+      log_start: pendingLogStart >= 0 ? pendingLogStart : undefined,
+      log_end: pendingLogStart >= 0 ? state.logBuffer.length : undefined,
     });
   }
   return turns.slice(-20);
@@ -5952,6 +6400,7 @@ function renderLiveAskSystemLogCard() {
     showChips: false,
     oneLine: true,
     forceFold: true,
+    foldKey: `global:${sourceLabel}:${state.activeJobId || state.liveAsk.lastJobLogStartIndex || "none"}`,
   });
   return `
     <section class="live-ask-turn live-ask-turn-system">
@@ -6002,8 +6451,16 @@ function renderLiveAskThread() {
 
   const turns = buildLiveAskTurnsForRender();
   const globalLogCard = renderLiveAskSystemLogCard();
-  const hasTurnProcessLog = turns.some((turn) => String(turn?.process_log || "").trim());
-  const showGlobalLogCard = Boolean(globalLogCard) && !hasTurnProcessLog && turns.length === 0;
+  const hasTurnProcessLog = turns.some((turn) => {
+    if (String(turn?.process_log || turn?.assistant?.process_log || "").trim()) return true;
+    const start = normalizeLiveAskLogIndex(
+      turn?.assistant?.log_start ?? turn?.log_start ?? turn?.assistant?.process_log_start,
+      -1,
+    );
+    return start >= 0;
+  });
+  const hasActiveProcess = Boolean(state.liveAsk.busy || state.ask.busy || state.activeJobPending || state.activeJobId);
+  const showGlobalLogCard = Boolean(globalLogCard) && (hasActiveProcess || !hasTurnProcessLog);
   if (!turns.length && !globalLogCard) {
     host.classList.add("is-empty");
     host.classList.remove("is-short");
@@ -6059,10 +6516,25 @@ function renderLiveAskThread() {
       ]
         .filter(Boolean)
         .join(" ");
-      const processLog = String(assistant?.process_log || turn?.process_log || "").trim();
+      const assistantLogStart = normalizeLiveAskLogIndex(
+        assistant?.log_start ?? assistant?.process_log_start ?? turn?.log_start ?? turn?.process_log_start,
+        -1,
+      );
+      const assistantLogEnd = normalizeLiveAskLogIndex(
+        assistant?.log_end ?? assistant?.process_log_end ?? turn?.log_end ?? turn?.process_log_end,
+        -1,
+      );
+      let processLog = String(assistant?.process_log || turn?.process_log || "").trim();
+      if (!processLog && assistantLogStart >= 0) {
+        processLog = extractLiveAskProcessLog(
+          assistantLogStart,
+          assistantLogEnd >= assistantLogStart ? assistantLogEnd : null,
+        );
+      }
       const assistantText = String(assistant?.content || "").trim();
       const isLogOnlyAssistant = Boolean(assistant && processLog && !assistantText && !assistant?.pending);
       const processSummaryPrefix = `${assistantRoleLabel} 로그 브릿지`;
+      const processFoldKey = `turn:${idx}:${assistantRoleLabel}:${assistant?.ts || user?.ts || ""}:${assistantLogStart}:${assistantLogEnd}`;
       const perTurnProcessBlock = renderLiveAskProcessFold(processLog, {
         open: Boolean((turn?.pending && !assistant) || /(error|failed|exception)/i.test(processLog)),
         summaryPrefix: processSummaryPrefix,
@@ -6071,6 +6543,7 @@ function renderLiveAskThread() {
         showChips: false,
         oneLine: true,
         forceFold: true,
+        foldKey: processFoldKey,
       });
       const assistantBody = assistant?.pending
         ? escapeHtml(assistant?.content || "").replace(/\n/g, "<br />")
@@ -6565,6 +7038,8 @@ async function runLiveAskQuestion() {
       traceSteps: Array.isArray(result?.trace?.steps) ? result.trace.steps.length : 0,
       error: result?.error || "",
     });
+    const liveProcessStart = normalizeLiveAskLogIndex(state.liveAsk.activeLogStartIndex, -1);
+    const liveProcessEnd = state.logBuffer.length;
     const liveProcessLog = extractLiveAskProcessLog(state.liveAsk.activeLogStartIndex);
     const liveStamp = new Date().toISOString();
     const liveMeta = normalizeLiveAskMeta({
@@ -6585,6 +7060,8 @@ async function runLiveAskQuestion() {
       action: result?.action || null,
       meta: liveMeta,
       process_log: liveProcessLog,
+      log_start: liveProcessStart >= 0 ? liveProcessStart : undefined,
+      log_end: liveProcessStart >= 0 ? liveProcessEnd : undefined,
     });
     if (state.liveAsk.history.length > 80) {
       state.liveAsk.history = state.liveAsk.history.slice(-80);
@@ -6676,6 +7153,8 @@ async function runLiveAskQuestion() {
       traceSteps: 0,
       error: aborted ? "live_ask_aborted" : String(err),
     });
+    const errorProcessStart = normalizeLiveAskLogIndex(state.liveAsk.activeLogStartIndex, -1);
+    const errorProcessEnd = state.logBuffer.length;
     const errorProcessLog = extractLiveAskProcessLog(state.liveAsk.activeLogStartIndex);
     const errorStamp = new Date().toISOString();
     const errorMeta = normalizeLiveAskMeta({
@@ -6694,6 +7173,8 @@ async function runLiveAskQuestion() {
       action: null,
       meta: errorMeta,
       process_log: errorProcessLog,
+      log_start: errorProcessStart >= 0 ? errorProcessStart : undefined,
+      log_end: errorProcessStart >= 0 ? errorProcessEnd : undefined,
     });
     if (state.liveAsk.history.length > 80) {
       state.liveAsk.history = state.liveAsk.history.slice(-80);
@@ -9892,6 +10373,46 @@ async function saveWorkspaceSettingsFromControls() {
   appendLog("[workspace] settings saved and runs reloaded\n");
 }
 
+async function saveLlmPolicyToWorkspaceSettings(policyBundle) {
+  if (!state.workspaceSettings?.canEdit) return false;
+  const effective = state.workspaceSettings?.effective || {};
+  const runRoots = Array.isArray(effective.run_roots)
+    ? effective.run_roots
+    : (Array.isArray(state.info?.run_roots) ? state.info.run_roots : []);
+  const siteRoot = String(
+    effective.site_root
+    || state.info?.site_root
+    || "site",
+  );
+  const reportHubRoot = String(
+    effective.report_hub_root
+    || state.info?.report_hub_root
+    || reportHubBase(),
+  );
+  const payload = pruneEmpty({
+    run_roots: runRoots,
+    site_root: siteRoot,
+    report_hub_root: reportHubRoot,
+    llm_policy: policyBundle,
+  });
+  try {
+    const saved = await fetchJSON("/api/workspace/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    state.workspaceSettings.effective = saved?.effective || state.workspaceSettings.effective;
+    state.workspaceSettings.stored = {
+      ...(state.workspaceSettings.stored || {}),
+      llm_policy: policyBundle,
+    };
+    return true;
+  } catch (err) {
+    appendLog(`[workspace] llm policy save skipped: ${err}\n`);
+    return false;
+  }
+}
+
 function bindHeroCards() {
   if (!state.info) return;
   const runRootsCard = $("#hero-card-run-roots");
@@ -10584,6 +11105,642 @@ function selectedRunRel() {
 function setStudioMeta(runRel, updatedAt) {
   setText("#studio-run-rel", runRel || "-");
   setText("#studio-updated", updatedAt ? `updated ${formatDate(updatedAt)}` : "-");
+}
+
+function activeAgentDisplayName() {
+  const active = resolveActiveAgentProfileItem();
+  if (active?.name) return String(active.name).trim();
+  if (active?.id) return String(active.id).trim();
+  const auth = state.agentProfiles?.sessionAuth || {};
+  if (auth.display_name) return String(auth.display_name).trim();
+  if (auth.username) return String(auth.username).trim();
+  return "federnett";
+}
+
+function parseHubTimestamp(value) {
+  const stamp = String(value || "").trim();
+  if (!stamp) return 0;
+  const t = Date.parse(stamp);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function formatMetricElapsed(ms) {
+  const safe = Math.max(0, Number(ms || 0));
+  if (safe >= 60000) return `${(safe / 60000).toFixed(1)}m`;
+  if (safe >= 1000) return `${(safe / 1000).toFixed(1)}s`;
+  return `${safe}ms`;
+}
+
+function formatMetricTokens(tokens) {
+  const safe = Math.max(0, Number(tokens || 0));
+  if (safe >= 1000000) return `${(safe / 1000000).toFixed(2)}M`;
+  if (safe >= 1000) return `${(safe / 1000).toFixed(1)}k`;
+  return `${safe}`;
+}
+
+function metricsHistoryStorageKey(runRel) {
+  const token = normalizePathString(runRel || "");
+  return token ? `${RUN_METRICS_HISTORY_KEY_PREFIX}${token}` : "";
+}
+
+function loadRunMetricsHistory(runRel) {
+  const token = normalizePathString(runRel || "");
+  if (!token) return [];
+  const cached = state.runMetrics.historyByRun[token];
+  if (Array.isArray(cached)) return cached;
+  const key = metricsHistoryStorageKey(token);
+  if (!key) return [];
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const normalized = parsed
+      .map((row) => {
+        if (!row || typeof row !== "object") return null;
+        return {
+          ts: String(row.ts || "").trim(),
+          passCount: Math.max(0, Number(row.passCount || 0)),
+          elapsedMs: Math.max(0, Number(row.elapsedMs || 0)),
+          estTokens: Math.max(0, Number(row.estTokens || 0)),
+          cacheHits: Math.max(0, Number(row.cacheHits || 0)),
+        };
+      })
+      .filter(Boolean);
+    state.runMetrics.historyByRun[token] = normalized.slice(-RUN_METRICS_HISTORY_LIMIT);
+  } catch (_err) {
+    state.runMetrics.historyByRun[token] = [];
+  }
+  return state.runMetrics.historyByRun[token] || [];
+}
+
+function saveRunMetricsHistory(runRel, rows) {
+  const token = normalizePathString(runRel || "");
+  if (!token) return;
+  const normalized = Array.isArray(rows) ? rows.slice(-RUN_METRICS_HISTORY_LIMIT) : [];
+  state.runMetrics.historyByRun[token] = normalized;
+  const key = metricsHistoryStorageKey(token);
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(normalized));
+  } catch (_err) {
+    // ignore storage quota/private mode failures
+  }
+}
+
+function snapshotWorkflowPassMetrics(metrics) {
+  const items = Array.isArray(metrics) ? metrics : [];
+  const passCount = items.length;
+  const elapsedMs = items.reduce((sum, row) => sum + Math.max(0, Number(row?.elapsedMs || 0)), 0);
+  const estTokens = items.reduce((sum, row) => sum + Math.max(0, Number(row?.estTokens || 0)), 0);
+  const cacheHits = items.reduce((sum, row) => sum + Math.max(0, Number(row?.cacheHits || 0)), 0);
+  return {
+    ts: new Date().toISOString(),
+    passCount,
+    elapsedMs,
+    estTokens,
+    cacheHits,
+  };
+}
+
+function metricsDigest(metrics) {
+  const items = Array.isArray(metrics) ? metrics : [];
+  return items
+    .map((row) => [
+      Number(row?.pass || 0),
+      String(row?.stageId || ""),
+      Math.max(0, Number(row?.elapsedMs || 0)),
+      Math.max(0, Number(row?.estTokens || 0)),
+      Math.max(0, Number(row?.cacheHits || 0)),
+    ].join(":"))
+    .join("|");
+}
+
+function maybeRecordRunMetricsHistory(runRel, metrics) {
+  const token = normalizePathString(runRel || "");
+  const items = Array.isArray(metrics) ? metrics : [];
+  if (!token || !items.length) return;
+  const digest = metricsDigest(items);
+  if (!digest) return;
+  if (state.runMetrics.digestByRun[token] === digest) return;
+  state.runMetrics.digestByRun[token] = digest;
+  const history = loadRunMetricsHistory(token);
+  const snap = snapshotWorkflowPassMetrics(items);
+  const merged = [...history, snap].slice(-RUN_METRICS_HISTORY_LIMIT);
+  saveRunMetricsHistory(token, merged);
+}
+
+function renderRunMetricsHistory(history) {
+  const rows = Array.isArray(history) ? history : [];
+  if (!rows.length) {
+    return `
+      <div class="run-metrics-history-head">
+        <span class="muted">run 누적 히스토리 없음</span>
+      </div>
+    `;
+  }
+  const latest = rows[rows.length - 1] || {};
+  const windowed = rows.slice(-12);
+  const maxTokens = Math.max(1, ...windowed.map((row) => Number(row.estTokens || 0)));
+  const bars = windowed
+    .map((row) => {
+      const ratio = Math.max(0.08, Math.min(1, Number(row.estTokens || 0) / maxTokens));
+      const style = `height:${Math.round(ratio * 44) + 8}px`;
+      const tip = [
+        `tokens ${formatMetricTokens(row.estTokens || 0)}`,
+        `elapsed ${formatMetricElapsed(row.elapsedMs || 0)}`,
+        `passes ${Math.max(0, Number(row.passCount || 0))}`,
+        `cache ${Math.max(0, Number(row.cacheHits || 0))}`,
+      ].join(" · ");
+      return `<span class="run-metrics-history-bar" style="${style}" title="${escapeHtml(tip)}"></span>`;
+    })
+    .join("");
+  return `
+    <div class="run-metrics-history-head">
+      <span class="muted">latest · ${escapeHtml(formatDate(latest.ts || ""))}</span>
+      <span class="run-metrics-history-summary">${escapeHtml(
+        `${formatMetricTokens(latest.estTokens || 0)} tok · ${formatMetricElapsed(latest.elapsedMs || 0)} · cache ${Math.max(
+          0,
+          Number(latest.cacheHits || 0),
+        )}`,
+      )}</span>
+    </div>
+    <div class="run-metrics-history-chart" role="img" aria-label="Run metric token trend">${bars}</div>
+  `;
+}
+
+const RUN_HUB_APPROVAL_STATUSES = ["draft", "review", "approved", "published", "rejected", "archived"];
+
+function normalizeRunHubApprovalStatus(value) {
+  const token = String(value || "").trim().toLowerCase();
+  if (RUN_HUB_APPROVAL_STATUSES.includes(token)) return token;
+  return "";
+}
+
+function runHubAllowedApprovalStates() {
+  const approval = state.runHub?.approval;
+  const fromPayload = Array.isArray(approval?.allowed_next)
+    ? approval.allowed_next
+        .map((item) => normalizeRunHubApprovalStatus(item))
+        .filter(Boolean)
+    : [];
+  const current = normalizeRunHubApprovalStatus(approval?.status);
+  const next = [];
+  if (current) next.push(current);
+  fromPayload.forEach((item) => {
+    if (!next.includes(item)) next.push(item);
+  });
+  if (!next.length) return RUN_HUB_APPROVAL_STATUSES.slice();
+  return next;
+}
+
+function syncRunHubApprovalStatusControl(selectEl, allowedStates, preferredStatus) {
+  if (!selectEl) return "";
+  const allowed = Array.isArray(allowedStates) && allowedStates.length
+    ? allowedStates
+    : RUN_HUB_APPROVAL_STATUSES;
+  Array.from(selectEl.options || []).forEach((opt) => {
+    const token = normalizeRunHubApprovalStatus(opt?.value);
+    const enabled = Boolean(token && allowed.includes(token));
+    opt.disabled = !enabled;
+    opt.hidden = !enabled;
+  });
+  const preferred = normalizeRunHubApprovalStatus(preferredStatus);
+  const selected = allowed.includes(preferred)
+    ? preferred
+    : normalizeRunHubApprovalStatus(selectEl.value);
+  const next = allowed.includes(selected) ? selected : (allowed[0] || "draft");
+  selectEl.value = next;
+  return next;
+}
+
+function renderRunMetricsPanel() {
+  const bodyEl = $("#run-metrics-body");
+  const summaryEl = $("#run-metrics-summary");
+  if (!bodyEl || !summaryEl) return;
+  const metrics = Array.isArray(state.workflow.passMetrics) ? state.workflow.passMetrics : [];
+  const runRel = normalizePathString(state.workflow.runRel || selectedRunRel() || state.runSummary?.run || "");
+  maybeRecordRunMetricsHistory(runRel, metrics);
+  const history = loadRunMetricsHistory(runRel);
+  if (!metrics.length) {
+    const latest = history.length ? history[history.length - 1] : null;
+    summaryEl.textContent = latest
+      ? `history ${history.length} · latest ${formatMetricTokens(latest.estTokens || 0)} tok`
+      : "No metrics yet.";
+    bodyEl.innerHTML = `
+      ${renderRunMetricsHistory(history)}
+      <span class="run-metrics-chip"><strong>-</strong><span>Federlicht 실행 후 pass metrics가 표시됩니다.</span></span>
+    `;
+    return;
+  }
+  const totalMs = metrics.reduce((sum, row) => sum + Math.max(0, Number(row?.elapsedMs || 0)), 0);
+  const totalTok = metrics.reduce((sum, row) => sum + Math.max(0, Number(row?.estTokens || 0)), 0);
+  const totalCache = metrics.reduce((sum, row) => sum + Math.max(0, Number(row?.cacheHits || 0)), 0);
+  summaryEl.textContent = `${metrics.length} passes · ${formatMetricElapsed(totalMs)} · ${formatMetricTokens(totalTok)} tok · cache ${totalCache} · hist ${history.length}`;
+  const chips = metrics
+    .map((row) => {
+      const pass = Number(row?.pass || 0);
+      const stage = workflowLabel(row?.stageId || "");
+      const elapsed = formatMetricElapsed(row?.elapsedMs || 0);
+      const tokens = formatMetricTokens(row?.estTokens || 0);
+      const cache = Math.max(0, Number(row?.cacheHits || 0));
+      return `<span class="run-metrics-chip"><strong>P${escapeHtml(String(pass))}</strong><span>${escapeHtml(stage)}</span><span>${escapeHtml(elapsed)}</span><span>${escapeHtml(tokens)} tok</span><span>cache ${escapeHtml(String(cache))}</span></span>`;
+    })
+    .join("");
+  bodyEl.innerHTML = `${renderRunMetricsHistory(history)}${chips}`;
+}
+
+function mergeRunHubTimelineEntries() {
+  const comments = Array.isArray(state.runHub.comments) ? state.runHub.comments : [];
+  const followups = Array.isArray(state.runHub.followups) ? state.runHub.followups : [];
+  const entries = [];
+  comments.forEach((item) => {
+    entries.push({
+      type: "comment",
+      text: String(item?.text || "").trim(),
+      author: String(item?.author || "").trim(),
+      createdAt: String(item?.created_at || "").trim(),
+      status: "",
+    });
+  });
+  followups.forEach((item) => {
+    entries.push({
+      type: "followup",
+      text: String(item?.prompt || "").trim(),
+      author: String(item?.author || "").trim(),
+      createdAt: String(item?.created_at || "").trim(),
+      status: String(item?.status || "").trim().toLowerCase(),
+    });
+  });
+  if (state.runHub.approval && typeof state.runHub.approval === "object") {
+    const approval = state.runHub.approval;
+    entries.push({
+      type: "approval",
+      text: String(approval.note || "").trim() || "상태 업데이트",
+      author: String(approval.updated_by || "").trim(),
+      createdAt: String(approval.updated_at || "").trim(),
+      status: String(approval.status || "").trim().toLowerCase(),
+    });
+  }
+  entries.sort((a, b) => parseHubTimestamp(b.createdAt) - parseHubTimestamp(a.createdAt));
+  return entries.slice(0, 40);
+}
+
+function renderRunHubPanel() {
+  const panel = $("#run-hub-panel");
+  const statusEl = $("#run-hub-status");
+  const contextEl = $("#run-hub-context");
+  const linkEl = $("#run-hub-link");
+  const timelineEl = $("#run-hub-timeline");
+  const approvalStatusEl = $("#run-hub-approval-status");
+  const approvalHintEl = $("#run-hub-approval-hint");
+  const approvalSaveBtn = $("#run-hub-approval-save");
+  const loading = Boolean(state.runHub.loading);
+  const post = state.runHub.post && typeof state.runHub.post === "object" ? state.runHub.post : null;
+  const postId = String(state.runHub.postId || post?.id || "").trim();
+  const runRel = String(state.runHub.runRel || selectedRunRel() || "").trim();
+  const hasPost = Boolean(post && postId);
+  const allowedApprovalStates = runHubAllowedApprovalStates();
+  const rootAuth = state.agentProfiles?.rootAuth || {};
+  const requiresRootUnlock = Boolean(rootAuth.enabled && !rootAuth.unlocked && !rootAuth.session_root);
+  if (statusEl) {
+    const approvalToken = String(state.runHub.approval?.status || "").trim();
+    statusEl.textContent = loading
+      ? "syncing..."
+      : hasPost
+        ? (approvalToken || "published")
+        : "unlinked";
+  }
+  if (contextEl) {
+    if (loading) {
+      contextEl.textContent = "Report Hub 게시글 상태를 동기화하는 중입니다.";
+    } else if (!runRel) {
+      contextEl.textContent = "run을 먼저 선택하세요.";
+    } else if (!hasPost) {
+      contextEl.textContent = `run=${runRel} 게시글이 아직 없습니다. 먼저 Publish to Report Hub를 실행하세요.`;
+    } else {
+      const title = String(post?.title || postId).trim();
+      contextEl.textContent = `post=${postId} · ${title}`;
+    }
+  }
+  if (linkEl) {
+    const linked = state.runHub.link && typeof state.runHub.link === "object" ? state.runHub.link : null;
+    const runLink = String(linked?.run_rel || "").trim();
+    const href = runLink ? toFileUrlFromRel(runLink) : "";
+    linkEl.innerHTML = runLink
+      ? `Hub link: <code>${escapeHtml(runLink)}</code>${href ? ` · <a href="${href}" target="_blank" rel="noreferrer">Open</a>` : ""}`
+      : "Hub link: -";
+  }
+  const preferredApprovalStatus = normalizeRunHubApprovalStatus(
+    state.runHub.approval?.status || (hasPost ? "published" : "draft"),
+  );
+  const selectedApprovalStatus = syncRunHubApprovalStatusControl(
+    approvalStatusEl,
+    allowedApprovalStates,
+    preferredApprovalStatus,
+  );
+  const canSubmitApproval = Boolean(
+    hasPost
+    && !loading
+    && selectedApprovalStatus
+    && allowedApprovalStates.includes(selectedApprovalStatus),
+  ) && !requiresRootUnlock;
+  if (approvalHintEl) {
+    if (loading) {
+      approvalHintEl.classList.remove("is-warning");
+      approvalHintEl.textContent = "허용 전이 상태를 동기화하는 중입니다.";
+    } else if (!hasPost) {
+      approvalHintEl.classList.remove("is-warning");
+      approvalHintEl.textContent = "게시글 연결 후 approval 상태를 변경할 수 있습니다.";
+    } else if (requiresRootUnlock) {
+      approvalHintEl.classList.add("is-warning");
+      approvalHintEl.textContent = "approval 변경은 root unlock 후 가능합니다.";
+    } else {
+      const chips = allowedApprovalStates.map((token) => `<code>${escapeHtml(token)}</code>`).join(" ");
+      const invalidPick = !canSubmitApproval;
+      approvalHintEl.classList.toggle("is-warning", invalidPick);
+      approvalHintEl.innerHTML = invalidPick
+        ? `허용 전이: ${chips} · 현재 선택 상태는 전이 규칙에 맞지 않습니다.`
+        : `허용 전이: ${chips}`;
+    }
+  }
+  const commentInput = $("#run-hub-comment-input");
+  const followupInput = $("#run-hub-followup-input");
+  const approvalNote = $("#run-hub-approval-note");
+  const controls = [
+    $("#run-hub-comment-submit"),
+    $("#run-hub-followup-submit"),
+    $("#run-hub-link-submit"),
+    commentInput,
+    followupInput,
+    approvalNote,
+    approvalStatusEl,
+  ];
+  controls.forEach((el) => {
+    if (!el) return;
+    el.disabled = loading || !hasPost;
+  });
+  if (approvalSaveBtn) {
+    approvalSaveBtn.disabled = !canSubmitApproval;
+    approvalSaveBtn.title = requiresRootUnlock
+      ? "Root unlock 후 approval 변경이 가능합니다."
+      : "Approval 상태를 저장합니다.";
+  }
+  if (timelineEl) {
+    const rows = mergeRunHubTimelineEntries();
+    if (!rows.length) {
+      timelineEl.innerHTML = `<p class="run-hub-empty">${hasPost ? "아직 협업 기록이 없습니다." : "게시글이 연결되면 comment/follow-up/approval 기록이 여기에 표시됩니다."}</p>`;
+    } else {
+      timelineEl.innerHTML = rows
+        .map((row) => {
+          const kindLabel = row.type === "approval"
+            ? "approval"
+            : row.type === "followup"
+              ? "follow-up"
+              : "comment";
+          const statusBadge = row.status
+            ? ` · <code>${escapeHtml(row.status)}</code>`
+            : "";
+          const when = row.createdAt ? formatDate(row.createdAt) : "-";
+          return `
+            <article class="run-hub-item">
+              <div class="run-hub-item-head">
+                <span class="run-hub-item-kind is-${escapeHtml(row.type)}">${escapeHtml(kindLabel)}${statusBadge}</span>
+                <span class="run-hub-item-meta">${escapeHtml(row.author || "anonymous")} · ${escapeHtml(when)}</span>
+              </div>
+              <div class="run-hub-item-body">${escapeHtml(row.text || "(empty)")}</div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+  }
+  if (panel) {
+    panel.classList.toggle("is-empty", !hasPost);
+  }
+}
+
+async function resolveRunHubPostForRun(runRel) {
+  const normalizedRun = normalizePathString(runRel || "");
+  if (!normalizedRun) return null;
+  const fallbackId = runBaseName(normalizedRun);
+  if (!fallbackId) return null;
+  try {
+    const post = await fetchJSON(`/api/report-hub/posts/${encodeURIComponent(fallbackId)}`);
+    if (post && typeof post === "object") return post;
+  } catch (err) {
+    // fallback to query endpoint
+  }
+  try {
+    const payload = await fetchJSON(`/api/report-hub/posts?run=${encodeURIComponent(fallbackId)}&limit=24`);
+    const rows = Array.isArray(payload?.items) ? payload.items : [];
+    if (!rows.length) return null;
+    const byId = rows.find((item) => String(item?.id || "").trim() === fallbackId);
+    if (byId) return byId;
+    const byRun = rows.find((item) => String(item?.run || "").trim() === fallbackId);
+    return byRun || rows[0] || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+async function loadRunHubContext(summary, options = {}) {
+  const runRel = normalizePathString(summary?.run_rel || selectedRunRel() || "");
+  state.runHub.loading = true;
+  state.runHub.runRel = runRel;
+  if (String(options?.clear || "") === "true") {
+    state.runHub.post = null;
+    state.runHub.postId = "";
+    state.runHub.comments = [];
+    state.runHub.followups = [];
+    state.runHub.link = null;
+    state.runHub.approval = null;
+  }
+  renderRunHubPanel();
+  if (!runRel) {
+    state.runHub.loading = false;
+    renderRunHubPanel();
+    return;
+  }
+  const post = await resolveRunHubPostForRun(runRel);
+  if (!post || typeof post !== "object") {
+    state.runHub.post = null;
+    state.runHub.postId = runBaseName(runRel);
+    state.runHub.comments = [];
+    state.runHub.followups = [];
+    state.runHub.link = null;
+    state.runHub.approval = null;
+    state.runHub.loading = false;
+    renderRunHubPanel();
+    return;
+  }
+  const postId = String(post.id || runBaseName(runRel)).trim();
+  state.runHub.post = post;
+  state.runHub.postId = postId;
+  const [commentsPayload, followupsPayload, linkPayload, approvalPayload] = await Promise.all([
+    fetchJSON(`/api/report-hub/posts/${encodeURIComponent(postId)}/comments?limit=80`).catch(() => ({ items: [] })),
+    fetchJSON(`/api/report-hub/posts/${encodeURIComponent(postId)}/followups?limit=80`).catch(() => ({ items: [] })),
+    fetchJSON(`/api/report-hub/posts/${encodeURIComponent(postId)}/link`).catch(() => ({ link: {} })),
+    fetchJSON(`/api/report-hub/posts/${encodeURIComponent(postId)}/approval`).catch(() => ({})),
+  ]);
+  state.runHub.comments = Array.isArray(commentsPayload?.items) ? commentsPayload.items : [];
+  state.runHub.followups = Array.isArray(followupsPayload?.items) ? followupsPayload.items : [];
+  state.runHub.link = linkPayload?.link && typeof linkPayload.link === "object" ? linkPayload.link : null;
+  state.runHub.approval = approvalPayload && typeof approvalPayload === "object" ? approvalPayload : null;
+  state.runHub.loading = false;
+  renderRunHubPanel();
+}
+
+async function submitRunHubComment() {
+  const input = $("#run-hub-comment-input");
+  const text = String(input?.value || "").trim();
+  if (!text) return;
+  const postId = String(state.runHub.postId || "").trim();
+  if (!postId) {
+    appendLog("[hub] comment skipped: post is not linked.\n");
+    return;
+  }
+  await fetchJSON("/api/report-hub/comments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      post_id: postId,
+      text,
+      author: activeAgentDisplayName(),
+      run_rel: state.runHub.runRel || selectedRunRel(),
+      profile_id: ensureAskProfileId(),
+    }),
+  });
+  if (input) input.value = "";
+  appendLog(`[hub] comment saved -> ${postId}\n`);
+  await loadRunHubContext(state.runSummary || { run_rel: state.runHub.runRel });
+}
+
+async function submitRunHubFollowup() {
+  const input = $("#run-hub-followup-input");
+  const prompt = String(input?.value || "").trim();
+  if (!prompt) return;
+  const postId = String(state.runHub.postId || "").trim();
+  if (!postId) {
+    appendLog("[hub] follow-up skipped: post is not linked.\n");
+    return;
+  }
+  await fetchJSON("/api/report-hub/followups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      post_id: postId,
+      prompt,
+      status: "proposed",
+      author: activeAgentDisplayName(),
+      run_rel: state.runHub.runRel || selectedRunRel(),
+      profile_id: ensureAskProfileId(),
+    }),
+  });
+  if (input) input.value = "";
+  appendLog(`[hub] follow-up saved -> ${postId}\n`);
+  await loadRunHubContext(state.runSummary || { run_rel: state.runHub.runRel });
+}
+
+async function submitRunHubLink() {
+  const postId = String(state.runHub.postId || "").trim();
+  const runRel = String(state.runHub.runRel || selectedRunRel() || "").trim();
+  if (!postId || !runRel) {
+    appendLog("[hub] link skipped: post/run is missing.\n");
+    return;
+  }
+  await fetchJSON("/api/report-hub/link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      post_id: postId,
+      run_rel: runRel,
+      linked_by: activeAgentDisplayName(),
+    }),
+  });
+  appendLog(`[hub] linked post ${postId} -> ${runRel}\n`);
+  await loadRunHubContext(state.runSummary || { run_rel: runRel });
+}
+
+async function submitRunHubApproval() {
+  const postId = String(state.runHub.postId || "").trim();
+  if (!postId) {
+    appendLog("[hub] approval skipped: post is not linked.\n");
+    return;
+  }
+  const status = String($("#run-hub-approval-status")?.value || "draft").trim().toLowerCase();
+  const allowedApprovalStates = runHubAllowedApprovalStates();
+  if (allowedApprovalStates.length && !allowedApprovalStates.includes(status)) {
+    appendLog(`[hub] approval skipped: '${status}' is not in allowed transitions (${allowedApprovalStates.join(", ")}).\n`);
+    renderRunHubPanel();
+    return;
+  }
+  const note = String($("#run-hub-approval-note")?.value || "").trim();
+  try {
+    await fetchJSON("/api/report-hub/approval", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        post_id: postId,
+        status,
+        note,
+        updated_by: activeAgentDisplayName(),
+        metadata: {
+          run_rel: state.runHub.runRel || selectedRunRel(),
+          profile_id: ensureAskProfileId(),
+        },
+      }),
+    });
+  } catch (err) {
+    if (Number(err?.status || 0) === 403) {
+      appendLog("[hub] approval blocked: root unlock required.\n");
+      await refreshRootAuthStatus().catch(() => {});
+      renderRunHubPanel();
+    }
+    throw err;
+  }
+  appendLog(`[hub] approval updated -> ${postId} (${status})\n`);
+  await loadRunHubContext(state.runSummary || { run_rel: state.runHub.runRel });
+}
+
+function handleRunHubPanel() {
+  $("#run-hub-refresh")?.addEventListener("click", () => {
+    loadRunHubContext(state.runSummary || { run_rel: selectedRunRel() }).catch((err) => {
+      appendLog(`[hub] refresh failed: ${err}\n`);
+    });
+  });
+  $("#run-hub-comment-submit")?.addEventListener("click", () => {
+    submitRunHubComment().catch((err) => {
+      appendLog(`[hub] comment failed: ${err}\n`);
+    });
+  });
+  $("#run-hub-followup-submit")?.addEventListener("click", () => {
+    submitRunHubFollowup().catch((err) => {
+      appendLog(`[hub] follow-up failed: ${err}\n`);
+    });
+  });
+  $("#run-hub-link-submit")?.addEventListener("click", () => {
+    submitRunHubLink().catch((err) => {
+      appendLog(`[hub] link failed: ${err}\n`);
+    });
+  });
+  $("#run-hub-approval-save")?.addEventListener("click", () => {
+    submitRunHubApproval().catch((err) => {
+      appendLog(`[hub] approval failed: ${err}\n`);
+    });
+  });
+  $("#run-hub-approval-note")?.addEventListener("keydown", (ev) => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {
+      ev.preventDefault();
+      submitRunHubApproval().catch((err) => {
+        appendLog(`[hub] approval failed: ${err}\n`);
+      });
+    }
+  });
+  $("#run-hub-approval-status")?.addEventListener("change", () => {
+    renderRunHubPanel();
+  });
+  renderRunHubPanel();
 }
 
 function updateFilePreviewState(patch) {
@@ -12658,6 +13815,10 @@ function renderRunSummary(summary) {
   renderRunFigureTools(summary).catch((err) => {
     appendLog(`[figures] failed to load candidates: ${err}\n`);
   });
+  loadRunHubContext(summary).catch((err) => {
+    appendLog(`[hub] sync failed: ${err}\n`);
+  });
+  renderRunMetricsPanel();
   applyRunSettings(summary);
 }
 
@@ -12784,6 +13945,16 @@ async function publishRunToHub(summary, button) {
     appendLog("[hub] publish skipped: run/report not selected.\n");
     return;
   }
+  const approvalStatus = String(state.runHub?.approval?.status || "").trim().toLowerCase();
+  if (approvalStatus && !["approved", "published"].includes(approvalStatus)) {
+    const proceed = window.confirm(
+      `현재 approval 상태가 '${approvalStatus}' 입니다.\n검토 완료 전 publish를 진행할까요?`,
+    );
+    if (!proceed) {
+      appendLog(`[hub] publish canceled by approval gate (${approvalStatus}).\n`);
+      return;
+    }
+  }
   const targetBtn = button || $("#run-publish-hub");
   const idleLabel = "Publish to Report Hub";
   if (targetBtn) {
@@ -12816,6 +13987,9 @@ async function publishRunToHub(summary, button) {
     if (result?.index_rel) {
       appendLog(`[hub] index refreshed: ${result.index_rel}\n`);
     }
+    await loadRunHubContext(state.runSummary || summary).catch((err) => {
+      appendLog(`[hub] sync failed: ${err}\n`);
+    });
   } catch (err) {
     appendLog(`[hub] publish failed: ${err}\n`);
   } finally {
@@ -15406,6 +16580,7 @@ function renderWorkflow() {
   syncWorkflowQualityControls();
   syncWorkflowHistoryControls();
   recoverIdleJobControls();
+  renderRunMetricsPanel();
 }
 
 function renderStageDetail(stageId) {
@@ -16576,7 +17751,7 @@ function setJobStatus(text, running = false) {
   const runningHint = running ? " · 로그: 타임라인 + 로그 브릿지" : "";
   el.textContent = `${statusText}${runningHint}`;
   el.title = running
-    ? "실시간 실행 로그는 Live Logs 타임라인 카드와 답변 카드의 로그 브릿지에서 확인할 수 있습니다."
+    ? "실시간 실행 로그는 Live Logs 타임라인 카드와 각 턴(시스템/에이전트)의 로그 브릿지에서 확인할 수 있습니다."
     : "";
   el.classList.toggle("is-running", !!running);
 }
@@ -16840,6 +18015,8 @@ function attachToJob(jobId, opts = {}) {
       const status = payload.status || "done";
       const code =
         typeof payload.returncode === "number" ? ` (rc=${payload.returncode})` : "";
+      const doneLogStart = normalizeLiveAskLogIndex(state.liveAsk.jobLogStartIndex, -1);
+      const doneLogEnd = state.logBuffer.length;
       const doneProcessLog = extractLiveAskProcessLog(state.liveAsk.jobLogStartIndex);
       appendLog(`[done] ${status}${code}\n`);
       upsertJob({
@@ -16870,7 +18047,7 @@ function attachToJob(jobId, opts = {}) {
           : "다음 단계: 모델/권한/입력 경로와 로그 오류를 확인 후 재실행";
         appendLiveAskSystemEntry(
           `[시스템] ${label} ${statusLabel}.\n상태: ${status || "done"}${code || ""}\n${summaryLine}\n${nextLine}`,
-          { processLog: doneProcessLog },
+          { processLog: doneProcessLog, logStart: doneLogStart, logEnd: doneLogEnd },
         );
         completionReported = true;
       }
@@ -16910,6 +18087,8 @@ function attachToJob(jobId, opts = {}) {
       return;
     }
     const failedKind = state.activeJobKind;
+    const streamLogStart = normalizeLiveAskLogIndex(state.liveAsk.jobLogStartIndex, -1);
+    const streamLogEnd = state.logBuffer.length;
     const streamProcessLog = extractLiveAskProcessLog(state.liveAsk.jobLogStartIndex);
     appendLog("[error] event stream closed unexpectedly\n");
     setJobStatus("Stream closed unexpectedly.", false);
@@ -16925,7 +18104,7 @@ function attachToJob(jobId, opts = {}) {
         const label = describeJobKind(failedKind);
         appendLiveAskSystemEntry(
           `[시스템] ${label} 실행 중 이벤트 스트림이 비정상 종료되었습니다.`,
-          { processLog: streamProcessLog },
+          { processLog: streamProcessLog, logStart: streamLogStart, logEnd: streamLogEnd },
         );
       }
     }
@@ -17139,7 +18318,13 @@ async function startJob(endpoint, payload, meta = {}) {
   }
   if (isSystemExecutionKind(kind)) {
     const label = describeJobKind(kind);
-    appendLiveAskSystemEntry(`[시스템] ${label} 실행이 시작되었습니다. (job=${shortId(jobId)})`);
+    appendLiveAskSystemEntry(
+      `[시스템] ${label} 실행이 시작되었습니다. (job=${shortId(jobId)})`,
+      {
+        logStart: normalizeLiveAskLogIndex(state.liveAsk.jobLogStartIndex, -1),
+        logEnd: state.logBuffer.length,
+      },
+    );
   }
   const inferredRunRel = inferRunRelFromPayload(payload);
   upsertJob({
@@ -17190,8 +18375,8 @@ function buildFeatherPayload(options = {}) {
   const resolvedQuery = queryValue || fallbackQuery;
   const outputRaw = String($("#feather-output")?.value || "").trim();
   const outputFallback = outputRaw || ensureAskRunRel() || selectedRunRel() || "";
-  const globalPolicy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
-  const backend = normalizeAskLlmBackend(globalPolicy.backend || "openai_api");
+  const featherPolicy = resolveScopedModelPolicy("feather");
+  const backend = normalizeAskLlmBackend(featherPolicy.backend || "openai_api");
   const payload = {
     input: inputValue,
     query: inputValue ? undefined : resolvedQuery,
@@ -17208,7 +18393,7 @@ function buildFeatherPayload(options = {}) {
     update_run: $("#feather-update-run")?.checked,
     yt_order: $("#feather-yt-order")?.value,
     llm_backend: backend,
-    model: globalPolicy.model || "",
+    model: featherPolicy.model || "",
     extra_args: $("#feather-extra-args")?.value,
   };
   if (!payload.input && !payload.query) {
@@ -17490,12 +18675,12 @@ function handleFeatherAgenticControls() {
   if (!toggle) return;
   const updatePolicyNote = () => {
     if (!policyNote) return;
-    const policy = normalizeGlobalModelPolicy(state.modelPolicy, state.modelPolicy.backend);
+    const policy = resolveScopedModelPolicy("feather");
     const backend = normalizeAskLlmBackend(policy.backend || "openai_api");
     const backendLabel = backend === "codex_cli" ? "Codex CLI Auth" : "OpenAI API";
     const modelLabel = normalizeModelToken(policy.model || (backend === "codex_cli" ? codexModelHint() : openaiModelHint()));
     if (!toggle.checked) {
-      policyNote.textContent = `Agentic Search OFF · 전역 LLM 설정 유지 (backend=${backendLabel}, model=${modelLabel || "-"})`;
+      policyNote.textContent = `Agentic Search OFF · Feather 정책 유지 (backend=${backendLabel}, model=${modelLabel || "-"})`;
       return;
     }
     policyNote.textContent = `Agentic Search ON · backend=${backendLabel} · model=${modelLabel || "-"}`;
@@ -17562,11 +18747,29 @@ function syncModelInputCatalogBindings() {
   const globalBackend = normalizeAskLlmBackend(
     $("#global-llm-backend")?.value || state.modelPolicy.backend || "openai_api",
   );
-  bindModelInputCatalog($("#ask-model"), globalBackend);
-  bindModelInputCatalog($("#live-ask-model"), globalBackend);
   bindModelInputCatalog($("#global-model"), globalBackend);
   bindModelInputCatalog($("#global-check-model"), globalBackend);
   bindModelInputCatalog($("#global-vision-model"), globalBackend);
+  const featherBackend = normalizeAskLlmBackend(
+    $("#policy-feather-backend")?.value
+    || state.modelOverrides?.feather?.backend
+    || globalBackend,
+  );
+  bindModelInputCatalog($("#policy-feather-model"), featherBackend);
+  const federlichtBackend = normalizeAskLlmBackend(
+    $("#policy-federlicht-backend")?.value
+    || state.modelOverrides?.federlicht?.backend
+    || globalBackend,
+  );
+  bindModelInputCatalog($("#policy-federlicht-model"), federlichtBackend);
+  bindModelInputCatalog($("#policy-federlicht-check-model"), federlichtBackend);
+  bindModelInputCatalog($("#policy-federlicht-vision-model"), federlichtBackend);
+  const federhavBackend = normalizeAskLlmBackend(
+    $("#policy-federhav-backend")?.value
+    || state.modelOverrides?.federhav?.backend
+    || globalBackend,
+  );
+  bindModelInputCatalog($("#policy-federhav-model"), federhavBackend);
   bindModelInputCatalog($("#template-gen-model"), "openai_api");
 }
 
@@ -18722,12 +19925,66 @@ function handleModelPolicyModal() {
   $("#workspace-model-settings")?.addEventListener("click", () => {
     openModelPolicyModal();
   });
-  $("#global-llm-backend")?.addEventListener("change", () => {
+  const syncCatalog = () => {
     syncModelInputCatalogBindings();
+    updateScopedPolicyControlState();
+    renderModelPolicyEffectiveHints(readGlobalModelPolicyControls());
+  };
+  [
+    "#global-llm-backend",
+    "#policy-feather-backend",
+    "#policy-federlicht-backend",
+    "#policy-federhav-backend",
+  ].forEach((selector) => {
+    $(selector)?.addEventListener("change", syncCatalog);
+  });
+  [
+    "#policy-feather-mode",
+    "#policy-federlicht-mode",
+    "#policy-federhav-mode",
+  ].forEach((selector) => {
+    $(selector)?.addEventListener("change", () => {
+      updateScopedPolicyControlState();
+      syncModelInputCatalogBindings();
+      renderModelPolicyEffectiveHints(readGlobalModelPolicyControls());
+    });
+  });
+  [
+    "#global-model",
+    "#global-check-model",
+    "#global-vision-model",
+    "#global-reasoning-effort",
+    "#global-model-lock",
+    "#policy-feather-model",
+    "#policy-federlicht-model",
+    "#policy-federlicht-check-model",
+    "#policy-federlicht-vision-model",
+    "#policy-federlicht-reasoning-effort",
+    "#policy-federhav-model",
+    "#policy-federhav-reasoning-effort",
+    "#policy-federhav-runtime-mode",
+    "#policy-federhav-live-auto-log",
+    "#policy-federhav-live-log-tail-size",
+  ].forEach((selector) => {
+    const el = $(selector);
+    if (!el) return;
+    ["input", "change"].forEach((eventName) => {
+      el.addEventListener(eventName, () => {
+        renderModelPolicyEffectiveHints(readGlobalModelPolicyControls());
+      });
+    });
   });
   $("#model-policy-apply")?.addEventListener("click", () => {
     const policy = readGlobalModelPolicyControls();
     applyGlobalModelPolicy(policy, { persist: true, announce: true });
+    const payload = currentLlmPolicyPayload();
+    saveLlmPolicyToWorkspaceSettings(payload).then((saved) => {
+      if (saved) {
+        setWorkspaceSettingsStatus("workspace settings saved (llm policy)");
+      } else if (!state.workspaceSettings?.canEdit) {
+        setWorkspaceSettingsStatus("llm policy saved locally (workspace 저장은 root unlock 필요)");
+      }
+    });
     closeModelPolicyModal();
   });
   $("#global-model-lock")?.addEventListener("change", (ev) => {
@@ -19391,6 +20648,24 @@ function generateSiteProfileId() {
   return String(Date.now() % 1000000).padStart(6, "0");
 }
 
+function normalizeProfileOwnership(value, source = "") {
+  const token = String(value || "").trim().toLowerCase();
+  if (token === "built-in" || token === "builtin") return "built-in";
+  if (token === "org-shared" || token === "org_shared" || token === "shared" || token === "organization") {
+    return "org-shared";
+  }
+  if (token === "private") return "private";
+  if (String(source || "").trim().toLowerCase() === "builtin") return "built-in";
+  return "private";
+}
+
+function profileOwnershipLabel(profile) {
+  const ownership = normalizeProfileOwnership(profile?.ownership, profile?.source);
+  if (ownership === "built-in") return "Built-in";
+  if (ownership === "org-shared") return "Org Shared";
+  return "Private";
+}
+
 function renderAgentList() {
   const listEl = $("#agent-list");
   if (!listEl) return;
@@ -19408,6 +20683,8 @@ function renderAgentList() {
         .join("");
       const applyOverflow = applyItems.length > 5 ? `<span class="agent-apply-pill">+${applyItems.length - 5}</span>` : "";
       const sourceLabel = profile.source === "site" ? "SITE" : "BUILTIN";
+      const ownership = normalizeProfileOwnership(profile.ownership, profile.source);
+      const ownershipLabel = profileOwnershipLabel(profile);
       const org = escapeHtml(profile.organization || "");
       const active =
         state.agentProfiles.activeId === profile.id &&
@@ -19416,7 +20693,10 @@ function renderAgentList() {
         <button class="agent-item ${active ? "active" : ""}" data-id="${id}" data-source="${profile.source}">
           <div class="agent-title-row">
             <strong>${name}</strong>
-            <span class="agent-source">${escapeHtml(sourceLabel)}</span>
+            <div class="agent-title-badges">
+              <span class="agent-source">${escapeHtml(sourceLabel)}</span>
+              <span class="agent-ownership agent-ownership-${escapeHtml(ownership)}">${escapeHtml(ownershipLabel)}</span>
+            </div>
           </div>
           <div>
             <div class="agent-meta-line">${id}${org ? ` · ${org}` : ""}</div>
@@ -19464,10 +20744,11 @@ function renderActiveProfileSummary() {
     return;
   }
   const source = active.source === "site" ? "site" : "builtin";
+  const ownership = profileOwnershipLabel(active);
   const name = active.name || active.id;
   const applyTo = Array.isArray(active.apply_to) ? active.apply_to.join(", ") : "";
   const applyLabel = applyTo ? ` · apply: ${applyTo}` : "";
-  el.textContent = `${name} (${active.id}/${source})${applyLabel}`;
+  el.textContent = `${name} (${active.id}/${source} · ${ownership})${applyLabel}`;
   refreshLiveAskAgentLabel();
   renderWorkflowStudioPanel();
 }
@@ -20365,6 +21646,7 @@ async function bootstrap() {
   handleFederlichtPromptEditor();
   handlePromptExpandControl();
   handleRunPicker();
+  handleRunHubPanel();
   handleModelPolicyModal();
   handleJobsModal();
   handleReloadRuns();
@@ -20416,15 +21698,22 @@ async function bootstrap() {
     await syncWorkflowStageOverridesToRun().catch((err) => {
       appendLog(`[workflow] stage override sync failed: ${err}\n`);
     });
-    syncFederlichtModelControls({ announce: false });
     loadGlobalModelPolicy();
     const hasStoredModelSignal = Boolean(
       state.modelPolicy.model
       || state.modelPolicy.checkModel
-      || state.modelPolicy.visionModel,
+      || state.modelPolicy.visionModel
+      || state.modelOverrides?.federlicht?.model
+      || state.modelOverrides?.federhav?.model,
     );
-    const startupPolicy = hasStoredModelSignal ? state.modelPolicy : policySnapshotFromSource("federlicht");
+    const startupPolicy = hasStoredModelSignal
+      ? currentLlmPolicyPayload()
+      : {
+        global: state.modelPolicy,
+        overrides: defaultModelOverrides(),
+      };
     applyGlobalModelPolicy(startupPolicy, { persist: false, announce: false });
+    syncFederlichtModelControls({ announce: false });
   } catch (err) {
     appendLog(`[init] ${err}\n`);
   }

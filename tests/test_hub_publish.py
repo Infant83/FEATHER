@@ -72,5 +72,47 @@ def test_publish_report_to_hub_inferrs_run_dir_from_report_subfolder(tmp_path: P
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     item = manifest["items"][0]
     assert item["id"] == "demo2"
-    assert item["paths"]["report"] == "reports/demo2/report_full.html"
+    assert item["paths"]["report"] == "reports/demo2/report/report_full.html"
 
+
+def test_publish_report_to_hub_copies_local_html_linked_assets(tmp_path: Path) -> None:
+    run_dir = tmp_path / "runs" / "demo3"
+    assets_dir = run_dir / "assets"
+    notes_dir = run_dir / "report_notes"
+    report_path = run_dir / "report_full.html"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    notes_dir.mkdir(parents=True, exist_ok=True)
+
+    (assets_dir / "chart.png").write_bytes(b"png")
+    (assets_dir / "theme.css").write_text("body{background:url('./bg.jpg');}", encoding="utf-8")
+    (assets_dir / "bg.jpg").write_bytes(b"jpg")
+    (notes_dir / "table.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+    report_path.write_text(
+        "\n".join(
+            [
+                "<html>",
+                "<head>",
+                "<link rel='stylesheet' href='assets/theme.css'>",
+                "</head>",
+                "<body style=\"background-image:url('assets/bg.jpg')\">",
+                "<img src='assets/chart.png' />",
+                "<a href='report_notes/table.csv'>table</a>",
+                "<a href='https://example.com'>external</a>",
+                "<img src='assets/missing.png' />",
+                "</body>",
+                "</html>",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    hub_root = tmp_path / "site" / "report_hub"
+    result = publish_report_to_hub(report_path=report_path, hub_root=hub_root, run_dir=run_dir)
+
+    assert result.published_report_path.exists()
+    assert (hub_root / "reports" / "demo3" / "assets" / "chart.png").exists()
+    assert (hub_root / "reports" / "demo3" / "assets" / "theme.css").exists()
+    assert (hub_root / "reports" / "demo3" / "assets" / "bg.jpg").exists()
+    assert (hub_root / "reports" / "demo3" / "report_notes" / "table.csv").exists()
+    assert len(result.published_asset_paths) >= 4
+    assert any("assets/missing.png" in item for item in result.skipped_asset_refs)

@@ -12,6 +12,7 @@ _MATH_BLOCK_RE = re.compile(r"(?s)(\$\$.*?\$\$|\\\[.*?\\\])")
 # Bracketed inline math: \( ... \)
 _MATH_BRACKET_RE = re.compile(r"(?s)(\\\(.*?\\\))")
 _MERMAID_CODE_BLOCK_RE = re.compile(r'(?is)<pre><code(?: class="([^"]*)")?>(.*?)</code></pre>')
+_MERMAID_FLOWCHART_NODE_RE = re.compile(r'(?m)\b([A-Za-z][A-Za-z0-9_]*)\[(.*?)\]')
 _HEADING_RE = re.compile(r"(?is)<h([23])([^>]*)>(.*?)</h\1>")
 _HEADING_ID_RE = re.compile(r'(?i)\bid\s*=\s*"([^"]+)"')
 
@@ -102,6 +103,33 @@ def markdown_to_html(markdown_text: str) -> str:
     return _unmask_math_segments(html_text, placeholders)
 
 
+def _normalize_mermaid_source(raw: str) -> str:
+    text = (raw or "").strip()
+    if not text:
+        return ""
+    first_directive = ""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("%%"):
+            continue
+        first_directive = stripped.lower()
+        break
+    if not (first_directive.startswith("flowchart") or first_directive.startswith("graph")):
+        return text
+
+    def _quote_label(match: re.Match[str]) -> str:
+        node_id = match.group(1)
+        label = (match.group(2) or "").strip()
+        if not label:
+            return match.group(0)
+        if (label.startswith('"') and label.endswith('"')) or (label.startswith("'") and label.endswith("'")):
+            return match.group(0)
+        escaped = label.replace('"', '\\"')
+        return f'{node_id}["{escaped}"]'
+
+    return _MERMAID_FLOWCHART_NODE_RE.sub(_quote_label, text)
+
+
 def transform_mermaid_code_blocks(body_html: str) -> tuple[str, bool]:
     has_mermaid = False
 
@@ -113,6 +141,7 @@ def transform_mermaid_code_blocks(body_html: str) -> tuple[str, bool]:
         raw = html_lib.unescape(match.group(2) or "").strip()
         if not raw:
             return ""
+        raw = _normalize_mermaid_source(raw)
         has_mermaid = True
         safe = html_lib.escape(raw)
         return (
@@ -778,8 +807,18 @@ def wrap_html(
         "        const path = window.location.pathname.replace(/\\\\/g, '/');\n"
         "        const idx = path.lastIndexOf('/runs/');\n"
         "        if (idx !== -1) {\n"
-        "          backLink.href = `${path.slice(0, idx)}/index.html`;\n"
+        "          const base = path.slice(0, idx);\n"
+        "          const preferred = `${base}/report_hub/index.html`;\n"
+        "          const fallback = `${base}/index.html`;\n"
+        "          backLink.href = preferred;\n"
         "          backLink.style.display = 'inline-flex';\n"
+        "          fetch(preferred, { method: 'HEAD' })\n"
+        "            .then((resp) => {\n"
+        "              if (!resp || !resp.ok) backLink.href = fallback;\n"
+        "            })\n"
+        "            .catch(() => {\n"
+        "              backLink.href = fallback;\n"
+        "            });\n"
         "        }\n"
         "      }\n"
         "      const panel = document.getElementById('viewer-panel');\n"

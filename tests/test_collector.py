@@ -119,6 +119,35 @@ def test_prepare_jobs_with_query(tmp_path) -> None:
     assert job.local_paths == []
 
 
+def test_prepare_jobs_reuses_existing_run_folder_output(tmp_path) -> None:
+    run_dir = tmp_path / "runs" / "quantum_topic"
+    (run_dir / "archive").mkdir(parents=True)
+    (run_dir / "instruction").mkdir(parents=True)
+    (run_dir / "report_notes").mkdir(parents=True)
+    jobs = prepare_jobs(
+        input_path=None,
+        query="quantum computing overview",
+        output_root=run_dir,
+        lang_pref="en",
+        openalex_enabled=False,
+        openalex_max_results=None,
+        youtube_enabled=False,
+        youtube_max_results=None,
+        youtube_transcript=False,
+        youtube_order="relevance",
+        days=7,
+        max_results=3,
+        download_pdf=False,
+        arxiv_source=False,
+        update_run=True,
+        citations_enabled=True,
+    )
+    assert len(jobs) == 1
+    job = jobs[0]
+    assert job.root_dir == run_dir
+    assert job.out_dir == run_dir / "archive"
+
+
 def test_select_youtube_queries() -> None:
     job = Job(
         date=dt.date(2026, 1, 4),

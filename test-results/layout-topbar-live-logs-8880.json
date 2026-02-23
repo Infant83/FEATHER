@@ -1,0 +1,33 @@
+{
+  "topbar_before": {
+    "pos": "relative",
+    "y": 233.203125
+  },
+  "topbar_after_scroll": {
+    "y": -140.796875,
+    "bottom": -76.796875
+  },
+  "live_ask_metrics": [
+    {
+      "tag": "initial",
+      "clientHeight": 338,
+      "scrollHeight": 338,
+      "minHeight": "340px",
+      "maxHeight": "680px"
+    },
+    {
+      "tag": "after_12",
+      "clientHeight": 466,
+      "scrollHeight": 1309,
+      "minHeight": "340px",
+      "maxHeight": "680px"
+    },
+    {
+      "tag": "after_82",
+      "clientHeight": 466,
+      "scrollHeight": 9992,
+      "minHeight": "340px",
+      "maxHeight": "680px"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-02-22T00:51:36.551180+00:00",
+  "theme": "white",
+  "metrics": {
+    "threadHeight": 311.86,
+    "composerHeight": 175.09,
+    "workflowHeight": 54,
+    "inputMinHeight": "44px",
+    "inputMaxHeight": "120px",
+    "inputFontSize": "12.8px",
+    "scrollables": 1
+  },
+  "page_errors": []
+}

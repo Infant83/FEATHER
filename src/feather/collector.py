@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import time
 from collections import Counter
 from pathlib import Path
@@ -70,7 +71,14 @@ AGENTIC_TRACE_MD = "agentic_trace.md"
 AGENTIC_DEFAULT_MODEL = "gpt-4o-mini"
 AGENTIC_DEFAULT_MAX_ITER = 3
 AGENTIC_FALLBACK_MODEL_ENV = "FEATHER_AGENTIC_FALLBACK_MODEL"
+AGENTIC_BACKEND_ENV = "FEATHER_AGENTIC_LLM_BACKEND"
 AGENTIC_PLANNER_TOKEN_BUDGET = 900
+
+
+def is_existing_run_folder(path: Path) -> bool:
+    if not path.exists() or not path.is_dir():
+        return False
+    return (path / "archive").exists() and (path / "instruction").exists()
 
 
 def is_instruction_file(path: Path) -> bool:
@@ -343,7 +351,9 @@ def build_job(
     file_date: Optional[dt.date] = None,
 ) -> Job:
     date_val = file_date or parse_date_from_filename(src_file.stem) or dt.date.today()
-    root_dir = out_root / query_id
+    # Federnett passes --output as a concrete run folder.
+    # If that run already exists, do not create output/query_id nested folders.
+    root_dir = out_root if is_existing_run_folder(out_root) else out_root / query_id
     out_dir = root_dir / "archive"
     base_dir = src_file.parent
 
@@ -2169,10 +2179,20 @@ def _resolve_agentic_model(model_name: Optional[str]) -> str:
     token = (model_name or "").strip()
     if token:
         return token
+    env_codex_model = os.getenv("CODEX_MODEL", "").strip()
+    if env_codex_model and _resolve_agentic_backend() == "codex_cli":
+        return env_codex_model
     env_model = os.getenv("OPENAI_MODEL", "").strip()
     if env_model:
         return env_model
     return AGENTIC_DEFAULT_MODEL
+
+
+def _resolve_agentic_backend() -> str:
+    token = str(os.getenv(AGENTIC_BACKEND_ENV) or "").strip().lower()
+    if token in {"codex", "codex_cli", "codex-cli", "cli"}:
+        return "codex_cli"
+    return "openai_api"
 
 
 def _agentic_endpoints() -> List[Tuple[str, str]]:
@@ -2372,7 +2392,102 @@ def _planner_content_from_responses_payload(data: Dict[str, Any]) -> str:
     return ""
 
 
+def _extract_codex_exec_message(stdout_text: str) -> str:
+    last_message = ""
+    for raw in str(stdout_text or "").splitlines():
+        line = raw.strip()
+        if not line or not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except Exception:
+            continue
+        if str(event.get("type") or "") != "item.completed":
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("type") or "") != "agent_message":
+            continue
+        text = str(item.get("text") or "").strip()
+        if text:
+            last_message = text
+    return last_message
+
+
+def _call_agentic_planner_codex_cli(
+    model_name: str,
+    payload: Dict[str, Any],
+    logger: JobLogger,
+) -> Dict[str, Any]:
+    codex_bin = str(os.getenv("CODEX_CLI_BIN") or "codex").strip()
+    bin_path = shutil.which(codex_bin) if codex_bin else None
+    if not bin_path:
+        raise RuntimeError("codex CLI is not available in PATH")
+    model_choice = str(model_name or os.getenv("CODEX_MODEL") or "").strip()
+    system_prompt = (
+        "You are Feather's agentic source planner. "
+        "Use the archive state and instruction goals to select the next best data-collection actions. "
+        "Prefer high-value, non-duplicative actions. "
+        "Return strict JSON with keys: done (bool), reason (string), actions (array). "
+        "Each action must include type plus query/url and optional max_results. "
+        "Allowed types: tavily_search, tavily_extract, arxiv_recent, openalex_search, youtube_search, stop."
+    )
+    user_prompt = json.dumps(payload, ensure_ascii=False, indent=2)
+    prompt = (
+        "Return only one JSON object.\n\n"
+        f"[SYSTEM]\n{system_prompt}\n\n"
+        f"[USER]\n{user_prompt}\n"
+    )
+    cmd = [
+        bin_path,
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--skip-git-repo-check",
+        "--sandbox",
+        "read-only",
+    ]
+    if model_choice:
+        cmd.extend(["--model", model_choice])
+    cmd.append("-")
+    try:
+        proc = subprocess.run(
+            cmd,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("codex CLI timed out") from exc
+    except Exception as exc:
+        raise RuntimeError(f"codex CLI execution failed: {exc}") from exc
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()
+        detail = detail.splitlines()[-1] if detail else ""
+        raise RuntimeError(f"codex CLI failed ({proc.returncode}){f': {detail}' if detail else ''}")
+    message = _extract_codex_exec_message(proc.stdout)
+    if not message:
+        raise RuntimeError("codex CLI returned empty planner output")
+    parsed = _parse_json_object(message)
+    if not parsed:
+        parsed = _parse_json_object(proc.stdout)
+    if not parsed:
+        raise RuntimeError("codex CLI planner output is not valid JSON")
+    if not isinstance(parsed.get("actions"), list):
+        parsed["actions"] = []
+    parsed["done"] = bool(parsed.get("done", False))
+    parsed["reason"] = str(parsed.get("reason") or "")
+    logger.log(f"AGENTIC planner backend=codex_cli model={model_choice or 'default'}")
+    return parsed
+
+
 def _call_agentic_planner(model_name: str, payload: Dict[str, Any], logger: JobLogger) -> Dict[str, Any]:
+    backend = _resolve_agentic_backend()
+    if backend == "codex_cli":
+        return _call_agentic_planner_codex_cli(model_name, payload, logger)
     api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
     headers = {"Content-Type": "application/json"}
     if api_key:
@@ -2792,11 +2907,13 @@ def run_job_agentic(
     write_job_json(job)
 
     resolved_model = _resolve_agentic_model(model_name or job.agentic_model)
+    backend = _resolve_agentic_backend()
     iterations = max_iter if max_iter is not None else job.agentic_max_iter
     if not iterations or iterations < 1:
         iterations = AGENTIC_DEFAULT_MAX_ITER
     logger.log(
-        f"JOB START (agentic): {job.src_file.name} date={job.date.isoformat()} max_results={job.max_results} model={resolved_model}"
+        f"JOB START (agentic): {job.src_file.name} date={job.date.isoformat()} max_results={job.max_results} "
+        f"backend={backend} model={resolved_model}"
     )
 
     # Bootstrap with the deterministic pipeline so agentic turns can build on concrete archive outputs.

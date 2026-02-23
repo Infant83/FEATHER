@@ -1,0 +1,55 @@
+{
+  "url": "http://127.0.0.1:8765",
+  "checks": {
+    "run_picker_drag": {
+      "ok": true,
+      "before": {
+        "x": 290,
+        "y": 208.97,
+        "width": 860,
+        "height": 522.06
+      },
+      "after": {
+        "x": 410,
+        "y": 298.97,
+        "width": 860,
+        "height": 522.06
+      }
+    },
+    "run_picker_esc_closed": true,
+    "workspace_drag": {
+      "ok": true,
+      "before": {
+        "x": 16,
+        "y": 86,
+        "width": 1400,
+        "height": 828
+      },
+      "after": {
+        "x": 30,
+        "y": 102,
+        "width": 1400,
+        "height": 828
+      }
+    },
+    "workspace_esc_closed": true,
+    "workflow_studio_drag": {
+      "ok": true,
+      "before": {
+        "x": 545.81,
+        "y": 470.28,
+        "width": 835.19,
+        "height": 702
+      },
+      "after": {
+        "x": 445.81,
+        "y": 228.28,
+        "width": 835.19,
+        "height": 702
+      }
+    },
+    "workflow_studio_esc_closed": true,
+    "model_policy_esc_closed": true
+  },
+  "page_errors": []
+}

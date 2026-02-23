@@ -181,6 +181,7 @@ Key points:
 - Run-internal file/folder summary requests are treated as content-analysis tasks by default (no automatic Feather/Federlicht run action suggestion unless explicit execution intent exists).
 - If `run` is omitted in help payload, FederHav recovers run context from `state_memory.scope.run_rel`/`state_memory.run.run_rel` to keep run-scoped analysis stable.
 - Forward roadmap for account/profile/hub collaboration: `docs/federnett_roadmap.md`.
+- Account/권한 운영(root/admin/user/bootstrap/revoke) 가이드: `docs/federnett_auth_operations.md`.
 - Playwright MCP troubleshooting and fallback validation path: `docs/playwright_mcp_troubleshooting.md`.
 
 Optional auth env:

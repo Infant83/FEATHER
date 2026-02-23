@@ -513,8 +513,18 @@ This is placeholder content to visualize section flow and expected narrative den
         const path = window.location.pathname.replace(/\\/g, '/');
         const idx = path.lastIndexOf('/runs/');
         if (idx !== -1) {
-          backLink.href = `${path.slice(0, idx)}/index.html`;
+          const base = path.slice(0, idx);
+          const preferred = `${base}/report_hub/index.html`;
+          const fallback = `${base}/index.html`;
+          backLink.href = preferred;
           backLink.style.display = 'inline-flex';
+          fetch(preferred, { method: 'HEAD' })
+            .then((resp) => {
+              if (!resp || !resp.ok) backLink.href = fallback;
+            })
+            .catch(() => {
+              backLink.href = fallback;
+            });
         }
       }
       const panel = document.getElementById('viewer-panel');

@@ -21,6 +21,7 @@ class Job:
     status: str = "running"
     returncode: Optional[int] = None
     logs: list[dict[str, Any]] = field(default_factory=list)
+    env_overrides: dict[str, str] = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _cond: threading.Condition = field(init=False)
     _proc: Optional[subprocess.Popen[str]] = None
@@ -98,6 +99,7 @@ class JobRegistry:
         cwd: Path,
         allow_parallel: bool = False,
         parallel_kinds: Optional[set[str]] = None,
+        env_overrides: Optional[dict[str, str]] = None,
     ) -> Job:
         with self._lock:
             if not allow_parallel:
@@ -110,13 +112,21 @@ class JobRegistry:
                         f"another job is already running ({running.kind}:{running.job_id})"
                     )
             job_id = uuid.uuid4().hex[:12]
-            job = Job(job_id=job_id, kind=kind, command=command, cwd=cwd)
+            job = Job(
+                job_id=job_id,
+                kind=kind,
+                command=command,
+                cwd=cwd,
+                env_overrides=dict(env_overrides or {}),
+            )
             self._jobs[job_id] = job
         self._launch(job)
         return job
 
     def _launch(self, job: Job) -> None:
         env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        env.setdefault("PYTHONIOENCODING", "utf-8")
         try:
             src_path = str((job.cwd / "src").resolve())
             current = env.get("PYTHONPATH", "")
@@ -127,6 +137,11 @@ class JobRegistry:
                 env["PYTHONPATH"] = src_path
         except Exception:
             env = os.environ.copy()
+        if job.env_overrides:
+            for key, value in job.env_overrides.items():
+                if value is None:
+                    continue
+                env[str(key)] = str(value)
         proc = subprocess.Popen(
             job.command,
             cwd=str(job.cwd),
@@ -140,6 +155,14 @@ class JobRegistry:
         )
         job.attach(proc)
         job.append_log(f"$ {' '.join(job.command)}", stream="meta")
+        if job.env_overrides:
+            rendered = " ".join(
+                f"{key}={value}"
+                for key, value in job.env_overrides.items()
+                if value is not None and str(value).strip()
+            )
+            if rendered:
+                job.append_log(f"[env] {rendered}", stream="meta")
 
         def reader() -> None:
             assert proc.stdout is not None

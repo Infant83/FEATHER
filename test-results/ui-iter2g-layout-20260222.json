@@ -1,0 +1,74 @@
+{
+  "main": {
+    "thread": {
+      "h": 406.953125,
+      "top": 492.328125,
+      "bottom": 899.28125
+    },
+    "composer": {
+      "h": 220,
+      "top": 909.28125,
+      "bottom": 1129.28125
+    },
+    "workflow": {
+      "h": 54,
+      "top": 1139.28125,
+      "bottom": 1193.28125
+    },
+    "workflowIdleCompact": true
+  },
+  "responsive": {
+    "1280x800": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 246.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 54
+      },
+      "workflowIdleCompact": true
+    },
+    "1024x768": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 228.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 54
+      },
+      "workflowIdleCompact": true
+    },
+    "768x1024": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 461
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 54
+      },
+      "workflowIdleCompact": true
+    },
+    "540x960": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 326.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 54
+      },
+      "workflowIdleCompact": true
+    }
+  }
+}

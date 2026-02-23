@@ -1,0 +1,75 @@
+{
+  "main": {
+    "logs": {
+      "h": 834,
+      "top": 385.28125,
+      "bottom": 1219.28125
+    },
+    "thread": {
+      "h": 388.953125,
+      "top": 492.328125,
+      "bottom": 881.28125
+    },
+    "composer": {
+      "h": 220,
+      "top": 891.28125,
+      "bottom": 1111.28125
+    },
+    "workflow": {
+      "h": 72,
+      "top": 1121.28125,
+      "bottom": 1193.28125
+    },
+    "workflowIdleCompact": false
+  },
+  "responsive": {
+    "1280x800": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 200.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 100
+      }
+    },
+    "1024x768": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 182.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 100
+      }
+    },
+    "768x1024": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 415
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 100
+      }
+    },
+    "540x960": {
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 252.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "workflow": {
+        "h": 128
+      }
+    }
+  }
+}

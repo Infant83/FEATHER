@@ -396,7 +396,12 @@ def refresh_site_from_runs(
     refresh_minutes: int = 10,
     default_author: str = "Federlicht",
 ) -> tuple[dict, Path]:
-    runs_dir = runs_root or (site_root / "runs")
+    if runs_root:
+        runs_dir = runs_root
+    else:
+        local_runs = site_root / "runs"
+        sibling_runs = site_root.parent / "runs"
+        runs_dir = local_runs if local_runs.exists() else sibling_runs
     entries: list[dict] = []
     existing_items: dict[str, dict] = {}
     manifest_path = site_root / "manifest.json"

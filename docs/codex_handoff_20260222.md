@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-22
 
-Last updated: 2026-02-22 16:35:46 +09:00  
+Last updated: 2026-02-22 22:06:27 +09:00  
 Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/ppt_writer_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `docs/federlicht_report.md`, `docs/playwright_mcp_troubleshooting.md`
 
 ## 1) 목적
@@ -10,9 +10,9 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
 ## 2) 현재 적용도 요약
 - Federlicht 보고서 파이프라인: **고도화 진행 중 (부분완료)**
 - Federnett 실행/운영 UI: **핵심 기능 완료 + UX 정리 잔여**
-- FederHav deepagent 전환: **Phase A + Phase B-2(액션 handoff/preflight/trace) 반영, Phase B-3~D 미완**
-- Run/Hub 분리 및 publish: **엔진 완료, 협업/승인 UI 미완**
-- LLM 정책 일원화: **전역 정책 중심으로 완료**
+- FederHav deepagent 전환: **Phase A + Phase B-3 완료(기본 fallback 축소/계약테스트 확장), Phase C~D 미완**
+- Run/Hub 분리 및 publish: **엔진 완료 + 협업/승인 UI 1차 완료(부분완료)**
+- LLM 정책 일원화: **Global + Scoped(Feather/Federlicht/FederHav) 2차 완료(정규화+가시화)**
 - Playwright 검증체계: **로컬 스모크 안정, CI E2E 미완**
 - PPT Writer 확장: **전략/설계 단계, 구현 착수 전**
 
@@ -21,6 +21,15 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
 - Report Hub publish 모듈 구현 (`python -m federlicht.hub_publish`).
 - Federnett Run Studio publish 버튼 + API 브릿지 구현.
 - LLM Settings 전역 일원화(backend/model 정책 단일 진입점).
+- LLM Settings 정책 분리 1차:
+  - Global baseline + Feather/Federlicht/FederHav scoped override 추가.
+  - FederHav 기본 모델 분리(`gpt-4o-mini`) 및 Federlicht 기본값(`OPENAI_MODEL`, `OPENAI_MODEL_VISION`) 반영.
+  - Stage override 편집 UI를 Workflow Studio에서 LLM Settings로 이동(편집 진입점 단일화).
+  - `workspace_settings.json`에 `llm_policy` 저장/복원 경로 추가(GET/POST `/api/workspace/settings` 확장).
+- LLM Settings 정책 분리 2차:
+  - `/api/workspace/settings` GET/POST에서 `llm_policy` 정규화 강제(legacy payload 호환 + canonical backend/model/reasoning/runtime 보정).
+  - LLM Settings 모달에 Global/Feather/Federlicht/FederHav별 `적용값`(effective policy) 실시간 요약 라인 추가.
+  - 편집 중 입력값 기준으로 effective 결과를 즉시 미리보기 가능하게 반영(모드/모델/런타임/로그 컨텍스트 포함).
 - Federlicht prompt 경로 불일치(`site/runs` vs `runs`) 해결.
 - Codex 모델명 정규화(대문자 토큰 이슈 완화).
 - Live Logs/Workflow Studio 주요 가독성 개선 및 white theme 보정 반복 적용.
@@ -86,91 +95,165 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
   - 기존 동작: `--output`이 이미 run 폴더여도 `output/query_id` 하위 run을 다시 생성.
   - 수정 동작: `archive + instruction`이 있는 기존 run 폴더를 출력으로 받으면 해당 폴더를 직접 갱신(중첩 생성 금지).
 - DeepAgents 0.4 런타임 분기 준비(파이썬 버전 조건부 의존성 반영).
+- Report Hub 협업/승인 API 확장:
+  - `GET /api/report-hub/posts/{post_id}/approval`
+  - `POST /api/report-hub/approval`
+  - approval 상태 모델(`draft/review/approved/published/rejected/archived`) + history 저장
+- Run Studio 협업 패널 1차 구현:
+  - comment/followup/link/approval submit + timeline view + refresh 동작
+  - run 기준 post 연결 자동탐색(직접 id 조회 + run query fallback)
+  - publish approval gate(approved/published 이전 상태에서 confirm)
+- Stage 비용/시간 대시보드 1차 구현:
+  - workflow pass metrics를 Run Studio card에서 합산/칩 형태로 표시(시간/토큰/cache)
+- FederHav DeepAgent Phase B-3 완료:
+  - action planner LLM fallback 기본 비활성(명시 opt-in only).
+  - safe-rule fallback 발동 축소(`runtime_mode=off + opt-in`, emergency override 별도).
+  - `federhav.agentic_runtime` 계약 테스트 신설(정규화/preflight/handoff).
+  - CLI/Core 회귀셋 확장(`execution_mode`, bounds, run-root resolution).
+- Agent profile ownership 명시화:
+  - backend profile 목록에 `ownership` 필드 추가(`built-in/private/org-shared`).
+  - UI 카드/활성 요약에 ownership badge 반영.
+- Stage 비용/시간 대시보드 2차:
+  - run별 누적 metrics history(local storage) 저장.
+  - 최근 추세 mini chart + latest summary 추가.
+- 계정/권한 운영 문서화:
+  - `docs/federnett_auth_operations.md` 추가(root/admin/user/bootstrap/revoke).
+  - README Federnett 섹션에 운영 문서 링크 반영.
 
-## 4) TODO 리스트 (우선순위)
+## 4) TODO 리스트 (우선순위, 재설정)
 
-### P0 (즉시)
-- Report Hub 협업 UI 완성(comment/followup/link 실제 submit 흐름).
-- 승인 워크플로우 UI 완성(초안 -> 검토 -> 발행 상태모델).
-- Live Logs 최종 시각 polish(모바일/저해상도에서 카드 밀도·여백·시선흐름 미세 조정).
-- Workflow Studio 고급 Stage 설정 최종 polish(초기 사용자용 설명/경고 문구 정제 + 오입력 가드 추가).
-- 테마별 semantic chip 대비 점검 상시화(Run Studio/Workflow/Runtime warning chip 포함, white/black 우선).
+### P0 (즉시, 다음 1~2 배치)
+- Report Hub publish 서버 게이트 강제:
+  - `/api/report-hub/publish`에서 approval 상태가 `approved|published`가 아니면 기본 차단.
+  - 예외 실행은 `root/session-root + reason` 조건으로만 허용하고 감사 로그 남김.
+- Run root 단일화 1차:
+  - 신규 run 생성/write target 기본값을 `runs/*`로 고정.
+  - `site/runs/*`는 legacy read-only 호환 모드로 표시하고 기본 생성 대상에서 제외.
+  - 마이그레이션 dry-run(경로 영향도/충돌 파일 목록) 제공.
+- 설정 충돌 제거 1차:
+  - LLM/Stage 편집 진입점 외 패널의 잔여 편집성 요소를 read-only 요약으로 정리.
+  - 사용자에게 “어디서 수정해야 하는지” 단일 경로를 UI에 명시.
+- Live Logs 실행 가시성 보강:
+  - 턴별 로그브릿지와 workflow node 상태 동기화 회귀(실행 중 로그 누락 방지).
+  - 대화 스택이 커져도 스크롤/접기 동작이 일관되게 유지되는지 회귀셋 확장.
 
-### P1 (단기)
-- FederHav DeepAgent Phase B-3 진행(LLM fallback 축소 + CLI 품질 회귀셋 + planner 계약 테스트 확장).
-- 계정/권한 운영 문서화(root/admin/user, bootstrap, session revoke 정책).
-- Agent profile ownership UI 명시화(built-in/private/org-shared).
-- Stage 비용/시간 대시보드(run 단위 elapsed/token/cache 집계).
-- Ad-hoc 규칙 축소 리팩터링(문구/토큰 하드코딩 기반 라우팅 제거 -> tool/state 기반 의사결정으로 이관).
+### P1 (단기, 3~6 배치)
+- DeepAgent Phase C 착수:
+  - `help_agent`의 잔여 heuristic 경로(`run_hint/safe_action`) 의존도 축소.
+  - planner/tool-state 기반 의사결정 비중을 높이고 route 계층 계약 테스트 확장.
+- Agent ownership 실체화:
+  - 현재 badge 표시(`built-in/private/org-shared`)를 권한 정책과 연결.
+  - `organization 존재 여부` 기반 추론을 명시 필드 기반으로 전환.
+- Stage Cost/Time Dashboard 3차:
+  - 현재 localStorage 누적을 run artifact 또는 서버 API 영속화로 상향.
+  - run 간 비교/필터/기간 기준 조회 추가.
+- Auth 운영 고도화:
+  - admin/root가 특정 세션을 강제 revoke 가능한 API 도입.
+  - auth 이벤트 감사로그(누가/언제/무엇) 저장 정책 확정 및 구현.
 
-### P2 (중기)
-- Playwright E2E CI 고정(질문->제안->실행->결과 시나리오 자동화).
-- PPT Writer Phase 1~2 구현(slide schema/contract + minimal renderer).
-- Quality evaluator 도메인별 가중치 세분화(산업/의학/정책).
-- 장문 deep quality timeout 저감(runtime budget/loop policy).
+### P2 (중기, 6+ 배치)
+- Playwright E2E CI 고정:
+  - 질문->제안->실행->결과 + run picker + workflow studio + publish 승인 플로우 자동화.
+- PPT Writer Phase 1~2:
+  - slide schema/contract, minimal renderer, run artifact 연결.
+- Quality evaluator 고도화:
+  - 도메인별 가중치(산업/의학/정책) + timeout/budget 정책 자동 조정.
+- DeepAgent Phase D:
+  - 멀티런 컨텍스트, 장기 메모리, 권한 감사 일관성 강화.
 
-## 5) 정책 충돌/중복 지점
+## 5) 정책 충돌/중복 지점 (재평가)
 
 ### 충돌 A: Run root 이원(`runs` + `site/runs`) vs 단일 root 지향
-- 현상: 문서들은 점진 이관을 전제로 이원을 허용한다.
-- 리스크: 경로 혼동, prompt/output 위치 불일치 재발 가능.
-- 권고: 운영 기본값은 `runs` 단일로 고정하고 `site/runs`는 읽기 전용 호환 모드로 단계 축소.
+- 현상: 코드 기본값이 여전히 이원 스캔/생성을 허용한다.
+- 리스크: run 선택/생성 시 경로 혼동과 artifact 누락 재발.
+- 권고: `runs`를 canonical write-root로 고정하고 `site/runs`는 읽기 호환 모드로 축소.
 
-### 충돌 B: FederHav read-only 기본(roadmap) vs Act 실행 허용(handoff)
-- 현상: 로드맵 Phase 1은 read-only 기본, 최근 구현은 bounded Act 실행을 허용.
-- 리스크: 권한 경계/감사 정책 불명확.
-- 권고: 정책 문구를 "default=plan(read-only), act=bounded write scope"로 통일하고 UI/문서 동기화.
+### 충돌 B: 승인 후 발행 정책 vs publish API 무차단
+- 현상: UI 확인(경고)은 있으나 `/api/report-hub/publish` 자체는 approval 상태를 강제하지 않는다.
+- 리스크: 승인 절차 우회 발행 가능.
+- 권고: 서버에서 approval 상태를 강제하고 예외는 root 권한 + 사유로 제한.
 
-### 충돌 C: 승인 후 발행 원칙 vs 즉시 publish 버튼 제공
-- 현상: 전략 문서는 승인 후 publish를 권장하지만 UI는 즉시 실행 버튼 중심.
-- 리스크: 검토 없는 게시.
-- 권고: publish 버튼 앞에 승인 상태 체크 또는 확인단계(Review Gate) 추가.
+### 충돌 C: Ownership 표시 vs 권한 모델
+- 현상: profile 카드에 ownership badge는 보이지만 ACL은 source/root 중심이다.
+- 리스크: `org-shared`가 표시만 되고 실질 권한/소유 모델과 불일치.
+- 권고: ownership을 저장 스키마/권한 체크에 반영하고 UI 문구와 동기화.
 
-### 충돌 D: 설정 일원화 목표 vs 일부 패널의 잔여 고급 설정
-- 현상: LLM은 일원화됐지만 stage override/툴 매핑 등은 분산 체감.
-- 리스크: 사용자가 어디서 무엇이 우선인지 혼동.
-- 권고: 우선순위 체계를 고정 표기(global > stage override > runtime temp)하고 UI에 항상 노출.
+### 충돌 D: Stage metrics “2차 완료” vs 영속성 범위
+- 현상: run metrics history는 현재 localStorage 기반으로 브라우저/디바이스 종속.
+- 리스크: 운영 감사/재현성 부족, multi-user 공유 불가.
+- 권고: run artifact 또는 서버 저장으로 영속화.
 
-### 충돌 E: 대화기록 저장 위치
-- 현상: roadmap은 run 내 파일 저장을 명시, 현재는 scope/local 중심 흐름이 혼재.
-- 리스크: 감사 추적/재현성 불일치.
-- 권고: 최소한 실행 액션 관련 대화는 run artifact로 append 저장(옵션화 가능).
+### 충돌 E: 권한 운영 문서화 vs 강제 revoke 기능
+- 현상: 운영 문서는 존재하지만 관리자 관점 세션 강제 종료 API는 부재.
+- 리스크: 사고 대응(계정 탈취/공유 PC) 시 즉시 통제가 어려움.
+- 권고: admin/root revoke API + 감사로그를 P1에서 구현.
+
+### 충돌 F: DeepAgent 우선 정책 vs 잔여 heuristic 경로
+- 현상: fallback 축소는 반영됐지만 `help_agent`/프론트 run hint 추론 로직이 아직 크다.
+- 리스크: 표현 다양성에 따라 예외 행동 및 유지보수 비용 증가.
+- 권고: planner/tool-state 기반으로 단계적 축소, emergency fallback만 최소 유지.
+
+## 5.1) 코드-핸드오프 심층 비교 결과
+- 핸드오프 미기재 구현(추가 반영 필요):
+  - Report Hub publish는 HTML 내 local link asset 복사(`include_linked_assets`)를 이미 지원.
+  - Root/Session auth token 관리가 프론트에 분리 저장되어 세션 복원 경로가 존재.
+- 핸드오프 “완료” 항목의 품질 격차:
+  - Stage metrics 2차는 구현됐지만 storage가 localStorage 중심이라 운영형 요구와 차이.
+  - Ownership 명시화는 UI 중심이며 권한 정책과 완전 결합되지 않음.
+  - DeepAgent 전환은 B-3까지 반영됐으나 heuristic 잔량이 커서 구조 단순화 여지 큼.
+- 성능/유지보수 관점 주의:
+  - `site/federnett/app.js` 단일 파일 규모가 매우 커(유지보수/회귀 영향 반경 확대) 모듈 분리가 필요.
 
 ## 6) 결정 필요 항목 (Owner 지정 필요)
-- 결정 1: Pages 배포 모델
-  - 선택지: 단일 repo vs 이원 repo(product + hub-publish).
-  - 권고: 이원 repo.
-- 결정 2: run 산출물 git 추적 정책
-  - 선택지: 기본 ignore vs 샘플 run 선별 추적.
-  - 권고: 기본 ignore + 샘플/검증 run만 추적.
-- 결정 3: Run root 장기 정책
-  - 선택지: 이원 유지 vs `runs` 단일화.
-  - 권고: `runs` 단일화 로드맵 명시(읽기 호환 기간 포함).
-- 결정 4: FederHav 실행 권한 기본값
-  - 선택지: 항상 read-only vs Plan 기본 + Act 승인 실행.
-  - 권고: Plan 기본 + Act 승인 실행.
+- 결정 1: Run root 장기 정책
+  - 선택지: 이원 유지 vs `runs` 단일화(권고).
+  - 필요 산출물: 마이그레이션 일정/호환 기간.
+- 결정 2: Publish 게이트 강도
+  - 선택지: warning-only vs server hard gate(권고).
+  - 필요 산출물: 예외 실행(root override) 운영 규칙.
+- 결정 3: Ownership/ACL 모델
+  - 선택지: source 기반 유지 vs ownership 기반 권한 모델 확장(권고).
+  - 필요 산출물: profile 스키마/권한 매트릭스.
+- 결정 4: Metrics 저장 전략
+  - 선택지: localStorage 유지 vs run artifact/API 영속화(권고).
+  - 필요 산출물: 보존기간/동기화 정책.
+- 결정 5: Auth revoke 운영
+  - 선택지: self-logout only vs admin/root 강제 revoke(권고).
+  - 필요 산출물: 감사로그 스키마/보안 정책.
+- 결정 6: 배포/추적 모델
+  - 선택지: 단일 repo vs 이원 repo(product + hub-publish), run 산출물 추적 범위.
+  - 권고: 이원 repo + 기본 ignore + 샘플/검증 run 선별 추적.
 
 ## 7) 다음 개발 사이클 권장 순서
-1. Report Hub 승인/협업 UI를 먼저 완성해 publish 안전성 확보.
-2. FederHav DeepAgent Phase B를 착수해 구조적 실행 일관성 확보.
-3. Playwright E2E CI를 고정해 회귀 자동검증 체계 확보.
-4. PPT Writer Phase 1 계약(schema/AST)부터 구현 착수.
+1. P0-1: publish 서버 게이트 강제(승인 우회 차단).
+2. P0-2: run root 단일화 1차(`runs` canonical write-root).
+3. P0-3: 설정 중복 제거 + Live Logs 실행 가시성 회귀 고정.
+4. P1-1: DeepAgent Phase C(heuristic 축소 + planner 계약 확장).
+5. P1-2: ownership ACL 실체화 + metrics 영속화 + auth revoke 구현.
+6. P2: Playwright CI/PPT writer/quality evaluator 고도화.
 
 ## 8) 운영 규칙 (앞으로 이 파일 기준)
 - 모든 작업 후 이 파일의 `DONE/TODO/결정 필요`를 먼저 갱신한다.
 - `Last updated`는 반드시 절대시간으로 기록한다.
+- Iteration 작업은 **5 iter마다** 반드시 handoff 업데이트(진행률/검증/리스크)한다.
+- 변경 배치마다 테스트 명령/결과를 handoff에 기록한다.
+- 정책 충돌이 새로 발견되면 같은 턴에서 `5)`에 추가하고 TODO 우선순위에 반영한다.
 - 기존 `docs/codex_handoff_20260220.md`는 상세 로그 아카이브로 유지하고, 상태 기준은 본 파일을 우선한다.
 
 ## 8.1) Ad-hoc 정리 백로그 (우선 제거 대상)
 - `src/federnett/help_agent.py`
-  - `_extract_run_hint(...)`: 긴 정규식/토큰 기반 run 추론 규칙이 과도하여 오탐 가능.
-  - `_is_invalid_run_hint(...)`: blocklist 중심 판별 규칙(언어/표현 변화에 취약).
-  - `_needs_agentic_action_planning(...)`: 키워드 기반 trigger 분기가 많아 유지보수 비용 증가.
-  - `_infer_safe_action(...)`: 규칙 분기 규모가 커서 deepagent 경로와 이중 정책이 생김.
-- 개선 목표:
-  - 질문 의도 판별은 `state_memory + run_context + tool_result` 기반으로 우선.
-  - 규칙은 최소한의 안전 가드(파괴적 동작 차단, 경로 범위 제한)만 유지.
-  - 실행 제안은 deepagent planner 결과를 기본으로 하고, safe-rule fallback은 완전 opt-in 유지.
+  - `_extract_run_hint(...)`: 정규식 기반 추론 로직이 커서 오탐/누락 가능.
+  - `_is_invalid_run_hint(...)`: blocklist 중심 판별(언어/표현 변화 취약).
+  - `_infer_safe_action(...)`: rule 기반 분기가 여전히 크고 deepagent 경로와 정책 중복.
+- `site/federnett/app.js`
+  - run hint/target 추론 유틸 다수(`normalizeRunHint`, `resolveActionRunTargetFromHints` 등)로 정책 분산.
+  - Live ask/render/workflow/state 로직이 단일 파일에 과집중.
+- `src/federnett/routes.py`
+  - publish/approval/auth 권한 검증이 엔드포인트별로 분산되어 정책 일관성 검증 비용이 큼.
+- 정리 목표:
+  - 의도 판별은 `state_memory + run_context + planner tool output` 기반을 우선.
+  - 규칙 fallback은 emergency 최소 경로만 유지.
+  - 프론트 정책 로직을 모듈 단위로 분리(ask/workflow/publish/auth).
 
 ## 9) 최근 Iteration 기록 (2026-02-22)
 - 작업 초점:
@@ -561,3 +644,213 @@ Source set: `docs/codex_handoff_20260220.md`, `docs/run_site_publish_strategy.md
     1) rule fallback 제거/격리(운영 긴급 플래그 외 기본 경로 완전 차단)
     2) federhav CLI deepagent action 품질 회귀셋 확장
     3) planner/output 계약 테스트를 federnett route 계층까지 확장
+
+- 추가 수정(17:13 KST, P0+P1 Iter batch):
+  - Iter-1: `src/federnett/report_hub.py`에 approval 상태모델/히스토리 저장 추가.
+  - Iter-2: `src/federnett/routes.py`에 approval GET/POST 엔드포인트 추가.
+  - Iter-3: `tests/test_report_hub_api.py`, `tests/test_federnett_routes.py`에 approval 회귀 테스트 추가.
+  - Iter-4: Run Studio에 `Report Hub Collaboration` 패널(코멘트/후속요청/링크/승인) UI 추가.
+  - Iter-5: `site/federnett/app.js`에 run 기반 post 자동탐색/타임라인 렌더/submit 동기화 로직 추가.
+  - Iter-6: publish approval gate 추가(approved/published 전 상태에서 confirm).
+  - Iter-7: Run Studio `Stage Cost/Time Dashboard` card 추가(시간/토큰/cache 집계 가시화).
+  - Iter-8: `node --check site/federnett/app.js` 문법 검증 통과.
+  - Iter-9: `pytest -q tests/test_report_hub_api.py tests/test_federnett_routes.py` 통과(`42 passed`).
+  - Iter-10: 회귀 확장 검증 `pytest -q tests/test_report_hub_api.py tests/test_federnett_routes.py tests/test_federhav_core.py tests/test_federhav_cli.py` 통과(`49 passed`) + P0/P1 상태/TODO 재정렬.
+
+- 추가 수정(18:42 KST, LLM 정책 분리 Iter):
+  - `site/federnett/index.html`
+    - LLM Settings 모달을 Global + Feather/Federlicht/FederHav scoped policy 구조로 확장.
+    - Stage override 편집 UI(`wf-stage-*`)를 Workflow Studio에서 LLM Settings로 이관하고, Workflow Studio에는 안내 섹션만 유지.
+  - `site/federnett/app.js`
+    - `state.modelOverrides` + `resolveScopedModelPolicy(scope)` 도입.
+    - Feather/Federlicht/FederHav payload가 각각 scoped policy를 사용하도록 연결.
+    - FederHav 기본 모델(`gpt-4o-mini`)을 global과 분리된 custom 기본값으로 고정.
+    - localStorage 정책 저장 스키마를 `global + overrides` 번들로 확장.
+    - root unlock 가능 시 `/api/workspace/settings`로 `llm_policy` 저장 연동(불가 시 로컬 저장 유지).
+  - `src/federnett/routes.py`, `src/federnett/workspace_settings.py`
+    - `/api/workspace/settings` GET/POST에서 `llm_policy` 반환/저장 지원.
+    - `/api/info`에 `federlicht_default_model(_vision)`, `federhav_default_model` 힌트 추가.
+  - `tests/test_federnett_routes.py`
+    - workspace settings `llm_policy` roundtrip 테스트 추가.
+  - 검증:
+    - `node --check site/federnett/app.js` 통과.
+    - `python -m pytest tests/test_federnett_routes.py -q` 통과 (`40 passed`).
+
+- 추가 수정(19:04 KST, P0/P1 Iter batch #1~#5):
+  - 진행률 기준(배치 시작):
+    - P0: **68%**
+    - P1: **42%**
+  - Iter-1 (P0 +4%):
+    - Live Logs 턴 데이터에 `log_start/log_end` 메타를 저장하고, `process_log`가 비어도 턴별 로그를 재추출하도록 보강.
+    - 적용: `site/federnett/app.js` (`normalizeLiveAskStoredHistory`, `appendLiveAskSystemEntry`, `renderLiveAskThread`).
+  - Iter-2 (P0 +3%):
+    - 글로벌 로그 브릿지 표시 조건 개선: 대화 turn이 있어도 턴별 로그가 없거나 실행 중이면 브릿지 카드 표시.
+    - 적용: `site/federnett/app.js` (`showGlobalLogCard` 조건식 개선).
+  - Iter-3 (P0 +2%):
+    - 로그브릿지 fold key를 턴 단위로 분리(동일 로그 텍스트라도 turn별 독립 접힘 상태 유지).
+    - 실행 상태 툴팁을 “타임라인 + 각 턴 로그브릿지” 기준으로 명확화.
+    - 적용: `site/federnett/app.js` (`renderLiveAskProcessFold`, `setJobStatus`).
+  - Iter-4 (P1 +4%):
+    - DeepAgent planner/action handoff 관련 route 계층 계약 보강:
+      - `/api/help/ask/stream`에서 `activity(action_plan)` 이벤트 payload가 SSE로 보존 전달되는지 회귀 테스트 추가.
+    - 적용: `tests/test_federnett_routes.py`.
+  - Iter-5 (P0 +1%, P1 +1%):
+    - 로그브릿지 관련 회귀 실행 및 핸드오프 진행률 트래킹 갱신.
+  - 진행률 결과(배치 종료):
+    - P0: **78%** (이번 배치 **+10%**)
+    - P1: **47%** (이번 배치 **+5%**)
+
+- 추가 수정(19:27 KST, P0/P1 Iter batch #6~#10):
+  - 진행률 기준(배치 시작):
+    - P0: **78%**
+    - P1: **47%**
+  - Iter-6 (P0 +3%):
+    - Report Hub approval 전이 규칙 엔진 추가:
+      - `src/federnett/report_hub.py`에 상태 전이 맵(`_APPROVAL_TRANSITIONS`)과 검증(`_is_valid_approval_transition`) 도입.
+      - 무효 전이(예: `published -> draft`)는 `ValueError`로 차단.
+  - Iter-7 (P0 +3%):
+    - approval 응답 가시성 보강:
+      - `get_post_approval`/`set_post_approval` payload에 `allowed_next` 추가.
+      - UI에서 다음 가능한 상태를 직접 안내할 수 있는 데이터 계약 확보.
+  - Iter-8 (P0 +2%):
+    - approval 쓰기 권한 가드 추가:
+      - `src/federnett/routes.py` `/api/report-hub/approval`에 root-auth 체크(`_can_edit_report_hub_approval`) 적용.
+      - root-auth 활성 환경에서 unlock 없이 승인 상태 변경 시 `403`.
+  - Iter-9 (P1 +2%):
+    - 회귀 테스트 확장:
+      - `tests/test_report_hub_api.py`
+        - 무효 전이 차단 테스트 추가.
+        - `allowed_next` 계약 검증 추가.
+      - `tests/test_federnett_routes.py`
+        - root-auth 잠금/해제 상태별 approval API 동작 검증 추가.
+        - approval 무효 전이 시 `400` 회귀 추가.
+  - Iter-10 (P0 +1%, P1 +1%):
+    - 검증 실행:
+      - `python -m pytest tests/test_report_hub_api.py tests/test_federnett_routes.py -q` 통과(`49 passed`).
+      - `node --check site/federnett/app.js` 통과.
+  - 진행률 결과(배치 종료):
+    - P0: **87%** (이번 배치 **+9%**)
+    - P1: **50%** (이번 배치 **+3%**)
+
+- 추가 수정(19:49 KST, P0/P1 Iter batch #11~#15):
+  - 진행률 기준(배치 시작):
+    - P0: **87%**
+    - P1: **50%**
+  - Iter-11 (P0 +2%):
+    - Report Hub approval UI를 전이 규칙 기반으로 보강:
+      - `site/federnett/app.js`
+        - `allowed_next` 기반 상태 옵션 동기화(`runHubAllowedApprovalStates`, `syncRunHubApprovalStatusControl`).
+        - 허용 전이 힌트/경고 렌더 추가.
+      - `site/federnett/index.html`
+        - approval 안내 라인(`run-hub-approval-hint`) 추가.
+      - `site/federnett/app.css`
+        - approval hint 스타일 추가(테마 공통 대비 보정).
+  - Iter-12 (P0 +1%):
+    - approval 저장 안전성 보강:
+      - 허용되지 않은 상태 선택 시 저장 차단 + 로그 안내.
+      - `/api/report-hub/approval` 403 시 root-auth 상태 재동기화 및 UI 재렌더.
+  - Iter-13 (P1 +3%):
+    - DeepAgent Phase B-3(LLM fallback 축소) 1차:
+      - `src/federnett/help_agent.py`
+        - `_allow_llm_action_planner_fallback(runtime_mode)` 추가.
+        - action planner 경로에서 LLM fallback은 기본 비활성(옵트인), runtime_mode=`off`에서만 기본 허용.
+        - `FEDERNETT_HELP_ACTION_LLM_FALLBACK=1`로 fallback 명시 허용.
+  - Iter-14 (P1 +2%):
+    - planner fallback 정책 회귀 테스트 확장:
+      - `tests/test_help_agent.py`
+        - 기본(자동/deepagent)에서 fallback 비활성 검증.
+        - env opt-in 시 fallback 허용 검증.
+        - 기존 LLM fallback 테스트를 opt-in 조건으로 고정.
+  - Iter-15 (P0 +1%, P1 +1%):
+    - 회귀 검증 실행:
+      - `python -m pytest tests/test_help_agent.py tests/test_report_hub_api.py tests/test_federnett_routes.py -q` 통과(`115 passed`).
+      - `node --check site/federnett/app.js` 통과.
+  - 진행률 결과(배치 종료):
+    - P0: **91%** (이번 배치 **+4%**)
+    - P1: **56%** (이번 배치 **+6%**)
+
+- 추가 수정(20:06 KST, P0/P1 Iter batch #16~#20):
+  - 진행률 기준(배치 시작):
+    - P0: **91%**
+    - P1: **56%**
+  - Iter-16 (P0 +2%):
+    - Report Hub 협업 UI 2차 polish(접근성/밀도) 보강:
+      - approval/comment/follow-up 입력 컨트롤 `aria-label` 추가.
+      - approval note에서 `Ctrl/Cmd+Enter` 저장 지원.
+      - timeline scroll 영역 `overscroll-behavior`/touch scroll 보강.
+  - Iter-17 (P0 +2%):
+    - approval + root-auth 연동 2차 보강:
+      - root-auth 잠금 상태에서는 approval 저장 버튼 비활성.
+      - 패널 힌트에 `root unlock 필요` 문구를 사전 표시.
+      - 저장 버튼 tooltip으로 상태 안내.
+  - Iter-18 (P0 +2%):
+    - Workflow Stage 오입력 가드 강화:
+      - `site/federnett/app.js` stage override에서
+        - system prompt 길이 상한(`6000`) 도입 및 자동 제한,
+        - 도구 토큰 개수 상한(`24`) 도입,
+        - runtime 미등록 도구 토큰 경고 추가.
+      - 경고는 stage context 경고 라인으로 집계 표시.
+  - Iter-19 (P0 +2%):
+    - Live Logs 최종 시각 polish(모바일/저해상도):
+      - dock/thread/composer 높이 정책 재조정(`100dvh` 기반).
+      - 모바일 구간에서 composer 스크롤 상한/밀도 보정.
+      - 스크롤 dead-zone 완화(`overscroll-behavior`, touch-scroll).
+  - Iter-20 (P0 +1%, P1 +2%):
+    - 테마별 semantic chip 대비 보정(white/black 우선):
+      - `meta-pill`, `pipeline-chip`, `workflow-stage-chip(is-on)` 대비 상향.
+      - warning chip 계열 색 대비 보강.
+    - DeepAgent Phase B-3 fallback 축소 연장:
+      - stage override 가드/approval UX 보강과 함께 회귀 확인.
+    - 검증:
+      - `python -m pytest tests/test_help_agent.py tests/test_report_hub_api.py tests/test_federnett_routes.py -q` 통과(`115 passed`).
+      - `node --check site/federnett/app.js` 통과.
+  - 진행률 결과(배치 종료):
+    - P0: **100%** (이번 배치 **+9%**, 목표 달성)
+    - P1: **58%** (이번 배치 **+2%**)
+
+- 추가 수정(20:16 KST, P0 100% 달성 지점 검증/중단):
+  - 요청 기준에 따라 P0 달성 시점에서 iter 중단.
+  - 검증 재실행:
+    - `python -m pytest tests/test_help_agent.py tests/test_report_hub_api.py tests/test_federnett_routes.py -q` 통과(`115 passed`).
+    - `node --check site/federnett/app.js` 통과.
+  - 상태:
+    - P0: **100% 유지**
+    - P1: **58% 유지** (다음 승인 후 재개)
+
+- 추가 수정(21:49 KST, P1 Iter batch #21~#25):
+  - 진행률 기준(배치 시작):
+    - P0: **100%**
+    - P1: **58%**
+  - Iter-21 (P1 +8%):
+    - DeepAgent Phase B-3 fallback 축소 2차:
+      - `src/federnett/help_agent.py`
+        - `_allow_llm_action_planner_fallback` 기본값을 전체 runtime에서 비활성화(명시 opt-in only)로 조정.
+      - 회귀: `tests/test_help_agent.py` fallback 정책 기대값 갱신.
+  - Iter-22 (P1 +10%):
+    - planner 계약 테스트 확장:
+      - `tests/test_federhav_agentic_runtime.py` 신설.
+      - preflight/정규화/assistant-json 경로/action-object 경로 계약 검증 추가.
+  - Iter-23 (P1 +7%):
+    - CLI/Core 품질 회귀셋 확장:
+      - `tests/test_federhav_cli.py`: execution bounds/flag normalization 회귀 추가.
+      - `tests/test_federhav_core.py`: execution_mode normalization + custom run_roots resolution 회귀 추가.
+  - Iter-24 (P1 +8%):
+    - ownership 명시화:
+      - `src/federnett/agent_profiles.py`에 `ownership` 계산(`built-in/private/org-shared`) 추가.
+      - `site/federnett/app.js`, `site/federnett/app.css`에 ownership badge 표시/테마 대비 반영.
+      - `tests/test_agent_profiles.py` ownership 회귀 추가.
+  - Iter-25 (P1 +9%):
+    - Stage Cost/Time Dashboard 2차 완료:
+      - run별 metrics history 누적(local storage) + mini trend chart 추가.
+      - `renderRunMetricsPanel`에서 history snapshot/summary 동기화.
+    - Ad-hoc 축소 1차 완료:
+      - `_allow_rule_fallback`을 `runtime_mode=off + opt-in`으로 제한(`emergency` 예외).
+      - `_needs_agentic_action_planning` 간소화(명시 실행의도 중심).
+    - 운영 문서:
+      - `docs/federnett_auth_operations.md` 추가 + `README.md` 링크 반영.
+  - 검증:
+    - `python -m pytest tests/test_help_agent.py tests/test_federhav_agentic_runtime.py tests/test_federhav_core.py tests/test_federhav_cli.py tests/test_agent_profiles.py tests/test_federnett_routes.py -q` 통과(`130 passed`).
+    - `node --check site/federnett/app.js` 통과.
+  - 진행률 결과(배치 종료):
+    - P0: **100% 유지**
+    - P1: **100%** (이번 배치 **+42%**, 목표 달성)

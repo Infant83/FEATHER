@@ -1,0 +1,32 @@
+{
+  ".workspace-panel-head h2": {
+    "fg": "rgb(18, 38, 63)",
+    "bg": "rgba(255, 255, 255, 0.95)",
+    "contrast": 15.275602303032343,
+    "text": "Federnett Workspace Settings"
+  },
+  ".workspace-panel-head p": {
+    "fg": "rgb(18, 38, 63)",
+    "bg": "rgba(255, 255, 255, 0.95)",
+    "contrast": 15.275602303032343,
+    "text": "Templates, Agent Profiles, Agent Capabilities를 한 패널에서 제어합니다."
+  },
+  ".agent-readonly-hint.is-readonly": {
+    "fg": "color(srgb 0.789961 0.285098 0.370275)",
+    "bg": "rgba(255, 255, 255, 0.93)",
+    "contrast": 4.561239547296715,
+    "text": "Built-in profile is read-only. Root auth: disabled · Clone 후 site profile로 저장하세요."
+  },
+  ".agent-apply-chip.is-on": {
+    "fg": "color(srgb 0.0906667 0.491765 0.710353)",
+    "bg": "color(srgb 0.855059 0.929725 0.969255)",
+    "contrast": 3.7456232267460488,
+    "text": "Writer"
+  },
+  ".agent-status": {
+    "fg": "color(srgb 0.0691765 0.14949 0.248471)",
+    "bg": "rgba(255, 255, 255, 0.93)",
+    "contrast": 15.257221533668414,
+    "text": "Profile loaded."
+  }
+}

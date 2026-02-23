@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+from datetime import datetime
 from pathlib import Path
 import re
 import shutil
@@ -91,6 +92,61 @@ def _find_run_root(run_dir: Path, run_roots: Iterable[Path]) -> Optional[Path]:
         if matched is None or len(str(root)) > len(str(matched)):
             matched = root
     return matched
+
+
+def _sanitize_run_name(raw: str | None) -> str:
+    token = str(raw or "").strip().replace("\r", " ").replace("\n", " ")
+    token = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', " ", token)
+    token = re.sub(r"\s+", "_", token)
+    token = re.sub(r"_+", "_", token).strip(" ._")
+    if not token:
+        token = datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    return token[:96]
+
+
+def create_run_folder(
+    root: Path,
+    run_roots: Iterable[Path],
+    *,
+    run_name: str | None = None,
+    topic: str | None = None,
+) -> dict[str, Any]:
+    roots = [Path(p) for p in run_roots]
+    if not roots:
+        raise ValueError("No run roots are configured.")
+    run_root = roots[0]
+    run_root.mkdir(parents=True, exist_ok=True)
+
+    base_name = _sanitize_run_name(run_name or topic)
+    run_dir = run_root / base_name
+    suffix = 1
+    while run_dir.exists():
+        run_dir = run_root / f"{base_name}_{suffix}"
+        suffix += 1
+
+    (run_dir / "archive").mkdir(parents=True, exist_ok=True)
+    (run_dir / "report_notes").mkdir(parents=True, exist_ok=True)
+    (run_dir / "instruction").mkdir(parents=True, exist_ok=True)
+
+    instruction_path = run_dir / "instruction" / f"{run_dir.name}.txt"
+    instruction_lines = [
+        (str(topic or run_dir.name).strip() or run_dir.name),
+        "",
+        "# Goal",
+        "핵심 기술 흐름, 대표 기업/연구기관, 응용 사례, 한계/리스크, 향후 전망을 정리하세요.",
+    ]
+    instruction_path.write_text("\n".join(instruction_lines).strip() + "\n", encoding="utf-8")
+
+    stat = run_dir.stat()
+    return {
+        "created": True,
+        "run_name": run_dir.name,
+        "run_rel": safe_rel(run_dir, root),
+        "run_abs": str(run_dir.resolve()),
+        "run_root_rel": safe_rel(run_root, root),
+        "instruction_path": safe_rel(instruction_path, root),
+        "updated_at": iso_ts(stat.st_mtime),
+    }
 
 
 def move_run_to_trash(root: Path, run_rel: str | None, run_roots: Iterable[Path]) -> dict[str, Any]:
@@ -266,6 +322,7 @@ def summarize_run(root: Path, run_rel: str | None) -> dict[str, Any]:
         "report_meta": {
             "template": report_meta.get("template"),
             "free_format": report_meta.get("free_format"),
+            "style_pack": report_meta.get("style_pack"),
             "template_rigidity": report_meta.get("template_rigidity"),
             "template_adjust_mode": report_meta.get("template_adjust_mode"),
             "repair_mode": report_meta.get("repair_mode"),

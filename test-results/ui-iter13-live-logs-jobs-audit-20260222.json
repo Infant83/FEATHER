@@ -1,0 +1,31 @@
+{
+  "run_button": {
+    "x": 1152,
+    "y": 919.078125,
+    "width": 64,
+    "height": 30
+  },
+  "plan_button": {
+    "x": 1152,
+    "y": 953.078125,
+    "width": 64,
+    "height": 20
+  },
+  "act_button": {
+    "x": 1152,
+    "y": 977.078125,
+    "width": 64,
+    "height": 20
+  },
+  "side_actions": {
+    "x": 1152,
+    "y": 919.078125,
+    "width": 64,
+    "height": 91.09375
+  },
+  "jobs_modal_open": true,
+  "jobs_item_bg": "linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96)), none | rgba(255, 255, 255, 0.96)",
+  "jobs_item_title_color": "rgb(23, 54, 77)",
+  "process_fold_count": 1,
+  "process_fold_close_from_tail": true
+}

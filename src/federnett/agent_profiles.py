@@ -108,6 +108,21 @@ def _iter_profile_files(dir_path: Path) -> dict[str, Path]:
     return files
 
 
+def _resolve_profile_ownership(data: dict[str, Any], source: str) -> str:
+    src = str(source or "").strip().lower()
+    if src == "builtin":
+        return "built-in"
+    visibility = str(data.get("visibility") or "").strip().lower().replace("-", "_")
+    if visibility in {"org_shared", "organization", "shared", "team", "public"}:
+        return "org-shared"
+    if bool(data.get("shared")):
+        return "org-shared"
+    organization = str(data.get("organization") or "").strip()
+    if organization:
+        return "org-shared"
+    return "private"
+
+
 def _sanitize_profile_id(raw: str) -> str:
     if not raw:
         raise ValueError("Profile id is required")
@@ -150,6 +165,7 @@ def list_agent_profiles(root: Path) -> list[dict[str, Any]]:
             if not path.exists():
                 continue
             data = _load_json(path)
+            ownership = _resolve_profile_ownership(data, source)
             profiles.append(
                 {
                     "id": data.get("id") or profile_id,
@@ -159,6 +175,7 @@ def list_agent_profiles(root: Path) -> list[dict[str, Any]]:
                     "organization": data.get("organization") or "",
                     "apply_to": _normalize_apply_to(data.get("apply_to") or []),
                     "source": source,
+                    "ownership": ownership,
                     "path": safe_rel(path, root),
                     "read_only": source == "builtin",
                     "memory_hook": data.get("memory_hook") or {},
@@ -208,20 +225,23 @@ def save_agent_profile(
     memory_text: Optional[str] = None,
     store: str = "site",
 ) -> dict[str, Any]:
-    if store != "site":
-        raise ValueError("Only site profiles can be saved")
-    dir_path = _profile_dir(root, "site")
+    if store not in {"site", "builtin"}:
+        raise ValueError("store must be either 'site' or 'builtin'")
+    dir_path = _profile_dir(root, store)
     dir_path.mkdir(parents=True, exist_ok=True)
 
     raw_id = str(profile.get("id") or "").strip()
     profile_id = ""
-    if raw_id and _is_six_digit_profile_id(raw_id):
-        profile_id = raw_id
-    elif raw_id and PROFILE_ID_RE.fullmatch(raw_id) and (dir_path / f"{raw_id}.json").exists():
-        # Keep legacy site profile IDs editable; new profiles use 6-digit IDs.
-        profile_id = raw_id
+    if store == "builtin":
+        profile_id = _sanitize_profile_id(raw_id)
     else:
-        profile_id = _generate_site_profile_id(dir_path)
+        if raw_id and _is_six_digit_profile_id(raw_id):
+            profile_id = raw_id
+        elif raw_id and PROFILE_ID_RE.fullmatch(raw_id) and (dir_path / f"{raw_id}.json").exists():
+            # Keep legacy site profile IDs editable; new profiles use 6-digit IDs.
+            profile_id = raw_id
+        else:
+            profile_id = _generate_site_profile_id(dir_path)
     profile["id"] = profile_id
     profile["apply_to"] = _normalize_apply_to(profile.get("apply_to") or [])
 
@@ -235,7 +255,8 @@ def save_agent_profile(
     elif "organization" in profile:
         profile.pop("organization", None)
 
-    path = dir_path / f"{profile_id}.json"
+    files = _iter_profile_files(dir_path)
+    path = files.get(profile_id) or (dir_path / f"{profile_id}.json")
 
     memory_hook = profile.get("memory_hook") or {}
     if not isinstance(memory_hook, dict):
@@ -255,7 +276,7 @@ def save_agent_profile(
     return {
         "id": profile_id,
         "path": safe_rel(path, root),
-        "source": "site",
+        "source": store,
     }
 
 

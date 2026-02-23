@@ -1,0 +1,39 @@
+{
+  "url": "http://127.0.0.1:8876/",
+  "checks": {
+    "theme_default_run_folder_btn": {
+      "bg": "rgba(255, 255, 255, 0.05)",
+      "color": "rgb(245, 247, 251)"
+    },
+    "theme_white_run_folder_btn": {
+      "bg": "rgba(255, 255, 255, 0.05)",
+      "color": "rgb(18, 38, 63)"
+    },
+    "theme_black_run_folder_btn": {
+      "bg": "rgba(255, 255, 255, 0.05)",
+      "color": "rgb(238, 245, 255)"
+    },
+    "workflow_studio_open": true,
+    "wf_stage_focus_btn_visible": true,
+    "wf_stage_reset_btn_visible": true,
+    "wf_stage_priority_text": "Scout\nenabled\n아카이브 지형도를 빠르게 훑고 핵심 읽기 대상을 고릅니다. 전체 맥락을 잡는 탐색 단계입니다.\n기본 에이전트 설정 사용\npriority: global settings → stage override → runtime temp",
+    "live_logs_order": {
+      "workflowOrder": "2",
+      "mainOrder": "1"
+    },
+    "thread_metrics": {
+      "clientHeight": 345,
+      "minHeight": "0px",
+      "maxHeight": "none",
+      "overflowY": "auto"
+    },
+    "compact_process_style": {
+      "summaryMinHeight": "20px",
+      "summaryGap": "6px",
+      "spanWhiteSpace": "nowrap",
+      "spanOverflow": "hidden",
+      "spanTextOverflow": "ellipsis"
+    }
+  },
+  "page_errors": []
+}

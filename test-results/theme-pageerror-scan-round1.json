@@ -1,0 +1,30 @@
+{
+  "default": {
+    "count": 0,
+    "errors": []
+  },
+  "white": {
+    "count": 0,
+    "errors": []
+  },
+  "black": {
+    "count": 0,
+    "errors": []
+  },
+  "sky": {
+    "count": 0,
+    "errors": []
+  },
+  "crimson": {
+    "count": 0,
+    "errors": []
+  },
+  "sage": {
+    "count": 0,
+    "errors": []
+  },
+  "amber": {
+    "count": 0,
+    "errors": []
+  }
+}

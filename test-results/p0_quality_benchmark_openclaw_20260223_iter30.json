@@ -1,0 +1,23 @@
+[
+  {
+    "path": "site/runs/openclaw/report_full.html",
+    "format": "html",
+    "overall": 71.95,
+    "claim_support_ratio": 3.08,
+    "unsupported_claim_count": 63.0,
+    "evidence_density_score": 98.44,
+    "section_coherence_score": 66.0,
+    "signals": {
+      "section_coverage": 25.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 98.44,
+      "claim_support_ratio": 3.08,
+      "unsupported_claim_count": 63.0,
+      "section_coherence_score": 66.0,
+      "method_transparency": 100.0,
+      "traceability": 86.0,
+      "uncertainty_handling": 100.0,
+      "overall": 71.95
+    }
+  }
+]

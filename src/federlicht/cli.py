@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,23 @@ from . import report as report_mod
 
 def main() -> int:
     args = report_mod.parse_args()
+    backend_token = str(os.getenv("FEDERLICHT_LLM_BACKEND") or "").strip().lower()
+    if backend_token in {"codex", "codex_cli", "codex-cli", "cli"}:
+        codex_model = str(os.getenv("CODEX_MODEL") or "").strip()
+        if codex_model:
+            model_raw = str(getattr(args, "model", "") or "").strip()
+            if not model_raw or model_raw in {"$OPENAI_MODEL", report_mod.DEFAULT_MODEL}:
+                args.model = codex_model
+            check_raw = str(getattr(args, "check_model", "") or "").strip()
+            if not check_raw or check_raw in {"$OPENAI_MODEL", report_mod.DEFAULT_CHECK_MODEL}:
+                args.check_model = codex_model
+            quality_raw = str(getattr(args, "quality_model", "") or "").strip()
+            if not quality_raw:
+                args.quality_model = codex_model
+        print(
+            f"[backend] FEDERLICHT_LLM_BACKEND=codex_cli (experimental bridge) model={getattr(args, 'model', '-')}",
+            file=sys.stderr,
+        )
     try:
         agent_overrides, config_overrides = report_mod.resolve_agent_overrides_from_config(args)
     except (OSError, ValueError, json.JSONDecodeError) as exc:

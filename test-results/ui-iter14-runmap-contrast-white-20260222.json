@@ -1,0 +1,56 @@
+{
+  "rows": [
+    {
+      "selector": ".run-file-required-chip.is-ok",
+      "color": "rgb(18, 83, 63)",
+      "backgroundColor": "rgb(232, 248, 240)",
+      "contrast": 8.19,
+      "text": "Instruction: ok"
+    },
+    {
+      "selector": ".run-file-required-chip.is-missing",
+      "color": "rgb(122, 39, 54)",
+      "backgroundColor": "rgb(253, 239, 242)",
+      "contrast": 8.66,
+      "text": "Report: missing"
+    },
+    {
+      "selector": ".run-file-scope-chip.is-input",
+      "color": "rgb(18, 83, 63)",
+      "backgroundColor": "rgb(232, 248, 240)",
+      "contrast": 8.19,
+      "text": "입력 파일 · 1"
+    },
+    {
+      "selector": ".run-file-scope-chip.is-output",
+      "color": "rgb(21, 73, 104)",
+      "backgroundColor": "rgb(234, 246, 255)",
+      "contrast": 8.75,
+      "text": "결과 파일 · 1"
+    },
+    {
+      "selector": ".run-file-tree-chip.is-essential",
+      "color": "rgb(18, 83, 63)",
+      "backgroundColor": "rgb(232, 248, 240)",
+      "contrast": 8.19,
+      "text": "필수 입력 · instruction (1)"
+    },
+    {
+      "selector": ".run-file-tree-chip.is-support",
+      "color": "rgb(58, 85, 107)",
+      "backgroundColor": "rgb(245, 249, 253)",
+      "contrast": 7.38,
+      "text": "아카이브 인덱스 (1)"
+    },
+    {
+      "selector": ".file-group-kind.is-essential",
+      "color": "rgb(18, 83, 63)",
+      "backgroundColor": "rgb(232, 248, 240)",
+      "contrast": 8.19,
+      "text": "필수"
+    }
+  ],
+  "minContrast": 7.38,
+  "url": "http://127.0.0.1:8765",
+  "theme": "white"
+}

@@ -1,0 +1,50 @@
+{
+  "page_errors": [],
+  "popups": {
+    "workspace_panel": {
+      "top": 86,
+      "left": 16,
+      "width": 1326,
+      "height": 788,
+      "bottom": 874,
+      "right": 1342,
+      "visible": true
+    },
+    "instruction_modal": {
+      "top": 211.390625,
+      "left": 323,
+      "width": 720,
+      "height": 477.203125,
+      "bottom": 688.59375,
+      "right": 1043,
+      "visible": true
+    },
+    "run_picker_modal": {
+      "top": 192.390625,
+      "left": 253,
+      "width": 860,
+      "height": 515.203125,
+      "bottom": 707.59375,
+      "right": 1113,
+      "visible": true
+    },
+    "model_modal": {
+      "top": 278.625,
+      "left": 323,
+      "width": 720,
+      "height": 342.734375,
+      "bottom": 621.359375,
+      "right": 1043,
+      "visible": true
+    },
+    "help_modal": {
+      "top": 81,
+      "left": 323,
+      "width": 720,
+      "height": 738,
+      "bottom": 819,
+      "right": 1043,
+      "visible": true
+    }
+  }
+}

@@ -1,5 +1,124 @@
 # Changelog
 
+## 1.9.26 (2026-02-22)
+- P0 completion batch (Federnett UX/governance polish):
+  - Report Hub collaboration accessibility/density pass:
+    - add explicit `aria-label` for approval/comment/follow-up inputs.
+    - add `Ctrl/Cmd+Enter` approval-note submit shortcut.
+    - improve timeline scrolling behavior (`overscroll-behavior`, touch scrolling).
+  - Root-auth aware approval UX:
+    - disable approval save when root auth is enabled but locked.
+    - surface lock state directly in approval hint + save button tooltip.
+  - Workflow Stage override guardrail hardening:
+    - enforce prompt max length (`6000`) with auto-trim.
+    - enforce max tool tokens (`24`) with truncation warning.
+    - warn on runtime-unknown tool tokens using active capability registry.
+  - Live Logs low-resolution/mobile polish:
+    - refine dock/thread/composer viewport-height policy.
+    - improve compact scrolling behavior and reduce dead zones in constrained layouts.
+  - Theme contrast pass (white-first, black-compatible):
+    - improve semantic chip readability for `meta-pill`, `pipeline-chip`, and `workflow-stage-chip` states.
+- DeepAgent P1 continuation:
+  - keep action-planner fallback reduction path stable while integrating above UI/guardrail changes.
+- Tests / checks:
+  - `python -m pytest tests/test_help_agent.py tests/test_report_hub_api.py tests/test_federnett_routes.py -q` passed (`115 passed`).
+  - `node --check site/federnett/app.js` passed.
+
+## 1.9.25 (2026-02-22)
+- Report Hub approval UI transition-awareness (P0):
+  - integrate backend `allowed_next` approval transition metadata into Run Studio collaboration panel.
+  - dynamically enable/disable approval status options based on allowed transitions.
+  - add inline approval transition hint/warning (`run-hub-approval-hint`) with theme-safe styling.
+  - block invalid approval submit attempts client-side with clear log feedback.
+  - on approval `403` responses, trigger root-auth status refresh and immediate panel re-render.
+- DeepAgent Phase B-3 start: action-planner fallback reduction (P1):
+  - add `_allow_llm_action_planner_fallback(runtime_mode)` in `src/federnett/help_agent.py`.
+  - default behavior:
+    - `runtime_mode=auto/deepagent`: no LLM action-planner fallback.
+    - `runtime_mode=off`: LLM fallback allowed.
+  - explicit opt-in override: `FEDERNETT_HELP_ACTION_LLM_FALLBACK=1`.
+- Regression coverage:
+  - update/extend `tests/test_help_agent.py` for fallback policy defaults and opt-in behavior.
+  - keep LLM planner fallback path covered under explicit opt-in.
+- Tests / checks:
+  - `python -m pytest tests/test_help_agent.py tests/test_report_hub_api.py tests/test_federnett_routes.py -q` passed (`115 passed`).
+  - `node --check site/federnett/app.js` passed.
+
+## 1.9.24 (2026-02-22)
+- Report Hub approval workflow hardening (P0):
+  - add explicit approval transition policy in `src/federnett/report_hub.py`:
+    - status graph via `_APPROVAL_TRANSITIONS`
+    - transition validation via `_is_valid_approval_transition(...)`
+    - reject invalid transitions with clear errors (e.g. `published -> draft`).
+  - enrich approval payload contract with `allowed_next` so UI can show valid next states.
+- Report Hub approval authorization hardening (P0):
+  - add route-level guard for `/api/report-hub/approval` in `src/federnett/routes.py`.
+  - when root-auth is enabled, approval updates now require root unlock (or root-role session path already recognized by auth helpers).
+- Regression coverage expansion (P1 support):
+  - `tests/test_report_hub_api.py`
+    - validate invalid transition rejection.
+    - validate `allowed_next` metadata in baseline/update/load flows.
+  - `tests/test_federnett_routes.py`
+    - validate approval route returns `403` when root-auth is enabled but locked.
+    - validate approval route succeeds after root unlock token.
+    - validate invalid transition returns `400`.
+- Tests / checks:
+  - `python -m pytest tests/test_report_hub_api.py tests/test_federnett_routes.py -q` passed (`49 passed`).
+  - `node --check site/federnett/app.js` passed.
+
+## 1.9.23 (2026-02-22)
+- Live Logs log-bridge turn mapping upgrade:
+  - store per-turn process bounds (`log_start`/`log_end`) in live history rows.
+  - rehydrate per-turn process logs from bounds when `process_log` text is missing.
+  - include process bounds for system execution events (job start/done/error) so system turns can render bridge context consistently.
+- Live Logs bridge visibility/persistence polish:
+  - show global bridge card while job/ask is active even when other turns already exist.
+  - show global bridge card when no turn-level bridge is attached yet.
+  - make process fold state independent per turn via fold-key scoping (prevents unrelated turns sharing open/close state).
+  - clarify running tooltip to indicate timeline + per-turn bridge locations.
+- DeepAgent/Federnett route contract hardening (P1 support):
+  - add SSE regression test to ensure `/api/help/ask/stream` preserves `activity(action_plan)` payload details (`execution_handoff` etc.).
+- Tests / checks:
+  - `node --check site/federnett/app.js` passed.
+  - `python -m pytest tests/test_federnett_routes.py tests/test_federnett_commands.py -q` passed.
+
+## 1.9.22 (2026-02-22)
+- Federnett LLM policy persistence hardening (iter-1):
+  - enforce `llm_policy` normalization on `/api/workspace/settings` GET/POST via `_normalize_llm_policy_payload(...)`.
+  - keep legacy/global payload compatibility while returning canonical scoped policy shape.
+  - normalize stored workspace policy responses to prevent backend/model/reasoning/runtime drift between runs.
+- LLM Settings effective-visibility upgrade (iter-2):
+  - add per-scope effective summary lines in LLM Settings modal:
+    - Global baseline
+    - Feather effective policy
+    - Federlicht effective policy
+    - FederHav effective policy
+  - wire live preview updates while editing mode/backend/model/runtime/log-tail controls.
+  - improve summary surface styling for dark/white themes (`policy-effective-line`).
+- Tests / checks:
+  - `node --check site/federnett/app.js` passed.
+  - `python -m pytest tests/test_federnett_routes.py tests/test_federnett_commands.py -q` passed (`60 passed`).
+
+## 1.9.21 (2026-02-22)
+- LLM policy split (Global + Scoped) in Federnett:
+  - extend LLM Settings modal to manage:
+    - Global baseline
+    - Feather policy (inherit/custom)
+    - Federlicht policy (inherit/custom)
+    - FederHav policy (inherit/custom)
+  - FederHav default is now separated from global and starts with `gpt-4o-mini` policy preset.
+  - Federlicht scoped default uses environment-first model hints (`OPENAI_MODEL`, `OPENAI_MODEL_VISION`).
+- Stage override management unification:
+  - move stage override editor (`wf-stage-*`) from Workflow Studio into LLM Settings.
+  - keep Workflow Studio section as guidance-only to avoid dual editing surfaces.
+- Workspace settings persistence expansion:
+  - add `llm_policy` support in `site/federnett/workspace_settings.json`.
+  - extend `/api/workspace/settings` GET/POST to return/save `llm_policy`.
+  - frontend applies localStorage policy and attempts workspace persistence when root unlock is available.
+- Tests / checks:
+  - `node --check site/federnett/app.js` passed.
+  - `python -m pytest tests/test_federnett_routes.py -q` passed (`40 passed`).
+
 ## 1.9.20 (2026-02-22)
 - FederHav DeepAgent Phase B-2 completion (`action proposal -> execution handoff`):
   - extend deepagent action planner schema in `src/federhav/agentic_runtime.py` with:

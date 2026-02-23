@@ -1,0 +1,35 @@
+body.style-pack-dark {
+  --site-ink: #e7edf8;
+  --site-muted: rgba(223, 231, 245, 0.78);
+  --ink: #e7edf8;
+  --muted: #9aa9c4;
+  --accent: #71d6ff;
+  --accent-2: #6ff2cb;
+  --accent-soft: rgba(113, 214, 255, 0.18);
+  --page-bg: radial-gradient(circle at 18% 12%, #22314f 0%, #131b2c 45%, #0a101c 100%);
+  --masthead-bg: rgba(8, 13, 25, 0.86);
+  --masthead-border: rgba(113, 214, 255, 0.26);
+  --masthead-title: #e7edf8;
+  --masthead-deck: rgba(231, 237, 248, 0.78);
+  --masthead-kicker: rgba(137, 159, 202, 0.82);
+  --masthead-link: #c6dcff;
+  --masthead-link-border: rgba(113, 214, 255, 0.3);
+  --masthead-link-bg: rgba(32, 54, 90, 0.45);
+  --paper: rgba(9, 15, 30, 0.93);
+  --paper-alt: rgba(16, 25, 46, 0.94);
+  --rule: rgba(113, 214, 255, 0.24);
+  --shadow: 0 30px 70px rgba(4, 8, 16, 0.6);
+}
+
+body.style-pack-dark .site-page::before {
+  background: linear-gradient(140deg, rgba(111, 242, 203, 0.14), rgba(113, 214, 255, 0.1));
+}
+
+body.style-pack-dark .report-shell {
+  border-color: rgba(113, 214, 255, 0.2);
+}
+
+body.style-pack-dark a {
+  color: var(--accent-2);
+}
+

@@ -1,0 +1,56 @@
+{
+  "page_errors": [],
+  "modals": {
+    "run_picker": {
+      "card": {
+        "x": 370,
+        "y": 242.390625,
+        "width": 860,
+        "height": 515.203125
+      },
+      "details": {
+        "x": 389,
+        "y": 403.125,
+        "width": 822,
+        "height": 50.46875
+      },
+      "list": {
+        "x": 389,
+        "y": 465.59375,
+        "width": 822,
+        "height": 220
+      },
+      "details_overlaps_list": false
+    },
+    "model_policy": {
+      "card": {
+        "x": 440,
+        "y": 328.625,
+        "width": 720,
+        "height": 342.734375
+      }
+    },
+    "jobs": {
+      "button_enabled": false
+    },
+    "help": {
+      "card": {
+        "x": 440,
+        "y": 90,
+        "width": 720,
+        "height": 820
+      }
+    }
+  },
+  "layout": {
+    "baseline": {
+      "control_h": 1561.3125,
+      "logs_h": 933.5,
+      "control_y": 313.203125,
+      "logs_y": 313.203125
+    },
+    "after_scroll": {
+      "topbar_delta_y": -900.0
+    }
+  }
+}

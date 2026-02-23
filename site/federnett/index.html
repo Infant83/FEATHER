@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./app.css?v=20260222_uiux_v48" />
+    <link rel="stylesheet" href="./app.css?v=20260222_uiux_v50" />
   </head>
   <body>
     <div class="app">
@@ -76,7 +76,7 @@
               <div class="ask-thread-inline">
                 <button type="button" id="ask-thread-toggle" class="ghost">대화 스레드</button>
               </div>
-              <small class="muted">LLM backend/model/reasoning은 상단 <strong>LLM Settings</strong>에서 전역 관리됩니다.</small>
+              <small class="muted">LLM backend/model/reasoning은 상단 <strong>LLM Settings</strong>에서 Global+스코프 정책으로 관리됩니다.</small>
               <button type="button" id="ask-open-llm-settings" class="ghost">LLM Settings</button>
               <button type="button" id="ask-geometry-reset" class="ghost">위치 초기화</button>
               <button type="button" id="ask-reset" class="ghost">Reset</button>
@@ -287,7 +287,7 @@
                   <div class="options-title-row">
                     <strong>Execution Options</strong>
                     <small id="feather-agentic-policy-note" class="muted">
-                      Agentic Search 모델 정책은 상단 LLM Settings 전역 설정을 사용합니다.
+                      Agentic Search 모델 정책은 상단 LLM Settings의 Feather 정책을 사용합니다.
                     </small>
                   </div>
                   <div class="advanced-grid">
@@ -475,7 +475,7 @@
                 <section class="wide options-panel" aria-label="Federlicht execution options">
                   <div class="options-title-row">
                     <strong>Execution Options</strong>
-                    <small class="muted">LLM 정책은 상단 LLM Settings 전역 설정을 사용합니다.</small>
+                    <small class="muted">LLM 정책은 상단 LLM Settings의 Federlicht 정책을 사용합니다.</small>
                   </div>
                   <div class="advanced-grid">
                     <label>
@@ -567,6 +567,69 @@
                   <div id="run-summary-links" class="summary-links"></div>
                   <div id="run-summary-reports" class="summary-reports"></div>
                   <div id="run-figure-tools" class="run-figure-tools is-empty"></div>
+                  <section class="run-hub-panel" id="run-hub-panel" aria-live="polite">
+                    <div class="run-hub-head">
+                      <strong>Report Hub Collaboration</strong>
+                      <div class="run-hub-head-actions">
+                        <span class="meta-pill" id="run-hub-status">unlinked</span>
+                        <button id="run-hub-refresh" class="ghost mini" type="button">Refresh</button>
+                      </div>
+                    </div>
+                    <p id="run-hub-context" class="muted">Run과 연결된 Hub 게시글을 확인하는 중...</p>
+                    <div id="run-hub-link" class="run-hub-link muted">Hub link: -</div>
+                    <div class="run-hub-approval-row">
+                      <label>
+                        <span>Approval</span>
+                        <select id="run-hub-approval-status" aria-label="Report Hub approval status">
+                          <option value="draft">draft</option>
+                          <option value="review">review</option>
+                          <option value="approved">approved</option>
+                          <option value="published">published</option>
+                          <option value="rejected">rejected</option>
+                          <option value="archived">archived</option>
+                        </select>
+                      </label>
+                      <label class="wide">
+                        <span>Approval note</span>
+                        <input id="run-hub-approval-note" type="text" placeholder="검토 메모/사유" aria-label="Report Hub approval note" />
+                      </label>
+                      <button id="run-hub-approval-save" class="ghost mini" type="button">Save Approval</button>
+                    </div>
+                    <div id="run-hub-approval-hint" class="run-hub-approval-hint muted">
+                      허용 전이 상태를 동기화하는 중입니다.
+                    </div>
+                    <div class="run-hub-compose-grid">
+                      <label class="wide">
+                        <span>Comment</span>
+                        <textarea
+                          id="run-hub-comment-input"
+                          rows="2"
+                          placeholder="게시글 코멘트/리뷰 의견을 남깁니다."
+                          aria-label="Report Hub comment"
+                        ></textarea>
+                      </label>
+                      <button id="run-hub-comment-submit" class="ghost mini" type="button">Add Comment</button>
+                      <label class="wide">
+                        <span>Follow-up task</span>
+                        <textarea
+                          id="run-hub-followup-input"
+                          rows="2"
+                          placeholder="다음 리비전 액션/요청 프롬프트를 기록합니다."
+                          aria-label="Report Hub follow-up task"
+                        ></textarea>
+                      </label>
+                      <button id="run-hub-followup-submit" class="ghost mini" type="button">Add Follow-up</button>
+                      <button id="run-hub-link-submit" class="ghost mini" type="button">Link Current Run</button>
+                    </div>
+                    <div id="run-hub-timeline" class="run-hub-timeline"></div>
+                  </section>
+                  <section class="run-metrics-panel" id="run-metrics-panel" aria-live="polite">
+                    <div class="run-metrics-head">
+                      <strong>Stage Cost/Time Dashboard</strong>
+                      <span class="muted" id="run-metrics-summary">No metrics yet.</span>
+                    </div>
+                    <div id="run-metrics-body" class="run-metrics-body"></div>
+                  </section>
                   <div class="file-list" id="run-file-list"></div>
                 </section>
               </div>
@@ -741,61 +804,7 @@
                 <section class="workflow-studio-section">
                   <h4>고급 Stage 설정</h4>
                   <p class="workflow-studio-note">
-                    drop-down에서 stage를 선택하고 override를 적용합니다. 비우면 Federlicht 기본 정책을 사용합니다.
-                  </p>
-                  <div class="workflow-stage-select-wrap">
-                    <label class="wide">
-                      <span>설정 대상 Stage</span>
-                      <select id="wf-stage-select" aria-label="Workflow stage override target"></select>
-                      <small class="workflow-studio-field-help">선택 stage 1개에만 override를 적용합니다.</small>
-                    </label>
-                    <div class="workflow-stage-badges">
-                      <span id="wf-selected-stage-pill" class="workflow-stage-badge is-selected">selected: -</span>
-                      <span id="wf-active-stage-pill" class="workflow-stage-badge">pipeline focus: -</span>
-                    </div>
-                    <div class="workflow-stage-actions">
-                      <button type="button" id="wf-stage-focus-active" class="ghost mini">활성 Stage로 맞춤</button>
-                      <button type="button" id="wf-stage-reset" class="ghost mini">선택 Stage 초기화</button>
-                    </div>
-                    <div id="wf-stage-context" class="workflow-stage-context">선택된 stage 정보를 불러오는 중...</div>
-                  </div>
-                  <div class="workflow-studio-grid">
-                    <label>
-                      <span>Tool Mapping (쉼표 구분)</span>
-                      <input id="wf-stage-tools" list="wf-stage-tool-suggestions" placeholder="예: list_archive_files,read_document,web_search" />
-                      <small class="workflow-studio-field-help">비우면 프로필/런타임 기본 도구를 사용합니다.</small>
-                    </label>
-                    <label class="wide">
-                      <span>System Prompt Override (선택)</span>
-                      <textarea id="wf-stage-prompt" rows="4" placeholder="선택한 stage의 system prompt를 덮어씁니다."></textarea>
-                      <small class="workflow-studio-field-help">실험 목적일 때만 권장됩니다. 기본 Prompt 일관성이 먼저입니다.</small>
-                    </label>
-                  </div>
-                  <details class="workflow-stage-policy" open>
-                    <summary>Prompt Override 적용 방식</summary>
-                    <pre id="wf-stage-prompt-preview">선택한 stage의 prompt 구조를 불러오는 중...</pre>
-                  </details>
-                  <small id="wf-stage-tools-known" class="workflow-studio-note">사용 가능 도구: 런타임/프로필 설정을 반영해 표시됩니다.</small>
-                  <small class="workflow-studio-note">override 우선순위: Global LLM Settings → Stage Override → Runtime Temporary</small>
-                  <div id="wf-stage-tool-help" class="workflow-studio-tool-help"></div>
-                  <datalist id="wf-stage-tool-suggestions">
-                    <option value="list_archive_files"></option>
-                    <option value="list_supporting_files"></option>
-                    <option value="read_document"></option>
-                    <option value="web_search"></option>
-                    <option value="search_web"></option>
-                    <option value="source_index"></option>
-                    <option value="llm_generate"></option>
-                  </datalist>
-                  <div class="workflow-studio-toggles">
-                    <label class="toggle">
-                      <input type="checkbox" id="wf-stage-enabled" checked />
-                      <span>이 stage 사용</span>
-                    </label>
-                  </div>
-                  <p class="workflow-studio-note">
-                    저장 시 <code>report_notes/workflow_stage_overrides.json</code>로 기록되고 Federlicht 실행에
-                    <code>--agent-config</code>로 연결됩니다.
+                    Stage override 편집은 상단 <strong>LLM Settings</strong>에서 관리됩니다.
                   </p>
                 </section>
 
@@ -1362,72 +1371,240 @@
         <div class="modal-card" role="document">
           <header class="modal-header">
             <div>
-              <h3>Global LLM Settings</h3>
-              <p>Feather/Federlicht/FederHav에 공통으로 적용할 모델 정책을 설정합니다.</p>
+              <h3>LLM Settings</h3>
+              <p>Global 정책과 Feather/Federlicht/FederHav 스코프별 오버라이드를 한 곳에서 관리합니다.</p>
             </div>
             <button type="button" class="ghost" data-modelpolicy-close>Close</button>
           </header>
           <div class="modal-list model-policy-list">
-            <div class="advanced-grid">
-              <label>
-                <span>LLM Backend</span>
-                <select id="global-llm-backend">
-                  <option value="openai_api" selected>OpenAI API</option>
-                  <option value="codex_cli">Codex CLI Auth</option>
-                </select>
-              </label>
-              <label>
-                <span>Model</span>
-                <input id="global-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
-              </label>
-              <label>
-                <span>Check Model</span>
-                <input id="global-check-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
-              </label>
-              <label>
-                <span>Vision Model</span>
-                <input id="global-vision-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
-              </label>
-              <label>
-                <span>Reasoning Effort</span>
-                <select id="global-reasoning-effort">
-                  <option value="off" selected>off</option>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                  <option value="extra_high">extra_high</option>
-                </select>
-              </label>
-              <label>
-                <span>FederHav Runtime</span>
-                <select id="global-federhav-runtime-mode">
-                  <option value="auto" selected>auto</option>
-                  <option value="deepagent">deepagent</option>
-                  <option value="off">off</option>
-                </select>
-              </label>
-              <label>
-                <span>FederHav Log Context</span>
-                <select id="global-live-log-tail-size">
-                  <option value="1200">1.2k</option>
-                  <option value="2200" selected>2.2k</option>
-                  <option value="3600">3.6k</option>
-                  <option value="5200">5.2k</option>
-                </select>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="global-live-auto-log" checked />
-                <span>FederHav Auto Log Context</span>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="global-model-lock" checked />
-                <span>Global Sync Lock</span>
-              </label>
-            </div>
-            <small class="muted">Lock가 켜져 있으면 panel 별 backend/model 변경이 전체 설정에 동기화됩니다.</small>
+            <section class="workflow-studio-section">
+              <h4>Global Baseline</h4>
+              <div class="advanced-grid">
+                <label>
+                  <span>LLM Backend</span>
+                  <select id="global-llm-backend">
+                    <option value="openai_api" selected>OpenAI API</option>
+                    <option value="codex_cli">Codex CLI Auth</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Model</span>
+                  <input id="global-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label>
+                  <span>Check Model</span>
+                  <input id="global-check-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label>
+                  <span>Vision Model</span>
+                  <input id="global-vision-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label>
+                  <span>Reasoning Effort</span>
+                  <select id="global-reasoning-effort">
+                    <option value="off" selected>off</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="extra_high">extra_high</option>
+                  </select>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" id="global-model-lock" checked />
+                  <span>Global Sync Lock</span>
+                </label>
+              </div>
+              <small id="policy-global-effective" class="workflow-studio-note policy-effective-line">effective: -</small>
+            </section>
+
+            <section class="workflow-studio-section">
+              <h4>Feather Policy</h4>
+              <div class="advanced-grid">
+                <label>
+                  <span>Policy Mode</span>
+                  <select id="policy-feather-mode">
+                    <option value="inherit" selected>Inherit Global</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </label>
+                <label>
+                  <span>LLM Backend</span>
+                  <select id="policy-feather-backend">
+                    <option value="openai_api" selected>OpenAI API</option>
+                    <option value="codex_cli">Codex CLI Auth</option>
+                  </select>
+                </label>
+                <label class="wide">
+                  <span>Agentic Model</span>
+                  <input id="policy-feather-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+              </div>
+              <small id="policy-feather-hint" class="workflow-studio-note">Inherit: Global LLM Settings를 그대로 사용합니다.</small>
+              <small id="policy-feather-effective" class="workflow-studio-note policy-effective-line">effective: -</small>
+            </section>
+
+            <section class="workflow-studio-section">
+              <h4>Federlicht Policy</h4>
+              <div class="advanced-grid">
+                <label>
+                  <span>Policy Mode</span>
+                  <select id="policy-federlicht-mode">
+                    <option value="inherit">Inherit Global</option>
+                    <option value="custom" selected>Custom</option>
+                  </select>
+                </label>
+                <label>
+                  <span>LLM Backend</span>
+                  <select id="policy-federlicht-backend">
+                    <option value="openai_api" selected>OpenAI API</option>
+                    <option value="codex_cli">Codex CLI Auth</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Model</span>
+                  <input id="policy-federlicht-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label>
+                  <span>Check Model</span>
+                  <input id="policy-federlicht-check-model" list="openai-model-options" placeholder="$OPENAI_MODEL" />
+                </label>
+                <label>
+                  <span>Vision Model</span>
+                  <input id="policy-federlicht-vision-model" list="openai-model-options" placeholder="$OPENAI_MODEL_VISION" />
+                </label>
+                <label>
+                  <span>Reasoning Effort</span>
+                  <select id="policy-federlicht-reasoning-effort">
+                    <option value="off" selected>off</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="extra_high">extra_high</option>
+                  </select>
+                </label>
+              </div>
+              <small id="policy-federlicht-hint" class="workflow-studio-note">Custom: Federlicht는 OPENAI_MODEL/OPENAI_MODEL_VISION 기본값을 우선 사용합니다.</small>
+              <small id="policy-federlicht-effective" class="workflow-studio-note policy-effective-line">effective: -</small>
+            </section>
+
+            <section class="workflow-studio-section">
+              <h4>FederHav Policy</h4>
+              <div class="advanced-grid">
+                <label>
+                  <span>Policy Mode</span>
+                  <select id="policy-federhav-mode">
+                    <option value="inherit">Inherit Global</option>
+                    <option value="custom" selected>Custom</option>
+                  </select>
+                </label>
+                <label>
+                  <span>LLM Backend</span>
+                  <select id="policy-federhav-backend">
+                    <option value="openai_api" selected>OpenAI API</option>
+                    <option value="codex_cli">Codex CLI Auth</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Model</span>
+                  <input id="policy-federhav-model" list="openai-model-options" placeholder="gpt-4o-mini" />
+                </label>
+                <label>
+                  <span>Reasoning Effort</span>
+                  <select id="policy-federhav-reasoning-effort">
+                    <option value="off" selected>off</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="extra_high">extra_high</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Runtime Mode</span>
+                  <select id="policy-federhav-runtime-mode">
+                    <option value="auto" selected>auto</option>
+                    <option value="deepagent">deepagent</option>
+                    <option value="off">off</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Log Context</span>
+                  <select id="policy-federhav-live-log-tail-size">
+                    <option value="1200">1.2k</option>
+                    <option value="2200" selected>2.2k</option>
+                    <option value="3600">3.6k</option>
+                    <option value="5200">5.2k</option>
+                  </select>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" id="policy-federhav-live-auto-log" checked />
+                  <span>FederHav Auto Log Context</span>
+                </label>
+              </div>
+              <small id="policy-federhav-hint" class="workflow-studio-note">Custom: FederHav 기본 모델은 gpt-4o-mini입니다.</small>
+              <small id="policy-federhav-effective" class="workflow-studio-note policy-effective-line">effective: -</small>
+            </section>
+
+            <section class="workflow-studio-section">
+              <h4>Federlicht Stage Overrides</h4>
+              <p class="workflow-studio-note">
+                Stage override 편집은 LLM Settings에서만 제공합니다. 저장 시 run의 <code>workflow_stage_overrides.json</code>으로 동기화됩니다.
+              </p>
+              <div class="workflow-stage-select-wrap">
+                <label class="wide">
+                  <span>설정 대상 Stage</span>
+                  <select id="wf-stage-select" aria-label="Workflow stage override target"></select>
+                  <small class="workflow-studio-field-help">선택 stage 1개에만 override를 적용합니다.</small>
+                </label>
+                <div class="workflow-stage-badges">
+                  <span id="wf-selected-stage-pill" class="workflow-stage-badge is-selected">selected: -</span>
+                  <span id="wf-active-stage-pill" class="workflow-stage-badge">pipeline focus: -</span>
+                </div>
+                <div class="workflow-stage-actions">
+                  <button type="button" id="wf-stage-focus-active" class="ghost mini">활성 Stage로 맞춤</button>
+                  <button type="button" id="wf-stage-reset" class="ghost mini">선택 Stage 초기화</button>
+                </div>
+                <div id="wf-stage-context" class="workflow-stage-context">선택된 stage 정보를 불러오는 중...</div>
+              </div>
+              <div class="workflow-studio-grid">
+                <label>
+                  <span>Tool Mapping (쉼표 구분)</span>
+                  <input id="wf-stage-tools" list="wf-stage-tool-suggestions" placeholder="예: list_archive_files,read_document,web_search" />
+                  <small class="workflow-studio-field-help">비우면 프로필/런타임 기본 도구를 사용합니다.</small>
+                </label>
+                <label class="wide">
+                  <span>System Prompt Override (선택)</span>
+                  <textarea id="wf-stage-prompt" rows="4" placeholder="선택한 stage의 system prompt를 덮어씁니다."></textarea>
+                  <small class="workflow-studio-field-help">실험 목적일 때만 권장됩니다. 기본 Prompt 일관성이 먼저입니다.</small>
+                </label>
+              </div>
+              <details class="workflow-stage-policy" open>
+                <summary>Prompt Override 적용 방식</summary>
+                <pre id="wf-stage-prompt-preview">선택한 stage의 prompt 구조를 불러오는 중...</pre>
+              </details>
+              <small id="wf-stage-tools-known" class="workflow-studio-note">사용 가능 도구: 런타임/프로필 설정을 반영해 표시됩니다.</small>
+              <small class="workflow-studio-note">override 우선순위: Global LLM Settings → Stage Override → Runtime Temporary</small>
+              <div id="wf-stage-tool-help" class="workflow-studio-tool-help"></div>
+              <datalist id="wf-stage-tool-suggestions">
+                <option value="list_archive_files"></option>
+                <option value="list_supporting_files"></option>
+                <option value="read_document"></option>
+                <option value="web_search"></option>
+                <option value="search_web"></option>
+                <option value="source_index"></option>
+                <option value="llm_generate"></option>
+              </datalist>
+              <div class="workflow-studio-toggles">
+                <label class="toggle">
+                  <input type="checkbox" id="wf-stage-enabled" checked />
+                  <span>이 stage 사용</span>
+                </label>
+              </div>
+            </section>
+
+            <small class="muted">Precedence: payload explicit value → stage override → scoped policy (custom/inherit) → global baseline → environment defaults.</small>
           </div>
           <div class="modal-footer">
-            <button type="button" id="model-policy-apply" class="primary">Apply Global Settings</button>
+            <button type="button" id="model-policy-apply" class="primary">Apply LLM Settings</button>
           </div>
         </div>
       </div>
@@ -1827,6 +2004,6 @@
     <datalist id="model-options"></datalist>
     <datalist id="openai-model-options"></datalist>
     <datalist id="codex-model-options"></datalist>
-    <script src="./app.js?v=20260222_uiux_v48" type="module"></script>
+    <script src="./app.js?v=20260222_uiux_v50" type="module"></script>
   </body>
 </html>

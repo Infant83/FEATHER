@@ -1,0 +1,38 @@
+body.style-pack-magazine {
+  --site-ink: #1a1224;
+  --site-muted: rgba(62, 43, 87, 0.74);
+  --ink: #1a1224;
+  --muted: #5d4f75;
+  --accent: #d9487f;
+  --accent-2: #2b9ad3;
+  --accent-soft: rgba(217, 72, 127, 0.18);
+  --page-bg: radial-gradient(circle at 14% 10%, #f9d6e6 0%, #f8ecfb 42%, #f4fbff 100%);
+  --masthead-bg: linear-gradient(120deg, #3f2d66 0%, #5b3f8f 45%, #2c88ba 100%);
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #fff7fc;
+  --masthead-deck: rgba(250, 241, 255, 0.9);
+  --masthead-kicker: rgba(250, 241, 255, 0.72);
+  --masthead-link: #fff7fc;
+  --masthead-link-border: rgba(255, 247, 252, 0.42);
+  --masthead-link-bg: rgba(255, 247, 252, 0.14);
+  --paper: #fffefe;
+  --paper-alt: #f8f3ff;
+  --rule: rgba(107, 76, 152, 0.2);
+  --shadow: 0 28px 60px rgba(101, 70, 138, 0.24);
+  --body-font: "Space Grotesk", "Noto Sans KR", "Segoe UI", sans-serif;
+  --heading-font: "Fraunces", "Space Grotesk", sans-serif;
+  --ui-font: "Space Grotesk", "Noto Sans KR", sans-serif;
+}
+
+body.style-pack-magazine .masthead h1 {
+  letter-spacing: 0.01em;
+}
+
+body.style-pack-magazine h2 {
+  color: #7f2853;
+}
+
+body.style-pack-magazine .report-figure {
+  border-color: rgba(217, 72, 127, 0.22);
+}
+

@@ -118,3 +118,30 @@ def test_evaluate_prompt_switches_quality_axis_by_mode() -> None:
     )
     assert "강하게 평가하세요." in deep_prompt
     assert "간결성, 목적 적합성" in brief_prompt
+
+
+def test_prompt_intent_guidance_adapts_to_decision_mode() -> None:
+    plan_prompt = prompts.build_plan_prompt(
+        "Korean",
+        depth="normal",
+        template_rigidity="balanced",
+        free_form=False,
+        report_intent="decision_brief",
+    )
+    evidence_prompt = prompts.build_evidence_prompt(
+        "Korean",
+        depth="normal",
+        template_rigidity="balanced",
+        free_form=False,
+        report_intent="decision",
+    )
+    evaluate_prompt = prompts.build_evaluate_prompt(
+        "coverage, structure",
+        depth="normal",
+        template_rigidity="balanced",
+        free_form=False,
+        report_intent="decision",
+    )
+    assert "의도=decision" in plan_prompt
+    assert "옵션별 근거" in evidence_prompt
+    assert "실행 가능성" in evaluate_prompt

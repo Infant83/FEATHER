@@ -1,0 +1,22 @@
+[
+  {
+    "path": "div#live-ask-thread > section.live-ask-turn.live-ask-turn-system > article.live-ask-message.system",
+    "bg": "rgba(6, 10, 16, 0.62)",
+    "luma": 9.58,
+    "alpha": 0.62,
+    "size": [
+      842,
+      45
+    ]
+  },
+  {
+    "path": "section#preview-popup",
+    "bg": "rgba(8, 13, 22, 0.94)",
+    "luma": 12.59,
+    "alpha": 0.94,
+    "size": [
+      887,
+      893
+    ]
+  }
+]

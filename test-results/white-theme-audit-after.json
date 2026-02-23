@@ -1,0 +1,173 @@
+{
+  "url": "http://127.0.0.1:8878/",
+  "checked": [
+    "#live-ask-input",
+    "#live-ask-runtime-mode",
+    "#live-ask-log-tail-size",
+    ".ask-policy-row-inline",
+    ".live-ask-policy-row",
+    ".workflow-stage-context",
+    ".workflow-stage-select-wrap select",
+    "#wf-stage-select",
+    ".modal-card",
+    ".modal-list",
+    ".file-preview-editor",
+    ".file-preview-size select"
+  ],
+  "samples": [
+    {
+      "selector": "#live-ask-input",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": "#live-ask-runtime-mode",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": "#live-ask-log-tail-size",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": ".ask-policy-row-inline",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".ask-policy-row-inline",
+      "index": 1,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".live-ask-policy-row",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".workflow-stage-context",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.92)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.604299 0.63647 0.679901 / 0.406902)",
+      "bg_luma": 255.0,
+      "alpha": 0.92
+    },
+    {
+      "selector": ".workflow-stage-select-wrap select",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": "#wf-stage-select",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": ".modal-card",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.94)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.94
+    },
+    {
+      "selector": ".modal-card",
+      "index": 1,
+      "bg": "rgba(255, 255, 255, 0.94)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.94
+    },
+    {
+      "selector": ".modal-card",
+      "index": 2,
+      "bg": "rgba(255, 255, 255, 0.94)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.94
+    },
+    {
+      "selector": ".modal-list",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".modal-list",
+      "index": 1,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".modal-list",
+      "index": 2,
+      "bg": "rgba(255, 255, 255, 0.88)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.88
+    },
+    {
+      "selector": ".file-preview-editor",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.517542 0.556766 0.609719 / 0.360078)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    },
+    {
+      "selector": ".file-preview-size select",
+      "index": 0,
+      "bg": "rgba(255, 255, 255, 0.96)",
+      "color": "rgb(18, 38, 63)",
+      "border": "color(srgb 0.577687 0.612022 0.658373 / 0.391294)",
+      "bg_luma": 255.0,
+      "alpha": 0.96
+    }
+  ],
+  "dark_like": []
+}

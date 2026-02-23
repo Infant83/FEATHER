@@ -1,0 +1,12 @@
+{
+  "filter_chip_count": 2,
+  "clicked_filter": true,
+  "file_btn_count": 3,
+  "clicked_file": true,
+  "preview_open_after_file_click": false,
+  "preview_path_after_file_click": "",
+  "latest_clicked": true,
+  "preview_open_after_latest_click": false,
+  "preview_path_after_latest_click": "",
+  "page_errors": []
+}

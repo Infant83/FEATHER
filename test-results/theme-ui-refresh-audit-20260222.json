@@ -1,0 +1,587 @@
+{
+  "themes": [
+    {
+      "theme": "default",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(245, 247, 251)",
+          "bg": "color(srgb 0.0823529 0.105882 0.137255 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(245, 247, 251)",
+          "bg": "color(srgb 0.0745098 0.0980392 0.133333 / 0.793725)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(245, 247, 251)",
+          "bg": "rgba(25, 32, 42, 0.94)",
+          "contrast": 15.280336752217838,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(245, 247, 251)",
+          "bg": "color(srgb 0.0745098 0.0980392 0.133333 / 0.829804)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(245, 247, 251, 0.68)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 18.39607682345189,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(245, 247, 251, 0.68)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 18.292775069313493,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "white",
+      "min_contrast": 15.275602303032343,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(18, 38, 63)",
+          "bg": "rgba(255, 255, 255, 0.92)",
+          "contrast": 15.275602303032343,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "color(srgb 0.0689412 0.149569 0.248706)",
+          "bg": "rgba(255, 255, 255, 0.93)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "color(srgb 0.0875294 0.467451 0.677176)",
+          "bg": "color(srgb 0.873177 0.93851 0.973098)",
+          "contrast": null,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(18, 38, 63)",
+          "bg": "rgba(255, 255, 255, 0.93)",
+          "contrast": 15.275602303032343,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(18, 38, 63)",
+          "bg": "rgba(255, 255, 255, 0.96)",
+          "contrast": 15.275602303032343,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(18, 38, 63, 0.62)",
+          "bg": "rgba(255, 255, 255, 0.9)",
+          "contrast": 15.275602303032343,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(18, 38, 63, 0.62)",
+          "bg": "rgba(255, 255, 255, 0.88)",
+          "contrast": 15.275602303032343,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "black",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(238, 245, 255)",
+          "bg": "color(srgb 0.027451 0.0352941 0.0470588 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(238, 245, 255)",
+          "bg": "color(srgb 0.0352941 0.0509804 0.0784314 / 0.81098)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(238, 245, 255)",
+          "bg": "rgba(13, 17, 24, 0.95)",
+          "contrast": 17.236108509165064,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(238, 245, 255)",
+          "bg": "color(srgb 0.0352941 0.0509804 0.0784314 / 0.847843)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(238, 245, 255, 0.64)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 17.983226065022663,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(238, 245, 255, 0.64)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 17.882242642556417,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "sky",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(244, 247, 255)",
+          "bg": "color(srgb 0.0784314 0.133333 0.219608 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(244, 247, 255)",
+          "bg": "color(srgb 0.0862745 0.133333 0.203922 / 0.793725)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(244, 247, 255)",
+          "bg": "rgba(28, 40, 60, 0.94)",
+          "contrast": 13.817333274476319,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(244, 247, 255)",
+          "bg": "color(srgb 0.0862745 0.133333 0.203922 / 0.829804)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(244, 247, 255, 0.66)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 18.410279808885733,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(244, 247, 255, 0.66)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 18.306898298975312,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "crimson",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(255, 245, 247)",
+          "bg": "color(srgb 0.152941 0.0784314 0.105882 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(255, 245, 247)",
+          "bg": "color(srgb 0.180392 0.0941177 0.129412 / 0.81098)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(255, 245, 247)",
+          "bg": "rgba(60, 30, 40, 0.95)",
+          "contrast": 13.955487645456925,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(255, 245, 247)",
+          "bg": "color(srgb 0.180392 0.0941176 0.129412 / 0.847843)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(255, 245, 247, 0.66)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 18.467702967231023,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(255, 245, 247, 0.66)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 18.363999001992642,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "sage",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(242, 248, 244)",
+          "bg": "color(srgb 0.0862745 0.12549 0.105882 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(242, 248, 244)",
+          "bg": "color(srgb 0.0941177 0.141176 0.117647 / 0.81098)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(242, 248, 244)",
+          "bg": "rgba(30, 44, 36, 0.95)",
+          "contrast": 13.538788856744457,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(242, 248, 244)",
+          "bg": "color(srgb 0.0941176 0.141176 0.117647 / 0.847843)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(242, 248, 244, 0.66)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 18.32930570605664,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(242, 248, 244, 0.66)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 18.226378899991083,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    },
+    {
+      "theme": "amber",
+      "min_contrast": 6.074415742941157,
+      "targets": {
+        "topbar_title": {
+          "selector": ".brand-title-row strong",
+          "fg": "rgb(255, 246, 232)",
+          "bg": "color(srgb 0.133333 0.101961 0.0784314 / 0.7)",
+          "contrast": null,
+          "size": {
+            "w": 88.484375,
+            "h": 19.4375
+          }
+        },
+        "workflow_title": {
+          "selector": ".workflow-head strong",
+          "fg": "rgb(255, 246, 232)",
+          "bg": "color(srgb 0.188235 0.141176 0.0941177 / 0.81098)",
+          "contrast": null,
+          "size": {
+            "w": 110.40625,
+            "h": 19.25
+          }
+        },
+        "workflow_node": {
+          "selector": ".workflow-node",
+          "fg": "rgb(231, 255, 247)",
+          "bg": "rgba(44, 106, 85, 0.24)",
+          "contrast": 6.074415742941157,
+          "size": {
+            "w": 124.578125,
+            "h": 24
+          }
+        },
+        "workflow_state": {
+          "missing": true
+        },
+        "live_thread": {
+          "selector": "#live-ask-thread",
+          "fg": "rgb(255, 246, 232)",
+          "bg": "rgba(58, 44, 28, 0.95)",
+          "contrast": 12.58843123786024,
+          "size": {
+            "w": 1122.40625,
+            "h": 1000.34375
+          }
+        },
+        "live_input": {
+          "selector": "#live-ask-input",
+          "fg": "rgb(255, 246, 232)",
+          "bg": "color(srgb 0.188235 0.141176 0.0941176 / 0.847843)",
+          "contrast": null,
+          "size": {
+            "w": 1100.40625,
+            "h": 96
+          }
+        },
+        "live_assistant_msg": {
+          "missing": true
+        },
+        "run_folder_label": {
+          "selector": "#tab-feather label span",
+          "fg": "rgba(255, 246, 232, 0.66)",
+          "bg": "rgba(6, 11, 18, 0.62)",
+          "contrast": 18.41462134486947,
+          "size": {
+            "w": 376.390625,
+            "h": 18.46875
+          }
+        },
+        "ask_mode_hint": {
+          "selector": "#live-ask-mode-scope-hint",
+          "fg": "rgba(255, 246, 232, 0.66)",
+          "bg": "rgba(7, 12, 18, 0.42)",
+          "contrast": 18.31121545539774,
+          "size": {
+            "w": 83.09375,
+            "h": 15.703125
+          }
+        }
+      }
+    }
+  ],
+  "min_contrast": 6.074415742941157,
+  "issues": [],
+  "layout": {
+    "thread_h": 1000.34375,
+    "dock_h": 1378.796875,
+    "panel_h": 1493.84375
+  },
+  "page_errors": [],
+  "topbar_scroll_follow_delta": 818.0
+}

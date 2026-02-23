@@ -1,0 +1,60 @@
+{
+  "responsive": {
+    "1280x800": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 200.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "logs": {
+        "h": 674
+      }
+    },
+    "1024x768": {
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 182.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "logs": {
+        "h": 656
+      }
+    },
+    "768x1024": {
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 415
+      },
+      "composer": {
+        "h": 220
+      },
+      "logs": {
+        "h": 912
+      }
+    },
+    "540x960": {
+      "scrollWidth": 540,
+      "clientWidth": 540,
+      "hasHorizontalOverflow": false,
+      "thread": {
+        "h": 252.953125
+      },
+      "composer": {
+        "h": 220
+      },
+      "logs": {
+        "h": 848
+      }
+    }
+  }
+}

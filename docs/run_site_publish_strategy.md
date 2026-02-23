@@ -1,6 +1,6 @@
 # Run / Site 분리 및 Report Hub 발행 전략
 
-Last updated: 2026-02-21
+Last updated: 2026-02-21 (workspace settings API + global run-folder control)
 
 ## 1) 디렉터리 역할 분리
 - 작업(run 아카이브): `runs/<run_name>/...`
@@ -17,6 +17,12 @@ Last updated: 2026-02-21
 - 신규 run은 `runs/*` 우선
 - `site/runs/*`는 하위 호환으로 스캔 가능
 - hub root는 `site/report_hub`로 분리
+- Federnett 전역 제어:
+  - 상단 `Run Folder` 버튼에서 run `Load/Open/Create` 수행
+  - workspace root 설정 API:
+    - `GET /api/workspace/settings`
+    - `POST /api/workspace/settings` (root auth enabled 시 root unlock 필요)
+  - 저장 파일: `site/federnett/workspace_settings.json`
 
 ## 3) 권장 발행 방식 (on-prem 포함)
 
@@ -37,6 +43,8 @@ python -m federlicht.hub_publish \
 동작:
 - `site/report_hub/reports/<run>/report_full.html`로 복사
 - (선택) `run_overview_*.md`, `report_workflow.md` 동반 복사
+- HTML 보고서가 참조하는 run 내부 로컬 파일(`img/css/csv/pdf` 등)도 기본 동반 복사
+  - 제외 옵션: `--no-linked-assets`
 - `site/report_hub/manifest.json`, `site/report_hub/index.html` 갱신
 
 ### 3.3 배포
@@ -79,7 +87,10 @@ python -m federlicht.hub_publish \
 ## 6) Federnett와 run 혼동 방지 규칙
 - UI/문서에서 run root와 report hub root를 분리 표기
 - publish 액션은 run 내부 파일을 직접 공유하지 않고 hub 복사본을 기준으로 수행
-- 향후 권장: Federnett Publish 버튼이 내부적으로 `federlicht.hub_publish`를 호출하도록 연결
+- Federnett Run Studio의 `Publish to Report Hub` 버튼은 `/api/report-hub/publish`를 통해
+  내부적으로 `federlicht.hub_publish`를 호출한다.
+- publish 응답은 `published_asset_rels`, `skipped_asset_refs`를 포함하여
+  링크 자산 동반 게시 결과를 추적한다.
 
 ## 7) 단계적 마이그레이션
 - 즉시 전량 이관 대신 점진 전환

@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-02-22T01:09:52.918022+00:00",
+  "checks": {
+    "run_picker_open": {
+      "exists": true,
+      "open": true,
+      "hidden": "false"
+    },
+    "model_policy_open": {
+      "exists": true,
+      "open": true,
+      "hidden": "false"
+    },
+    "workspace_panel_open": {
+      "exists": true,
+      "open": true,
+      "aria": "false"
+    },
+    "workflow_studio_open": {
+      "exists": true,
+      "open": true,
+      "aria": "false"
+    }
+  },
+  "page_errors": []
+}
