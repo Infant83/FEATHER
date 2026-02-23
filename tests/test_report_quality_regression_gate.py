@@ -89,3 +89,36 @@ def test_load_rows_supports_bundle_shape() -> None:
     payload = {"rows": [{"overall": 72.0, "claim_support_ratio": 45.0, "unsupported_claim_count": 12.0, "section_coherence_score": 63.0}]}
     rows = gate._load_rows(payload)
     assert len(rows) == 1
+
+
+def test_profile_policy_world_class_makes_gate_stricter() -> None:
+    rows = [
+        {
+            "overall": 79.0,
+            "claim_support_ratio": 55.0,
+            "unsupported_claim_count": 14.0,
+            "section_coherence_score": 70.0,
+        }
+    ]
+    baseline_policy = gate.resolve_quality_gate_targets(profile="baseline")
+    baseline_targets = baseline_policy["thresholds"]
+    ok_baseline, _ = gate.run_gate(
+        rows,
+        min_overall=baseline_targets["min_overall"],
+        min_claim_support=baseline_targets["min_claim_support"],
+        max_unsupported=baseline_targets["max_unsupported"],
+        min_section_coherence=baseline_targets["min_section_coherence"],
+    )
+    assert ok_baseline is True
+
+    world_policy = gate.resolve_quality_gate_targets(profile="world_class")
+    world_targets = world_policy["thresholds"]
+    ok_world, errors_world = gate.run_gate(
+        rows,
+        min_overall=world_targets["min_overall"],
+        min_claim_support=world_targets["min_claim_support"],
+        max_unsupported=world_targets["max_unsupported"],
+        min_section_coherence=world_targets["min_section_coherence"],
+    )
+    assert ok_world is False
+    assert errors_world

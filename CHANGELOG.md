@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.9.27 (2026-02-23)
+- Report quality gate threshold policy normalization:
+  - add shared quality profile module `src/federlicht/quality_profiles.py`:
+    - `none`, `smoke`, `baseline`, `professional`, `world_class`
+    - unified target resolver (`resolve_quality_gate_targets`) and effective-band classifier.
+  - clarify that low thresholds (e.g., `overall=65`) are smoke-level health checks, not world-class.
+- Federlicht runtime gate profile support:
+  - add `--quality-profile` to Federlicht CLI (`src/federlicht/cli_args.py`).
+  - apply profile + override resolution in orchestrator (`src/federlicht/orchestrator.py`).
+  - persist profile/band/policy metadata in:
+    - `report_notes/quality_contract.latest.json`
+    - `report_notes/quality_gate.json`
+- Tooling alignment:
+  - `tools/report_quality_regression_gate.py`:
+    - add `--quality-profile` (default `baseline`), emit `gate-policy` line.
+  - `tools/run_report_quality_gate.py`:
+    - add `--quality-profile` (default `baseline`).
+    - include profile/band/targets in markdown report.
+- Documentation:
+  - add `docs/report_quality_threshold_policy.md`.
+  - update handoff and workflow guide references.
+- Tests:
+  - add `tests/test_quality_profiles.py`.
+  - extend `tests/test_report_quality_gate_runner.py`, `tests/test_federlicht_cli_args.py`.
+  - regression run:
+    - `pytest -q tests/test_quality_profiles.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_federlicht_cli_args.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `26 passed`.
+  - world-class gate check on QC sample:
+    - `python tools/run_report_quality_gate.py ... --quality-profile world_class` -> `FAIL` (expected; thresholds now explicit).
+
 ## 1.9.26 (2026-02-22)
 - P0 completion batch (Federnett UX/governance polish):
   - Report Hub collaboration accessibility/density pass:

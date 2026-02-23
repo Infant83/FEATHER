@@ -23,3 +23,17 @@ def test_report_parse_args_matches_cli_args() -> None:
 def test_temperature_override_flag_removed() -> None:
     with pytest.raises(SystemExit):
         cli_args.parse_args(["--run", "sample_run", "--temperature", "0.5"])
+
+
+def test_quality_profile_arg_parses() -> None:
+    args = cli_args.parse_args(
+        [
+            "--run",
+            "sample_run",
+            "--output",
+            "report_full.md",
+            "--quality-profile",
+            "world_class",
+        ]
+    )
+    assert args.quality_profile == "world_class"

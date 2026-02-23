@@ -312,6 +312,29 @@ Federlicht uses multiple guardrails to prevent context overflows and preserve ev
 - Reducer summaries store original chunks under `report_notes/tool_cache/` and mark `NEEDS_VERIFICATION` items.
 - For PDF follow-ups, `read_document` supports `start_page` to read later pages without raising global limits.
 
+### Report quality profiles
+Use profile presets to keep quality thresholds explicit and comparable across runs:
+- `--quality-profile smoke`: pipeline health check only (not publication-quality)
+- `--quality-profile baseline`: default regression bar
+- `--quality-profile professional`: production-quality bar
+- `--quality-profile world_class`: top-tier research bar
+
+Per-metric options still work as overrides:
+- `--quality-min-overall`
+- `--quality-min-claim-support`
+- `--quality-max-unsupported-claims`
+- `--quality-min-section-coherence`
+
+Example:
+```bash
+federlicht --run ./runs/demo --output ./runs/demo/report_full.html \
+  --quality-profile world_class \
+  --quality-iterations 3 \
+  --quality-auto-extra-iterations 2
+```
+
+For benchmark/regression tooling, see `docs/report_quality_threshold_policy.md`.
+
 ### Figures (PDF extraction & selection)
 Federlicht can extract figures from referenced PDFs and insert them into the report. Candidates are derived from
 PDFs cited in the report body (e.g., `./archive/.../pdf/...`); it does **not** scan the entire archive.

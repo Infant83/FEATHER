@@ -43,8 +43,25 @@ def test_build_gate_report_markdown_contains_key_sections() -> None:
         "suite": {"suite_id": "report_quality_v1"},
         "compare_markdown": "| metric | current | baseline | delta |\n| --- | ---: | ---: | ---: |",
     }
-    text = runner.build_gate_report_markdown(payload, "gate-result | PASS", 0)
+    text = runner.build_gate_report_markdown(
+        payload,
+        "gate-result | PASS",
+        0,
+        gate_policy={
+            "profile": "world_class",
+            "effective_band": "world_class",
+            "source": "profile:world_class",
+            "thresholds": {
+                "min_overall": 82.0,
+                "min_claim_support": 60.0,
+                "max_unsupported": 12.0,
+                "min_section_coherence": 75.0,
+            },
+        },
+    )
     assert "gate_result: PASS" in text
+    assert "gate_profile: world_class" in text
+    assert "gate_effective_band: world_class" in text
     assert "## Summary" in text
     assert "## Delta (current - baseline)" in text
     assert "## Compare Table" in text

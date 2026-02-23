@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 21:55:19 +09:00  
+Last updated: 2026-02-23 22:38:17 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -973,3 +973,59 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - P0(core): `100%` 유지
 - P0+(quality uplift): `45%` (이전 `41%` -> `+4%p`)
 - P1: `0%` (P0+ quality gate 통과 후 착수)
+
+## 27) Iteration Log (76~80 / 100)
+- Iter 상태: `80/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 22:38:17 +09:00`
+- 이번 배치 목표:
+- quality gate 기준의 혼선을 제거하고 `smoke`/`baseline`/`professional`/`world_class`를 코드/문서/런타임에 동일하게 반영
+
+### Iter-76: Quality profile 공통 모듈 도입
+- 반영:
+- `src/federlicht/quality_profiles.py` 추가
+  - 프로파일: `smoke`, `baseline`, `professional`, `world_class`, `none`
+  - `resolve_quality_gate_targets(...)`로 profile + metric override를 단일 규칙으로 계산
+  - `classify_quality_band(...)` 추가로 현재 threshold band를 계약형으로 판별
+
+### Iter-77: Federlicht 런타임 게이트에 profile 정책 연결
+- 반영:
+- `src/federlicht/cli_args.py`
+  - `--quality-profile` 추가
+  - metric threshold 인자 설명을 "profile override" 의미로 명확화
+- `src/federlicht/orchestrator.py`
+  - gate 정책 계산을 공통 모듈로 통일
+  - `quality_contract.latest.json`, `quality_gate.json`에 `profile/effective_band/policy` 기록
+
+### Iter-78: 게이트 스크립트 profile 연동
+- 반영:
+- `tools/report_quality_regression_gate.py`
+  - `--quality-profile` 도입 (기본 `baseline`)
+  - 실행 시 `gate-policy` 출력(프로파일/밴드/실제 타깃)
+- `tools/run_report_quality_gate.py`
+  - 동일 프로파일 정책 적용
+  - markdown 리포트에 `gate_profile`, `gate_effective_band`, `gate_targets` 명시
+
+### Iter-79: 품질 기준 문서화
+- 반영:
+- `docs/report_quality_threshold_policy.md` 추가
+  - `overall=65`는 smoke(헬스체크)임을 명시
+  - world-class를 단일 점수가 아닌 composite pass(게이트+정합+지원근거)로 정의
+  - 유연성 원칙(정형 강제보다 agentic decomposition 개선) 명문화
+
+### Iter-80: 회귀 테스트 보강
+- 반영:
+- `tests/test_quality_profiles.py` 추가
+  - 프로파일 정규화/해석/밴드 판정 검증
+- `tests/test_report_quality_gate_runner.py` 확장
+  - gate markdown에 profile 정보 노출 검증
+- `tests/test_federlicht_cli_args.py` 확장
+  - `--quality-profile` 파싱 검증
+- 검증:
+- `pytest -q tests/test_quality_profiles.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_federlicht_cli_args.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `27 passed`
+- `python tools/run_report_quality_gate.py --input site/runs/20260221_QC_report/report_full_iter51.html --suite docs/report_quality_benchmark_suite_v1.json --summary-output test-results/p0_quality_benchmark_qc_iter80.summary.json --benchmark-output test-results/p0_quality_benchmark_qc_iter80.json --report-md test-results/p0_quality_gate_report_qc_iter80.md --quality-contract site/runs/20260221_QC_report/report_notes/quality_contract.latest.json --contract-consistency-output test-results/p0_quality_contract_consistency_qc_iter80.json --quality-profile world_class` -> `FAIL` (world_class 기준 미달 수치 명시)
+
+### 진행률 업데이트 (76~80 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `52%` (이전 `45%` -> `+7%p`)
+- P1: `0%`

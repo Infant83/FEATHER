@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from federlicht.quality_profiles import quality_profile_choices, resolve_quality_gate_targets
+
 METRIC_FIELDS = (
     "overall",
     "claim_support_ratio",
@@ -88,6 +90,7 @@ def build_gate_report_markdown(
     gate_rc: int,
     *,
     contract_consistency: dict | None = None,
+    gate_policy: dict | None = None,
 ) -> str:
     summary = dict(summary_payload.get("summary") or {})
     baseline = dict(summary_payload.get("baseline_summary") or {})
@@ -99,14 +102,28 @@ def build_gate_report_markdown(
         f"- gate_result: {'PASS' if gate_rc == 0 else 'FAIL'} (rc={gate_rc})",
         f"- suite: {suite.get('suite_id') or '(none)'}",
         f"- rows_count: {summary_payload.get('rows_count')}",
-        "",
-        "## Summary",
-        f"- overall: {float(summary.get('overall', 0.0)):.2f}",
-        f"- claim_support_ratio: {float(summary.get('claim_support_ratio', 0.0)):.2f}",
-        f"- unsupported_claim_count: {float(summary.get('unsupported_claim_count', 0.0)):.2f}",
-        f"- evidence_density_score: {float(summary.get('evidence_density_score', 0.0)):.2f}",
-        f"- section_coherence_score: {float(summary.get('section_coherence_score', 0.0)):.2f}",
     ]
+    if isinstance(gate_policy, dict):
+        targets = dict(gate_policy.get("thresholds") or {})
+        lines.extend(
+            [
+                f"- gate_profile: {gate_policy.get('profile') or 'none'}",
+                f"- gate_effective_band: {gate_policy.get('effective_band') or 'custom'}",
+                f"- gate_source: {gate_policy.get('source') or 'custom'}",
+                f"- gate_targets: {targets}",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## Summary",
+            f"- overall: {float(summary.get('overall', 0.0)):.2f}",
+            f"- claim_support_ratio: {float(summary.get('claim_support_ratio', 0.0)):.2f}",
+            f"- unsupported_claim_count: {float(summary.get('unsupported_claim_count', 0.0)):.2f}",
+            f"- evidence_density_score: {float(summary.get('evidence_density_score', 0.0)):.2f}",
+            f"- section_coherence_score: {float(summary.get('section_coherence_score', 0.0)):.2f}",
+        ]
+    )
     if baseline:
         lines.extend(
             [
@@ -210,10 +227,19 @@ def main() -> int:
     parser.add_argument("--max-contract-unsupported-delta", type=float, default=8.0)
     parser.add_argument("--max-contract-evidence-density-delta", type=float, default=8.0)
     parser.add_argument("--max-contract-section-coherence-delta", type=float, default=8.0)
-    parser.add_argument("--min-overall", type=float, default=70.0)
-    parser.add_argument("--min-claim-support", type=float, default=40.0)
-    parser.add_argument("--max-unsupported", type=float, default=25.0)
-    parser.add_argument("--min-section-coherence", type=float, default=60.0)
+    parser.add_argument(
+        "--quality-profile",
+        default="baseline",
+        choices=list(quality_profile_choices()),
+        help=(
+            "Gate threshold preset: none/smoke/baseline/professional/world_class "
+            "(default: baseline)."
+        ),
+    )
+    parser.add_argument("--min-overall", type=float, default=0.0)
+    parser.add_argument("--min-claim-support", type=float, default=0.0)
+    parser.add_argument("--max-unsupported", type=float, default=-1.0)
+    parser.add_argument("--min-section-coherence", type=float, default=0.0)
     args = parser.parse_args()
 
     benchmark_cmd = [
@@ -243,21 +269,39 @@ def main() -> int:
     if bench_proc.returncode != 0:
         return bench_proc.returncode
 
+    gate_policy = resolve_quality_gate_targets(
+        profile=args.quality_profile,
+        min_overall=float(args.min_overall),
+        min_claim_support=float(args.min_claim_support),
+        max_unsupported=float(args.max_unsupported),
+        min_section_coherence=float(args.min_section_coherence),
+    )
+    gate_targets = dict(gate_policy.get("thresholds") or {})
+
     gate_cmd = [
         sys.executable,
         "tools/report_quality_regression_gate.py",
         "--input",
         str(args.summary_output),
+        "--quality-profile",
+        str(gate_policy.get("profile") or "none"),
         "--min-overall",
-        str(float(args.min_overall)),
+        str(float(gate_targets.get("min_overall", 0.0))),
         "--min-claim-support",
-        str(float(args.min_claim_support)),
+        str(float(gate_targets.get("min_claim_support", 0.0))),
         "--max-unsupported",
-        str(float(args.max_unsupported)),
+        str(float(gate_targets.get("max_unsupported", -1.0))),
         "--min-section-coherence",
-        str(float(args.min_section_coherence)),
+        str(float(gate_targets.get("min_section_coherence", 0.0))),
     ]
     gate_proc = _run_command(gate_cmd)
+    print(
+        "gate-policy | "
+        f"profile={gate_policy.get('profile')} | "
+        f"effective_band={gate_policy.get('effective_band')} | "
+        f"source={gate_policy.get('source')} | "
+        f"targets={gate_targets}"
+    )
     print(gate_proc.stdout, end="")
     if gate_proc.stderr:
         print(gate_proc.stderr, file=sys.stderr, end="")
@@ -304,6 +348,7 @@ def main() -> int:
         gate_proc.stdout,
         gate_proc.returncode,
         contract_consistency=contract_consistency,
+        gate_policy=gate_policy,
     )
     report_path = Path(args.report_md)
     report_path.parent.mkdir(parents=True, exist_ok=True)

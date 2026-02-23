@@ -10,6 +10,7 @@ Last updated: 2026-02-23
 - `docs/ppt_writer_strategy.md`
 - `docs/federhav_deepagent_transition_plan.md`
 - `docs/future_architecture_plan.md`
+- `docs/report_quality_threshold_policy.md`
 
 ## 2) Iter Execution Rule
 - Work in `iter` units.

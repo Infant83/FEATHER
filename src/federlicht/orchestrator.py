@@ -16,6 +16,7 @@ from federlicht import tools as feder_tools
 
 from . import artwork as feder_artwork
 from . import prompts, workflow_stages
+from . import quality_profiles as feder_quality_profiles
 from . import section_ast as feder_section_ast
 from .agent_runtime import AgentRuntime
 from .agents import AgentRunner
@@ -282,11 +283,26 @@ class ReportOrchestrator:
 
         depth_for_budget = helpers.normalize_depth_choice(getattr(args, "depth", ""))
         deep_budget_mode = depth_for_budget in {"deep", "exhaustive"}
-        quality_strict_mode = (
-            float(getattr(args, "quality_min_overall", 0.0) or 0.0) >= 78.0
-            or float(getattr(args, "quality_min_claim_support", 0.0) or 0.0) >= 50.0
-            or float(getattr(args, "quality_min_section_coherence", 0.0) or 0.0) >= 70.0
+        quality_gate_policy = feder_quality_profiles.resolve_quality_gate_targets(
+            profile=getattr(args, "quality_profile", "none"),
+            min_overall=getattr(args, "quality_min_overall", 0.0),
+            min_claim_support=getattr(args, "quality_min_claim_support", 0.0),
+            max_unsupported=getattr(args, "quality_max_unsupported_claims", -1.0),
+            min_section_coherence=getattr(args, "quality_min_section_coherence", 0.0),
         )
+        quality_gate_args = dict(
+            quality_gate_policy.get("thresholds")
+            or {
+                "min_overall": 0.0,
+                "min_claim_support": 0.0,
+                "max_unsupported": -1.0,
+                "min_section_coherence": 0.0,
+            }
+        )
+        quality_gate_enabled = bool(quality_gate_policy.get("enabled"))
+        quality_gate_profile = str(quality_gate_policy.get("profile") or "none")
+        quality_gate_profile_band = str(quality_gate_policy.get("effective_band") or "custom")
+        quality_strict_mode = bool(quality_gate_policy.get("strict_mode"))
 
         def _env_float(name: str, default: float) -> float:
             try:
@@ -3782,28 +3798,6 @@ class ReportOrchestrator:
                 "High index-only evidence ratio detected. "
                 "Treat weak claims as tentative and prioritize direct source-backed revisions."
             )
-        min_overall_target = getattr(args, "quality_min_overall", 0.0)
-        min_claim_support_target = getattr(args, "quality_min_claim_support", 0.0)
-        max_unsupported_target = getattr(args, "quality_max_unsupported_claims", -1.0)
-        min_section_coherence_target = getattr(args, "quality_min_section_coherence", 0.0)
-        quality_gate_args = {
-            "min_overall": float(0.0 if min_overall_target is None else min_overall_target),
-            "min_claim_support": float(
-                0.0 if min_claim_support_target is None else min_claim_support_target
-            ),
-            "max_unsupported": float(-1.0 if max_unsupported_target is None else max_unsupported_target),
-            "min_section_coherence": float(
-                0.0 if min_section_coherence_target is None else min_section_coherence_target
-            ),
-        }
-        quality_gate_enabled = any(
-            (
-                quality_gate_args["min_overall"] > 0.0,
-                quality_gate_args["min_claim_support"] > 0.0,
-                quality_gate_args["max_unsupported"] >= 0.0,
-                quality_gate_args["min_section_coherence"] > 0.0,
-            )
-        )
         auto_extra_iterations = max(0, int(getattr(args, "quality_auto_extra_iterations", 0) or 0))
         if quality_iterations <= 0 and quality_gate_enabled and auto_extra_iterations > 0:
             quality_iterations = 1
@@ -4420,6 +4414,9 @@ class ReportOrchestrator:
             "quality_iterations_requested": quality_iterations,
             "quality_iterations_effective": effective_quality_iterations,
             "quality_passes_executed": quality_passes_executed,
+            "quality_gate_profile": quality_gate_profile,
+            "quality_gate_effective_band": quality_gate_profile_band,
+            "quality_gate_policy": quality_gate_policy,
             "selected_eval": quality_contract_eval,
             "final_signals": final_signals,
             "missing_sections_after_final": list(
@@ -4442,6 +4439,9 @@ class ReportOrchestrator:
             gate_payload = {
                 "enabled": True,
                 "targets": quality_gate_args,
+                "profile": quality_gate_profile,
+                "effective_band": quality_gate_profile_band,
+                "policy": quality_gate_policy,
                 "quality_iterations_requested": quality_iterations,
                 "quality_iterations_effective": effective_quality_iterations,
                 "quality_passes_executed": quality_passes_executed,

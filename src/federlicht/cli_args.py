@@ -22,6 +22,7 @@ from .report import (
     list_builtin_templates,
     parse_max_input_tokens,
 )
+from .quality_profiles import quality_profile_choices
 
 class CleanHelpFormatter(argparse.RawDescriptionHelpFormatter):
     def __init__(self, prog: str) -> None:
@@ -295,28 +296,50 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Max chars passed to critique/revision (default: 12000).",
     )
     ap.add_argument(
+        "--quality-profile",
+        default="none",
+        choices=list(quality_profile_choices()),
+        help=(
+            "Quality gate profile preset. "
+            "none=disabled, smoke=health-check, baseline=default regression bar, "
+            "professional=production bar, world_class=top-tier bar."
+        ),
+    )
+    ap.add_argument(
         "--quality-min-overall",
         type=float,
         default=0.0,
-        help="Optional quality gate: minimum overall heuristic score (0 disables gate).",
+        help=(
+            "Optional quality gate override: minimum overall heuristic score "
+            "(0 keeps profile value; with profile=none, 0 disables this metric)."
+        ),
     )
     ap.add_argument(
         "--quality-min-claim-support",
         type=float,
         default=0.0,
-        help="Optional quality gate: minimum claim_support_ratio (0 disables gate).",
+        help=(
+            "Optional quality gate override: minimum claim_support_ratio "
+            "(0 keeps profile value; with profile=none, 0 disables this metric)."
+        ),
     )
     ap.add_argument(
         "--quality-max-unsupported-claims",
         type=float,
         default=-1.0,
-        help="Optional quality gate: maximum unsupported_claim_count (-1 disables gate).",
+        help=(
+            "Optional quality gate override: maximum unsupported_claim_count "
+            "(-1 keeps profile value; with profile=none, -1 disables this metric)."
+        ),
     )
     ap.add_argument(
         "--quality-min-section-coherence",
         type=float,
         default=0.0,
-        help="Optional quality gate: minimum section_coherence_score (0 disables gate).",
+        help=(
+            "Optional quality gate override: minimum section_coherence_score "
+            "(0 keeps profile value; with profile=none, 0 disables this metric)."
+        ),
     )
     ap.add_argument(
         "--quality-auto-extra-iterations",
