@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 08:34:06 +09:00  
+Last updated: 2026-02-23 21:17:16 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -783,3 +783,29 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
   - 결정: recoverable fallback + 런타임 타임아웃/백엔드 우선순위 정책을 다음 배치에서 명시
 - 충돌 3: runtime quality_contract와 benchmark signals 일부 차이 가능성
   - 결정: 동일 report/required_sections 기준 비교 테스트를 추가해 지표 정합을 강제
+
+## 22) Iter 운영 규칙 (실행 기준)
+- 목적:
+- Codex 작업을 반복 가능한 `iter` 단위로 운영하고, 중간 누락/정책 충돌을 줄인다.
+
+- 표준 루프:
+- `iter 시작` -> 목표/P0~P2 범위 확인 -> 구현 -> 테스트/검증 -> handoff 업데이트(진행률+시각) -> `iter 종료 시점에만` git add/commit/push
+- 예외:
+- 사용자가 중간 체크포인트 커밋을 명시 요청한 경우만 중간 커밋 허용
+
+- 커밋 타이밍:
+- 기본 정책: 한 iter 배치가 끝난 뒤 마지막 단계에서만 커밋/푸시
+- 커밋 전 필수 확인:
+- `git status --short`로 누락 파일/원치 않는 파일 점검
+- handoff(`docs/codex_handoff_20260223.md`)에 변경 요약/진행률/시각 기록
+
+- 임시 산출물 정책:
+- 임시 스크립트/디버그 출력/실험 산출물은 루트에 생성하지 않고 `temp/` 하위에만 생성
+- 권장 경로:
+- `temp/<date>/<topic>/...`
+- 루트 임시 파일(`temp_app_*.js`, `*.pid`, 임시 slice)은 생성 금지
+- 테스트 러너의 일시 상태 파일은 `.gitignore`로 제외하고 iter 종료 시 정리
+
+- 문서 운영 정책:
+- 개발 계획/운영 가이드는 `docs/`에만 보관
+- 루트에는 실행 엔트리/프로젝트 메타 파일만 유지
