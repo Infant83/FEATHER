@@ -2163,10 +2163,125 @@ def _quality_plain_text(report_text: str, output_format: str) -> str:
     return text
 
 
+_NON_CONTENT_SECTION_TOKENS = (
+    "report prompt",
+    "references",
+    "source index",
+    "miscellaneous",
+    "appendix",
+    "artifacts",
+    "metadata",
+)
+
+_SECTION_SEMANTIC_ALIAS_GROUPS: dict[str, tuple[str, ...]] = {
+    "executive_summary": (
+        "executive summary",
+        "summary",
+        "overview",
+        "lede",
+        "핵심 요약",
+        "요약",
+        "개요",
+    ),
+    "scope_methodology": (
+        "scope methodology",
+        "scope and methodology",
+        "scope",
+        "methodology",
+        "method",
+        "approach",
+        "how it works",
+        "방법론",
+        "방법",
+        "분석 방법",
+    ),
+    "key_findings": (
+        "key findings",
+        "findings",
+        "results",
+        "result",
+        "the story so far",
+        "insights",
+        "핵심 결과",
+        "핵심 발견",
+        "결과",
+    ),
+    "risks_gaps": (
+        "risks gaps",
+        "risk",
+        "risks",
+        "limitations",
+        "limitation",
+        "open questions",
+        "uncertainty",
+        "gaps",
+        "gap",
+        "리스크",
+        "한계",
+        "불확실",
+        "공백",
+    ),
+}
+
+
+def _normalize_heading_token(value: str) -> str:
+    token = str(value or "").lower()
+    token = re.sub(r"<[^>]+>", " ", token)
+    token = token.replace("&", " and ")
+    token = re.sub(r"^[\s\d\W_]+", "", token)
+    token = re.sub(r"[\s\-_]+", " ", token)
+    token = re.sub(r"[^\w\s\uac00-\ud7a3]+", " ", token)
+    token = re.sub(r"\s+", " ", token).strip()
+    return token
+
+
+def _quality_heading_tags(title: str) -> set[str]:
+    normalized = _normalize_heading_token(title)
+    if not normalized:
+        return set()
+    tags: set[str] = {normalized}
+    for key, aliases in _SECTION_SEMANTIC_ALIAS_GROUPS.items():
+        for alias in aliases:
+            alias_norm = _normalize_heading_token(alias)
+            if not alias_norm:
+                continue
+            if (
+                normalized == alias_norm
+                or normalized.startswith(f"{alias_norm} ")
+                or alias_norm in normalized
+                or normalized in alias_norm
+            ):
+                tags.add(key)
+                break
+    return tags
+
+
+def _is_non_content_heading(title: str) -> bool:
+    normalized = _normalize_heading_token(title)
+    if not normalized:
+        return False
+    return any(token in normalized for token in _NON_CONTENT_SECTION_TOKENS)
+
+
+def _iter_html_h2_sections(report_text: str) -> list[tuple[str, str]]:
+    raw = report_text or ""
+    matches = list(re.finditer(r"<h2[^>]*>(.*?)</h2>", raw, re.IGNORECASE | re.DOTALL))
+    if not matches:
+        return []
+    sections: list[tuple[str, str]] = []
+    for idx, match in enumerate(matches):
+        heading_raw = re.sub(r"<[^>]+>", " ", str(match.group(1) or ""))
+        heading_text = re.sub(r"\s+", " ", heading_raw).strip()
+        start = match.end()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+        sections.append((heading_text, raw[start:end]))
+    return sections
+
+
 def _extract_section_headings_for_quality(report_text: str, output_format: str) -> list[str]:
     if output_format == "html":
         headings: list[str] = []
-        for match in re.finditer(r"<h2[^>]*>(.*?)</h2>", report_text or "", re.IGNORECASE | re.DOTALL):
+        for match in re.finditer(r"<h[1-4][^>]*>(.*?)</h[1-4]>", report_text or "", re.IGNORECASE | re.DOTALL):
             raw = re.sub(r"<[^>]+>", " ", str(match.group(1) or ""))
             text = re.sub(r"\s+", " ", raw).strip()
             if text:
@@ -2181,9 +2296,22 @@ def _required_section_coverage_score(report_text: str, required_sections: list[s
     if not required_sections:
         return 100.0
     headings = _extract_section_headings_for_quality(report_text, output_format)
+    heading_tags = [_quality_heading_tags(heading) for heading in headings]
     covered = 0
     for section in required_sections:
-        if any(str(heading).lower().startswith(str(section).lower()) for heading in headings):
+        section_tags = _quality_heading_tags(section)
+        section_norm = _normalize_heading_token(section)
+        if any(section_tags.intersection(tags) for tags in heading_tags):
+            covered += 1
+            continue
+        if any(
+            section_norm
+            and (
+                _normalize_heading_token(heading).startswith(section_norm)
+                or section_norm in _normalize_heading_token(heading)
+            )
+            for heading in headings
+        ):
             covered += 1
     return round((covered / max(1, len(required_sections))) * 100.0, 2)
 
@@ -2205,10 +2333,32 @@ def _count_citations(raw: str, plain_text: str, *, output_format: str) -> int:
         re.findall(r"\[[^\]]+\]\((https?://[^)\s]+|\.?/?[^)\n]+\.(?:md|txt|pdf|html|csv|jsonl?))\)", raw)
     )
     citation_count += len(re.findall(r"https?://[^\s<>\"]+", raw))
-    citation_count += len(re.findall(r"(\./[^\s<>\"]+\.(?:md|txt|pdf|html|csv|jsonl?))", raw))
     if output_format == "html":
         citation_count += len(re.findall(r"href=\"https?://[^\"]+\"", raw, re.IGNORECASE))
-    citation_count += len(re.findall(r"\[\d{1,3}\]", plain_text))
+    # Source mentions often appear as domain labels (without protocol) or archive/run paths.
+    citation_count += len(
+        re.findall(
+            r"\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:/[^\s<>\"]*)?",
+            raw,
+            re.IGNORECASE,
+        )
+    )
+    citation_count += len(
+        re.findall(
+            r"(?<![\w/])(?:\.{0,2}/)?(?:site/)?runs/[^\s<>\"]+\.(?:md|txt|pdf|html|csv|jsonl?|png|jpe?g|svg)",
+            raw,
+            re.IGNORECASE,
+        )
+    )
+    citation_count += len(
+        re.findall(
+            r"(?<![\w/])/?archive/[^\s<>\"]+\.(?:md|txt|pdf|html|csv|jsonl?|png|jpe?g|svg)",
+            raw,
+            re.IGNORECASE,
+        )
+    )
+    citation_count += len(re.findall(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", raw, re.IGNORECASE))
+    citation_count += len(re.findall(r"\\?\[\d{1,3}\\?\]", plain_text))
     return citation_count
 
 
@@ -2225,12 +2375,19 @@ def _iter_quality_claim_candidates(report_text: str, output_format: str) -> list
     raw = report_text or ""
     candidates: list[tuple[str, str]] = []
     if output_format == "html":
-        for match in re.finditer(r"<(p|li|tr)[^>]*>(.*?)</\1>", raw, re.IGNORECASE | re.DOTALL):
-            raw_block = str(match.group(2) or "")
-            plain = re.sub(r"<[^>]+>", " ", raw_block)
-            plain = re.sub(r"\s+", " ", plain).strip()
-            if plain:
-                candidates.append((plain, raw_block))
+        sections = _iter_html_h2_sections(raw)
+        spans = [span for heading, span in sections if not _is_non_content_heading(heading)]
+        if not spans:
+            spans = [raw]
+        for span in spans:
+            # Table rows tend to inflate unsupported-claim counts with schema/header text.
+            # Keep claim detection focused on narrative blocks that should carry inline grounding.
+            for match in re.finditer(r"<(p|li)[^>]*>(.*?)</\1>", span, re.IGNORECASE | re.DOTALL):
+                raw_block = str(match.group(2) or "")
+                plain = re.sub(r"<[^>]+>", " ", raw_block)
+                plain = re.sub(r"\s+", " ", plain).strip()
+                if plain:
+                    candidates.append((plain, raw_block))
         return candidates
     for line in raw.splitlines():
         plain = str(line).strip()
@@ -2244,6 +2401,19 @@ def _is_substantive_claim_candidate(line: str) -> bool:
     if not text:
         return False
     if text.startswith(("## ", "### ", "\\section", "|", "---")):
+        return False
+    low = text.lower()
+    if low.startswith(("default assisted and prompted by", "citation policy:", "ai transparency notice:")):
+        return False
+    if text.startswith(("AI 투명성 고지:", "출처·저작권 고지:", "검증 고지:", "EU AI Act 정합성 참고:")):
+        return False
+    if re.search(
+        r"\((?:제안|해석|전망|가설|추정|권고|recommendation|proposal|interpretation|outlook|hypothesis)\)",
+        text,
+        re.IGNORECASE,
+    ):
+        return False
+    if re.match(r"^\$.*\$$", text):
         return False
     if len(re.findall(r"\w+|[\uac00-\ud7a3]", text)) < 12:
         return False
@@ -2289,12 +2459,8 @@ def _section_coherence_score(report_text: str, output_format: str) -> float:
     raw = report_text or ""
     spans: list[str] = []
     if output_format == "html":
-        matches = list(re.finditer(r"<h2[^>]*>.*?</h2>", raw, re.IGNORECASE | re.DOTALL))
-        if matches:
-            for idx, match in enumerate(matches):
-                start = match.end()
-                end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
-                spans.append(raw[start:end])
+        sections = _iter_html_h2_sections(raw)
+        spans = [span for heading, span in sections if not _is_non_content_heading(heading)]
     elif output_format == "tex":
         matches = list(re.finditer(r"^\\section\\*?\\{[^}]+\\}", raw, re.MULTILINE))
         if matches:
@@ -2367,6 +2533,13 @@ def compute_heuristic_quality_signals(
         "methodology",
         "scope",
         "approach",
+        "workflow",
+        "pipeline",
+        "how it works",
+        "experimental setup",
+        "evaluation protocol",
+        "qubo",
+        "ising",
         "selection criteria",
         "exclusion criteria",
         "dataset",

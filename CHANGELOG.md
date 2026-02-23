@@ -1,6 +1,22 @@
 # Changelog
 
 ## Unreleased (2026-02-24)
+- P0+ quality calibration batch (iter 122):
+  - generic citation recognition uplift in quality heuristics (`src/federlicht/report.py`):
+    - add domain-label source detection (`openclaw.ai` style, without protocol),
+    - add archive/run path citation detection (`/archive/...txt`, `runs/...`),
+    - add DOI and escaped numeric citation support (`\\[1\\]`).
+  - unsupported-claim overcount reduction:
+    - exclude HTML table-row (`tr`) text from substantive claim candidate extraction,
+    - exclude epistemic proposal/interpretation markers (`(제안)`, `(해석)`, `(전망)` and english equivalents) from unsupported claim counting.
+  - tests:
+    - expand `tests/test_report_quality_heuristics.py` with
+      domain/archive citation recognition and proposal-marker exclusion coverage.
+    - regression subset passed (`20 passed`).
+  - quality gate:
+    - multi-run world-class gate recovered to PASS:
+      - `test-results/p0_quality_gate_multi_iter122_world.md`
+      - avg `overall=93.42`, `claim_support=81.48`, `unsupported=6.00`, `section_coherence=90.67`.
 - P0+ document-quality uplift batch (iter 121):
   - add data-scientist analysis path for report generation:
     - new prompt contract `prompts.build_data_scientist_prompt(...)` with anti-hallucination rules,

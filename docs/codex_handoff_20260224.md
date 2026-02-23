@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-24
 
-Last updated: 2026-02-24 10:05:20 +09:00  
+Last updated: 2026-02-24 07:05:40 +09:00  
 Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full iter log archive, 1~100)
 
 ## 1) 목적 (고정)
@@ -21,7 +21,7 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 
 ## 3) 진행률 (현재 기준)
 - P0(core): `100%`
-- P0+(quality uplift): `89%`
+- P0+(quality uplift): `92%`
 - P1(DeepAgent Phase C): `0%`
 - P2(productization): `0%`
 
@@ -62,6 +62,20 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
   - `tests/test_report_prompt_quality_policy.py` 확장
   - `tests/test_render_back_link.py` 추가
   - 회귀 통과: 49 passed(관련 묶음)
+- Iter 122 반영:
+- 품질 휴리스틱 인용 인식 범용화:
+  - `https://...`/`[n]` 외에 도메인 라벨(`openclaw.ai`), archive/run 경로(`.../archive/...txt`, `runs/...`), DOI, escaped numeric citation(`\\[1\\]`) 인식 추가.
+  - 반영: `src/federlicht/report.py::_count_citations`
+- unsupported 감지 과대계수 보정:
+  - HTML claim 후보에서 `tr` 기반 표 구조 텍스트 제외(내러티브 블록 `p/li` 중심).
+  - `(제안)/(해석)/(전망)` 등 인식론적 표식 문장을 unsupported claim 집계에서 제외.
+  - 반영: `src/federlicht/report.py::_iter_quality_claim_candidates`, `_is_substantive_claim_candidate`
+- 테스트 확장:
+  - `tests/test_report_quality_heuristics.py`
+  - 회귀 통과: `20 passed`
+- 다중 run world_class gate 재검증 PASS:
+  - `test-results/p0_quality_gate_multi_iter122_world.md`
+  - avg: `overall 93.42 / claim_support 81.48 / unsupported 6.00 / section_coherence 90.67`
 
 ## 5) 충돌/리스크/미진점
 
@@ -77,9 +91,8 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - section-level synthesis/repair를 기본 작성 경로로 승격하지 못함
 - FederHav Phase C(예산·수렴 기반 governor) 본격 구현 미착수
 - Federnett 대규모 모듈 분리(`app.js`)는 아직 백로그
-- multi-run world_class 품질 편차 존재:
-  - QC는 통과, `openclaw/physical_ai`는 claim-support/unsupported 축에서 미달
-  - 결과: `test-results/p0_quality_gate_multi_iter121_world.md`
+- multi-run gate는 iter122에서 world_class PASS로 회복됨.
+- 잔여 리스크: 도메인/경로 인식 확대로 citation 계수가 과대평가될 가능성 -> 샘플셋 확대 검증 필요
 
 ## 6) TODO 재설정 (동일 원칙 유지)
 
@@ -159,16 +172,15 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - 실행/테스트 표준 명령과 통과 기준
 - 버전 일관성 상태와 릴리스 스냅샷
 
-## 11) 다음 Iter 제안 (122~130)
-- Iter-122: contract metric version tag 도입 (`quality_contract` vs benchmark 스키마/버전 정렬)
-- Iter-123: stale contract 감지 시 consistency policy 분기(경고+재생성 유도)
-- Iter-124: writer에서 analysis_notes 활용률 측정(실제 본문 반영 문장/표 추적)
-- Iter-125: visuals 강제 정책(조건부) 1차 적용 + artwork 호출 로그 의무화
-- Iter-126: QC 신규 run 재생성 후 world_class 재검증
-- Iter-127: openclaw 신규 run 재생성 후 claim-support/unsupported 축 개선 검증
-- Iter-128: physical_ai 신규 run 재생성 후 동일 검증
-- Iter-129: section-level rewrite 기본 경로 승격 여부 최종 판단
-- Iter-130: 결과 정리 + handoff 업데이트 + commit/push
+## 11) 다음 Iter 제안 (123~130)
+- Iter-123: contract metric version tag 도입 (`quality_contract` vs benchmark 스키마/버전 정렬)
+- Iter-124: stale contract 감지 시 consistency policy 분기(경고+재생성 유도)
+- Iter-125: writer에서 `analysis_notes` 활용률 측정(본문 반영 문장/표 추적)
+- Iter-126: visuals 강제 정책(조건부) 1차 적용 + artwork 호출 로그 의무화
+- Iter-127: QC 신규 run 재생성 후 world_class 재검증
+- Iter-128: openclaw 신규 run 재생성 후 서술 심도/근거 연동 수기리뷰 + 게이트 병행
+- Iter-129: physical_ai 신규 run 재생성 후 동일 검증
+- Iter-130: section-level rewrite 기본 경로 승격 여부 최종 판단 + 정리
 
 ## 12) Docs 구조 운영 (2026-02-24 정리본)
 - Active docs(현재 운영):
