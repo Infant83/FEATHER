@@ -30,9 +30,16 @@ def _to_float(value: object, default: float = 0.0) -> float:
 
 
 def extract_quality_contract_metrics(contract_payload: dict) -> dict[str, float]:
+    metric_source_name = str(contract_payload.get("metric_source") or "").strip().lower()
     selected_eval = contract_payload.get("selected_eval")
     final_signals = contract_payload.get("final_signals")
-    metric_source = selected_eval if isinstance(selected_eval, dict) else final_signals
+    metric_source: object
+    if metric_source_name == "final_signals":
+        metric_source = final_signals if isinstance(final_signals, dict) else selected_eval
+    elif metric_source_name == "selected_eval":
+        metric_source = selected_eval if isinstance(selected_eval, dict) else final_signals
+    else:
+        metric_source = selected_eval if isinstance(selected_eval, dict) else final_signals
     metric_source = metric_source if isinstance(metric_source, dict) else {}
     return {key: _to_float(metric_source.get(key), 0.0) for key in METRIC_FIELDS}
 
@@ -67,7 +74,7 @@ def build_quality_contract_consistency(
         for metric in METRIC_FIELDS
         if abs_delta[metric] > thresholds[metric]
     ]
-    metric_source = (
+    metric_source = str(contract_payload.get("metric_source") or "").strip() or (
         "selected_eval"
         if isinstance(contract_payload.get("selected_eval"), dict)
         else "final_signals"

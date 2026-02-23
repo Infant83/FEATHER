@@ -136,3 +136,27 @@ def test_build_gate_report_markdown_includes_contract_consistency() -> None:
     assert "## Quality Contract Consistency" in text
     assert "Metric Delta (benchmark - quality_contract)" in text
     assert "| overall |" in text
+
+
+def test_extract_quality_contract_metrics_respects_metric_source_final_signals() -> None:
+    payload = {
+        "metric_source": "final_signals",
+        "selected_eval": {
+            "overall": 88.0,
+            "claim_support_ratio": 80.0,
+            "unsupported_claim_count": 2.0,
+            "evidence_density_score": 85.0,
+            "section_coherence_score": 84.0,
+        },
+        "final_signals": {
+            "overall": 72.0,
+            "claim_support_ratio": 54.0,
+            "unsupported_claim_count": 16.0,
+            "evidence_density_score": 66.0,
+            "section_coherence_score": 68.0,
+        },
+    }
+    metrics = runner.extract_quality_contract_metrics(payload)
+    assert metrics["overall"] == 72.0
+    assert metrics["claim_support_ratio"] == 54.0
+    assert metrics["unsupported_claim_count"] == 16.0

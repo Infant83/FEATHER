@@ -4401,13 +4401,20 @@ class ReportOrchestrator:
             depth=depth,
             report_intent=report_intent,
         )
-        quality_contract_eval = dict(selected_eval or {})
-        quality_contract_eval.setdefault("overall", float(final_signals.get("overall", 0.0)))
-        quality_contract_eval.setdefault("evidence_density_score", float(final_signals.get("evidence_density_score", 0.0)))
-        quality_contract_eval.setdefault("claim_support_ratio", float(final_signals.get("claim_support_ratio", 0.0)))
-        quality_contract_eval.setdefault("unsupported_claim_count", float(final_signals.get("unsupported_claim_count", 0.0)))
-        quality_contract_eval.setdefault(
-            "section_coherence_score", float(final_signals.get("section_coherence_score", 0.0))
+        selected_eval_legacy = dict(selected_eval or {})
+        quality_contract_eval = dict(selected_eval_legacy)
+        quality_contract_eval["overall"] = float(final_signals.get("overall", 0.0))
+        quality_contract_eval["evidence_density_score"] = float(
+            final_signals.get("evidence_density_score", 0.0)
+        )
+        quality_contract_eval["claim_support_ratio"] = float(
+            final_signals.get("claim_support_ratio", 0.0)
+        )
+        quality_contract_eval["unsupported_claim_count"] = float(
+            final_signals.get("unsupported_claim_count", 0.0)
+        )
+        quality_contract_eval["section_coherence_score"] = float(
+            final_signals.get("section_coherence_score", 0.0)
         )
         quality_contract = {
             "selected_label": selected_label,
@@ -4417,6 +4424,8 @@ class ReportOrchestrator:
             "quality_gate_profile": quality_gate_profile,
             "quality_gate_effective_band": quality_gate_profile_band,
             "quality_gate_policy": quality_gate_policy,
+            "metric_source": "final_signals",
+            "selected_eval_legacy": selected_eval_legacy,
             "selected_eval": quality_contract_eval,
             "final_signals": final_signals,
             "missing_sections_after_final": list(

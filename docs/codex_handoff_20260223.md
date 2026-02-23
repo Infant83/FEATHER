@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 22:38:17 +09:00  
+Last updated: 2026-02-23 22:43:16 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -1028,4 +1028,29 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 ### 진행률 업데이트 (76~80 기준)
 - P0(core): `100%` 유지
 - P0+(quality uplift): `52%` (이전 `45%` -> `+7%p`)
+- P1: `0%`
+
+## 28) Iteration Log (81 / 100)
+- Iter 상태: `81/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 22:43:16 +09:00`
+- 이번 iter 목표:
+- quality_contract vs benchmark 불일치의 핵심 원인(계약 metric source) 정렬
+
+### Iter-81: quality_contract metric source 정렬
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `quality_contract.latest.json` 작성 시 핵심 metric(`overall/support/unsupported/evidence_density/coherence`)을 `final_signals` 기준으로 강제 동기화
+  - `metric_source=final_signals` 추가
+  - `selected_eval_legacy` 필드 분리(디버그/비교 추적용)
+- `tools/run_report_quality_gate.py`
+  - consistency 계산 시 `metric_source` 힌트를 우선 해석
+- `tests/test_report_quality_contract_consistency_tool.py`
+  - `metric_source=final_signals` 해석 회귀 테스트 추가
+- 검증:
+- `pytest -q tests/test_quality_profiles.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_report_quality_contract_consistency_tool.py tests/test_federlicht_cli_args.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `31 passed`
+
+### 진행률 업데이트 (81 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `55%` (이전 `52%` -> `+3%p`)
 - P1: `0%`

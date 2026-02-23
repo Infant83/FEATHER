@@ -12,6 +12,9 @@
   - persist profile/band/policy metadata in:
     - `report_notes/quality_contract.latest.json`
     - `report_notes/quality_gate.json`
+  - align quality contract metric source to `final_signals` for consistency checks:
+    - write `metric_source=final_signals`
+    - keep `selected_eval_legacy` for traceability
 - Tooling alignment:
   - `tools/report_quality_regression_gate.py`:
     - add `--quality-profile` (default `baseline`), emit `gate-policy` line.
@@ -28,6 +31,8 @@
     - `pytest -q tests/test_quality_profiles.py tests/test_report_quality_gate_runner.py tests/test_report_quality_regression_gate.py tests/test_federlicht_cli_args.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py` -> `26 passed`.
   - world-class gate check on QC sample:
     - `python tools/run_report_quality_gate.py ... --quality-profile world_class` -> `FAIL` (expected; thresholds now explicit).
+  - consistency source regression:
+    - `pytest -q tests/test_report_quality_contract_consistency_tool.py` includes `metric_source=final_signals` case.
 
 ## 1.9.26 (2026-02-22)
 - P0 completion batch (Federnett UX/governance polish):
