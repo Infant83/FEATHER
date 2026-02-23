@@ -15,3 +15,7 @@ node_modules/
 temp/
 artifacts/
 *.log
+.tmp_federnett_*.pid
+temp_app_*.js
+temp_help_agent_slice.txt
+test-results/.last-run.json
