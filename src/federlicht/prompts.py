@@ -394,6 +394,13 @@ def build_writer_prompt(
         "서술 연결성: 섹션 간 논리 전환을 자연스럽게 유지하세요. "
         "심층형 보고서에서는 섹션 시작/끝 문장으로 연결을 명시하고, brief 모드에서는 과도한 연결 문구를 줄이세요. "
     )
+    coherence_structure_guidance = ""
+    if depth in {"deep", "exhaustive"} and intent in {"research", "review", "decision"}:
+        coherence_structure_guidance = (
+            "심층 전개 규칙: 주요 섹션마다 (1) 한 줄 핵심 주장 문장으로 시작하고, "
+            "(2) 근거를 종합한 비교/해석 단락을 포함하고, "
+            "(3) 다음 섹션과 연결되는 1~2문장 전환을 마지막에 배치하세요. "
+        )
     if intent == "research":
         intent_writer_guidance = (
             "의도=research: 주장마다 재현 가능한 근거 경로와 한계를 분리해 기술하고, 방법-결과-해석 순서를 우선하세요. "
@@ -600,6 +607,7 @@ def build_writer_prompt(
         f"{result_traceability_guidance}"
         f"{uncertainty_guidance}"
         f"{narrative_flow_guidance}"
+        f"{coherence_structure_guidance}"
         f"{intent_writer_guidance}"
         f"{figure_guidance}"
         f"{artwork_guidance}"

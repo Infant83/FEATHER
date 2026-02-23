@@ -98,6 +98,7 @@ const state = {
     autoStages: new Set(),
     autoStageReasons: {},
     passMetrics: [],
+    fallbackEvents: [],
     activeStep: "",
     completedSteps: new Set(),
     hasError: false,
@@ -15226,6 +15227,8 @@ function resetWorkflowState() {
   state.workflow.autoStages = new Set();
   state.workflow.autoStageReasons = {};
   state.workflow.passMetrics = [];
+  state.workflow.fallbackEvents = [];
+  state.workflow.fallbackEvents = [];
   state.workflow.activeStep = "";
   state.workflow.completedSteps = new Set();
   state.workflow.hasError = false;
@@ -15263,6 +15266,7 @@ function syncWorkflowStageSelection(selected = selectedStagesInOrder()) {
   state.workflow.autoStages = new Set();
   state.workflow.autoStageReasons = {};
   state.workflow.passMetrics = [];
+  state.workflow.fallbackEvents = [];
   renderWorkflow();
 }
 
@@ -15338,6 +15342,7 @@ function beginWorkflow(kind, payload = {}) {
     state.workflow.autoStages = new Set();
     state.workflow.autoStageReasons = {};
     state.workflow.passMetrics = [];
+    state.workflow.fallbackEvents = [];
     state.workflow.completedSteps = new Set(["feather"]);
     state.workflow.activeStep = selected[0] || "scout";
     state.workflow.hasError = false;
@@ -15364,6 +15369,7 @@ function beginWorkflow(kind, payload = {}) {
     state.workflow.autoStages = new Set();
     state.workflow.autoStageReasons = {};
     state.workflow.passMetrics = [];
+    state.workflow.fallbackEvents = [];
     state.workflow.completedSteps = new Set();
     state.workflow.activeStep = "feather";
     state.workflow.hasError = false;
@@ -15463,6 +15469,9 @@ function parseWorkflowDetailMeta(detail) {
     autoRequiredBy: [],
     autoRequired: false,
     passMetric: null,
+    fallbackKind: "",
+    fallbackStage: "",
+    fallbackReason: "",
   };
   const text = String(detail || "").trim();
   if (!text) return payload;
@@ -15496,6 +15505,28 @@ function parseWorkflowDetailMeta(detail) {
       cacheHits: cacheMatch ? Number(cacheMatch[1]) : 0,
       runtime: runtimeMatch ? String(runtimeMatch[1] || "").trim() : "",
     };
+  }
+  const fallbackKindMatch = text.match(/(?:^|[,\s])fallback_kind=([a-z_]+)(?:[,]|$)/i);
+  const fallbackStageMatch = text.match(/(?:^|[,\s])fallback_stage=([a-z_]+)(?:[,]|$)/i);
+  const fallbackReasonMatch = text.match(/(?:^|[,\s])fallback_reason=([a-z0-9_.-]+)(?:[,]|$)/i);
+  if (fallbackKindMatch && fallbackKindMatch[1]) {
+    payload.fallbackKind = String(fallbackKindMatch[1]).trim().toLowerCase();
+  } else if (/overflow_static_fallback/i.test(text)) {
+    payload.fallbackKind = "overflow_static";
+  } else if (/overflow_fallback/i.test(text)) {
+    payload.fallbackKind = "overflow";
+  } else if (/recoverable/i.test(text) && /fallback/i.test(text)) {
+    payload.fallbackKind = "recoverable";
+  } else if (/fallback/i.test(text)) {
+    payload.fallbackKind = "generic";
+  }
+  if (fallbackStageMatch && fallbackStageMatch[1]) {
+    payload.fallbackStage = String(fallbackStageMatch[1]).trim().toLowerCase();
+  }
+  if (fallbackReasonMatch && fallbackReasonMatch[1]) {
+    payload.fallbackReason = String(fallbackReasonMatch[1]).trim().toLowerCase();
+  } else if (payload.fallbackKind) {
+    payload.fallbackReason = payload.fallbackKind;
   }
   return payload;
 }
@@ -15933,6 +15964,9 @@ async function hydrateWorkflowFromHistory({ logPath, runRel, kind, logText }) {
         state.workflow.autoStages.add(stageId);
         state.workflow.autoStageReasons[stageId] = detailMeta.autoRequiredBy.join(", ");
       }
+      if (detailMeta.fallbackKind) {
+        upsertWorkflowFallbackEvent(stageId, detailMeta);
+      }
     });
     if (!state.workflow.selectedStages.size) {
       selectedStagesInOrder().forEach((stageId) => state.workflow.selectedStages.add(stageId));
@@ -16046,6 +16080,35 @@ function upsertWorkflowPassMetric(stageId, metric) {
   state.workflow.passMetrics = items.slice(-8);
 }
 
+function upsertWorkflowFallbackEvent(stageId, meta) {
+  if (!meta || !meta.fallbackKind) return;
+  const items = Array.isArray(state.workflow.fallbackEvents) ? [...state.workflow.fallbackEvents] : [];
+  const entry = {
+    stageId: String(meta.fallbackStage || stageId || "").trim().toLowerCase(),
+    kind: String(meta.fallbackKind || "").trim().toLowerCase(),
+    reason: String(meta.fallbackReason || meta.fallbackKind || "").trim().toLowerCase(),
+    at: Date.now(),
+  };
+  if (!entry.stageId) {
+    entry.stageId = String(stageId || "").trim().toLowerCase();
+  }
+  const dedupWindowMs = 8_000;
+  const existingIdx = items.findIndex((item) => {
+    const itemStage = String(item?.stageId || "").trim().toLowerCase();
+    const itemKind = String(item?.kind || "").trim().toLowerCase();
+    if (itemStage !== entry.stageId || itemKind !== entry.kind) return false;
+    const itemTs = Number(item?.at || 0);
+    return Number.isFinite(itemTs) && Math.abs(entry.at - itemTs) <= dedupWindowMs;
+  });
+  if (existingIdx >= 0) {
+    items[existingIdx] = { ...items[existingIdx], ...entry };
+  } else {
+    items.push(entry);
+  }
+  items.sort((a, b) => Number(a.at || 0) - Number(b.at || 0));
+  state.workflow.fallbackEvents = items.slice(-8);
+}
+
 function updateWorkflowFromLog(text) {
   if (!state.workflow.running || state.workflow.kind !== "federlicht") return;
   const resultPathChanged = syncWorkflowResultPathFromLog(text);
@@ -16055,6 +16118,9 @@ function updateWorkflowFromLog(text) {
     const detailMeta = parseWorkflowDetailMeta(workflowEvent.detail);
     if (detailMeta.passMetric) {
       upsertWorkflowPassMetric(stageId, detailMeta.passMetric);
+    }
+    if (detailMeta.fallbackKind) {
+      upsertWorkflowFallbackEvent(stageId, detailMeta);
     }
     if (detailMeta.autoRequired || detailMeta.autoRequiredBy.length) {
       state.workflow.autoStages.add(stageId);
@@ -16404,6 +16470,23 @@ function renderWorkflow() {
       `;
     })
     .join("");
+  const fallbackEvents = Array.isArray(state.workflow.fallbackEvents)
+    ? state.workflow.fallbackEvents
+    : [];
+  const fallbackHtml = fallbackEvents
+    .map((item) => {
+      const stageText = workflowLabel(String(item.stageId || "").trim().toLowerCase());
+      const kindText = String(item.kind || "fallback").trim().toLowerCase();
+      const reasonText = String(item.reason || kindText).trim().toLowerCase();
+      const title = `Fallback: ${kindText}${reasonText ? ` (${reasonText})` : ""}`;
+      return `
+        <span class="workflow-fallback" title="${escapeHtml(title)}">
+          <span class="workflow-fallback-kind">${escapeHtml(kindText)}</span>
+          <span class="workflow-fallback-stage">${escapeHtml(stageText || "-")}</span>
+        </span>
+      `;
+    })
+    .join("");
   const spotHtml = spots
     .map((spot) => {
       const classes = [
@@ -16430,8 +16513,11 @@ function renderWorkflow() {
       `;
     })
     .join("");
-  extrasHost.innerHTML = `${metricHtml}${spotHtml}`;
-  extrasHost.classList.toggle("is-empty", spots.length === 0 && metrics.length === 0);
+  extrasHost.innerHTML = `${metricHtml}${fallbackHtml}${spotHtml}`;
+  extrasHost.classList.toggle(
+    "is-empty",
+    spots.length === 0 && metrics.length === 0 && fallbackEvents.length === 0,
+  );
   const statusToken = String(state.workflow.statusText || "").trim().toLowerCase();
   const compactIdle =
     !state.workflow.running
@@ -16460,6 +16546,7 @@ function renderWorkflow() {
       || state.workflow.hasError
       || spots.length > 0
       || metrics.length > 0
+      || fallbackEvents.length > 0
     );
   if (opsWrap) {
     opsWrap.classList.toggle("is-empty", !showOps);

@@ -3125,6 +3125,12 @@ def _is_recoverable_agent_failure(exc: Exception) -> bool:
             "graph_recursion_limit",
             "maximum recursion depth",
             "without hitting a stop condition",
+            "timed out",
+            "timeout",
+            "deadline exceeded",
+            "gateway timeout",
+            "read timeout",
+            "connection reset",
         )
     )
 
@@ -3261,7 +3267,10 @@ def adjust_template_spec(
         if not _is_recoverable_agent_failure(exc):
             raise
         fallback_adjustment = {
-            "rationale": "fallback: template_adjust skipped due recoverable agent error",
+            "rationale": (
+                "fallback: template_adjust skipped due recoverable agent error "
+                "(fallback_reason=recoverable_agent_error)"
+            ),
             "sections": base_sections,
             "section_guidance": {},
             "writer_guidance": [],

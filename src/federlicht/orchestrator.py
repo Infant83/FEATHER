@@ -8,6 +8,7 @@ import datetime as dt
 import difflib
 import hashlib
 import json
+import os
 import re
 import sys
 
@@ -281,6 +282,24 @@ class ReportOrchestrator:
 
         depth_for_budget = helpers.normalize_depth_choice(getattr(args, "depth", ""))
         deep_budget_mode = depth_for_budget in {"deep", "exhaustive"}
+        quality_strict_mode = (
+            float(getattr(args, "quality_min_overall", 0.0) or 0.0) >= 78.0
+            or float(getattr(args, "quality_min_claim_support", 0.0) or 0.0) >= 50.0
+            or float(getattr(args, "quality_min_section_coherence", 0.0) or 0.0) >= 70.0
+        )
+
+        def _env_float(name: str, default: float) -> float:
+            try:
+                return float(str(os.getenv(name) or "").strip())
+            except Exception:
+                return float(default)
+
+        def _env_int(name: str, default: int) -> int:
+            try:
+                return int(str(os.getenv(name) or "").strip())
+            except Exception:
+                return int(default)
+
         configured_tool_char_limit = int(getattr(args, "max_tool_chars", 0) or 0)
         tool_budget_source = "cli" if configured_tool_char_limit > 0 else "auto"
         if configured_tool_char_limit > 0:
@@ -304,16 +323,34 @@ class ReportOrchestrator:
             if deep_budget_mode:
                 min_tool_chars = max(min_tool_chars, 24000)
                 auto_multiplier = 0.28 if token_cap >= 24000 else 0.22
+                if quality_strict_mode:
+                    auto_multiplier *= 1.12
+                    min_tool_chars = max(min_tool_chars, 28000)
                 tool_char_limit = max(min_tool_chars, min(96000, int(token_cap * char_ratio * auto_multiplier)))
             else:
                 auto_multiplier = 0.18 if depth_for_budget == "normal" else 0.14
                 tool_char_limit = max(min_tool_chars, min(64000, int(token_cap * char_ratio * auto_multiplier)))
+        env_budget_multiplier = _env_float("FEDERLICHT_TOOL_BUDGET_MULTIPLIER", 1.0)
+        if env_budget_multiplier > 0 and abs(env_budget_multiplier - 1.0) > 1e-6:
+            tool_char_limit = int(max(6000, min(140000, round(tool_char_limit * env_budget_multiplier))))
+            tool_budget_source = f"{tool_budget_source}+env_multiplier"
         if deep_budget_mode:
             fs_read_cap = max(2400, min(9000, max(2600, tool_char_limit // 6)))
             fs_total_cap = max(12000, min(tool_char_limit, int(tool_char_limit * 0.55)))
+            if quality_strict_mode:
+                fs_read_cap = max(fs_read_cap, min(11000, int(fs_read_cap * 1.12)))
+                fs_total_cap = max(fs_total_cap, min(tool_char_limit, int(tool_char_limit * 0.62)))
         else:
             fs_read_cap = max(1500, min(4000, max(2000, tool_char_limit // 8)))
             fs_total_cap = max(8000, min(tool_char_limit, int(tool_char_limit * 0.35)))
+        env_fs_read_cap = _env_int("FEDERLICHT_FS_READ_CAP", 0)
+        if env_fs_read_cap > 0:
+            fs_read_cap = max(500, min(20000, env_fs_read_cap))
+            tool_budget_source = f"{tool_budget_source}+env_fs_read_cap"
+        env_fs_total_cap = _env_int("FEDERLICHT_FS_TOTAL_CAP", 0)
+        if env_fs_total_cap > 0:
+            fs_total_cap = max(2000, min(tool_char_limit, env_fs_total_cap))
+            tool_budget_source = f"{tool_budget_source}+env_fs_total_cap"
         # Keep run_dir as backend root so built-in file tools can resolve archive paths reliably.
         # Bound filesystem-tool reads/list payloads in the backend to prevent context blowups.
         backend = helpers.SafeFilesystemBackend(
@@ -1086,14 +1123,26 @@ class ReportOrchestrator:
         stage_events: list[dict[str, str]] = []
 
         def record_stage(name: str, status: str, detail: str = "") -> None:
-            workflow_stages.record_stage(stage_status, name=name, status=status, detail=detail)
+            detail_text = str(detail or "").strip()
+            lowered_detail = detail_text.lower()
+            if detail_text and "fallback" in lowered_detail and "fallback_kind=" not in lowered_detail:
+                fallback_kind = ""
+                if "overflow_static_fallback" in lowered_detail:
+                    fallback_kind = "overflow_static"
+                elif "overflow_fallback" in lowered_detail:
+                    fallback_kind = "overflow"
+                elif "recoverable" in lowered_detail:
+                    fallback_kind = "recoverable"
+                else:
+                    fallback_kind = "generic"
+                detail_text = f"{detail_text},fallback_kind={fallback_kind},fallback_stage={name}"
+            workflow_stages.record_stage(stage_status, name=name, status=status, detail=detail_text)
             _set_artwork_log_context(
                 name,
                 phase=f"stage_{status}",
                 agent="orchestrator",
                 label=name,
             )
-            detail_text = str(detail or "").strip()
             stage_events.append(
                 {
                     "index": str(len(stage_events) + 1),

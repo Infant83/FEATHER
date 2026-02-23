@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-23 (Kickoff)
 
-Last updated: 2026-02-23 21:17:16 +09:00  
+Last updated: 2026-02-23 21:55:19 +09:00  
 Status basis date: 2026-02-22 (현 시각)  
 Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, `docs/federlicht_report.md`, `docs/federhav_deepagent_transition_plan.md`, `docs/federnett_roadmap.md`, `docs/federnett_remaining_tasks.md`, `docs/ppt_writer_strategy.md`, `docs/run_site_publish_strategy.md`, `docs/capability_governance_plan.md`, `docs/artwork_agent_and_deepagents_0_4_plan.md`, `c:/Users/angpa/Downloads/Elicit - Quantum Leap Revolutionizing Manufacturing and Ma - Report.pdf`
 
@@ -809,3 +809,167 @@ Source set: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`, 
 - 문서 운영 정책:
 - 개발 계획/운영 가이드는 `docs/`에만 보관
 - 루트에는 실행 엔트리/프로젝트 메타 파일만 유지
+
+## 23) Iteration Log (56~60 / 100)
+- Iter 상태: `60/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 21:55:19 +09:00`
+- 이번 배치 목표:
+- P0+: runtime `quality_contract` vs benchmark signals 정합 자동화
+- P0+: deep 품질 런에서 coherence/근거 밀도 상향을 위한 예산 정책 미세조정
+
+### Iter-56: Quality gate 스크립트에 계약 정합 체크 경로 추가
+- 반영:
+- `tools/run_report_quality_gate.py`
+  - `quality_contract.latest.json` 입력을 받아 benchmark summary와 metric delta 비교
+  - contract consistency 결과 JSON 출력 옵션 추가
+  - strict mode에서 consistency fail 시 non-zero 종료 코드 반환 지원
+
+### Iter-57: Contract consistency 회귀 테스트 추가
+- 반영:
+- `tests/test_report_quality_contract_consistency_tool.py` 추가
+  - pass/fail 시나리오
+  - 게이트 markdown에 consistency 섹션 렌더링 검증
+
+### Iter-58: Deep 런 read budget 정책 보정 (strict quality target 연동)
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - quality target이 엄격한 경우(`quality_min_overall/claim_support/section_coherence`) deep 예산 자동 상향
+  - 환경변수 override 추가:
+    - `FEDERLICHT_TOOL_BUDGET_MULTIPLIER`
+    - `FEDERLICHT_FS_READ_CAP`
+    - `FEDERLICHT_FS_TOTAL_CAP`
+
+### Iter-59: Writer coherence 지시 강화
+- 반영:
+- `src/federlicht/prompts.py`
+  - deep+research/review/decision 의도에서
+  - 섹션 시작 핵심 주장 -> 근거 종합 -> 다음 섹션 전환 문장 규칙을 추가
+
+### Iter-60: 회귀 테스트
+- 테스트:
+- `pytest -q tests/test_report_quality_gate_runner.py tests/test_report_quality_contract_consistency_tool.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py tests/test_template_adjust_fallback.py`
+- 결과: `17 passed`
+
+### 진행률 업데이트 (56~60 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `29%` (이전 `20%` -> `+9%p`)
+- P1: `0%`
+
+## 24) Iteration Log (61~65 / 100)
+- Iter 상태: `65/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 21:55:19 +09:00`
+- 이번 배치 목표:
+- 운영 안정성 보강: fallback 이벤트를 Live Logs/Workflow에서 추적 가능한 형태로 표준화
+
+### Iter-61: Stage detail fallback contract 메타 추가
+- 반영:
+- `src/federlicht/orchestrator.py`
+  - `[workflow] stage=... detail=...` 출력에서 fallback detail에 `fallback_kind`, `fallback_stage` 메타 자동 부착
+
+### Iter-62: Live logs parser에 fallback meta 해석 추가
+- 반영:
+- `site/federnett/app.js`
+  - `parseWorkflowDetailMeta(...)`에 fallback_kind/fallback_stage/fallback_reason 파싱 추가
+  - overflow/recoverable/generic fallback 자동 분류
+
+### Iter-63: Workflow runtime state에 fallback event 스택 추가
+- 반영:
+- `site/federnett/app.js`
+  - `state.workflow.fallbackEvents` 추가
+  - `updateWorkflowFromLog(...)` 및 history hydrate 경로에서 fallback 이벤트 upsert
+  - 상태 리셋/재시작 경로에 fallback event 초기화 반영
+
+### Iter-64: Workflow strip 시각화 확장
+- 반영:
+- `site/federnett/app.js`, `site/federnett/app.css`
+  - workflow extras 영역에 fallback badge 렌더
+  - fallback kind/stage 가독성 스타일 추가
+
+### Iter-65: 정적 검증
+- 테스트:
+- `node --check site/federnett/app.js`
+- 결과: syntax check pass
+
+### 진행률 업데이트 (61~65 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `35%` (이전 `29%` -> `+6%p`)
+- P1: `0%`
+
+## 25) Iteration Log (66~70 / 100)
+- Iter 상태: `70/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 21:55:19 +09:00`
+- 이번 배치 목표:
+- openai quota/timeout 계열 recoverable 오류 범위를 확장하고 fallback rationale를 계약형으로 정리
+
+### Iter-66: recoverable 오류 토큰 확장
+- 반영:
+- `src/federlicht/report.py`
+  - `_is_recoverable_agent_failure(...)`에 timeout/connection 계열 토큰 추가
+    - `timed out`, `timeout`, `deadline exceeded`, `gateway timeout`, `read timeout`, `connection reset`
+
+### Iter-67: template_adjust fallback rationale 계약형 보강
+- 반영:
+- `src/federlicht/report.py`
+  - recoverable fallback rationale에 `fallback_reason=recoverable_agent_error` 메타를 포함
+
+### Iter-68: timeout recoverable 회귀 테스트 추가
+- 반영:
+- `tests/test_template_adjust_fallback.py`
+  - timeout 오류에서도 fallback 경로로 처리되는 케이스 추가
+
+### Iter-69: 기존 회귀 테스트 재실행
+- 테스트:
+- `pytest -q tests/test_report_quality_gate_runner.py tests/test_report_quality_contract_consistency_tool.py tests/test_template_adjust_fallback.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py tests/test_report_quality_heuristics.py`
+- 결과: `18 passed`
+
+### Iter-70: 리스크 업데이트
+- 관찰:
+- recoverable 범위 확장으로 pipeline 중단 빈도는 줄이되, 근거 품질 저하를 막기 위해 quality gate/consistency gate 병행 필요
+
+### 진행률 업데이트 (66~70 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `41%` (이전 `35%` -> `+6%p`)
+- P1: `0%`
+
+## 26) Iteration Log (71~75 / 100)
+- Iter 상태: `75/100` 완료
+- 상태: `진행중`
+- 업데이트 시각: `2026-02-23 21:55:19 +09:00`
+- 이번 배치 목표:
+- world-class 판정 기준에서 quality_contract와 benchmark 수치의 불일치 원인 추적
+
+### Iter-71: QC 샘플 대상으로 contract consistency 실측 실행
+- 실행:
+- `python tools/run_report_quality_gate.py --input site/runs/20260221_QC_report/report_full_iter51.html --suite docs/report_quality_benchmark_suite_v1.json --summary-output test-results/p0_quality_benchmark_qc_iter56.summary.json --benchmark-output test-results/p0_quality_benchmark_qc_iter56.json --report-md test-results/p0_quality_gate_report_qc_iter56.md --quality-contract site/runs/20260221_QC_report/report_notes/quality_contract.latest.json --contract-consistency-output test-results/p0_quality_contract_consistency_qc_iter56.json --min-overall 65 --min-claim-support 2 --max-unsupported 70 --min-section-coherence 55`
+
+### Iter-72: 실측 결과 요약
+- benchmark summary:
+- `overall=60.92`, `claim_support_ratio=47.50`, `unsupported=21.0`, `section_coherence=60.0`
+- gate 결과:
+- `FAIL` (`avg_overall 60.92 < 65.00`)
+
+### Iter-73: contract consistency 결과 분석
+- 결과 파일:
+- `test-results/p0_quality_contract_consistency_qc_iter56.json`
+- 핵심 불일치:
+- `overall abs_delta=16.02`
+- `unsupported_claim_count abs_delta=21.00`
+- 해석:
+- selected_eval 중심 계약값과 실제 benchmark 재계산 값의 편차가 큼
+
+### Iter-74: 다음 배치 타깃 정의
+- 우선순위:
+- quality_contract의 metric source를 `selected_eval` 단일 기준에서 `final_signals` 중심으로 재정렬 검토
+- unsupported claim 계산 규칙을 contract/benchmark 양쪽에서 동일 경로로 고정
+
+### Iter-75: 배치 결론
+- 결론:
+- P0+는 진행 중이며, world-class 통과를 위해 지표 정합(contracts vs benchmark) 문제를 다음 배치 P0+ 핵심 과제로 승격
+
+### 진행률 업데이트 (71~75 기준)
+- P0(core): `100%` 유지
+- P0+(quality uplift): `45%` (이전 `41%` -> `+4%p`)
+- P1: `0%` (P0+ quality gate 통과 후 착수)

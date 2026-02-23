@@ -7,12 +7,88 @@ import subprocess
 import sys
 from pathlib import Path
 
+METRIC_FIELDS = (
+    "overall",
+    "claim_support_ratio",
+    "unsupported_claim_count",
+    "evidence_density_score",
+    "section_coherence_score",
+)
+
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(command, check=False, text=True, capture_output=True)
 
 
-def build_gate_report_markdown(summary_payload: dict, gate_stdout: str, gate_rc: int) -> str:
+def _to_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def extract_quality_contract_metrics(contract_payload: dict) -> dict[str, float]:
+    selected_eval = contract_payload.get("selected_eval")
+    final_signals = contract_payload.get("final_signals")
+    metric_source = selected_eval if isinstance(selected_eval, dict) else final_signals
+    metric_source = metric_source if isinstance(metric_source, dict) else {}
+    return {key: _to_float(metric_source.get(key), 0.0) for key in METRIC_FIELDS}
+
+
+def build_quality_contract_consistency(
+    summary_payload: dict,
+    contract_payload: dict,
+    *,
+    max_overall_delta: float = 2.5,
+    max_claim_support_delta: float = 8.0,
+    max_unsupported_delta: float = 8.0,
+    max_evidence_density_delta: float = 8.0,
+    max_section_coherence_delta: float = 8.0,
+) -> dict:
+    summary = dict(summary_payload.get("summary") or {})
+    benchmark_metrics = {key: _to_float(summary.get(key), 0.0) for key in METRIC_FIELDS}
+    contract_metrics = extract_quality_contract_metrics(contract_payload)
+    delta = {
+        key: round(benchmark_metrics.get(key, 0.0) - contract_metrics.get(key, 0.0), 4)
+        for key in METRIC_FIELDS
+    }
+    abs_delta = {key: round(abs(value), 4) for key, value in delta.items()}
+    thresholds = {
+        "overall": float(max_overall_delta),
+        "claim_support_ratio": float(max_claim_support_delta),
+        "unsupported_claim_count": float(max_unsupported_delta),
+        "evidence_density_score": float(max_evidence_density_delta),
+        "section_coherence_score": float(max_section_coherence_delta),
+    }
+    failed_checks = [
+        f"{metric} abs_delta={abs_delta[metric]:.2f} > {thresholds[metric]:.2f}"
+        for metric in METRIC_FIELDS
+        if abs_delta[metric] > thresholds[metric]
+    ]
+    metric_source = (
+        "selected_eval"
+        if isinstance(contract_payload.get("selected_eval"), dict)
+        else "final_signals"
+    )
+    return {
+        "pass": len(failed_checks) == 0,
+        "metric_source": metric_source,
+        "benchmark_summary": benchmark_metrics,
+        "quality_contract_metrics": contract_metrics,
+        "delta": delta,
+        "abs_delta": abs_delta,
+        "thresholds": thresholds,
+        "failed_checks": failed_checks,
+    }
+
+
+def build_gate_report_markdown(
+    summary_payload: dict,
+    gate_stdout: str,
+    gate_rc: int,
+    *,
+    contract_consistency: dict | None = None,
+) -> str:
     summary = dict(summary_payload.get("summary") or {})
     baseline = dict(summary_payload.get("baseline_summary") or {})
     delta = dict(summary_payload.get("delta_summary") or {})
@@ -58,6 +134,44 @@ def build_gate_report_markdown(summary_payload: dict, gate_stdout: str, gate_rc:
     compare_md = str(summary_payload.get("compare_markdown") or "").strip()
     if compare_md:
         lines.extend(["", "## Compare Table", compare_md])
+    if isinstance(contract_consistency, dict):
+        lines.extend(
+            [
+                "",
+                "## Quality Contract Consistency",
+                f"- pass: {'PASS' if contract_consistency.get('pass') else 'FAIL'}",
+                f"- metric_source: {contract_consistency.get('metric_source') or 'unknown'}",
+            ]
+        )
+        checks = contract_consistency.get("failed_checks")
+        if isinstance(checks, list) and checks:
+            lines.append("- failed_checks:")
+            lines.extend(
+                f"  - {item}" for item in checks if isinstance(item, str) and item.strip()
+            )
+        else:
+            lines.append("- failed_checks: (none)")
+        lines.extend(
+            [
+                "",
+                "### Metric Delta (benchmark - quality_contract)",
+                "| metric | benchmark | quality_contract | delta | abs_delta | threshold |",
+                "| --- | ---: | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        benchmark_summary = contract_consistency.get("benchmark_summary") or {}
+        contract_metrics = contract_consistency.get("quality_contract_metrics") or {}
+        deltas = contract_consistency.get("delta") or {}
+        abs_deltas = contract_consistency.get("abs_delta") or {}
+        thresholds = contract_consistency.get("thresholds") or {}
+        for metric in METRIC_FIELDS:
+            lines.append(
+                f"| {metric} | {float(benchmark_summary.get(metric, 0.0)):.2f} | "
+                f"{float(contract_metrics.get(metric, 0.0)):.2f} | "
+                f"{float(deltas.get(metric, 0.0)):+.2f} | "
+                f"{float(abs_deltas.get(metric, 0.0)):.2f} | "
+                f"{float(thresholds.get(metric, 0.0)):.2f} |"
+            )
     lines.extend(["", "## Gate Output", "```text", (gate_stdout or "").strip(), "```"])
     return "\n".join(lines) + "\n"
 
@@ -76,6 +190,26 @@ def main() -> int:
     parser.add_argument("--summary-output", required=True, help="Benchmark summary JSON output path.")
     parser.add_argument("--benchmark-output", default="", help="Optional benchmark row JSON output path.")
     parser.add_argument("--report-md", required=True, help="Markdown gate report output path.")
+    parser.add_argument(
+        "--quality-contract",
+        default="",
+        help="Optional quality_contract.latest.json path for metric consistency checks.",
+    )
+    parser.add_argument(
+        "--contract-consistency-output",
+        default="",
+        help="Optional JSON output path for quality-contract consistency result.",
+    )
+    parser.add_argument(
+        "--strict-contract-consistency",
+        action="store_true",
+        help="Fail run when quality_contract consistency check fails.",
+    )
+    parser.add_argument("--max-contract-overall-delta", type=float, default=2.5)
+    parser.add_argument("--max-contract-claim-support-delta", type=float, default=8.0)
+    parser.add_argument("--max-contract-unsupported-delta", type=float, default=8.0)
+    parser.add_argument("--max-contract-evidence-density-delta", type=float, default=8.0)
+    parser.add_argument("--max-contract-section-coherence-delta", type=float, default=8.0)
     parser.add_argument("--min-overall", type=float, default=70.0)
     parser.add_argument("--min-claim-support", type=float, default=40.0)
     parser.add_argument("--max-unsupported", type=float, default=25.0)
@@ -129,12 +263,57 @@ def main() -> int:
         print(gate_proc.stderr, file=sys.stderr, end="")
 
     summary_payload = json.loads(Path(args.summary_output).read_text(encoding="utf-8"))
-    report_md = build_gate_report_markdown(summary_payload, gate_proc.stdout, gate_proc.returncode)
+    contract_consistency: dict | None = None
+    contract_fail = False
+    quality_contract_path = Path(str(args.quality_contract or "").strip())
+    if str(args.quality_contract or "").strip():
+        if not quality_contract_path.exists():
+            contract_consistency = {
+                "pass": False,
+                "metric_source": "missing",
+                "benchmark_summary": {},
+                "quality_contract_metrics": {},
+                "delta": {},
+                "abs_delta": {},
+                "thresholds": {},
+                "failed_checks": [f"quality_contract missing: {quality_contract_path.as_posix()}"],
+            }
+            contract_fail = True
+        else:
+            contract_payload = json.loads(quality_contract_path.read_text(encoding="utf-8"))
+            contract_consistency = build_quality_contract_consistency(
+                summary_payload,
+                contract_payload if isinstance(contract_payload, dict) else {},
+                max_overall_delta=float(args.max_contract_overall_delta),
+                max_claim_support_delta=float(args.max_contract_claim_support_delta),
+                max_unsupported_delta=float(args.max_contract_unsupported_delta),
+                max_evidence_density_delta=float(args.max_contract_evidence_density_delta),
+                max_section_coherence_delta=float(args.max_contract_section_coherence_delta),
+            )
+            contract_fail = not bool(contract_consistency.get("pass"))
+        if args.contract_consistency_output:
+            output_path = Path(str(args.contract_consistency_output))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(contract_consistency, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(f"Wrote quality contract consistency: {output_path.as_posix()}")
+    report_md = build_gate_report_markdown(
+        summary_payload,
+        gate_proc.stdout,
+        gate_proc.returncode,
+        contract_consistency=contract_consistency,
+    )
     report_path = Path(args.report_md)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report_md, encoding="utf-8")
     print(f"Wrote quality gate report: {report_path.as_posix()}")
-    return gate_proc.returncode
+    if gate_proc.returncode != 0:
+        return gate_proc.returncode
+    if bool(args.strict_contract_consistency) and contract_fail:
+        return 2
+    return 0
 
 
 if __name__ == "__main__":

@@ -7075,6 +7075,36 @@ small.workflow-studio-note {
   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.workflow-fallback {
+  border: 1px solid rgba(255, 179, 71, 0.52);
+  border-radius: 999px;
+  padding: 5px 8px;
+  background:
+    linear-gradient(120deg, rgba(255, 184, 107, 0.2), rgba(255, 228, 160, 0.12)),
+    rgba(22, 18, 10, 0.62);
+  color: #ffe9c6;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 12px rgba(255, 184, 107, 0.16);
+}
+
+.workflow-fallback-kind {
+  border: 1px solid rgba(255, 184, 107, 0.68);
+  border-radius: 999px;
+  padding: 1px 5px;
+  background: rgba(255, 184, 107, 0.24);
+  color: #fff4da;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.workflow-fallback-stage {
+  color: rgba(255, 242, 214, 0.9);
+}
+
 .workflow-spot {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
