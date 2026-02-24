@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-24
 
-Last updated: 2026-02-24 14:33:10 +09:00  
+Last updated: 2026-02-24 22:58:00 +09:00  
 Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full iter log archive, 1~100)
 
 ## 1) 목적 (고정)
@@ -20,9 +20,8 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 | M5 Benchmark Harness | 부분완료 | benchmark/gate/compare 도구 + 회귀 테스트 | CI quality gate와 장문 샘플셋 확장 필요 |
 
 ## 3) 진행률 (현재 기준)
-- P0(core): `100%`
-- P0+(quality uplift): `100%`
-- P1(DeepAgent Phase C): `0%`
+- P0(world-class sustain v2): `33%`
+- P1(DeepAgent Phase C): `34%`
 - P2(productization): `0%`
 
 ## 4) DONE 요약 (20260223 -> 20260224 승계)
@@ -101,6 +100,86 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
   - world_class gate: PASS
     - `test-results/p0_quality_gate_openclaw_iter123_codex_world.md`
     - signals: `overall 96.53 / claim_support 97.22 / unsupported 1 / coherence 100`
+- Iter 133~137 반영 (5-iter batch):
+- Report Prompt 중복 렌더 원인/교정:
+  - 원인: `instruction/report_prompt_*.txt` 내부의 반복 블록이 그대로 저장되어 `Report Prompt` 섹션에 중복 출력됨
+  - 수정: `dedupe_repeated_prompt_content(...)` 도입 및 로딩/저장/overview 경로에 공통 적용
+  - 반영: `src/federlicht/report.py`
+- Feather instruction 노출/선택 정책 보강:
+  - `find_instruction_file(...)`가 `run_name.txt`/`instruction.txt`를 우선 선택하고 `generated_prompt_*`/`report_prompt_*`는 후순위 처리
+  - `write_run_overview(...)`, `write_report_overview(...)` Source 라인을 markdown 링크로 출력해 클릭 가능화
+- 기존 iter123 산출물 교정:
+  - `site/runs/openclaw/report/run_overview.md` 재작성 (클릭 링크 + `openclaw.txt` 기준)
+  - `test-results/p0_sample_openclaw_iter123_codex_snapshot.html`의 `Report Prompt` 중복 구간 제거
+- 테스트:
+  - 신규: `tests/test_report_run_overview_prompt.py`
+  - 실행: `pytest -q tests/test_report_run_overview_prompt.py tests/test_report_citation_rewrite.py` -> `18 passed`
+  - 추가 회귀: `pytest -q tests/test_report_metadata.py tests/test_report_prompt_quality_policy.py tests/test_report_quality_heuristics.py tests/test_render_back_link.py` -> `21 passed`
+- Iter 138~142 반영 (5-iter batch):
+- FederHav Phase-C 최소 수렴 루프 1차 구현:
+  - `try_deepagent_action_plan(...)`를 단발 invoke에서 governor 반복 루프로 확장
+  - 환경변수 기반 정책 추가:
+    - `FEDERHAV_GOVERNOR_MAX_ITER`
+    - `FEDERHAV_GOVERNOR_DELTA_THRESHOLD`
+    - `FEDERHAV_GOVERNOR_BUDGET_CHARS`
+  - action 후보 scoring/select + `execution_handoff.governor_loop` 메타 기록(수렴 여부/시도 횟수/후보 점수/trace)
+  - 반영: `src/federhav/agentic_runtime.py`
+- Feather instruction 노출 일관화:
+  - pipeline 메타에 `feather_instruction_path` 기록 + metadata block HTML/MD 출력 링크 추가
+  - 반영: `src/federlicht/pipeline_runner_impl.py`, `src/federlicht/report.py`
+- Deep writer 품질 가이드 보강:
+  - deep/exhaustive 모드에서 섹션 밀도(근거->해석->시사점) 가이드 추가
+  - figure 부족 시 artwork/mermaid fallback + 인접 해석 문단 요구 가이드 추가
+  - 반영: `src/federlicht/prompts.py`
+- 회귀 테스트 보강:
+  - governor policy clamp + governor loop convergence/select 검증 추가
+    - `tests/test_federhav_agentic_runtime.py`
+  - feather instruction metadata 렌더 검증 추가
+    - `tests/test_report_metadata.py`
+  - deep prompt guidance 검증 추가
+    - `tests/test_report_prompt_quality_policy.py`
+  - 실행:
+    - `pytest -q tests/test_federhav_agentic_runtime.py tests/test_report_metadata.py tests/test_report_prompt_quality_policy.py tests/test_report_run_overview_prompt.py tests/test_pipeline_runner_impl.py tests/test_pipeline_runner_reordered_e2e.py`
+    - 결과: `32 passed`
+- Iter 143~162 반영 (20-iter batch):
+- FederHav governor -> Live Logs 브릿지 연결 강화:
+  - `execution_handoff.governor_loop`를 help_agent normalize 경로에 포함
+  - action trace message에 governor 요약(`attempts/max_iter`, `converged`, `candidate count`) 반영
+  - SSE activity event(`action_plan`)에 `details` 포함 전달
+  - 반영: `src/federnett/help_agent.py`
+- Federnett Live Logs 메타/로그 표시 강화:
+  - activity timeline 이벤트에 `details` 저장
+  - ask trace meta chip에서 governor 요약(`gov=x/y`, `conv=yes/no`) 표시
+  - run-agent activity 로그 라인에 action/governor 요약 추가
+  - stream fallback(legacy ask 응답)에서도 trace step을 Live Logs로 재주입하여 턴 단위 로그브릿지 누락 방지
+  - 반영: `site/federnett/app.js`
+- FederHav governor stage budget 정책 1차 연결:
+  - attempt별 adaptive budget(`_attempt_budget_chars`) 도입
+  - execution mode/allow_artifacts 반영한 budget decay 정책 적용
+  - governor_loop 메타에 `stage_budget_mode`, `attempt_budget_chars`, `attempt_trace[*].budget_chars` 기록
+  - 반영: `src/federhav/agentic_runtime.py`
+- 테스트 확장:
+  - `tests/test_help_agent.py`
+    - handoff normalize가 governor_loop 유지하는지 검증
+    - stream action_plan activity 이벤트에 governor details 포함되는지 검증
+  - `tests/test_federhav_agentic_runtime.py` 기존 governor loop 테스트 회귀 통과
+  - 실행:
+    - `pytest -q tests/test_federhav_agentic_runtime.py` -> `7 passed`
+    - `pytest -q tests/test_help_agent.py -k "governor_loop or action_plan_details or deepagent_handoff_metadata or stream_help_question_action_activity_includes_governor_details"` -> `4 passed`
+    - `pytest -q tests/test_report_metadata.py tests/test_report_prompt_quality_policy.py tests/test_report_run_overview_prompt.py` -> `19 passed`
+- P0 품질 재검증 (world_class gate):
+  - QC: `test-results/p0_quality_gate_qc_iter142_world.md` -> PASS
+    - overall `91.05`, claim_support `72.73`, unsupported `6`, coherence `92`
+  - openclaw: `test-results/p0_quality_gate_openclaw_iter142_world.md` -> PASS
+    - overall `94.63`, claim_support `97.22`, unsupported `1`, coherence `100`
+  - physical_ai: `test-results/p0_quality_gate_physical_iter142_world.md` -> PASS
+    - overall `94.39`, claim_support `93.94`, unsupported `2`, coherence `80`
+  - summary/consistency 산출물:
+    - `test-results/p0_quality_benchmark_qc_iter142.summary.json`
+    - `test-results/p0_quality_contract_consistency_qc_iter142.json`
+    - `test-results/p0_quality_benchmark_openclaw_iter142.summary.json`
+    - `test-results/p0_quality_contract_consistency_openclaw_iter142.json`
+    - `test-results/p0_quality_benchmark_physical_iter142.summary.json`
 
 ## 5) 충돌/리스크/미진점
 
@@ -118,36 +197,28 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - Federnett 대규모 모듈 분리(`app.js`)는 아직 백로그
 - 도메인/경로 인식 확대로 citation 계수가 과대평가될 가능성 -> 샘플셋 확대 검증 필요
 
-## 6) TODO 재설정 (동일 원칙 유지)
+## 6) TODO 재설정 (P0/P1/P2)
 
-### P0+ (최우선)
-- P0Q-1. baseline 안정 통과 회복
-- 상태: `완료`
-- 결과: QC 샘플 기준 baseline/professional/world_class 모두 PASS
-- P0Q-2. writer/evidence 루프 품질 튜닝
-- 목표: revise pass마다 `quality_pass_trace` 개선폭이 실제 양(+)이 되도록 보정
-- 수단: critic/reviser 지시문과 evidence packet 압축 정책 재설계
-- 상태: `완료`
-- 결과: metric version tagging + stale contract skip 정책 적용
-- P0Q-4. 문서 수준 uplift (신규/상향)
-- 목표: 섹션당 심층 서술(3~5+ 문단), 표/다이어그램/정량 해석의 자연스러운 통합, 톤 일관성 확보
-- 구현축:
-  - Data Scientist 분석 노트(`analysis_notes.md`)를 writer 기본 입력으로 사용
-  - visuals(표/다이어그램) 생성을 "선택적 장식"이 아니라 근거-해석 연결 자산으로 승격
-  - figure/table caption에서 데이터 출처·해석 근거를 자연문으로 설명(라벨형 문구 금지)
-- 검증축:
-  - QC / openclaw / physical_ai 3개 축으로 world_class gate + 본문 수기 리뷰 병행
-- 상태: `1차 완료`
-- 결과: Codex 샘플(openclaw brief)에서 world_class PASS + high claim-support 확인
-- 잔여: deep 장문(3~5+ 문단/섹션)에서 동일 수준 재현 검증 필요
+### P0 (최우선: world-class sustain v2)
+- 목표: deep/brief 모두에서 섹션당 충분한 서사 밀도 + 표/다이어그램/데이터 해석 통합 품질을 안정적으로 재현
+- P0-1. 장문 밀도 보강:
+  - deep 보고서에서 핵심 섹션(Methods/Findings/Implications) 최소 3문단 이상을 기본 달성하도록 writer plan/quality rubric 보정
+- P0-2. 시각화 통합:
+  - figures 미존재 런에서도 artwork fallback(mermaid/d2) 1개 이상 생성 가능 경로를 기본화
+  - figure/table caption에 데이터 출처와 해석 근거를 자연문으로 연결
+- P0-3. 경량모델 재현성:
+  - `gpt-4o-mini` 프로파일에서 분량/근거밀도 저하를 완화하는 section budget + 단계별 분할 작성 루프 설계
+- P0-4. 검증:
+  - QC/openclaw/physical_ai 3개 run에서 10-iter마다 샘플 생성 + world_class gate + 수기 리뷰 동시 기록
 
-### P1
-- FederHav DeepAgent Phase C 착수
-- governor convergence 조건(`delta_threshold`, `budget`, `max_iter`) 도입
+### P1 (FederHav DeepAgent Phase C)
+- governor convergence 조건(`delta_threshold`, `budget`, `max_iter`) 구현
+- run-context 선택/도구 실행/요약 응답을 규칙기반이 아닌 planning-execution loop로 일원화
+- 턴별 로그 브릿지를 action trace와 결합해 Live Logs에서 요청 단위로 스택 표시
 
-### P2
-- CI 품질 게이트 통합
-- 장문 벤치마크 세트 확대
+### P2 (Productization/운영)
+- CI 품질 게이트 통합(quality contract + benchmark + world_class gate)
+- 장문 벤치마크 세트 확대 및 stale run 재생성 정책 수립
 - Federnett UI 모듈 분리/가독성 회귀 자동검증
 
 ## 7) Iter 맥락 요약 (상세 로그는 20260223 참조)
@@ -197,13 +268,12 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - 실행/테스트 표준 명령과 통과 기준
 - 버전 일관성 상태와 릴리스 스냅샷
 
-## 11) 다음 Iter 제안 (P1 착수)
-- Iter-133: FederHav Phase C governor convergence 최소 루프(δ-threshold + max_iter) 구현
-- Iter-134: stage budget 정책을 phase governor와 연결(예산 초과 시 자동 축약)
-- Iter-135: section-level rewrite 기본 경로 승격 실험(기본 ON, 실패시 fallback)
-- Iter-136: deep 장문 Codex 샘플(QC) 재생성 + world_class + 수기 리뷰 병행
-- Iter-137: openclaw/physical_ai deep 장문 재생성 + 비교 리포트
-- Iter-138: P1 중간점검 + handoff 갱신 + commit/push
+## 11) 다음 Iter 제안 (P1 진행)
+- Iter-163: governor loop 정책을 LLM Settings payload와 연결(환경변수 의존 축소, workspace 정책화)
+- Iter-164: per-turn log bridge에서 governor attempt trace 간결 요약 카드 추가(UI)
+- Iter-165: section-level rewrite 기본 경로 승격 실험(기본 ON, 실패시 fallback)
+- Iter-166: deep 장문 Codex 샘플(QC) 재생성 + world_class + 수기 리뷰 병행
+- Iter-167: openclaw/physical_ai deep 장문 재생성 + 비교 리포트 + P1 중간점검
 
 ## 12) Docs 구조 운영 (2026-02-24 정리본)
 - Active docs(현재 운영):

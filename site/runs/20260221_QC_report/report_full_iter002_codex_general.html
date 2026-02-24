@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --chrome-ink: #f5f7fb;
+      --chrome-muted: rgba(245, 247, 251, 0.66);
+      --chrome-surface: rgba(11, 17, 29, 0.62);
+      --chrome-border: rgba(255, 255, 255, 0.16);
+      --chrome-hover-soft: rgba(255, 255, 255, 0.06);
+      --chrome-hover: rgba(255, 255, 255, 0.08);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .toc-sidebar {
+      display: none;
+      position: fixed;
+      left: max(18px, calc(50% - 700px));
+      top: 64px;
+      width: 250px;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+      padding: 16px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--chrome-border);
+      background: var(--chrome-surface);
+      backdrop-filter: blur(8px);
+      z-index: 2;
+    }
+    .toc-title {
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--chrome-muted);
+      margin-bottom: 10px;
+    }
+    .toc-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .toc-item {
+      display: block;
+      color: var(--chrome-ink);
+      text-decoration: none;
+      font-family: var(--ui-font);
+      font-size: 0.88rem;
+      line-height: 1.35;
+      opacity: 0.82;
+      border-left: 2px solid transparent;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: all 0.18s ease;
+    }
+    .toc-item:hover {
+      opacity: 1;
+      border-left-color: var(--accent);
+      background: var(--chrome-hover-soft);
+    }
+    .toc-item.active {
+      opacity: 1;
+      border-left-color: var(--accent);
+      background: var(--chrome-hover);
+    }
+    .toc-sub {
+      margin-left: 12px;
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }
+    body.layout-sidebar_toc .page {
+      max-width: 980px;
+    }
+    @media (min-width: 1300px) {
+      body.layout-sidebar_toc .toc-sidebar {
+        display: block;
+      }
+      body.layout-sidebar_toc .page {
+        margin-left: max(300px, calc(50% - 370px));
+        margin-right: 56px;
+      }
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article h2, .article h3 { scroll-margin-top: 92px; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article .misc-block {
+      margin: 1.2rem 0 1.4rem;
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: rgba(148, 163, 184, 0.1);
+    }
+    .article .misc-block ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .article .misc-block li {
+      margin: 0.35rem 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .article .misc-block.ai-disclosure {
+      border-color: var(--accent);
+      background: rgba(78, 224, 181, 0.08);
+    }
+    .article .misc-block.ai-disclosure p {
+      margin: 0 0 0.55rem;
+      color: var(--ink);
+      font-family: var(--ui-font);
+      letter-spacing: 0.01em;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article figure.report-figure {
+      margin: 1.8rem 0;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .article figure.report-figure img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+    }
+    .article figure.report-figure figcaption {
+      margin-top: 0.65rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .article figure.report-diagram {
+      background: rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      border-radius: 14px;
+      padding: 0.9rem;
+    }
+    .article .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      min-height: 40px;
+    }
+    .article .mermaid svg {
+      max-width: 100% !important;
+      height: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    body.template-quanta_magazine {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1b1c22;
+  --muted: #4c5566;
+  --accent: #2f4b8f;
+  --link: #2f4b8f;
+  --page-bg: radial-gradient(1200px 700px at 15% -10%, #e9eef9 0%, #f4f6fb 45%, #ffffff 100%);
+  --body-font: "Baskerville", "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-quanta_magazine .report-title {
+  font-size: 2.8rem;
+}
+
+body.template-quanta_magazine .article {
+  border-radius: 20px;
+  box-shadow: 0 26px 70px rgba(43, 69, 121, 0.16);
+}
+
+body.template-quanta_magazine .article p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.2rem;
+  line-height: 1;
+  padding-right: 8px;
+  color: var(--accent);
+  font-family: var(--heading-font);
+}
+
+body.template-quanta_magazine .article h2 {
+  border-top: 1px solid rgba(47, 75, 143, 0.3);
+}
+body.template-quanta_magazine {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
+}
+
+  </style>
+</head>
+<body class="theme-coral template-quanta_magazine layout-sidebar_toc">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <aside class="toc-sidebar" id="toc-sidebar"><div class="toc-title">Contents</div><nav class="toc-nav"><a class="toc-item" href="#lede">Lede</a><a class="toc-item" href="#central_question">Central Question</a><a class="toc-item" href="#the_story_so_far">The Story So Far</a><a class="toc-item toc-sub" href="#2025_benchmarks_narrowed_the_promise">2025: Benchmarks narrowed the promise</a><a class="toc-item toc-sub" href="#2025_adjacent_evidence_showed_where_quantum_can_">2025: Adjacent evidence showed where quantum can still add value</a><a class="toc-item toc-sub" href="#late_2025_to_early_2026_commercialization_signal">Late 2025 to early 2026: Commercialization signals accelerated</a><a class="toc-item" href="#how_it_works">How It Works</a><a class="toc-item toc-sub" href="#optimization_mapping_then_hybrid_execution">Optimization mapping, then hybrid execution</a><a class="toc-item toc-sub" href="#why_outcomes_vary_so_sharply_by_problem_class">Why outcomes vary so sharply by problem class</a><a class="toc-item toc-sub" href="#why_service_architecture_now_matters_as_much_as_">Why service architecture now matters as much as algorithms</a><a class="toc-item" href="#why_it_matters">Why It Matters</a><a class="toc-item" href="#open_questions">Open Questions</a><a class="toc-item" href="#appendix">Appendix</a><a class="toc-item toc-sub" href="#evidence_strength_snapshot">Evidence Strength Snapshot</a><a class="toc-item toc-sub" href="#minimal_decision_checklist_reproducible_pilot">Minimal Decision Checklist (Reproducible Pilot)</a><a class="toc-item toc-sub" href="#scope_and_limits">Scope and Limits</a><a class="toc-item" href="#report_prompt">Report Prompt</a><a class="toc-item" href="#references">References</a><a class="toc-item" href="#miscellaneous">Miscellaneous</a></nav></aside>
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025</h1>
+<p>Default assisted and prompted by "Federlicht Writer" — 2026-02-25 00:57</p>
+<h2 id="lede">Lede</h2>
+<p>In industrial quantum computing, 2025 was the year the conversation became less about “quantum will change everything” and more about “for which workloads, at what price, and under what constraints.” The strongest peer-reviewed benchmark in this archive found that D-Wave’s hybrid approach is most compelling for specific binary quadratic structures, while large MILP-style industrial formulations still favor top classical solvers on both quality and time in many settings <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<p>A second 2025 study on rail rescheduling sharpened that realism: it explicitly framed current NISQ methods as underperforming classical baselines on core optimization metrics, while still showing scientific value in stochastic modeling workflows <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[2]</a>. That result is not a dead end; it is a boundary condition.</p>
+<p>At the same time, the market signal strengthened in late 2025 and early 2026. D-Wave publicly positioned a dual-platform roadmap with an initial gate-model system target in 2026 and emphasized service-scale metrics such as uptime, problem volume, and enterprise adoption; third-party industry coverage reported additional commercial and defense milestones, though those claims are secondary and should be treated accordingly <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[3]</a> <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-to-bring-commercial-quantum-computing-to-ces-2026/" target="_blank" rel="noopener">[4]</a> <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-qubits-2026-quantum-computing-user-conference/" target="_blank" rel="noopener">[5]</a> <a href="https://quantumcomputingreport.com/d-wave-announces-hq-relocation-20m-system-sale-and-defense-performance-breakthroughs/" target="_blank" rel="noopener">[6]</a>.</p>
+<h2 id="central_question">Central Question</h2>
+<p>The decision is no longer whether quantum computing is “real,” but whether D-Wave-centered quantum optimization should be deployed now for your specific problem mix. The practical choice is among three paths: targeted pilot now, hybrid multi-solver adoption, or defer-and-monitor. The right answer depends on whether your critical workloads map cleanly to QUBO/BQP-like structures and whether hybrid workflow overhead stays below the value created <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<h2 id="the_story_so_far">The Story So Far</h2>
+<h3 id="2025_benchmarks_narrowed_the_promise">2025: Benchmarks narrowed the promise</h3>
+<p>The Scientific Reports benchmark compared D-Wave hybrid solvers against CPLEX/Gurobi/IPOPT across problem classes and concluded that competitiveness is currently limited and class-dependent, with better relative behavior on BQP-like formulations than on large MILP unit commitment problems <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>. In that same paper, a full-scale unit commitment setup had no feasible solution at default 20 s runtime, and even longer runs (150 s and 400 s) remained far from the classical reference objective <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<p>The Baltimore rail study reinforced that caution: classical ILP solved quickly and optimally in the tested instances (reported around \(0.0014\) to \(0.08\) seconds), while quantum approaches were slower and costlier in the presented experiments, despite useful exploratory behavior for stochastic schedule distributions <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[2]</a>.</p>
+<h3 id="2025_adjacent_evidence_showed_where_quantum_can_">2025: Adjacent evidence showed where quantum can still add value</h3>
+<p>A peptide-design study reported that D-Wave-assisted hybrid optimization could produce low-energy solutions quickly and with broader candidate diversity in its workflow, indicating potential value in search-heavy discovery pipelines rather than strict deterministic optimization dominance <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[7]</a>. In parallel, quantum-inspired compression work showed that strong reduction of Ising instance size can preserve high solution quality, suggesting a practical “preprocess-then-quantum” or even “preprocess-instead-of-quantum” branch in deployment architectures <a href="https://doi.org/10.1609/aaai.v39i11.33235" target="_blank" rel="noopener">[8]</a>.</p>
+<h3 id="late_2025_to_early_2026_commercialization_signal">Late 2025 to early 2026: Commercialization signals accelerated</h3>
+<p>D-Wave’s official releases emphasized dual-platform strategy, 2026 gate-model milestones, CES participation on January 7-8, 2026, and service-scale operating claims (e.g., uptime and submission volume) <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[3]</a> <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-to-bring-commercial-quantum-computing-to-ces-2026/" target="_blank" rel="noopener">[4]</a> <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-qubits-2026-quantum-computing-user-conference/" target="_blank" rel="noopener">[5]</a>. Third-party reporting added potential commercialization indicators (usage growth, QCaaS contract scale, defense simulation outcomes), but these remain secondary unless independently audited <a href="https://quantumcomputingreport.com/d-wave-announces-hq-relocation-20m-system-sale-and-defense-performance-breakthroughs/" target="_blank" rel="noopener">[6]</a> <a href="https://quantumcomputingreport.com/d-wave-advances-quantum-applications-in-automotive-manufacturing-and-drug-discovery/" target="_blank" rel="noopener">[9]</a>.</p>
+<h2 id="how_it_works">How It Works</h2>
+<h3 id="optimization_mapping_then_hybrid_execution">Optimization mapping, then hybrid execution</h3>
+<p>D-Wave-style annealing pipelines start by translating business constraints into an Ising/QUBO objective, typically of the form 
+$$
+E(\mathbf{s})=\sum_{i} h_{i}s_{i}+\sum_{i&lt;j}J_{ij}s_{i}s_{j},\quad s_{i}\in\{-1,+1\}.
+$$ 
+This mapping is where many practical gains or losses are determined, because encoding, penalties, and embedding overhead can dominate runtime and quality for non-native formulations <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<h3 id="why_outcomes_vary_so_sharply_by_problem_class">Why outcomes vary so sharply by problem class</h3>
+<p>For BQP-like structures, annealing can be structurally aligned and competitive; for large MILP-like formulations, translation overhead plus constraint complexity can erase gains, which is exactly what the 2025 benchmark observed in unit commitment experiments <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>. This is why “hybrid” is the operational reality: classical decomposition, quantum sampling, and classical repair/ranking loops jointly determine value <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<h3 id="why_service_architecture_now_matters_as_much_as_">Why service architecture now matters as much as algorithms</h3>
+<p>Networked quantum service literature places current systems at an experimental TRL stage and highlights interoperability, API standardization, middleware, and orchestration as bottlenecks <a href="https://doi.org/10.2478/qic-2025-0006" target="_blank" rel="noopener">[10]</a>. In practice, this means adoption success is often constrained by integration and operability, not just solver physics.</p>
+<h2 id="why_it_matters">Why It Matters</h2>
+<p>For decision makers, this is a portfolio design problem, not a binary bet on “quantum vs classical.”</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Strength</th>
+<th>Execution condition</th>
+<th>Failure risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D-Wave-first targeted pilot</td>
+<td>Fast learning on QUBO/BQP-suitable workloads; potential near-term domain value in selected search/optimization tasks <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[7]</a></td>
+<td>Clear high-value use case with measurable baseline and constrained scope</td>
+<td>Over-generalizing pilot success to mismatched MILP-heavy workloads <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a></td>
+</tr>
+<tr>
+<td>Hybrid multi-solver path (recommended)</td>
+<td>Keeps classical reliability while exploiting quantum where structurally aligned; lowers lock-in risk <a href="https://doi.org/10.1609/aaai.v39i11.33235" target="_blank" rel="noopener">[8]</a> <a href="https://doi.org/10.2478/qic-2025-0006" target="_blank" rel="noopener">[10]</a></td>
+<td>Strong MLOps/OR engineering to route workloads by structure and KPI</td>
+<td>Integration complexity and slower organizational execution</td>
+</tr>
+<tr>
+<td>Wait-and-monitor</td>
+<td>Lowest near-term spend and operational disruption</td>
+<td>Use when no high-value candidate workload is available</td>
+<td>Missed capability learning and slower readiness if market matures quickly <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[3]</a></td>
+</tr>
+</tbody>
+</table>
+<p>Recommendation: run a 6-12 month hybrid pilot program now, but gate expansion on hard outcomes. Scale only if at least one production-relevant workload beats your classical baseline on either quality-at-fixed-time or time-at-fixed-quality, with integration overhead and reliability inside pre-agreed limits. If not, keep quantum in R&amp;D mode and shift investment toward quantum-inspired preprocessing plus classical solvers.</p>
+<h2 id="open_questions">Open Questions</h2>
+<ol>
+<li>Can you predict in advance which internal workloads are “BQP-native enough” to justify annealing, instead of discovering this expensively by trial and error <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>? </li>
+<li>How much of observed improvement comes from quantum sampling versus classical decomposition, repair, and tuning in hybrid workflows <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>? </li>
+<li>Will service-layer constraints (interoperability, API standardization, orchestration) improve fast enough to support multi-provider enterprise deployment <a href="https://doi.org/10.2478/qic-2025-0006" target="_blank" rel="noopener">[10]</a>? </li>
+<li>Do recent commercialization claims (usage growth, contract scale, defense metrics) replicate under independent benchmarking and transparent baselines <a href="https://quantumcomputingreport.com/d-wave-announces-hq-relocation-20m-system-sale-and-defense-performance-breakthroughs/" target="_blank" rel="noopener">[6]</a>? </li>
+<li>Where is the long-term boundary between true quantum advantage and high-performing quantum-inspired methods for the same optimization classes <a href="https://doi.org/10.1609/aaai.v39i11.33235" target="_blank" rel="noopener">[8]</a>?</li>
+</ol>
+<h2 id="appendix">Appendix</h2>
+<h3 id="evidence_strength_snapshot">Evidence Strength Snapshot</h3>
+<ul>
+<li>Peer-reviewed optimization benchmarks provide the strongest decision anchor and are consistent in showing class-dependent performance, not universal advantage <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[2]</a>. </li>
+<li>Peer-reviewed application evidence in life sciences is promising but domain-specific and not yet a universal template for industrial optimization ROI <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[7]</a>. </li>
+<li>Vendor releases are useful for roadmap/timing signals (late 2025 to early 2026) but should be treated as issuer claims until independently validated <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[3]</a> <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-to-bring-commercial-quantum-computing-to-ces-2026/" target="_blank" rel="noopener">[4]</a>.</li>
+</ul>
+<h3 id="minimal_decision_checklist_reproducible_pilot">Minimal Decision Checklist (Reproducible Pilot)</h3>
+<ul>
+<li>Define one primary KPI per workload: <code>quality@time</code> or <code>time@quality</code>, with a fixed classical baseline and cost accounting window. </li>
+<li>Record full workflow cost: model translation, embedding/tuning effort, queue/latency, reruns, and post-processing effort, not only solver-call time. </li>
+<li>Require at least one independently rerun test set before scale-up, with failure cases documented alongside wins. </li>
+<li>Keep fallback routing to classical solvers for SLA-critical operations during pilot.</li>
+</ul>
+<h3 id="scope_and_limits">Scope and Limits</h3>
+<ul>
+<li>This brief is D-Wave-centered by instruction and source mix; it is not a full cross-vendor benchmark. </li>
+<li>Several commercial signals come from company releases or secondary reporting and should be interpreted as directional until independently reproduced <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-qubits-2026-quantum-computing-user-conference/" target="_blank" rel="noopener">[5]</a> <a href="https://quantumcomputingreport.com/d-wave-announces-hq-relocation-20m-system-sale-and-defense-performance-breakthroughs/" target="_blank" rel="noopener">[6]</a>. </li>
+<li>The most reliable conclusion remains conditional: deploy where structure fits, measure rigorously, and keep hybrid optionality.</li>
+</ul>
+<h2 id="report_prompt">Report Prompt</h2>
+<p>Objective: Explain recent industrial quantum computing progress with practical implications.
+Tone: Friendly and clear for mixed technical/non-technical readers.
+Audience: Wide range decision makers, including non-specialists.
+Depth preference: brief.
+Avoid jargon where possible, and define terms when needed.</p>
+<h2 id="references">References</h2>
+<p>Citation policy: keep citations inline as <code>[n]</code>; source rights belong to original publishers/authors. Validate primary sources before high-stakes use.</p>
+<ol>
+<li><span id="ref-1"></span> doi.org/10.1038/s41598-025-96220-2 — <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-2"></span> doi.org/10.1038/s41598-025-15545-0 — <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-3"></span> D-Wave Announces Advancements in Annealing and Gate-Model ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-4"></span> www.dwavequantum.com/company/newsroom/press-release/d-wave-to... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-to-bring-commercial-quantum-computing-to-ces-2026/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-5"></span> D-Wave Announces Qubits 2026 Quantum Computing User ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-qubits-2026-quantum-computing-user-conference/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-6"></span> D-Wave Announces HQ Relocation, $20M System Sale, $10M ... — <a href="https://quantumcomputingreport.com/d-wave-announces-hq-relocation-20m-system-sale-and-defense-performance-breakthroughs/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-7"></span> doi.org/10.1021/acs.jctc.5c00768 — <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-8"></span> doi.org/10.1609/aaai.v39i11.33235 — <a href="https://doi.org/10.1609/aaai.v39i11.33235" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-9"></span> D-Wave Advances Quantum Applications in Automotive ... — <a href="https://quantumcomputingreport.com/d-wave-advances-quantum-applications-in-automotive-manufacturing-and-drug-discovery/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-10"></span> doi.org/10.2478/qic-2025-0006 — <a href="https://doi.org/10.2478/qic-2025-0006" target="_blank" rel="noopener">link</a></li>
+</ol>
+<h2 id="miscellaneous">Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-25 00:58:02</li>
+<li>Duration: 00:14:15 (855.05s)</li>
+<li>Model: gpt-5.3-codex</li>
+<li>Quality strategy: none</li>
+<li>Quality iterations: 0</li>
+<li>Template: quanta_magazine</li>
+<li>Depth: brief</li>
+<li>Language: English</li>
+<li>Tags: and, quantum, d-wave, hybrid, gains</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_iter002_codex_general.md-ebea7542.html" data-viewer="report_views/report_run_overview_report_full_iter002_codex_general.md-ebea7542.html" data-raw="report/run_overview_report_full_iter002_codex_general.md" class="viewer-link">./report/run_overview_report_full_iter002_codex_general.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-viewer="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-raw="archive/20260221_QC_report-index.md" class="viewer-link">./archive/20260221_QC_report-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-viewer="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-raw="instruction/20260221_QC_report.txt" class="viewer-link">./instruction/20260221_QC_report.txt</a></li>
+<li>Feather instruction: <a href="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-viewer="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-raw="instruction/20260221_QC_report.txt" class="viewer-link">./instruction/20260221_QC_report.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_iter002_codex_general.txt-ff309ab7.html" data-viewer="report_views/instruction_report_prompt_report_full_iter002_codex_general.txt-ff309ab7.html" data-raw="instruction/report_prompt_report_full_iter002_codex_general.txt" class="viewer-link">./instruction/report_prompt_report_full_iter002_codex_general.txt</a></li>
+</ul>
+</div>
+<div class="misc-block ai-disclosure">
+<p><strong>AI Transparency and Source Notice</strong></p>
+<ul>
+<li>AI transparency notice: this document is generated with the Federlicht agent pipeline; final accountability remains with the user/organization.</li>
+<li>Source and copyright notice: external-source rights remain with original owners; quotations should stay minimal and analysis should rely on paraphrased synthesis.</li>
+<li>Verification notice: for high-stakes use (legal, medical, finance, regulation), perform primary-source verification before relying on this report.</li>
+<li>EU AI Act alignment note: this output is explicitly disclosed as AI-assisted/generated content and is intended for human-reviewed use.</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        // Report files are placed under runs/<run>/report*.html.
+        // A stable relative target is ../../report_hub/index.html from the report file.
+        // Keep extra candidates for mixed hosting roots (/site, /).
+        const candidates = [
+          '../../report_hub/index.html',
+          '/report_hub/index.html',
+          '/site/report_hub/index.html',
+          '../index.html',
+          '/index.html',
+        ];
+        backLink.style.display = 'inline-flex';
+        backLink.href = candidates[0];
+        const canProbe = String(window.location.protocol || '').startsWith('http');
+        if (canProbe) {
+          const probe = async () => {
+            for (const href of candidates) {
+              try {
+                const resp = await fetch(href, { method: 'HEAD' });
+                if (resp && resp.ok) {
+                  backLink.href = href;
+                  return;
+                }
+              } catch (_) {}
+            }
+          };
+          probe();
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      const tocLinks = Array.from(document.querySelectorAll('.toc-item'));
+      const tocSections = tocLinks
+        .map((link) => {
+          const id = (link.getAttribute('href') || '').replace('#', '');
+          if (!id) return null;
+          const section = document.getElementById(id);
+          if (!section) return null;
+          return { link, section };
+        })
+        .filter(Boolean);
+      if (tocSections.length) {
+        tocLinks.forEach((link) => {
+          link.addEventListener('click', (ev) => {
+            const href = link.getAttribute('href') || '';
+            if (!href.startsWith('#')) return;
+            const target = document.getElementById(href.slice(1));
+            if (!target) return;
+            ev.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (history && history.replaceState) {
+              history.replaceState(null, '', href);
+            }
+          });
+        });
+        
+        const updateToc = () => {
+          const threshold = window.scrollY + 180;
+          let active = null;
+          for (const item of tocSections) {
+            if (item.section.offsetTop <= threshold) active = item;
+          }
+          tocLinks.forEach((node) => node.classList.remove('active'));
+          if (active) active.link.classList.add('active');
+        };
+        updateToc();
+        window.addEventListener('scroll', updateToc, { passive: true });
+      }
+    })();
+  </script>
+</body>
+</html>

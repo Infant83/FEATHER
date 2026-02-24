@@ -61,6 +61,7 @@ Top recommendation: run a 12-week pilot with explicit stop/go criteria [https://
     assert signals["overall"] >= 55.0
     assert "section_coherence_score" in signals
     assert "evidence_density_score" in signals
+    assert "narrative_density_score" in signals
 
 
 def test_heuristic_handles_html_headings_and_links() -> None:
@@ -184,3 +185,56 @@ def test_quality_gate_failures_supports_threshold_checks() -> None:
         min_section_coherence=60.0,
     )
     assert len(failures) == 4
+
+
+def test_narrative_density_rewards_deeper_reports_in_deep_mode() -> None:
+    required = ["Executive Summary", "Scope & Methodology", "Key Findings", "Implications"]
+    short_deep = """
+## Executive Summary
+One short paragraph with a citation [https://example.com/1].
+
+## Scope & Methodology
+Short method note [https://example.com/2].
+
+## Key Findings
+Short finding note [https://example.com/3].
+"""
+    long_deep = """
+## Executive Summary
+Industrial adoption accelerated in selected pilot pathways with measurable constraints [https://example.com/a].
+
+This section explains why pilots scaled in narrow workflows while broader rollout lagged [https://example.com/b].
+
+## Scope & Methodology
+We used explicit source selection criteria, exclusion criteria, and staged evidence synthesis [https://example.com/c].
+
+The workflow mapped claims to evidence paths before interpretation to reduce unsupported conclusions [https://example.com/d].
+
+## Key Findings
+First, operational gains appear in constrained optimization windows and are not universal [https://example.com/e].
+
+Second, integration overhead and governance requirements remain dominant blockers in enterprise deployments [https://example.com/f].
+
+Third, benchmark comparability limits direct cross-vendor ranking and requires context-aware interpretation [https://example.com/g].
+
+## Implications
+Decision makers should sequence pilots by integration readiness and define stop/go criteria early [https://example.com/h].
+
+Risk controls and evidence refresh cadence must be set before scale-out decisions [https://example.com/i].
+"""
+    short_signals = report.compute_heuristic_quality_signals(
+        short_deep,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    long_signals = report.compute_heuristic_quality_signals(
+        long_deep,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    assert long_signals["narrative_density_score"] > short_signals["narrative_density_score"]
+    assert long_signals["overall"] > short_signals["overall"]

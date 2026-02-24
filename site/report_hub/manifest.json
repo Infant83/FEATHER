@@ -1,34 +1,92 @@
 {
-  "revision": "2026-02-23T07:24:05.568918",
-  "generated_at": "2026-02-23T07:24:05.568918",
+  "revision": "2026-02-25T01:10:07.120855",
+  "generated_at": "2026-02-25T01:10:07.120855",
   "items": [
+    {
+      "id": "physical_ai_insight",
+      "run": "physical_ai_insight",
+      "report_stem": "report_full_iter003_codex_classroom",
+      "title": "Real Time Chunking and Latency Brittleness in Language Driven Robots",
+      "author": "Federlicht Writer",
+      "summary": "Real Time Chunking and Latency Brittleness in Language Driven Robots Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 01:09 Lede A robot that “understands” language but pauses for a third of a second be…",
+      "lang": "English",
+      "template": "quanta_magazine",
+      "format": "html",
+      "model": "gpt-5.3-codex",
+      "tags": [
+        "and",
+        "language",
+        "real",
+        "time",
+        "chunking"
+      ],
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T01:10:06.834951",
+      "source_mtime": 1771949407,
+      "source_size": 43584,
+      "paths": {
+        "report": "../runs/physical_ai_insight/report_full_iter003_codex_classroom.html",
+        "overview": "../runs/physical_ai_insight/report/run_overview_report_full_iter003_codex_classroom.md",
+        "workflow": "../runs/physical_ai_insight/report_notes/report_workflow.md",
+        "run": "../runs/physical_ai_insight"
+      }
+    },
     {
       "id": "20260221_QC_report",
       "run": "20260221_QC_report",
-      "report_stem": "report_full_iter51",
-      "title": "산업 현장의 실용적 양자컴퓨팅 기대와 회의",
+      "report_stem": "report_full_iter002_codex_general",
+      "title": "D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025",
       "author": "Federlicht Writer",
-      "summary": "산업 현장의 실용적 양자컴퓨팅 기대와 회의 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-23 07:24 Lede 산업 현장에서 “쓸모 있는 양자컴퓨팅”은 대개 두 가지 기대 사이를 오갑니다. 하나는 최적화·스케줄링·물류 같은 현실 문제에서 고전 솔버가 이미 잘하는 일을 “조금이라도 더 싸게, 더 빨리, 더 좋은 해로” 밀어…",
-      "lang": "Korean",
+      "summary": "D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 00:57 Lede In industrial quantum computing, 2025 was the year the conversation became le…",
+      "lang": "English",
       "template": "quanta_magazine",
       "format": "html",
-      "model": "gpt-5.2",
+      "model": "gpt-5.3-codex",
       "tags": [
-        "산업",
-        "양자컴퓨팅",
-        "현장의",
-        "실용적",
-        "기대와"
+        "and",
+        "quantum",
+        "d-wave",
+        "hybrid",
+        "gains"
       ],
-      "date": "2026-02-23",
-      "timestamp": "2026-02-23T07:24:05.281710",
-      "source_mtime": 1771799045,
-      "source_size": 41214,
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T00:58:02.816434",
+      "source_mtime": 1771948683,
+      "source_size": 44025,
       "paths": {
-        "report": "../runs/20260221_QC_report/report_full_iter51.html",
-        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter51.md",
+        "report": "../runs/20260221_QC_report/report_full_iter002_codex_general.html",
+        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter002_codex_general.md",
         "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
         "run": "../runs/20260221_QC_report"
+      }
+    },
+    {
+      "id": "openclaw",
+      "run": "openclaw",
+      "report_stem": "report_full_iter001_codex_leader",
+      "title": "OpenClaw and the Rise of Action-Oriented AI Agents",
+      "author": "Federlicht Writer",
+      "summary": "OpenClaw and the Rise of Action-Oriented AI Agents Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 00:41 Lede OpenClaw is part of a visible shift in AI software: from systems that answer questions to s…",
+      "lang": "English",
+      "template": "quanta_magazine",
+      "format": "html",
+      "model": "gpt-5.3-codex",
+      "tags": [
+        "and",
+        "openclaw",
+        "the",
+        "rise",
+        "action-oriented"
+      ],
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T00:41:45.646263",
+      "source_mtime": 1771947705,
+      "source_size": 44766,
+      "paths": {
+        "report": "../runs/openclaw/report_full_iter001_codex_leader.html",
+        "overview": "../runs/openclaw/report/run_overview_report_full_iter001_codex_leader.md",
+        "workflow": "../runs/openclaw/report_notes/report_workflow.md",
+        "run": "../runs/openclaw"
       }
     },
     {
@@ -58,35 +116,6 @@
         "overview": "../../runs/양자컴퓨터_관련_자료_정리/report/run_overview_report_full_1.md",
         "workflow": "../../runs/양자컴퓨터_관련_자료_정리/report_notes/report_workflow.md",
         "run": "../../runs/양자컴퓨터_관련_자료_정리"
-      }
-    },
-    {
-      "id": "openclaw",
-      "run": "openclaw",
-      "report_stem": "report_full_iter_brief_base",
-      "title": "대화형을 넘어선 실행형 AI 오픈클로",
-      "author": "Federlicht Writer",
-      "summary": "대화형을 넘어선 실행형 AI 오픈클로 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-22 01:20 Lede 2026년 1월 말, OpenClaw는 “대화형 AI”라는 익숙한 범주를 살짝 벗어났다. 공식 사이트가 내세운 문구는 “The AI that actually does things”였고, 예시는 메일 발송, 캘린더 관리…",
-      "lang": "Korean",
-      "template": "quanta_magazine",
-      "format": "md",
-      "model": "gpt-5.3-codex",
-      "tags": [
-        "대화형을",
-        "넘어선",
-        "실행형",
-        "오픈클로",
-        "default"
-      ],
-      "date": "2026-02-22",
-      "timestamp": "2026-02-22T01:20:11.841624",
-      "source_mtime": 1771690811,
-      "source_size": 13614,
-      "paths": {
-        "report": "../runs/openclaw/report_full_iter_brief_base.md",
-        "overview": "../runs/openclaw/report/run_overview_report_full_iter_brief_base.md",
-        "workflow": "../runs/openclaw/report_notes/report_workflow.md",
-        "run": "../runs/openclaw"
       }
     },
     {

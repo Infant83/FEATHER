@@ -251,7 +251,24 @@ def find_instruction_file(run_dir: Path) -> Optional[Path]:
     if not instr_dir.exists():
         return None
     candidates = sorted(instr_dir.glob("*.txt"))
-    return candidates[0] if candidates else None
+    if not candidates:
+        return None
+
+    preferred_names = (
+        f"{run_dir.name}.txt",
+        "instruction.txt",
+    )
+    by_name = {path.name.lower(): path for path in candidates}
+    for name in preferred_names:
+        match = by_name.get(name.lower())
+        if match:
+            return match
+
+    generated_prefixes = ("generated_prompt_", "report_prompt_")
+    non_generated = [path for path in candidates if not path.name.lower().startswith(generated_prefixes)]
+    if non_generated:
+        return non_generated[0]
+    return candidates[0]
 
 
 def write_run_overview(
@@ -267,7 +284,7 @@ def write_run_overview(
     lines: list[str] = ["# Run Overview", ""]
     if instruction_file and instruction_file.exists():
         rel_instruction = f"./{instruction_file.relative_to(run_dir).as_posix()}"
-        lines.extend(["## Instruction", f"Source: {rel_instruction}", ""])
+        lines.extend(["## Instruction", f"Source: [{rel_instruction}]({rel_instruction})", ""])
         content = instruction_file.read_text(encoding="utf-8", errors="replace").strip()
         lines.append("```")
         lines.append(content)
@@ -275,7 +292,7 @@ def write_run_overview(
         lines.append("")
     if index_file and index_file.exists():
         rel_index = f"./{index_file.relative_to(run_dir).as_posix()}"
-        lines.extend(["## Archive Index", f"Source: {rel_index}", ""])
+        lines.extend(["## Archive Index", f"Source: [{rel_index}]({rel_index})", ""])
         content = index_file.read_text(encoding="utf-8", errors="replace").strip()
         lines.append(content)
         lines.append("")
@@ -851,7 +868,7 @@ def write_report_prompt_copy(
     instr_dir.mkdir(parents=True, exist_ok=True)
     stem = output_path.stem if output_path else "report"
     prompt_path = instr_dir / f"report_prompt_{stem}.txt"
-    text = (report_prompt or "No report prompt provided.").strip()
+    text = dedupe_repeated_prompt_content((report_prompt or "No report prompt provided.").strip())
     prompt_path.write_text(f"{text}\n", encoding="utf-8")
     return prompt_path
 
@@ -889,18 +906,20 @@ def write_report_overview(
         "",
     ]
     if prompt_path:
-        lines.extend(["## Report Prompt (Saved)", f"Source: {rel_path_or_abs(prompt_path, run_dir)}", ""])
+        rel_prompt = rel_path_or_abs(prompt_path, run_dir)
+        lines.extend(["## Report Prompt (Saved)", f"Source: [{rel_prompt}]({rel_prompt})", ""])
     if template_adjustment_path:
+        rel_adjust = rel_path_or_abs(template_adjustment_path, run_dir)
         lines.extend(
             [
                 "## Template Adjustment",
-                f"Source: {rel_path_or_abs(template_adjustment_path, run_dir)}",
+                f"Source: [{rel_adjust}]({rel_adjust})",
                 "",
             ]
         )
     if report_prompt:
         lines.append("```")
-        lines.append(report_prompt.strip())
+        lines.append(dedupe_repeated_prompt_content(report_prompt.strip()))
         lines.append("```")
         lines.append("")
     overview_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
@@ -1451,13 +1470,14 @@ def load_report_prompt(prompt_text: Optional[str], prompt_file: Optional[str]) -
     seen: set[str] = set()
 
     def _add_part(text: str) -> None:
-        normalized = re.sub(r"\s+", " ", text).strip()
+        cleaned = dedupe_repeated_prompt_content(text)
+        normalized = re.sub(r"\s+", " ", cleaned).strip()
         if not normalized:
             return
         if normalized in seen:
             return
         seen.add(normalized)
-        parts.append(text)
+        parts.append(cleaned)
 
     if prompt_file:
         path = Path(prompt_file)
@@ -1471,6 +1491,26 @@ def load_report_prompt(prompt_text: Optional[str], prompt_file: Optional[str]) -
     if not parts:
         return None
     return "\n\n".join(parts)
+
+
+def dedupe_repeated_prompt_content(text: str) -> str:
+    raw = str(text or "").strip()
+    if not raw:
+        return raw
+    blocks = [block.strip() for block in re.split(r"\n\s*\n", raw) if block.strip()]
+    if not blocks:
+        return raw
+    total = len(blocks)
+    for repeats in range(2, 7):
+        if total % repeats != 0:
+            continue
+        unit_len = total // repeats
+        if unit_len <= 0:
+            continue
+        unit = blocks[:unit_len]
+        if all(blocks[idx * unit_len : (idx + 1) * unit_len] == unit for idx in range(1, repeats)):
+            return "\n\n".join(unit).strip()
+    return raw
 
 
 def load_user_answers(answer_text: Optional[str], answer_file: Optional[str]) -> Optional[str]:
@@ -2513,6 +2553,59 @@ def _keyword_signal_score(
     return round(min(100.0, 62.0 + (hit_count * 12.0)), 2)
 
 
+def _narrative_density_score(
+    report_text: str,
+    output_format: str,
+    *,
+    depth: Optional[str] = None,
+    report_intent: Optional[str] = None,
+) -> float:
+    """Estimate whether narrative depth matches requested depth/intent.
+
+    This is a soft heuristic: it should reward sufficiently developed prose in
+    deep/research modes without hard-coding one template shape.
+    """
+    text = _quality_plain_text(str(report_text or ""), output_format)
+    if not text:
+        return 0.0
+    paragraphs = [chunk.strip() for chunk in re.split(r"\n\s*\n+", text) if chunk.strip()]
+    if not paragraphs:
+        return 0.0
+
+    words_per_paragraph = [len(re.findall(r"[A-Za-z0-9가-힣_]+", para)) for para in paragraphs]
+    total_paragraphs = len(paragraphs)
+    avg_words = (sum(words_per_paragraph) / max(1, total_paragraphs)) if words_per_paragraph else 0.0
+
+    intent = _normalize_report_intent(report_intent)
+    normalized_depth = normalize_depth_choice(depth)
+    deep_mode = intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}
+    brief_mode = intent in {"briefing", "slide"} or normalized_depth == "brief"
+
+    if deep_mode:
+        score = 42.0 + (total_paragraphs * 3.4) + (min(avg_words, 180.0) * 0.09)
+        if total_paragraphs < 10:
+            score -= 20.0
+        elif total_paragraphs < 14:
+            score -= 8.0
+        if avg_words < 45:
+            score -= 10.0
+    elif brief_mode:
+        score = 74.0 + (min(total_paragraphs, 8) * 2.0)
+        if total_paragraphs < 4:
+            score -= 18.0
+        if total_paragraphs > 14:
+            score -= 14.0
+        if avg_words < 28:
+            score -= 8.0
+    else:
+        score = 55.0 + (total_paragraphs * 2.6) + (min(avg_words, 160.0) * 0.07)
+        if total_paragraphs < 7:
+            score -= 12.0
+        if avg_words < 35:
+            score -= 7.0
+    return round(max(20.0, min(100.0, score)), 2)
+
+
 def compute_heuristic_quality_signals(
     report_text: str,
     required_sections: list[str],
@@ -2590,36 +2683,45 @@ def compute_heuristic_quality_signals(
         default_score=58.0,
         output_format=output_format,
     )
+    narrative_density = _narrative_density_score(
+        report_text,
+        output_format,
+        depth=normalized_depth,
+        report_intent=intent,
+    )
 
     if intent in {"briefing", "slide"} or normalized_depth == "brief":
         weights = {
-            "section_coverage": 0.22,
-            "citation_density": 0.20,
+            "section_coverage": 0.20,
+            "citation_density": 0.19,
             "method_transparency": 0.10,
             "traceability": 0.12,
             "uncertainty": 0.12,
             "claim_support_ratio": 0.14,
             "section_coherence": 0.10,
+            "narrative_density": 0.03,
         }
     elif intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}:
         weights = {
-            "section_coverage": 0.14,
+            "section_coverage": 0.12,
             "citation_density": 0.18,
             "method_transparency": 0.18,
             "traceability": 0.18,
             "uncertainty": 0.10,
             "claim_support_ratio": 0.12,
-            "section_coherence": 0.10,
+            "section_coherence": 0.07,
+            "narrative_density": 0.05,
         }
     else:
         weights = {
-            "section_coverage": 0.18,
+            "section_coverage": 0.17,
             "citation_density": 0.18,
             "method_transparency": 0.14,
             "traceability": 0.14,
             "uncertainty": 0.10,
             "claim_support_ratio": 0.14,
             "section_coherence": 0.12,
+            "narrative_density": 0.01,
         }
     overall = (
         (section_coverage * weights["section_coverage"])
@@ -2629,6 +2731,7 @@ def compute_heuristic_quality_signals(
         + (uncertainty * weights["uncertainty"])
         + (claim_support_ratio * weights["claim_support_ratio"])
         + (section_coherence * weights["section_coherence"])
+        + (narrative_density * weights["narrative_density"])
     )
     return {
         "section_coverage": round(section_coverage, 2),
@@ -2640,6 +2743,7 @@ def compute_heuristic_quality_signals(
         "method_transparency": round(method_transparency, 2),
         "traceability": round(traceability, 2),
         "uncertainty_handling": round(uncertainty, 2),
+        "narrative_density_score": round(narrative_density, 2),
         "overall": round(overall, 2),
     }
 
@@ -2735,6 +2839,8 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
             lines.append(f"Archive index: {meta.get('archive_index_path')}")
         if meta.get("instruction_path"):
             lines.append(f"Instruction file: {meta.get('instruction_path')}")
+        if meta.get("feather_instruction_path"):
+            lines.append(f"Feather instruction: {meta.get('feather_instruction_path')}")
         if meta.get("report_prompt_path"):
             lines.append(f"Report prompt: {meta.get('report_prompt_path')}")
         if meta.get("figures_preview_path"):
@@ -2762,6 +2868,7 @@ def format_metadata_block(meta: dict, output_format: str) -> str:
         add_link("Report workflow", meta.get("report_workflow_path"))
         add_link("Archive index", meta.get("archive_index_path"))
         add_link("Instruction file", meta.get("instruction_path"))
+        add_link("Feather instruction", meta.get("feather_instruction_path"))
         add_link("Report prompt", meta.get("report_prompt_path"))
         add_link("Figure candidates", meta.get("figures_preview_path"))
         add_link("Artwork tool log", meta.get("artwork_tool_log_path"))

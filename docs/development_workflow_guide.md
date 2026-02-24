@@ -1,16 +1,18 @@
 # Development Workflow Guide
 
-Last updated: 2026-02-23
+Last updated: 2026-02-25
 
 ## 1) Canonical Working Docs
-- Primary handoff: `docs/codex_handoff_20260223.md`
-- Legacy snapshots: `docs/codex_handoff_20260222.md`, `docs/codex_handoff_20260220.md`
+- Primary handoff: `docs/codex_handoff_20260225.md`
+- Legacy snapshots: `docs/dev_history/handoffs/codex_handoff_20260224.md`, `docs/dev_history/handoffs/codex_handoff_20260223.md`, `docs/dev_history/handoffs/codex_handoff_20260222.md`, `docs/dev_history/handoffs/codex_handoff_20260220.md`
+- History index: `docs/dev_history/README.md`
 - Strategy docs:
 - `docs/run_site_publish_strategy.md`
 - `docs/ppt_writer_strategy.md`
 - `docs/federhav_deepagent_transition_plan.md`
 - `docs/future_architecture_plan.md`
 - `docs/report_quality_threshold_policy.md`
+- `docs/codex_resume_guide.md`
 
 ## 2) Iter Execution Rule
 - Work in `iter` units.
@@ -18,13 +20,34 @@ Last updated: 2026-02-23
 - define target scope -> implement -> test -> update handoff(progress + timestamp) -> commit/push at iter end
 - Default: do not commit in the middle of an iter batch.
 - Exception: commit mid-iter only when explicitly requested by user.
+- 5 iter마다 handoff에 진행률/리스크/검증 로그를 업데이트한다.
+- 20 iter마다 샘플 보고서 생성 및 품질 게이트를 실행한다.
+
+## 2.1) Report Quality Gate Rule (Mandatory)
+- Quality gate는 반드시 **해당 iter 배치에서 새로 생성한 보고서**를 입력으로 측정한다.
+- 과거 보고서 재측정은 회귀 점검에만 사용하고, 품질 상승 근거로 단독 사용하지 않는다.
+- gate 실행 기록에는 다음을 함께 남긴다:
+- 생성 보고서 경로
+- 사용한 프롬프트/독자 톤
+- gate 결과 md/json 경로
+- 수기 리뷰 요약(장문 밀도/근거 추적/시각화 품질)
 
 ## 3) Temporary Output Policy
 - Create temporary/debug artifacts only under `temp/`.
 - Recommended layout:
 - `temp/<yyyyMMdd>/<topic>/...`
 - Do not create root-level temp files.
+- Test audit artifacts are stored only under `test-results/` (no extra root folders).
+- Root-level transient directories are limited to:
+- `temp/` (ephemeral debug/log)
+- `test-results/` (iter test evidence)
+- `node_modules/` (npm install output, recreate-on-demand)
+- `artifacts/` (optional packaging/debug output, recreate-on-demand)
 - Ignored temp patterns are in `.gitignore`.
+- Safe local cleanup (without touching tracked sources):
+- `cmd /c if exist node_modules rmdir /s /q node_modules`
+- `cmd /c if exist artifacts rmdir /s /q artifacts`
+- `cmd /c if exist temp rmdir /s /q temp`
 
 ## 4) Folder Purpose (Current)
 - `tests/`: unit/integration/regression tests.

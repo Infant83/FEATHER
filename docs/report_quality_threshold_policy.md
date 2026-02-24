@@ -1,6 +1,6 @@
 # Report Quality Threshold Policy
 
-Last updated: 2026-02-23
+Last updated: 2026-02-25
 
 ## 1) Why `overall=65` Is Not World-Class
 - `overall=65` is a **smoke/health-check** threshold.
@@ -42,6 +42,7 @@ Required:
 2. `quality_contract.latest.json` and benchmark summary consistency pass.
 3. No critical unsupported-claim clusters in key sections.
 4. Section-level coherence and method/result traceability preserved after finalizer.
+5. Gate input must be a report generated in the same iter batch (no stale-only pass claims).
 
 ## 5) CLI Usage
 
