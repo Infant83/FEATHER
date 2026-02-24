@@ -50,3 +50,29 @@ fully open-source
 ... [truncated]
 [2026-02-06 06:55:14] JOB END
 [2026-02-07 15:55:17] JOB START
+[2026-02-25 00:58:47] JOB START
+[2026-02-25 01:02:09] Scout Notes: **Scout Result**
+- Run folder resolved at [site/runs/physical_ai_insight](/C:/Users/angpa/myProjects/FEATHER/site/runs/physical_ai_insight).
+- Focus alignment: physical AI trends + practical adoption path, brief lecture-note style.
+- I only did inventory + short header/index reads (no full long-document reading).
+
+**Metadata Coverage (required JSONL check)**
+- Present: [archive/arxiv/papers.jsonl](/C:/Users/angpa/myProjects/FEATHER/site/runs/physical_ai_insight/archive/arxiv/papers.jsonl) (23,662 bytes, 10 arXiv records).
+- Missing: `archive/tavily_search.jsonl`
+- Missing: `archive/openalex/works.jsonl`
+- Missing: `archive/youtube/videos.jsonl`
+- Missing: `archive/local/manifest.jsonl`
+
+**Structured Inventory**
+- Control/index files:
+  - [instruction/physical_ai_insight.txt](/C:/Users/angp
+... [truncated]
+[2026-02-25 01:10:06] Report Preview: Real Time Chunking and Latency Brittleness in Language Driven Robots
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 01:09
+Lede
+A robot that “understands” language but pauses for a third of a second before moving is not just slow; it is physically brittle. Recent work on real-time chunking shows why: latency creates discontinuities at action boundaries, which can turn smooth manipulation into jerky, failure-prone behavior, especially in precise tasks
+\[1\]
+.
+That tension now defines physical AI in 2026. The field moved from proving that large vision-language-action models can generalize across tasks to proving they can run on real systems under tight latency, memory, and embodiment constraints. Open baselines in 2024 established scale and reproducibility, while 2025 paper
+... [truncated]
+[2026-02-25 01:10:07] JOB END

@@ -9,7 +9,30 @@
       svg: { fontCache: 'global' }
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script>
+    (function () {
+      const candidates = [
+        '/vendor/mathjax/tex-svg.js',
+        './vendor/mathjax/tex-svg.js',
+        '../vendor/mathjax/tex-svg.js',
+        '../../federnett/vendor/mathjax/tex-svg.js',
+        '../../../federnett/vendor/mathjax/tex-svg.js',
+        'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+      ];
+      const head = document.head || document.getElementsByTagName('head')[0];
+      let index = 0;
+      const loadNext = () => {
+        if (window.MathJax && window.MathJax.typesetPromise) return;
+        if (index >= candidates.length) return;
+        const script = document.createElement('script');
+        script.src = candidates[index++];
+        script.async = true;
+        script.onerror = loadNext;
+        head.appendChild(script);
+      };
+      loadNext();
+    })();
+  </script>
   <style>
     body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
     header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }

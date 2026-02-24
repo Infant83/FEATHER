@@ -596,6 +596,25 @@ def build_writer_prompt(
             "깊이 있는 보고서에서는 가능하면 비교 표 또는 다이어그램을 활용해 주장-근거 연결을 강화하세요. "
             "다만 요청이 요약/서술 중심이면 과도한 시각 요소를 강제하지 마세요. "
         )
+    depth_density_guidance = ""
+    if depth in {"deep", "exhaustive"}:
+        depth_density_guidance = (
+            "심층 모드에서는 핵심 섹션(Methods/Findings/Implications)을 3개 이상 논리 단락으로 전개해 "
+            "단순 요약 나열이 아닌 '근거 -> 해석 -> 시사점' 흐름을 유지하세요. "
+            "다만 근거가 부족한 영역은 분량을 억지로 늘리지 말고 한계와 검증 계획을 명시하세요. "
+        )
+    visual_evidence_integration_guidance = ""
+    if high_structure_mode and depth in {"deep", "exhaustive"} and output_format != "tex":
+        if artwork_enabled:
+            visual_evidence_integration_guidance = (
+                "시각 근거 통합: figure 후보가 없거나 부족하면 artwork 도구(Mermaid/D2)로 최소 1개 구조 다이어그램을 생성하고, "
+                "해당 다이어그램/표 바로 주변 문단에서 데이터 출처와 해석 근거를 자연문으로 설명하세요. "
+            )
+        else:
+            visual_evidence_integration_guidance = (
+                "시각 근거 통합: figure 후보가 없으면 최소 1개 Mermaid 코드블록 또는 compact 비교표를 포함하고, "
+                "인접 문단에서 출처와 해석 근거를 자연문으로 연결하세요. "
+            )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -652,6 +671,8 @@ def build_writer_prompt(
         f"{figure_guidance}"
         f"{artwork_guidance}"
         f"{visual_mandate_guidance}"
+        f"{depth_density_guidance}"
+        f"{visual_evidence_integration_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
         f"{not_applicable_guidance}"

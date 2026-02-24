@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-02-22T02:09:12.934799",
+  "created_at": "2026-02-25T06:23:02.486345",
   "stages": {
     "scout": {
       "status": "cached",
@@ -34,8 +34,8 @@
       "detail": ""
     },
     "quality": {
-      "status": "ran",
-      "detail": "iterations=1"
+      "status": "disabled",
+      "detail": ""
     }
   },
   "order": [
@@ -52,66 +52,59 @@
   "timeline": [
     {
       "index": "1",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:06",
       "stage": "template_adjust",
       "status": "skipped",
       "detail": "depth=brief"
     },
     {
       "index": "2",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:08",
       "stage": "scout",
       "status": "cached",
       "detail": ""
     },
     {
       "index": "3",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:08",
       "stage": "clarifier",
       "status": "skipped",
       "detail": "no_questions"
     },
     {
       "index": "4",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:09",
       "stage": "plan",
       "status": "cached",
       "detail": ""
     },
     {
       "index": "5",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:09",
       "stage": "web",
       "status": "skipped",
       "detail": "policy"
     },
     {
       "index": "6",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:09",
       "stage": "plan_check",
       "status": "skipped",
       "detail": "missing_evidence"
     },
     {
       "index": "7",
-      "timestamp": "2026-02-22T01:54:04",
+      "timestamp": "2026-02-25T06:21:09",
       "stage": "evidence",
       "status": "skipped",
       "detail": "depth=brief"
     },
     {
       "index": "8",
-      "timestamp": "2026-02-22T01:57:35",
+      "timestamp": "2026-02-25T06:22:16",
       "stage": "writer",
       "status": "ran",
       "detail": ""
-    },
-    {
-      "index": "9",
-      "timestamp": "2026-02-22T02:05:26",
-      "stage": "quality",
-      "status": "ran",
-      "detail": "iterations=1"
     }
   ],
   "artifacts": {
@@ -168,5 +161,5 @@
       }
     ]
   },
-  "diagram_mermaid": "flowchart LR\n    scout[\"scout\\ncached\"]\n    clarifier[\"clarifier\\nskipped\"]\n    template_adjust[\"template_adjust\\nskipped\"]\n    plan[\"plan\\ncached\"]\n    web[\"web\\nskipped\"]\n    evidence[\"evidence\\nskipped\"]\n    plan_check[\"plan_check\\nskipped\"]\n    writer[\"writer\\nran\"]\n    quality[\"quality\\nran\"]\n    scout --> clarifier\n    clarifier --> template_adjust\n    template_adjust --> plan\n    plan --> web\n    web --> evidence\n    evidence --> plan_check\n    plan_check --> writer\n    writer --> quality\n    quality -. feedback .-> writer"
+  "diagram_mermaid": "flowchart LR\n    scout[\"scout\\ncached\"]\n    clarifier[\"clarifier\\nskipped\"]\n    template_adjust[\"template_adjust\\nskipped\"]\n    plan[\"plan\\ncached\"]\n    web[\"web\\nskipped\"]\n    evidence[\"evidence\\nskipped\"]\n    plan_check[\"plan_check\\nskipped\"]\n    writer[\"writer\\nran\"]\n    quality[\"quality\\ndisabled\"]\n    scout --> clarifier\n    clarifier --> template_adjust\n    template_adjust --> plan\n    plan --> web\n    web --> evidence\n    evidence --> plan_check\n    plan_check --> writer\n    writer --> quality"
 }

@@ -1,8 +1,7 @@
-- [ ] 목표·평가기준 확정 — `instruction/generated_prompt_openclaw.txt`와 템플릿 요구를 기준으로 핵심 질문, 주장 강도, 리스크/거버넌스 비중을 고정한다.
-- [ ] 핵심 소스 재선정 — `openclaw.ai`·`Dark Reading`·`twofootdog`를 1차 근거로, `dev.to`·`skywork`는 교차검증 전제의 보조 근거로 분류한다.
-- [ ] 근거 인덱스 구축 — 비어 있는 `report_notes/source_index.jsonl`에 클레임 단위로 출처, 증거 문장, 신뢰도, 한계 태그를 기록한다.
-- [ ] 시간축 스토리라인 정리 — “The Story So Far”용으로 등장 배경→확산→보안 이슈 전개를 연대기 구조로 묶는다.
-- [ ] 작동 원리·운영 경로 설명 설계 — “How It Works”에 설치/연동 흐름과 개념 메커니즘을 분리해 기술하고 불필요한 기술 과장을 제거한다.
-- [ ] 영향·리스크 종합 — “Why It Matters”에서 생산성 가치와 IAM/Shadow AI/거버넌스 위험을 균형 있게 대조한다.
-- [ ] 불확실성·검증 계획 명시 — 2차 출처 의존 주장과 충돌 지점을 “Open Questions” 3~5개로 전환하고 추가 검증 경로를 붙인다.
-- [ ] 최종 일관성 점검 — 섹션별 주장-근거 매핑, 인용 추적성, 템플릿 톤(서사형·근거중심) 준수 여부를 체크리스트로 검수한다.
+- [ ] Lock decision objective and success criteria — define go/no-go thresholds for OpenClaw deployment (scope, data surfaces, impact, and required human-in-the-loop).
+- [ ] Validate core sources and inventory alignment — confirm S1–S4, verify provenance, and extract essential decision-worthy facts.
+- [ ] Model risks and threats — map operational, data, IAM, and persistence risks; articulate risk appetite and trigger thresholds.
+- [ ] Define governance, controls, and observability — specify least privilege, tamper-evident logging, kill-switch, and anomaly monitoring.
+- [ ] Design sandboxed pilot — plan non-production scope, credential lifecycle, approvals, monitoring, rollback, and success criteria.
+- [ ] Develop decision framework and deployment options — compare restricted pilot, staged rollout, and pause with explicit decision criteria and when/if contingencies.
+- [ ] Outline deliverables and next steps — executive memo, 1-page slide outline, talking points, schedule, owners, and escalation paths.

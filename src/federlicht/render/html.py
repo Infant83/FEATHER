@@ -17,6 +17,75 @@ _HEADING_RE = re.compile(r"(?is)<h([23])([^>]*)>(.*?)</h\1>")
 _HEADING_ID_RE = re.compile(r'(?i)\bid\s*=\s*"([^"]+)"')
 
 
+def _mathjax_loader_script() -> str:
+    return (
+        "  <script>\n"
+        "    (function () {\n"
+        "      const candidates = [\n"
+        "        '/vendor/mathjax/tex-svg.js',\n"
+        "        './vendor/mathjax/tex-svg.js',\n"
+        "        '../vendor/mathjax/tex-svg.js',\n"
+        "        '../../federnett/vendor/mathjax/tex-svg.js',\n"
+        "        '../../../federnett/vendor/mathjax/tex-svg.js',\n"
+        "        'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',\n"
+        "      ];\n"
+        "      const head = document.head || document.getElementsByTagName('head')[0];\n"
+        "      let index = 0;\n"
+        "      const loadNext = () => {\n"
+        "        if (window.MathJax && window.MathJax.typesetPromise) return;\n"
+        "        if (index >= candidates.length) return;\n"
+        "        const script = document.createElement('script');\n"
+        "        script.src = candidates[index++];\n"
+        "        script.async = true;\n"
+        "        script.onerror = loadNext;\n"
+        "        head.appendChild(script);\n"
+        "      };\n"
+        "      loadNext();\n"
+        "    })();\n"
+        "  </script>\n"
+    )
+
+
+def _mermaid_loader_script() -> str:
+    return (
+        "  <script>\n"
+        "    (function () {\n"
+        "      const candidates = [\n"
+        "        '/vendor/mermaid/mermaid.min.js',\n"
+        "        './vendor/mermaid/mermaid.min.js',\n"
+        "        '../vendor/mermaid/mermaid.min.js',\n"
+        "        '../../federnett/vendor/mermaid/mermaid.min.js',\n"
+        "        '../../../federnett/vendor/mermaid/mermaid.min.js',\n"
+        "        'https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js',\n"
+        "      ];\n"
+        "      const head = document.head || document.getElementsByTagName('head')[0];\n"
+        "      let index = 0;\n"
+        "      const applyMermaid = () => {\n"
+        "        if (!window.mermaid) return;\n"
+        "        window.mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: 'neutral' });\n"
+        "        if (typeof window.mermaid.run === 'function') {\n"
+        "          window.mermaid.run({ querySelector: '.mermaid' });\n"
+        "        }\n"
+        "      };\n"
+        "      const loadNext = () => {\n"
+        "        if (window.mermaid) {\n"
+        "          applyMermaid();\n"
+        "          return;\n"
+        "        }\n"
+        "        if (index >= candidates.length) return;\n"
+        "        const script = document.createElement('script');\n"
+        "        script.src = candidates[index++];\n"
+        "        script.async = true;\n"
+        "        script.onload = applyMermaid;\n"
+        "        script.onerror = loadNext;\n"
+        "        head.appendChild(script);\n"
+        "      };\n"
+        "      loadNext();\n"
+        "    })();\n"
+        "  </script>\n"
+    )
+
+
 def _mask_math_segments(text: str) -> tuple[str, list[str]]:
     placeholders: list[str] = []
 
@@ -237,7 +306,7 @@ def render_viewer_html(title: str, body_html: str) -> str:
         "      svg: { fontCache: 'global' }\n"
         "    };\n"
         "  </script>\n"
-        "  <script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>\n"
+        f"{_mathjax_loader_script()}"
         "  <style>\n"
         "    body { font-family: \"Iowan Old Style\", Georgia, serif; margin: 0; color: #1d1c1a; }\n"
         "    header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }\n"
@@ -293,20 +362,8 @@ def wrap_html(
     mermaid_head = ""
     mermaid_tail = ""
     if with_mermaid:
-        mermaid_head = (
-            "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js\"></script>\n"
-        )
-        mermaid_tail = (
-            "  <script>\n"
-            "    if (window.mermaid) {\n"
-            "      mermaid.initialize({\n"
-            "        startOnLoad: true,\n"
-            "        securityLevel: 'strict',\n"
-            "        theme: 'neutral',\n"
-            "      });\n"
-            "    }\n"
-            "  </script>\n"
-        )
+        mermaid_head = _mermaid_loader_script()
+        mermaid_tail = ""
     return (
         "<!doctype html>\n"
         "<html lang=\"en\">\n"
@@ -319,7 +376,7 @@ def wrap_html(
         "      svg: { fontCache: 'global' }\n"
         "    };\n"
         "  </script>\n"
-        "  <script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>\n"
+        f"{_mathjax_loader_script()}"
         f"{mermaid_head}"
         "  <style>\n"
         "    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');\n"

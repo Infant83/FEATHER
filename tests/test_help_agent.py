@@ -798,6 +798,34 @@ def test_infer_agentic_action_keeps_deepagent_handoff_metadata(tmp_path, monkeyp
     assert preflight.get("requires_instruction_confirm") is True
 
 
+def test_normalize_execution_handoff_keeps_governor_loop() -> None:
+    normalized = help_agent._normalize_execution_handoff(
+        {
+            "planner": "deepagent",
+            "governor_loop": {
+                "max_iter": 4,
+                "attempts": 2,
+                "converged": True,
+                "delta_threshold": 0.12,
+                "budget_chars": 18000,
+                "selected_candidate_index": 1,
+                "candidates": [
+                    {"type": "run_feather", "confidence": 0.61, "score": 64.0},
+                    {"type": "run_federlicht", "confidence": 0.93, "score": 118.2},
+                ],
+            },
+        }
+    )
+    assert isinstance(normalized, dict)
+    governor = normalized.get("governor_loop")
+    assert isinstance(governor, dict)
+    assert governor.get("max_iter") == 4
+    assert governor.get("attempts") == 2
+    assert governor.get("converged") is True
+    candidates = governor.get("candidates")
+    assert isinstance(candidates, list) and len(candidates) == 2
+
+
 def test_answer_help_question_trace_includes_action_plan_details(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 4))
     monkeypatch.setattr(help_agent, "_call_llm", lambda *_args, **_kwargs: ("ok", "gpt-4o-mini"))
@@ -834,6 +862,56 @@ def test_answer_help_question_trace_includes_action_plan_details(monkeypatch, tm
     assert isinstance(details, dict)
     assert details.get("planner") == "deepagent"
     assert details.get("type") == "run_federlicht"
+
+
+def test_stream_help_question_action_activity_includes_governor_details(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(help_agent, "_select_sources", lambda *_args, **_kwargs: (_sample_sources(), 3))
+
+    def _fake_call_llm_stream(_q, _sources, **_kwargs):
+        def _iter():
+            yield "테스트 스트림 응답"
+
+        return _iter(), "gpt-4o-mini"
+
+    monkeypatch.setattr(help_agent, "_call_llm_stream", _fake_call_llm_stream)
+    monkeypatch.setattr(
+        help_agent,
+        "_infer_governed_action",
+        lambda *_args, **_kwargs: {
+            "type": "run_federlicht",
+            "planner": "deepagent",
+            "confidence": 0.94,
+            "execution_handoff": {
+                "preflight": {"status": "ok", "ready_for_execute": True, "resolved_run_rel": "runs/demo"},
+                "governor_loop": {"max_iter": 3, "attempts": 2, "converged": True},
+            },
+        },
+    )
+    events = list(
+        help_agent.stream_help_question(
+            tmp_path,
+            "federlicht 실행",
+            run_rel="runs/demo",
+        )
+    )
+    action_evt = next(
+        (
+            evt
+            for evt in events
+            if isinstance(evt, dict)
+            and evt.get("event") == "activity"
+            and str(evt.get("id") or "").strip().lower() == "action_plan"
+        ),
+        None,
+    )
+    assert isinstance(action_evt, dict)
+    details = action_evt.get("details")
+    assert isinstance(details, dict)
+    handoff = details.get("execution_handoff")
+    assert isinstance(handoff, dict)
+    governor = handoff.get("governor_loop")
+    assert isinstance(governor, dict)
+    assert governor.get("attempts") == 2
 
 
 def test_allow_rule_fallback_requires_emergency_opt_in(monkeypatch) -> None:

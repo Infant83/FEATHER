@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-25
 
-Last updated: 2026-02-25 01:25:00 +09:00  
+Last updated: 2026-02-25 06:40:11 +09:00  
 Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.md`
 
 ## 1) 목적 (고정)
@@ -58,6 +58,22 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
   - `compute_heuristic_quality_signals`에 `narrative_density_score` 신호 추가
   - deep/research 계열 가중치에 서술 밀도 반영
   - 회귀 테스트 추가: `tests/test_report_quality_heuristics.py::test_narrative_density_rewards_deeper_reports_in_deep_mode`
+- 온프렘/클라우드 자동 LLM 기본정책 반영:
+  - `src/federnett/routes.py`에서 `OPENAI_BASE_URL` 기반 deployment mode 감지
+  - on-prem 기본 모델 맵(`Qwen3/Llama-4`) + cloud 기본(`gpt-5-nano`, federhav `gpt-4o-mini`)
+  - `/api/info`에 `llm_defaults.deployment_mode`, `recommended_model_options`, `onprem_policy` 노출
+- FederHav 런타임 기본모델 정책 반영:
+  - `src/federhav/agentic_runtime.py`에서 on-prem 감지 시 `Qwen3-235B-A22B-Thinking-2507` 기본 사용
+  - 회귀 테스트 추가: `tests/test_federhav_agentic_runtime.py` (on-prem/public API 분기)
+- CDN 장애/지연 대응 로컬-first 로더 반영:
+  - `src/federlicht/render/html.py` MathJax/Mermaid 스크립트 로더를 local->cdn 순으로 변경
+  - `site/federnett/app.js` Mermaid 로더를 후보 체인 기반 폴백으로 변경
+  - vendor 자산 포함: `site/federnett/vendor/mathjax/tex-svg.js`, `site/federnett/vendor/mermaid/mermaid.min.js`
+- `gpt-5-nano` 샘플 보고서 생성+게이트 PASS:
+  - `site/runs/openclaw/report_full_iter004_gpt5nano_leader.html`
+  - `test-results/p0_quality_gate_openclaw_iter004_gpt5nano_world.md`
+  - `site/runs/20260221_QC_report/report_full_iter005_gpt5nano_general.html`
+  - `test-results/p0_quality_gate_qc_iter005_gpt5nano_world.md`
 
 ## 7) TODO (P0/P1/P2)
 
@@ -108,6 +124,15 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
   - 품질 휴리스틱/게이트 회귀 테스트 통과(17 passed)
   - 동일 신규 생성물 3종 gate 재측정 PASS 유지
   - P0 진행률 `49% -> 58%`
+- Iter 11 완료 (2026-02-25 06:29 +09:00)
+  - on-prem/cloud LLM 기본정책 자동감지 + `/api/info` 기본정책 메타 확장
+  - MathJax/Mermaid 로컬-first CDN 폴백 체인 반영(offline/on-prem 지연 완화)
+  - `gpt-5-nano` 샘플 생성/게이트 PASS 확인
+  - 회귀 테스트 통과(34 passed), P0 진행률 변화 없음(`58%`)
+- Iter 12 완료 (2026-02-25 06:40 +09:00)
+  - `gpt-5-nano` QC 샘플 추가 생성 + world-class gate PASS
+  - 샘플 다각화(리더/일반독자 톤) 2건 확보
+  - P0 진행률 변화 없음(`58%`)
 
 ## 11) 다음 Iter 계획 (즉시)
 - Iter 11~15:

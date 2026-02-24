@@ -180,6 +180,13 @@ Key points:
 - Path/file questions are handled with run-context source selection + tool grounding (not per-phrase hardcoded reply templates).
 - Run-internal file/folder summary requests are treated as content-analysis tasks by default (no automatic Feather/Federlicht run action suggestion unless explicit execution intent exists).
 - If `run` is omitted in help payload, FederHav recovers run context from `state_memory.scope.run_rel`/`state_memory.run.run_rel` to keep run-scoped analysis stable.
+- Deployment-aware LLM defaults are applied automatically:
+  - OpenAI cloud mode (`OPENAI_BASE_URL` unset or `api.openai.com`): writer/check/feather default `gpt-5-nano`, federhav default `gpt-4o-mini`.
+  - On-prem OpenAI-compatible mode (`OPENAI_BASE_URL` custom host): planner/federhav `Qwen3-235B-A22B-Thinking-2507`, feather executor `Qwen3-Coder-480B-A35B-Instruct`, writer `Qwen3-235B-A22B-Instruct-2507`, vision `Llama-4-Scout`.
+  - Explicit env overrides still take precedence (`OPENAI_MODEL`, `OPENAI_MODEL_VISION`, `FEDERHAV_MODEL`, `FEATHER_AGENTIC_MODEL`, `FEDERLICHT_CHECK_MODEL`).
+- MathJax/Mermaid runtime loading is local-first with CDN fallback for on-prem/network-restricted environments.
+  - Local vendor assets: `site/federnett/vendor/mathjax/tex-svg.js`, `site/federnett/vendor/mermaid/mermaid.min.js`.
+  - Refresh vendor assets: `powershell -ExecutionPolicy Bypass -File tools/sync_web_vendor_assets.ps1`
 - Forward roadmap for account/profile/hub collaboration: `docs/federnett_roadmap.md`.
 - Account/권한 운영(root/admin/user/bootstrap/revoke) 가이드: `docs/federnett_auth_operations.md`.
 - Playwright MCP troubleshooting and fallback validation path: `docs/playwright_mcp_troubleshooting.md`.

@@ -517,6 +517,11 @@ _TRUE_LIKE = {"1", "true", "yes", "on"}
 _OPENAI_MODEL_TOKENS = {"$openai_model", "${openai_model}", "%openai_model%"}
 _OPENAI_MODEL_VISION_TOKENS = {"$openai_model_vision", "${openai_model_vision}"}
 _CODEX_BACKENDS = {"codex_cli", "codex-cli", "codex", "cli"}
+_OPENAI_PUBLIC_DEFAULT_MODEL = "gpt-5-nano"
+_ONPREM_PLANNER_MODEL = "Qwen3-235B-A22B-Thinking-2507"
+_ONPREM_EXECUTOR_MODEL = "Qwen3-Coder-480B-A35B-Instruct"
+_ONPREM_WRITER_MODEL = "Qwen3-235B-A22B-Instruct-2507"
+_ONPREM_VISION_MODEL = "Llama-4-Scout"
 _CODEX_MODEL_OPTIONS = [
     "gpt-5.3-codex",
     "gpt-5.3-codex-spark",
@@ -555,14 +560,37 @@ def _looks_like_codex_model(token: str) -> bool:
     return bool(lowered) and "codex" in lowered
 
 
-def _preferred_openai_model(default: str = "gpt-4o-mini") -> str:
+def _raw_openai_base_url() -> str:
+    return str(os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "").strip()
+
+
+def _is_onprem_openai_compatible() -> bool:
+    """Treat custom OPENAI_BASE_URL as on-prem/OpenAI-compatible deployment."""
+    raw = _raw_openai_base_url()
+    if not raw:
+        return False
+    parsed = urlparse(raw if "://" in raw else f"https://{raw}")
+    host = parsed.netloc.lower()
+    if not host:
+        return False
+    return host != "api.openai.com"
+
+
+def _preferred_openai_model(default: str = "") -> str:
+    if not default:
+        default = _ONPREM_WRITER_MODEL if _is_onprem_openai_compatible() else _OPENAI_PUBLIC_DEFAULT_MODEL
     model = str(os.getenv("OPENAI_MODEL") or "").strip()
     if not model or _looks_like_codex_model(model):
         return default
     return model
 
 
-def _preferred_openai_vision_model(default: str = "gpt-4o-mini") -> str:
+def _preferred_openai_vision_model(default: str = "") -> str:
+    if not default:
+        if _is_onprem_openai_compatible():
+            default = _ONPREM_VISION_MODEL
+        else:
+            default = _preferred_openai_model(default=_OPENAI_PUBLIC_DEFAULT_MODEL)
     model = str(os.getenv("OPENAI_MODEL_VISION") or "").strip()
     if not model:
         model = str(os.getenv("OPENAI_MODEL") or "").strip()
@@ -571,15 +599,38 @@ def _preferred_openai_vision_model(default: str = "gpt-4o-mini") -> str:
     return model
 
 
+def _preferred_federhav_model() -> str:
+    explicit = str(os.getenv("FEDERHAV_MODEL") or "").strip()
+    if explicit:
+        return explicit
+    if _is_onprem_openai_compatible():
+        return _ONPREM_PLANNER_MODEL
+    return "gpt-4o-mini"
+
+
+def _preferred_feather_agentic_model() -> str:
+    explicit = str(os.getenv("FEATHER_AGENTIC_MODEL") or "").strip()
+    if explicit:
+        return explicit
+    if _is_onprem_openai_compatible():
+        return _ONPREM_EXECUTOR_MODEL
+    return _preferred_openai_model(default=_OPENAI_PUBLIC_DEFAULT_MODEL)
+
+
+def _preferred_federlicht_check_model(default_model: str) -> str:
+    explicit = str(os.getenv("FEDERLICHT_CHECK_MODEL") or "").strip()
+    if explicit and not _looks_like_codex_model(explicit):
+        return explicit
+    if _is_onprem_openai_compatible():
+        return _ONPREM_PLANNER_MODEL
+    return default_model
+
+
 def _openai_reasoning_api_supported() -> bool:
     force = str(os.getenv("FEDERNETT_FORCE_REASONING_EFFORT") or "").strip().lower() in _TRUE_LIKE
     if force:
         return True
-    base_url = str(
-        os.getenv("OPENAI_BASE_URL")
-        or os.getenv("OPENAI_API_BASE")
-        or "https://api.openai.com"
-    ).strip()
+    base_url = str(os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "https://api.openai.com").strip()
     if not base_url:
         return False
     host = urlparse(base_url).netloc.lower()
@@ -627,6 +678,7 @@ def _prepare_federlicht_payload(raw_payload: dict[str, Any]) -> tuple[dict[str, 
 
     if backend == "openai_api":
         openai_model = _preferred_openai_model()
+        openai_check_model = _preferred_federlicht_check_model(openai_model)
         model_lower = model.lower()
         check_lower = check_model.lower()
         vision_lower = model_vision.lower()
@@ -639,12 +691,12 @@ def _prepare_federlicht_payload(raw_payload: dict[str, Any]) -> tuple[dict[str, 
             model = openai_model
             notes.append(f"OpenAI backend selected: model fallback applied -> {openai_model}")
         if not check_model or check_lower in _OPENAI_MODEL_TOKENS:
-            fallback_check = model or openai_model
+            fallback_check = openai_check_model or model or openai_model
             payload["check_model"] = fallback_check
             check_model = fallback_check
             notes.append(f"OpenAI backend selected: check_model resolved -> {fallback_check}")
         elif _looks_like_codex_model(check_model):
-            fallback_check = model or openai_model
+            fallback_check = openai_check_model or model or openai_model
             payload["check_model"] = fallback_check
             check_model = fallback_check
             notes.append(f"OpenAI backend selected: check_model fallback applied -> {fallback_check}")
@@ -728,6 +780,9 @@ def handle_api_get(
     if path == "/api/info":
         default_openai_model = _preferred_openai_model()
         default_openai_vision = _preferred_openai_vision_model(default=default_openai_model)
+        default_federhav_model = _preferred_federhav_model()
+        default_feather_model = _preferred_feather_agentic_model()
+        default_federlicht_check_model = _preferred_federlicht_check_model(default_openai_model)
         default_codex_model = _canonicalize_codex_model_token(str(os.getenv("CODEX_MODEL") or "").strip())
         federlicht_default_model = str(os.getenv("OPENAI_MODEL") or "").strip() or default_openai_model
         federlicht_default_vision = (
@@ -735,6 +790,19 @@ def handle_api_get(
             or str(os.getenv("OPENAI_MODEL") or "").strip()
             or default_openai_vision
         )
+        onprem_detected = _is_onprem_openai_compatible()
+        deployment_mode = "on_prem" if onprem_detected else "openai_cloud"
+        recommended_model_options = [
+            default_openai_model,
+            default_openai_vision,
+            default_feather_model,
+            default_federlicht_check_model,
+            default_federhav_model,
+            _ONPREM_PLANNER_MODEL,
+            _ONPREM_EXECUTOR_MODEL,
+            _ONPREM_WRITER_MODEL,
+            _ONPREM_VISION_MODEL,
+        ]
         payload = {
             "root": _safe_rel(cfg.root, cfg.root),
             "root_abs": str(cfg.root.resolve()),
@@ -746,22 +814,35 @@ def handle_api_get(
             "report_hub_root_abs": str((cfg.report_hub_root or cfg.site_root).resolve()),
             "templates": list_templates(cfg.root),
             "llm_defaults": {
+                "deployment_mode": deployment_mode,
+                "onprem_detected": onprem_detected,
+                "openai_base_url": _raw_openai_base_url(),
                 "openai_model": default_openai_model,
                 "openai_model_vision": default_openai_vision,
+                "recommended_model_options": sorted({token for token in recommended_model_options if token}),
                 "codex_model": default_codex_model,
                 "codex_model_options": list(_CODEX_MODEL_OPTIONS),
                 "openai_reasoning_api": _openai_reasoning_api_supported(),
                 "openai_reasoning_model": _supports_reasoning_effort(default_openai_model, "openai_api"),
                 "federlicht_default_backend": "openai_api",
                 "federlicht_default_model": federlicht_default_model,
+                "federlicht_default_check_model": default_federlicht_check_model,
                 "federlicht_default_model_vision": federlicht_default_vision,
+                "feather_default_backend": "openai_api",
+                "feather_default_model": default_feather_model,
                 "federhav_default_backend": "openai_api",
-                "federhav_default_model": "gpt-4o-mini",
+                "federhav_default_model": default_federhav_model,
                 "federhav_runtime_mode": str(
                     os.getenv("FEDERHAV_AGENTIC_RUNTIME")
                     or os.getenv("FEDERHAV_RUNTIME_MODE")
                     or "auto"
                 ).strip().lower(),
+                "onprem_policy": {
+                    "planning_model": _ONPREM_PLANNER_MODEL,
+                    "executor_model": _ONPREM_EXECUTOR_MODEL,
+                    "writer_model": _ONPREM_WRITER_MODEL,
+                    "vision_model": _ONPREM_VISION_MODEL,
+                },
             },
             "root_auth": _root_auth_status_payload(handler),
             "session_auth": _session_status_payload(handler),

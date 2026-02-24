@@ -470,10 +470,16 @@ def run_pipeline(
         meta["run_overview_path"] = rel_path_or_abs(overview_path, run_dir)
     if report_overview_path:
         meta["report_overview_path"] = rel_path_or_abs(report_overview_path, run_dir)
+    preferred_instruction_file = find_instruction_file(run_dir)
     if index_file:
         meta["archive_index_path"] = rel_path_or_abs(index_file, run_dir)
     if instruction_file:
         meta["instruction_path"] = rel_path_or_abs(instruction_file, run_dir)
+    if preferred_instruction_file:
+        feather_rel = rel_path_or_abs(preferred_instruction_file, run_dir)
+        meta["feather_instruction_path"] = feather_rel
+        if not meta.get("instruction_path"):
+            meta["instruction_path"] = feather_rel
     if prompt_copy_path:
         meta["report_prompt_path"] = rel_path_or_abs(prompt_copy_path, run_dir)
     if template_adjustment_path:

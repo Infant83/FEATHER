@@ -67,3 +67,37 @@ Last updated: 2026-02-25
 - if version changed, run `python tools/check_version_consistency.py` and ensure `README.md` + `CHANGELOG.md` + `pyproject.toml` + `src/federlicht/versioning.py` are aligned
 - After push:
 - verify branch tip and clean working tree
+
+## 6) LLM Default Policy (Cloud vs On-Prem)
+- Deployment mode is auto-detected from `OPENAI_BASE_URL` / `OPENAI_API_BASE`.
+- Rule:
+- if host is `api.openai.com` or env is empty -> `openai_cloud`
+- if host is custom (for example local/vllm/sglang/ollama gateway) -> `on_prem`
+- OpenAI cloud defaults:
+- federlicht writer/check/feather default model: `gpt-5-nano`
+- federhav default model: `gpt-4o-mini`
+- On-prem defaults:
+- planner / federhav: `Qwen3-235B-A22B-Thinking-2507`
+- feather executor(agentic search): `Qwen3-Coder-480B-A35B-Instruct`
+- federlicht writer: `Qwen3-235B-A22B-Instruct-2507`
+- vision: `Llama-4-Scout`
+- Explicit env overrides always win:
+- `OPENAI_MODEL`
+- `OPENAI_MODEL_VISION`
+- `FEDERHAV_MODEL`
+- `FEATHER_AGENTIC_MODEL`
+- `FEDERLICHT_CHECK_MODEL`
+
+## 7) CDN/Offline Asset Policy
+- MathJax/Mermaid runtime script loading uses local-first fallback chain.
+- Local vendor paths:
+- `site/federnett/vendor/mathjax/tex-svg.js`
+- `site/federnett/vendor/mermaid/mermaid.min.js`
+- Loader order:
+- local absolute/relative paths first
+- CDN (`jsdelivr` / `cdnjs`) last
+- 운영 권장:
+- on-prem 배포에서는 vendor 파일을 저장소에 포함하고, 외부 CDN 접근을 필수 경로로 가정하지 않는다.
+- vendor 자산 동기화:
+- `powershell -ExecutionPolicy Bypass -File tools/sync_web_vendor_assets.ps1`
+- 네트워크 격리 환경에서 first paint 지연이 크면 report_hub의 외부 font CDN(`fonts.googleapis.com`)도 로컬 번들/시스템 폰트로 전환한다.

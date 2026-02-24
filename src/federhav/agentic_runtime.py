@@ -6,9 +6,11 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator
+from urllib.parse import urlparse
 
 _OFF_TOKENS = {"", "0", "false", "off", "none", "disable", "disabled"}
 _DEFAULT_MODEL_FALLBACK = "gpt-4o-mini"
+_ONPREM_FEDERHAV_MODEL_FALLBACK = "Qwen3-235B-A22B-Thinking-2507"
 _STATE_MEMORY_MAX_CHARS = 5200
 _RUN_FILE_MAX_CHARS = 3200
 _RUN_FILE_MAX_BYTES = 180_000
@@ -25,6 +27,12 @@ _ACTION_ALLOWED_TYPES = (
     "run_capability",
 )
 _ACTION_ALLOWED_SET = set(_ACTION_ALLOWED_TYPES)
+_GOVERNOR_MAX_ITER_DEFAULT = 2
+_GOVERNOR_MAX_ITER_MAX = 4
+_GOVERNOR_DELTA_DEFAULT = 0.12
+_GOVERNOR_BUDGET_CHARS_DEFAULT = 20_000
+_GOVERNOR_BUDGET_CHARS_MIN = 4_000
+_GOVERNOR_BUDGET_CHARS_MAX = 60_000
 
 
 def normalize_runtime_mode(value: Any) -> str:
@@ -55,12 +63,28 @@ def _resolve_backend(value: str | None) -> str:
     return "openai_api"
 
 
+def _is_onprem_openai_compatible() -> bool:
+    raw = str(os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE") or "").strip()
+    if not raw:
+        return False
+    parsed = urlparse(raw if "://" in raw else f"https://{raw}")
+    host = parsed.netloc.lower()
+    if not host:
+        return False
+    return host != "api.openai.com"
+
+
 def _resolve_model_hint(model: str | None, backend: str) -> str:
     explicit = str(model or "").strip()
     if explicit:
         return explicit
     if backend == "codex_cli":
         return str(os.getenv("CODEX_MODEL") or "").strip()
+    federhav_model = str(os.getenv("FEDERHAV_MODEL") or "").strip()
+    if federhav_model:
+        return federhav_model
+    if _is_onprem_openai_compatible():
+        return _ONPREM_FEDERHAV_MODEL_FALLBACK
     return str(os.getenv("OPENAI_MODEL") or _DEFAULT_MODEL_FALLBACK).strip()
 
 
@@ -167,6 +191,149 @@ def _extract_first_json_object(raw: str) -> dict[str, Any] | None:
                     break
         start = text.find("{", start + 1)
     return None
+
+
+def _safe_int(value: object, default: int, minimum: int, maximum: int) -> int:
+    try:
+        parsed = int(str(value).strip())
+    except Exception:
+        parsed = int(default)
+    return max(minimum, min(maximum, parsed))
+
+
+def _safe_float(value: object, default: float, minimum: float, maximum: float) -> float:
+    try:
+        parsed = float(str(value).strip())
+    except Exception:
+        parsed = float(default)
+    return max(minimum, min(maximum, parsed))
+
+
+def _governor_loop_policy() -> dict[str, float | int]:
+    max_iter = _safe_int(
+        os.getenv("FEDERHAV_GOVERNOR_MAX_ITER"),
+        _GOVERNOR_MAX_ITER_DEFAULT,
+        1,
+        _GOVERNOR_MAX_ITER_MAX,
+    )
+    delta_threshold = _safe_float(
+        os.getenv("FEDERHAV_GOVERNOR_DELTA_THRESHOLD"),
+        _GOVERNOR_DELTA_DEFAULT,
+        0.01,
+        0.5,
+    )
+    budget_chars = _safe_int(
+        os.getenv("FEDERHAV_GOVERNOR_BUDGET_CHARS"),
+        _GOVERNOR_BUDGET_CHARS_DEFAULT,
+        _GOVERNOR_BUDGET_CHARS_MIN,
+        _GOVERNOR_BUDGET_CHARS_MAX,
+    )
+    return {
+        "max_iter": int(max_iter),
+        "delta_threshold": float(delta_threshold),
+        "budget_chars": int(budget_chars),
+    }
+
+
+def _attempt_budget_chars(
+    *,
+    base_budget_chars: int,
+    attempt: int,
+    max_iter: int,
+    execution_mode: str,
+    allow_artifacts: bool,
+) -> int:
+    safe_base = max(_GOVERNOR_BUDGET_CHARS_MIN, int(base_budget_chars))
+    mode = str(execution_mode or "plan").strip().lower()
+    mode_factor = 1.0 if mode == "plan" else (0.88 if allow_artifacts else 0.94)
+    decay_step = 0.16
+    decay = 1.0 - (max(1, int(attempt)) - 1) * decay_step
+    if max_iter <= 1:
+        decay = 1.0
+    decay = max(0.55, min(1.0, decay))
+    budget = int(round(safe_base * mode_factor * decay))
+    budget = max(_GOVERNOR_BUDGET_CHARS_MIN, min(safe_base, budget))
+    return budget
+
+
+def _action_signature(payload: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
+    return (
+        str(payload.get("type") or "").strip().lower(),
+        str(payload.get("stage") or "").strip().lower(),
+        str(payload.get("target") or "").strip().lower(),
+        str(payload.get("run_hint") or "").strip().lower(),
+        str(payload.get("mode") or "").strip().lower(),
+        str(payload.get("capability_id") or "").strip().lower(),
+    )
+
+
+def _action_score(payload: dict[str, Any]) -> float:
+    confidence = _normalize_confidence(payload.get("confidence")) or 0.0
+    score = confidence * 100.0
+    action_type = str(payload.get("type") or "").strip().lower()
+    if action_type and action_type != "none":
+        score += 3.0
+    handoff = payload.get("execution_handoff")
+    if isinstance(handoff, dict):
+        preflight = handoff.get("preflight")
+        if isinstance(preflight, dict):
+            if bool(preflight.get("ready_for_execute")):
+                score += 14.0
+            status = str(preflight.get("status") or "").strip().lower()
+            if status == "ok":
+                score += 8.0
+            elif status == "needs_confirmation":
+                score -= 2.0
+            elif status in {"missing_instruction", "missing_run"}:
+                score -= 6.0
+    return round(score, 3)
+
+
+def _trim_messages_to_budget(messages: list[dict[str, str]], budget_chars: int) -> list[dict[str, str]]:
+    if budget_chars <= 0:
+        return messages
+    total_chars = sum(len(str(item.get("content") or "")) for item in messages if isinstance(item, dict))
+    if total_chars <= budget_chars or len(messages) <= 3:
+        return messages
+    head = messages[:2]
+    tail = messages[-4:]
+    merged: list[dict[str, str]] = []
+    for row in [*head, *tail]:
+        if not isinstance(row, dict):
+            continue
+        if row not in merged:
+            merged.append(row)
+    trimmed_chars = sum(len(str(item.get("content") or "")) for item in merged)
+    if trimmed_chars <= budget_chars:
+        return merged
+    if merged:
+        first = dict(merged[0])
+        first_content = str(first.get("content") or "")
+        reserve = max(1000, budget_chars - sum(len(str(item.get("content") or "")) for item in merged[1:]))
+        if len(first_content) > reserve:
+            first["content"] = first_content[:reserve].rstrip() + "…"
+        merged[0] = first
+    return merged
+
+
+def _extract_normalized_action_from_result(
+    result: Any,
+    *,
+    root: Path | None,
+    run_rel: str,
+) -> dict[str, Any] | None:
+    if isinstance(result, dict):
+        action_obj = result.get("action")
+        if isinstance(action_obj, dict):
+            normalized = _normalize_action_planner_payload(action_obj, root=root, run_rel=run_rel)
+            if normalized is not None:
+                return normalized
+        normalized = _normalize_action_planner_payload(result, root=root, run_rel=run_rel)
+        if normalized is not None:
+            return normalized
+    answer_text = _extract_assistant_text(result)
+    parsed = _extract_first_json_object(answer_text)
+    return _normalize_action_planner_payload(parsed, root=root, run_rel=run_rel)
 
 
 def _safe_rel(path: Path, root: Path) -> str:
@@ -1035,31 +1202,117 @@ def try_deepagent_action_plan(
             execution_mode=execution_mode,
             allow_artifacts=allow_artifacts,
         )
-        result = agent.invoke({"messages": messages, "question": question})
-        if isinstance(result, dict):
-            action_obj = result.get("action")
-            if isinstance(action_obj, dict):
-                normalized = _normalize_action_planner_payload(
-                    action_obj,
-                    root=root,
-                    run_rel=effective_run_rel,
-                )
-                if normalized is not None:
-                    return normalized
-            normalized = _normalize_action_planner_payload(
+        policy = _governor_loop_policy()
+        max_iter = int(policy["max_iter"])
+        delta_threshold = float(policy["delta_threshold"])
+        budget_chars = int(policy["budget_chars"])
+        attempts: list[dict[str, Any]] = []
+        candidates: list[dict[str, Any]] = []
+        converged = False
+        previous_candidate: dict[str, Any] | None = None
+        previous_signature: tuple[str, str, str, str, str, str] | None = None
+        previous_conf = 0.0
+        active_messages = list(messages)
+
+        for attempt in range(1, max_iter + 1):
+            attempt_budget_chars = _attempt_budget_chars(
+                base_budget_chars=budget_chars,
+                attempt=attempt,
+                max_iter=max_iter,
+                execution_mode=execution_mode,
+                allow_artifacts=bool(allow_artifacts),
+            )
+            invoke_messages = _trim_messages_to_budget(active_messages, attempt_budget_chars)
+            result = agent.invoke({"messages": invoke_messages, "question": question})
+            candidate = _extract_normalized_action_from_result(
                 result,
                 root=root,
                 run_rel=effective_run_rel,
             )
-            if normalized is not None:
-                return normalized
-        answer_text = _extract_assistant_text(result)
-        parsed = _extract_first_json_object(answer_text)
-        return _normalize_action_planner_payload(
-            parsed,
-            root=root,
-            run_rel=effective_run_rel,
-        )
+            attempt_row: dict[str, Any] = {
+                "attempt": attempt,
+                "budget_chars": attempt_budget_chars,
+                "message_chars": sum(len(str(item.get("content") or "")) for item in invoke_messages),
+                "candidate": False,
+            }
+            if candidate:
+                signature = _action_signature(candidate)
+                confidence = _normalize_confidence(candidate.get("confidence")) or 0.0
+                score = _action_score(candidate)
+                attempt_row.update(
+                    {
+                        "candidate": True,
+                        "type": candidate.get("type"),
+                        "confidence": confidence,
+                        "score": score,
+                    }
+                )
+                candidates.append(candidate)
+                same_signature = previous_signature is not None and signature == previous_signature
+                confidence_delta = abs(confidence - previous_conf) if previous_candidate else 1.0
+                preflight = candidate.get("execution_handoff", {}).get("preflight", {}) if isinstance(
+                    candidate.get("execution_handoff"), dict
+                ) else {}
+                ready_for_execute = bool(preflight.get("ready_for_execute")) if isinstance(preflight, dict) else False
+                if same_signature and confidence_delta <= delta_threshold:
+                    converged = True
+                    attempts.append(attempt_row)
+                    break
+                if ready_for_execute and confidence >= 0.92:
+                    converged = True
+                    attempts.append(attempt_row)
+                    break
+                previous_candidate = candidate
+                previous_signature = signature
+                previous_conf = confidence
+                feedback = {
+                    "attempt": attempt,
+                    "candidate": {
+                        "type": candidate.get("type"),
+                        "run_hint": candidate.get("run_hint", ""),
+                        "target": candidate.get("target", ""),
+                        "stage": candidate.get("stage", ""),
+                        "confidence": confidence,
+                        "score": score,
+                    },
+                    "instruction": (
+                        "Refine the action JSON. Keep schema strict, improve execution safety/preflight clarity, "
+                        "and avoid changing action type unless evidence demands."
+                    ),
+                }
+                active_messages = [
+                    *invoke_messages,
+                    {"role": "user", "content": json.dumps(feedback, ensure_ascii=False)},
+                ]
+            attempts.append(attempt_row)
+
+        if not candidates:
+            return None
+        selected_index = max(range(len(candidates)), key=lambda idx: _action_score(candidates[idx]))
+        selected = dict(candidates[selected_index])
+        handoff = dict(selected.get("execution_handoff") or {})
+        handoff["governor_loop"] = {
+            "max_iter": max_iter,
+            "attempts": len(attempts),
+            "converged": bool(converged),
+            "delta_threshold": delta_threshold,
+            "budget_chars": budget_chars,
+            "stage_budget_mode": "adaptive_decay",
+            "attempt_budget_chars": [int(item.get("budget_chars") or 0) for item in attempts],
+            "selected_candidate_index": selected_index,
+            "candidates": [
+                {
+                    "type": str(item.get("type") or ""),
+                    "confidence": _normalize_confidence(item.get("confidence")) or 0.0,
+                    "score": _action_score(item),
+                }
+                for item in candidates
+            ],
+            "attempt_trace": attempts,
+        }
+        selected["execution_handoff"] = handoff
+        selected["planner"] = "deepagent"
+        return selected
     except Exception:
         if mode == "deepagent":
             raise

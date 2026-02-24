@@ -283,7 +283,14 @@ const LOG_LINE_LIMIT = 1400;
 const LOG_LINE_MAX_CHARS = 3200;
 const LOG_MD_MAX_CHARS = 120000;
 const LOG_MD_TAIL_CHARS = 60000;
-const MERMAID_CDN = "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js";
+const MERMAID_SCRIPT_CANDIDATES = [
+  "/vendor/mermaid/mermaid.min.js",
+  "./vendor/mermaid/mermaid.min.js",
+  "../vendor/mermaid/mermaid.min.js",
+  "../../federnett/vendor/mermaid/mermaid.min.js",
+  "../../../federnett/vendor/mermaid/mermaid.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js",
+];
 const WORKFLOW_PREF_STORAGE_KEY = "federnett-workflow-pref-v1";
 const AGENT_PROFILE_STORAGE_KEY = "federnett-active-agent-profile-v1";
 const AGENT_ROOT_TOKEN_KEY = "federnett-root-token-v1";
@@ -2155,7 +2162,7 @@ function openaiModelHint() {
     || window?.FEDERNETT_OPENAI_MODEL_HINT
     || "",
   );
-  if (!hint || isCodexModelToken(hint)) return "gpt-4o-mini";
+  if (!hint || isCodexModelToken(hint)) return "gpt-5-nano";
   return hint;
 }
 
@@ -2193,13 +2200,16 @@ function uniqueTokens(values) {
 
 function openaiModelPresetOptions() {
   const defaults = [openaiModelHint(), openaiVisionModelHint(), "$OPENAI_MODEL", "$OPENAI_MODEL_VISION"];
+  const recommended = Array.isArray(llmDefaults().recommended_model_options)
+    ? llmDefaults().recommended_model_options
+    : [];
   const presets = MODEL_PRESET_OPTIONS.filter((token) => {
     const normalized = normalizeModelToken(token).toLowerCase();
     if (!normalized) return false;
     if (normalized.includes("codex")) return false;
     return true;
   });
-  return uniqueTokens([...defaults, ...presets]);
+  return uniqueTokens([...defaults, ...recommended, ...presets]);
 }
 
 function codexModelPresetOptions() {
@@ -2283,6 +2293,16 @@ function federlichtDefaultModelHint() {
   return hint || "$OPENAI_MODEL";
 }
 
+function federlichtDefaultCheckModelHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().federlicht_default_check_model
+    || llmDefaults().federlicht_default_model
+    || llmDefaults().openai_model
+    || "$OPENAI_MODEL",
+  );
+  return hint || "$OPENAI_MODEL";
+}
+
 function federlichtDefaultVisionHint() {
   const hint = normalizeModelToken(
     llmDefaults().federlicht_default_model_vision
@@ -2293,25 +2313,47 @@ function federlichtDefaultVisionHint() {
   return hint || "$OPENAI_MODEL_VISION";
 }
 
+function featherDefaultModelHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().feather_default_model
+    || "",
+  );
+  return hint;
+}
+
+function featherDefaultBackendHint() {
+  return normalizeAskLlmBackend(llmDefaults().feather_default_backend || "openai_api");
+}
+
+function federhavDefaultModelHint() {
+  const hint = normalizeModelToken(
+    llmDefaults().federhav_default_model
+    || "gpt-4o-mini",
+  );
+  return hint || "gpt-4o-mini";
+}
+
 function defaultModelOverrides() {
+  const featherModel = featherDefaultModelHint();
+  const featherCustom = Boolean(featherModel);
   return {
     feather: {
-      mode: "inherit",
-      backend: "",
-      model: "",
+      mode: featherCustom ? "custom" : "inherit",
+      backend: featherCustom ? featherDefaultBackendHint() : "",
+      model: featherCustom ? featherModel : "",
     },
     federlicht: {
       mode: "custom",
-      backend: "openai_api",
+      backend: normalizeAskLlmBackend(llmDefaults().federlicht_default_backend || "openai_api"),
       model: federlichtDefaultModelHint(),
-      checkModel: federlichtDefaultModelHint(),
+      checkModel: federlichtDefaultCheckModelHint(),
       visionModel: federlichtDefaultVisionHint(),
       reasoningEffort: "off",
     },
     federhav: {
       mode: "custom",
       backend: normalizeAskLlmBackend(llmDefaults().federhav_default_backend || "openai_api"),
-      model: normalizeModelToken(llmDefaults().federhav_default_model || "gpt-4o-mini") || "gpt-4o-mini",
+      model: federhavDefaultModelHint(),
       reasoningEffort: "off",
       runtimeMode: normalizeAskRuntimeMode(llmDefaults().federhav_runtime_mode || "auto"),
       liveAutoLogContext: true,
@@ -2565,7 +2607,7 @@ function renderGlobalModelPolicyControls() {
   const havLogTailEl = $("#policy-federhav-live-log-tail-size");
   if (havModeEl) havModeEl.value = overrides.federhav.mode || "custom";
   if (havBackendEl) havBackendEl.value = overrides.federhav.backend || "openai_api";
-  if (havModelEl) havModelEl.value = overrides.federhav.model || "gpt-4o-mini";
+  if (havModelEl) havModelEl.value = overrides.federhav.model || federhavDefaultModelHint();
   if (havReasoningEl) havReasoningEl.value = overrides.federhav.reasoningEffort || "off";
   if (havRuntimeEl) havRuntimeEl.value = normalizeAskRuntimeMode(overrides.federhav.runtimeMode || "auto");
   if (havAutoLogEl) havAutoLogEl.checked = overrides.federhav.liveAutoLogContext !== false;
@@ -2698,7 +2740,7 @@ function readGlobalModelPolicyControls() {
       federhav: {
         mode: $("#policy-federhav-mode")?.value || state.modelOverrides?.federhav?.mode || "custom",
         backend: $("#policy-federhav-backend")?.value || state.modelOverrides?.federhav?.backend || "openai_api",
-        model: $("#policy-federhav-model")?.value || state.modelOverrides?.federhav?.model || "gpt-4o-mini",
+        model: $("#policy-federhav-model")?.value || state.modelOverrides?.federhav?.model || federhavDefaultModelHint(),
         reasoningEffort: $("#policy-federhav-reasoning-effort")?.value || state.modelOverrides?.federhav?.reasoningEffort || "off",
         runtimeMode: $("#policy-federhav-runtime-mode")?.value || state.modelOverrides?.federhav?.runtimeMode || "auto",
         liveAutoLogContext:
@@ -3632,6 +3674,7 @@ function setAskActivity(id, status, message = "", meta = null) {
     duration_ms: durationMs,
     token_est: tokenEst,
     cache_hit: cacheHit,
+    details: metaObj?.details && typeof metaObj.details === "object" ? metaObj.details : null,
   }].slice(-140);
   renderAskCapabilities();
   renderWorkflowRuntimeConfig();
@@ -3650,6 +3693,24 @@ function askTraceMetaText(event) {
   if (Number.isFinite(durationRaw) && durationRaw >= 0) parts.push(`dur=${Math.round(durationRaw)}ms`);
   if (Number.isFinite(tokenRaw) && tokenRaw >= 0) parts.push(`tok~${Math.round(tokenRaw)}`);
   if (hasCacheHit) parts.push(`cache=${event.cache_hit ? "hit" : "miss"}`);
+  const details = event.details && typeof event.details === "object" ? event.details : null;
+  const governor = details?.execution_handoff?.governor_loop
+    && typeof details.execution_handoff.governor_loop === "object"
+    ? details.execution_handoff.governor_loop
+    : null;
+  if (governor) {
+    const attempts = Number(governor.attempts);
+    const maxIter = Number(governor.max_iter);
+    const converged = governor.converged;
+    if (Number.isFinite(attempts) && attempts > 0 && Number.isFinite(maxIter) && maxIter > 0) {
+      parts.push(`gov=${Math.round(attempts)}/${Math.round(maxIter)}`);
+    } else if (Number.isFinite(attempts) && attempts > 0) {
+      parts.push(`gov=${Math.round(attempts)}`);
+    }
+    if (typeof converged === "boolean") {
+      parts.push(converged ? "conv=yes" : "conv=no");
+    }
+  }
   return parts.join(" · ");
 }
 
@@ -3674,6 +3735,13 @@ function applyAskTraceTimeline(result, options = {}) {
       trace_id: String(step.trace_id || traceId || "").trim(),
       tool_id: String(step.tool_id || id).trim(),
     });
+    if (options?.appendLiveLog) {
+      appendLiveAskActivityToLog(id, status, message, {
+        ...step,
+        trace_id: String(step.trace_id || traceId || "").trim(),
+        tool_id: String(step.tool_id || id).trim(),
+      });
+    }
   });
   return true;
 }
@@ -6653,6 +6721,30 @@ function appendLiveAskActivityToLog(activityId, status, message = "", meta = nul
   const metaText = askTraceMetaText(meta && typeof meta === "object" ? meta : {});
   const parts = [`id=${id}`, `status=${stateToken}`];
   if (metaText) parts.push(metaText);
+  const details = meta && typeof meta === "object" && meta.details && typeof meta.details === "object"
+    ? meta.details
+    : null;
+  if (details) {
+    const dtype = String(details.type || "").trim().toLowerCase();
+    if (dtype) parts.push(`action=${dtype}`);
+    const governor = details.execution_handoff?.governor_loop
+      && typeof details.execution_handoff.governor_loop === "object"
+      ? details.execution_handoff.governor_loop
+      : null;
+    if (governor) {
+      const attempts = Number(governor.attempts);
+      const maxIter = Number(governor.max_iter);
+      const converged = governor.converged;
+      if (Number.isFinite(attempts) && attempts > 0 && Number.isFinite(maxIter) && maxIter > 0) {
+        parts.push(`governor=${Math.round(attempts)}/${Math.round(maxIter)}`);
+      } else if (Number.isFinite(attempts) && attempts > 0) {
+        parts.push(`governor=${Math.round(attempts)}`);
+      }
+      if (typeof converged === "boolean") {
+        parts.push(converged ? "converged" : "non-converged");
+      }
+    }
+  }
   if (note) parts.push(`msg=${note}`);
   appendLog(`[run-agent:activity] ${parts.join(" | ")}\n`);
 }
@@ -6990,17 +7082,25 @@ async function runLiveAskQuestion() {
     const answer = enforceExecutionModeAdviceGuard(String(result?.answer || ""), result);
     const sources = Array.isArray(result?.sources) ? result.sources : [];
     if (usedLegacyFallback) {
-      const appliedTrace = applyAskTraceTimeline(result, { reset: true });
+      const appliedTrace = applyAskTraceTimeline(result, { reset: true, appendLiveLog: true });
       if (!appliedTrace) {
-        setAskActivity("source_index", "done", `근거 후보 ${Number(result?.indexed_files || 0)}개`);
+        const sourceMsg = `근거 후보 ${Number(result?.indexed_files || 0)}개`;
+        setAskActivity("source_index", "done", sourceMsg);
+        appendLiveAskActivityToLog("source_index", "done", sourceMsg, {});
         if (requestPayload.web_search) {
           const webNote = String(result?.web_search_note || "");
           const webStatus = webNote.toLowerCase().includes("skipped") ? "skipped" : "done";
-          setAskActivity("web_research", webStatus, webNote || "웹 검색 처리 완료");
+          const webMsg = webNote || "웹 검색 처리 완료";
+          setAskActivity("web_research", webStatus, webMsg);
+          appendLiveAskActivityToLog("web_research", webStatus, webMsg, {});
         } else {
           setAskActivity("web_research", "disabled", "web_search 옵션 꺼짐");
+          appendLiveAskActivityToLog("web_research", "disabled", "web_search 옵션 꺼짐", {});
         }
-        setAskActivity("llm_generate", result?.used_llm ? "done" : "error", result?.error || "완료");
+        const llmStatus = result?.used_llm ? "done" : "error";
+        const llmMsg = result?.error || "완료";
+        setAskActivity("llm_generate", llmStatus, llmMsg);
+        appendLiveAskActivityToLog("llm_generate", llmStatus, llmMsg, {});
       }
     }
     state.liveAsk.pendingQuestion = "";
@@ -10241,6 +10341,10 @@ function renderRunContextSummary() {
   if (hub && hub !== siteRoot) {
     pills.push(`report hub: ${hub}`);
   }
+  const deploymentMode = String(state.info?.llm_defaults?.deployment_mode || "").trim();
+  if (deploymentMode) {
+    pills.push(`llm: ${deploymentMode}`);
+  }
   pills.push(`run folder: ${runFolderContextLabel()}`);
   if (strip) {
     strip.innerHTML = pills.map((p) => `<span class="meta-pill">${p}</span>`).join("");
@@ -12159,31 +12263,54 @@ function ensureMermaidLoaded() {
   }
   if (mermaidState.loading) return mermaidState.loading;
   mermaidState.loading = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = MERMAID_CDN;
-    script.async = true;
-    script.onload = () => {
-      if (!window.mermaid || typeof window.mermaid.render !== "function") {
-        reject(new Error("mermaid unavailable"));
+    const candidates = [...MERMAID_SCRIPT_CANDIDATES];
+    let idx = 0;
+    const attempt = () => {
+      if (window.mermaid && typeof window.mermaid.render === "function") {
+        if (!window.__federnettMermaidConfigured) {
+          window.mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "loose",
+            theme: "dark",
+          });
+          window.__federnettMermaidConfigured = true;
+        }
+        mermaidState.ready = true;
+        resolve(window.mermaid);
         return;
       }
-      if (!window.__federnettMermaidConfigured) {
-        window.mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: "loose",
-          theme: "dark",
-        });
-        window.__federnettMermaidConfigured = true;
+      if (idx >= candidates.length) {
+        mermaidState.loading = null;
+        mermaidState.ready = false;
+        reject(new Error("failed to load mermaid"));
+        return;
       }
-      mermaidState.ready = true;
-      resolve(window.mermaid);
+      const script = document.createElement("script");
+      script.src = String(candidates[idx] || "").trim();
+      idx += 1;
+      script.async = true;
+      script.onload = () => {
+        if (!window.mermaid || typeof window.mermaid.render !== "function") {
+          attempt();
+          return;
+        }
+        if (!window.__federnettMermaidConfigured) {
+          window.mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "loose",
+            theme: "dark",
+          });
+          window.__federnettMermaidConfigured = true;
+        }
+        mermaidState.ready = true;
+        resolve(window.mermaid);
+      };
+      script.onerror = () => {
+        attempt();
+      };
+      document.head.appendChild(script);
     };
-    script.onerror = () => {
-      mermaidState.loading = null;
-      mermaidState.ready = false;
-      reject(new Error("failed to load mermaid"));
-    };
-    document.head.appendChild(script);
+    attempt();
   });
   return mermaidState.loading;
 }

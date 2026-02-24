@@ -149,3 +149,104 @@ def test_try_deepagent_action_plan_parses_json_from_assistant_text(monkeypatch, 
     assert result["type"] == "focus_editor"
     assert result["planner"] == "deepagent"
     assert result["confidence"] == 0.65
+
+
+def test_governor_loop_policy_clamps_env_values(monkeypatch) -> None:
+    monkeypatch.setenv("FEDERHAV_GOVERNOR_MAX_ITER", "999")
+    monkeypatch.setenv("FEDERHAV_GOVERNOR_DELTA_THRESHOLD", "-1")
+    monkeypatch.setenv("FEDERHAV_GOVERNOR_BUDGET_CHARS", "10")
+
+    policy = runtime_mod._governor_loop_policy()
+
+    assert policy["max_iter"] == 4
+    assert policy["delta_threshold"] == 0.01
+    assert policy["budget_chars"] == 4000
+
+
+def test_try_deepagent_action_plan_records_governor_loop_and_selects_best_candidate(
+    monkeypatch, tmp_path: Path
+) -> None:
+    class _FakeAgent:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def invoke(self, _payload):
+            self.calls += 1
+            if self.calls == 1:
+                return {
+                    "action": {
+                        "type": "run_feather",
+                        "run_hint": "demo",
+                        "confidence": 0.61,
+                        "execution_handoff": {
+                            "preflight": {"status": "needs_confirmation", "ready_for_execute": False}
+                        },
+                    }
+                }
+            return {
+                "action": {
+                    "type": "run_federlicht",
+                    "run_hint": "demo",
+                    "confidence": 0.94,
+                    "execution_handoff": {"preflight": {"status": "ok", "ready_for_execute": True}},
+                }
+            }
+
+    fake_agent = _FakeAgent()
+
+    class _FakeReportMod:
+        @staticmethod
+        def create_agent_with_fallback(*_args, **_kwargs):
+            return fake_agent
+
+    monkeypatch.setenv("FEDERHAV_GOVERNOR_MAX_ITER", "3")
+    monkeypatch.setattr(runtime_mod, "_load_agent_factory", lambda: (_FakeReportMod(), object()))
+
+    run_dir = tmp_path / "runs" / "demo" / "instruction"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "demo.txt").write_text("instruction\n", encoding="utf-8")
+
+    result = runtime_mod.try_deepagent_action_plan(
+        question="federlicht 실행",
+        run_rel="runs/demo",
+        history=[],
+        state_memory={},
+        capabilities={},
+        execution_mode="act",
+        allow_artifacts=False,
+        model="gpt-4o-mini",
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        root=tmp_path,
+    )
+    assert isinstance(result, dict)
+    assert result["type"] == "run_federlicht"
+    assert result["planner"] == "deepagent"
+    assert fake_agent.calls == 2
+
+    handoff = result.get("execution_handoff")
+    assert isinstance(handoff, dict)
+    loop = handoff.get("governor_loop")
+    assert isinstance(loop, dict)
+    assert loop.get("attempts") == 2
+    assert loop.get("converged") is True
+    assert loop.get("selected_candidate_index") == 1
+
+
+def test_resolve_model_hint_prefers_onprem_default_when_openai_base_is_custom(monkeypatch) -> None:
+    monkeypatch.delenv("FEDERHAV_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://127.0.0.1:8000/v1")
+
+    model = runtime_mod._resolve_model_hint(None, "openai_api")
+    assert model == "Qwen3-235B-A22B-Thinking-2507"
+
+
+def test_resolve_model_hint_keeps_openai_default_for_public_api(monkeypatch) -> None:
+    monkeypatch.delenv("FEDERHAV_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+
+    model = runtime_mod._resolve_model_hint(None, "openai_api")
+    assert model == "gpt-4o-mini"

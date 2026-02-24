@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-02-07T16:05:51.640793",
+  "created_at": "2026-02-25T01:09:59.582064",
   "stages": {
     "scout": {
       "status": "ran",
@@ -7,35 +7,35 @@
     },
     "clarifier": {
       "status": "skipped",
-      "detail": "disabled"
+      "detail": "no_questions"
     },
     "template_adjust": {
       "status": "skipped",
-      "detail": "disabled"
+      "detail": "depth=brief"
     },
     "plan": {
-      "status": "disabled",
-      "detail": ""
-    },
-    "web": {
-      "status": "disabled",
-      "detail": ""
-    },
-    "evidence": {
       "status": "ran",
       "detail": ""
     },
+    "web": {
+      "status": "skipped",
+      "detail": "policy"
+    },
+    "evidence": {
+      "status": "skipped",
+      "detail": "depth=brief"
+    },
     "plan_check": {
-      "status": "disabled",
-      "detail": ""
+      "status": "skipped",
+      "detail": "missing_evidence"
     },
     "writer": {
       "status": "ran",
       "detail": ""
     },
     "quality": {
-      "status": "ran",
-      "detail": "iterations=1"
+      "status": "disabled",
+      "detail": ""
     }
   },
   "order": [
@@ -48,5 +48,100 @@
     "plan_check",
     "writer",
     "quality"
-  ]
+  ],
+  "timeline": [
+    {
+      "index": "1",
+      "timestamp": "2026-02-25T00:58:49",
+      "stage": "template_adjust",
+      "status": "skipped",
+      "detail": "depth=brief"
+    },
+    {
+      "index": "2",
+      "timestamp": "2026-02-25T01:02:09",
+      "stage": "scout",
+      "status": "ran",
+      "detail": ""
+    },
+    {
+      "index": "3",
+      "timestamp": "2026-02-25T01:02:09",
+      "stage": "clarifier",
+      "status": "skipped",
+      "detail": "no_questions"
+    },
+    {
+      "index": "4",
+      "timestamp": "2026-02-25T01:02:30",
+      "stage": "plan",
+      "status": "ran",
+      "detail": ""
+    },
+    {
+      "index": "5",
+      "timestamp": "2026-02-25T01:02:30",
+      "stage": "web",
+      "status": "skipped",
+      "detail": "policy"
+    },
+    {
+      "index": "6",
+      "timestamp": "2026-02-25T01:02:30",
+      "stage": "plan_check",
+      "status": "skipped",
+      "detail": "missing_evidence"
+    },
+    {
+      "index": "7",
+      "timestamp": "2026-02-25T01:02:30",
+      "stage": "evidence",
+      "status": "skipped",
+      "detail": "depth=brief"
+    },
+    {
+      "index": "8",
+      "timestamp": "2026-02-25T01:06:27",
+      "stage": "writer",
+      "status": "ran",
+      "detail": ""
+    }
+  ],
+  "artifacts": {
+    "scout": [
+      {
+        "label": "Scout notes",
+        "path": "./report_notes/scout_notes.md"
+      }
+    ],
+    "plan": [
+      {
+        "label": "Plan update",
+        "path": "./report_notes/report_plan.md"
+      }
+    ],
+    "evidence": [
+      {
+        "label": "Evidence notes",
+        "path": "./report_notes/evidence_notes.md"
+      },
+      {
+        "label": "Source triage",
+        "path": "./report_notes/source_triage.md"
+      },
+      {
+        "label": "Source index",
+        "path": "./report_notes/source_index.jsonl"
+      },
+      {
+        "label": "Claim map",
+        "path": "./report_notes/claim_map.md"
+      },
+      {
+        "label": "Gap report",
+        "path": "./report_notes/gap_finder.md"
+      }
+    ]
+  },
+  "diagram_mermaid": "flowchart LR\n    scout[\"scout\\nran\"]\n    clarifier[\"clarifier\\nskipped\"]\n    template_adjust[\"template_adjust\\nskipped\"]\n    plan[\"plan\\nran\"]\n    web[\"web\\nskipped\"]\n    evidence[\"evidence\\nskipped\"]\n    plan_check[\"plan_check\\nskipped\"]\n    writer[\"writer\\nran\"]\n    quality[\"quality\\ndisabled\"]\n    scout --> clarifier\n    clarifier --> template_adjust\n    template_adjust --> plan\n    plan --> web\n    web --> evidence\n    evidence --> plan_check\n    plan_check --> writer\n    writer --> quality"
 }

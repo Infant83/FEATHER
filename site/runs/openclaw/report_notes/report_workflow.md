@@ -9,19 +9,18 @@
 6. evidence: skipped (depth=brief)
 7. plan_check: skipped (missing_evidence)
 8. writer: ran
-9. quality: ran (iterations=1)
+9. quality: disabled
 
 ## Timeline
 
-1. [2026-02-22T01:54:04] template_adjust: skipped (depth=brief)
-2. [2026-02-22T01:54:04] scout: cached
-3. [2026-02-22T01:54:04] clarifier: skipped (no_questions)
-4. [2026-02-22T01:54:04] plan: cached
-5. [2026-02-22T01:54:04] web: skipped (policy)
-6. [2026-02-22T01:54:04] plan_check: skipped (missing_evidence)
-7. [2026-02-22T01:54:04] evidence: skipped (depth=brief)
-8. [2026-02-22T01:57:35] writer: ran
-9. [2026-02-22T02:05:26] quality: ran (iterations=1)
+1. [2026-02-25T06:21:06] template_adjust: skipped (depth=brief)
+2. [2026-02-25T06:21:08] scout: cached
+3. [2026-02-25T06:21:08] clarifier: skipped (no_questions)
+4. [2026-02-25T06:21:09] plan: cached
+5. [2026-02-25T06:21:09] web: skipped (policy)
+6. [2026-02-25T06:21:09] plan_check: skipped (missing_evidence)
+7. [2026-02-25T06:21:09] evidence: skipped (depth=brief)
+8. [2026-02-25T06:22:16] writer: ran
 
 ## Artifacts
 ### scout
@@ -55,7 +54,7 @@ flowchart LR
     evidence["evidence\nskipped"]
     plan_check["plan_check\nskipped"]
     writer["writer\nran"]
-    quality["quality\nran"]
+    quality["quality\ndisabled"]
     scout --> clarifier
     clarifier --> template_adjust
     template_adjust --> plan
@@ -64,10 +63,9 @@ flowchart LR
     evidence --> plan_check
     plan_check --> writer
     writer --> quality
-    quality -. feedback .-> writer
 ```
 ## Outputs
-- Report overview: ./report/run_overview_report_full_iter_brief_quality_v2.md
+- Report overview: ./report/run_overview_report_full_iter004_gpt5nano_leader.md
 - Report meta: ./report_notes/report_meta.json
-- Report prompt copy: ./instruction/report_prompt_report_full_iter_brief_quality_v2.txt
+- Report prompt copy: ./instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt
 - Template summary: ./report_notes/report_template.txt

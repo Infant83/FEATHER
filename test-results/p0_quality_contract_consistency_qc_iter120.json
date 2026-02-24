@@ -1,0 +1,44 @@
+{
+  "pass": false,
+  "metric_source": "selected_eval",
+  "benchmark_summary": {
+    "overall": 91.05,
+    "claim_support_ratio": 72.73,
+    "unsupported_claim_count": 6.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 92.0
+  },
+  "quality_contract_metrics": {
+    "overall": 76.94,
+    "claim_support_ratio": 50.0,
+    "unsupported_claim_count": 0.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 55.0
+  },
+  "delta": {
+    "overall": 14.11,
+    "claim_support_ratio": 22.73,
+    "unsupported_claim_count": 6.0,
+    "evidence_density_score": 0.0,
+    "section_coherence_score": 37.0
+  },
+  "abs_delta": {
+    "overall": 14.11,
+    "claim_support_ratio": 22.73,
+    "unsupported_claim_count": 6.0,
+    "evidence_density_score": 0.0,
+    "section_coherence_score": 37.0
+  },
+  "thresholds": {
+    "overall": 2.5,
+    "claim_support_ratio": 8.0,
+    "unsupported_claim_count": 8.0,
+    "evidence_density_score": 8.0,
+    "section_coherence_score": 8.0
+  },
+  "failed_checks": [
+    "overall abs_delta=14.11 > 2.50",
+    "claim_support_ratio abs_delta=22.73 > 8.00",
+    "section_coherence_score abs_delta=37.00 > 8.00"
+  ]
+}

@@ -2847,6 +2847,55 @@ def _normalize_execution_handoff(raw: Any) -> dict[str, Any] | None:
                 preflight["notes"] = notes[:8]
         if preflight:
             out["preflight"] = preflight
+    governor_raw = raw.get("governor_loop")
+    if isinstance(governor_raw, dict):
+        governor: dict[str, Any] = {}
+        for key in ("max_iter", "attempts", "selected_candidate_index", "budget_chars"):
+            value = governor_raw.get(key)
+            try:
+                parsed = int(float(value))
+            except Exception:
+                parsed = None
+            if parsed is not None:
+                governor[key] = max(0, parsed)
+        converged = governor_raw.get("converged")
+        if isinstance(converged, bool):
+            governor["converged"] = converged
+        delta_threshold = governor_raw.get("delta_threshold")
+        try:
+            delta_token = float(delta_threshold)
+        except Exception:
+            delta_token = None
+        if delta_token is not None and math.isfinite(delta_token):
+            governor["delta_threshold"] = round(max(0.0, min(delta_token, 1.0)), 4)
+        candidates_raw = governor_raw.get("candidates")
+        if isinstance(candidates_raw, list):
+            candidates: list[dict[str, Any]] = []
+            for row in candidates_raw:
+                if not isinstance(row, dict):
+                    continue
+                item: dict[str, Any] = {}
+                row_type = str(row.get("type") or "").strip().lower()
+                if row_type:
+                    item["type"] = row_type[:64]
+                row_conf = _normalize_action_confidence(row.get("confidence"))
+                if row_conf is not None:
+                    item["confidence"] = row_conf
+                score_raw = row.get("score")
+                try:
+                    score = float(score_raw)
+                except Exception:
+                    score = None
+                if score is not None and math.isfinite(score):
+                    item["score"] = round(score, 3)
+                if item:
+                    candidates.append(item)
+                if len(candidates) >= 6:
+                    break
+            if candidates:
+                governor["candidates"] = candidates
+        if governor:
+            out["governor_loop"] = governor
     return out or None
 
 
@@ -3736,6 +3785,7 @@ def _trace_activity_event(
     duration_ms: float | int | None = None,
     token_est: int | None = None,
     cache_hit: bool | None = None,
+    details: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
         "event": "activity",
@@ -3757,7 +3807,35 @@ def _trace_activity_event(
             pass
     if cache_hit is not None:
         payload["cache_hit"] = bool(cache_hit)
+    if isinstance(details, dict) and details:
+        payload["details"] = details
     return payload
+
+
+def _action_governor_summary(action_details: dict[str, Any] | None) -> str:
+    if not isinstance(action_details, dict):
+        return ""
+    handoff = action_details.get("execution_handoff")
+    if not isinstance(handoff, dict):
+        return ""
+    governor = handoff.get("governor_loop")
+    if not isinstance(governor, dict):
+        return ""
+    attempts = governor.get("attempts")
+    max_iter = governor.get("max_iter")
+    converged = governor.get("converged")
+    candidates = governor.get("candidates")
+    candidate_count = len(candidates) if isinstance(candidates, list) else 0
+    parts: list[str] = []
+    if isinstance(attempts, int) and isinstance(max_iter, int) and max_iter > 0:
+        parts.append(f"governor={attempts}/{max_iter}")
+    elif isinstance(attempts, int):
+        parts.append(f"governor={attempts}")
+    if isinstance(converged, bool):
+        parts.append("converged" if converged else "non-converged")
+    if candidate_count > 0:
+        parts.append(f"candidates={candidate_count}")
+    return " ".join(parts).strip()
 
 
 def _clarify_prompt_from_action(action: dict[str, Any] | None) -> tuple[bool, str]:
@@ -3801,7 +3879,9 @@ def _action_trace_status_and_message(action: dict[str, Any] | None) -> tuple[str
     confidence_text = ""
     if isinstance(confidence, (float, int)):
         confidence_text = f" confidence={float(confidence):.2f}"
-    message = f"action={details.get('type')} planner={planner}{confidence_text}".strip()
+    governor_summary = _action_governor_summary(details)
+    suffix = f" {governor_summary}" if governor_summary else ""
+    message = f"action={details.get('type')} planner={planner}{confidence_text}{suffix}".strip()
     return "done", message, details
 
 
@@ -4288,6 +4368,7 @@ def stream_help_question(
         duration_ms=0,
         token_est=0,
         cache_hit=False,
+        details=action_details,
     )
     clarify_required, clarify_question = _clarify_prompt_from_action(action)
     yield {

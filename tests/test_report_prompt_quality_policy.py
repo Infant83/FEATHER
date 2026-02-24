@@ -157,3 +157,23 @@ def test_data_scientist_prompt_enforces_grounded_narrative_provenance() -> None:
     assert "근거가 없는 수치/비교를 만들지 말 것" in prompt
     assert "원출처 URL 또는 파일 경로" in prompt
     assert "딱딱한 라벨형 문구 금지" in prompt
+
+
+def test_writer_prompt_deep_adds_density_and_visual_integration_guidance() -> None:
+    prompt = prompts.build_writer_prompt(
+        _format_instructions(),
+        "",
+        _template_spec(),
+        ["Executive Summary", "Methods & Evidence", "Results & Benchmarks", "Risks & Gaps"],
+        "md",
+        "Korean",
+        depth="deep",
+        template_rigidity="balanced",
+        figures_enabled=False,
+        figures_mode="auto",
+        artwork_enabled=True,
+        free_form=False,
+        report_intent="research",
+    )
+    assert "심층 모드에서는 핵심 섹션" in prompt
+    assert "figure 후보가 없거나 부족하면 artwork 도구" in prompt

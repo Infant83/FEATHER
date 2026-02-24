@@ -9,7 +9,30 @@
       svg: { fontCache: 'global' }
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script>
+    (function () {
+      const candidates = [
+        '/vendor/mathjax/tex-svg.js',
+        './vendor/mathjax/tex-svg.js',
+        '../vendor/mathjax/tex-svg.js',
+        '../../federnett/vendor/mathjax/tex-svg.js',
+        '../../../federnett/vendor/mathjax/tex-svg.js',
+        'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+      ];
+      const head = document.head || document.getElementsByTagName('head')[0];
+      let index = 0;
+      const loadNext = () => {
+        if (window.MathJax && window.MathJax.typesetPromise) return;
+        if (index >= candidates.length) return;
+        const script = document.createElement('script');
+        script.src = candidates[index++];
+        script.async = true;
+        script.onerror = loadNext;
+        head.appendChild(script);
+      };
+      loadNext();
+    })();
+  </script>
   <style>
     body { font-family: "Iowan Old Style", Georgia, serif; margin: 0; color: #1d1c1a; }
     header { padding: 16px 20px; border-bottom: 1px solid #e7dfd2; background: #f7f4ee; }
@@ -38,19 +61,18 @@
 <li>evidence: skipped (depth=brief)</li>
 <li>plan_check: skipped (missing_evidence)</li>
 <li>writer: ran</li>
-<li>quality: ran (iterations=1)</li>
+<li>quality: disabled</li>
 </ol>
 <h2>Timeline</h2>
 <ol>
-<li>[2026-02-22T01:03:46] template_adjust: skipped (depth=brief)</li>
-<li>[2026-02-22T01:03:46] scout: cached</li>
-<li>[2026-02-22T01:03:46] clarifier: skipped (no_questions)</li>
-<li>[2026-02-22T01:03:46] plan: cached</li>
-<li>[2026-02-22T01:03:46] web: skipped (policy)</li>
-<li>[2026-02-22T01:03:46] plan_check: skipped (missing_evidence)</li>
-<li>[2026-02-22T01:03:46] evidence: skipped (depth=brief)</li>
-<li>[2026-02-22T01:07:23] writer: ran</li>
-<li>[2026-02-22T01:10:42] quality: ran (iterations=1)</li>
+<li>[2026-02-25T06:21:06] template_adjust: skipped (depth=brief)</li>
+<li>[2026-02-25T06:21:08] scout: cached</li>
+<li>[2026-02-25T06:21:08] clarifier: skipped (no_questions)</li>
+<li>[2026-02-25T06:21:09] plan: cached</li>
+<li>[2026-02-25T06:21:09] web: skipped (policy)</li>
+<li>[2026-02-25T06:21:09] plan_check: skipped (missing_evidence)</li>
+<li>[2026-02-25T06:21:09] evidence: skipped (depth=brief)</li>
+<li>[2026-02-25T06:22:16] writer: ran</li>
 </ol>
 <h2>Artifacts</h2>
 <h3>scout</h3>
@@ -71,6 +93,11 @@
 <li>Claim-evidence map (json): <a href="../report_notes/claim_evidence_map.json">./report_notes/claim_evidence_map.json</a></li>
 <li>Gap report: <a href="../report_notes/gap_finder.md">./report_notes/gap_finder.md</a></li>
 </ul>
+<h3>quality</h3>
+<ul>
+<li>Quality evaluations: <a href="../report_notes/quality_evals.jsonl">./report_notes/quality_evals.jsonl</a></li>
+<li>Quality pairwise: <a href="../report_notes/quality_pairwise.jsonl">./report_notes/quality_pairwise.jsonl</a></li>
+</ul>
 <h2>Diagram</h2>
 <pre><code class="language-mermaid">flowchart LR
     scout[&quot;scout\ncached&quot;]
@@ -81,7 +108,7 @@
     evidence[&quot;evidence\nskipped&quot;]
     plan_check[&quot;plan_check\nskipped&quot;]
     writer[&quot;writer\nran&quot;]
-    quality[&quot;quality\nran&quot;]
+    quality[&quot;quality\ndisabled&quot;]
     scout --&gt; clarifier
     clarifier --&gt; template_adjust
     template_adjust --&gt; plan
@@ -90,13 +117,12 @@
     evidence --&gt; plan_check
     plan_check --&gt; writer
     writer --&gt; quality
-    quality -. feedback .-&gt; writer
 </code></pre>
 <h2>Outputs</h2>
 <ul>
-<li>Report overview: <a href="../report/run_overview_report_full_iter_brief_quality.md">./report/run_overview_report_full_iter_brief_quality.md</a></li>
+<li>Report overview: <a href="../report/run_overview_report_full_iter004_gpt5nano_leader.md">./report/run_overview_report_full_iter004_gpt5nano_leader.md</a></li>
 <li>Report meta: <a href="../report_notes/report_meta.json">./report_notes/report_meta.json</a></li>
-<li>Report prompt copy: <a href="../instruction/report_prompt_report_full_iter_brief_quality.txt">./instruction/report_prompt_report_full_iter_brief_quality.txt</a></li>
+<li>Report prompt copy: <a href="../instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt">./instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt</a></li>
 <li>Template summary: <a href="../report_notes/report_template.txt">./report_notes/report_template.txt</a></li>
 </ul></main>
   <script>

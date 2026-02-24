@@ -1,0 +1,45 @@
+{
+  "rows": [
+    {
+      "path": "site/runs/20260221_QC_report/report_full_iter51.html",
+      "format": "html",
+      "overall": 91.05,
+      "claim_support_ratio": 72.73,
+      "unsupported_claim_count": 6.0,
+      "evidence_density_score": 100.0,
+      "section_coherence_score": 92.0,
+      "signals": {
+        "section_coverage": 100.0,
+        "citation_density": 100.0,
+        "evidence_density_score": 100.0,
+        "claim_support_ratio": 72.73,
+        "unsupported_claim_count": 6.0,
+        "section_coherence_score": 92.0,
+        "method_transparency": 100.0,
+        "traceability": 74.0,
+        "uncertainty_handling": 98.0,
+        "overall": 91.05
+      }
+    }
+  ],
+  "rows_count": 1,
+  "summary": {
+    "overall": 91.05,
+    "claim_support_ratio": 72.73,
+    "unsupported_claim_count": 6.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 92.0
+  },
+  "baseline_summary": null,
+  "delta_summary": null,
+  "compare_markdown": "",
+  "suite": null,
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

@@ -1,7 +1,65 @@
 {
-  "revision": "2026-02-25T01:10:07.120855",
-  "generated_at": "2026-02-25T01:10:07.120855",
+  "revision": "2026-02-25T06:39:15.530260",
+  "generated_at": "2026-02-25T06:39:15.530260",
   "items": [
+    {
+      "id": "20260221_QC_report",
+      "run": "20260221_QC_report",
+      "report_stem": "report_full_iter005_gpt5nano_general",
+      "title": "Quantum Resource Utilization in Real-World Design and Optimization",
+      "author": "Federlicht Writer",
+      "summary": "Quantum Resource Utilization in Real-World Design and Optimization Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 06:39 Lede Quantum resources are increasingly pressed into service for real-world desi…",
+      "lang": "English",
+      "template": "quanta_magazine",
+      "format": "html",
+      "model": "gpt-5-nano",
+      "tags": [
+        "quantum",
+        "real-world",
+        "and",
+        "resource",
+        "utilization"
+      ],
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T06:39:15.198913",
+      "source_mtime": 1771969155,
+      "source_size": 55355,
+      "paths": {
+        "report": "../runs/20260221_QC_report/report_full_iter005_gpt5nano_general.html",
+        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter005_gpt5nano_general.md",
+        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
+        "run": "../runs/20260221_QC_report"
+      }
+    },
+    {
+      "id": "openclaw",
+      "run": "openclaw",
+      "report_stem": "report_full_iter004_gpt5nano_leader",
+      "title": "Decision Framework for Responsible OpenClaw-like AI Agent Deployment",
+      "author": "Federlicht Writer",
+      "summary": "Decision Framework for Responsible OpenClaw-like AI Agent Deployment Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 06:23 Lede OpenClaw frames a provocative vision: an AI agent that operates through e…",
+      "lang": "English",
+      "template": "quanta_magazine",
+      "format": "html",
+      "model": "gpt-5-nano",
+      "tags": [
+        "for",
+        "agent",
+        "and",
+        "decision",
+        "framework"
+      ],
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T06:23:10.515455",
+      "source_mtime": 1771968190,
+      "source_size": 46005,
+      "paths": {
+        "report": "../runs/openclaw/report_full_iter004_gpt5nano_leader.html",
+        "overview": "../runs/openclaw/report/run_overview_report_full_iter004_gpt5nano_leader.md",
+        "workflow": "../runs/openclaw/report_notes/report_workflow.md",
+        "run": "../runs/openclaw"
+      }
+    },
     {
       "id": "physical_ai_insight",
       "run": "physical_ai_insight",
@@ -29,64 +87,6 @@
         "overview": "../runs/physical_ai_insight/report/run_overview_report_full_iter003_codex_classroom.md",
         "workflow": "../runs/physical_ai_insight/report_notes/report_workflow.md",
         "run": "../runs/physical_ai_insight"
-      }
-    },
-    {
-      "id": "20260221_QC_report",
-      "run": "20260221_QC_report",
-      "report_stem": "report_full_iter002_codex_general",
-      "title": "D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025",
-      "author": "Federlicht Writer",
-      "summary": "D-Wave Hybrid Gains and Classical MILP Dominance in Quantum 2025 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 00:57 Lede In industrial quantum computing, 2025 was the year the conversation became le…",
-      "lang": "English",
-      "template": "quanta_magazine",
-      "format": "html",
-      "model": "gpt-5.3-codex",
-      "tags": [
-        "and",
-        "quantum",
-        "d-wave",
-        "hybrid",
-        "gains"
-      ],
-      "date": "2026-02-25",
-      "timestamp": "2026-02-25T00:58:02.816434",
-      "source_mtime": 1771948683,
-      "source_size": 44025,
-      "paths": {
-        "report": "../runs/20260221_QC_report/report_full_iter002_codex_general.html",
-        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter002_codex_general.md",
-        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
-        "run": "../runs/20260221_QC_report"
-      }
-    },
-    {
-      "id": "openclaw",
-      "run": "openclaw",
-      "report_stem": "report_full_iter001_codex_leader",
-      "title": "OpenClaw and the Rise of Action-Oriented AI Agents",
-      "author": "Federlicht Writer",
-      "summary": "OpenClaw and the Rise of Action-Oriented AI Agents Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 00:41 Lede OpenClaw is part of a visible shift in AI software: from systems that answer questions to s…",
-      "lang": "English",
-      "template": "quanta_magazine",
-      "format": "html",
-      "model": "gpt-5.3-codex",
-      "tags": [
-        "and",
-        "openclaw",
-        "the",
-        "rise",
-        "action-oriented"
-      ],
-      "date": "2026-02-25",
-      "timestamp": "2026-02-25T00:41:45.646263",
-      "source_mtime": 1771947705,
-      "source_size": 44766,
-      "paths": {
-        "report": "../runs/openclaw/report_full_iter001_codex_leader.html",
-        "overview": "../runs/openclaw/report/run_overview_report_full_iter001_codex_leader.md",
-        "workflow": "../runs/openclaw/report_notes/report_workflow.md",
-        "run": "../runs/openclaw"
       }
     },
     {

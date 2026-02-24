@@ -3508,7 +3508,9 @@ class ReportOrchestrator:
 
         def build_rewrite_stats(report_text: str, target_sections: int) -> dict[str, object]:
             report_word_count = len(re.findall(r"\S+", str(report_text or "")))
-            total_sections = len(list(section_ast_payload.get("sections") or []))
+            total_sections = 0
+            if isinstance(section_ast_payload, dict):
+                total_sections = len(list(section_ast_payload.get("sections") or []))
             avg_words_per_section = (
                 (report_word_count / total_sections) if total_sections > 0 else float(report_word_count)
             )

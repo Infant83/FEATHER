@@ -1,0 +1,6 @@
+- [ ] Define the briefing thesis and core teaching objective — lock the single central message on physical AI trends and practical adoption for graduate-level learners.  
+- [ ] Read the highest-relevance sources first — use `source_triage.md` plus top-ranked papers (Gemini Robotics, GR00T N1, BitVLA, parallel decoding, real-time execution).  
+- [ ] Extract evidence in a compact matrix — record each source’s key claim, strongest result, adoption implication, and citation anchor.  
+- [ ] Synthesize the trend storyline — connect 2024 open VLA baselines (Octo/OpenVLA/π0/CogACT) to 2025 shifts in generality, efficiency, and real-time control.  
+- [ ] Build the briefing backbone (message-grounding-risk) — for each key point, pair supporting evidence with practical risks (latency, compute cost, robustness, transfer gaps).  
+- [ ] Map insights into the Quanta-style structure — draft short lede, central question, mechanism explanation, why-it-matters, and 3-5 explicit open questions.

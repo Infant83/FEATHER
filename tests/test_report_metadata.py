@@ -28,3 +28,17 @@ def test_format_metadata_block_includes_artwork_tool_log_in_markdown() -> None:
     rendered = format_metadata_block(meta, "md")
     assert "Artwork tool log: report_notes/artwork_tool_calls.md" in rendered
 
+
+def test_format_metadata_block_includes_feather_instruction_link_in_html() -> None:
+    meta = _base_meta()
+    meta["feather_instruction_path"] = "./instruction/demo.txt"
+    rendered = format_metadata_block(meta, "html")
+    assert "Feather instruction" in rendered
+    assert "./instruction/demo.txt" in rendered
+
+
+def test_format_metadata_block_includes_feather_instruction_in_markdown() -> None:
+    meta = _base_meta()
+    meta["feather_instruction_path"] = "./instruction/demo.txt"
+    rendered = format_metadata_block(meta, "md")
+    assert "Feather instruction: ./instruction/demo.txt" in rendered
