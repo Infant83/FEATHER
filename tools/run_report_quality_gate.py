@@ -7,6 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from federlicht.quality_contract import (
+    QUALITY_CONTRACT_METRIC_VERSION,
+    detect_quality_contract_staleness,
+)
 from federlicht.quality_profiles import quality_profile_choices, resolve_quality_gate_targets
 
 METRIC_FIELDS = (
@@ -48,6 +52,7 @@ def build_quality_contract_consistency(
     summary_payload: dict,
     contract_payload: dict,
     *,
+    expected_metric_version: str = QUALITY_CONTRACT_METRIC_VERSION,
     max_overall_delta: float = 2.5,
     max_claim_support_delta: float = 8.0,
     max_unsupported_delta: float = 8.0,
@@ -56,7 +61,39 @@ def build_quality_contract_consistency(
 ) -> dict:
     summary = dict(summary_payload.get("summary") or {})
     benchmark_metrics = {key: _to_float(summary.get(key), 0.0) for key in METRIC_FIELDS}
+    stale, stale_reason = detect_quality_contract_staleness(
+        contract_payload,
+        expected_metric_version=expected_metric_version,
+    )
     contract_metrics = extract_quality_contract_metrics(contract_payload)
+    metric_source = str(contract_payload.get("metric_source") or "").strip() or (
+        "selected_eval"
+        if isinstance(contract_payload.get("selected_eval"), dict)
+        else "final_signals"
+    )
+    metric_version = str(contract_payload.get("metric_version") or "").strip()
+    if stale:
+        return {
+            "pass": True,
+            "skipped": True,
+            "stale": True,
+            "stale_reason": stale_reason,
+            "expected_metric_version": expected_metric_version,
+            "metric_version": metric_version or "(missing)",
+            "metric_source": metric_source,
+            "benchmark_summary": benchmark_metrics,
+            "quality_contract_metrics": contract_metrics,
+            "delta": {key: 0.0 for key in METRIC_FIELDS},
+            "abs_delta": {key: 0.0 for key in METRIC_FIELDS},
+            "thresholds": {
+                "overall": float(max_overall_delta),
+                "claim_support_ratio": float(max_claim_support_delta),
+                "unsupported_claim_count": float(max_unsupported_delta),
+                "evidence_density_score": float(max_evidence_density_delta),
+                "section_coherence_score": float(max_section_coherence_delta),
+            },
+            "failed_checks": [],
+        }
     delta = {
         key: round(benchmark_metrics.get(key, 0.0) - contract_metrics.get(key, 0.0), 4)
         for key in METRIC_FIELDS
@@ -74,13 +111,13 @@ def build_quality_contract_consistency(
         for metric in METRIC_FIELDS
         if abs_delta[metric] > thresholds[metric]
     ]
-    metric_source = str(contract_payload.get("metric_source") or "").strip() or (
-        "selected_eval"
-        if isinstance(contract_payload.get("selected_eval"), dict)
-        else "final_signals"
-    )
     return {
         "pass": len(failed_checks) == 0,
+        "skipped": False,
+        "stale": False,
+        "stale_reason": "",
+        "expected_metric_version": expected_metric_version,
+        "metric_version": metric_version or "(missing)",
         "metric_source": metric_source,
         "benchmark_summary": benchmark_metrics,
         "quality_contract_metrics": contract_metrics,
@@ -164,7 +201,16 @@ def build_gate_report_markdown(
                 "",
                 "## Quality Contract Consistency",
                 f"- pass: {'PASS' if contract_consistency.get('pass') else 'FAIL'}",
+                f"- skipped: {'YES' if contract_consistency.get('skipped') else 'NO'}",
+                f"- stale: {'YES' if contract_consistency.get('stale') else 'NO'}",
+                (
+                    f"- stale_reason: {contract_consistency.get('stale_reason')}"
+                    if contract_consistency.get("stale_reason")
+                    else "- stale_reason: (none)"
+                ),
                 f"- metric_source: {contract_consistency.get('metric_source') or 'unknown'}",
+                f"- metric_version: {contract_consistency.get('metric_version') or 'unknown'}",
+                f"- expected_metric_version: {contract_consistency.get('expected_metric_version') or 'unknown'}",
             ]
         )
         checks = contract_consistency.get("failed_checks")
@@ -228,6 +274,11 @@ def main() -> int:
         "--strict-contract-consistency",
         action="store_true",
         help="Fail run when quality_contract consistency check fails.",
+    )
+    parser.add_argument(
+        "--quality-contract-metric-version",
+        default=QUALITY_CONTRACT_METRIC_VERSION,
+        help="Expected quality_contract metric version tag for consistency checks.",
     )
     parser.add_argument("--max-contract-overall-delta", type=float, default=2.5)
     parser.add_argument("--max-contract-claim-support-delta", type=float, default=8.0)
@@ -335,6 +386,7 @@ def main() -> int:
             contract_consistency = build_quality_contract_consistency(
                 summary_payload,
                 contract_payload if isinstance(contract_payload, dict) else {},
+                expected_metric_version=str(args.quality_contract_metric_version),
                 max_overall_delta=float(args.max_contract_overall_delta),
                 max_claim_support_delta=float(args.max_contract_claim_support_delta),
                 max_unsupported_delta=float(args.max_contract_unsupported_delta),

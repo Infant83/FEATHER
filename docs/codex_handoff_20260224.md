@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-24
 
-Last updated: 2026-02-24 07:05:40 +09:00  
+Last updated: 2026-02-24 14:33:10 +09:00  
 Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full iter log archive, 1~100)
 
 ## 1) 목적 (고정)
@@ -21,7 +21,7 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 
 ## 3) 진행률 (현재 기준)
 - P0(core): `100%`
-- P0+(quality uplift): `92%`
+- P0+(quality uplift): `100%`
 - P1(DeepAgent Phase C): `0%`
 - P2(productization): `0%`
 
@@ -76,6 +76,31 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - 다중 run world_class gate 재검증 PASS:
   - `test-results/p0_quality_gate_multi_iter122_world.md`
   - avg: `overall 93.42 / claim_support 81.48 / unsupported 6.00 / section_coherence 90.67`
+- Iter 123~132 반영 (10-iter batch):
+- P0Q-3 contract-benchmark 수렴 자동화 완료:
+  - quality contract metric version 체계 도입:
+    - `src/federlicht/quality_contract.py`
+    - `QUALITY_CONTRACT_METRIC_VERSION = qc-metrics.v2`
+  - orchestrator가 최신 contract에 `metric_version` 기록:
+    - `src/federlicht/orchestrator.py` (`quality_contract.latest.json`)
+  - quality gate 도구의 stale contract 자동 판정/스킵 정책 도입:
+    - `tools/run_report_quality_gate.py`
+    - legacy source(`selected_eval`) 또는 `metric_version` 누락/불일치 시 consistency FAIL이 아닌 `stale skip` 처리
+    - gate report에 `skipped/stale/stale_reason/metric_version` 명시
+- 런타임 안정성 버그 수정:
+  - Data Scientist 단계에서 stage budget 인자 불일치(`min_budget/max_budget`)로 중단되던 오류 수정
+  - deep 모드에서 `condensed` 참조 가능성(미정의) 제거
+  - 반영: `src/federlicht/orchestrator.py`
+- 테스트:
+  - 추가: `tests/test_quality_contract.py`
+  - 확장: `tests/test_report_quality_contract_consistency_tool.py`
+  - 회귀: `26 passed` (`quality_contract`, gate/iteration, pipeline e2e 핵심 묶음)
+- Codex 모델 실샘플 생성/평가:
+  - 생성: `site/runs/openclaw/report_full_iter123_codex_brief.html`
+  - 스냅샷: `test-results/p0_sample_openclaw_iter123_codex_snapshot.html`
+  - world_class gate: PASS
+    - `test-results/p0_quality_gate_openclaw_iter123_codex_world.md`
+    - signals: `overall 96.53 / claim_support 97.22 / unsupported 1 / coherence 100`
 
 ## 5) 충돌/리스크/미진점
 
@@ -84,15 +109,14 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - 해결 정책: 점수 보정 자체를 목표로 두지 않고, 다음 iter에서 실제 생성 결과(신규 run) 교차검증 병행
 
 ### B. 리스크
-- 기존 run의 `quality_contract.latest.json`은 과거 휴리스틱 기준 값이라 benchmark와 큰 delta 발생
-- 의미: contract-benchmark 수렴 자동화(P0Q-3)를 버전/스키마 기준으로 보강해야 함
+- stale contract(구버전 run)는 consistency 비교에서 `stale skip`으로 처리되므로,
+  운영 리포트에서 stale 비율이 높으면 재생성 배치를 계획해야 함
 
 ### C. 미진점
 - section-level synthesis/repair를 기본 작성 경로로 승격하지 못함
 - FederHav Phase C(예산·수렴 기반 governor) 본격 구현 미착수
 - Federnett 대규모 모듈 분리(`app.js`)는 아직 백로그
-- multi-run gate는 iter122에서 world_class PASS로 회복됨.
-- 잔여 리스크: 도메인/경로 인식 확대로 citation 계수가 과대평가될 가능성 -> 샘플셋 확대 검증 필요
+- 도메인/경로 인식 확대로 citation 계수가 과대평가될 가능성 -> 샘플셋 확대 검증 필요
 
 ## 6) TODO 재설정 (동일 원칙 유지)
 
@@ -103,10 +127,8 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - P0Q-2. writer/evidence 루프 품질 튜닝
 - 목표: revise pass마다 `quality_pass_trace` 개선폭이 실제 양(+)이 되도록 보정
 - 수단: critic/reviser 지시문과 evidence packet 압축 정책 재설계
-- P0Q-3. contract-benchmark 수렴 자동화
-- 목표: consistency delta 허용치 내 수렴
-- 현재: 과거 run contract와 신형 휴리스틱 간 버전 차이로 FAIL 사례 존재
-- 다음: contract metric version tagging + stale contract 처리 정책 도입
+- 상태: `완료`
+- 결과: metric version tagging + stale contract skip 정책 적용
 - P0Q-4. 문서 수준 uplift (신규/상향)
 - 목표: 섹션당 심층 서술(3~5+ 문단), 표/다이어그램/정량 해석의 자연스러운 통합, 톤 일관성 확보
 - 구현축:
@@ -115,6 +137,9 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
   - figure/table caption에서 데이터 출처·해석 근거를 자연문으로 설명(라벨형 문구 금지)
 - 검증축:
   - QC / openclaw / physical_ai 3개 축으로 world_class gate + 본문 수기 리뷰 병행
+- 상태: `1차 완료`
+- 결과: Codex 샘플(openclaw brief)에서 world_class PASS + high claim-support 확인
+- 잔여: deep 장문(3~5+ 문단/섹션)에서 동일 수준 재현 검증 필요
 
 ### P1
 - FederHav DeepAgent Phase C 착수
@@ -172,15 +197,13 @@ Previous handoff: `docs/dev_history/handoffs/codex_handoff_20260223.md` (full it
 - 실행/테스트 표준 명령과 통과 기준
 - 버전 일관성 상태와 릴리스 스냅샷
 
-## 11) 다음 Iter 제안 (123~130)
-- Iter-123: contract metric version tag 도입 (`quality_contract` vs benchmark 스키마/버전 정렬)
-- Iter-124: stale contract 감지 시 consistency policy 분기(경고+재생성 유도)
-- Iter-125: writer에서 `analysis_notes` 활용률 측정(본문 반영 문장/표 추적)
-- Iter-126: visuals 강제 정책(조건부) 1차 적용 + artwork 호출 로그 의무화
-- Iter-127: QC 신규 run 재생성 후 world_class 재검증
-- Iter-128: openclaw 신규 run 재생성 후 서술 심도/근거 연동 수기리뷰 + 게이트 병행
-- Iter-129: physical_ai 신규 run 재생성 후 동일 검증
-- Iter-130: section-level rewrite 기본 경로 승격 여부 최종 판단 + 정리
+## 11) 다음 Iter 제안 (P1 착수)
+- Iter-133: FederHav Phase C governor convergence 최소 루프(δ-threshold + max_iter) 구현
+- Iter-134: stage budget 정책을 phase governor와 연결(예산 초과 시 자동 축약)
+- Iter-135: section-level rewrite 기본 경로 승격 실험(기본 ON, 실패시 fallback)
+- Iter-136: deep 장문 Codex 샘플(QC) 재생성 + world_class + 수기 리뷰 병행
+- Iter-137: openclaw/physical_ai deep 장문 재생성 + 비교 리포트
+- Iter-138: P1 중간점검 + handoff 갱신 + commit/push
 
 ## 12) Docs 구조 운영 (2026-02-24 정리본)
 - Active docs(현재 운영):

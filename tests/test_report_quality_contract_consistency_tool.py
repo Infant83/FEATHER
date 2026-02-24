@@ -27,6 +27,15 @@ def test_build_quality_contract_consistency_pass() -> None:
         }
     }
     contract_payload = {
+        "metric_version": runner.QUALITY_CONTRACT_METRIC_VERSION,
+        "metric_source": "final_signals",
+        "final_signals": {
+            "overall": 73.0,
+            "claim_support_ratio": 55.0,
+            "unsupported_claim_count": 10.0,
+            "evidence_density_score": 64.0,
+            "section_coherence_score": 66.0,
+        },
         "selected_eval": {
             "overall": 73.0,
             "claim_support_ratio": 55.0,
@@ -45,8 +54,10 @@ def test_build_quality_contract_consistency_pass() -> None:
         max_section_coherence_delta=8.0,
     )
     assert result["pass"] is True
+    assert result["skipped"] is False
+    assert result["stale"] is False
     assert result["failed_checks"] == []
-    assert result["metric_source"] == "selected_eval"
+    assert result["metric_source"] == "final_signals"
 
 
 def test_build_quality_contract_consistency_fail() -> None:
@@ -60,6 +71,8 @@ def test_build_quality_contract_consistency_fail() -> None:
         }
     }
     contract_payload = {
+        "metric_version": runner.QUALITY_CONTRACT_METRIC_VERSION,
+        "metric_source": "final_signals",
         "final_signals": {
             "overall": 72.0,
             "claim_support_ratio": 38.0,
@@ -78,8 +91,38 @@ def test_build_quality_contract_consistency_fail() -> None:
         max_section_coherence_delta=8.0,
     )
     assert result["pass"] is False
+    assert result["skipped"] is False
+    assert result["stale"] is False
     assert result["metric_source"] == "final_signals"
     assert len(result["failed_checks"]) >= 3
+
+
+def test_build_quality_contract_consistency_skips_stale_contract() -> None:
+    summary_payload = {
+        "summary": {
+            "overall": 82.0,
+            "claim_support_ratio": 62.0,
+            "unsupported_claim_count": 11.0,
+            "evidence_density_score": 68.0,
+            "section_coherence_score": 73.0,
+        }
+    }
+    contract_payload = {
+        "metric_source": "selected_eval",
+        "selected_eval": {
+            "overall": 70.0,
+            "claim_support_ratio": 30.0,
+            "unsupported_claim_count": 30.0,
+            "evidence_density_score": 40.0,
+            "section_coherence_score": 45.0,
+        },
+    }
+    result = runner.build_quality_contract_consistency(summary_payload, contract_payload)
+    assert result["pass"] is True
+    assert result["skipped"] is True
+    assert result["stale"] is True
+    assert "legacy_metric_source" in str(result["stale_reason"])
+    assert result["failed_checks"] == []
 
 
 def test_build_gate_report_markdown_includes_contract_consistency() -> None:
@@ -95,6 +138,11 @@ def test_build_gate_report_markdown_includes_contract_consistency() -> None:
     }
     consistency = {
         "pass": True,
+        "skipped": False,
+        "stale": False,
+        "stale_reason": "",
+        "metric_version": runner.QUALITY_CONTRACT_METRIC_VERSION,
+        "expected_metric_version": runner.QUALITY_CONTRACT_METRIC_VERSION,
         "metric_source": "selected_eval",
         "benchmark_summary": summary_payload["summary"],
         "quality_contract_metrics": {
@@ -136,6 +184,7 @@ def test_build_gate_report_markdown_includes_contract_consistency() -> None:
     assert "## Quality Contract Consistency" in text
     assert "Metric Delta (benchmark - quality_contract)" in text
     assert "| overall |" in text
+    assert "metric_version" in text
 
 
 def test_extract_quality_contract_metrics_respects_metric_source_final_signals() -> None:

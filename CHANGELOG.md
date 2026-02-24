@@ -1,6 +1,28 @@
 # Changelog
 
 ## Unreleased (2026-02-24)
+- P0+ completion batch (iter 123~132):
+  - quality-contract metric versioning and stale handling:
+    - add `src/federlicht/quality_contract.py` with
+      `QUALITY_CONTRACT_METRIC_VERSION=qc-metrics.v2` and stale detector.
+    - write `metric_version` to `quality_contract.latest.json` in orchestrator.
+    - upgrade `tools/run_report_quality_gate.py` consistency logic:
+      - detect stale legacy contracts (`selected_eval` source or missing/mismatched metric_version),
+      - mark as `skipped/stale` with reason instead of false consistency failure,
+      - include `skipped/stale/stale_reason/metric_version` in markdown reports.
+  - runtime stability fix for Data Scientist stage:
+    - fix stage budget parameter mismatch (`min_budget/max_budget` -> `minimum/default_budget/hard_cap`),
+    - fix deep-mode `condensed` undefined reference path.
+  - tests:
+    - add `tests/test_quality_contract.py`.
+    - extend `tests/test_report_quality_contract_consistency_tool.py`.
+    - regression subset pass (`26 passed`).
+  - codex sample run:
+    - generated `site/runs/openclaw/report_full_iter123_codex_brief.html`.
+    - exported artifacts:
+      - `test-results/p0_sample_openclaw_iter123_codex_snapshot.html`
+      - `test-results/p0_quality_gate_openclaw_iter123_codex_world.md`
+    - world-class gate PASS (`overall=96.53`, `claim_support=97.22`, `unsupported=1`, `coherence=100`).
 - P0+ quality calibration batch (iter 122):
   - generic citation recognition uplift in quality heuristics (`src/federlicht/report.py`):
     - add domain-label source detection (`openclaw.ai` style, without protocol),

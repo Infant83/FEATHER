@@ -19,6 +19,7 @@ from . import quality_iteration as feder_quality_iteration
 from . import prompts, workflow_stages
 from . import quality_profiles as feder_quality_profiles
 from . import section_ast as feder_section_ast
+from .quality_contract import QUALITY_CONTRACT_METRIC_VERSION
 from .agent_runtime import AgentRuntime
 from .agents import AgentRunner
 from .verification_tools import parse_verification_requests
@@ -3361,6 +3362,7 @@ class ReportOrchestrator:
                 else:
                     gap_text = f"Gaps Summary\n- {index_only_warning}"
                 (notes_dir / "gap_finder.md").write_text(gap_text, encoding="utf-8")
+            condensed = ""
             if not is_deep:
                 condensed = "\n".join(
                     section for section in [claim_packet_text, gap_text, claim_map_text] if section
@@ -3428,14 +3430,16 @@ class ReportOrchestrator:
                 ds_budget = resolve_stage_budget(
                     ds_max,
                     reserve=2200,
-                    min_budget=1800,
-                    max_budget=max(2400, pack_limit),
+                    minimum=1800,
+                    default_budget=max(2400, pack_limit),
+                    hard_cap=max(3000, pack_limit),
                     model_name=data_scientist_model,
                 )
+                fallback_evidence_text = condensed or evidence_for_writer
                 ds_input, _, _ = build_stage_payload(
                     ds_sections,
                     ds_budget,
-                    fallback_map={"evidence": condensed or evidence_for_writer} if (condensed or evidence_for_writer) else None,
+                    fallback_map={"evidence": fallback_evidence_text} if fallback_evidence_text else None,
                 )
                 try:
                     analysis_notes = invoke_agent(
@@ -3455,9 +3459,7 @@ class ReportOrchestrator:
                         reduced_input, _, _ = build_stage_payload(
                             ds_sections,
                             reduced_budget,
-                            fallback_map={"evidence": condensed or evidence_for_writer}
-                            if (condensed or evidence_for_writer)
-                            else None,
+                            fallback_map={"evidence": fallback_evidence_text} if fallback_evidence_text else None,
                         )
                         analysis_notes = invoke_agent(
                             "Data Scientist",
@@ -4677,6 +4679,7 @@ class ReportOrchestrator:
         )
         quality_contract = {
             "selected_label": selected_label,
+            "metric_version": QUALITY_CONTRACT_METRIC_VERSION,
             "quality_iterations_requested": quality_iterations,
             "quality_iterations_effective": effective_quality_iterations,
             "quality_passes_executed": quality_passes_executed,

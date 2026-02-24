@@ -1,0 +1,23 @@
+[
+  {
+    "path": "site/runs/openclaw/report_full_iter123_codex_brief.html",
+    "format": "html",
+    "overall": 96.53,
+    "claim_support_ratio": 97.22,
+    "unsupported_claim_count": 1.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 100.0,
+    "signals": {
+      "section_coverage": 100.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 100.0,
+      "claim_support_ratio": 97.22,
+      "unsupported_claim_count": 1.0,
+      "section_coherence_score": 100.0,
+      "method_transparency": 86.0,
+      "traceability": 86.0,
+      "uncertainty_handling": 100.0,
+      "overall": 96.53
+    }
+  }
+]
