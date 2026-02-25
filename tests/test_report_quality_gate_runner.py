@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -65,3 +66,53 @@ def test_build_gate_report_markdown_contains_key_sections() -> None:
     assert "## Summary" in text
     assert "## Delta (current - baseline)" in text
     assert "## Compare Table" in text
+
+
+def test_evaluate_infographic_lint_detects_missing_source(tmp_path: Path) -> None:
+    spec_path = tmp_path / "infographic_spec.json"
+    spec_path.write_text(
+        json.dumps(
+            {
+                "title": "demo",
+                "charts": [{"id": "a", "type": "bar", "labels": ["A"], "datasets": [{"label": "x", "data": [1]}]}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    lint = runner.evaluate_infographic_lint([spec_path])
+    assert lint.get("pass") is False
+    assert int(lint.get("failed_count", 0) or 0) >= 1
+    rows = lint.get("rows")
+    assert isinstance(rows, list)
+    assert rows
+    issues = rows[0].get("issues")
+    assert isinstance(issues, list)
+    assert any("source is missing" in str(item) for item in issues)
+
+
+def test_build_gate_report_markdown_includes_infographic_lint_block() -> None:
+    payload = {
+        "rows_count": 1,
+        "summary": {
+            "overall": 82.0,
+            "claim_support_ratio": 70.0,
+            "unsupported_claim_count": 5.0,
+            "evidence_density_score": 90.0,
+            "section_coherence_score": 80.0,
+        },
+    }
+    text = runner.build_gate_report_markdown(
+        payload,
+        "gate-result | PASS",
+        0,
+        infographic_lint={
+            "checked_count": 1,
+            "failed_count": 1,
+            "pass": False,
+            "rows": [{"path": "demo.json", "chart_count": 1, "issues": ["charts[1] source is missing."]}],
+        },
+    )
+    assert "## Infographic Lint" in text
+    assert "failed_specs: 1" in text
+    assert "demo.json" in text

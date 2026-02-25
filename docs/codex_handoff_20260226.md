@@ -1,0 +1,588 @@
+# Codex Unified Handoff - 2026-02-26
+
+Last updated: 2026-02-26 05:26:40 +09:00  
+Previous handoff (archived): `docs/codex_handoff_20260225.md`
+
+## 1) 목적 (고정)
+- 최상위 목표: `(World-Class) Professional Research Level Report Quality`
+- 확장 목표:
+  - Federlicht 보고서에 **데이터 기반 인포그래픽/아트웍**을 섹션 맥락에 맞게 삽입
+  - 단순 다이어그램(Mermaid)뿐 아니라 Chart.js/Plotly 기반 시각 근거도 일관 파이프라인으로 통합
+- 원칙:
+  - 에이전트 협업 구조(Scout/Plan/Evidence/Writer/Quality/Artwork) 중심
+  - Claim-Evidence-Source 추적성 유지
+  - 결과물은 재현 가능(입력 데이터/프롬프트/산출물 추적 가능)해야 함
+
+## 2) Iter 운영 기준 (20260226 리셋)
+- Iter count는 오늘 기준 `0`부터 재시작.
+- 기록 단위:
+  - 5 iter마다 handoff 진행률/변경점/리스크 업데이트
+  - 20 iter마다 샘플 보고서 생성 + world-class gate + 인포그래픽 품질 점검(수기)
+- 배치 종료 시점에만 commit/push (사용자 요청 예외)
+
+## 3) 운영 정책 (신규/강화)
+- 보고서 섹션 수정 우선순위:
+  1. `run_capability:rewrite_section` (섹션 단위)
+  2. `run_capability:edit_text_file` (정밀 문자열/제목/저자 수정)
+  3. 필요 시 Federlicht 재실행
+- 인포그래픽 정책:
+  - 차트/그래프는 출처 또는 시뮬레이션 여부를 명시
+  - 시뮬레이션 수치 사용 시 `Simulated/Illustrative` 라벨 강제
+  - 섹션 주장과 충돌하는 시각화 금지(근거 일치 검증)
+  - 생성된 시각화 입력 데이터는 `report_notes/` 하위에 저장
+- PDF 변환 정책(신규):
+  - `완전 로컬화`는 즉시 강제하지 않음 (파일 크기/호환성 리스크)
+  - 우선순위는 `HTML -> PDF 변환 안정성`과 `엔진 폴백 유연성`
+  - print 전용 CSS 프로필(`A4/Letter/Screen`)로 출력 품질을 제어
+
+## 4) 마일스톤 상태 (M1~M6)
+
+| Milestone | 상태 | 현재 코드 반영 | 잔여 갭 |
+| --- | --- | --- | --- |
+| M1 Layer Contract | 부분완료 | evidence packet/quality contract | section anchor validator 고도화 |
+| M2 Structured Synthesis(AST) | 부분완료 | section_ast 연동 일부 | section rewrite 경로 확대 |
+| M3 Validation Interface | 부분완료 | heuristic signals + gate | 계약-벤치 자동 수렴 강화 |
+| M4 FederHav Governor | 부분완료 | governor loop + trace 노출 | 정책 UI/워크스페이스 연동 강화 |
+| M5 Benchmark Harness | 부분완료 | benchmark/gate/compare 도구 | CI 게이트 통합 |
+| M6 Artwork Infographic Pipeline | 부분완료 | infographic_html + claim_packet_builder + 다중차트 + 자동삽입 + lint gate 연동 + pdf baseline 회귀 | world_class 품질 자동 수렴 |
+
+## 5) 진행률 (20260226 기준)
+- P0(world-class sustain v2): `100% (완료)`
+- P1(DeepAgent Phase C + Section Rewrite UX): `47%`
+- P2(Productization + Infographic pipeline): `89%`
+
+## 6) DONE (금일 반영)
+- FederHav capability write 경로(기존):
+  - `edit_text_file`, `rewrite_section` 및 `allowArtifactWrites` 정책 적용
+- Artwork 파이프라인 확장:
+  - `src/federlicht/artwork.py`에 `render_infographic_html(...)` 추가
+  - Chart.js/Plotly/Tailwind 기반 정적 HTML 인포그래픽 산출
+  - `report_notes/infographic_spec_<slug>.json` 자동 저장(재현성)
+  - 반환값에 `path`, `data_path`, `markdown`, `embed_html` 포함
+  - `build_infographic_spec_from_table(...)` 추가
+    - CSV/TSV/Markdown Table 입력을 `infographic_spec` JSON으로 변환
+    - series/labels 자동 파싱, source/simulated/theme/disclaimer 메타 포함
+- 인코딩 일반화(Windows cp949 대응 보강):
+  - artwork 내부 `subprocess.run(...)`에 `encoding=\"utf-8\", errors=\"replace\"` 적용
+  - Mermaid/D2/NPX probe 경로에서 로케일 의존 디코딩 리스크 완화
+- Orchestrator 연동:
+  - `artwork_infographic_html` 도구 등록 + artwork 로그 연동
+  - `artwork_infographic_spec_builder` 도구 등록 + artwork 로그 연동
+  - artwork subagent 설명을 다이어그램+인포그래픽으로 확장
+- Federnett capability pack 연동:
+  - `src/federnett/capabilities.py` runtime tool 목록/pack에
+    - `artwork.artwork_infographic_spec_builder`
+    - `artwork.artwork_infographic_html`
+    추가
+- Prompt 업데이트:
+  - `src/federlicht/prompts.py`의 writer/artwork 지침에
+    - `infographic_spec_builder -> infographic_html` 순서 가이드
+    - `Simulated/Illustrative` 라벨 정책
+    반영
+- 테스트 추가/통과:
+  - `tests/test_artwork_tools.py`
+    - table -> spec builder 변환 검증
+    - capability 문자열에 infographic 항목 포함 검증
+    - 인포그래픽 HTML + spec 파일 생성 검증
+  - `tests/test_capabilities.py`
+    - runtime capabilities/pack에 spec_builder+infographic_html 도구 노출 검증
+  - 실행 결과: `20 passed`
+- HTML/PDF 변환 안정화 1차 반영:
+  - CLI 옵션 추가:
+    - `--html-print-profile (a4|letter|screen)`
+    - `--html-pdf`, `--html-pdf-engine`
+    - `--html-pdf-wait-ms`, `--html-pdf-timeout-sec`
+  - `wrap_html(...)`에 print 전용 CSS 주입:
+    - `@media print`, `@page size`, page-break 제어, 애니메이션/오버레이 비활성화
+  - HTML PDF 컴파일러 추가:
+    - `compile_html_to_pdf(...)` with engine fallback
+    - auto 순서: `playwright -> chrome/chromium/msedge -> weasyprint -> wkhtmltopdf`
+    - 실패 원인 누적 메시지 기록
+  - pipeline/meta 연동:
+    - HTML 출력 시 profile/meta 기록(`html_print_profile`, `html_pdf_engine`)
+    - 성공/실패에 따라 `pdf_status` 업데이트
+  - federnett 커맨드 전달 확장:
+    - HTML PDF 관련 payload -> CLI args 연결
+  - 테스트 추가:
+    - `tests/test_report_html_pdf.py` (엔진 none/auto fallback/specific engine)
+    - `tests/test_federnett_commands.py` (html pdf 옵션 전달)
+    - `tests/test_render_back_link.py` (print profile css 반영)
+- HTML/PDF 변환 안정화 2차 반영 (Iter 27~46):
+  - Federnett UI 컨트롤 추가:
+    - `HTML -> PDF Export` 토글
+    - `HTML Print Profile` (A4/Letter/Screen)
+    - `HTML PDF Engine` (auto/playwright/chrome/weasyprint/wkhtmltopdf/none)
+    - `HTML PDF Wait (ms)`, `HTML PDF Timeout (sec)`
+  - output 확장자 기반 제어:
+    - output이 `.html`일 때만 HTML PDF 컨트롤 활성화
+    - `.md/.tex` 등 비-HTML 출력에서는 자동 비활성화 + 안내 메시지 노출
+  - payload/runtime 반영:
+    - `buildFederlichtPayload`에 html pdf 관련 인자 연결
+    - runtime summary chip 및 실행 로그에 print/profile/pdf/engine 노출
+  - run meta 적용:
+    - `report_meta.json`의 `html_print_profile`, `html_pdf_requested`, `html_pdf_engine`를 UI에 재주입
+  - PDF 산출물 메타 강화:
+    - `pdf_bytes`, `pdf_pages`를 meta에 기록 (성공 시)
+  - 테스트/검증:
+    - `tests/test_federnett_routes.py`에 runtime snapshot 필드 검증 추가
+    - `node --check site/federnett/app.js` 문법 검증
+    - 관련 pytest 묶음 통과 (아래 섹션 참조)
+- Infographic E2E 자동화 (Iter 47~66):
+  - claim packet 기반 스펙 생성기 추가:
+    - `src/federlicht/artwork.py`에 `build_infographic_spec_from_claim_packet(...)` 추가
+    - `claim_evidence_map.json`/`evidence_packet`의 `claim/evidence/strength`를 차트 데이터로 자동 변환
+  - 스펙 lint 추가:
+    - `lint_infographic_spec(...)` 구현
+    - `source`/`simulated` 누락, labels-datasets 길이 불일치, 빈 데이터셋 탐지
+  - 자동 삽입 경로 구현:
+    - `src/federlicht/report.py`에 `auto_insert_claim_packet_infographic(...)` 추가
+    - 섹션 힌트(`section_hint`) 기반 타겟 섹션 선택 후 `<figure class=\"report-infographic\">` 블록 자동 병합
+    - `report_notes/infographic_auto_insert.json`, `report_notes/infographic_lint_auto_claim_snapshot.txt` 기록
+  - pipeline/meta 연동:
+    - `src/federlicht/pipeline_runner_impl.py`에서 report 후처리 시 자동 삽입 실행
+    - `report_meta.json`에 `infographic_auto_*` 필드 기록
+  - runtime/capability 확장:
+    - orchestrator 도구 추가: `artwork_infographic_claim_packet_builder`
+    - capability pack 추가: `artwork.artwork_infographic_claim_packet_builder`
+    - writer/artwork prompt에 claim-packet builder 경로 반영
+  - HTML PDF 동적 wait 개선:
+    - `src/federlicht/report.py`에 `_wait_for_playwright_render_settle(...)` 추가
+    - DOM/폰트/이미지/iframe/canvas/plotly 상태 기반 안정화 대기 후 PDF 캡처
+    - `src/federlicht/artwork.py`에서 `window.__FEDERLICHT_CHARTS_READY__` 신호 제공
+  - PDF 회귀 자동 점검 도구 추가:
+    - `tools/run_html_pdf_regression.py`
+    - compile 성공/페이지 수/파일 크기/베이스라인 델타를 JSON 요약으로 기록
+  - 테스트 추가/통과:
+    - `tests/test_report_infographic_insert.py` 신규
+    - `tests/test_report_html_pdf.py`에 render-settle wait 테스트 추가
+    - `tests/test_artwork_tools.py`, `tests/test_capabilities.py` 확장
+    - 실행 결과: `35 passed`
+- Infographic/Export/QA 고도화 (Iter 67~86):
+  - claim packet 다중 차트 확장:
+    - `build_infographic_spec_from_claim_packet(...)`에 `split_by_section`, `max_charts` 옵션 추가
+    - `section_hint` 기준으로 섹션별 Evidence Profile 차트 자동 생성
+  - auto insertion 고도화:
+    - auto claim infographic 생성 시 다중 차트 모드 활성화(`split_by_section=True`)
+    - `infographic_auto_insert.json` 및 meta에 `chart_count` 기록
+  - quality gate + infographic lint 연동:
+    - `tools/run_report_quality_gate.py`에
+      - `--infographic-spec`(다중/글롭)
+      - `--infographic-lint-output`
+      - `--strict-infographic-lint`
+      추가
+    - gate markdown 리포트에 `Infographic Lint` 섹션 자동 포함
+  - PDF 회귀 baseline 비교 고도화:
+    - `tools/run_html_pdf_regression.py`에 `evaluate_pdf_regression_checks(...)` 추출
+    - baseline bytes/pages 회귀 규칙을 테스트 가능한 순수 함수로 분리
+  - 테스트 추가/통과:
+    - `tests/test_artwork_tools.py` (claim packet split_by_section 케이스)
+    - `tests/test_report_infographic_insert.py` (auto insertion chart_count 검증)
+    - `tests/test_report_quality_gate_runner.py` (infographic lint 평가/리포트 섹션)
+    - `tests/test_html_pdf_regression_tool.py` 신규
+    - 실행 결과: `31 passed`
+- Multi-section auto insertion 완성 (Iter 87~106):
+  - `src/federlicht/report.py`:
+    - claim packet spec의 chart별 `section_hint` 추출기(`_extract_infographic_chart_section_hint`) 추가
+    - 섹션별 렌더링/삽입 경로 구현:
+      - `split_by_section` 결과를 hint별로 분할 렌더
+      - 섹션 매칭 성공 시 해당 섹션 본문에 삽입
+      - 섹션 미매칭 시 `Data-Driven Infographic (...)` 섹션 append fallback
+    - auto-insert meta 확장:
+      - `sections`, `paths`, `data_paths`, `chart_count` 기록
+      - `infographic_auto_insert.json`에도 다중 경로/섹션 기록
+    - Markdown section span 파싱 버그 수정:
+      - `find_section_spans()`의 md 정규식 `^##\s+(.+)$`로 교정
+  - `src/federlicht/pipeline_runner_impl.py`:
+    - report meta에 다중 삽입 필드 노출:
+      - `infographic_auto_sections`
+      - `infographic_auto_paths`
+      - `infographic_auto_data_paths`
+  - 테스트 보강:
+    - `tests/test_report_infographic_insert.py`를 다중 섹션/다중 아티팩트 검증으로 확장
+    - 실행 결과: `18 passed` (`test_report_infographic_insert`, `test_artwork_tools`, `test_report_quality_gate_runner`, `test_html_pdf_regression_tool`)
+- Section-aware chart type 자동선택 (Iter 107~111):
+  - `src/federlicht/artwork.py`:
+    - `build_infographic_spec_from_claim_packet(...)`에 `chart_type="auto"` 모드 확장
+    - `section_hint` 기반 차트 타입 자동 매핑:
+      - `scope_methodology`, `risks_gaps` -> `line`
+      - 기타 -> `bar`
+  - `src/federlicht/report.py`:
+    - auto claim insertion 경로에서 claim-packet builder 호출 시 `chart_type="auto"` 적용
+  - 테스트 보강:
+    - `tests/test_artwork_tools.py`: section별 auto chart type 검증 신규
+    - `tests/test_report_infographic_insert.py`: auto 삽입 산출 spec에서 `line` 타입 포함 검증
+    - 실행 결과: `14 passed` + `5 passed`
+
+## 7) 20-Iter 배치 검증 (필수 규칙 수행)
+- 샘플 보고서(동일 배치 신규 생성):
+  - `temp/20260226/iter20_infographic_sample/report_full.html`
+- 인포그래픽 산출물:
+  - `temp/20260226/iter20_infographic_sample/report_assets/artwork/iter20_infographic.html`
+  - `temp/20260226/iter20_infographic_sample/report_notes/infographic_spec_iter20_infographic.json`
+- world_class gate 실행:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter20_infographic_gate.summary.json --report-md test-results/iter20_infographic_gate.md --quality-profile world_class`
+  - 결과: `FAIL`
+  - 주요 수치: `overall=79.31`, `claim_support_ratio=75.00`, `unsupported=1`, `section_coherence=28.00`
+  - 실패 이유: overall/section_coherence 임계 미달
+- 수기 인포그래픽 점검:
+  - `test-results/iter20_infographic_manual_review.md`
+  - source/simulated 라벨, 재현성(spec 저장), 반응형 렌더는 PASS
+  - claim-data 정합 자동검증은 아직 PARTIAL
+
+### 40-Iter 배치 검증 (추가)
+- HTML->PDF 스모크:
+  - 입력: `temp/20260226/iter20_infographic_sample/report_full.html`
+  - 출력: `test-results/iter40_html_pdf_export_smoke.pdf`
+  - 결과: `PASS` (engine=`playwright`, bytes=`193175`)
+- world_class gate 재실행:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter40_pdf_export_gate.summary.json --report-md test-results/iter40_pdf_export_gate.md --quality-profile world_class`
+  - 결과: `FAIL`
+  - 주요 수치: `overall=79.31`, `claim_support_ratio=75.00`, `unsupported=1`, `section_coherence=28.00`
+  - 실패 이유: overall/section_coherence 임계 미달
+- 수기 PDF 점검:
+  - `test-results/iter40_pdf_export_manual_review.md`
+  - 엔진 폴백/출력 안정성은 PASS, 품질 게이트는 FAIL 유지
+
+### 60-Iter 배치 검증 (추가)
+- HTML->PDF 회귀 스냅샷 자동 점검:
+  - 명령: `python tools/run_html_pdf_regression.py --html temp/20260226/iter20_infographic_sample/report_full.html --output-pdf test-results/iter60_html_pdf_regression.pdf --summary-output test-results/iter60_html_pdf_regression.summary.json --engine auto --print-profile a4 --wait-ms 1800 --timeout-sec 120`
+  - 결과: `PASS`
+  - 주요 수치: `engine=playwright`, `pdf_bytes=193175`, `pdf_pages=2`
+- world_class gate 재실행:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter60_infographic_gate.summary.json --report-md test-results/iter60_infographic_gate.md --quality-profile world_class`
+  - 결과: `FAIL`
+  - 주요 수치: `overall=79.31`, `claim_support_ratio=75.00`, `unsupported=1`, `section_coherence=28.00`
+  - 실패 이유: overall/section_coherence 임계 미달(동일 축 유지)
+- 수기 점검:
+  - `test-results/iter60_manual_review.md`
+  - 자동 삽입/lint/동적 wait/회귀 스냅샷 경로는 PASS, 품질 게이트는 FAIL 유지
+
+### 80-Iter 배치 검증 (추가)
+- world_class gate + infographic lint:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter80_infographic_gate.summary.json --report-md test-results/iter80_infographic_gate.md --quality-profile world_class --infographic-spec temp/20260226/iter20_infographic_sample/report_notes/infographic_spec_iter20_infographic.json --infographic-lint-output test-results/iter80_infographic_lint.summary.json`
+  - 결과: `FAIL` (quality gate)
+  - 주요 수치: `overall=79.31`, `claim_support_ratio=75.00`, `unsupported=1`, `section_coherence=28.00`
+  - infographic lint: `PASS` (`checked=1`, `failed=0`, `chart_count=2`)
+- strict infographic lint 스모크:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter80_infographic_gate_smoke.summary.json --report-md test-results/iter80_infographic_gate_smoke.md --quality-profile none --infographic-spec test-results/iter80_bad_infographic_spec.json --strict-infographic-lint`
+  - 결과: `FAIL(expected)` (lint fail 경로 확인)
+- HTML->PDF baseline 회귀:
+  - 명령: `python tools/run_html_pdf_regression.py --html temp/20260226/iter20_infographic_sample/report_full.html --output-pdf test-results/iter80_html_pdf_regression.pdf --summary-output test-results/iter80_html_pdf_regression.summary.json --engine auto --print-profile a4 --wait-ms 1800 --timeout-sec 120 --baseline-summary test-results/iter60_html_pdf_regression.summary.json --max-page-delta 0 --max-bytes-regression-ratio 0.10`
+  - 결과: `PASS` (`engine=playwright`, `pdf_bytes=193175`, `pdf_pages=2`)
+- 수기 점검:
+  - `test-results/iter80_manual_review.md`
+  - lint coupling 및 baseline 회귀는 PASS, quality gate는 FAIL 유지
+
+### 100-Iter 배치 검증 (추가)
+- world_class gate + infographic lint:
+  - 명령: `python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output test-results/iter100_infographic_gate.summary.json --report-md test-results/iter100_infographic_gate.md --quality-profile world_class --infographic-spec temp/20260226/iter20_infographic_sample/report_notes/infographic_spec_iter20_infographic.json --infographic-lint-output test-results/iter100_infographic_lint.summary.json`
+  - 결과: `FAIL` (quality gate)
+  - 주요 수치: `overall=79.31`, `claim_support_ratio=75.00`, `unsupported=1`, `section_coherence=28.00`
+  - infographic lint: `PASS` (`checked=1`, `failed=0`)
+- HTML->PDF baseline 회귀:
+  - 명령: `python tools/run_html_pdf_regression.py --html temp/20260226/iter20_infographic_sample/report_full.html --output-pdf test-results/iter100_html_pdf_regression.pdf --summary-output test-results/iter100_html_pdf_regression.summary.json --engine auto --print-profile a4 --wait-ms 1800 --timeout-sec 120 --baseline-summary test-results/iter80_html_pdf_regression.summary.json --max-page-delta 0 --max-bytes-regression-ratio 0.10`
+  - 결과: `PASS` (`engine=playwright`, `pdf_bytes=193175`, `pdf_pages=2`)
+- 수기 점검:
+  - `test-results/iter100_manual_review.md`
+  - multi-section 자동삽입 코드/테스트는 PASS, quality gate FAIL 축은 동일 유지
+
+## 8) TODO (P1/P2)
+
+### P1 (Section-aware 운영 고도화)
+- `rewrite_section` 프롬프트 품질 강화:
+  - tone/style/length 파싱 정확도 개선
+  - 섹션 미존재 시 생성/삽입 정책 명시화
+- FederHav 액션 추천 정확도 개선:
+  - section edit intent 감지 강화
+  - run target 자동 추론 안정화
+- DeepAgent runtime 안정화:
+  - tool metadata 호환성(`__name__`/`__qualname__`) 회귀 방지 테스트 유지
+  - codex/openai backend별 fallback 행동 추적 로그 강화
+
+### P2 (Infographic Artwork Pipeline)
+- 자동 스펙 생성 단계 고도화(잔여):
+  - claim packet `다중 차트(section_hint)`는 반영 완료, 다음은 `혼합 라이브러리(Chart.js+Plotly)` 자동 선택
+  - section별 KPI(리스크/최신성/source_kind)까지 자동 매핑
+- 섹션 자동삽입 단계 고도화(잔여):
+  - 현재 md/html 경로를 tex/strict template 경로까지 확장
+  - 기존 figure/diagram과 충돌하지 않는 삽입 위치 최적화
+- 품질 게이트 보강(잔여):
+  - `source/simulated` lint 연동/리포트/strict fail 옵션은 반영 완료
+  - world_class 프로파일에서 lint fail을 기본 실패 조건으로 승격할지 정책 확정
+  - claim-source-link 불일치 탐지(rule 기반) 도입
+  - CDN 의존성 fallback(local-first script loader) 강화
+- PDF Export 안정화 트랙(잔여):
+  - 동적 wait 결과를 엔진별(Playwright/Chrome) 수치로 meta 기록
+  - 회귀 스냅샷 baseline 비교는 반영 완료, CI 게이트 연동만 잔여
+
+## 9) 리스크
+- 섹션 재작성 시 과도한 내용 변형 위험:
+  - 대응: section-scope guard + diff preview 우선
+- 인포그래픽 미관은 좋지만 근거 불일치 위험:
+  - 대응: source/metric linkage 체크포인트 도입
+- chart 라이브러리 의존성(CDN/런타임) 위험:
+  - 대응: local-first 로더 + offline fallback 경로
+- HTML PDF 엔진 의존성 위험(환경별 설치 편차):
+  - 대응: 다중 엔진 폴백 + 실패 원인 메시지 표준화 + timeout 조정 옵션
+
+## 10) 필수 참조 문서
+- `docs/development_workflow_guide.md`
+- `docs/codex_resume_guide.md`
+- `docs/report_quality_threshold_policy.md`
+- `docs/dev_history/README.md`
+- `docs/capability_governance_plan.md`
+
+## 11) Iter 로그 (당일)
+- Iter 1
+  - `rewrite_section` capability 구현/연동/테스트 추가
+  - capability write 정책(`allowArtifactWrites`) 일관 적용
+- Iter 2
+  - handoff/운영 문서 기준 재검토 및 P2 범위 확정
+- Iter 3
+  - artwork/orchestrator/runtime capability 현황 점검
+- Iter 4
+  - 인포그래픽 툴 인터페이스/출력 계약 설계
+- Iter 5
+  - `render_infographic_html` 코어 구현(초안)
+- Iter 6
+  - 차트 스펙 정규화/색상/카드/메타 라벨 로직 추가
+- Iter 7
+  - HTML 템플릿(Chart.js/Plotly/Tailwind) 렌더 경로 완성
+- Iter 8
+  - `report_notes/infographic_spec_*.json` 저장 규칙 반영
+- Iter 9
+  - `list_artwork_capabilities`에 infographic 항목 추가
+- Iter 10
+  - artwork subprocess UTF-8 decode 강제(cp949 완화)
+- Iter 11
+  - orchestrator `artwork_infographic_html` 도구 래퍼 추가
+- Iter 12
+  - artwork 도구 로그(`artwork_tool_calls`) 연동
+- Iter 13
+  - runtime capabilities/pack에 infographic 도구 노출
+- Iter 14
+  - writer/artwork prompt 지침에 infographic 선택 규칙 반영
+- Iter 15
+  - writer visual-evidence 통합 지침 확장
+- Iter 16
+  - `tests/test_artwork_tools.py` 신규 테스트 추가
+- Iter 17
+  - `tests/test_capabilities.py` 신규 테스트 추가
+- Iter 18
+  - 테스트 실행/통과(19 passed)
+- Iter 19
+  - 상대경로 run_dir 예외 케이스 보강(absolute relative_to 처리)
+- Iter 20
+  - 샘플 인포그래픽 보고서 생성(동일 배치 신규 산출물)
+- Iter 21
+  - world_class gate + 수기 인포그래픽 점검 수행 및 결과 기록
+- Iter 22
+  - `build_infographic_spec_from_table(...)` 구현(CSV/TSV/Markdown table 파싱)
+  - source/simulated/theme/disclaimer 메타를 spec에 반영
+- Iter 23
+  - orchestrator에 `artwork_infographic_spec_builder` 도구 래퍼/로그 연동
+  - runtime capabilities/pack 및 artwork prompt에 spec_builder 경로 반영
+- Iter 24
+  - 테스트 추가 및 검증:
+    - `tests/test_artwork_tools.py`, `tests/test_capabilities.py`
+    - 실행 결과 `20 passed`
+  - builder 함수 스모크 실행(table -> spec JSON) 확인
+- Iter 25
+  - HTML print profile/A4-Letter 정책 반영 (`wrap_html` print CSS)
+  - HTML->PDF 엔진 폴백 컴파일러 구현 (`compile_html_to_pdf`)
+- Iter 26
+  - federlicht/federnett 옵션 연동 + 메타 기록 확장
+  - 테스트 추가:
+    - `tests/test_report_html_pdf.py`
+    - `tests/test_federnett_commands.py`
+    - `tests/test_render_back_link.py`
+- Iter 27
+  - Federnett UI에 HTML PDF 토글/엔진/프로필/wait/timeout 필드 추가
+- Iter 28
+  - output 확장자(.html 여부) 판단 유틸 및 컨트롤 활성/비활성 로직 추가
+- Iter 29
+  - `buildFederlichtPayload`에 html_pdf 관련 payload 직렬화 연동
+- Iter 30
+  - 비-HTML 출력 시 html_pdf payload 자동 제거/안전 가드 적용
+- Iter 31
+  - runtime summary chip에 print/html_pdf/engine 상태 표시
+- Iter 32
+  - federlicht 시작 로그(runtime/resolved)에 html pdf 설정 라인 추가
+- Iter 33
+  - run meta 적용 경로(`applyRunSettings`)에 html pdf 관련 필드 복원 추가
+- Iter 34
+  - run/output 변경 시 html pdf 컨트롤 재동기화 이벤트 배선
+- Iter 35
+  - bootstrap 초기화 시 html pdf 컨트롤 핸들러 등록
+- Iter 36
+  - PDF 성공 시 meta에 `pdf_pages`/`pdf_bytes` 기록 로직 추가
+- Iter 37
+  - `tests/test_report_html_pdf.py`에 PDF artifact inspection 테스트 추가
+- Iter 38
+  - `tests/test_federnett_routes.py`에 runtime snapshot html pdf 필드 테스트 추가
+- Iter 39
+  - `node --check site/federnett/app.js` 문법 검증
+- Iter 40
+  - 샘플 HTML->PDF 스모크 실행 및 산출물 저장 (`iter40_html_pdf_export_smoke.pdf`)
+- Iter 41
+  - world_class gate 재실행 (`iter40_pdf_export_gate.*`) 및 실패축 재확인
+- Iter 42
+  - 수기 PDF export 점검 문서 작성 (`iter40_pdf_export_manual_review.md`)
+- Iter 43
+  - 관련 pytest 묶음 실행(34 passed)
+- Iter 44
+  - routes 신규 테스트 단독 실행(1 passed, deselected 47)
+- Iter 45
+  - 파이프라인 회귀 테스트 실행(기존 6 tests + 신규 묶음)
+- Iter 46
+  - handoff 업데이트 및 다음 배치 목표 재정렬
+- Iter 47
+  - claim packet 기반 infographic spec 자동생성 경로 설계(입력/출력 계약 정의)
+- Iter 48
+  - `artwork.build_infographic_spec_from_claim_packet(...)` 구현
+- Iter 49
+  - `artwork.lint_infographic_spec(...)` 구현(source/simulated/shape 검사)
+- Iter 50
+  - `list_artwork_capabilities`에 claim_packet builder 항목 추가
+- Iter 51
+  - orchestrator 도구 래퍼 `artwork_infographic_claim_packet_builder` 추가
+- Iter 52
+  - federnett runtime capability/pack에 claim_packet builder 노출
+- Iter 53
+  - writer/artwork prompt에 claim_packet builder 선택 가이드 반영
+- Iter 54
+  - report 후처리 함수 `auto_insert_claim_packet_infographic(...)` 구현(초안)
+- Iter 55
+  - section_hint 기반 target section 선택 로직 구현
+- Iter 56
+  - auto insertion 산출물 기록(`infographic_auto_insert.json`) + lint report 저장
+- Iter 57
+  - pipeline 연동(`pipeline_runner_impl.py`): report 후처리 auto insertion 실행
+- Iter 58
+  - meta 확장(`infographic_auto_*`) 반영
+- Iter 59
+  - Playwright 동적 안정화 wait 함수 `_wait_for_playwright_render_settle(...)` 추가
+- Iter 60
+  - artwork HTML에 `window.__FEDERLICHT_CHARTS_READY__` 신호 추가
+  - PDF 회귀 스냅샷 도구 `tools/run_html_pdf_regression.py` 추가 + 스모크 PASS
+- Iter 61
+  - `tests/test_artwork_tools.py` 확장(claim_packet builder/lint)
+- Iter 62
+  - `tests/test_capabilities.py` 확장(claim_packet builder 노출 검증)
+- Iter 63
+  - `tests/test_report_infographic_insert.py` 신규(자동삽입/스킵 경로)
+- Iter 64
+  - `tests/test_report_html_pdf.py` 확장(render settle wait 성공/타임아웃)
+- Iter 65
+  - 대상 pytest 묶음 실행 및 통과(`35 passed`)
+- Iter 66
+  - handoff 진행률/검증 결과/다음 계획 업데이트
+- Iter 67
+  - claim packet builder 다중 차트 확장 설계(`split_by_section`, `max_charts`)
+- Iter 68
+  - `artwork.build_infographic_spec_from_claim_packet(...)`에 section_hint 그룹 차트 구현
+- Iter 69
+  - claim section hint 정규화/표시 라벨 헬퍼 추가
+- Iter 70
+  - auto insertion 경로에서 다중 차트 모드 활성화
+- Iter 71
+  - auto insertion 메타/레코드에 `chart_count` 기록 추가
+- Iter 72
+  - pipeline meta(`infographic_auto_chart_count`) 반영
+- Iter 73
+  - writer/artwork prompt에 section_hint 기반 multi-chart 지침 반영
+- Iter 74
+  - `tools/run_report_quality_gate.py`에 infographic lint 입력 확장(`--infographic-spec`)
+- Iter 75
+  - gate markdown에 `Infographic Lint` 섹션 추가
+- Iter 76
+  - strict lint 실패 옵션(`--strict-infographic-lint`) 및 lint JSON 출력 추가
+- Iter 77
+  - `tests/test_report_quality_gate_runner.py`에 lint 평가/리포트 테스트 추가
+- Iter 78
+  - `tools/run_html_pdf_regression.py` 회귀 규칙 함수 추출(`evaluate_pdf_regression_checks`)
+- Iter 79
+  - baseline bytes/pages 체크 로직 테스트 신규(`tests/test_html_pdf_regression_tool.py`)
+- Iter 80
+  - world_class gate + infographic lint 실측 실행(`iter80_infographic_gate.*`, `iter80_infographic_lint.summary.json`)
+- Iter 81
+  - strict infographic lint 스모크(의도적 bad spec) 실행(`iter80_infographic_gate_smoke.*`)
+- Iter 82
+  - PDF baseline 회귀 실측 실행(`iter80_html_pdf_regression.summary.json`)
+- Iter 83
+  - `tests/test_artwork_tools.py` split_by_section 케이스 추가
+- Iter 84
+  - `tests/test_report_infographic_insert.py` chart_count 검증 확장
+- Iter 85
+  - 대상 pytest 묶음 실행 및 통과(`31 passed`)
+- Iter 86
+  - handoff 목표 달성률/검증 산출물/다음 계획 업데이트
+- Iter 87
+  - handoff/코드 상태 재점검, 미완료 지점(`multi-section auto insertion`) 재확인
+- Iter 88
+  - chart별 `section_hint` 추출 규칙 설계(note/id 파싱)
+- Iter 89
+  - report helper 추가:
+    - `_extract_infographic_chart_section_hint`
+    - `_dedupe_preserve_order`
+    - `_build_infographic_append_heading`
+- Iter 90
+  - `auto_insert_claim_packet_infographic(...)`를 hint별 render job 생성 구조로 리팩터링
+- Iter 91
+  - 다중 렌더 산출물 파일명 규칙 추가(`auto_claim_snapshot_{idx}_{hint}.html`)
+- Iter 92
+  - 섹션 토큰 매칭 기반 다중 block 삽입(`section_block_map`) 구현
+- Iter 93
+  - 섹션 미매칭 fallback append 로직 구현(heading 자동 생성)
+- Iter 94
+  - auto insertion meta 확장(`sections/paths/data_paths/chart_count`)
+- Iter 95
+  - `infographic_auto_insert.json`에 다중 경로/섹션 및 `render_errors` 기록
+- Iter 96
+  - pipeline meta 확장:
+    - `infographic_auto_sections`
+    - `infographic_auto_paths`
+    - `infographic_auto_data_paths`
+- Iter 97
+  - Markdown section span 파싱 정규식 버그 수정(`find_section_spans`: `^##\\s+(.+)$`)
+- Iter 98
+  - `tests/test_report_infographic_insert.py`를 다중 섹션 삽입 검증으로 확장
+- Iter 99
+  - 관련 pytest 묶음 실행/통과(`18 passed`)
+- Iter 100
+  - world_class gate + infographic lint 검증 실행(`iter100_infographic_gate.*`, `iter100_infographic_lint.summary.json`)
+- Iter 101
+  - HTML->PDF baseline 회귀 검증 실행(`iter100_html_pdf_regression.*`)
+- Iter 102
+  - 수기 검증 리포트 작성(`test-results/iter100_manual_review.md`)
+- Iter 103
+  - `py_compile`로 변경 파일 문법 검증(`report.py`, `pipeline_runner_impl.py`)
+- Iter 104
+  - 확장 pytest 스모크 중 기존 경로의 unrelated 실패 1건 확인(`test_federnett_routes.py` 모델 기본값 기대치 불일치)
+- Iter 105
+  - P2 진행률/잔여 TODO 정렬(다중 삽입 완료 반영)
+- Iter 106
+  - handoff 전체 업데이트 및 다음 배치 계획 재설정
+- Iter 107
+  - `section_hint` 기반 차트 타입 자동선택 설계(`chart_type="auto"` 모드)
+- Iter 108
+  - `artwork.build_infographic_spec_from_claim_packet(...)`에 `_resolve_claim_chart_type` 적용
+- Iter 109
+  - report auto insertion 경로에서 claim-packet builder `chart_type="auto"` 활성화
+- Iter 110
+  - 테스트 확장:
+    - `tests/test_artwork_tools.py` auto chart type by section
+    - `tests/test_report_infographic_insert.py` auto insertion spec type 검증
+- Iter 111
+  - pytest/py_compile 검증 및 handoff 업데이트
+
+## 12) 다음 Iter 계획 (즉시)
+- P2-E2E 고도화:
+  - section_ast/claim_packet 연동으로 섹션별 chart 타입(막대/라인/산점) 고도화(현재 bar/line 자동선택 반영)
+  - 다중 섹션 삽입 경로를 tex/strict template로 확장하고 figure 충돌 우선순위 규칙 확정
+- P2-Export 고도화:
+  - baseline 회귀 도구를 CI 게이트 스텝으로 연결
+  - Chrome 엔진 경로에도 동적 wait/안정화 신호 반영 여부 검토
+- P2-QA:
+  - world_class 프로파일에서 infographic lint strict 모드 기본화 여부 결정
+  - section_coherence 개선을 위한 writer 후처리(문단 밀도/전개 균형) 실험 배치 수행

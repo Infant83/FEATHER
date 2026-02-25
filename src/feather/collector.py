@@ -73,6 +73,11 @@ AGENTIC_DEFAULT_MAX_ITER = 3
 AGENTIC_FALLBACK_MODEL_ENV = "FEATHER_AGENTIC_FALLBACK_MODEL"
 AGENTIC_BACKEND_ENV = "FEATHER_AGENTIC_LLM_BACKEND"
 AGENTIC_PLANNER_TOKEN_BUDGET = 900
+SUBPROCESS_TEXT_KWARGS: Dict[str, Any] = {
+    "text": True,
+    "encoding": "utf-8",
+    "errors": "replace",
+}
 
 
 def is_existing_run_folder(path: Path) -> bool:
@@ -2455,10 +2460,10 @@ def _call_agentic_planner_codex_cli(
         proc = subprocess.run(
             cmd,
             input=prompt,
-            text=True,
             capture_output=True,
             timeout=120,
             check=False,
+            **SUBPROCESS_TEXT_KWARGS,
         )
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError("codex CLI timed out") from exc

@@ -121,6 +121,45 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Skip PDF compilation for .tex output.",
     )
     ap.add_argument(
+        "--html-print-profile",
+        default="a4",
+        choices=["a4", "letter", "screen"],
+        help=(
+            "Print profile used for HTML output and PDF export. "
+            "a4/letter inject @page size rules for print media; screen disables fixed paper size."
+        ),
+    )
+    ap.add_argument(
+        "--html-pdf",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Also export PDF when output format is .html (default: disabled).",
+    )
+    ap.add_argument(
+        "--html-pdf-engine",
+        default="auto",
+        choices=["auto", "playwright", "chrome", "weasyprint", "wkhtmltopdf", "none"],
+        help=(
+            "HTML PDF engine. auto tries playwright -> chrome -> weasyprint -> wkhtmltopdf "
+            "with fallback."
+        ),
+    )
+    ap.add_argument(
+        "--html-pdf-wait-ms",
+        type=int,
+        default=1500,
+        help=(
+            "Extra wait time in milliseconds before HTML PDF capture to allow charts/scripts to settle "
+            "(default: 1500)."
+        ),
+    )
+    ap.add_argument(
+        "--html-pdf-timeout-sec",
+        type=int,
+        default=120,
+        help="Timeout in seconds for each HTML PDF engine attempt (default: 120).",
+    )
+    ap.add_argument(
         "--lang",
         default="ko",
         help=(

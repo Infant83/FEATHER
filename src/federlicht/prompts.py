@@ -580,6 +580,10 @@ def build_writer_prompt(
         "시각화가 논리를 명확히 만들 때만 다이어그램을 사용하세요. "
         "실행 중 task 도구에 artwork_agent가 보이면 다이어그램 초안 생성을 위임할 수 있습니다. "
         "단순 프로세스/타임라인은 Mermaid, 복잡한 아키텍처 토폴로지는 D2 또는 diagrams 렌더를 우선하세요. "
+        "정량 비교(추세/리스크-수익/섹터 비교)가 핵심이면 infographic_spec_builder 또는 "
+        "infographic_claim_packet_builder -> infographic_html 순서로 우선 검토하세요. "
+        "claim packet 기반이면 section_hint를 활용해 다중 차트(핵심 결과/리스크 등)로 분리하는 것을 우선 고려하세요. "
+        "시뮬레이션 수치를 쓸 때는 Simulated/Illustrative 라벨과 source 주석을 함께 남기세요. "
         "다이어그램은 장식용이 아니라 주장-근거 연결을 보조할 때만 포함하세요. "
         if artwork_enabled
         else "다이어그램은 꼭 필요한 경우에만 간결하게 사용하세요. "
@@ -607,8 +611,8 @@ def build_writer_prompt(
     if high_structure_mode and depth in {"deep", "exhaustive"} and output_format != "tex":
         if artwork_enabled:
             visual_evidence_integration_guidance = (
-                "시각 근거 통합: figure 후보가 없거나 부족하면 artwork 도구(Mermaid/D2)로 최소 1개 구조 다이어그램을 생성하고, "
-                "해당 다이어그램/표 바로 주변 문단에서 데이터 출처와 해석 근거를 자연문으로 설명하세요. "
+                "시각 근거 통합: figure 후보가 없거나 부족하면 artwork 도구(Mermaid/D2/infographic_html)로 최소 1개 시각 근거를 생성하고, "
+                "해당 다이어그램/인포그래픽/표 바로 주변 문단에서 데이터 출처와 해석 근거를 자연문으로 설명하세요. "
             )
         else:
             visual_evidence_integration_guidance = (
@@ -974,18 +978,20 @@ def build_artwork_prompt(output_format: str, language: str) -> str:
     if output_format == "tex":
         format_rule = (
             "LaTeX 리포트에서는 mermaid 코드블록 대신 간결한 SVG/PNG 삽입 경로 또는 "
-            "텍스트 기반 다이어그램 스펙을 우선 제안하세요. "
+            "텍스트 기반 다이어그램 스펙을 우선 제안하세요. infographic_html 결과는 링크 형태로만 제시하세요. "
         )
     else:
         format_rule = (
             "Markdown/HTML 리포트에서는 ```mermaid 코드블록을 우선 사용하고, "
-            "필요 시 SVG 경로를 함께 제안하세요. "
+            "필요 시 SVG 경로 또는 infographic_html artifact 경로를 함께 제안하세요. "
         )
     return (
         "You are Artwork Agent, a report-visual specialist. "
-        "Create concise, professional diagrams that clarify structure, timeline, or process. "
+        "Create concise, professional visuals that clarify structure, timeline, process, or quantitative comparisons. "
         "Choose the tool by intent: Mermaid for simple process/timeline, D2 for dense architecture, "
-        "and diagrams_render for Python-style architecture rendering. "
+        "diagrams_render for Python-style architecture rendering, and "
+        "infographic_spec_builder / infographic_claim_packet_builder + infographic_html "
+        "for data-driven Chart.js/Plotly visuals. "
         "For Mermaid flowcharts, always use quoted node labels (e.g., A[\"label text\"]) "
         "when labels include punctuation/parentheses or mixed-language text. "
         "Keep labels short and factual. "
@@ -993,6 +999,11 @@ def build_artwork_prompt(output_format: str, language: str) -> str:
         "When mermaid_render is available, you may export SVG/PNG/PDF artifacts for report embedding. "
         "When d2_render is available, you may output an SVG reference snippet for complex layouts. "
         "When diagrams_render is available, you may render architecture SVG from node/edge specs. "
+        "When infographic_spec_builder is available, first build spec_json from tabular claim/data values. "
+        "When infographic_claim_packet_builder is available, you may build spec_json directly from "
+        "claim_evidence_map/evidence_packet JSON and optionally split charts by section_hint. "
+        "When infographic_html is available, provide spec_json with explicit source/simulated metadata "
+        "and include Simulated/Illustrative labels if values are not directly measured. "
         "Return only artifact-ready snippets (diagram block + optional one-line caption), no extra commentary. "
         f"{format_rule}"
         f"All explanations and captions should be in {language}."

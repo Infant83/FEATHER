@@ -1029,7 +1029,7 @@ def test_call_llm_uses_codex_cli_backend(monkeypatch) -> None:
 
 
 def test_call_llm_codex_cli_passes_reasoning_effort(monkeypatch) -> None:
-    captured: dict[str, object] = {}
+    captured_calls: list[dict[str, object]] = []
 
     class _Proc:
         returncode = 0
@@ -1037,7 +1037,7 @@ def test_call_llm_codex_cli_passes_reasoning_effort(monkeypatch) -> None:
         stdout = '{"type":"item.completed","item":{"id":"x","type":"agent_message","text":"codex answer"}}'
 
     def _fake_run(cmd, *args, **kwargs):
-        captured["cmd"] = list(cmd)
+        captured_calls.append({"cmd": list(cmd), "kwargs": dict(kwargs)})
         return _Proc()
 
     monkeypatch.setenv("FEDERNETT_HELP_LLM_BACKEND", "codex_cli")
@@ -1054,10 +1054,17 @@ def test_call_llm_codex_cli_passes_reasoning_effort(monkeypatch) -> None:
 
     assert answer == "codex answer"
     assert model == "gpt-5-codex"
-    cmd = captured.get("cmd")
+    exec_call = next((row for row in captured_calls if "exec" in row.get("cmd", [])), None)
+    assert isinstance(exec_call, dict)
+    cmd = exec_call.get("cmd")
     assert isinstance(cmd, list)
     assert "-c" in cmd
     assert 'reasoning_effort="extra_high"' in cmd
+    kwargs = exec_call.get("kwargs")
+    assert isinstance(kwargs, dict)
+    assert kwargs.get("text") is True
+    assert kwargs.get("encoding") == "utf-8"
+    assert kwargs.get("errors") == "replace"
 
 
 def test_call_llm_openai_includes_reasoning_effort(monkeypatch) -> None:
@@ -1120,6 +1127,8 @@ def test_call_llm_openai_omits_reasoning_effort_on_codex_named_model(monkeypatch
 
 
 def test_call_llm_stream_uses_codex_cli_backend(monkeypatch) -> None:
+    captured_popen_kwargs: dict[str, object] = {}
+
     class _FakeStdin:
         def __init__(self) -> None:
             self.buffer = ""
@@ -1154,7 +1163,12 @@ def test_call_llm_stream_uses_codex_cli_backend(monkeypatch) -> None:
 
     monkeypatch.setenv("FEDERNETT_HELP_LLM_BACKEND", "codex_cli")
     monkeypatch.setattr(help_agent.shutil, "which", lambda _name: "codex")
-    monkeypatch.setattr(help_agent.subprocess, "Popen", lambda *args, **kwargs: _Proc())
+
+    def _fake_popen(*args, **kwargs):
+        captured_popen_kwargs.update(kwargs)
+        return _Proc()
+
+    monkeypatch.setattr(help_agent.subprocess, "Popen", _fake_popen)
 
     chunk_iter, model = help_agent._call_llm_stream(
         "codex 스트림 질문",
@@ -1165,6 +1179,9 @@ def test_call_llm_stream_uses_codex_cli_backend(monkeypatch) -> None:
 
     assert "".join(list(chunk_iter)) == "codex stream answer"
     assert isinstance(model, str) and model.strip()
+    assert captured_popen_kwargs.get("text") is True
+    assert captured_popen_kwargs.get("encoding") == "utf-8"
+    assert captured_popen_kwargs.get("errors") == "replace"
 
 
 def test_answer_help_question_passes_live_log_tail_to_llm(monkeypatch, tmp_path) -> None:

@@ -2,7 +2,12 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.29
+Version: 1.9.30
+
+## Latest Update (1.9.30, 2026-02-26)
+- Section-aware infographic auto insertion was expanded and stabilized for multi-chart claim-packet flows.
+- HTML->PDF regression tooling (`tools/run_html_pdf_regression.py`) and related QA artifacts were added.
+- Report quality gate now supports stricter infographic lint orchestration with world-class workflow tracking.
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:

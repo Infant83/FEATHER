@@ -682,17 +682,40 @@ def _normalize_action_planner_payload(
     return payload
 
 
+def _prime_tool_metadata(tool_obj: object, fallback_name: str, description: str = "") -> None:
+    raw_name = str(getattr(tool_obj, "name", "") or fallback_name).strip() or fallback_name
+    safe_name = "".join(ch if (ch.isalnum() or ch == "_") else "_" for ch in raw_name) or fallback_name
+    safe_desc = str(description or "").strip()
+    for key, value in (
+        ("__name__", safe_name),
+        ("__qualname__", safe_name),
+        ("__annotations__", {}),
+    ):
+        try:
+            setattr(tool_obj, key, value)
+        except Exception:
+            pass
+    if safe_desc:
+        try:
+            setattr(tool_obj, "__doc__", safe_desc)
+        except Exception:
+            pass
+
+
 @dataclass
 class _MemorySnapshotTool:
     name: str
     description: str
-    snapshot: dict[str, Any]
+    snapshot: dict[str, object]
 
-    def invoke(self, payload: Any = None) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        _prime_tool_metadata(self, "memory_snapshot", self.description)
+
+    def invoke(self, payload=None):
         _ = payload
         return dict(self.snapshot)
 
-    def __call__(self, payload: Any = None) -> dict[str, Any]:
+    def __call__(self, payload=None):
         return self.invoke(payload)
 
 
@@ -700,9 +723,12 @@ class _MemorySnapshotTool:
 class _RunArtifactIndexTool:
     name: str
     description: str
-    snapshot: dict[str, Any]
+    snapshot: dict[str, object]
 
-    def invoke(self, payload: Any = None) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        _prime_tool_metadata(self, "run_artifacts", self.description)
+
+    def invoke(self, payload=None):
         _ = payload
         run = self.snapshot.get("run") if isinstance(self.snapshot, dict) else {}
         if not isinstance(run, dict):
@@ -723,7 +749,7 @@ class _RunArtifactIndexTool:
             "artifacts": artifacts[:24],
         }
 
-    def __call__(self, payload: Any = None) -> dict[str, Any]:
+    def __call__(self, payload=None):
         return self.invoke(payload)
 
 
@@ -734,7 +760,10 @@ class _RunFileReadTool:
     root: Path | None
     run_rel: str
 
-    def _resolve_candidate(self, payload: Any) -> Path | None:
+    def __post_init__(self) -> None:
+        _prime_tool_metadata(self, "read_run_file", self.description)
+
+    def _resolve_candidate(self, payload) -> Path | None:
         if self.root is None:
             return None
         root = self.root.resolve()
@@ -771,7 +800,7 @@ class _RunFileReadTool:
                 return None
         return candidate
 
-    def invoke(self, payload: Any = None) -> dict[str, Any]:
+    def invoke(self, payload=None):
         target = self._resolve_candidate(payload)
         if target is None:
             return {"ok": False, "error": "path must be run-scoped and under workspace root"}
@@ -809,7 +838,7 @@ class _RunFileReadTool:
             "content": text,
         }
 
-    def __call__(self, payload: Any = None) -> dict[str, Any]:
+    def __call__(self, payload=None):
         return self.invoke(payload)
 
 
@@ -817,11 +846,14 @@ class _RunFileReadTool:
 class _SourceDigestTool:
     name: str
     description: str
-    sources: list[dict[str, Any]]
+    sources: list[dict[str, object]]
 
-    def invoke(self, payload: Any = None) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        _prime_tool_metadata(self, "source_digest", self.description)
+
+    def invoke(self, payload=None):
         _ = payload
-        rows: list[dict[str, Any]] = []
+        rows: list[dict[str, object]] = []
         for item in self.sources[:10]:
             if not isinstance(item, dict):
                 continue
@@ -836,7 +868,7 @@ class _SourceDigestTool:
             )
         return {"sources": rows}
 
-    def __call__(self, payload: Any = None) -> dict[str, Any]:
+    def __call__(self, payload=None):
         return self.invoke(payload)
 
 
@@ -847,13 +879,16 @@ class _ActionPreflightTool:
     root: Path | None
     run_rel: str
 
-    def invoke(self, payload: Any = None) -> dict[str, Any]:
+    def __post_init__(self) -> None:
+        _prime_tool_metadata(self, "execution_preflight", self.description)
+
+    def invoke(self, payload=None):
         action = payload if isinstance(payload, dict) else {"type": str(payload or "")}
         if "run_rel" not in action and self.run_rel:
             action = {**action, "run_rel": self.run_rel}
         return _build_action_preflight(action, root=self.root, run_rel=self.run_rel)
 
-    def __call__(self, payload: Any = None) -> dict[str, Any]:
+    def __call__(self, payload=None):
         return self.invoke(payload)
 
 

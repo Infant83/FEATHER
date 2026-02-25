@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "generated_at": "2026-02-26T03:41:06",
+  "input_html": "C:\\Users\\angpa\\myProjects\\FEATHER\\temp\\20260226\\iter20_infographic_sample\\report_full.html",
+  "output_pdf": "C:\\Users\\angpa\\myProjects\\FEATHER\\test-results\\iter100_html_pdf_regression.pdf",
+  "engine_requested": "auto",
+  "engine_used": "playwright",
+  "ok": true,
+  "message": "",
+  "pdf_bytes": 193175,
+  "pdf_pages": 2,
+  "baseline_summary": "C:\\Users\\angpa\\myProjects\\FEATHER\\test-results\\iter80_html_pdf_regression.summary.json",
+  "checks": [
+    {
+      "name": "compile_success",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "minimum_bytes",
+      "ok": true,
+      "detail": "bytes=193175, min=10000"
+    },
+    {
+      "name": "nonzero_pages",
+      "ok": true,
+      "detail": "pages=2"
+    },
+    {
+      "name": "baseline_bytes_regression",
+      "ok": true,
+      "detail": "bytes=193175, baseline=193175, min_allowed=173858"
+    },
+    {
+      "name": "baseline_pages_delta",
+      "ok": true,
+      "detail": "pages=2, baseline=2, delta=0"
+    }
+  ]
+}

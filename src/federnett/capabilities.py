@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import difflib
+import datetime as dt
 import json
 import re
 from pathlib import Path
@@ -18,11 +20,33 @@ ALLOWED_ACTION_KINDS = {
     "open_path",
     "open_url",
     "set_inline_prompt",
+    "edit_text_file",
+    "rewrite_section",
     "run_feather",
     "run_federlicht",
     "run_feather_then_federlicht",
     "mcp_ping",
 }
+
+_EDIT_ALLOWED_PREFIXES = (
+    "site/runs/",
+    "site/report_hub/",
+    "docs/",
+    "site/agent_profiles/",
+)
+_RUN_RELATIVE_EDIT_PREFIXES = (
+    "archive/",
+    "instruction/",
+    "report/",
+    "report_notes/",
+    "output/",
+    "supporting/",
+    "tmp/",
+    "final_report/",
+    "large_tool_results/",
+)
+_EDIT_DIFF_MAX_LINES = 180
+_EDIT_DIFF_MAX_CHARS = 8000
 
 
 def _registry_path(root: Path) -> Path:
@@ -62,6 +86,497 @@ def _normalize_action(payload: Any, *, default_kind: str = "none", fallback_targ
         "target": target,
         "confirm": False if confirm is False else True,
     }
+
+
+def _to_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
+def _read_text_utf8(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"edit_text_file supports utf-8 text files only: {path.name}") from exc
+
+
+def _parse_edit_target_spec(target: str) -> dict[str, Any]:
+    token = str(target or "").strip()
+    if not token:
+        return {}
+    if token.startswith("{"):
+        try:
+            parsed = json.loads(token)
+        except Exception as exc:
+            raise ValueError(f"edit_text_file target JSON parse failed: {exc}") from exc
+        if not isinstance(parsed, dict):
+            raise ValueError("edit_text_file target JSON must be an object")
+        return parsed
+    return {"path": token}
+
+
+def _normalize_edit_override(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, Any] = {}
+    nested = raw.get("edit")
+    if isinstance(nested, dict):
+        out.update(nested)
+    for key in (
+        "path",
+        "mode",
+        "find",
+        "replace",
+        "title",
+        "author",
+        "request_text",
+        "max_replacements",
+    ):
+        if key in raw and raw.get(key) is not None:
+            out[key] = raw.get(key)
+    alias = {
+        "edit_path": "path",
+        "target_path": "path",
+        "file_path": "path",
+        "edit_mode": "mode",
+        "edit_find": "find",
+        "edit_replace": "replace",
+        "title_text": "title",
+        "author_name": "author",
+        "max_replace": "max_replacements",
+        "request": "request_text",
+    }
+    for src, dst in alias.items():
+        if src in raw and raw.get(src) is not None:
+            out[dst] = raw.get(src)
+    return out
+
+
+def _merge_edit_spec(
+    target_spec: dict[str, Any],
+    action_override: dict[str, Any] | None,
+    request_text: str | None,
+) -> dict[str, Any]:
+    spec = dict(target_spec)
+    override = _normalize_edit_override(action_override)
+    spec.update({k: v for k, v in override.items() if v is not None})
+    request = str(request_text or spec.get("request_text") or "").strip()
+    if request:
+        spec["request_text"] = request[:1200]
+    return spec
+
+
+def _is_allowed_edit_path(rel_path: str, *, run_rel: str | None = None) -> bool:
+    rel = str(rel_path or "").replace("\\", "/").strip().lstrip("./")
+    if not rel:
+        return False
+    run_token = str(run_rel or "").replace("\\", "/").strip().strip("/")
+    if run_token:
+        run_prefix = f"{run_token}/"
+        if rel == run_token or rel.startswith(run_prefix):
+            return True
+    return any(rel == prefix.rstrip("/") or rel.startswith(prefix) for prefix in _EDIT_ALLOWED_PREFIXES)
+
+
+def _resolve_edit_path(root: Path, raw_path: str, *, run_rel: str | None = None) -> tuple[Path, str]:
+    token = str(raw_path or "").replace("\\", "/").strip()
+    if not token:
+        raise ValueError("edit_text_file path is required")
+    run_token = str(run_rel or "").replace("\\", "/").strip().strip("/")
+    # Allow concise run-relative path declarations like "report/report_full.html".
+    lowered = token.lower().lstrip("./")
+    if run_token and any(lowered.startswith(prefix) for prefix in _RUN_RELATIVE_EDIT_PREFIXES):
+        token = f"{run_token}/{token.lstrip('./')}"
+    resolved = resolve_under_root(root, token)
+    if not resolved:
+        raise ValueError("edit_text_file path is required")
+    rel = safe_rel(resolved, root).replace("\\", "/")
+    if not _is_allowed_edit_path(rel, run_rel=run_rel):
+        raise ValueError(f"edit_text_file path is outside allowed scope: {rel}")
+    return resolved, rel
+
+
+def _infer_edit_from_request(request_text: str, source_text: str) -> dict[str, Any]:
+    text = str(request_text or "").strip()
+    if not text:
+        return {}
+    replace_pat = re.compile(
+        r"""replace\s+["'“”‘’`](?P<find>.+?)["'“”‘’`]\s*(?:with|to|->|=>)\s*["'“”‘’`](?P<replace>.+?)["'“”‘’`]""",
+        re.IGNORECASE | re.DOTALL,
+    )
+    match = replace_pat.search(text)
+    if match:
+        return {
+            "mode": "replace_first",
+            "find": match.group("find"),
+            "replace": match.group("replace"),
+        }
+    kor_replace_pat = re.compile(
+        r"""["'“”‘’`](?P<find>.+?)["'“”‘’`]\s*(?:을|를)?\s*["'“”‘’`](?P<replace>.+?)["'“”‘’`]\s*로\s*(?:바꿔|변경|수정)""",
+        re.IGNORECASE | re.DOTALL,
+    )
+    match = kor_replace_pat.search(text)
+    if match:
+        return {
+            "mode": "replace_first",
+            "find": match.group("find"),
+            "replace": match.group("replace"),
+        }
+    title_pat = re.compile(r"""(?:title|제목)\s*(?:을|를)?\s*["'“”‘’`](?P<title>.+?)["'“”‘’`]""", re.IGNORECASE)
+    match = title_pat.search(text)
+    if match and "<title" in source_text.lower():
+        return {
+            "mode": "replace_title_html",
+            "title": match.group("title"),
+        }
+    author_pat = re.compile(r"""(?:author|저자|작성자)(?:\s*이름)?\s*(?:을|를)?\s*["'“”‘’`](?P<author>.+?)["'“”‘’`]""", re.IGNORECASE)
+    match = author_pat.search(text)
+    if match:
+        return {
+            "mode": "replace_author_html",
+            "author": match.group("author"),
+        }
+    return {}
+
+
+def _replace_html_title(content: str, title: str) -> tuple[str, int]:
+    pattern = re.compile(r"(<title[^>]*>)(.*?)(</title>)", re.IGNORECASE | re.DOTALL)
+    return pattern.subn(lambda m: f"{m.group(1)}{title}{m.group(3)}", content, count=1)
+
+
+def _replace_html_author(content: str, author: str) -> tuple[str, int]:
+    meta_pat = re.compile(
+        r"""(<meta[^>]+(?:name|property)=["'](?:author|article:author)["'][^>]*content=["'])([^"']*)(["'][^>]*>)""",
+        re.IGNORECASE | re.DOTALL,
+    )
+    updated, replaced = meta_pat.subn(lambda m: f"{m.group(1)}{author}{m.group(3)}", content, count=1)
+    if replaced > 0:
+        return updated, replaced
+    byline_pat = re.compile(
+        r"""(<(?:span|p|div)[^>]*class=["'][^"']*(?:author|byline)[^"']*["'][^>]*>)(.*?)(</(?:span|p|div)>)""",
+        re.IGNORECASE | re.DOTALL,
+    )
+    return byline_pat.subn(lambda m: f"{m.group(1)}{author}{m.group(3)}", content, count=1)
+
+
+def _apply_text_edit(content: str, spec: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    mode_raw = str(spec.get("mode") or "").strip().lower()
+    mode = {
+        "replace": "replace_first",
+        "replace_one": "replace_first",
+        "replace_first": "replace_first",
+        "replace_all": "replace_all",
+        "append": "append",
+        "prepend": "prepend",
+        "overwrite": "overwrite",
+        "replace_title_html": "replace_title_html",
+        "replace_author_html": "replace_author_html",
+    }.get(mode_raw, mode_raw)
+    find = str(spec.get("find") or "")
+    replace = str(spec.get("replace") or "")
+    if not mode:
+        mode = "replace_first" if find else "overwrite"
+    if not find and not replace:
+        inferred = _infer_edit_from_request(str(spec.get("request_text") or ""), content)
+        if inferred:
+            mode = str(inferred.get("mode") or mode).strip().lower()
+            find = str(inferred.get("find") or find)
+            replace = str(inferred.get("replace") or replace)
+            if inferred.get("title") is not None:
+                spec["title"] = str(inferred.get("title"))
+            if inferred.get("author") is not None:
+                spec["author"] = str(inferred.get("author"))
+    max_replacements = max(0, _to_int(spec.get("max_replacements"), 0))
+    if mode == "replace_first":
+        if not find:
+            raise ValueError("edit_text_file replace_first mode requires 'find'")
+        replaced = 1 if find in content else 0
+        updated = content.replace(find, replace, 1)
+        return updated, {"mode": mode, "replacements": replaced}
+    if mode == "replace_all":
+        if not find:
+            raise ValueError("edit_text_file replace_all mode requires 'find'")
+        total = content.count(find)
+        limit = max_replacements if max_replacements > 0 else total
+        updated = content.replace(find, replace, limit)
+        return updated, {"mode": mode, "replacements": min(total, limit)}
+    if mode == "append":
+        text = replace or str(spec.get("append_text") or "")
+        updated = content + text
+        return updated, {"mode": mode, "replacements": 1 if text else 0}
+    if mode == "prepend":
+        text = replace or str(spec.get("prepend_text") or "")
+        updated = text + content
+        return updated, {"mode": mode, "replacements": 1 if text else 0}
+    if mode == "overwrite":
+        text = replace or str(spec.get("content") or "")
+        updated = text
+        return updated, {"mode": mode, "replacements": 1}
+    if mode == "replace_title_html":
+        title = str(spec.get("title") or replace).strip()
+        if not title:
+            raise ValueError("edit_text_file replace_title_html mode requires 'title'")
+        updated, replaced = _replace_html_title(content, title)
+        return updated, {"mode": mode, "replacements": replaced}
+    if mode == "replace_author_html":
+        author = str(spec.get("author") or replace).strip()
+        if not author:
+            raise ValueError("edit_text_file replace_author_html mode requires 'author'")
+        updated, replaced = _replace_html_author(content, author)
+        return updated, {"mode": mode, "replacements": replaced}
+    raise ValueError(f"unsupported edit_text_file mode: {mode}")
+
+
+def _build_diff_preview(before: str, after: str, rel_path: str) -> str:
+    diff_lines = list(
+        difflib.unified_diff(
+            before.splitlines(),
+            after.splitlines(),
+            fromfile=f"a/{rel_path}",
+            tofile=f"b/{rel_path}",
+            n=2,
+            lineterm="",
+        )
+    )
+    if len(diff_lines) > _EDIT_DIFF_MAX_LINES:
+        diff_lines = diff_lines[:_EDIT_DIFF_MAX_LINES] + ["... (diff truncated)"]
+    diff_text = "\n".join(diff_lines)
+    if len(diff_text) > _EDIT_DIFF_MAX_CHARS:
+        diff_text = diff_text[:_EDIT_DIFF_MAX_CHARS] + "\n... (diff truncated)"
+    return diff_text
+
+
+def _parse_rewrite_target_spec(target: str) -> dict[str, Any]:
+    token = str(target or "").strip()
+    if not token:
+        return {}
+    if token.startswith("{"):
+        try:
+            parsed = json.loads(token)
+        except Exception as exc:
+            raise ValueError(f"rewrite_section target JSON parse failed: {exc}") from exc
+        if not isinstance(parsed, dict):
+            raise ValueError("rewrite_section target JSON must be an object")
+        return parsed
+    if "#" in token:
+        path, section = token.split("#", 1)
+        return {"path": path.strip(), "section": section.strip()}
+    return {"path": token}
+
+
+def _normalize_rewrite_override(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, Any] = {}
+    nested = raw.get("rewrite")
+    if isinstance(nested, dict):
+        out.update(nested)
+    for key in (
+        "path",
+        "section",
+        "section_title",
+        "replacement",
+        "content",
+        "tone",
+        "style",
+        "length",
+        "request_text",
+    ):
+        if key in raw and raw.get(key) is not None:
+            out[key] = raw.get(key)
+    alias = {
+        "edit_path": "path",
+        "target_path": "path",
+        "file_path": "path",
+        "section_name": "section",
+        "section_id": "section",
+        "rewrite_text": "replacement",
+        "tone_hint": "tone",
+        "style_hint": "style",
+        "length_hint": "length",
+        "request": "request_text",
+    }
+    for src, dst in alias.items():
+        if src in raw and raw.get(src) is not None:
+            out[dst] = raw.get(src)
+    return out
+
+
+def _merge_rewrite_spec(
+    target_spec: dict[str, Any],
+    action_override: dict[str, Any] | None,
+    request_text: str | None,
+) -> dict[str, Any]:
+    spec = dict(target_spec)
+    override = _normalize_rewrite_override(action_override)
+    spec.update({k: v for k, v in override.items() if v is not None})
+    section = str(spec.get("section") or spec.get("section_title") or "").strip()
+    if section:
+        spec["section"] = section[:160]
+    request = str(request_text or spec.get("request_text") or "").strip()
+    if request:
+        spec["request_text"] = request[:1200]
+    return spec
+
+
+def _infer_run_rel_from_path(rel_path: str) -> str:
+    token = str(rel_path or "").replace("\\", "/").strip().strip("/")
+    if not token.startswith("site/runs/"):
+        return ""
+    parts = token.split("/")
+    if len(parts) < 3:
+        return ""
+    return "/".join(parts[:3])
+
+
+def _infer_output_format_from_path(rel_path: str) -> str:
+    suffix = Path(str(rel_path or "")).suffix.lower()
+    if suffix in {".html", ".htm"}:
+        return "html"
+    if suffix in {".tex", ".latex"}:
+        return "tex"
+    return "md"
+
+
+def _extract_section_from_request(request_text: str) -> str:
+    text = str(request_text or "").strip()
+    if not text:
+        return ""
+    patterns = (
+        r"""(?:section|섹션|단락)\s*["'“”‘’`](?P<section>.+?)["'“”‘’`]""",
+        r"""["'“”‘’`](?P<section>.+?)["'“”‘’`]\s*(?:section|섹션|단락)""",
+        r"""(?:section|섹션)\s+(?P<section>[A-Za-z0-9가-힣][^,\n]{1,80})""",
+    )
+    for pat in patterns:
+        match = re.search(pat, text, flags=re.IGNORECASE | re.DOTALL)
+        if not match:
+            continue
+        token = re.sub(r"\s+", " ", str(match.group("section") or "")).strip(" .,:;")
+        if token:
+            return token[:160]
+    return ""
+
+
+def _extract_rewrite_block_from_request(request_text: str) -> str:
+    text = str(request_text or "")
+    if not text:
+        return ""
+    triple = re.search(r"(?s)```(?:md|markdown|text|html)?\n(?P<body>.+?)\n```", text, flags=re.IGNORECASE)
+    if triple:
+        body = str(triple.group("body") or "").strip()
+        if body:
+            return body
+    quoted = re.search(r'(?s)"""(?P<body>.+?)"""', text)
+    if quoted:
+        body = str(quoted.group("body") or "").strip()
+        if body:
+            return body
+    return ""
+
+
+def _extract_tone_hint(request_text: str) -> str:
+    text = str(request_text or "").lower()
+    if not text:
+        return ""
+    tone_tokens = {
+        "냉철": "냉철하고 분석적인 톤",
+        "차분": "차분하고 균형 잡힌 톤",
+        "전문": "전문적이고 검증 중심의 톤",
+        "공격적": "강한 주장 중심의 톤",
+        "friendly": "friendly and reader-friendly tone",
+        "formal": "formal and objective tone",
+    }
+    for token, desc in tone_tokens.items():
+        if token in text:
+            return desc
+    match = re.search(r'(["\'“”‘’`][^"\'“”‘’`\n]{1,64}["\'“”‘’`])\s*톤', str(request_text or ""), flags=re.IGNORECASE)
+    if match:
+        raw = str(match.group(1) or "").strip().strip('"\'“”‘’`')
+        if raw:
+            return f"{raw} tone"
+    return ""
+
+
+def _extract_length_hint(request_text: str) -> str:
+    text = str(request_text or "").lower()
+    if not text:
+        return ""
+    if any(token in text for token in ("길게", "더 길", "expand", "longer")):
+        return "expand length by roughly 30-70% while keeping substance concise."
+    if any(token in text for token in ("짧게", "요약", "shorter", "condense")):
+        return "condense to a shorter, sharper section."
+    return ""
+
+
+def _extract_style_hint(request_text: str) -> str:
+    text = str(request_text or "").lower()
+    if not text:
+        return ""
+    if any(token in text for token in ("서술형", "narrative")):
+        return "narrative prose format (avoid bullet-only output)."
+    if any(token in text for token in ("불릿", "bullet")):
+        return "use concise bullets where appropriate."
+    return ""
+
+
+def _render_section_rewrite_prompt(
+    *,
+    report_rel: str,
+    section_title: str,
+    existing_section: str,
+    tone_hint: str,
+    style_hint: str,
+    length_hint: str,
+) -> str:
+    excerpt = existing_section.strip()
+    if len(excerpt) > 5000:
+        excerpt = excerpt[:5000].rstrip() + "\n...(truncated)"
+    lines = [
+        "Update request:",
+        f"- Base report: {report_rel}",
+        f"- Target section: {section_title}",
+        "- Task: rewrite the target section only, preserving factual claims and citation traceability.",
+    ]
+    if tone_hint:
+        lines.append(f"- Tone: {tone_hint}")
+    if style_hint:
+        lines.append(f"- Writing style: {style_hint}")
+    if length_hint:
+        lines.append(f"- Length: {length_hint}")
+    lines.extend(
+        [
+            "",
+            "Constraints:",
+            "- Keep the section heading unchanged.",
+            "- Do not rewrite unrelated sections unless required for consistency.",
+            "- Maintain claim-evidence-source alignment; preserve citations or refresh them if the claim changes.",
+            "",
+            "Current section excerpt:",
+            "<<<",
+            excerpt or "(section currently empty)",
+            ">>>",
+        ]
+    )
+    return "\n".join(lines).strip() + "\n"
+
+
+def _next_section_update_request_path(root: Path, run_rel: str, section_title: str) -> tuple[Path, str]:
+    run_dir = resolve_under_root(root, run_rel)
+    if not run_dir:
+        raise ValueError(f"invalid run path for rewrite_section: {run_rel}")
+    report_notes_dir = run_dir / "report_notes"
+    stamp = dt.datetime.now().strftime("%Y%m%d")
+    slug = _slug_id(section_title, "section")
+    base = f"update_request_section_{slug}_{stamp}"
+    candidate = report_notes_dir / f"{base}.txt"
+    idx = 1
+    while candidate.exists():
+        candidate = report_notes_dir / f"{base}_{idx}.txt"
+        idx += 1
+    rel = safe_rel(candidate, root).replace("\\", "/")
+    return candidate, rel
 
 
 def _normalize_basic_entry(entry: Any, *, fallback_id: str) -> dict[str, Any]:
@@ -175,12 +690,17 @@ def _contains_token(text: str, token: str) -> bool:
 
 
 def infer_capability_action(root: Path, question: str, *, run_rel: str | None = None) -> dict[str, Any] | None:
-    query = str(question or "").strip().lower()
+    query_raw = str(question or "").strip()
+    query = query_raw.lower()
     if not query:
         return None
     run_like = any(token in query for token in ("실행", "run", "start", "시작", "테스트", "ping"))
     open_like = any(token in query for token in ("열어", "open", "보기", "preview", "확인"))
     prompt_like = any(token in query for token in ("prompt", "프롬프트", "inline"))
+    edit_like = any(
+        token in query
+        for token in ("수정", "편집", "바꿔", "변경", "replace", "edit", "rewrite", "제목", "저자", "author", "title")
+    )
     best: tuple[float, dict[str, Any]] | None = None
     registry = load_capability_registry(root)
     for entry in _iter_custom_entries(registry):
@@ -198,6 +718,8 @@ def infer_capability_action(root: Path, question: str, *, run_rel: str | None = 
         for kw in entry.get("keywords") or []:
             if _contains_token(query, str(kw)):
                 score += 3.0
+        if action_kind in {"edit_text_file", "rewrite_section"} and edit_like:
+            score += 2.5
         if action_kind in {"mcp_ping"} and any(token in query for token in ("mcp", "연결", "connection", "health")):
             score += 3.0
         if score <= 0:
@@ -211,13 +733,16 @@ def infer_capability_action(root: Path, question: str, *, run_rel: str | None = 
         if action_kind == "set_inline_prompt" and not (prompt_like or run_like):
             if score < 10.0:
                 continue
+        if action_kind in {"edit_text_file", "rewrite_section"} and not (edit_like or run_like):
+            if score < 10.0:
+                continue
         if best is None or score > best[0]:
             best = (score, entry)
     if best is None:
         return None
     picked = best[1]
     action = picked.get("action") if isinstance(picked.get("action"), dict) else {}
-    return {
+    action_payload = {
         "type": "run_capability",
         "label": f"{picked.get('label') or picked.get('id')} 실행",
         "summary": picked.get("description") or "등록된 커스텀 capability 실행",
@@ -227,6 +752,9 @@ def infer_capability_action(root: Path, question: str, *, run_rel: str | None = 
         "action_kind": action.get("kind") or "none",
         "run_rel": run_rel or "",
     }
+    if query_raw:
+        action_payload["request_text"] = query_raw[:1200]
+    return action_payload
 
 
 def _validate_url(value: str) -> str:
@@ -243,6 +771,8 @@ def execute_capability_action(
     dry_run: bool = True,
     run_rel: str | None = None,
     timeout_sec: int = 6,
+    action_override: dict[str, Any] | None = None,
+    request_text: str | None = None,
 ) -> dict[str, Any]:
     entry = resolve_capability_entry(root, capability_id)
     if not entry:
@@ -306,6 +836,162 @@ def execute_capability_action(
                 "effect": "set_inline_prompt",
                 "prompt_text": text,
                 "preview": json.dumps({"effect": "set_inline_prompt", "chars": len(text)}, ensure_ascii=False, indent=2),
+            }
+        )
+        return result
+    if action_kind == "edit_text_file":
+        target_spec = _parse_edit_target_spec(target)
+        merged_spec = _merge_edit_spec(target_spec, action_override, request_text)
+        path_token = str(merged_spec.get("path") or "").strip()
+        if not path_token:
+            raise ValueError("edit_text_file action requires path (target or action_override.path)")
+        resolved_path, rel_path = _resolve_edit_path(root, path_token, run_rel=run_rel)
+        if not resolved_path.exists():
+            raise ValueError(f"edit_text_file target does not exist: {rel_path}")
+        before = _read_text_utf8(resolved_path)
+        after, edit_meta = _apply_text_edit(before, merged_spec)
+        changed = before != after
+        replacements = int(edit_meta.get("replacements") or 0)
+        mode = str(edit_meta.get("mode") or merged_spec.get("mode") or "").strip().lower()
+        diff_preview = _build_diff_preview(before, after, rel_path) if changed else ""
+        preview_payload = {
+            "effect": "edit_text_file",
+            "path": rel_path,
+            "mode": mode or "-",
+            "changed": changed,
+            "replacements": replacements,
+            "chars_before": len(before),
+            "chars_after": len(after),
+            "diff": diff_preview,
+        }
+        result.update(
+            {
+                "effect": "edit_text_file",
+                "path": rel_path,
+                "mode": mode or "-",
+                "changed": changed,
+                "replacements": replacements,
+                "chars_before": len(before),
+                "chars_after": len(after),
+                "diff": diff_preview,
+                "preview": json.dumps(preview_payload, ensure_ascii=False, indent=2),
+            }
+        )
+        if dry_run:
+            return result
+        if changed:
+            resolved_path.write_text(after, encoding="utf-8")
+            stat = resolved_path.stat()
+            result["size"] = stat.st_size
+        else:
+            result["message"] = "no changes applied"
+        return result
+    if action_kind == "rewrite_section":
+        target_spec = _parse_rewrite_target_spec(target)
+        merged_spec = _merge_rewrite_spec(target_spec, action_override, request_text)
+        path_token = str(merged_spec.get("path") or "").strip()
+        if not path_token:
+            raise ValueError("rewrite_section action requires path (target or action_override.path)")
+        resolved_path, rel_path = _resolve_edit_path(root, path_token, run_rel=run_rel)
+        if not resolved_path.exists():
+            raise ValueError(f"rewrite_section target does not exist: {rel_path}")
+        before = _read_text_utf8(resolved_path)
+        section_title = str(merged_spec.get("section") or "").strip()
+        if not section_title:
+            section_title = _extract_section_from_request(str(merged_spec.get("request_text") or ""))
+        if not section_title:
+            raise ValueError("rewrite_section requires section title (target#section, action_override.section, or request text)")
+        output_format = str(merged_spec.get("output_format") or "").strip().lower() or _infer_output_format_from_path(rel_path)
+        if output_format not in {"md", "html", "tex"}:
+            output_format = _infer_output_format_from_path(rel_path)
+        from federlicht import report as feder_report  # local import avoids heavy startup for non-rewrite actions
+
+        existing_section = feder_report.extract_named_section(before, output_format, section_title) or ""
+        replacement_text = str(merged_spec.get("replacement") or merged_spec.get("content") or "").strip()
+        if not replacement_text:
+            replacement_text = _extract_rewrite_block_from_request(str(merged_spec.get("request_text") or ""))
+
+        tone_hint = str(merged_spec.get("tone") or "").strip() or _extract_tone_hint(str(merged_spec.get("request_text") or ""))
+        style_hint = str(merged_spec.get("style") or "").strip() or _extract_style_hint(str(merged_spec.get("request_text") or ""))
+        length_hint = str(merged_spec.get("length") or "").strip() or _extract_length_hint(str(merged_spec.get("request_text") or ""))
+
+        if replacement_text:
+            after = feder_report.upsert_named_section(before, output_format, section_title, replacement_text)
+            changed = before != after
+            diff_preview = _build_diff_preview(before, after, rel_path) if changed else ""
+            preview_payload = {
+                "effect": "rewrite_section",
+                "rewrite_mode": "direct_upsert",
+                "path": rel_path,
+                "section": section_title,
+                "changed": changed,
+                "chars_before": len(before),
+                "chars_after": len(after),
+                "diff": diff_preview,
+            }
+            result.update(
+                {
+                    "effect": "rewrite_section",
+                    "rewrite_mode": "direct_upsert",
+                    "path": rel_path,
+                    "section": section_title,
+                    "found_section": bool(existing_section),
+                    "changed": changed,
+                    "chars_before": len(before),
+                    "chars_after": len(after),
+                    "diff": diff_preview,
+                    "preview": json.dumps(preview_payload, ensure_ascii=False, indent=2),
+                }
+            )
+            if dry_run:
+                return result
+            if changed:
+                resolved_path.write_text(after, encoding="utf-8")
+                result["size"] = resolved_path.stat().st_size
+            else:
+                result["message"] = "no changes applied"
+            return result
+
+        run_rel_effective = str(run_rel or "").strip() or _infer_run_rel_from_path(rel_path)
+        prompt_text = _render_section_rewrite_prompt(
+            report_rel=rel_path,
+            section_title=section_title,
+            existing_section=existing_section,
+            tone_hint=tone_hint,
+            style_hint=style_hint,
+            length_hint=length_hint,
+        )
+        prompt_file_rel = ""
+        if run_rel_effective:
+            prompt_path, prompt_file_rel = _next_section_update_request_path(root, run_rel_effective, section_title)
+            if not dry_run:
+                prompt_path.parent.mkdir(parents=True, exist_ok=True)
+                prompt_path.write_text(prompt_text, encoding="utf-8")
+        preview_payload = {
+            "effect": "rewrite_section",
+            "rewrite_mode": "prompt_prep",
+            "path": rel_path,
+            "section": section_title,
+            "found_section": bool(existing_section),
+            "prompt_file": prompt_file_rel,
+            "prompt_preview": prompt_text[:1200],
+            "suggested_action_type": "run_federlicht" if run_rel_effective else "",
+        }
+        result.update(
+            {
+                "effect": "rewrite_section",
+                "rewrite_mode": "prompt_prep",
+                "path": rel_path,
+                "section": section_title,
+                "found_section": bool(existing_section),
+                "existing_chars": len(existing_section),
+                "tone_hint": tone_hint,
+                "style_hint": style_hint,
+                "length_hint": length_hint,
+                "prompt_text": prompt_text,
+                "prompt_file": prompt_file_rel,
+                "suggested_action_type": "run_federlicht" if run_rel_effective else "",
+                "preview": json.dumps(preview_payload, ensure_ascii=False, indent=2),
             }
         )
         return result
@@ -480,6 +1166,27 @@ def runtime_capabilities(root: Path, *, web_search_enabled: bool) -> dict[str, A
             "group": "federlicht",
         },
         {
+            "id": "artwork.artwork_infographic_spec_builder",
+            "label": "artwork_infographic_spec_builder",
+            "description": "표 기반 claim/data를 infographic_spec JSON으로 자동 변환",
+            "enabled": True,
+            "group": "federlicht",
+        },
+        {
+            "id": "artwork.artwork_infographic_claim_packet_builder",
+            "label": "artwork_infographic_claim_packet_builder",
+            "description": "claim_evidence_map/evidence_packet JSON에서 infographic_spec 자동 생성",
+            "enabled": True,
+            "group": "federlicht",
+        },
+        {
+            "id": "artwork.artwork_infographic_html",
+            "label": "artwork_infographic_html",
+            "description": "Chart.js/Plotly 기반 데이터 인포그래픽 HTML 렌더링",
+            "enabled": True,
+            "group": "federlicht",
+        },
+        {
             "id": "deepagents.subagent_router",
             "label": "Subagent Router",
             "description": "create_deep_agent의 subagent 라우팅 경로",
@@ -551,6 +1258,9 @@ def runtime_capabilities(root: Path, *, web_search_enabled: bool) -> dict[str, A
                 "artwork.artwork_mermaid_render",
                 "artwork.artwork_d2_render",
                 "artwork.artwork_diagrams_render",
+                "artwork.artwork_infographic_spec_builder",
+                "artwork.artwork_infographic_claim_packet_builder",
+                "artwork.artwork_infographic_html",
                 "citation_guard",
                 "context_budget_guard",
             ],

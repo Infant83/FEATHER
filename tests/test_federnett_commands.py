@@ -286,3 +286,41 @@ def test_build_generate_prompt_cmd_normalizes_codex_model_to_lowercase(tmp_path:
     assert "--model" in cmd
     idx = cmd.index("--model")
     assert cmd[idx + 1] == "gpt-5.3-codex-spark"
+
+
+def test_build_federlicht_cmd_includes_html_pdf_export_options(tmp_path: Path) -> None:
+    cfg = _cfg(tmp_path)
+    payload = {
+        "run": "site/runs/demo",
+        "output": "site/runs/demo/report_full.html",
+        "html_print_profile": "letter",
+        "html_pdf": True,
+        "html_pdf_engine": "auto",
+        "html_pdf_wait_ms": 2200,
+        "html_pdf_timeout_sec": 90,
+    }
+
+    cmd = _build_federlicht_cmd(cfg, payload)
+
+    assert "--html-print-profile" in cmd
+    assert cmd[cmd.index("--html-print-profile") + 1] == "letter"
+    assert "--html-pdf" in cmd
+    assert "--html-pdf-engine" in cmd
+    assert cmd[cmd.index("--html-pdf-engine") + 1] == "auto"
+    assert "--html-pdf-wait-ms" in cmd
+    assert cmd[cmd.index("--html-pdf-wait-ms") + 1] == "2200"
+    assert "--html-pdf-timeout-sec" in cmd
+    assert cmd[cmd.index("--html-pdf-timeout-sec") + 1] == "90"
+
+
+def test_build_federlicht_cmd_supports_disabling_html_pdf(tmp_path: Path) -> None:
+    cfg = _cfg(tmp_path)
+    payload = {
+        "run": "site/runs/demo",
+        "output": "site/runs/demo/report_full.html",
+        "no_html_pdf": True,
+    }
+
+    cmd = _build_federlicht_cmd(cfg, payload)
+
+    assert "--no-html-pdf" in cmd

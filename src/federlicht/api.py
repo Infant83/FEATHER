@@ -71,6 +71,14 @@ REPORTER_INPUT_SCHEMA = {
         "max_pdf_pages": {"type": "integer", "description": "Max PDF pages to extract."},
         "pdf_extend_pages": {"type": "integer", "description": "Auto-read next N PDF pages when text is short."},
         "pdf_extend_min_chars": {"type": "integer", "description": "Minimum chars before PDF auto-extension triggers."},
+        "html_print_profile": {"type": "string", "description": "HTML print profile: a4|letter|screen."},
+        "html_pdf": {"type": "boolean", "description": "Also export PDF for HTML output."},
+        "html_pdf_engine": {
+            "type": "string",
+            "description": "HTML PDF engine: auto|playwright|chrome|weasyprint|wkhtmltopdf|none.",
+        },
+        "html_pdf_wait_ms": {"type": "integer", "description": "Extra wait time before HTML PDF capture."},
+        "html_pdf_timeout_sec": {"type": "integer", "description": "Timeout per HTML PDF engine attempt."},
     },
     "additionalProperties": True,
 }

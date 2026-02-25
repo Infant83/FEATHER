@@ -799,6 +799,99 @@ def test_handle_api_post_capabilities_execute_runs_action(tmp_path: Path) -> Non
     assert body.get("path") == "README.md"
 
 
+def test_handle_api_post_capabilities_execute_edits_text_file(tmp_path: Path) -> None:
+    cfg = make_cfg(tmp_path)
+    note = tmp_path / "docs" / "note.md"
+    note.parent.mkdir(parents=True, exist_ok=True)
+    note.write_text("author: old\n", encoding="utf-8")
+    save_handler = DummyHandler(
+        cfg,
+        "/api/capabilities/save",
+        payload={
+            "registry": {
+                "tools": [
+                    {
+                        "id": "edit_note",
+                        "label": "Edit Note",
+                        "action": {"kind": "edit_text_file", "target": "docs/note.md"},
+                    }
+                ],
+                "skills": [],
+                "mcp_servers": [],
+            }
+        },
+    )
+    handle_api_post(save_handler, render_template_preview=lambda _root, _payload: "")
+    exec_handler = DummyHandler(
+        cfg,
+        "/api/capabilities/execute",
+        payload={
+            "id": "edit_note",
+            "dry_run": False,
+            "action_override": {
+                "mode": "replace_first",
+                "find": "old",
+                "replace": "new",
+            },
+            "request_text": 'author를 "new"로 바꿔줘',
+        },
+    )
+    handle_api_post(exec_handler, render_template_preview=lambda _root, _payload: "")
+    assert exec_handler.json_response is not None
+    status, body = exec_handler.json_response
+    assert status == 200
+    assert isinstance(body, dict)
+    assert body.get("effect") == "edit_text_file"
+    assert body.get("changed") is True
+    assert "author: new" in note.read_text(encoding="utf-8")
+
+
+def test_handle_api_post_capabilities_execute_rewrite_section(tmp_path: Path) -> None:
+    cfg = make_cfg(tmp_path)
+    report = tmp_path / "site" / "runs" / "demo" / "report" / "report_full.md"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text("## Executive Summary\nold summary\n", encoding="utf-8")
+    save_handler = DummyHandler(
+        cfg,
+        "/api/capabilities/save",
+        payload={
+            "registry": {
+                "tools": [
+                    {
+                        "id": "rewrite_summary",
+                        "label": "Rewrite Summary",
+                        "action": {"kind": "rewrite_section", "target": "report/report_full.md#Executive Summary"},
+                    }
+                ],
+                "skills": [],
+                "mcp_servers": [],
+            }
+        },
+    )
+    handle_api_post(save_handler, render_template_preview=lambda _root, _payload: "")
+    exec_handler = DummyHandler(
+        cfg,
+        "/api/capabilities/execute",
+        payload={
+            "id": "rewrite_summary",
+            "dry_run": False,
+            "run": "site/runs/demo",
+            "action_override": {
+                "replacement": "new summary in objective style",
+            },
+        },
+    )
+    handle_api_post(exec_handler, render_template_preview=lambda _root, _payload: "")
+    assert exec_handler.json_response is not None
+    status, body = exec_handler.json_response
+    assert status == 200
+    assert isinstance(body, dict)
+    assert body.get("effect") == "rewrite_section"
+    assert body.get("rewrite_mode") == "direct_upsert"
+    assert body.get("changed") is True
+    assert "new summary in objective style" in report.read_text(encoding="utf-8")
+
+
 def test_handle_api_get_help_history_forwards_profile_id(tmp_path: Path, monkeypatch) -> None:
     cfg = make_cfg(tmp_path)
     captured: dict[str, object] = {}
@@ -1185,3 +1278,19 @@ def test_prepare_federlicht_payload_normalizes_codex_model_tokens_to_lowercase()
     assert payload.get("model") == "gpt-5.3-codex-spark"
     assert payload.get("check_model") == "gpt-5.3-codex"
     assert any("normalized" in str(note).lower() for note in notes)
+
+
+def test_federlicht_runtime_snapshot_includes_html_pdf_fields() -> None:
+    snapshot = routes_mod._federlicht_runtime_snapshot(
+        {
+            "llm_backend": "openai_api",
+            "model": "gpt-5-mini",
+            "check_model": "gpt-4o",
+            "html_print_profile": "letter",
+            "html_pdf": True,
+            "html_pdf_engine": "weasyprint",
+        }
+    )
+    assert snapshot.get("html_print_profile") == "letter"
+    assert snapshot.get("html_pdf") is True
+    assert snapshot.get("html_pdf_engine") == "weasyprint"

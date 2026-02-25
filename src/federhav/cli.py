@@ -12,6 +12,15 @@ from federnett.filesystem import clear_help_history
 from .core import FederHavChatConfig, ask_question, normalize_run_relpath, stream_question
 
 
+def _configure_stdio_utf8() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            if hasattr(stream, "reconfigure"):
+                stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+
+
 def _resolve_run_dir(run: str) -> Path:
     path = Path(run).expanduser()
     if not path.is_absolute():
@@ -427,6 +436,7 @@ def _run_update_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _configure_stdio_utf8()
     raw = list(sys.argv[1:] if argv is None else argv)
     parser = _build_parser()
     args = parser.parse_args(_coerce_command_argv(raw))

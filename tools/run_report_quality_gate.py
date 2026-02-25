@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from federlicht import artwork as feder_artwork
 from federlicht.quality_contract import (
     QUALITY_CONTRACT_METRIC_VERSION,
     detect_quality_contract_staleness,
@@ -20,6 +21,64 @@ METRIC_FIELDS = (
     "evidence_density_score",
     "section_coherence_score",
 )
+
+
+def _expand_input_patterns(patterns: list[str]) -> list[Path]:
+    resolved: list[Path] = []
+    seen: set[Path] = set()
+    for token in patterns:
+        raw = str(token or "").strip()
+        if not raw:
+            continue
+        path = Path(raw)
+        candidates: list[Path]
+        if any(char in raw for char in ("*", "?", "[")):
+            candidates = sorted(Path(".").glob(raw))
+        else:
+            candidates = [path]
+        for candidate in candidates:
+            final = candidate.resolve()
+            if final in seen:
+                continue
+            seen.add(final)
+            resolved.append(final)
+    return resolved
+
+
+def evaluate_infographic_lint(spec_paths: list[Path]) -> dict[str, object]:
+    rows: list[dict[str, object]] = []
+    for path in spec_paths:
+        row: dict[str, object] = {
+            "path": str(path),
+            "exists": path.exists(),
+            "issues": [],
+        }
+        if not path.exists():
+            row["issues"] = ["spec file not found"]
+            rows.append(row)
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        except Exception as exc:
+            row["issues"] = [f"json parse failed: {exc}"]
+            rows.append(row)
+            continue
+        if not isinstance(payload, dict):
+            row["issues"] = ["spec payload is not an object"]
+            rows.append(row)
+            continue
+        issues = feder_artwork.lint_infographic_spec(payload)
+        row["issues"] = list(issues)
+        charts = payload.get("charts")
+        row["chart_count"] = len(charts) if isinstance(charts, list) else 0
+        rows.append(row)
+    failed_rows = [item for item in rows if isinstance(item.get("issues"), list) and item.get("issues")]
+    return {
+        "checked_count": len(rows),
+        "failed_count": len(failed_rows),
+        "pass": len(failed_rows) == 0,
+        "rows": rows,
+    }
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess:
@@ -135,6 +194,7 @@ def build_gate_report_markdown(
     *,
     contract_consistency: dict | None = None,
     gate_policy: dict | None = None,
+    infographic_lint: dict | None = None,
 ) -> str:
     summary = dict(summary_payload.get("summary") or {})
     baseline = dict(summary_payload.get("baseline_summary") or {})
@@ -242,6 +302,39 @@ def build_gate_report_markdown(
                 f"{float(abs_deltas.get(metric, 0.0)):.2f} | "
                 f"{float(thresholds.get(metric, 0.0)):.2f} |"
             )
+    if isinstance(infographic_lint, dict):
+        checked_count = int(infographic_lint.get("checked_count", 0) or 0)
+        failed_count = int(infographic_lint.get("failed_count", 0) or 0)
+        lint_pass = bool(infographic_lint.get("pass"))
+        lines.extend(
+            [
+                "",
+                "## Infographic Lint",
+                f"- checked_specs: {checked_count}",
+                f"- failed_specs: {failed_count}",
+                f"- lint_result: {'PASS' if lint_pass else 'FAIL'}",
+            ]
+        )
+        lint_rows = infographic_lint.get("rows")
+        if isinstance(lint_rows, list) and lint_rows:
+            lines.extend(
+                [
+                    "",
+                    "| spec_path | chart_count | issues |",
+                    "| --- | ---: | --- |",
+                ]
+            )
+            for item in lint_rows:
+                if not isinstance(item, dict):
+                    continue
+                path = str(item.get("path") or "").strip() or "(unknown)"
+                chart_count = int(item.get("chart_count", 0) or 0)
+                issues = item.get("issues")
+                if isinstance(issues, list) and issues:
+                    issue_text = "; ".join(str(issue) for issue in issues[:4])
+                else:
+                    issue_text = "-"
+                lines.append(f"| {path} | {chart_count} | {issue_text} |")
     lines.extend(["", "## Gate Output", "```text", (gate_stdout or "").strip(), "```"])
     return "\n".join(lines) + "\n"
 
@@ -260,6 +353,22 @@ def main() -> int:
     parser.add_argument("--summary-output", required=True, help="Benchmark summary JSON output path.")
     parser.add_argument("--benchmark-output", default="", help="Optional benchmark row JSON output path.")
     parser.add_argument("--report-md", required=True, help="Markdown gate report output path.")
+    parser.add_argument(
+        "--infographic-spec",
+        action="append",
+        default=[],
+        help="Infographic spec JSON path or glob pattern (can be repeated).",
+    )
+    parser.add_argument(
+        "--infographic-lint-output",
+        default="",
+        help="Optional JSON output path for infographic lint summary.",
+    )
+    parser.add_argument(
+        "--strict-infographic-lint",
+        action="store_true",
+        help="Fail run when infographic lint finds any issues.",
+    )
     parser.add_argument(
         "--quality-contract",
         default="",
@@ -367,6 +476,8 @@ def main() -> int:
     summary_payload = json.loads(Path(args.summary_output).read_text(encoding="utf-8"))
     contract_consistency: dict | None = None
     contract_fail = False
+    infographic_lint: dict | None = None
+    infographic_lint_fail = False
     quality_contract_path = Path(str(args.quality_contract or "").strip())
     if str(args.quality_contract or "").strip():
         if not quality_contract_path.exists():
@@ -402,12 +513,31 @@ def main() -> int:
                 encoding="utf-8",
             )
             print(f"Wrote quality contract consistency: {output_path.as_posix()}")
+    if args.infographic_spec:
+        spec_paths = _expand_input_patterns([str(item) for item in args.infographic_spec if str(item).strip()])
+        infographic_lint = evaluate_infographic_lint(spec_paths)
+        infographic_lint_fail = not bool(infographic_lint.get("pass"))
+        if args.infographic_lint_output:
+            output_path = Path(str(args.infographic_lint_output))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(infographic_lint, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(f"Wrote infographic lint summary: {output_path.as_posix()}")
+        print(
+            "infographic-lint | "
+            f"checked={int(infographic_lint.get('checked_count', 0) or 0)} | "
+            f"failed={int(infographic_lint.get('failed_count', 0) or 0)} | "
+            f"result={'PASS' if bool(infographic_lint.get('pass')) else 'FAIL'}"
+        )
     report_md = build_gate_report_markdown(
         summary_payload,
         gate_proc.stdout,
         gate_proc.returncode,
         contract_consistency=contract_consistency,
         gate_policy=gate_policy,
+        infographic_lint=infographic_lint,
     )
     report_path = Path(args.report_md)
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -416,6 +546,8 @@ def main() -> int:
     if gate_proc.returncode != 0:
         return gate_proc.returncode
     if bool(args.strict_contract_consistency) and contract_fail:
+        return 2
+    if bool(args.strict_infographic_lint) and infographic_lint_fail:
         return 2
     return 0
 

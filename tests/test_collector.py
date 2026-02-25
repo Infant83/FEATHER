@@ -368,6 +368,44 @@ def test_planner_chat_request_retries_payload_variants(monkeypatch) -> None:
     assert any("retry without response_format" in line for line in logger.lines)
 
 
+def test_call_agentic_planner_codex_cli_uses_utf8_subprocess(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class _Proc:
+        returncode = 0
+        stderr = ""
+        stdout = (
+            '{"type":"item.completed","item":{"id":"x","type":"agent_message",'
+            '"text":"{\\"done\\": false, \\"reason\\": \\"ok\\", \\"actions\\": []}"}}'
+        )
+
+    class _StubLogger:
+        def log(self, _msg: str) -> None:
+            return
+
+    def _fake_run(cmd, *args, **kwargs):
+        captured["cmd"] = list(cmd)
+        captured["kwargs"] = dict(kwargs)
+        return _Proc()
+
+    monkeypatch.setattr(collector.shutil, "which", lambda _name: "codex")
+    monkeypatch.setattr(collector.subprocess, "run", _fake_run)
+
+    payload = collector._call_agentic_planner_codex_cli(
+        "gpt-5-nano",
+        {"query": "test"},
+        _StubLogger(),
+    )
+
+    assert payload["done"] is False
+    assert payload["reason"] == "ok"
+    kwargs = captured.get("kwargs")
+    assert isinstance(kwargs, dict)
+    assert kwargs.get("text") is True
+    assert kwargs.get("encoding") == "utf-8"
+    assert kwargs.get("errors") == "replace"
+
+
 def test_normalize_youtube_query() -> None:
     assert normalize_youtube_query("site:youtube.com quantum ai") == "quantum ai"
     assert normalize_youtube_query("quantum ai") == "quantum ai"

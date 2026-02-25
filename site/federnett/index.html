@@ -459,6 +459,10 @@
                     <span>Figures</span>
                   </label>
                   <label class="toggle">
+                    <input type="checkbox" id="federlicht-html-pdf" />
+                    <span>HTML -> PDF Export</span>
+                  </label>
+                  <label class="toggle">
                     <input type="checkbox" id="federlicht-web-search" />
                     <span>Web Search</span>
                   </label>
@@ -511,6 +515,33 @@
                       <input id="federlicht-figures-mode" value="auto" />
                     </label>
                     <label>
+                      <span>HTML Print Profile</span>
+                      <select id="federlicht-html-print-profile">
+                        <option value="a4" selected>A4</option>
+                        <option value="letter">Letter</option>
+                        <option value="screen">Screen</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>HTML PDF Engine</span>
+                      <select id="federlicht-html-pdf-engine">
+                        <option value="auto" selected>auto</option>
+                        <option value="playwright">playwright</option>
+                        <option value="chrome">chrome</option>
+                        <option value="weasyprint">weasyprint</option>
+                        <option value="wkhtmltopdf">wkhtmltopdf</option>
+                        <option value="none">none</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>HTML PDF Wait (ms)</span>
+                      <input id="federlicht-html-pdf-wait-ms" type="number" min="0" step="100" value="1500" />
+                    </label>
+                    <label>
+                      <span>HTML PDF Timeout (sec)</span>
+                      <input id="federlicht-html-pdf-timeout-sec" type="number" min="5" step="5" value="120" />
+                    </label>
+                    <label>
                       <span>Figures Select</span>
                       <input
                         id="federlicht-figures-select"
@@ -532,6 +563,9 @@
                         placeholder="--progress --stream --repair-debug"
                       />
                     </label>
+                    <small id="federlicht-html-pdf-hint" class="muted wide">
+                      HTML output(<code>.html</code>)에서만 HTML PDF 옵션이 적용됩니다.
+                    </small>
                   </div>
                 </section>
 
@@ -1233,6 +1267,8 @@
                   <option value="open_path">open_path</option>
                   <option value="open_url">open_url</option>
                   <option value="set_inline_prompt">set_inline_prompt</option>
+                  <option value="edit_text_file">edit_text_file</option>
+                  <option value="rewrite_section">rewrite_section</option>
                   <option value="run_feather">run_feather</option>
                   <option value="run_federlicht">run_federlicht</option>
                   <option value="run_feather_then_federlicht">run_feather_then_federlicht</option>

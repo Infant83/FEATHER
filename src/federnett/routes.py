@@ -762,6 +762,9 @@ def _federlicht_runtime_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
         "model_vision": model_vision,
         "reasoning_effort": reasoning_effort,
         "progress_chars": progress_chars,
+        "html_print_profile": payload.get("html_print_profile"),
+        "html_pdf": bool(payload.get("html_pdf")),
+        "html_pdf_engine": payload.get("html_pdf_engine"),
     }
 
 
@@ -1481,12 +1484,18 @@ def handle_api_post(
                 timeout_sec = int(timeout_raw) if timeout_raw is not None else 6
             except Exception:
                 timeout_sec = 6
+            action_override_raw = payload.get("action_override")
+            action_override = action_override_raw if isinstance(action_override_raw, dict) else None
+            request_text_raw = payload.get("request_text")
+            request_text = str(request_text_raw).strip() if isinstance(request_text_raw, str) else None
             result = execute_capability_action(
                 cfg.root,
                 cap_id,
                 dry_run=dry_run,
                 run_rel=run_rel,
                 timeout_sec=max(2, min(timeout_sec, 30)),
+                action_override=action_override,
+                request_text=request_text,
             )
             handler._send_json(result)
             return

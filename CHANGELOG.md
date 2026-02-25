@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (2026-02-24)
+## 1.9.30 (2026-02-26)
 - P0+ completion batch (iter 123~132):
   - quality-contract metric versioning and stale handling:
     - add `src/federlicht/quality_contract.py` with
@@ -77,6 +77,18 @@
   - reinforce temporary-output policy in `docs/development_workflow_guide.md`:
     - limit root transient dirs to `temp/`, `test-results/`, `node_modules/`, `artifacts/`.
     - add explicit safe cleanup commands for local ephemeral dirs.
+- P2 infographic/export/QA batch (iter 20~111):
+  - section-aware infographic auto insertion hardening:
+    - strengthen claim-packet split rendering and multi-section insertion paths.
+    - persist insertion/lint metadata to run artifacts (`infographic_auto_insert.json`, lint snapshots).
+  - HTML->PDF regression tooling:
+    - add `tools/run_html_pdf_regression.py` for bytes/pages baseline checks and structured JSON summary output.
+    - add regression tests (`tests/test_html_pdf_regression_tool.py`, `tests/test_report_html_pdf.py`).
+  - quality gate + lint orchestration upgrades:
+    - expand `tools/run_report_quality_gate.py` infographic lint reporting and strict-fail path coverage.
+    - add/extend tests for gate runner, artwork tooling, and infographic insertion flow.
+  - handoff updates:
+    - add `docs/codex_handoff_20260226.md` with iter governance, batch verification records, and next-plan priorities.
 
 ## 1.9.29 (2026-02-23)
 - Version consistency policy hardening:

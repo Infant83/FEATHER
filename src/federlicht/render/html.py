@@ -17,6 +17,104 @@ _HEADING_RE = re.compile(r"(?is)<h([23])([^>]*)>(.*?)</h\1>")
 _HEADING_ID_RE = re.compile(r'(?i)\bid\s*=\s*"([^"]+)"')
 
 
+def normalize_html_print_profile(value: Optional[str]) -> str:
+    token = str(value or "").strip().lower()
+    if token in {"letter", "us_letter", "us-letter"}:
+        return "letter"
+    if token in {"screen", "none", "off", "false", "0"}:
+        return "screen"
+    return "a4"
+
+
+def _build_html_print_css(print_profile: Optional[str]) -> str:
+    profile = normalize_html_print_profile(print_profile)
+    page_size_rule = ""
+    if profile == "a4":
+        page_size_rule = "size: A4;"
+    elif profile == "letter":
+        page_size_rule = "size: Letter;"
+    return (
+        "@media print {\n"
+        "  @page {\n"
+        f"    {page_size_rule}\n"
+        "    margin: 12mm 12mm 14mm 12mm;\n"
+        "  }\n"
+        "  * {\n"
+        "    animation: none !important;\n"
+        "    transition: none !important;\n"
+        "    -webkit-print-color-adjust: exact;\n"
+        "    print-color-adjust: exact;\n"
+        "  }\n"
+        "  html, body {\n"
+        "    background: #ffffff !important;\n"
+        "    color: #0f172a !important;\n"
+        "  }\n"
+        "  .backdrop,\n"
+        "  .toc-sidebar,\n"
+        "  .viewer-overlay,\n"
+        "  .viewer-panel,\n"
+        "  .back-link {\n"
+        "    display: none !important;\n"
+        "  }\n"
+        "  .page {\n"
+        "    max-width: none !important;\n"
+        "    margin: 0 !important;\n"
+        "    padding: 0 !important;\n"
+        "  }\n"
+        "  .masthead,\n"
+        "  .article {\n"
+        "    box-shadow: none !important;\n"
+        "    backdrop-filter: none !important;\n"
+        "  }\n"
+        "  .masthead {\n"
+        "    background: #ffffff !important;\n"
+        "    color: #0f172a !important;\n"
+        "    border: 1px solid #cbd5e1 !important;\n"
+        "    margin-bottom: 16px !important;\n"
+        "    break-inside: avoid-page;\n"
+        "    page-break-inside: avoid;\n"
+        "  }\n"
+        "  .kicker,\n"
+        "  .report-title,\n"
+        "  .report-deck {\n"
+        "    color: #0f172a !important;\n"
+        "  }\n"
+        "  .article {\n"
+        "    border: 0 !important;\n"
+        "    background: #ffffff !important;\n"
+        "    padding: 0 !important;\n"
+        "  }\n"
+        "  .article h2,\n"
+        "  .article h3,\n"
+        "  .article blockquote,\n"
+        "  .article pre,\n"
+        "  .article table,\n"
+        "  .article figure.report-figure {\n"
+        "    break-inside: avoid-page;\n"
+        "    page-break-inside: avoid;\n"
+        "  }\n"
+        "  .article img,\n"
+        "  .article svg,\n"
+        "  .article canvas {\n"
+        "    max-width: 100% !important;\n"
+        "    height: auto !important;\n"
+        "    box-shadow: none !important;\n"
+        "    break-inside: avoid-page;\n"
+        "    page-break-inside: avoid;\n"
+        "  }\n"
+        "  .article h2,\n"
+        "  .article h3 {\n"
+        "    scroll-margin-top: 0 !important;\n"
+        "  }\n"
+        "  .article a,\n"
+        "  .article a:visited {\n"
+        "    color: #0f172a !important;\n"
+        "    text-decoration: underline;\n"
+        "  }\n"
+        "}\n"
+    )
+
+
 def _mathjax_loader_script() -> str:
     return (
         "  <script>\n"
@@ -345,6 +443,7 @@ def wrap_html(
     extra_body_class: Optional[str] = None,
     with_mermaid: bool = False,
     layout: Optional[str] = None,
+    print_profile: Optional[str] = "a4",
 ) -> str:
     safe_title = html_lib.escape(title)
     template_class = ""
@@ -364,6 +463,7 @@ def wrap_html(
     if with_mermaid:
         mermaid_head = _mermaid_loader_script()
         mermaid_tail = ""
+    print_css = _build_html_print_css(print_profile)
     return (
         "<!doctype html>\n"
         "<html lang=\"en\">\n"
@@ -814,6 +914,7 @@ def wrap_html(
         "    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }\n"
         "    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }\n"
         "    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }\n"
+        f"    {print_css}\n"
         f"    {'' if theme_href else (theme_css or '')}\n"
         "  </style>\n"
         f"{theme_link}"

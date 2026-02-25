@@ -250,3 +250,37 @@ def test_resolve_model_hint_keeps_openai_default_for_public_api(monkeypatch) -> 
 
     model = runtime_mod._resolve_model_hint(None, "openai_api")
     assert model == "gpt-4o-mini"
+
+
+def test_try_deepagent_answer_tools_expose_callable_name(monkeypatch, tmp_path: Path) -> None:
+    captured_tools: list[object] = []
+
+    class _FakeAgent:
+        def invoke(self, _payload):
+            return {"messages": [{"role": "assistant", "content": "ok"}]}
+
+    class _FakeReportMod:
+        @staticmethod
+        def create_agent_with_fallback(*args, **_kwargs):
+            if len(args) >= 3 and isinstance(args[2], list):
+                captured_tools.extend(args[2])
+            return _FakeAgent()
+
+    monkeypatch.setattr(runtime_mod, "_load_agent_factory", lambda: (_FakeReportMod(), object()))
+
+    out = runtime_mod.try_deepagent_answer(
+        question="요약해줘",
+        messages=[{"role": "user", "content": "hello"}],
+        sources=[],
+        state_memory={"run": {"run_rel": "runs/demo"}},
+        model="gpt-4o-mini",
+        llm_backend="openai_api",
+        reasoning_effort="off",
+        runtime_mode="auto",
+        root=tmp_path,
+    )
+    assert out is not None
+    assert captured_tools
+    assert all(callable(tool) for tool in captured_tools)
+    assert all(hasattr(tool, "__name__") and str(getattr(tool, "__name__", "")).strip() for tool in captured_tools)
+    assert all(hasattr(tool, "__qualname__") and str(getattr(tool, "__qualname__", "")).strip() for tool in captured_tools)

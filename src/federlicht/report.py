@@ -30,6 +30,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
+from . import artwork as feder_artwork
 from . import tools as feder_tools
 from . import prompts
 from .profiles import (
@@ -53,6 +54,7 @@ from feather.web_research import run_supporting_web_research
 from .render.html import (
     html_to_text,
     markdown_to_html,
+    normalize_html_print_profile,
     render_viewer_html,
     transform_mermaid_code_blocks,  # noqa: F401
     wrap_html,
@@ -3372,6 +3374,388 @@ def compile_latex_to_pdf(tex_path: Path) -> tuple[bool, str]:
     return False, "No LaTeX compiler found (latexmk or pdflatex)."
 
 
+_HTML_PDF_ENGINES = ("playwright", "chrome", "weasyprint", "wkhtmltopdf")
+_CHROME_CANDIDATES = (
+    "chrome",
+    "chrome.exe",
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "msedge",
+    "msedge.exe",
+)
+
+
+def _resolve_html_pdf_engine_order(engine: str) -> list[str]:
+    token = str(engine or "auto").strip().lower()
+    if token in {"none", "off", "false", "0"}:
+        return []
+    if token in _HTML_PDF_ENGINES:
+        return [token]
+    return list(_HTML_PDF_ENGINES)
+
+
+def _resolve_html_pdf_format(print_profile: Optional[str]) -> str:
+    profile = normalize_html_print_profile(print_profile)
+    if profile == "letter":
+        return "Letter"
+    return "A4"
+
+
+def _wait_for_playwright_render_settle(page: Any, *, timeout_ms: int) -> tuple[bool, str]:
+    budget_ms = max(800, int(timeout_ms))
+    poll_ms = 220
+    stable_required = 2
+    stable_hits = 0
+    last_signature = ""
+    last_state: dict[str, Any] = {}
+    deadline = time.monotonic() + (budget_ms / 1000.0)
+
+    while time.monotonic() < deadline:
+        try:
+            state_raw = page.evaluate(
+                """() => {
+                    const doc = document;
+                    const domReady = doc.readyState === 'complete' || doc.readyState === 'interactive';
+                    const images = Array.from(doc.images || []);
+                    const imagesPending = images.filter((img) => !img.complete).length;
+                    const canvases = Array.from(doc.querySelectorAll('canvas'));
+                    const canvasReady = canvases.filter((canvas) => {
+                        try {
+                            const w = Number(canvas.width || 0);
+                            const h = Number(canvas.height || 0);
+                            if (w <= 0 || h <= 0) return false;
+                            const ctx = canvas.getContext && canvas.getContext('2d');
+                            return Boolean(ctx);
+                        } catch (_err) {
+                            return false;
+                        }
+                    }).length;
+                    const plotlyCount = doc.querySelectorAll('.js-plotly-plot').length;
+                    const iframes = Array.from(doc.querySelectorAll('iframe'));
+                    const iframePending = iframes.filter((frame) => {
+                        try {
+                            const inner = frame.contentDocument;
+                            if (!inner) return true;
+                            const ready = String(inner.readyState || '').toLowerCase();
+                            return !(ready === 'complete' || ready === 'interactive');
+                        } catch (_err) {
+                            return false;
+                        }
+                    }).length;
+                    const fontsReady = !doc.fonts || doc.fonts.status === 'loaded';
+                    const hasVisualTargets = canvases.length > 0 || plotlyCount > 0 || iframes.length > 0;
+                    const chartReadyFlag = Boolean(window.__FEDERLICHT_CHARTS_READY__ || window.FEDERLICHT_CHARTS_READY);
+                    const visualReady = !hasVisualTargets || chartReadyFlag || canvasReady > 0 || plotlyCount > 0;
+                    const ready = domReady && fontsReady && imagesPending === 0 && iframePending === 0 && visualReady;
+                    const bodyHeight = Number(doc.body ? doc.body.scrollHeight : 0);
+                    const signature = [
+                        String(doc.readyState || ''),
+                        String(imagesPending),
+                        String(canvases.length),
+                        String(canvasReady),
+                        String(plotlyCount),
+                        String(iframes.length),
+                        String(iframePending),
+                        String(bodyHeight),
+                        chartReadyFlag ? '1' : '0',
+                    ].join('|');
+                    return {
+                        ready,
+                        signature,
+                        dom_ready: domReady,
+                        fonts_ready: fontsReady,
+                        images_pending: imagesPending,
+                        canvas_total: canvases.length,
+                        canvas_ready: canvasReady,
+                        plotly_count: plotlyCount,
+                        iframe_total: iframes.length,
+                        iframe_pending: iframePending,
+                        chart_ready_flag: chartReadyFlag,
+                    };
+                }"""
+            )
+        except Exception as exc:
+            return False, f"render_probe_failed:{exc}"
+
+        state = state_raw if isinstance(state_raw, dict) else {}
+        last_state = state
+        signature = str(state.get("signature") or "")
+        ready = bool(state.get("ready"))
+        if ready and signature == last_signature:
+            stable_hits += 1
+            if stable_hits >= stable_required:
+                return True, ""
+        else:
+            stable_hits = 1 if ready else 0
+            last_signature = signature
+        try:
+            page.wait_for_timeout(poll_ms)
+        except Exception:
+            break
+
+    pending: list[str] = []
+    if not bool(last_state.get("dom_ready")):
+        pending.append("dom")
+    if not bool(last_state.get("fonts_ready", True)):
+        pending.append("fonts")
+    if int(last_state.get("images_pending", 0) or 0) > 0:
+        pending.append(f"images={int(last_state.get('images_pending', 0) or 0)}")
+    if int(last_state.get("iframe_pending", 0) or 0) > 0:
+        pending.append(f"iframe={int(last_state.get('iframe_pending', 0) or 0)}")
+    if not bool(last_state.get("chart_ready_flag")) and int(last_state.get("canvas_total", 0) or 0) > 0:
+        pending.append("chart_flag")
+    reason = ",".join(pending) if pending else "timeout"
+    return False, f"render_settle_timeout:{reason}"
+
+
+def _compile_html_to_pdf_playwright(
+    html_path: Path,
+    pdf_path: Path,
+    *,
+    print_profile: Optional[str],
+    wait_ms: int,
+    timeout_sec: int,
+) -> tuple[bool, str]:
+    try:
+        from playwright.sync_api import sync_playwright  # type: ignore
+    except Exception as exc:
+        return False, f"playwright unavailable: {exc}"
+    file_url = html_path.resolve().as_uri()
+    timeout_ms = max(5000, int(timeout_sec) * 1000)
+    extra_wait = max(0, int(wait_ms))
+    page_format = _resolve_html_pdf_format(print_profile)
+    try:
+        with sync_playwright() as runner:
+            browser = runner.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.goto(file_url, wait_until="domcontentloaded", timeout=timeout_ms)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=min(timeout_ms, 8000))
+                except Exception:
+                    pass
+                settle_timeout = min(timeout_ms, max(2200, int(timeout_ms * 0.18)))
+                settled, _settle_reason = _wait_for_playwright_render_settle(
+                    page,
+                    timeout_ms=settle_timeout,
+                )
+                if not settled and extra_wait <= 0:
+                    extra_wait = 900
+                if extra_wait > 0:
+                    page.wait_for_timeout(extra_wait)
+                page.pdf(
+                    path=str(pdf_path),
+                    print_background=True,
+                    prefer_css_page_size=True,
+                    format=page_format,
+                )
+            finally:
+                browser.close()
+    except Exception as exc:
+        return False, f"playwright failed: {exc}"
+    if pdf_path.exists() and pdf_path.stat().st_size > 0:
+        return True, ""
+    return False, "playwright did not produce a non-empty PDF."
+
+
+def _find_chrome_binary() -> Optional[str]:
+    for candidate in _CHROME_CANDIDATES:
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+    return None
+
+
+def _compile_html_to_pdf_chrome(
+    html_path: Path,
+    pdf_path: Path,
+    *,
+    timeout_sec: int,
+) -> tuple[bool, str]:
+    chrome_bin = _find_chrome_binary()
+    if not chrome_bin:
+        return False, "chrome/chromium/msedge binary not found in PATH."
+    file_url = html_path.resolve().as_uri()
+    base_args = [
+        chrome_bin,
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--allow-file-access-from-files",
+        "--enable-local-file-accesses",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={pdf_path}",
+        file_url,
+    ]
+    headless_modes = (["--headless=new"], ["--headless"])
+    last_error = ""
+    for headless in headless_modes:
+        cmd = [*base_args[:1], *headless, *base_args[1:]]
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=max(5, int(timeout_sec)),
+            )
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+        if result.returncode == 0 and pdf_path.exists() and pdf_path.stat().st_size > 0:
+            return True, ""
+        stderr_text = (result.stderr or "").strip()
+        stdout_text = (result.stdout or "").strip()
+        last_error = stderr_text or stdout_text or f"chrome exited with code {result.returncode}"
+    return False, f"chrome failed: {truncate_text_head(last_error, 400)}"
+
+
+def _compile_html_to_pdf_weasyprint(
+    html_path: Path,
+    pdf_path: Path,
+    *,
+    timeout_sec: int,
+) -> tuple[bool, str]:
+    exe = shutil.which("weasyprint")
+    if not exe:
+        return False, "weasyprint command not found."
+    cmd = [exe, str(html_path), str(pdf_path)]
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=max(5, int(timeout_sec)),
+        )
+    except Exception as exc:
+        return False, f"weasyprint failed: {exc}"
+    if result.returncode == 0 and pdf_path.exists() and pdf_path.stat().st_size > 0:
+        return True, ""
+    error = result.stderr or result.stdout or f"weasyprint exited with code {result.returncode}"
+    return False, f"weasyprint failed: {truncate_text_head(error, 400)}"
+
+
+def _compile_html_to_pdf_wkhtmltopdf(
+    html_path: Path,
+    pdf_path: Path,
+    *,
+    print_profile: Optional[str],
+    timeout_sec: int,
+) -> tuple[bool, str]:
+    exe = shutil.which("wkhtmltopdf")
+    if not exe:
+        return False, "wkhtmltopdf command not found."
+    page_size = _resolve_html_pdf_format(print_profile)
+    cmd = [
+        exe,
+        "--enable-local-file-access",
+        "--print-media-type",
+        "--page-size",
+        page_size,
+        str(html_path),
+        str(pdf_path),
+    ]
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=max(5, int(timeout_sec)),
+        )
+    except Exception as exc:
+        return False, f"wkhtmltopdf failed: {exc}"
+    if result.returncode == 0 and pdf_path.exists() and pdf_path.stat().st_size > 0:
+        return True, ""
+    error = result.stderr or result.stdout or f"wkhtmltopdf exited with code {result.returncode}"
+    return False, f"wkhtmltopdf failed: {truncate_text_head(error, 400)}"
+
+
+def compile_html_to_pdf(
+    html_path: Path,
+    *,
+    pdf_path: Optional[Path] = None,
+    engine: str = "auto",
+    print_profile: Optional[str] = "a4",
+    wait_ms: int = 1500,
+    timeout_sec: int = 120,
+) -> tuple[bool, str, str]:
+    source_path = html_path.resolve()
+    target_path = (pdf_path or html_path.with_suffix(".pdf")).resolve()
+    if not source_path.exists():
+        return False, "none", f"HTML not found: {source_path}"
+    if source_path.suffix.lower() != ".html":
+        return False, "none", f"HTML PDF export requires a .html source: {source_path.name}"
+    engines = _resolve_html_pdf_engine_order(engine)
+    if not engines:
+        return False, "none", "HTML PDF export disabled by engine setting."
+    attempted: list[str] = []
+    for candidate in engines:
+        if candidate == "playwright":
+            ok, reason = _compile_html_to_pdf_playwright(
+                source_path,
+                target_path,
+                print_profile=print_profile,
+                wait_ms=wait_ms,
+                timeout_sec=timeout_sec,
+            )
+        elif candidate == "chrome":
+            ok, reason = _compile_html_to_pdf_chrome(
+                source_path,
+                target_path,
+                timeout_sec=timeout_sec,
+            )
+        elif candidate == "weasyprint":
+            ok, reason = _compile_html_to_pdf_weasyprint(
+                source_path,
+                target_path,
+                timeout_sec=timeout_sec,
+            )
+        elif candidate == "wkhtmltopdf":
+            ok, reason = _compile_html_to_pdf_wkhtmltopdf(
+                source_path,
+                target_path,
+                print_profile=print_profile,
+                timeout_sec=timeout_sec,
+            )
+        else:
+            ok, reason = False, "unknown engine"
+        if ok:
+            return True, candidate, ""
+        attempted.append(f"{candidate}: {reason}")
+    if target_path.exists() and target_path.stat().st_size <= 0:
+        try:
+            target_path.unlink()
+        except Exception:
+            pass
+    return False, "none", " | ".join(attempted)
+
+
+def inspect_pdf_artifact(pdf_path: Path) -> dict[str, int]:
+    info: dict[str, int] = {}
+    try:
+        size = int(pdf_path.stat().st_size)
+    except Exception:
+        size = 0
+    if size > 0:
+        info["pdf_bytes"] = size
+    try:
+        import fitz  # type: ignore
+
+        with fitz.open(str(pdf_path)) as doc:
+            pages = int(getattr(doc, "page_count", 0) or 0)
+            if pages > 0:
+                info["pdf_pages"] = pages
+    except Exception:
+        pass
+    return info
+
+
 def cleanup_latex_artifacts(tex_path: Path) -> None:
     base = tex_path.with_suffix("")
     candidates = [
@@ -5975,7 +6359,7 @@ def find_section_spans(text: str, output_format: str) -> list[tuple[str, int, in
     if output_format == "tex":
         pattern = re.compile(r"^\\section\\*?\\{([^}]+)\\}", re.MULTILINE)
     else:
-        pattern = re.compile(r"^##\\s+(.+)$", re.MULTILINE)
+        pattern = re.compile(r"^##\s+(.+)$", re.MULTILINE)
     matches = list(pattern.finditer(text))
     spans: list[tuple[str, int, int]] = []
     for idx, match in enumerate(matches):
@@ -6581,6 +6965,522 @@ def insert_figures_by_section(
             callout_block = f"{callout}\n\n" if callout else ""
             rebuilt = rebuilt.rstrip() + "\n\n## Figures\n" + callout_block + block + "\n"
     return rebuilt
+
+
+_INFOGRAPHIC_SECTION_HINT_CANDIDATES: dict[str, list[str]] = {
+    "key_findings": [
+        "Key Findings",
+        "Results & Benchmarks",
+        "Trends & Implications",
+        "핵심 결과",
+        "핵심 발견",
+        "결과",
+        "시사점",
+    ],
+    "decision_recommendation": [
+        "Implications",
+        "Recommendations",
+        "Conclusion",
+        "결론",
+        "권고",
+        "전략",
+        "시사점",
+    ],
+    "scope_methodology": [
+        "Scope & Methodology",
+        "Methods & Data",
+        "Methodology",
+        "방법론",
+        "연구 방법",
+    ],
+    "risks_gaps": [
+        "Risks & Gaps",
+        "Limitations",
+        "Risk Analysis",
+        "리스크",
+        "한계",
+        "불확실성",
+    ],
+    "executive_summary": [
+        "Executive Summary",
+        "Summary",
+        "요약",
+        "개요",
+    ],
+    "unspecified": [
+        "Key Findings",
+        "Trends & Implications",
+        "핵심 결과",
+        "결과",
+    ],
+}
+
+
+def _find_section_title_by_candidate(
+    spans: list[tuple[str, int, int]],
+    candidate: str,
+) -> Optional[str]:
+    token = _normalize_section_title_token(candidate)
+    if not token:
+        return None
+    for title, _start, _end in spans:
+        title_token = _normalize_section_title_token(title)
+        if not title_token:
+            continue
+        if title_token == token or title_token.startswith(token) or token in title_token:
+            return title
+    return None
+
+
+def _pick_infographic_section_title(
+    report_text: str,
+    output_format: str,
+    claims: list[dict[str, Any]],
+) -> Optional[str]:
+    spans = find_section_spans(report_text, output_format)
+    if not spans:
+        return None
+    hint_counts: dict[str, int] = {}
+    for entry in claims:
+        hint = str(entry.get("section_hint") or "unspecified").strip().lower() or "unspecified"
+        hint_counts[hint] = hint_counts.get(hint, 0) + 1
+    ordered_hints = sorted(
+        hint_counts.items(),
+        key=lambda item: (item[1], item[0] != "key_findings"),
+        reverse=True,
+    )
+    for hint, _count in ordered_hints:
+        for candidate in _INFOGRAPHIC_SECTION_HINT_CANDIDATES.get(hint, []):
+            matched = _find_section_title_by_candidate(spans, candidate)
+            if matched:
+                return matched
+    for candidate in _INFOGRAPHIC_SECTION_HINT_CANDIDATES["unspecified"]:
+        matched = _find_section_title_by_candidate(spans, candidate)
+        if matched:
+            return matched
+    return spans[min(1, len(spans) - 1)][0]
+
+
+def _normalize_infographic_section_hint(value: object) -> str:
+    token = str(value or "").strip().lower().replace("-", "_")
+    return token or "unspecified"
+
+
+def _pick_infographic_section_title_for_hint(
+    spans: list[tuple[str, int, int]],
+    hint: str,
+) -> Optional[str]:
+    for candidate in _INFOGRAPHIC_SECTION_HINT_CANDIDATES.get(_normalize_infographic_section_hint(hint), []):
+        matched = _find_section_title_by_candidate(spans, candidate)
+        if matched:
+            return matched
+    return None
+
+
+def _extract_infographic_chart_section_hint(chart: dict[str, Any]) -> str:
+    note = str(chart.get("note") or "").strip().lower()
+    note_match = re.search(r"section_hint\s*=\s*([a-z0-9_-]+)", note)
+    if note_match:
+        return _normalize_infographic_section_hint(note_match.group(1))
+    chart_id = str(chart.get("id") or "").strip().lower()
+    if chart_id.startswith("claim_evidence_"):
+        suffix = chart_id[len("claim_evidence_") :]
+        if suffix and suffix not in {"snapshot", "overview", "all"}:
+            return _normalize_infographic_section_hint(suffix)
+    return "unspecified"
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        token = str(value or "").strip()
+        if not token or token in seen:
+            continue
+        seen.add(token)
+        ordered.append(token)
+    return ordered
+
+
+def _build_infographic_append_heading(hint: str, is_korean: bool) -> str:
+    normalized = _normalize_infographic_section_hint(hint)
+    if normalized == "unspecified":
+        return "데이터 인포그래픽" if is_korean else "Data-Driven Infographic"
+    label = normalized.replace("_", " ").strip().title()
+    if is_korean:
+        return f"데이터 인포그래픽 ({label})"
+    return f"Data-Driven Infographic ({label})"
+
+
+def _resolve_run_rel_href_for_report(rel_path: str, run_dir: Path, report_dir: Path) -> str:
+    raw = str(rel_path or "").strip()
+    if not raw:
+        return ""
+    clean = raw.lstrip("./").replace("\\", "/")
+    abs_path = (run_dir / clean).resolve()
+    if abs_path.exists():
+        return os.path.relpath(abs_path, report_dir).replace("\\", "/")
+    return clean
+
+
+def _rewrite_embed_iframe_src(embed_html: str, src_href: str) -> str:
+    raw = str(embed_html or "").strip()
+    if not raw or not str(src_href or "").strip():
+        return raw
+    safe_href = html_lib.escape(src_href, quote=True)
+    rewritten = re.sub(r'src="[^"]*"', f'src="{safe_href}"', raw, count=1)
+    return rewritten if rewritten else raw
+
+
+def _append_infographic_section(
+    report_text: str,
+    output_format: str,
+    heading: str,
+    block: str,
+) -> str:
+    if output_format == "tex":
+        return report_text.rstrip() + f"\n\n\\section*{{{heading}}}\n{block}\n"
+    return report_text.rstrip() + f"\n\n## {heading}\n\n{block}\n"
+
+
+def auto_insert_claim_packet_infographic(
+    report_text: str,
+    *,
+    output_format: str,
+    run_dir: Path,
+    report_dir: Path,
+    notes_dir: Path,
+    report_title: str = "",
+    language: str = "ko",
+    max_claims: int = 8,
+) -> tuple[str, dict[str, Any]]:
+    meta: dict[str, Any] = {
+        "enabled": output_format in {"md", "html"},
+        "inserted": False,
+        "reason": "",
+        "section": "",
+        "sections": [],
+        "path": "",
+        "paths": [],
+        "data_path": "",
+        "data_paths": [],
+        "lint_warning_count": 0,
+        "lint_path": "",
+        "chart_count": 0,
+    }
+    if output_format not in {"md", "html"}:
+        meta["reason"] = "output_not_supported"
+        return report_text, meta
+    if not str(report_text or "").strip():
+        meta["reason"] = "empty_report"
+        return report_text, meta
+    if "report-infographic" in str(report_text).lower():
+        meta["reason"] = "existing_infographic_present"
+        return report_text, meta
+
+    packet_path: Optional[Path] = None
+    for candidate in ("claim_evidence_map.json", "evidence_packet.latest.json"):
+        path = notes_dir / candidate
+        if path.exists():
+            packet_path = path
+            break
+    if not packet_path:
+        meta["reason"] = "claim_packet_missing"
+        return report_text, meta
+
+    try:
+        claim_packet = json.loads(packet_path.read_text(encoding="utf-8", errors="replace"))
+    except Exception as exc:
+        meta["reason"] = f"claim_packet_parse_failed:{exc}"
+        return report_text, meta
+    if not isinstance(claim_packet, dict):
+        meta["reason"] = "claim_packet_invalid"
+        return report_text, meta
+    claims_raw = claim_packet.get("claims")
+    if not isinstance(claims_raw, list):
+        meta["reason"] = "claim_packet_claims_missing"
+        return report_text, meta
+
+    eligible_claims: list[dict[str, Any]] = []
+    for raw in claims_raw:
+        if not isinstance(raw, dict):
+            continue
+        claim_text = str(raw.get("claim_text") or raw.get("claim") or "").strip()
+        if not claim_text:
+            continue
+        evidence_ids = raw.get("evidence_ids")
+        refs = raw.get("refs")
+        evidence_count = 0
+        if isinstance(evidence_ids, list):
+            evidence_count = sum(1 for item in evidence_ids if str(item).strip())
+        elif isinstance(refs, list):
+            evidence_count = sum(1 for item in refs if str(item).strip())
+        if evidence_count <= 0:
+            continue
+        eligible_claims.append(raw)
+    if len(eligible_claims) < 2:
+        meta["reason"] = "insufficient_claims_for_infographic"
+        return report_text, meta
+
+    source_rel = f"./{packet_path.resolve().relative_to(run_dir.resolve()).as_posix()}"
+    is_korean = _is_korean_lang(language)
+    try:
+        spec_text = feder_artwork.build_infographic_spec_from_claim_packet(
+            json.dumps(claim_packet, ensure_ascii=False),
+            title=(
+                "근거 패킷 기반 인포그래픽"
+                if is_korean
+                else "Claim-Evidence Packet Infographic"
+            ),
+            subtitle=(
+                "claim_evidence_map.json에서 자동 생성된 주장-근거 요약"
+                if is_korean
+                else "Auto-generated claim-evidence snapshot from packet."
+            ),
+            chart_title=(
+                "주장 강도와 근거 커버리지"
+                if is_korean
+                else "Claim Strength and Evidence Coverage"
+            ),
+            chart_description=(
+                "핵심 claim의 evidence 수와 strength 점수를 비교합니다."
+                if is_korean
+                else "Compares evidence count and strength score for selected claims."
+            ),
+            source=source_rel,
+            simulated=False,
+            chart_type="auto",
+            max_claims=max_claims,
+            split_by_section=True,
+            max_charts=4,
+            note=(
+                "데이터: claim_text, evidence_ids, strength 필드 기준"
+                if is_korean
+                else "Derived from claim_text, evidence_ids, and strength fields."
+            ),
+        )
+    except Exception as exc:
+        meta["reason"] = f"spec_build_failed:{exc}"
+        return report_text, meta
+
+    try:
+        spec_obj = json.loads(spec_text)
+    except Exception:
+        spec_obj = {}
+    chart_items: list[dict[str, Any]] = []
+    chart_count = 0
+    if isinstance(spec_obj, dict):
+        raw_chart_items = spec_obj.get("charts")
+        if isinstance(raw_chart_items, list):
+            chart_items = [item for item in raw_chart_items if isinstance(item, dict)]
+            chart_count = len(chart_items)
+    lint_issues = feder_artwork.lint_infographic_spec(spec_obj if isinstance(spec_obj, dict) else {})
+    lint_path = notes_dir / "infographic_lint_auto_claim_snapshot.txt"
+    lint_lines = [
+        "# Infographic Lint",
+        f"- packet: {packet_path.name}",
+        f"- warnings: {len(lint_issues)}",
+        "",
+    ]
+    if lint_issues:
+        lint_lines.extend([f"- {item}" for item in lint_issues])
+    else:
+        lint_lines.append("- OK")
+    lint_path.write_text("\n".join(lint_lines).strip() + "\n", encoding="utf-8")
+    lint_rel = f"./{lint_path.resolve().relative_to(run_dir.resolve()).as_posix()}"
+    lint_href = _resolve_run_rel_href_for_report(lint_rel, run_dir, report_dir)
+
+    spans = find_section_spans(report_text, output_format)
+    fallback_section = _pick_infographic_section_title(report_text, output_format, eligible_claims) or ""
+
+    render_jobs: list[dict[str, Any]] = []
+    if chart_items and isinstance(spec_obj, dict):
+        grouped_charts: dict[str, list[dict[str, Any]]] = {}
+        for chart in chart_items:
+            hint = _extract_infographic_chart_section_hint(chart)
+            grouped_charts.setdefault(hint, []).append(chart)
+        overview_charts = grouped_charts.pop("unspecified", [])
+        ordered_groups = sorted(
+            grouped_charts.items(),
+            key=lambda item: (len(item[1]), item[0] != "key_findings"),
+            reverse=True,
+        )
+        for idx, (hint, rows) in enumerate(ordered_groups, start=1):
+            if not rows:
+                continue
+            section_title = _pick_infographic_section_title_for_hint(spans, hint) if spans else None
+            chart_bundle: list[dict[str, Any]] = []
+            if idx == 1 and overview_charts:
+                chart_bundle.extend(overview_charts)
+            chart_bundle.extend(rows)
+            spec_variant = dict(spec_obj)
+            spec_variant["charts"] = chart_bundle
+            render_jobs.append(
+                {
+                    "hint": hint,
+                    "section": section_title or "",
+                    "spec_text": json.dumps(spec_variant, ensure_ascii=False, indent=2),
+                }
+            )
+        if not render_jobs:
+            render_jobs.append(
+                {
+                    "hint": "unspecified",
+                    "section": fallback_section,
+                    "spec_text": spec_text,
+                }
+            )
+    else:
+        render_jobs.append(
+            {
+                "hint": "unspecified",
+                "section": fallback_section,
+                "spec_text": spec_text,
+            }
+        )
+
+    render_errors: list[str] = []
+    rendered_entries: list[dict[str, str]] = []
+    multi_render = len(render_jobs) > 1
+    for idx, job in enumerate(render_jobs, start=1):
+        hint = _normalize_infographic_section_hint(job.get("hint"))
+        suffix_seed = hint if hint != "unspecified" else f"section_{idx}"
+        suffix = slugify_label(suffix_seed) or f"section_{idx}"
+        output_rel_path = "report_assets/artwork/auto_claim_snapshot.html"
+        if multi_render:
+            output_rel_path = f"report_assets/artwork/auto_claim_snapshot_{idx:02d}_{suffix}.html"
+        render_result = feder_artwork.render_infographic_html(
+            run_dir,
+            str(job.get("spec_text") or spec_text),
+            output_rel_path=output_rel_path,
+            page_title=report_title or "",
+        )
+        if str(render_result.get("ok") or "").lower() != "true":
+            error = str(render_result.get("error") or "infographic_render_failed").strip() or "infographic_render_failed"
+            render_errors.append(f"{hint}:{error}")
+            continue
+        asset_rel = str(render_result.get("path") or "").strip()
+        data_rel = str(render_result.get("data_path") or "").strip()
+        embed_html = str(render_result.get("embed_html") or "").strip()
+        asset_href = _resolve_run_rel_href_for_report(asset_rel, run_dir, report_dir)
+        data_href = _resolve_run_rel_href_for_report(data_rel, run_dir, report_dir)
+        embed_html = _rewrite_embed_iframe_src(embed_html, asset_href)
+        block_lines = [embed_html] if embed_html else []
+        if data_href:
+            block_lines.append(f"*Infographic spec: [{data_href}]({data_href})*")
+        if lint_href:
+            block_lines.append(f"*Lint report: [{lint_href}]({lint_href})*")
+        block = "\n\n".join(line for line in block_lines if str(line).strip()).strip()
+        if not block:
+            render_errors.append(f"{hint}:empty_embed_block")
+            continue
+        rendered_entries.append(
+            {
+                "hint": hint,
+                "section": str(job.get("section") or "").strip(),
+                "asset_rel": asset_rel,
+                "data_rel": data_rel,
+                "block": block,
+            }
+        )
+
+    if not rendered_entries:
+        meta["reason"] = "infographic_render_failed"
+        if render_errors:
+            meta["reason"] = f"infographic_render_failed:{render_errors[0]}"
+        meta["lint_warning_count"] = len(lint_issues)
+        meta["lint_path"] = lint_rel
+        meta["chart_count"] = chart_count
+        return report_text, meta
+
+    section_block_map: dict[str, list[str]] = {}
+    section_title_map: dict[str, str] = {}
+    append_entries: list[dict[str, str]] = []
+    updated = report_text
+    if spans:
+        span_token_map: dict[str, str] = {}
+        for title, _start, _end in spans:
+            token = _normalize_section_title_token(title)
+            if token and token not in span_token_map:
+                span_token_map[token] = title
+        for entry in rendered_entries:
+            hint = _normalize_infographic_section_hint(entry.get("hint"))
+            target_section = str(entry.get("section") or "").strip()
+            if not target_section:
+                target_section = _pick_infographic_section_title_for_hint(spans, hint) or ""
+            if not target_section and fallback_section:
+                target_section = fallback_section
+            target_token = _normalize_section_title_token(target_section)
+            if target_token and target_token in span_token_map:
+                section_block_map.setdefault(target_token, []).append(entry["block"])
+                section_title_map[target_token] = span_token_map[target_token]
+                continue
+            append_entries.append(entry)
+        if section_block_map:
+            rebuilt = report_text[: spans[0][1]]
+            for title, start, end in spans:
+                section_text = report_text[start:end]
+                token = _normalize_section_title_token(title)
+                blocks = section_block_map.get(token) or []
+                if blocks:
+                    section_text = section_text.rstrip() + "\n\n" + "\n\n".join(blocks) + "\n"
+                rebuilt += section_text
+            updated = rebuilt
+    else:
+        append_entries = list(rendered_entries)
+
+    inserted_sections: list[str] = []
+    if spans and section_block_map:
+        for token in section_block_map:
+            inserted_sections.append(section_title_map.get(token) or "")
+    for entry in append_entries:
+        hint = _normalize_infographic_section_hint(entry.get("hint"))
+        heading = _build_infographic_append_heading(hint, is_korean)
+        updated = _append_infographic_section(updated, output_format, heading, entry["block"])
+        inserted_sections.append(heading)
+
+    inserted_sections = _dedupe_preserve_order(inserted_sections)
+    asset_paths = _dedupe_preserve_order([entry.get("asset_rel", "") for entry in rendered_entries if entry.get("asset_rel")])
+    data_paths = _dedupe_preserve_order([entry.get("data_rel", "") for entry in rendered_entries if entry.get("data_rel")])
+    primary_section = inserted_sections[0] if inserted_sections else ""
+    primary_path = asset_paths[0] if asset_paths else ""
+    primary_data_path = data_paths[0] if data_paths else ""
+
+    meta.update(
+        {
+            "inserted": True,
+            "reason": "ok_partial_render" if render_errors else "ok",
+            "section": primary_section,
+            "sections": inserted_sections,
+            "path": primary_path,
+            "paths": asset_paths,
+            "data_path": primary_data_path,
+            "data_paths": data_paths,
+            "lint_warning_count": len(lint_issues),
+            "lint_path": lint_rel,
+            "chart_count": chart_count,
+        }
+    )
+    try:
+        auto_record_path = notes_dir / "infographic_auto_insert.json"
+        auto_record = {
+            "timestamp": dt.datetime.now().isoformat(timespec="seconds"),
+            "section": primary_section,
+            "sections": inserted_sections,
+            "asset_path": primary_path,
+            "asset_paths": asset_paths,
+            "spec_path": primary_data_path,
+            "spec_paths": data_paths,
+            "lint_path": lint_rel,
+            "lint_warning_count": len(lint_issues),
+            "chart_count": chart_count,
+            "claim_packet_path": source_rel,
+            "render_errors": render_errors,
+        }
+        auto_record_path.write_text(json.dumps(auto_record, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+    return updated, meta
 
 
 def _build_visual_fallback_note(
@@ -7555,12 +8455,16 @@ def print_progress(label: str, content: str, enabled: bool, max_chars: int) -> N
     print(f"\n[{label}]\n{snippet}\n")
 
 
-def _resolve_federlicht_backend_token() -> str:
+def _resolve_federlicht_backend_token(preferred: object = None) -> str:
+    if isinstance(preferred, str):
+        token = preferred.strip().lower()
+        if token:
+            return token
     return str(os.getenv("FEDERLICHT_LLM_BACKEND") or "").strip().lower()
 
 
-def _is_codex_backend_enabled() -> bool:
-    return _resolve_federlicht_backend_token() in {"codex", "codex_cli", "codex-cli", "cli"}
+def _is_codex_backend_enabled(preferred: object = None) -> bool:
+    return _resolve_federlicht_backend_token(preferred) in {"codex", "codex_cli", "codex-cli", "cli"}
 
 
 def _flatten_message_content(value: object) -> str:
@@ -8015,7 +8919,7 @@ def create_agent_with_fallback(
     if effective_temperature is not None:
         kwargs["temperature"] = effective_temperature
 
-    if _is_codex_backend_enabled():
+    if _is_codex_backend_enabled(backend):
         global CODEX_BRIDGE_LOGGED
         bridge_model = str(model_name or os.getenv("CODEX_MODEL") or "").strip()
         if not CODEX_BRIDGE_LOGGED:

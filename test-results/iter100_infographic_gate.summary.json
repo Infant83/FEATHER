@@ -1,0 +1,47 @@
+{
+  "rows": [
+    {
+      "path": "temp/20260226/iter20_infographic_sample/report_full.html",
+      "format": "html",
+      "overall": 79.31,
+      "claim_support_ratio": 75.0,
+      "unsupported_claim_count": 1.0,
+      "evidence_density_score": 100.0,
+      "section_coherence_score": 28.0,
+      "signals": {
+        "section_coverage": 100.0,
+        "citation_density": 100.0,
+        "evidence_density_score": 100.0,
+        "claim_support_ratio": 75.0,
+        "unsupported_claim_count": 1.0,
+        "section_coherence_score": 28.0,
+        "method_transparency": 100.0,
+        "traceability": 50.0,
+        "uncertainty_handling": 100.0,
+        "narrative_density_score": 31.88,
+        "visual_evidence_score": 92.0,
+        "overall": 79.31
+      }
+    }
+  ],
+  "rows_count": 1,
+  "summary": {
+    "overall": 79.31,
+    "claim_support_ratio": 75.0,
+    "unsupported_claim_count": 1.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 28.0
+  },
+  "baseline_summary": null,
+  "delta_summary": null,
+  "compare_markdown": "",
+  "suite": null,
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

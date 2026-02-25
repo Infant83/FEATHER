@@ -3078,12 +3078,18 @@ function renderFederlichtRuntimeSummary(configOverride = null) {
   const gatewayLabel = current.backend === "openai_api"
     ? (current.gatewayReasoningSupported ? "openai-api" : "compat-safe")
     : "codex-cli";
+  const htmlOutput = isFederlichtHtmlOutput();
+  const htmlPrintProfile = String($("#federlicht-html-print-profile")?.value || "a4").trim() || "a4";
+  const htmlPdfEnabled = Boolean($("#federlicht-html-pdf")?.checked) && htmlOutput;
+  const htmlPdfEngine = String($("#federlicht-html-pdf-engine")?.value || "auto").trim() || "auto";
   host.innerHTML = `
     ${chip("backend", current.backend)}
     ${chip("model", current.model || openaiModelHint())}
     ${chip("check", current.checkModel || current.model || openaiModelHint())}
     ${chip("vision", current.visionModel || openaiVisionModelHint())}
     ${chip("reasoning", reasoningLabel, current.reasoningCompatible ? "" : "is-warning")}
+    ${chip("print", htmlOutput ? htmlPrintProfile : "n/a", htmlOutput ? "" : "is-warning")}
+    ${chip("html_pdf", htmlOutput ? (htmlPdfEnabled ? `on:${htmlPdfEngine}` : "off") : "n/a", htmlOutput ? "" : "is-warning")}
   `;
   if (gatewayChip) {
     gatewayChip.textContent = `gateway: ${gatewayLabel}`;
@@ -7193,9 +7199,9 @@ async function runLiveAskQuestion() {
     const suggestedAction = String(result?.action?.type || "").trim().toLowerCase();
     if (suggestedAction) {
       appendLog(`[run-agent:action] suggested=${suggestedAction}\n`);
-      const isWriteAction = isAskWriteActionType(suggestedAction);
-      const requiresRunTargetConfirm = isRunTargetActionType(suggestedAction);
       const actionOverride = normalizeAskActionOverride(suggestedAction, result?.action || null);
+      const isWriteAction = isAskWriteActionType(suggestedAction) || isCapabilityWriteAction(suggestedAction, actionOverride);
+      const requiresRunTargetConfirm = isRunTargetActionType(suggestedAction);
       const requiresInstructionConfirm = actionRequiresInstructionConfirm(suggestedAction, actionOverride);
       const instructionConfirmReason = actionInstructionConfirmReason(suggestedAction, actionOverride);
       const requiresClarification = Boolean(actionOverride?.clarify_required);
@@ -9234,6 +9240,14 @@ function isAskWriteActionType(actionType) {
   return ASK_WRITE_ACTION_TYPES.has(normalizeAskActionType(actionType));
 }
 
+function isCapabilityWriteAction(actionType, actionOverride = null) {
+  const type = normalizeAskActionType(actionType);
+  if (!type || !type.startsWith("capability:")) return false;
+  const context = resolveAskActionContext(type, actionOverride);
+  const actionKind = String(context?.action_kind || "").trim().toLowerCase();
+  return actionKind === "edit_text_file" || actionKind === "rewrite_section";
+}
+
 function isAskPlanInstantActionType(actionType) {
   return ASK_PLAN_INSTANT_ACTION_TYPES.has(normalizeAskActionType(actionType));
 }
@@ -9453,6 +9467,7 @@ async function buildAskActionPlan(actionType, options = {}) {
     const capId = String(actionType || "").slice("capability:".length).trim();
     if (!capId) throw new Error("capability id is required");
     const runRel = selectedRunRel();
+    const requestText = inferCapabilityRequestFromRecentContext(action);
     const payload = await fetchJSON("/api/capabilities/execute", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -9460,6 +9475,8 @@ async function buildAskActionPlan(actionType, options = {}) {
         id: capId,
         dry_run: true,
         run: runRel || undefined,
+        action_override: action || undefined,
+        request_text: requestText || undefined,
       }),
     });
     return enrichAskActionPlanWithPlannerMeta({
@@ -10018,12 +10035,14 @@ async function executeAskSuggestedAction(actionType, options = {}) {
     return;
   }
   if (String(actionType || "").startsWith("capability:")) {
+    const action = resolveAskActionContext(actionType, actionOverride);
     const capId = String(actionType || "").slice("capability:".length).trim();
     if (!capId) {
       setAskStatus("Capability ID가 비어 있습니다.");
       return;
     }
     const runRel = selectedRunRel();
+    const requestText = inferCapabilityRequestFromRecentContext(action);
     const payload = await fetchJSON("/api/capabilities/execute", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -10031,6 +10050,8 @@ async function executeAskSuggestedAction(actionType, options = {}) {
         id: capId,
         dry_run: false,
         run: runRel || undefined,
+        action_override: action || undefined,
+        request_text: requestText || undefined,
       }),
     });
     const effect = String(payload?.effect || "").trim().toLowerCase();
@@ -10056,6 +10077,62 @@ async function executeAskSuggestedAction(actionType, options = {}) {
       }
       setAskStatus(`Capability 실행 완료: ${capId} · Inline Prompt 반영`);
       appendLog(`[capability] ${capId} -> set_inline_prompt\n`);
+      return;
+    }
+    if (effect === "edit_text_file") {
+      const targetPath = String(payload?.path || "").trim();
+      if (targetPath) {
+        await loadFilePreview(targetPath, { readOnly: false });
+      }
+      const changed = payload?.changed === true;
+      const mode = String(payload?.mode || "").trim() || "-";
+      const replacementCount = Number(payload?.replacements || 0);
+      const replacementNote = Number.isFinite(replacementCount) ? ` replacements=${replacementCount}` : "";
+      const statusLabel = changed ? "updated" : "no_change";
+      setAskStatus(`Capability 실행 완료: ${capId} · edit_text_file(${statusLabel})`);
+      appendLog(`[capability] ${capId} -> edit_text_file ${targetPath || "-"} mode=${mode} changed=${changed ? "1" : "0"}${replacementNote}\n`);
+      return;
+    }
+    if (effect === "rewrite_section") {
+      const targetPath = String(payload?.path || "").trim();
+      const section = String(payload?.section || "").trim();
+      const rewriteMode = String(payload?.rewrite_mode || "").trim().toLowerCase() || "prompt_prep";
+      if (targetPath) {
+        await loadFilePreview(targetPath, { readOnly: false });
+      }
+      if (rewriteMode === "prompt_prep") {
+        const promptFile = String(payload?.prompt_file || "").trim();
+        const promptText = String(payload?.prompt_text || "");
+        if (promptFile) {
+          const promptField = $("#federlicht-prompt-file");
+          if (promptField) {
+            promptField.value = promptFile;
+          }
+          promptFileTouched = true;
+          try {
+            await syncPromptFromFile(true);
+          } catch (err) {
+            appendLog(`[capability] ${capId} -> rewrite_section prompt load warning: ${err}\n`);
+          }
+        } else if (promptText) {
+          const promptEditor = $("#federlicht-prompt");
+          if (promptEditor) {
+            promptEditor.value = promptText;
+            promptEditor.focus();
+            promptEditor.setSelectionRange(promptText.length, promptText.length);
+          }
+          promptInlineTouched = true;
+        }
+        document.querySelector('[data-tab="federlicht"]')?.click();
+        const modeLabel = section ? `section=${section}` : "section=-";
+        setAskStatus(`Capability 실행 완료: ${capId} · rewrite_section(prompt_prep, ${modeLabel})`);
+        appendLog(`[capability] ${capId} -> rewrite_section prompt_prep ${targetPath || "-"} ${modeLabel}\n`);
+        return;
+      }
+      const changed = payload?.changed === true;
+      const modeLabel = section ? `section=${section}` : "section=-";
+      setAskStatus(`Capability 실행 완료: ${capId} · rewrite_section(${changed ? "updated" : "no_change"})`);
+      appendLog(`[capability] ${capId} -> rewrite_section ${targetPath || "-"} ${modeLabel} changed=${changed ? "1" : "0"}\n`);
       return;
     }
     if (effect === "delegate" && payload?.action_type) {
@@ -10090,6 +10167,8 @@ async function runAskSuggestedAction(actionType, options = {}) {
     }
     const mode = normalizeAskActionType(state.ask.actionMode || "plan");
     const plan = await buildAskActionPlan(actionType, { actionOverride: effectiveOverride });
+    const isWriteAction = isAskWriteActionType(normalizedActionType)
+      || isCapabilityWriteAction(normalizedActionType, effectiveOverride);
     const isRunAction = isAskWriteActionType(normalizedActionType) || isRunTargetActionType(normalizedActionType);
     const needsInstructionConfirm = actionRequiresInstructionConfirm(normalizedActionType, effectiveOverride);
     if (isRunAction) {
@@ -10118,13 +10197,13 @@ async function runAskSuggestedAction(actionType, options = {}) {
       await executeAskSuggestedAction(actionType, { actionOverride: effectiveOverride });
       return;
     }
-    const canAutoRun = mode === "act" && !needsInstructionConfirm && (!isRunAction || state.ask.allowArtifactWrites);
+    const canAutoRun = mode === "act" && !needsInstructionConfirm && (!isWriteAction || state.ask.allowArtifactWrites);
     if (canAutoRun) {
       setAskStatus("Act mode: 안전 규칙에 따라 제안을 바로 실행합니다.");
       await executeAskSuggestedAction(actionType, { actionOverride: effectiveOverride });
       return;
     }
-    if (mode === "act" && isRunAction && !state.ask.allowArtifactWrites) {
+    if (mode === "act" && isWriteAction && !state.ask.allowArtifactWrites) {
       setAskStatus("Act 모드지만 파일쓰기허용이 꺼져 있어 확인 후 실행 모드로 전환합니다.");
     }
     openAskActionModal({
@@ -10808,6 +10887,28 @@ function inferRunHintFromRecentContext() {
   return "";
 }
 
+function inferCapabilityRequestFromRecentContext(action = null) {
+  const explicit = String(action?.request_text || action?.request || "").trim();
+  if (explicit) return explicit.slice(0, 1200);
+  const candidates = [];
+  const pendingLive = String(state.liveAsk.pendingQuestion || "").trim();
+  const pendingAsk = String(state.ask.pendingQuestion || "").trim();
+  if (pendingLive) candidates.push(pendingLive);
+  if (pendingAsk) candidates.push(pendingAsk);
+  const pickRecentUserRows = (rows) => {
+    const list = Array.isArray(rows) ? rows : [];
+    return [...list]
+      .reverse()
+      .filter((entry) => entry?.role === "user" && String(entry?.content || "").trim())
+      .slice(0, 4)
+      .map((entry) => String(entry.content || "").trim());
+  };
+  candidates.push(...pickRecentUserRows(state.liveAsk.history));
+  candidates.push(...pickRecentUserRows(state.ask.history));
+  const first = candidates.find((item) => String(item || "").trim());
+  return first ? String(first).trim().slice(0, 1200) : "";
+}
+
 function resolveActionOverrideWithRunHint(actionType, actionOverride) {
   const context = resolveAskActionContext(actionType, actionOverride);
   const explicitHint = normalizeRunHint(context?.run_hint || "");
@@ -10983,6 +11084,52 @@ function ensureOutputPathForRun(rawOutputPath, runRel, fallbackLeaf = "report_fu
   return normalizePathString(`${normalizedRun}/${leaf}`);
 }
 
+function outputSuffixToken(pathValue) {
+  const normalized = normalizePathString(pathValue || "");
+  if (!normalized) return "";
+  const leaf = normalized.split("/").filter(Boolean).pop() || "";
+  const idx = leaf.lastIndexOf(".");
+  if (idx < 0) return "";
+  return leaf.slice(idx).toLowerCase();
+}
+
+function isFederlichtHtmlOutput(pathValue = null) {
+  const runRel = normalizePathString($("#run-select")?.value || "");
+  const outputPath = pathValue != null
+    ? normalizePathString(pathValue)
+    : ensureOutputPathForRun($("#federlicht-output")?.value, runRel);
+  const suffix = outputSuffixToken(outputPath);
+  if (!suffix) return true;
+  return suffix === ".html" || suffix === ".htm";
+}
+
+function syncFederlichtHtmlPdfControls(options = {}) {
+  const htmlOutput = isFederlichtHtmlOutput();
+  const htmlPdfToggle = $("#federlicht-html-pdf");
+  const printProfile = $("#federlicht-html-print-profile");
+  const engineSelect = $("#federlicht-html-pdf-engine");
+  const waitInput = $("#federlicht-html-pdf-wait-ms");
+  const timeoutInput = $("#federlicht-html-pdf-timeout-sec");
+  const hint = $("#federlicht-html-pdf-hint");
+  const controls = [htmlPdfToggle, printProfile, engineSelect, waitInput, timeoutInput].filter(Boolean);
+  controls.forEach((el) => {
+    el.disabled = !htmlOutput;
+    el.setAttribute("aria-disabled", htmlOutput ? "false" : "true");
+    el.classList.toggle("is-disabled", !htmlOutput);
+  });
+  if (hint) {
+    hint.innerHTML = htmlOutput
+      ? "HTML output(<code>.html</code>)에서 HTML PDF 옵션이 적용됩니다."
+      : "현재 출력 형식이 HTML이 아니므로 HTML PDF 옵션이 비활성화됩니다.";
+  }
+  if (!htmlOutput && htmlPdfToggle) {
+    htmlPdfToggle.checked = false;
+  }
+  if (!options.silent) {
+    renderFederlichtRuntimeSummary();
+  }
+}
+
 let reportOutputTouched = false;
 let promptOutputTouched = false;
 let featherOutputTouched = false;
@@ -11142,6 +11289,7 @@ function refreshRunDependentFields() {
     });
   }
   refreshFederlichtOutputHint().catch(() => {});
+  syncFederlichtHtmlPdfControls({ silent: true });
   syncFederlichtFieldTitles();
   renderWorkflowStudioPanel();
 }
@@ -18096,6 +18244,28 @@ function applyRunSettings(summary) {
       levelSelect.value = meta.temperature_level;
     }
   }
+  if (meta.html_print_profile) {
+    const printProfileSelect = $("#federlicht-html-print-profile");
+    if (
+      printProfileSelect
+      && Array.from(printProfileSelect.options).some((o) => o.value === meta.html_print_profile)
+    ) {
+      printProfileSelect.value = meta.html_print_profile;
+    }
+  }
+  if (meta.html_pdf_engine) {
+    const engineSelect = $("#federlicht-html-pdf-engine");
+    if (
+      engineSelect
+      && Array.from(engineSelect.options).some((o) => o.value === meta.html_pdf_engine)
+    ) {
+      engineSelect.value = meta.html_pdf_engine;
+    }
+  }
+  if (meta.html_pdf_requested !== undefined && meta.html_pdf_requested !== null) {
+    const htmlPdfToggle = $("#federlicht-html-pdf");
+    if (htmlPdfToggle) htmlPdfToggle.checked = !!meta.html_pdf_requested;
+  }
   if (meta.quality_iterations !== undefined && meta.quality_iterations !== null) {
     setQualityIterations(meta.quality_iterations);
   }
@@ -18112,6 +18282,7 @@ function applyRunSettings(summary) {
     }
   }
   syncFederlichtModelControls({ announce: false });
+  syncFederlichtHtmlPdfControls({ silent: true });
   renderActiveProfileSummary();
   applyFreeFormatMode();
   syncWorkflowQualityControls();
@@ -18504,12 +18675,21 @@ async function startJob(endpoint, payload, meta = {}) {
     const model = String(runtime.model || payload?.model || "-");
     const checkModel = String(runtime.check_model || runtime.model || payload?.check_model || payload?.model || "-");
     const reasoning = String(runtime.reasoning_effort || payload?.reasoning_effort || "off");
+    const htmlPrintProfile = String(
+      runtime.html_print_profile
+      || payload?.html_print_profile
+      || "-",
+    );
+    const htmlPdfEnabled = runtime.html_pdf !== undefined
+      ? Boolean(runtime.html_pdf)
+      : Boolean(payload?.html_pdf);
+    const htmlPdfEngine = String(runtime.html_pdf_engine || payload?.html_pdf_engine || "-");
     const progressCharsRaw = Number.parseInt(String(runtime.progress_chars || payload?.progress_chars || "0"), 10);
     const progressChars = Number.isFinite(progressCharsRaw) && progressCharsRaw > 0
       ? String(progressCharsRaw)
       : "off";
     appendLog(
-      `[federlicht:resolved] backend=${backend} model=${model} check=${checkModel} reasoning=${reasoning} progress=${progressChars}\n`,
+      `[federlicht:resolved] backend=${backend} model=${model} check=${checkModel} reasoning=${reasoning} progress=${progressChars} print=${htmlPrintProfile} html_pdf=${htmlPdfEnabled ? "on" : "off"} engine=${htmlPdfEngine}\n`,
     );
   }
   const jobId = res.job_id;
@@ -18663,9 +18843,14 @@ function buildFederlichtPayload() {
     : "";
   const promptValue = $("#federlicht-prompt")?.value;
   const includeInlinePrompt = isPromptDirty() || !promptFileValue;
+  const resolvedOutput = ensureOutputPathForRun($("#federlicht-output")?.value, runRel);
+  const htmlOutput = isFederlichtHtmlOutput(resolvedOutput);
+  const htmlPdfEnabled = Boolean($("#federlicht-html-pdf")?.checked) && htmlOutput;
+  const htmlPdfWaitMs = Number.parseInt(String($("#federlicht-html-pdf-wait-ms")?.value || "").trim(), 10);
+  const htmlPdfTimeoutSec = Number.parseInt(String($("#federlicht-html-pdf-timeout-sec")?.value || "").trim(), 10);
   const payload = {
     run: runRel,
-    output: ensureOutputPathForRun($("#federlicht-output")?.value, runRel),
+    output: resolvedOutput,
     template: freeFormat ? undefined : $("#template-select")?.value,
     free_format: freeFormat ? true : undefined,
     style_pack: freeFormat && stylePack && stylePack !== "none" ? stylePack : undefined,
@@ -18683,6 +18868,13 @@ function buildFederlichtPayload() {
     model_vision: normalizedModelConfig.visionModel,
     template_rigidity: freeFormat ? undefined : $("#federlicht-template-rigidity")?.value,
     temperature_level: $("#federlicht-temperature-level")?.value,
+    html_print_profile: htmlOutput ? $("#federlicht-html-print-profile")?.value : undefined,
+    html_pdf: htmlPdfEnabled ? true : undefined,
+    no_html_pdf: htmlOutput && !htmlPdfEnabled ? true : undefined,
+    html_pdf_engine: htmlOutput && htmlPdfEnabled ? $("#federlicht-html-pdf-engine")?.value : undefined,
+    html_pdf_wait_ms: htmlOutput && htmlPdfEnabled && Number.isFinite(htmlPdfWaitMs) ? htmlPdfWaitMs : undefined,
+    html_pdf_timeout_sec:
+      htmlOutput && htmlPdfEnabled && Number.isFinite(htmlPdfTimeoutSec) ? htmlPdfTimeoutSec : undefined,
     stages: selectedStages.join(","),
     skip_stages: skippedStages.join(","),
     quality_iterations: Number.parseInt(
@@ -18712,6 +18904,14 @@ function buildFederlichtPayload() {
     throw new Error("Output report path is required.");
   }
   if (!Number.isFinite(payload.quality_iterations)) delete payload.quality_iterations;
+  if (!htmlOutput) {
+    delete payload.html_print_profile;
+    delete payload.html_pdf;
+    delete payload.no_html_pdf;
+    delete payload.html_pdf_engine;
+    delete payload.html_pdf_wait_ms;
+    delete payload.html_pdf_timeout_sec;
+  }
   return pruneEmpty(payload);
 }
 
@@ -18991,11 +19191,13 @@ function handleRunOutputTouch() {
   $("#federlicht-output")?.addEventListener("input", () => {
     reportOutputTouched = true;
     refreshFederlichtOutputHint().catch(() => {});
+    syncFederlichtHtmlPdfControls({ silent: true });
     syncFederlichtFieldTitles();
   });
   $("#federlicht-output")?.addEventListener("change", () => {
     reportOutputTouched = true;
     refreshFederlichtOutputHint().catch(() => {});
+    syncFederlichtHtmlPdfControls({ silent: true });
     syncFederlichtFieldTitles();
   });
   $("#federlicht-prompt-file")?.addEventListener("input", () => {
@@ -19017,6 +19219,23 @@ function handleRunOutputTouch() {
   $("#federlicht-prompt")?.addEventListener("input", () => {
     promptInlineTouched = true;
   });
+}
+
+function handleFederlichtPdfControls() {
+  const controls = [
+    "#federlicht-html-pdf",
+    "#federlicht-html-print-profile",
+    "#federlicht-html-pdf-engine",
+    "#federlicht-html-pdf-wait-ms",
+    "#federlicht-html-pdf-timeout-sec",
+  ];
+  controls.forEach((selector) => {
+    $(selector)?.addEventListener("change", () => {
+      syncFederlichtHtmlPdfControls({ silent: true });
+      renderFederlichtRuntimeSummary();
+    });
+  });
+  syncFederlichtHtmlPdfControls({ silent: true });
 }
 
 function handlePipelineInputs() {
@@ -21695,8 +21914,12 @@ function bindForms() {
         appendLog(`[workflow] stage override sync failed: ${err}\n`);
       });
       const payload = buildFederlichtPayload();
+      const htmlOutput = isFederlichtHtmlOutput(payload.output || "");
+      const printProfile = String(payload.html_print_profile || "-");
+      const htmlPdfFlag = htmlOutput && Boolean(payload.html_pdf);
+      const htmlPdfEngine = String(payload.html_pdf_engine || "-");
       appendLog(
-        `[federlicht] runtime backend=${runtime.backend} model=${runtime.model || "$OPENAI_MODEL"} check=${runtime.checkModel || runtime.model || "-"} reasoning=${runtime.reasoningEffort || "off"}\n`,
+        `[federlicht] runtime backend=${runtime.backend} model=${runtime.model || "$OPENAI_MODEL"} check=${runtime.checkModel || runtime.model || "-"} reasoning=${runtime.reasoningEffort || "off"} print=${printProfile} html_pdf=${htmlPdfFlag ? "on" : "off"} engine=${htmlPdfEngine}\n`,
       );
       await applyFederlichtOutputSuggestionToPayload(payload, { syncInput: true });
       const runRel = payload.run;
@@ -21849,6 +22072,7 @@ async function bootstrap() {
   handleFeatherAgenticControls();
   handlePipelineBackendControls();
   handleRunOutputTouch();
+  handleFederlichtPdfControls();
   handlePipelineInputs();
   handleRunChanges();
   handleRunOpen();

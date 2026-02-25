@@ -116,6 +116,11 @@ _CODEX_MODEL_HINT_CACHE: dict[str, str] = {}
 _HISTORY_TURNS = 10
 _HISTORY_CHARS = 1400
 _HISTORY_SUMMARY_PREFIX = "[context-compress]"
+_SUBPROCESS_TEXT_KWARGS: dict[str, Any] = {
+    "text": True,
+    "encoding": "utf-8",
+    "errors": "replace",
+}
 _META_PATH_HINTS = (
     "pyproject.toml",
     "CHANGELOG.md",
@@ -1279,10 +1284,10 @@ def _probe_codex_cli_default_model_hint(bin_path: str) -> str:
         try:
             proc = subprocess.run(
                 cmd,
-                text=True,
                 capture_output=True,
                 timeout=4,
                 check=False,
+                **_SUBPROCESS_TEXT_KWARGS,
             )
         except Exception:
             continue
@@ -1550,10 +1555,10 @@ def _call_llm_codex_cli(
         proc = subprocess.run(
             cmd,
             input=prompt,
-            text=True,
             capture_output=True,
             timeout=120,
             check=False,
+            **_SUBPROCESS_TEXT_KWARGS,
         )
     except subprocess.TimeoutExpired as exc:
         raise RuntimeError("codex CLI timed out") from exc
@@ -1652,8 +1657,8 @@ def _call_llm_stream_codex_cli(
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
                 bufsize=1,
+                **_SUBPROCESS_TEXT_KWARGS,
             )
         except Exception:
             answer, _ = _call_llm_codex_cli(
@@ -2997,6 +3002,12 @@ def _normalize_agentic_action(raw: Any, *, run_rel: str | None) -> dict[str, Any
         if not capability_id:
             return None
         action["capability_id"] = capability_id[:80]
+        action_kind = str(raw.get("action_kind") or "").strip().lower()
+        if action_kind:
+            action["action_kind"] = action_kind[:40]
+        request_text = str(raw.get("request_text") or "").strip()
+        if request_text:
+            action["request_text"] = request_text[:1200]
 
     return action
 
@@ -3172,7 +3183,7 @@ def _build_agentic_action_prompt(
         "none,run_feather,run_federlicht,run_feather_then_federlicht,"
         "create_run_folder,switch_run,preset_resume_stage,focus_editor,set_action_mode,run_capability"
         "]\n"
-        "schema={type,label,summary,safety,run_hint,create_if_missing,auto_instruction,require_instruction_confirm,instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id}\n"
+        "schema={type,label,summary,safety,run_hint,create_if_missing,auto_instruction,require_instruction_confirm,instruction_confirm_reason,run_name_hint,topic_hint,stage,target,mode,allow_artifacts,capability_id,action_kind,request_text}\n"
         "rules:\n"
         "- avoid destructive/unbounded actions.\n"
         "- if intent is unclear, type=none.\n"
@@ -3392,7 +3403,7 @@ def _infer_safe_action(
     workspace_request = _is_workspace_operation_request(q)
     generic_followup = _is_generic_execution_question(q)
     followup_execution_like = _has_explicit_execution_intent(q)
-    custom = infer_capability_action(root, q, run_rel=run_rel)
+    custom = infer_capability_action(root, question, run_rel=run_rel)
     if custom:
         action_type = str(custom.get("type") or "").strip().lower()
         if (

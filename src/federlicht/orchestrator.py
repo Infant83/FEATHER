@@ -1105,6 +1105,193 @@ class ReportOrchestrator:
             )
             return output_text
 
+        def artwork_infographic_html(
+            spec_json: str,
+            output_rel_path: str = "report_assets/artwork/infographic.html",
+            page_title: str = "",
+        ) -> str:
+            """Render a data-driven infographic HTML artifact (Chart.js/Plotly) and return embed snippets."""
+            result = feder_artwork.render_infographic_html(
+                run_dir,
+                spec_json,
+                output_rel_path=output_rel_path,
+                page_title=page_title,
+            )
+            if str(result.get("ok", "")).lower() != "true":
+                message = (
+                    "[artwork][error] "
+                    + str(result.get("message") or result.get("error") or "infographic_render_failed")
+                )
+                _append_artwork_log(
+                    "artwork_infographic_html",
+                    params={
+                        "output_rel_path": output_rel_path,
+                        "page_title": page_title,
+                        "spec_chars": len(str(spec_json or "")),
+                    },
+                    output="",
+                    ok=False,
+                    error=message,
+                )
+                return message
+            rel_path = str(result.get("path") or "").strip()
+            markdown = str(result.get("markdown") or "").strip()
+            embed_html = str(result.get("embed_html") or "").strip()
+            data_path = str(result.get("data_path") or "").strip()
+            lines = []
+            if rel_path:
+                lines.append(f"[artwork] generated: {rel_path} (html)")
+            if data_path:
+                lines.append(f"[artwork] data: {data_path}")
+            if markdown:
+                lines.append(markdown)
+            if embed_html:
+                lines.append(embed_html)
+            output_text = "\n".join(lines).strip() or "[artwork] generated"
+            _append_artwork_log(
+                "artwork_infographic_html",
+                params={
+                    "output_rel_path": output_rel_path,
+                    "page_title": page_title,
+                    "spec_chars": len(str(spec_json or "")),
+                },
+                output=output_text,
+                ok=True,
+            )
+            return output_text
+
+        def artwork_infographic_spec_builder(
+            data_table: str,
+            title: str = "",
+            subtitle: str = "",
+            chart_title: str = "",
+            chart_description: str = "",
+            chart_type: str = "line",
+            library: str = "chartjs",
+            source: str = "",
+            simulated: bool | str = True,
+            theme_json: str = "",
+            note: str = "",
+            disclaimer: str = "",
+        ) -> str:
+            """Build infographic spec_json from tabular values extracted from report claims/evidence."""
+            try:
+                spec_text = feder_artwork.build_infographic_spec_from_table(
+                    data_table,
+                    title=title,
+                    subtitle=subtitle,
+                    chart_title=chart_title,
+                    chart_description=chart_description,
+                    chart_type=chart_type,
+                    library=library,
+                    source=source,
+                    simulated=simulated,
+                    theme_json=theme_json,
+                    note=note,
+                    disclaimer=disclaimer,
+                )
+            except Exception as exc:
+                message = f"[artwork][error] infographic_spec_builder failed: {exc}"
+                _append_artwork_log(
+                    "artwork_infographic_spec_builder",
+                    params={
+                        "title": title,
+                        "chart_title": chart_title,
+                        "chart_type": chart_type,
+                        "library": library,
+                        "data_table_chars": len(str(data_table or "")),
+                    },
+                    output="",
+                    ok=False,
+                    error=str(exc),
+                )
+                return message
+            _append_artwork_log(
+                "artwork_infographic_spec_builder",
+                params={
+                    "title": title,
+                    "chart_title": chart_title,
+                    "chart_type": chart_type,
+                    "library": library,
+                    "data_table_chars": len(str(data_table or "")),
+                },
+                output=spec_text,
+                ok=True,
+            )
+            return spec_text
+
+        def artwork_infographic_claim_packet_builder(
+            claim_packet_json: str,
+            title: str = "",
+            subtitle: str = "",
+            chart_title: str = "",
+            chart_description: str = "",
+            source: str = "",
+            simulated: bool | str = False,
+            library: str = "chartjs",
+            chart_type: str = "bar",
+            theme_json: str = "",
+            note: str = "",
+            disclaimer: str = "",
+            max_claims: int = 8,
+            split_by_section: bool | str = False,
+            max_charts: int = 3,
+        ) -> str:
+            """Build infographic spec_json from claim_evidence_map/evidence_packet JSON."""
+            try:
+                spec_text = feder_artwork.build_infographic_spec_from_claim_packet(
+                    claim_packet_json,
+                    title=title,
+                    subtitle=subtitle,
+                    chart_title=chart_title,
+                    chart_description=chart_description,
+                    source=source,
+                    simulated=simulated,
+                    library=library,
+                    chart_type=chart_type,
+                    theme_json=theme_json,
+                    note=note,
+                    disclaimer=disclaimer,
+                    max_claims=max_claims,
+                    split_by_section=split_by_section,
+                    max_charts=max_charts,
+                )
+            except Exception as exc:
+                message = f"[artwork][error] infographic_claim_packet_builder failed: {exc}"
+                _append_artwork_log(
+                    "artwork_infographic_claim_packet_builder",
+                    params={
+                        "title": title,
+                        "chart_title": chart_title,
+                        "chart_type": chart_type,
+                        "library": library,
+                        "max_claims": max_claims,
+                        "split_by_section": bool(split_by_section),
+                        "max_charts": max_charts,
+                        "claim_packet_chars": len(str(claim_packet_json or "")),
+                    },
+                    output="",
+                    ok=False,
+                    error=str(exc),
+                )
+                return message
+            _append_artwork_log(
+                "artwork_infographic_claim_packet_builder",
+                params={
+                    "title": title,
+                    "chart_title": chart_title,
+                    "chart_type": chart_type,
+                    "library": library,
+                    "max_claims": max_claims,
+                    "split_by_section": bool(split_by_section),
+                    "max_charts": max_charts,
+                    "claim_packet_chars": len(str(claim_packet_json or "")),
+                },
+                output=spec_text,
+                ok=True,
+            )
+            return spec_text
+
         artwork_tools = [
             artwork_capabilities,
             artwork_mermaid_flowchart,
@@ -1112,6 +1299,9 @@ class ReportOrchestrator:
             artwork_mermaid_render,
             artwork_d2_render,
             artwork_diagrams_render,
+            artwork_infographic_spec_builder,
+            artwork_infographic_claim_packet_builder,
+            artwork_infographic_html,
         ]
 
         all_stages = set(STAGE_INFO)
@@ -3672,8 +3862,8 @@ class ReportOrchestrator:
                 {
                     "name": "artwork_agent",
                     "description": (
-                        "Generate concise report artwork snippets (Mermaid flowchart/timeline "
-                        "or D2 SVG references) for specific sections."
+                        "Generate concise report visuals (Mermaid/D2 diagrams and data-driven "
+                        "infographic HTML snippets) for specific sections."
                     ),
                     "system_prompt": artwork_prompt,
                     "model": artwork_model,

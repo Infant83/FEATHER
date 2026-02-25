@@ -1,0 +1,13 @@
+{
+  "checked_count": 1,
+  "failed_count": 0,
+  "pass": true,
+  "rows": [
+    {
+      "path": "C:\\Users\\angpa\\myProjects\\FEATHER\\temp\\20260226\\iter20_infographic_sample\\report_notes\\infographic_spec_iter20_infographic.json",
+      "exists": true,
+      "issues": [],
+      "chart_count": 2
+    }
+  ]
+}

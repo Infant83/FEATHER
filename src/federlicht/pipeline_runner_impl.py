@@ -296,6 +296,7 @@ def run_pipeline(
         report = f"{byline_block}\n\n{report.strip()}"
     report_dir = run_dir if not args.output else Path(args.output).resolve().parent
     figure_entries: list[dict] = []
+    infographic_meta: dict[str, object] = {}
     preview_path: Optional[Path] = None
     if args.extract_figures:
         candidates = build_figure_plan(
@@ -367,6 +368,17 @@ def run_pipeline(
         report_body = merge_orphan_citations(report_body)
     if figure_entries:
         report_body = insert_figures_by_section(report_body, figure_entries, output_format, report_dir, run_dir)
+    if output_format in {"md", "html"}:
+        report_body, infographic_meta = auto_insert_claim_packet_infographic(
+            report_body,
+            output_format=output_format,
+            run_dir=run_dir,
+            report_dir=report_dir,
+            notes_dir=notes_dir,
+            report_title=title,
+            language=language,
+            max_claims=8,
+        )
     report = report_body
     if report_prompt:
         report = report.rstrip()
@@ -426,6 +438,9 @@ def run_pipeline(
             auto_tags_enabled = not tags_list
     if auto_tags_enabled:
         tags_list = build_auto_tags(report_prompt, title, report_summary, max_tags=5)
+    html_print_profile = normalize_html_print_profile(getattr(args, "html_print_profile", "a4"))
+    html_pdf_requested = bool(output_format == "html" and getattr(args, "html_pdf", False))
+    tex_pdf_requested = bool(output_format == "tex" and args.pdf)
     meta = {
         "generated_at": end_stamp.strftime("%Y-%m-%d %H:%M:%S"),
         "started_at": start_stamp.strftime("%Y-%m-%d %H:%M:%S"),
@@ -454,8 +469,33 @@ def run_pipeline(
         "tags": tags_list,
         "free_format": args.free_format,
         "style_pack": core.normalize_style_pack(getattr(args, "style_pack", core.STYLE_PACK_DEFAULT)),
-        "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
+        "pdf_status": "enabled" if (tex_pdf_requested or html_pdf_requested) else "disabled",
+        "html_print_profile": html_print_profile if output_format == "html" else None,
+        "html_pdf_requested": html_pdf_requested if output_format == "html" else None,
+        "html_pdf_engine": getattr(args, "html_pdf_engine", "auto") if output_format == "html" else None,
         "visual_evidence_fallback_inserted": bool(visual_fallback_inserted),
+        "infographic_auto_inserted": bool(infographic_meta.get("inserted")),
+        "infographic_auto_section": infographic_meta.get("section") or None,
+        "infographic_auto_sections": (
+            list(infographic_meta.get("sections") or [])
+            if isinstance(infographic_meta.get("sections"), list) and infographic_meta.get("sections")
+            else None
+        ),
+        "infographic_auto_path": infographic_meta.get("path") or None,
+        "infographic_auto_paths": (
+            list(infographic_meta.get("paths") or [])
+            if isinstance(infographic_meta.get("paths"), list) and infographic_meta.get("paths")
+            else None
+        ),
+        "infographic_auto_data_path": infographic_meta.get("data_path") or None,
+        "infographic_auto_data_paths": (
+            list(infographic_meta.get("data_paths") or [])
+            if isinstance(infographic_meta.get("data_paths"), list) and infographic_meta.get("data_paths")
+            else None
+        ),
+        "infographic_auto_lint_warnings": int(infographic_meta.get("lint_warning_count", 0) or 0),
+        "infographic_auto_lint_path": infographic_meta.get("lint_path") or None,
+        "infographic_auto_chart_count": int(infographic_meta.get("chart_count", 0) or 0),
     }
     if core.ACTIVE_AGENT_PROFILE:
         meta["agent_profile"] = {
@@ -571,6 +611,7 @@ def run_pipeline(
             extra_body_class=extra_body_class,
             with_mermaid=has_mermaid,
             layout=template_spec.layout,
+            print_profile=html_print_profile,
         )
     elif output_format == "tex":
         latex_template = load_template_latex(template_spec)
@@ -623,7 +664,28 @@ def run_pipeline(
             if ok and pdf_path.exists():
                 print(f"Wrote PDF: {pdf_path}")
                 meta["pdf_status"] = "success"
+                meta.update(inspect_pdf_artifact(pdf_path))
             elif not ok:
+                print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
+                meta["pdf_status"] = "failed"
+            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        elif output_format == "html" and getattr(args, "html_pdf", False):
+            pdf_path = final_path.with_suffix(".pdf")
+            ok, used_engine, message = compile_html_to_pdf(
+                final_path,
+                pdf_path=pdf_path,
+                engine=getattr(args, "html_pdf_engine", "auto"),
+                print_profile=html_print_profile,
+                wait_ms=int(getattr(args, "html_pdf_wait_ms", 1500) or 0),
+                timeout_sec=int(getattr(args, "html_pdf_timeout_sec", 120) or 120),
+            )
+            if used_engine:
+                meta["html_pdf_engine"] = used_engine
+            if ok and pdf_path.exists():
+                print(f"Wrote PDF: {pdf_path}")
+                meta["pdf_status"] = "success"
+                meta.update(inspect_pdf_artifact(pdf_path))
+            else:
                 print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
                 meta["pdf_status"] = "failed"
             meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")

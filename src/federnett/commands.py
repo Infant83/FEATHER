@@ -206,6 +206,22 @@ def _build_federlicht_cmd(cfg: FedernettConfig, payload: dict[str, Any]) -> list
     max_pdf_pages = payload.get("max_pdf_pages")
     if max_pdf_pages is not None and str(max_pdf_pages) != "":
         cmd.extend(["--max-pdf-pages", str(max_pdf_pages)])
+    html_print_profile = payload.get("html_print_profile")
+    if html_print_profile:
+        cmd.extend(["--html-print-profile", str(html_print_profile)])
+    if parse_bool(payload, "html_pdf"):
+        cmd.append("--html-pdf")
+    if parse_bool(payload, "no_html_pdf"):
+        cmd.append("--no-html-pdf")
+    html_pdf_engine = payload.get("html_pdf_engine")
+    if html_pdf_engine:
+        cmd.extend(["--html-pdf-engine", str(html_pdf_engine)])
+    html_pdf_wait_ms = payload.get("html_pdf_wait_ms")
+    if html_pdf_wait_ms is not None and str(html_pdf_wait_ms) != "":
+        cmd.extend(["--html-pdf-wait-ms", str(html_pdf_wait_ms)])
+    html_pdf_timeout_sec = payload.get("html_pdf_timeout_sec")
+    if html_pdf_timeout_sec is not None and str(html_pdf_timeout_sec) != "":
+        cmd.extend(["--html-pdf-timeout-sec", str(html_pdf_timeout_sec)])
     tags = payload.get("tags")
     if tags:
         cmd.extend(["--tags", str(tags)])
