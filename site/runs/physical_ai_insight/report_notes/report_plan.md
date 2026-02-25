@@ -1,6 +1,9 @@
-- [ ] Define the briefing thesis and core teaching objective — lock the single central message on physical AI trends and practical adoption for graduate-level learners.  
-- [ ] Read the highest-relevance sources first — use `source_triage.md` plus top-ranked papers (Gemini Robotics, GR00T N1, BitVLA, parallel decoding, real-time execution).  
-- [ ] Extract evidence in a compact matrix — record each source’s key claim, strongest result, adoption implication, and citation anchor.  
-- [ ] Synthesize the trend storyline — connect 2024 open VLA baselines (Octo/OpenVLA/π0/CogACT) to 2025 shifts in generality, efficiency, and real-time control.  
-- [ ] Build the briefing backbone (message-grounding-risk) — for each key point, pair supporting evidence with practical risks (latency, compute cost, robustness, transfer gaps).  
-- [ ] Map insights into the Quanta-style structure — draft short lede, central question, mechanism explanation, why-it-matters, and 3-5 explicit open questions.
+- [ ] 범위/독자/산출물 확정 — instruction·template(technical_deep_dive) 요구사항과 “explainer(배경→개념→근거→한계)” 흐름, 필수 섹션/비교표 1개/inline 인용([n]) 규칙을 체크하고 목차 골격을 고정  
+- [ ] 소스 맵·인용번호 체계 구성 — source_index.jsonl + archive index로 사용 소스 11개(Glossary 1 + arXiv 10) 목록을 확정하고 [1]~[11] 인용번호 매핑표를 만든 뒤 리포트 전 구간에서 일관 적용  
+- [ ] 배경(문제) 파트 근거 수집 — NVIDIA Glossary에서 Physical AI 정의·핵심 직관(왜 ‘물리 세계’가 어려운가/센서-행동 루프)을 최소 인용문 후보로 뽑아 도입 문단을 구성([n])  
+- [ ] 핵심 개념(메커니즘) 정리 — VLA/로봇 파운데이션 모델의 공통 파이프라인(vision+language→policy/action), 행동 표현(action representation), 학습 패러다임(BC/flow/액션 청킹 등)을 논문 초록·서론 중심으로 정리하고 용어를 통일([n])  
+- [ ] 방법·데이터 축 정리 — Octo/OpenVLA/π₀/CogACT/“What matters…”/Gemini/GR00T에서 데이터(규모·구성·멀티로봇 여부)와 학습/추론 워크플로우(사전학습→파인튜닝, 서빙/양자화, 실시간 설계)를 비교 가능한 항목으로 추출([n])  
+- [ ] 결과·증거(근거) 요약 — 각 코어 논문이 제시하는 실험 세팅/평가 지표/주요 개선 주장(정성·정량)을 “관찰 가능한 결과”만 분리해 요약하고, 과장/비교 조건 차이 리스크를 함께 표시([n])  
+- [ ] 핵심 비교표 1개 설계·작성 — “모델/목표 로봇/입력/출력 행동/데이터·학습/실시간·효율 포인트/공개 여부/대표 근거” 컬럼으로 5~7개 모델을 한 표로 압축하고 표 내에도 [n]을 달아 추적 가능하게 구성  
+- [ ] 한계·오픈퀘스천(의미→한계) 정리 — 실세계 일반화, 안전/검증, 데이터 편향, 지연·온디바이스 제약(BitVLA·PD-VLA·RTC 등), 재현성/벤치마크 표준화 이슈를 근거 문장과 함께 정리하고 향후 검증 과제를 제안([n])  
+- [ ] 최종 편집·정합성 점검 — 모든 핵심 주장 문장 끝 inline 인용([n]) 누락 여부, 섹션 간 중복/용어 불일치, 표와 본문 참조, ‘실험 근거 vs 추측’ 구분, 참고문헌 리스트를 일괄 검수 후 제출본 형태로 다듬기

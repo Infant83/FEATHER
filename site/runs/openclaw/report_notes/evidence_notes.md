@@ -1,19 +1,49 @@
-메타 커버리지 확인 결과, 이 런은 `tavily_extract` 5개 웹 추출 중심이며(`URLs: 5`, `Queries: 0`) 2026-02-03에 생성된 아카이브입니다 (https://openclaw.ai/, https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments, [archive/openclaw-index.md], [archive/_job.json], [instruction/openclaw.txt]).
+현재 단계(파일 read budget 제한으로 추가 열람 불가)에서 **실제 원문 텍스트를 확인해 근거를 추출**할 수 있었던 소스는 `0002(openclaw.ai)`와 `0005(Dark Reading)` 2개뿐입니다. 따라서 아래 “핵심 사실(관찰)”은 **이 2개 소스에서만** 뽑았고, 나머지 3개(0001/0003/0004)는 이번 응답에서 근거 추출/인용을 하지 않습니다(원문 확인 불가).
+
+---
+
+## 1) 근거 기반 핵심 사실 추출 (관찰/명시된 내용만)
+
+### A. OpenClaw(공식 사이트) — 제품/배치/기능(주장)
+- OpenClaw는 “Personal AI Assistant”로 자신을 소개하며, “Clears your inbox, sends emails, manages your calendar, checks you in for flights” 같은 업무를 “WhatsApp, Telegram, or any chat app”을 통해 수행한다고 설명합니다. (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- 설치/실행 방식으로 **CLI 설치(npm)** 및 **GitHub 리포지토리 클론 후 빌드(pnpm)** 경로를 제시합니다(예: `npm i -g openclaw`, `git clone https://github.com/openclaw/openclaw.git`). (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- “Runs on Your Machine”을 전면에 내세우며, “Mac, Windows, or Linux… Private by default—your data stays yours.”라고 주장합니다. (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- “Full System Access”로 **파일 읽기/쓰기, 쉘 커맨드 실행, 스크립트 실행**을 할 수 있다고 명시하면서 “Full access or sandboxed—your choice.”라고 옵션을 언급합니다. (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- 기능 링크로 문서 도메인(`docs.openclaw.ai`)의 여러 항목을 노출합니다(예: getting-started, session, browser, bash, skills). 즉, 공식 사이트 자체 텍스트에서 **문서/기능 영역(세션/메모리, 브라우저, bash, skills)**을 제품 범위로 제시합니다. (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+
+### B. Dark Reading 기사 — 보안 우려/리스크(2차 + 인용 포함)
+- Dark Reading은 OpenClaw를 “popular open source AI assistant”로 소개하며, “privileged, autonomous control within users' computers”에 대한 보안 우려가 제기된다고 서술합니다. (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+- 기사 본문은 Token Security의 평가를 인용해 OpenClaw가 **email/files/messaging platforms/system tools에 직접 연결**되며, 그 결과 **traditional IAM 및 secrets controls 밖에 놓이는 persistent non-human identities / access paths**를 만든다고 주장합니다. (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+- 같은 인용 구간에서 OpenClaw가 수행 가능한 행위로 **terminal commands 실행, scripts 실행, web browse, read/write files, control browsers, retain memory across sessions, proactively act on a user's behalf**가 열거됩니다. (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+- Dark Reading은 “bring-your-own-AI systems”가 로컬 애플리케이션 및 사용자의 채팅 채널에 privileged access를 갖는 것이 “significant security risks”를 동반한다고 일반화해 경고합니다. (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+- Pillar Security 경고를 인용/요약하며, 공격자가 “default MoltBot—now, OpenClaw—port”를 스캔하고 있다는 맥락을 언급합니다(단, 이번 스냅샷에서는 링크 URL이 본문 중간에서 잘려 있어 1차 원문 추적은 미완). (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+
+---
+
+## 2) 의사결정(intent: decision) 기준에 직접 매핑되는 “근거 포인트”
+(아래는 **근거가 있는 것만**)
+
+- **로컬 실행/데이터 위치 주장(벤더 주장)**: “Runs on Your Machine”, “Private by default—your data stays yours.” (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- **권한/툴 실행 범위(벤더 주장)**: 파일/쉘/스크립트 실행 + “Full access or sandboxed—your choice.” 옵션 존재 (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- **IAM/Secrets 통제 리스크(2차 인용)**: “persistent non-human identities… outside traditional IAM and secrets controls”라는 위험 프레이밍 (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+- **지속 메모리/세션(리스크 연결고리)**: “retain memory across sessions” (Dark Reading 인용) + 공식 사이트의 “Persistent Memory” 기능 제시가 서로 맞물려, “지속성”이 핵심 특성임을 뒷받침 (https://openclaw.ai/ , https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0002_https_openclaw.ai.txt] ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+
+---
+
+## 3) 이번 단계의 한계(근거 관점)
+- `docs.openclaw.ai` 및 `github.com/openclaw/openclaw` **원문(추출본/PDF)이 아카이브에 포함되어 있지 않아**, “sandboxed—your choice”가 의미하는 정확한 격리 수준, 토큰/시크릿 저장 위치, 감사로그/권한 프롬프트 정책 등은 **근거로 확정할 수 없습니다.** (https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt])
+- Dark Reading이 인용한 Token Security / Pillar Security의 **1차 출처 원문을 본 run에서 열람하지 못해**, 해당 주장(지속 non-human ID, 포트 스캔 등)을 **재인용/정량화**할 수는 없습니다(현 단계에선 “Dark Reading이 이렇게 인용했다”까지만 근거). (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt])
+
+---
+
+## Evidence Ledger (요약 표)
 
 | Claim | Evidence summary | Source URL/path | Strength | Limits | Recency |
 |---|---|---|---|---|---|
-| 수집 범위는 5개 지정 URL 기반이다 | 런 인덱스에 Tavily Extract 5개만 명시되고, job 메타에 URL 5개/질의 0개로 기록됨 | https://openclaw.ai/ ; https://twofootdog.tistory.com/555 ; https://dev.to/czmilo/moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e ; https://skywork.ai/skypage/en/moltbot-proactive-ai-assistants/2016342203473260544 ; https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [archive/openclaw-index.md] ; [archive/_job.json] | high | 소스 풀 자체가 작아 교차검증 폭이 제한됨 | 2026-02-03(수집일) |
-| OpenClaw 공식 포지셔닝은 “행동 수행형” 개인 비서다 | 공식 페이지에서 채팅앱 기반 상호작용, OS 범용 설치, 시스템 작업 수행을 전면 제시함 | https://openclaw.ai/ ; [archive/tavily_extract/0002_https_openclaw.ai.txt] | medium | 공식 홍보성 문구 중심이라 성능 검증은 별도 필요 | 페이지 추출 시점(런 수집) |
-| 설치 핵심 명령과 플랫폼 정보가 공식/커뮤니티에서 일치한다 | `npm i -g openclaw`, `openclaw onboard`, macOS/Windows/Linux 지원이 확인됨 | https://openclaw.ai/ ; https://twofootdog.tistory.com/555 ; [archive/tavily_extract/0002_https_openclaw.ai.txt] ; [archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt] | medium | 공식 문서 버전 변화 가능성 있음 | 2026-01~02 |
-| 운영 권한 모델은 강력하지만 위험 표면이 크다 | 공식 설명에 파일 읽기/쓰기·셸 실행 권한이 포함되고, 보안 기사에서 IAM/시크릿 통제 바깥 경로를 위험으로 지적함 | https://openclaw.ai/ ; https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [archive/tavily_extract/0002_https_openclaw.ai.txt] ; [archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt] | medium-high | 보안 기사의 수치·사례는 제3자 인용(업체 분석) 포함 | 2026-01-30(기사일) |
-| 기업 환경 리스크 신호가 제시된다 | Dark Reading은 11.3만+ 스타 급증, Token Security 고객사 내 22% 사용, prompt injection 취약성 경고를 함께 보도함 | https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt] | medium | 단일 기사 기반이며 원데이터(벤더 내부 데이터셋)는 비공개 | 2026-01-30 |
-| 최소권한 원칙이 핵심 완화책으로 제시된다 | 기사 내 문서 인용으로 “완전한 보안 설정은 없고, 최소 접근부터 시작” 원칙을 강조함 | https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; https://docs.molt.bot/gateway/security ; [archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt] | medium | 간접 인용이라 원문 정책 문서 정독이 추가로 필요 | 2026-01-30 |
-| 로컬 설치 실무는 Node/WSL/API키 준비 중심이다 | 커뮤니티 설치 가이드는 Node 22+, `wsl --install`, Google AI Studio API 키, 온보딩 옵션(채널 스킵·hooks 선택)을 구체화함 | https://twofootdog.tistory.com/555 ; [archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt] | medium | 블로그 1인 가이드라 환경별 재현성 편차 가능 | 2026-01-30 |
-| Skywork 문서는 2차 합성 자료 성격이 강하다 | 본문에 “Source: Synthesized from ...”와 외부 매체 의존 레퍼런스가 명시됨 | https://skywork.ai/skypage/en/moltbot-proactive-ai-assistants/2016342203473260544 ; [archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt] | low | 1차 검증 없이 단독 근거로 사용하기 부적절 | 2026-01-28 |
-| DEV 글도 2차 종합·커뮤니티 포스트 성격이다 | 체크리스트/요약은 제공하지만 광고·큐레이션 혼재가 크고 “Last updated: January 2026” 수준의 자체 서술이 중심임 | https://dev.to/czmilo/moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e ; [archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt] | low | 사실 단정에는 독립 1차 출처 교차 필요 | 2026-01(자체 표기) |
-| 현재 런의 소스 선별 기록은 비어 있다 | 트리아지는 `(no sources ranked)`이고 source_index는 빈 상태임 | [report_notes/source_triage.md] ; [report_notes/source_index.jsonl] | high | 후속 클레임-근거 인덱싱 선행 필요 | 2026-02-22 기준 파일 상태 |
+| OpenClaw는 채팅앱을 통해 이메일/캘린더 등 작업을 수행한다고 주장 | 랜딩에 “Clears your inbox… manages your calendar…” + “All from WhatsApp, Telegram…” 명시 | https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt] | medium | 벤더 마케팅 주장, 검증/구현 세부 없음 | 2026-02-03 스냅샷(인덱스 날짜) |
+| OpenClaw는 로컬 머신에서 동작하며 “Private by default”를 주장 | “Runs on Your Machine… Private by default—your data stays yours.” | https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt] | medium | “data stays yours”의 범위/예외/텔레메트리 불명 | 동 |
+| 파일/쉘/스크립트 실행 등 “Full system access”와 “sandboxed 옵션”을 언급 | “Read and write files, run shell commands, execute scripts… Full access or sandboxed—your choice.” | https://openclaw.ai/ ; [/archive/tavily_extract/0002_https_openclaw.ai.txt] | medium | 샌드박스 정의/경계/구현 근거(문서/코드) 부재 | 동 |
+| OpenClaw가 IAM·secrets 통제 밖 persistent non-human identity/access path를 만든다는 우려(인용) | Dark Reading이 Token Security 평가를 따옴표로 인용 | https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_…txt] | low~medium | 2차 기사 인용이며 1차 출처 원문 검증 불가 | 기사 2026-01-30 |
+| OpenClaw가 다양한 강력 행위(터미널/파일/브라우저/세션 메모리/프로액티브)를 수행 가능하다는 우려(인용) | Dark Reading이 Token Security 인용으로 행위 목록 열거 | https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments ; [/archive/tavily_extract/0005_…txt] | low~medium | 2차 인용, 실제 제품 설정/권한 프롬프트/로깅은 미확인 | 2026-01-30 |
 
-- 공식/1차(제품): OpenClaw는 채팅 채널 통합, 지속 메모리, 시스템 접근을 특징으로 제시하며 설치 진입점(`npm i -g openclaw`, `openclaw onboard`)을 명시합니다 (https://openclaw.ai/, [archive/tavily_extract/0002_https_openclaw.ai.txt]).
-- 보안/리스크(보도): Dark Reading은 빠른 확산과 함께 IAM 우회 경로, prompt injection, shadow AI 관리 문제를 핵심 위험으로 정리합니다 (https://www.darkreading.com/application-security/openclaw-ai-runs-wild-business-environments, [archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt]).
-- 실무 가이드(커뮤니티): twofootdog 글은 Windows/WSL/Node 22+/Gemini API 키 기반 온보딩 절차를 구체화한 운영형 근거입니다 (https://twofootdog.tistory.com/555, [archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt]).
-- 2차 종합(보조): skywork/dev.to는 정보 밀도는 높지만 합성·재인용 비중이 높아 “보조/미검증” 태그로 제한 사용이 타당합니다 (https://skywork.ai/skypage/en/moltbot-proactive-ai-assistants/2016342203473260544, https://dev.to/czmilo/moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e, [archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt], [archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt]).
+---

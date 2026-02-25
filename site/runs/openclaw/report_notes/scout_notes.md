@@ -1,129 +1,92 @@
-Here is a structured inventory map and a focused reading plan for OpenClaw, kept tight to key sources and aligned with your “inventory/read plan” objective. I’ve prioritized OpenClaw-centric items and kept reads to small, disambiguating slices.
+## 0) 범위/제약 확인(스카우트 단계)
+- 목적: **아카이브 매핑 + 핵심 소스 파일 식별 + 우선 읽기(딥리드) 계획 제안**
+- 제약 준수: 긴 문서 전체 읽기 금지, 필요 최소 범위만 확인
+- 현재 상태: 아카이브는 **tavily_extract 5개 URL 스냅샷** 중심이며, 지정된 **메타데이터 JSONL 인덱스들(tavily_search/openalex/arxiv/youtube/local manifest)** 은 **이번 run 폴더에 존재하지 않음**(패턴 매칭 실패로 확인). 따라서 `archive/openclaw-index.md`가 사실상 1차 인덱스 역할.
 
-Part 1) Structured inventory (candidates, max 12)
+---
 
-- S1: archive/openclaw-index.md
-  - Type/role: OpenClaw project index and run-scoped metadata
-  - What it covers: Run command, date, queries, and pointers to Tavily extracts
-  - Priority: High
-  - Rationale: Central hub for scope, provenance, and recommended sources; anchors the OpenClaw study.
+## 1) 아카이브 인벤토리(구조화)
+### A. 실행/인덱스/로그
+1. `archive/openclaw-index.md` (946B)  
+   - 본 run에서 수집된 URL 5개와 tavily_extract 파일 매핑 제공(핵심 인덱스).
+2. `instruction/openclaw.txt`  
+   - 수집 대상 URL 목록(5개)만 포함(스카우트용 입력).
+3. `archive/_job.json` / `archive/_log.txt` / `archive/_feather_log.txt`  
+   - 수집 작업 메타/로그(추가 소스 확장 시 참고).
 
-- S2: instruction/openclaw.txt
-  - Type/role: Instruction/file list with sources
-  - What it covers: URLs and quick pointers to OpenClaw materials
-  - Priority: High
-  - Rationale: Primary source of candidate material to examine; directly guides follow-up reads.
+### B. 본문 스냅샷(1차 소스 풀)
+(모두 `archive/tavily_extract/*.txt` 형태, 각 파일은 JSON 구조 안에 `url/title/raw_content` 포함)
+1. `archive/tavily_extract/0002_https_openclaw.ai.txt` (49KB)  
+   - OpenClaw 공식 사이트 랜딩/기능/설치/문서 링크 요약(제품 주장·기능 범위).
+2. `archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt` (17KB)  
+   - Dark Reading 기사: “OpenClaw AI Runs Wild in Business Environments”(보안 이슈·리스크 내러티브).
+3. `archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt` (11KB)  
+   - 한국어 설치/연동 실습 가이드(로컬 설치 전제, Gemini 연동 등 운영 관점 단서).
+4. `archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt` (77KB)  
+   - Dev.to 장문 가이드(변경 전 명칭 MoltBot 관련, 기술/사용법 가능성 높음). *이번 단계에서 예산 한도로 헤더만 확인됨.*
+5. `archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt` (29KB)  
+   - Skywork 페이지(요약/해설 성격 가능, 2차 컨텐츠일 확률). *이번 단계에서 내용 확인 실패(예산 한도).*
 
-- S3: tavily_extract/0002_https_openclaw.ai.txt
-  - Type/role: OpenClaw official landing content
-  - What it covers: OpenClaw description, capabilities (personal AI assistant that acts via chat apps, connects to email/files/messaging/system tools)
-  - Priority: High
-  - Rationale: Core description of what OpenClaw is advertised to do; essential for scope.
+### C. 보고서 노트
+- `report_notes/source_index.jsonl`: **빈 파일**(현재 인용 번호 체계/소스 등록이 안 된 상태)
+- `report_notes/source_triage.md`: `(no sources ranked)` (트리아지 미수행)
 
-- S4: archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt
-  - Type/role: Security/risk article
-  - What it covers: OpenClaw use in business environments, privilege/access concerns, persistent identities, IAM/secrets considerations
-  - Priority: High
-  - Rationale: Primary risk signal; informs operational risk posture and required mitigations.
+---
 
-- S5: tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt
-  - Type/role: Informational/engineering perspective
-  - What it covers: Moltbot personal AI assistant guide, architecture and capabilities discussion
-  - Priority: Medium
-  - Rationale: Background context on Moltbot lineage; helps understand architectural approaches and trade-offs.
+## 2) 리포트 포커스(CTO/보안 리더 의사결정) 관점의 소스 적합도
+의사결정 리포트에 필요한 축:
+- **(1) 제품/아키텍처/권한 범위**: 무엇에 접근하고 무엇을 실행하는지(메일/파일/메신저/쉘/브라우저 등)
+- **(2) 위협모델/공격면**: BYO-agent, 비인간 ID, IAM 밖의 지속 세션/메모리, 기본 포트 스캐닝 등
+- **(3) 운영 통제 옵션**: 샌드박스, 권한 제한, 로깅/감사, 비밀관리, 네트워크 제어
+- **(4) 도입 의사결정**: “허용/부분 허용/금지” 정책과 가드레일
 
-- S6: tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt
-  - Type/role: Technical/report-like overview
-  - What it covers: Moltbot/proactive AI assistant features, installation/usage hints
-  - Priority: Medium
-  - Rationale: Additional architectural/usage context; useful for completeness.
+현재 아카이브 내에서 (2)를 직접 다루는 건 **Dark Reading(0005)** 가 가장 강함. (1)은 **공식 사이트(0002)** 가 1차 근거. (3)은 공식 docs 링크로 추가 확장 필요(현 아카이브에는 docs 본문 스냅샷이 없음). (4)는 위 1~3 근거로 작성.
 
-- S7: report_notes/source_index.jsonl
-  - Type/role: Source index file
-  - What it covers: Metadata about sources (stub in current view)
-  - Priority: Low to Medium
-  - Rationale: Helps correlate sources; not a primary content source but useful for provenance.
+---
 
-- S8: report_notes/source_triage.md
-  - Type/role: Source triage note
-  - What it covers: Triaging status (no sources ranked)
-  - Priority: Low
-  - Rationale: Documentation of triage posture; not a content source but provides process context.
+## 3) 우선순위 산정(읽기 계획: 최대 12개)
+아래는 “스카우트 → 다음 단계(딥리드/인용 구축)”로 넘어갈 때의 **우선 읽기 목록**이며, 각 항목은 **인용 [n]으로 쓰기 적합한가** 기준으로 선정했습니다.
 
-- S9: archive/_log.txt and S10: archive/_feather_log.txt
-  - Type/role: Run logs
-  - What they cover: Operational run logs
-  - Priority: Low
-  - Rationale: Not direct OpenClaw content; only for provenance/audit if needed.
+1) `archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt`  
+- 이유: 보안 리스크/우려를 가장 직접적으로 정리한 기사. 위협모델 섹션의 핵심 근거 후보.
 
-- S11: (optional supplementary) archive/openclaw-index.md’s embedded Tavily extract listing (already counted in S1)
-  - Type/role: Cross-check reference
-  - Rationale: Redundant to S1; keep as a quick cross-check if needed.
+2) `archive/tavily_extract/0002_https_openclaw.ai.txt`  
+- 이유: 제품이 주장하는 기능(“Runs on your machine”, “Full system access”, “Persistent memory”, “Any chat app”)을 1차 소스로 고정해야 함. “통제 옵션(샌드박스 선택)” 언급도 있어 정책 권고에 필요.
 
-- S12: archive/_job.json
-  - Type/role: Job metadata
-  - Rationale: Provenance/logging; not content source; used for traceability.
+3) `archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt`  
+- 이유: 한국어 운영/설치 맥락(Windows/WSL, Node 버전, API 키 등)으로 **실제 도입 마찰·현장 운영 포인트**를 보강 가능. (단, 2차 블로그이므로 사실 주장 인용은 신중)
 
-Notes:
-- The strongest, immediately useful sources are S1, S2, S3, and S4. They establish scope, instruction, official description, and risk signals, which drive the executive recommendations.
-- The Dev.to and Skywork Moltbot items (S5, S6) provide architectural and implementation flavor but are secondary to the OpenClaw security/operational focus.
-- I’ve included the index and triage files (S7, S8) for completeness to support provenance and process clarity.
+4) `archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt`  
+- 이유: 장문 가이드일 가능성이 높아 기능/설정/통합 지점(메일/캘린더/슬랙 등)과 위험을 체계적으로 정리했을 수 있음. 단, 2차 컨텐츠 → 교차검증 필요.
 
-Part 2) Targeted reading plan (top 8 items; reads kept to minimal slices)
+5) `archive/tavily_extract/0004_https_skywork.ai_skypage_en_moltbot-proactive-ai-assistants_2016342203473260544.txt`  
+- 이유: “proactive assistants” 관점에서 요약/프레이밍 제공 가능. 다만 마케팅/재가공 위험이 있어 낮은 우선순위.
 
-- RG1: S1 (archive/openclaw-index.md) — read plan: scan Run Command, Date, Queries, and Tavily Extract list sections.
-  - Reason: Confirms scope, date window, and concrete sources to prioritize; sets boundaries for the executive brief.
+6) (아카이브 밖 확장 후보) `https://docs.openclaw.ai/getting-started` 및 하위: `/bash`, `/browser`, `/skills`, `/session`, `/integrations`  
+- 이유: CTO/보안 리더 의사결정에는 **공식 문서의 권한 모델/보안 옵션/로깅/설계**가 필수. 현재 run에 미수집이므로, 다음 수집에서 최우선으로 추가해야 함.
 
-- RG2: S2 (instruction/openclaw.txt) — read plan: read the full short text (it’s compact) to enumerate candidate sources.
-  - Reason: Direct pointer list to core materials; ensures no sources are overlooked.
+7) (아카이브 밖 확장 후보) GitHub repo: `https://github.com/openclaw/openclaw` (특히 security, permissions, sandbox, telemetry 관련 문서/코드)  
+- 이유: “오픈소스 에이전트” 리스크 판단은 repo의 기본 설정, 통신, 비밀/토큰 처리, 샌드박스 구현을 확인해야 함.
 
-- RG3: S3 (tavily_extract/0002_https_openclaw.ai.txt) — read plan: review the raw_content opening portion to capture OpenClaw’s core capabilities and positioning.
-  - Reason: Primary source for “what OpenClaw claims to do” and its scope.
+8) (아카이브 밖 확장 후보) Token Security / Pillar Security 언급 원문(0005에 간접 인용된 리서치/블로그)  
+- 이유: Dark Reading이 인용한 “IAM/Secrets 통제 밖 지속 ID” 주장에 대해 1차 자료로 강화 필요.
 
-- RG4: S4 (archive/tavily_extract/0005_https_www.darkreading.com_application-security_openclaw-ai-runs-wild-business-environments.txt) — read plan: skim the opening and the sections describing privilege access, persistence, and IAM/secrets concerns.
-  - Reason: Key risk signals; essential to operational recommendations.
+> 참고: `report_notes/source_index.jsonl`가 비어 있어, 다음 단계에서는 위 1~5를 **[1]~[5] 인용 번호로 먼저 등록**하는 작업이 선행돼야 합니다(리포트 요구사항: 문장 끝 inline 인용).
 
-- RG5: S5 (tavily_extract/0003_dev.to_czmilo_moltbot...) — read plan: skim early sections that discuss Moltbot’s architecture and capabilities.
-  - Reason: Context for how Moltbot/Moltbot lineage informs OpenClaw’s design considerations.
+---
 
-- RG6: S6 (tavily_extract/0004_https_skywork...) — read plan: skim the initial sections with headings like “What Is Moltbot?” and “Proactive AI Assistants” to understand feature framing.
-  - Reason: Additional perspective on how proactive assistants are framed in the literature.
+## 4) “필수 섹션/비교표/다이어그램”을 위한 소스 커버리지 갭
+- 비교표(최소 1개):  
+  - 축 예시: **OpenClaw 도입 옵션(로컬/원격/샌드박스) vs 통제수단(IAM 연계, secrets, 네트워크, 로깅)**  
+  - 근거는 (0002) 기능/옵션 + (0005) 리스크로 구성 가능하나, **공식 docs/repo 근거가 부족**.
+- 다이어그램(mermaid):  
+  - “사용자/채팅앱 ↔ OpenClaw(에이전트) ↔ 로컬 시스템(파일/쉘/브라우저) ↔ 외부 SaaS(메일/캘린더)” 데이터/권한 흐름 그림이 필요. (0002, 0005)로 초안 가능하지만 **세부 경계(샌드박스/권한 프롬프트/토큰 저장 위치)** 는 docs/repo로 보강 권장.
 
-- RG7: S7 (report_notes/source_index.jsonl) — read plan: open to see what metadata exists and how sources are indexed.
-  - Reason: Helps validate source coverage and alignment with triage, without bogging down content reading.
+---
 
-- RG8: S8 (report_notes/source_triage.md) — read plan: skim to confirm triage posture and whether any off-topic items were considered.
-  - Reason: Process context; ensures focus on on-topic material.
+## 5) 다음 액션 제안(스카우트 종료 후)
+1. `report_notes/source_index.jsonl`를 비어있는 상태에서 **최소 5개 소스(0001~0005)를 등록**(인용 번호 체계 확보).
+2. 추가 수집(권장): OpenClaw 공식 docs 주요 페이지 + GitHub repo의 security/permissions 관련 문서.
+3. 그 다음에만 딥리드: (0005)→(0002)→(docs)→(repo) 순으로, “주장-근거-통제” 체계를 세워 의사결정 리포트 본문 작성.
 
-Optional lower-priority reads (if time allows):
-- S9/S10: archive/_log.txt and archive/_feather_log.txt — read plan: quick skim for any notes about data ingestion or anomalies that affect interpretability.
-  - Reason: provenance/audit only; not required for core brief.
-
-Part 3) Executive brief (concise, actionable; for busy engineering leaders)
-
-Executive gist:
-- OpenClaw is presented as a personal AI assistant capable of performing tasks via chat apps and privileged system access (email, files, calendar, etc.), with a growing ecosystem and strong attention to automation flows. The primary concern surfaced in open coverage is security risk due to persistent, user-identified access paths that can bypass traditional IAM controls.
-
-Key operational implications:
-- Privileged access risk: OpenClaw-like agents can connect to email/files and system tools, creating persistent identities. This elevates risk of data exposure, lateral movement, and misuses if controls are weak.
-- IAM/secrets controls must be hardened: Treat such agents as privileged software; enforce least-privilege, time-bounded scopes, and robust secrets management; monitor for anomalous access patterns.
-- Hardening recommendations for deployment:
-  - Enforce explicit authorization for privileged actions; require consent/approval for sensitive workflows.
-  - Run OpenClaw-like agents in isolated, auditable sandboxes with strict egress controls.
-  - Implement strict identity governance: per-task identities, short-lived tokens, and strong revocation paths.
-  - Enforce code-signing, tamper-evidence, and integrity checks for agent components.
-- Observability and auditing:
-  - Centralized, tamper-evident logging of all privileged actions, with alerting on unusual behavior (e.g., high-volume access to sensitive data, cross-service automation without human prompts).
-  - Store immutable action trails and provide rapid forensics capabilities.
-- Security-by-design adoption plan:
-  - Start with a limited, auditable pilot in non-production data domains; use threat modeling to enumerate attack surfaces (data access, command execution, persistence).
-  - Establish a governance model for agent-enabled workflows, including risk owners, risk registers, and kill-switch mechanisms.
-
-Operational recommendations (concrete next steps):
-- Draft a minimal policy for OpenClaw-like agents including allowed data surfaces, required approvals, and mandated logging.
-- Deploy in a sandboxed environment with the least-privilege policy, monitoring, and automatic rotation/revocation of credentials.
-- Implement anomaly-based monitoring and centralized alerting on privileged actions; require human-in-the-loop for sensitive operations.
-- Align with existing IAM/secrets controls and ensure integration points are auditable and tamper-evident.
-- Schedule a short risk-review with platform owners to decide whether to proceed with broader rollout, starting from a controlled scope.
-
-If you’d like, I can convert the above into a ready-to-share executive briefing document (short memo) with a one-page slide outline and talking points for engineering leadership reviews.
+원하면, 제가 다음 단계에서 **소스 트리아지 템플릿(신뢰도/1차성/의사결정 기여도/인용 가능 문장 후보 필드)** 를 `report_notes/source_triage.md`에 맞춰 제안할 수 있습니다.

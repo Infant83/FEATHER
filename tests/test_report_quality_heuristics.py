@@ -238,3 +238,64 @@ Risk controls and evidence refresh cadence must be set before scale-out decision
     )
     assert long_signals["narrative_density_score"] > short_signals["narrative_density_score"]
     assert long_signals["overall"] > short_signals["overall"]
+
+
+def test_visual_evidence_score_rewards_mermaid_in_deep_mode() -> None:
+    required = ["Executive Summary", "Key Findings"]
+    no_visual = """
+## Executive Summary
+핵심 요약과 근거 연결을 문장으로만 설명합니다 [https://example.com/a].
+
+## Key Findings
+운영 리스크와 기대효과를 텍스트로만 정리했습니다 [https://example.com/b].
+"""
+    with_visual = """
+## Executive Summary
+핵심 요약과 근거 연결을 문장으로 설명합니다 [https://example.com/a].
+
+## Key Findings
+```mermaid
+flowchart LR
+  A[질문] --> B[근거]
+  B --> C[해석]
+```
+
+시각화는 주장-근거 경로를 요약합니다 [https://example.com/b].
+"""
+    signals_plain = report.compute_heuristic_quality_signals(
+        no_visual,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    signals_visual = report.compute_heuristic_quality_signals(
+        with_visual,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    assert signals_visual["visual_evidence_score"] > signals_plain["visual_evidence_score"]
+    assert signals_visual["overall"] > signals_plain["overall"]
+
+
+def test_visual_fallback_inserts_mermaid_when_deep_and_missing_visuals() -> None:
+    report_text = """
+## Executive Summary
+핵심 서술 [https://example.com/a].
+
+## Key Findings
+핵심 결과를 설명합니다 [https://example.com/b].
+"""
+    updated, inserted = report.ensure_visual_evidence_fallback(
+        report_text,
+        output_format="md",
+        language="ko",
+        depth="deep",
+        report_intent="research",
+        citation_refs=[{"target": "https://example.com/a"}],
+    )
+    assert inserted is True
+    assert "```mermaid" in updated
+    assert "핵심 주장과 해석 경로" in updated

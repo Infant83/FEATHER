@@ -1,5 +1,1 @@
-Objective: Build a teaching-style report that explains physical AI technology trends and practical adoption paths.
-Tone: Classroom lecture note style, structured and didactic.
-Audience: Graduate-level students and early-career engineers.
-Depth preference: brief.
-Use clear section transitions and simple explanations before advanced points.
+한국어로 작성. 대학 수업용 설명 리포트 톤으로 배경-개념-근거-한계 순서로 쉽게 설명. 필수 섹션 유지, 핵심 주장 문장 끝에 inline 인용([n]) 포함, 핵심 비교표 1개 포함.

@@ -1,30 +1,34 @@
 # Report Workflow
 
 ## Stages
-1. scout: cached
+1. scout: ran
 2. clarifier: skipped (no_questions)
-3. template_adjust: skipped (depth=brief)
-4. plan: cached
+3. template_adjust: ran
+4. plan: ran
 5. web: skipped (policy)
-6. evidence: skipped (depth=brief)
-7. plan_check: skipped (missing_evidence)
+6. evidence: ran
+7. plan_check: ran
 8. writer: ran
-9. quality: disabled
+9. quality: ran (iterations=1/4)
 
 ## Timeline
 
-1. [2026-02-25T06:21:06] template_adjust: skipped (depth=brief)
-2. [2026-02-25T06:21:08] scout: cached
-3. [2026-02-25T06:21:08] clarifier: skipped (no_questions)
-4. [2026-02-25T06:21:09] plan: cached
-5. [2026-02-25T06:21:09] web: skipped (policy)
-6. [2026-02-25T06:21:09] plan_check: skipped (missing_evidence)
-7. [2026-02-25T06:21:09] evidence: skipped (depth=brief)
-8. [2026-02-25T06:22:16] writer: ran
+1. [2026-02-25T10:15:00] scout: ran
+2. [2026-02-25T10:15:00] clarifier: skipped (no_questions)
+3. [2026-02-25T10:15:46] template_adjust: ran
+4. [2026-02-25T10:16:03] plan: ran
+5. [2026-02-25T10:16:28] web: skipped (policy)
+6. [2026-02-25T10:17:13] evidence: ran
+7. [2026-02-25T10:18:41] plan_check: ran
+8. [2026-02-25T10:21:17] writer: ran
+9. [2026-02-25T10:24:23] quality: ran (iterations=1/4)
 
 ## Artifacts
 ### scout
 - Scout notes: ./report_notes/scout_notes.md
+
+### template_adjust
+- Template adjustment: ./report_notes/template_adjustment.md
 
 ### plan
 - Plan update: ./report_notes/report_plan.md
@@ -46,15 +50,15 @@
 
 ```mermaid
 flowchart LR
-    scout["scout\ncached"]
+    scout["scout\nran"]
     clarifier["clarifier\nskipped"]
-    template_adjust["template_adjust\nskipped"]
-    plan["plan\ncached"]
+    template_adjust["template_adjust\nran"]
+    plan["plan\nran"]
     web["web\nskipped"]
-    evidence["evidence\nskipped"]
-    plan_check["plan_check\nskipped"]
+    evidence["evidence\nran"]
+    plan_check["plan_check\nran"]
     writer["writer\nran"]
-    quality["quality\ndisabled"]
+    quality["quality\nran"]
     scout --> clarifier
     clarifier --> template_adjust
     template_adjust --> plan
@@ -63,9 +67,10 @@ flowchart LR
     evidence --> plan_check
     plan_check --> writer
     writer --> quality
+    quality -. feedback .-> writer
 ```
 ## Outputs
-- Report overview: ./report/run_overview_report_full_iter004_gpt5nano_leader.md
+- Report overview: ./report/run_overview_report_full_iter016_gpt52_ko_deep_world.md
 - Report meta: ./report_notes/report_meta.json
-- Report prompt copy: ./instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt
+- Report prompt copy: ./instruction/report_prompt_report_full_iter016_gpt52_ko_deep_world.txt
 - Template summary: ./report_notes/report_template.txt

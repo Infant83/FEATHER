@@ -374,6 +374,14 @@ def run_pipeline(
         report = report.rstrip()
     refs = collect_references(archive_dir, run_dir, args.max_refs, supporting_dir)
     refs = filter_references(refs, report_prompt, evidence_notes, args.max_refs)
+    report, visual_fallback_inserted = ensure_visual_evidence_fallback(
+        report,
+        output_format=output_format,
+        language=language,
+        depth=getattr(args, "depth", None),
+        report_intent=getattr(args, "report_intent", None),
+        citation_refs=citation_refs,
+    )
     openalex_meta = load_openalex_meta(archive_dir)
     report = ensure_appendix_contents(report, output_format, refs, run_dir, notes_dir, language)
     report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format)}"
@@ -447,6 +455,7 @@ def run_pipeline(
         "free_format": args.free_format,
         "style_pack": core.normalize_style_pack(getattr(args, "style_pack", core.STYLE_PACK_DEFAULT)),
         "pdf_status": "enabled" if output_format == "tex" and args.pdf else "disabled",
+        "visual_evidence_fallback_inserted": bool(visual_fallback_inserted),
     }
     if core.ACTIVE_AGENT_PROFILE:
         meta["agent_profile"] = {

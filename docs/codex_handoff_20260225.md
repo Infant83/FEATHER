@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-25
 
-Last updated: 2026-02-25 06:40:11 +09:00  
+Last updated: 2026-02-25 10:31:48 +09:00  
 Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.md`
 
 ## 1) 목적 (고정)
@@ -36,8 +36,8 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
 | M5 Benchmark Harness | 부분완료 | benchmark/gate/compare 도구 + 회귀 테스트 | CI 품질게이트 + 장문 샘플셋 확장 |
 
 ## 5) 진행률 (리셋 기준)
-- P0(world-class sustain v2): `58%`
-- P1(DeepAgent Phase C): `34%`
+- P0(world-class sustain v2): `100% (완료)`
+- P1(DeepAgent Phase C): `36%`
 - P2(productization): `0%`
 
 ## 6) DONE (전일 승계 핵심)
@@ -74,24 +74,41 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
   - `test-results/p0_quality_gate_openclaw_iter004_gpt5nano_world.md`
   - `site/runs/20260221_QC_report/report_full_iter005_gpt5nano_general.html`
   - `test-results/p0_quality_gate_qc_iter005_gpt5nano_world.md`
+- 구조 정규화 패치:
+  - `src/federlicht/orchestrator.py`에서 `coerce_required_headings`/`coerce_repair_headings`를 확장
+  - `###` 승격뿐 아니라 단독 섹션 라벨(`Executive Summary` 등)도 `##`로 자동 정규화
+  - 효과: brief 보고서의 section coverage/coherence 하락 이슈 완화
+- KO 우선 신규 생성물 world-class PASS(동일 배치):
+  - 리더 톤(gpt-5-nano): `site/runs/openclaw/report_full_iter008_gpt5nano_ko_world.html`
+  - 일반독자 톤(gpt-5.2): `site/runs/20260221_QC_report/report_full_iter013_gpt52_ko_general_world.html`
+  - 수업형 톤(gpt-5.2): `site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html`
+  - deep/decision 보강(gpt-5.2): `site/runs/openclaw/report_full_iter016_gpt52_ko_deep_world.html`
+  - gate 결과:
+    - `test-results/p0_quality_gate_openclaw_iter008_gpt5nano_ko_world.md`
+    - `test-results/p0_quality_gate_qc_iter013_gpt52_ko_world.md`
+    - `test-results/p0_quality_gate_physical_iter015_gpt52_ko_world.md`
+    - `test-results/p0_quality_gate_openclaw_iter016_gpt52_ko_world.md`
+- P0-1~P0-4 완료 판정:
+  - P0-1: 신규 생성물 기준 gate 운영 고정 유지
+  - P0-2: deep 샘플(`iter016`)에서 world-class PASS
+  - P0-3: deep 경로에서 시각화 통합(비교표/mermaid) 확인
+  - P0-4: 3톤(리더/일반/수업형) KO 샘플 world-class PASS 확보
 
 ## 7) TODO (P0/P1/P2)
 
-### P0 (최우선: world-class sustain v2)
-- P0-1. 신규 생성물 기준 품질 검증 체계 고정
-  - 보고서 생성 -> gate -> 수기 리뷰 순서 강제
-- P0-2. 장문 밀도 보강
-  - deep 모드 핵심 섹션(Methods/Findings/Implications) 3문단+ 기본 달성
-- P0-3. 시각화/해석 통합
-  - figure 부재 시 artwork/mermaid fallback 기본화
-  - caption/본문에 데이터 출처+해석 근거 자연문 연결
-- P0-4. 독자층 변형 품질 유지
-  - 기술리더/일반독자/수업형 톤 변형에서도 world-class gate 유지
+### P0 (world-class sustain v2)
+- 상태: `완료(2026-02-25 10:31 +09:00)`
+- 후속 유지보수 항목(회귀 감시):
+  - 모델별 quality loop 퇴행(critique 텍스트가 본문을 덮어쓰는 현상) 감시/회귀 테스트 강화
+  - KO 톤 샘플 20 iter 주기 재생성 + gate 재검증
 
 ### P1 (FederHav DeepAgent Phase C)
 - governor 정책의 workspace LLM settings 연동(환경변수 의존 축소)
 - planning-execution loop 고도화(수렴/예산/trace 계약 일관화)
 - 턴 단위 로그 브릿지 요약 카드 개선
+- quality loop 안정화:
+  - `gpt-5-nano`에서 critique/revision 초안이 최종 본문을 오염시키는 퇴행 경로 차단
+  - final selection 시 섹션 완결성/required section 우선 가중
 
 ### P2 (Productization)
 - CI 품질 게이트 통합
@@ -107,6 +124,8 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
   - 대응: 20 iter 배치에서 3개 샘플은 유지하되, 각 샘플은 `depth=brief` + quality stage 생략 후 외부 gate로 검증
 - 시각화 삽입률 리스크(현재 baseline 3/3 보고서에서 실제 `<figure>` 0건):
   - 대응: P0-3에서 figure/diagram 생성 트리거를 명시하고 미삽입 사유를 로그에 기록
+- 모델별 quality loop 변동성 리스크:
+  - 대응: nano 계열은 quality loop 보수 운영(또는 상위 모델 fallback), 선택기 회귀 테스트 추가
 
 ## 9) 필수 참조 문서
 - `docs/development_workflow_guide.md`
@@ -133,13 +152,20 @@ Previous handoff (archived): `docs/dev_history/handoffs/codex_handoff_20260224.m
   - `gpt-5-nano` QC 샘플 추가 생성 + world-class gate PASS
   - 샘플 다각화(리더/일반독자 톤) 2건 확보
   - P0 진행률 변화 없음(`58%`)
+- Iter 13~16 완료 (2026-02-25 10:31 +09:00)
+  - `orchestrator` 섹션 헤딩 정규화 패치 적용(plain section label -> H2)
+  - KO 우선 신규 샘플 생성/게이트:
+    - `openclaw iter008 (gpt-5-nano, leader)` PASS
+    - `QC iter013 (gpt-5.2, general)` PASS
+    - `physical iter015 (gpt-5.2, classroom)` PASS
+    - `openclaw iter016 (gpt-5.2, deep/decision)` PASS
+  - P0 진행률 `58% -> 100%` 및 완료 처리
 
 ## 11) 다음 Iter 계획 (즉시)
-- Iter 11~15:
-  - P0-3 시각화 통합: artwork/mermaid fallback 삽입률 계측 + 실패 원인 로그 표준화
-  - figure caption/본문 연결 문장 품질 점검(출처/해석 자연문)
-  - handoff 진행률 업데이트(5 iter 단위)
-- Iter 16~20:
-  - 개선 반영 후 3톤 샘플 재생성 + world-class gate 재측정
-  - 수기 리뷰(문단 밀도/서사 연결/근거 추적/시각화 설명) 기록
-  - 배치 종료 시 commit/push
+- P1 Phase-C 집중:
+  - governor 정책/수렴 규칙을 LLM Settings와 일관 연결
+  - 턴별 로그 브릿지 품질 개선(요약 카드 + 원로그 가독성)
+  - quality loop 안정성 회귀 테스트(특히 nano 계열)
+- 운영:
+  - 5 iter마다 handoff 업데이트
+  - 20 iter마다 KO 샘플 3종 재생성 + world-class gate 재검증

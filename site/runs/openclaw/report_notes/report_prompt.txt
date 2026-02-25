@@ -1,4 +1,1 @@
-Objective: Produce a concise executive brief on OpenClaw with clear operational recommendations.
-Tone: Practical and direct for busy engineering leaders.
-Audience: Technical leaders and platform owners.
-Depth preference: brief.
+한국어로 작성. CTO/보안 리더 대상 심층 의사결정 리포트. 필수 섹션 유지, 주장 문장 끝 inline 인용([n]) 준수. 최소 비교표 1개와 다이어그램(mermaid 또는 figure) 1개를 포함.

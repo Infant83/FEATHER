@@ -402,3 +402,253 @@ Lede
 OpenClaw frames a provocative vision: an AI agent that operates through everyday enterprise channels—chat apps, email, files, and system tools—so it can perform tasks with minimal human intervention. The promise is undeniable: faster workflows, fewer handoffs, and continuous productivity. The risk, however, scales with capability. If an agent can secretly access credentials, exfiltrate data, or alter configurations across services, a small misstep can cascade into a major breach. This report assembles a decision-focused view of what it would take to deploy OpenClaw-like agents responsibly, with a rigorous governance and safety envelope anchored i
 ... [truncated]
 [2026-02-25 06:23:10] JOB END
+[2026-02-25 07:10:01] JOB START
+[2026-02-25 07:11:15] Scout Notes: 다음은 Archive 스토리지 맵에서의 인벤토리(구조화된 목록)와 읽기 우선 목록(최대 12개), 선정 이유입니다. 원문 타이틀/소스명은 원어 유지, 설명은 한글로 작성했습니다.
+
+1) 구조화된 인벤토리 (Inventory)
+
+- archive/openclaw-index.md
+  - 요약: OpenClaw(OpenClaw) 인덱스 문서. 쿼리ID, 날짜 범위, 실행 명령, Tavily Extract 목록이 요약되어 있음.
+  - 핵심 메타: Query ID: openclaw, Run Command 제시, Tavily Extract 목록 5개 명시.
+  - 비고: 본 스카우트의 참조 진입점으로 우선 읽을 대상.
+
+- archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 요약: OpenClaw — Personal AI Assistant에 대한 오리지널/대상 페이지 내용(JSON 구조 포함 부분 발췌).
+  - 핵심 메타: url: https://openclaw.ai/, title: OpenClaw — Personal AI Assistant
+  - 비고: OpenClaw의 공식 소개 및 개요를 제공하는 1차 소스.
+
+- archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt
+  - 요약: Moltbot(Clawdbot) 관련 DEV Community의 가이드 글.
+  - 핵심 메타: url: dev.to/czmilo/... M
+... [truncated]
+[2026-02-25 07:11:15] Alignment Check (scout): [prep] initializing alignment agent
+[2026-02-25 07:11:16] Alignment Check (scout): [prep] building alignment payload
+[2026-02-25 07:11:16] Alignment Check (scout): [prep] resolving cache and invoking model
+[2026-02-25 07:13:14] Alignment Check (plan): [prep] building alignment payload
+[2026-02-25 07:13:14] Alignment Check (plan): [prep] resolving cache and invoking model
+[2026-02-25 07:24:36] Alignment Check (evidence): [prep] building alignment payload
+[2026-02-25 07:24:36] Alignment Check (evidence): [prep] resolving cache and invoking model
+[2026-02-25 07:25:13] Plan Update: [prep] composing plan/evidence reconciliation payload
+[2026-02-25 07:31:26] Alignment Check (draft): [prep] building alignment payload
+[2026-02-25 07:32:23] JOB START
+[2026-02-25 07:32:27] Scout Notes [cache]: 다음은 Archive 스토리지 맵에서의 인벤토리(구조화된 목록)와 읽기 우선 목록(최대 12개), 선정 이유입니다. 원문 타이틀/소스명은 원어 유지, 설명은 한글로 작성했습니다.
+
+1) 구조화된 인벤토리 (Inventory)
+
+- archive/openclaw-index.md
+  - 요약: OpenClaw(OpenClaw) 인덱스 문서. 쿼리ID, 날짜 범위, 실행 명령, Tavily Extract 목록이 요약되어 있음.
+  - 핵심 메타: Query ID: openclaw, Run Command 제시, Tavily Extract 목록 5개 명시.
+  - 비고: 본 스카우트의 참조 진입점으로 우선 읽을 대상.
+
+- archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 요약: OpenClaw — Personal AI Assistant에 대한 오리지널/대상 페이지 내용(JSON 구조 포함 부분 발췌).
+  - 핵심 메타: url: https://openclaw.ai/, title: OpenClaw — Personal AI Assistant
+  - 비고: OpenClaw의 공식 소개 및 개요를 제공하는 1차 소스.
+
+- archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt
+  - 요약: Moltbot(Clawdbot) 관련 DEV Community의 가이드 글.
+  - 핵심 메타: url: dev.to/czmilo/... M
+... [truncated]
+[2026-02-25 07:39:10] Report Preview: 오픈클로우 인덱스와 타빌리 익스트랙트 기술 검토
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 07:38
+Executive Summary
+본 보고서는 OpenClaw 인덱스와 Tavily Extract 목록을 중심으로 하는 심층 기술 검토를 목표로 한다. 공개적 문헌에서 확인되는 핵심 주장은 OpenClaw가 “실제로 작동하는” Personal AI Assistant로 기능하며, 다양한 채팅 앱에서 작동하고 로컬 환경에서도 구동 가능하다는 점이다. 이와 관련해 공식 소개 및 관련 기사에서 확인 가능한 근거를 근거로 하되, 현재 데이터는 마케팅/프로모션 성격의 문구가 다수로 포함되어 있어 재현성 및 실제 작동 범위에 대한 독립적 검증은 제한적이다. 주요 공개 출처로 OpenClaw의 공식 사이트(
+\[1\]
+), Skywork의 Moltbot-Proactive AI 페이지(
+\[2\]
+), Dark Reading의 보도 기사(
+\[3\]
+)를 확인하였다. 또한 인덱스 구조와 Tavily Extract의 진입점을 다루는 내부 아카이브 파일들이 존재하나, 이들 파일은 공개 URL을 제공하지 않으므로 본 보고서의 인용은 주로 공개 원문을 우선한다. 현 시점의 근거 커버리지는 28건의 주장 중 8건의 증거 참조로 제한되며, 주장의 인용 방식과 한계는 향후 재현성 검증이 필요하다. 상황에 따라 포괄적 재현성 확보를 위한 추가 원문 수집이 필요하다.
+핵심 시사점
+- 공개 출처에 기반한 주장들은 OpenClaw를 실무형 도구로 제시하는 경향이 강하며, 
+... [truncated]
+[2026-02-25 07:39:10] JOB END
+[2026-02-25 07:41:41] JOB START
+[2026-02-25 07:42:54] Scout Notes: 다음은 run 폴더/archive 구조를 바탕으로 한 소스 스카우트(Inventory + 우선 읽기 목록) 결과입니다. 원문 파일을 모두 읽지 않는 것을 우선으로, 먼저 사용할 메타데이터와 인덱스 파일 위주로 파악했습니다.
+
+1) 구조화된 인벤토리 (소스 목록 및 간략 요약)
+- archive/openclaw-index.md
+  - 타입: archive 인덱스 문서
+  - 요약: OpenClaw 아카이브의 개요와 Run Command, Tavily Extract 목록, Instruction 위치를 포함. 이 문서는 전체 아카이브의 방향성과 핵심 링크를 한눈에 파악하는 출발점.
+- archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 타입: Tavily Extract
+  - 요약: OpenClaw 관련 핵심 소개 텍스트를 담은 문서. 제목 및 인용 문구 포함. OpenClaw의 기능 방향성(개인 비서 성격)을 간접적으로 파악 가능.
+- archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt
+  - 타입: Tavily Extract
+  - 요약: Moltbot(개인 AI 비서) 가이드에 대한 DEV.to 글 요약으로, Personal AI Assistant의 구현 방향성 및 예시가 포함되어 있음.
+- archive/tavily_extract/0001_https_twofootdog.tistory.com_555.txt
+  - 타
+... [truncated]
+[2026-02-25 08:01:05] JOB START
+[2026-02-25 08:02:58] Scout Notes: 다음은 현재 아카이브에서 핵심 소스 식별 및 우선 읽기 계획(최대 12개 소스)으로 구성된 인벤토리와 선정 이유, 그리고 실행 의사결정 포인트를 요약한 내용입니다. 읽기 계획은 OpenClaw 도입의 실행 의사결정에 directly 도움되는 문맥 위주로 정리했습니다. 원문 본문은 필요 최소 범위에서만 확인하고, JSONL 메타데이터 파일 존재 시 커버리지를 우선 파악합니다.
+
+1) 인벤토리(구조화된 목록)
+- ARCH-OC-IDX: archive/openclaw-index.md
+  - 유형: Archive 인덱스 문서
+  - 우선도: High
+  - 핵심 포인트: OpenClaw 연구의 개요와 Tavily Extract 맵핑; Run Commands 및 Instruction 위치 제시. Tavily Extract 목록(0001~0005)의 진입점 역할.
+  - 선정 이유: 전반적 맥락과 데이터 흐름의 출발점으로, 이후 모든 소스의 위치와 목적을 빠르게 확인 가능.
+
+- ARCH-OC-EX-0002: archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 유형: Tavily Extract 텍스트(오픈클로우/오픈클라우드 계열)
+  - 우선도: High
+  - 핵심 포인트: OpenClaw의 핵심 개념 표현(“The AI that actually does things” 등); 개인용 AI 어시스턴트로서의 기능성 제시.
+  - 선정 이유: OpenClaw가 실제로 수행하는 작업의 성격과 사용 시나리오의 직관적 이해에 가장 직결.
+
+- ARCH-OC-EX-0003: archiv
+... [truncated]
+[2026-02-25 08:07:23] JOB START
+[2026-02-25 08:07:27] Scout Notes [cache]: 다음은 현재 아카이브에서 핵심 소스 식별 및 우선 읽기 계획(최대 12개 소스)으로 구성된 인벤토리와 선정 이유, 그리고 실행 의사결정 포인트를 요약한 내용입니다. 읽기 계획은 OpenClaw 도입의 실행 의사결정에 directly 도움되는 문맥 위주로 정리했습니다. 원문 본문은 필요 최소 범위에서만 확인하고, JSONL 메타데이터 파일 존재 시 커버리지를 우선 파악합니다.
+
+1) 인벤토리(구조화된 목록)
+- ARCH-OC-IDX: archive/openclaw-index.md
+  - 유형: Archive 인덱스 문서
+  - 우선도: High
+  - 핵심 포인트: OpenClaw 연구의 개요와 Tavily Extract 맵핑; Run Commands 및 Instruction 위치 제시. Tavily Extract 목록(0001~0005)의 진입점 역할.
+  - 선정 이유: 전반적 맥락과 데이터 흐름의 출발점으로, 이후 모든 소스의 위치와 목적을 빠르게 확인 가능.
+
+- ARCH-OC-EX-0002: archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 유형: Tavily Extract 텍스트(오픈클로우/오픈클라우드 계열)
+  - 우선도: High
+  - 핵심 포인트: OpenClaw의 핵심 개념 표현(“The AI that actually does things” 등); 개인용 AI 어시스턴트로서의 기능성 제시.
+  - 선정 이유: OpenClaw가 실제로 수행하는 작업의 성격과 사용 시나리오의 직관적 이해에 가장 직결.
+
+- ARCH-OC-EX-0003: archiv
+... [truncated]
+[2026-02-25 08:07:27] Plan [cache]: - [ ] 요구사항 정리 및 보고서 포커스 확정 — 독자(CIO/보안 리더) 맞춤 의사결정 포인트 및 포맷 정의
+- [ ] 핵심 소스 인벤토리 확정 및 우선 읽기 순서 제시 — ARCH-OC-IDX, ARCH-OC-EX-0002~0005를 우선 읽고 1–2문단 요약 및 리스크 포인트 도출
+- [ ] 발췌 포인트 도출 및 커버리지 매핑 — 각 소스의 핵심 문장 2–3개 발췌 및 커버리지 매핑
+- [ ] 보안·거버넌스 정책 프레임워크 초안 — 최소 권한 원칙, 샌드박스 규칙, 감사 로깅 정책 개요
+- [ ] 실행 의사결정 포인트 도출 — 옵션 비교, 의사결정 기준, 권고안 및 조건부 가정(when/if) 구체화
+- [ ] 90일 실행 계획 설계 — Day 1–Day 90 마일스톤, 책임자, KPI 정의
+- [ ] 최종 보고서 구성 및 마감 — template technical_deep_dive에 맞춘 섹션 배치, 인용/발췌 목록 정리
+[2026-02-25 08:11:26] Report Preview: 실행형 개인 AI의 엔터프라이즈 거버넌스와 보안
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 08:11
+Executive Summary
+OpenClaw represents a paradigm of personal AI assistants that can perform actionable tasks across messaging and automation channels, including inbox management, email, and calendar operations, via familiar chat interfaces. This capability is described explicitly as “The AI that actually does things,” signaling a shift from passive guidance toward task execution
+\[1\]
+. For enterprise consideration, the evidence base points to meaningful automation potential (e.g., cross-app actions and integrations) but also highlights substantive governance, security, and data-privacy considerations when operating in business environments. Dark Reading emphasizes security and operational ri
+... [truncated]
+[2026-02-25 08:11:26] JOB END
+[2026-02-25 08:13:29] JOB START
+[2026-02-25 08:15:21] Scout Notes: 다음은 OpenClaw 아카이브에 대한 소스 스카우트(Inventory) 초안입니다. 원문 본문 대량 읽기(read_file/read_document) 없이, 우선 파일목록과 메타데이터를 통해 커버리지를 파악하고, 읽기 계획을 제안합니다. 이번 스카우트는 인벤토리/우선 읽기 목록(최대 12개)과 선정 이유를 먼저 제시합니다.
+
+1) 구조화된 인벤토리(12개) + 선정 이유
+- 소스: archive/openclaw-index.md
+  - 설명: OpenClaw 아카이브의 중심 지시문서로 Run_command/Instruction 경로와 Tavily Extract 목록의 개요를 제공합니다.
+  - 선정 이유: 현재 커버리지를 파악하는 출발점으로 필수적이며, 전체 스카우트의 맥락을 한눈에 확인 가능. 근거 파일: archive/openclaw-index.md
+- 소스: archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 설명: OpenClaw AI에 대한 핵심 소개/내용 요약이 담긴 카드형 텍스트.
+  - 선정 이유: OpenClaw의 핵심 개념과 기능에 대한 1차 근거 확보. 근거 파일: archive/tavily_extract/0002_https_openclaw.ai.txt
+- 소스: archive/tavily_extract/0003_https_dev.to_czmilo_moltbot-the-ultimate-personal-ai-assistant-guide-for-2026-d4e.txt
+  - 설명: Moltb ot/Clawdbot 계열 개인 AI 보조 가이드(2026
+... [truncated]
+[2026-02-25 08:18:41] Report Preview: 오픈클로 아카이브 현황과 90일 실행계획 리스크 관리
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 08:18
+Executive Summary
+본 보고서는 OpenClaw 아카이브에 대한 깊이 있는 기술적 검토를 목표로 하며, 현 시점의 커버리지 현황을 바탕으로 90일 실행계획과 거버넌스 확보를 위한 리스크 관리 전략을 제시합니다. 핵심 근거로는 아카이브의 구조를 기술하는 중심 문서
+\[1\]
+와 Tavily Extract의 핵심 소스들(0002, 0003, 0004, 0005 시퀀스)로 구성된 인벤토리와 메타데이터가 활용됩니다. 이 인벤토리는 현재 커버리지의 출발점으로서 전체 스카우트의 맥락을 한눈에 제공하며, 보안/거버넌스 이슈에 대한 논의가 향후 주요 관심사로 남을 가능성이 높습니다. 구체적으로는 12개 구조화 인벤토리 항목과 각 항목의 선정 이유를 통해 주요 주장과 리스크를 도출하고, 90일 실행계획에 따른 실행 조건과 컨트롤 체크리스트를 제시합니다. 근거 파일:
+\[1\]
+,
+\[2\]
+,
+\[3\]
+,
+\[4\]
+,
+\[5\]
+,
+\[6\]
+,
+\[7\]
+.
+\[1\]
+現時점에서의 핵심 의사결정은 다음과 같습니다. (1) 커버리지 맵의 12개 소스에 대한 체계적 읽기 우선순위 확정, (2) 상단 섹션 스캐닝 계획에 따른 주장/리스크 메모 완료, (3) 90일 실행계획 및 컨트롤 체크리스트 구체화. 이 보고서는 결정 지원용 브리프이므로, 추정이나 과도한 해석 없이 문서 기반의 주장-근거-리스크 체계를 유지합니다. 본문에 제시된 모
+... [truncated]
+[2026-02-25 08:18:42] JOB END
+[2026-02-25 08:24:29] JOB START
+[2026-02-25 08:26:57] Scout Notes: 다음은 OpenClaw(OpenClaw/OpenClaw 기반 아카이브) 관련 핵심 소스를 식별하고, 스카우트 관점의 인벤토리 및 읽기 우선순위를 제시한 정리안입니다. 원문 본문을 길게 읽지 않는 선에서, 우선 메타데이터/목록 파일과 샘플 인출본 위주로 구성했습니다. 요청에 따라 한국어로 정리하고, 핵심 주장/불릿에 인용 표기를 포함합니다.
+
+1) 구조화된 인벤토리(최대 12개) + 선정 이유
+- Source 1: archive/openclaw-index.md
+  - 요약/역할: OpenClaw 인덱스의 메타데이터 및 Run Command를 포함한 핵심 개요를 제공합니다. 스코프 정의의 기초로 활용됩니다. 선정 이유: 메타데이터를 빠르게 파악해 검색 범위를 결정하는 데 필수. 선정 근거 문장 예: "Query ID: `openclaw`" [1].
+- Source 2: instruction/openclaw.txt
+  - 요약/역할: OpenClaw 관련 주요 대상 페이지 URL 목록을 포함합니다. 핵심 소스 후보를 신속히 파악하는 데 중요합니다. 선정 이유: 원문 소스의 직접 링크를 확보하여 추가 확인 포인트를 빠르게 점검할 수 있습니다. 선정 근거 문장 예: 여러 URL 목록에 대한 접근 근거 제공 [2].
+- Source 3: archive/tavily_extract/0002_https_openclaw.ai.txt
+  - 요약/역할: OpenClaw — Personal AI Assistant에 대한 직접 기술(제품명/개념)을 담은 샘플 원문. 선정 이유: 핵심 용어(“OpenClaw — Personal AI 
+... [truncated]
+[2026-02-25 08:32:19] Report Preview: OpenClaw 실행형 AI 보안 브리프
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 08:32
+Executive Summary
+본 보고서는 OpenClaw 아카이브를 중심으로 핵심 인벤토리와 읽기 우선순위를 기반으로, CTO/보안 리더의 의사결정을 지원하기 위한 기술적 심층 브리프입니다. 핵심 주장은 OpenClaw가 “실제로 실행 가능한 작업을 수행하는 AI” 방향성을 제시한다는 점이며, 업무 실행(일정 관리, 메일 발송 등) 가능성에 주안점을 둡니다
+\[1\]
+.
+읽기 우선순위의 근거가 된 주요 메타데이터/샘플 문서는 OpenClaw 인덱스 부문과 샘플 원문에서 도출되며, 이를 통해 검색 범위와 핵심 용어를 신속히 파악할 수 있습니다
+\[1\]
+.
+Moltbot의 2026년 가이드는 차세대 퍼스널 AI 어시스턴트의 방향성을 제공하며, 보안 및 운영 설계 맥락에서 중요한 참조점으로 작용합니다
+\[2\]
+.
+90일 실행계획은 프라이버시, 공급망 관리, 로그 관리, 정책 준수의 4대 리스크 축을 중심으로 구성되며, 각 기간에 필요한 제어와 검증 활동을 제시합니다. 예를 들어 0-30일 구간은 보안 정책 초안 작성 및 공급망 위험 평가를 수행하도록 권고합니다
+\[3\]
+.
+본 인벤토리는 원문 전체를 대량으로 읽지 않는 원칙에 따라 메타정보와 샘플 인용 위주로 구성되며, 필요 시 구체 섹션의 Read Document로 보완하는 방식으로 운용합니다
+\[1\]
+.
+요약적으로, 이 보고서는 OpenClaw 기반 아카이브의 핵심 문맥과 보안/운영 
+... [truncated]
+[2026-02-25 08:32:20] JOB END
+[2026-02-25 10:14:05] JOB START
+[2026-02-25 10:15:00] Scout Notes: ## 0) 범위/제약 확인(스카우트 단계)
+- 목적: **아카이브 매핑 + 핵심 소스 파일 식별 + 우선 읽기(딥리드) 계획 제안**
+- 제약 준수: 긴 문서 전체 읽기 금지, 필요 최소 범위만 확인
+- 현재 상태: 아카이브는 **tavily_extract 5개 URL 스냅샷** 중심이며, 지정된 **메타데이터 JSONL 인덱스들(tavily_search/openalex/arxiv/youtube/local manifest)** 은 **이번 run 폴더에 존재하지 않음**(패턴 매칭 실패로 확인). 따라서 `archive/openclaw-index.md`가 사실상 1차 인덱스 역할.
+
+---
+
+## 1) 아카이브 인벤토리(구조화)
+### A. 실행/인덱스/로그
+1. `archive/openclaw-index.md` (946B)  
+   - 본 run에서 수집된 URL 5개와 tavily_extract 파일 매핑 제공(핵심 인덱스).
+2. `instruction/openclaw.txt`  
+   - 수집 대상 URL 목록(5개)만 포함(스카우트용 입력).
+3. `archive/_job.json` / `archive/_log.txt` / `archive/_feather_log.txt`  
+   - 수집 작업 메타/로그(추가 소스 확장 시 참고).
+
+### B. 본문 스냅샷(1차 소스 풀)
+(모두 `archive/tavily_extract/*.txt` 형태, 각 파일은 JSON 구조 안에 `url/title/raw_content` 포함)
+1. `archive/tavily_extract/0002_https_opencl
+... [truncated]
+[2026-02-25 10:15:00] Alignment Check (scout): [prep] initializing alignment agent
+[2026-02-25 10:15:00] Alignment Check (scout): [prep] building alignment payload
+[2026-02-25 10:15:00] Alignment Check (scout): [prep] resolving cache and invoking model
+[2026-02-25 10:16:03] Alignment Check (plan): [prep] building alignment payload
+[2026-02-25 10:16:03] Alignment Check (plan): [prep] resolving cache and invoking model
+[2026-02-25 10:17:13] Alignment Check (evidence): [prep] building alignment payload
+[2026-02-25 10:17:13] Alignment Check (evidence): [prep] resolving cache and invoking model
+[2026-02-25 10:17:33] Plan Update: [prep] composing plan/evidence reconciliation payload
+[2026-02-25 10:23:18] Alignment Check (draft): [prep] building alignment payload
+[2026-02-25 10:23:18] Alignment Check (draft): [prep] resolving cache and invoking model
+[2026-02-25 10:24:51] Alignment Check (final): [prep] building alignment payload
+[2026-02-25 10:24:51] Alignment Check (final): [prep] resolving cache and invoking model
+[2026-02-25 10:25:13] Report Preview: OpenClaw 엔터프라이즈 조건부 도입 결론과 보안 통제 쟁점
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 10:25
+Executive Summary
+도입 결론(Go/No-Go/조건부)
+현 아카이브 근거만 기준으로는 엔터프라이즈 전면 도입은
+조건부(제한적 PoC 후 단계적 확대)
+가 합리적이다.[1]
+조건부의 핵심 전제는 OpenClaw가 “Read and write files, run shell commands, execute scripts” 수준의
+로컬 권한 실행면
+을 전제로 하며, 동시에 “Full access or sandboxed—your choice.”라는
+격리 옵션을 마케팅 문구로만 제시
+하고 있어 실제 강제력·정책화 가능성을 문서/코드로 확인해야 하기 때문이다.[2][1]
+또한 Dark Reading은 OpenClaw를 “privileged, autonomous control within users' computers” 맥락에서 다루며, 전통 IAM/시크릿 통제 밖에 “persistent non-human identities”가 생길 수 있다는 위험 프레이밍을 제시하므로, 보안 리더 관점에서 통제 설계·검증 없이 도입하기 어렵다.[5][1]
+핵심 리스크(3~5개)
+에이전트가 파일 읽기/쓰기, 쉘 명령, 스크립트 실행을 수행할 수 있다는 점은
+권한 오남용·명령 주입·데이터 유출
+로 이어질 수 있다.[2]
+“Runs on Your Machine”, “Private by default—your data stays yours.”
+... [truncated]
+[2026-02-25 10:25:13] JOB END

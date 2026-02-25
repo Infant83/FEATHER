@@ -53,31 +53,36 @@
   <main><h1>Report Workflow</h1>
 <h2>Stages</h2>
 <ol>
-<li>scout: cached</li>
+<li>scout: ran</li>
 <li>clarifier: skipped (no_questions)</li>
-<li>template_adjust: skipped (depth=brief)</li>
-<li>plan: cached</li>
+<li>template_adjust: ran</li>
+<li>plan: ran</li>
 <li>web: skipped (policy)</li>
-<li>evidence: skipped (depth=brief)</li>
-<li>plan_check: skipped (missing_evidence)</li>
+<li>evidence: ran</li>
+<li>plan_check: ran</li>
 <li>writer: ran</li>
-<li>quality: disabled</li>
+<li>quality: ran (iterations=1/4)</li>
 </ol>
 <h2>Timeline</h2>
 <ol>
-<li>[2026-02-25T06:21:06] template_adjust: skipped (depth=brief)</li>
-<li>[2026-02-25T06:21:08] scout: cached</li>
-<li>[2026-02-25T06:21:08] clarifier: skipped (no_questions)</li>
-<li>[2026-02-25T06:21:09] plan: cached</li>
-<li>[2026-02-25T06:21:09] web: skipped (policy)</li>
-<li>[2026-02-25T06:21:09] plan_check: skipped (missing_evidence)</li>
-<li>[2026-02-25T06:21:09] evidence: skipped (depth=brief)</li>
-<li>[2026-02-25T06:22:16] writer: ran</li>
+<li>[2026-02-25T10:15:00] scout: ran</li>
+<li>[2026-02-25T10:15:00] clarifier: skipped (no_questions)</li>
+<li>[2026-02-25T10:15:46] template_adjust: ran</li>
+<li>[2026-02-25T10:16:03] plan: ran</li>
+<li>[2026-02-25T10:16:28] web: skipped (policy)</li>
+<li>[2026-02-25T10:17:13] evidence: ran</li>
+<li>[2026-02-25T10:18:41] plan_check: ran</li>
+<li>[2026-02-25T10:21:17] writer: ran</li>
+<li>[2026-02-25T10:24:23] quality: ran (iterations=1/4)</li>
 </ol>
 <h2>Artifacts</h2>
 <h3>scout</h3>
 <ul>
 <li>Scout notes: <a href="../report_notes/scout_notes.md">./report_notes/scout_notes.md</a></li>
+</ul>
+<h3>template_adjust</h3>
+<ul>
+<li>Template adjustment: <a href="../report_notes/template_adjustment.md">./report_notes/template_adjustment.md</a></li>
 </ul>
 <h3>plan</h3>
 <ul>
@@ -100,15 +105,15 @@
 </ul>
 <h2>Diagram</h2>
 <pre><code class="language-mermaid">flowchart LR
-    scout[&quot;scout\ncached&quot;]
+    scout[&quot;scout\nran&quot;]
     clarifier[&quot;clarifier\nskipped&quot;]
-    template_adjust[&quot;template_adjust\nskipped&quot;]
-    plan[&quot;plan\ncached&quot;]
+    template_adjust[&quot;template_adjust\nran&quot;]
+    plan[&quot;plan\nran&quot;]
     web[&quot;web\nskipped&quot;]
-    evidence[&quot;evidence\nskipped&quot;]
-    plan_check[&quot;plan_check\nskipped&quot;]
+    evidence[&quot;evidence\nran&quot;]
+    plan_check[&quot;plan_check\nran&quot;]
     writer[&quot;writer\nran&quot;]
-    quality[&quot;quality\ndisabled&quot;]
+    quality[&quot;quality\nran&quot;]
     scout --&gt; clarifier
     clarifier --&gt; template_adjust
     template_adjust --&gt; plan
@@ -117,12 +122,13 @@
     evidence --&gt; plan_check
     plan_check --&gt; writer
     writer --&gt; quality
+    quality -. feedback .-&gt; writer
 </code></pre>
 <h2>Outputs</h2>
 <ul>
-<li>Report overview: <a href="../report/run_overview_report_full_iter004_gpt5nano_leader.md">./report/run_overview_report_full_iter004_gpt5nano_leader.md</a></li>
+<li>Report overview: <a href="../report/run_overview_report_full_iter016_gpt52_ko_deep_world.md">./report/run_overview_report_full_iter016_gpt52_ko_deep_world.md</a></li>
 <li>Report meta: <a href="../report_notes/report_meta.json">./report_notes/report_meta.json</a></li>
-<li>Report prompt copy: <a href="../instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt">./instruction/report_prompt_report_full_iter004_gpt5nano_leader.txt</a></li>
+<li>Report prompt copy: <a href="../instruction/report_prompt_report_full_iter016_gpt52_ko_deep_world.txt">./instruction/report_prompt_report_full_iter016_gpt52_ko_deep_world.txt</a></li>
 <li>Template summary: <a href="../report_notes/report_template.txt">./report_notes/report_template.txt</a></li>
 </ul></main>
   <script>

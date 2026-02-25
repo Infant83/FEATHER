@@ -1671,14 +1671,31 @@ class ReportOrchestrator:
                 return text
             if not text or not sections:
                 return text
+            section_lookup = {
+                re.sub(r"[^a-z0-9가-힣]+", "", section.strip().lower()): section.strip()
+                for section in sections
+                if section and str(section).strip()
+            }
             lines = text.splitlines()
             lowered = [section.lower() for section in sections]
             for idx, line in enumerate(lines):
-                if not line.startswith("### "):
+                stripped = line.strip()
+                if line.startswith("### "):
+                    heading = line[4:].strip()
+                    if any(heading.lower().startswith(section) for section in lowered):
+                        lines[idx] = f"## {heading}"
                     continue
-                heading = line[4:].strip()
-                if any(heading.lower().startswith(section) for section in lowered):
-                    lines[idx] = f"## {heading}"
+                if (
+                    not stripped
+                    or stripped.startswith(("## ", "#", "- ", "* ", "> ", "|", "```"))
+                    or re.match(r"^\d+[.)]\s+", stripped)
+                    or len(stripped) > 80
+                ):
+                    continue
+                normalized = re.sub(r"[^a-z0-9가-힣]+", "", stripped.rstrip(":").lower())
+                canonical = section_lookup.get(normalized)
+                if canonical:
+                    lines[idx] = f"## {canonical}"
             return "\n".join(lines)
 
         def report_needs_retry(text: str) -> tuple[bool, str]:
@@ -1713,14 +1730,31 @@ class ReportOrchestrator:
                 return text
             if not text:
                 return text
+            section_lookup = {
+                re.sub(r"[^a-z0-9가-힣]+", "", section.strip().lower()): section.strip()
+                for section in sections
+                if section and str(section).strip()
+            }
             lines = text.splitlines()
             lowered = [section.lower() for section in sections]
             for idx, line in enumerate(lines):
-                if not line.startswith("### "):
+                stripped = line.strip()
+                if line.startswith("### "):
+                    heading = line[4:].strip()
+                    if any(heading.lower().startswith(section) for section in lowered):
+                        lines[idx] = f"## {heading}"
                     continue
-                heading = line[4:].strip()
-                if any(heading.lower().startswith(section) for section in lowered):
-                    lines[idx] = f"## {heading}"
+                if (
+                    not stripped
+                    or stripped.startswith(("## ", "#", "- ", "* ", "> ", "|", "```"))
+                    or re.match(r"^\d+[.)]\s+", stripped)
+                    or len(stripped) > 80
+                ):
+                    continue
+                normalized = re.sub(r"[^a-z0-9가-힣]+", "", stripped.rstrip(":").lower())
+                canonical = section_lookup.get(normalized)
+                if canonical:
+                    lines[idx] = f"## {canonical}"
             return "\n".join(lines)
 
         def append_missing_sections(report_text: str, supplement: str) -> str:
@@ -1764,6 +1798,7 @@ class ReportOrchestrator:
                 return result_text
 
             def merge_targeted_sections(current_report: str, repair_report: str) -> tuple[str, int]:
+                nonlocal section_ast_payload, section_ast_outline_text
                 if not hasattr(helpers, "upsert_named_section"):
                     return current_report, 0
                 merged = str(current_report or "")

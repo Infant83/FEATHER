@@ -1,0 +1,47 @@
+{
+  "rows": [
+    {
+      "path": "site/runs/openclaw/report_full_iter007_gpt5nano_ko_leader_brief.html",
+      "format": "html",
+      "overall": 81.87,
+      "claim_support_ratio": 48.39,
+      "unsupported_claim_count": 16.0,
+      "evidence_density_score": 100.0,
+      "section_coherence_score": 100.0,
+      "signals": {
+        "section_coverage": 100.0,
+        "citation_density": 100.0,
+        "evidence_density_score": 100.0,
+        "claim_support_ratio": 48.39,
+        "unsupported_claim_count": 16.0,
+        "section_coherence_score": 100.0,
+        "method_transparency": 100.0,
+        "traceability": 74.0,
+        "uncertainty_handling": 100.0,
+        "narrative_density_score": 38.0,
+        "visual_evidence_score": 42.0,
+        "overall": 81.87
+      }
+    }
+  ],
+  "rows_count": 1,
+  "summary": {
+    "overall": 81.87,
+    "claim_support_ratio": 48.39,
+    "unsupported_claim_count": 16.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 100.0
+  },
+  "baseline_summary": null,
+  "delta_summary": null,
+  "compare_markdown": "",
+  "suite": null,
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

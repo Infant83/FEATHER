@@ -1,0 +1,25 @@
+[
+  {
+    "path": "site/runs/openclaw/report_full_iter008_gpt5nano_ko_world.html",
+    "format": "html",
+    "overall": 91.3,
+    "claim_support_ratio": 73.17,
+    "unsupported_claim_count": 11.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 100.0,
+    "signals": {
+      "section_coverage": 100.0,
+      "citation_density": 100.0,
+      "evidence_density_score": 100.0,
+      "claim_support_ratio": 73.17,
+      "unsupported_claim_count": 11.0,
+      "section_coherence_score": 100.0,
+      "method_transparency": 100.0,
+      "traceability": 74.0,
+      "uncertainty_handling": 100.0,
+      "narrative_density_score": 38.0,
+      "visual_evidence_score": 42.0,
+      "overall": 91.3
+    }
+  }
+]

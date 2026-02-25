@@ -9,18 +9,19 @@
 6. evidence: skipped (depth=brief)
 7. plan_check: skipped (missing_evidence)
 8. writer: ran
-9. quality: disabled
+9. quality: skipped (iterations=0)
 
 ## Timeline
 
-1. [2026-02-25T00:58:49] template_adjust: skipped (depth=brief)
-2. [2026-02-25T01:02:09] scout: ran
-3. [2026-02-25T01:02:09] clarifier: skipped (no_questions)
-4. [2026-02-25T01:02:30] plan: ran
-5. [2026-02-25T01:02:30] web: skipped (policy)
-6. [2026-02-25T01:02:30] plan_check: skipped (missing_evidence)
-7. [2026-02-25T01:02:30] evidence: skipped (depth=brief)
-8. [2026-02-25T01:06:27] writer: ran
+1. [2026-02-25T10:08:20] template_adjust: skipped (depth=brief)
+2. [2026-02-25T10:09:01] scout: ran
+3. [2026-02-25T10:09:01] clarifier: skipped (no_questions)
+4. [2026-02-25T10:09:20] plan: ran
+5. [2026-02-25T10:09:20] web: skipped (policy)
+6. [2026-02-25T10:09:20] plan_check: skipped (missing_evidence)
+7. [2026-02-25T10:09:20] evidence: skipped (depth=brief)
+8. [2026-02-25T10:11:29] writer: ran
+9. [2026-02-25T10:13:12] quality: skipped (iterations=0)
 
 ## Artifacts
 ### scout
@@ -36,6 +37,10 @@
 - Claim map: ./report_notes/claim_map.md
 - Gap report: ./report_notes/gap_finder.md
 
+### quality
+- Quality evaluations: ./report_notes/quality_evals.jsonl
+- Quality pairwise: ./report_notes/quality_pairwise.jsonl
+
 ## Diagram
 
 ```mermaid
@@ -48,7 +53,7 @@ flowchart LR
     evidence["evidence\nskipped"]
     plan_check["plan_check\nskipped"]
     writer["writer\nran"]
-    quality["quality\ndisabled"]
+    quality["quality\nskipped"]
     scout --> clarifier
     clarifier --> template_adjust
     template_adjust --> plan
@@ -59,7 +64,7 @@ flowchart LR
     writer --> quality
 ```
 ## Outputs
-- Report overview: ./report/run_overview_report_full_iter003_codex_classroom.md
+- Report overview: ./report/run_overview_report_full_iter015_gpt52_ko_classroom_world.md
 - Report meta: ./report_notes/report_meta.json
-- Report prompt copy: ./instruction/report_prompt_report_full_iter003_codex_classroom.txt
+- Report prompt copy: ./instruction/report_prompt_report_full_iter015_gpt52_ko_classroom_world.txt
 - Template summary: ./report_notes/report_template.txt

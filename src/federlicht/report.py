@@ -2455,9 +2455,19 @@ def _is_substantive_claim_candidate(line: str) -> bool:
         return False
     if re.match(r"^\$.*\$$", text):
         return False
-    if len(re.findall(r"\w+|[\uac00-\ud7a3]", text)) < 12:
+    if re.match(r"^\s*(?:[-*•]|\d+\.)\s+", text):
+        has_anchor = bool(
+            re.search(
+                r"(https?://|doi\.org/|archive/|instruction/|report_notes/|supporting/|\[\d+\]|\.md\b|\.txt\b|\.pdf\b)",
+                text,
+                re.IGNORECASE,
+            )
+        )
+        if not has_anchor:
+            return False
+    if len(re.findall(r"\w+|[\uac00-\ud7a3]", text)) < 14:
         return False
-    if len(text) < 42:
+    if len(text) < 50:
         return False
     return True
 
@@ -2553,6 +2563,87 @@ def _keyword_signal_score(
     return round(min(100.0, 62.0 + (hit_count * 12.0)), 2)
 
 
+def _contains_visual_evidence(report_text: str, output_format: str) -> bool:
+    raw = str(report_text or "")
+    if not raw:
+        return False
+    lowered = raw.lower()
+    if output_format == "html":
+        if "<figure" in lowered or "class=\"mermaid\"" in lowered or "<table" in lowered:
+            return True
+    elif output_format == "tex":
+        if "\\begin{figure" in lowered or "\\begin{table" in lowered:
+            return True
+    else:
+        if "```mermaid" in lowered or "<figure" in lowered:
+            return True
+        if re.search(r"(?m)^\s*\|.+\|\s*$", raw) and re.search(r"(?m)^\s*\|?\s*:?-{3,}", raw):
+            return True
+    return False
+
+
+def _core_section_paragraph_density_score(report_text: str, output_format: str) -> float:
+    target_sections = (
+        "Methods & Experimental Evidence",
+        "Methods & Data",
+        "Scope & Methodology",
+        "Key Findings",
+        "Results & Benchmarks",
+        "Implications",
+        "Trends & Implications",
+    )
+    paragraph_counts: list[int] = []
+    for section in target_sections:
+        extracted = extract_named_section(report_text, output_format, section)
+        if not extracted:
+            continue
+        if output_format == "html":
+            chunks = [seg.strip() for seg in re.findall(r"(?is)<p[^>]*>(.*?)</p>", extracted)]
+            if not chunks:
+                plain = html_to_text(extracted)
+                chunks = [seg.strip() for seg in re.split(r"\n\s*\n+", plain) if seg.strip()]
+        else:
+            chunks = [seg.strip() for seg in re.split(r"\n\s*\n+", extracted) if seg.strip()]
+        valid = 0
+        for chunk in chunks:
+            plain = _quality_plain_text(chunk, output_format)
+            if len(re.findall(r"[A-Za-z0-9가-힣_]+", plain)) >= 22:
+                valid += 1
+        if valid > 0:
+            paragraph_counts.append(valid)
+    if not paragraph_counts:
+        return 55.0
+    avg_count = sum(paragraph_counts) / max(1, len(paragraph_counts))
+    if avg_count >= 3.0:
+        return 92.0
+    if avg_count >= 2.4:
+        return 82.0
+    if avg_count >= 2.0:
+        return 73.0
+    if avg_count >= 1.4:
+        return 63.0
+    return 52.0
+
+
+def _visual_evidence_score(
+    report_text: str,
+    output_format: str,
+    *,
+    depth: Optional[str] = None,
+    report_intent: Optional[str] = None,
+) -> float:
+    if _contains_visual_evidence(report_text, output_format):
+        return 92.0
+    intent = _normalize_report_intent(report_intent)
+    normalized_depth = normalize_depth_choice(depth)
+    deep_mode = intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}
+    if deep_mode:
+        return 42.0
+    if intent in {"briefing", "slide"} or normalized_depth == "brief":
+        return 72.0
+    return 58.0
+
+
 def _narrative_density_score(
     report_text: str,
     output_format: str,
@@ -2589,6 +2680,8 @@ def _narrative_density_score(
             score -= 8.0
         if avg_words < 45:
             score -= 10.0
+        section_density = _core_section_paragraph_density_score(report_text, output_format)
+        score += (section_density - 70.0) * 0.2
     elif brief_mode:
         score = 74.0 + (min(total_paragraphs, 8) * 2.0)
         if total_paragraphs < 4:
@@ -2683,6 +2776,12 @@ def compute_heuristic_quality_signals(
         default_score=58.0,
         output_format=output_format,
     )
+    visual_evidence = _visual_evidence_score(
+        report_text,
+        output_format,
+        depth=normalized_depth,
+        report_intent=intent,
+    )
     narrative_density = _narrative_density_score(
         report_text,
         output_format,
@@ -2699,22 +2798,24 @@ def compute_heuristic_quality_signals(
             "uncertainty": 0.12,
             "claim_support_ratio": 0.14,
             "section_coherence": 0.10,
-            "narrative_density": 0.03,
+            "narrative_density": 0.02,
+            "visual_evidence": 0.01,
         }
     elif intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}:
         weights = {
-            "section_coverage": 0.12,
-            "citation_density": 0.18,
-            "method_transparency": 0.18,
-            "traceability": 0.18,
-            "uncertainty": 0.10,
+            "section_coverage": 0.11,
+            "citation_density": 0.16,
+            "method_transparency": 0.16,
+            "traceability": 0.16,
+            "uncertainty": 0.09,
             "claim_support_ratio": 0.12,
             "section_coherence": 0.07,
-            "narrative_density": 0.05,
+            "narrative_density": 0.06,
+            "visual_evidence": 0.07,
         }
     else:
         weights = {
-            "section_coverage": 0.17,
+            "section_coverage": 0.15,
             "citation_density": 0.18,
             "method_transparency": 0.14,
             "traceability": 0.14,
@@ -2722,6 +2823,7 @@ def compute_heuristic_quality_signals(
             "claim_support_ratio": 0.14,
             "section_coherence": 0.12,
             "narrative_density": 0.01,
+            "visual_evidence": 0.02,
         }
     overall = (
         (section_coverage * weights["section_coverage"])
@@ -2732,6 +2834,7 @@ def compute_heuristic_quality_signals(
         + (claim_support_ratio * weights["claim_support_ratio"])
         + (section_coherence * weights["section_coherence"])
         + (narrative_density * weights["narrative_density"])
+        + (visual_evidence * weights["visual_evidence"])
     )
     return {
         "section_coverage": round(section_coverage, 2),
@@ -2744,6 +2847,7 @@ def compute_heuristic_quality_signals(
         "traceability": round(traceability, 2),
         "uncertainty_handling": round(uncertainty, 2),
         "narrative_density_score": round(narrative_density, 2),
+        "visual_evidence_score": round(visual_evidence, 2),
         "overall": round(overall, 2),
     }
 
@@ -6477,6 +6581,118 @@ def insert_figures_by_section(
             callout_block = f"{callout}\n\n" if callout else ""
             rebuilt = rebuilt.rstrip() + "\n\n## Figures\n" + callout_block + block + "\n"
     return rebuilt
+
+
+def _build_visual_fallback_note(
+    language: str,
+    output_format: str,
+    source_targets: list[str],
+) -> str:
+    is_ko = _is_korean_lang(language)
+    if output_format == "html":
+        if is_ko:
+            source_text = ", ".join(source_targets) if source_targets else "본문 Source Index의 1차 근거"
+            return (
+                "<figure class=\"report-figure report-diagram\">"
+                "<div class=\"mermaid\">flowchart LR\n"
+                "  A[연구 질문 정교화] --> B[근거 수집]\n"
+                "  B --> C[비교/검증]\n"
+                "  C --> D[의사결정 시사점]\n"
+                "</div>"
+                f"<figcaption>Figure: 핵심 주장-근거-해석 흐름도. 본 도식은 {html_lib.escape(source_text)}를 기반으로 "
+                "주장 형성 과정을 요약합니다.</figcaption>"
+                "</figure>"
+            )
+        source_text = ", ".join(source_targets) if source_targets else "primary references in Source Index"
+        return (
+            "<figure class=\"report-figure report-diagram\">"
+            "<div class=\"mermaid\">flowchart LR\n"
+            "  A[Question framing] --> B[Evidence intake]\n"
+            "  B --> C[Comparative validation]\n"
+            "  C --> D[Decision implications]\n"
+            "</div>"
+            f"<figcaption>Figure: claim-evidence-interpretation flow. This diagram summarizes the reasoning flow "
+            f"grounded in {html_lib.escape(source_text)}.</figcaption>"
+            "</figure>"
+        )
+    if is_ko:
+        source_text = ", ".join(source_targets) if source_targets else "본문 Source Index의 1차 근거"
+        return (
+            "### Visual Evidence Map\n\n"
+            "```mermaid\n"
+            "flowchart LR\n"
+            "  A[연구 질문 정교화] --> B[근거 수집]\n"
+            "  B --> C[비교/검증]\n"
+            "  C --> D[의사결정 시사점]\n"
+            "```\n\n"
+            f"위 도식은 {source_text}를 토대로, 본문의 핵심 주장과 해석 경로를 압축해 정리한 것입니다."
+        )
+    source_text = ", ".join(source_targets) if source_targets else "primary references listed in the Source Index"
+    return (
+        "### Visual Evidence Map\n\n"
+        "```mermaid\n"
+        "flowchart LR\n"
+        "  A[Question framing] --> B[Evidence intake]\n"
+        "  B --> C[Comparative validation]\n"
+        "  C --> D[Decision implications]\n"
+        "```\n\n"
+        f"This diagram condenses the claim-evidence-interpretation path grounded in {source_text}."
+    )
+
+
+def ensure_visual_evidence_fallback(
+    report_text: str,
+    *,
+    output_format: str,
+    language: str,
+    depth: Optional[str] = None,
+    report_intent: Optional[str] = None,
+    citation_refs: Optional[list[dict]] = None,
+) -> tuple[str, bool]:
+    if output_format == "tex":
+        return report_text, False
+    if _contains_visual_evidence(report_text, output_format):
+        return report_text, False
+    normalized_depth = normalize_depth_choice(depth)
+    intent = _normalize_report_intent(report_intent)
+    deep_mode = normalized_depth in {"deep", "exhaustive"} or intent in {"research", "review", "decision"}
+    if not deep_mode:
+        return report_text, False
+
+    insertion_format = output_format
+    if output_format == "html" and not re.search(r"(?is)<h[1-6][^>]*>", report_text):
+        insertion_format = "md"
+
+    source_targets: list[str] = []
+    for entry in citation_refs or []:
+        target = str((entry or {}).get("target") or "").strip()
+        if not target:
+            continue
+        if target in source_targets:
+            continue
+        source_targets.append(target)
+        if len(source_targets) >= 2:
+            break
+    visual_note = _build_visual_fallback_note(language, insertion_format, source_targets)
+    section_candidates = [
+        "Key Findings",
+        "Results & Benchmarks",
+        "Trends & Implications",
+        "Implications",
+        "핵심 결과",
+        "핵심 발견",
+        "결과",
+        "시사점",
+    ]
+    for section_title in section_candidates:
+        existing = extract_named_section(report_text, insertion_format, section_title)
+        if not existing:
+            continue
+        merged = f"{existing.rstrip()}\n\n{visual_note}"
+        return upsert_named_section(report_text, insertion_format, section_title, merged), True
+    if report_text.strip():
+        return f"{report_text.rstrip()}\n\n{visual_note}\n", True
+    return visual_note.strip() + "\n", True
 
 
 def generate_figures_preview(

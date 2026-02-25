@@ -1,61 +1,32 @@
 {
-  "revision": "2026-02-25T06:39:15.530260",
-  "generated_at": "2026-02-25T06:39:15.530260",
+  "revision": "2026-02-25T10:25:13.877638",
+  "generated_at": "2026-02-25T10:25:13.877638",
   "items": [
-    {
-      "id": "20260221_QC_report",
-      "run": "20260221_QC_report",
-      "report_stem": "report_full_iter005_gpt5nano_general",
-      "title": "Quantum Resource Utilization in Real-World Design and Optimization",
-      "author": "Federlicht Writer",
-      "summary": "Quantum Resource Utilization in Real-World Design and Optimization Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 06:39 Lede Quantum resources are increasingly pressed into service for real-world desi…",
-      "lang": "English",
-      "template": "quanta_magazine",
-      "format": "html",
-      "model": "gpt-5-nano",
-      "tags": [
-        "quantum",
-        "real-world",
-        "and",
-        "resource",
-        "utilization"
-      ],
-      "date": "2026-02-25",
-      "timestamp": "2026-02-25T06:39:15.198913",
-      "source_mtime": 1771969155,
-      "source_size": 55355,
-      "paths": {
-        "report": "../runs/20260221_QC_report/report_full_iter005_gpt5nano_general.html",
-        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter005_gpt5nano_general.md",
-        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
-        "run": "../runs/20260221_QC_report"
-      }
-    },
     {
       "id": "openclaw",
       "run": "openclaw",
-      "report_stem": "report_full_iter004_gpt5nano_leader",
-      "title": "Decision Framework for Responsible OpenClaw-like AI Agent Deployment",
+      "report_stem": "report_full_iter016_gpt52_ko_deep_world",
+      "title": "OpenClaw 엔터프라이즈 조건부 도입 결론과 보안 통제 쟁점",
       "author": "Federlicht Writer",
-      "summary": "Decision Framework for Responsible OpenClaw-like AI Agent Deployment Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 06:23 Lede OpenClaw frames a provocative vision: an AI agent that operates through e…",
-      "lang": "English",
-      "template": "quanta_magazine",
+      "summary": "OpenClaw 엔터프라이즈 조건부 도입 결론과 보안 통제 쟁점 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 10:25 Executive Summary 도입 결론(Go/No-Go/조건부) 현 아카이브 근거만 기준으로는 엔터프라이즈 전면 도입은 조건부(제한적 PoC 후 단계적 확대) 가 합리적이다.[1] 조건부의 핵심…",
+      "lang": "Korean",
+      "template": "technical_deep_dive",
       "format": "html",
-      "model": "gpt-5-nano",
+      "model": "gpt-5.2",
       "tags": [
-        "for",
-        "agent",
-        "and",
-        "decision",
-        "framework"
+        "조건부",
+        "엔터프라이즈",
+        "도입",
+        "보안",
+        "openclaw"
       ],
       "date": "2026-02-25",
-      "timestamp": "2026-02-25T06:23:10.515455",
-      "source_mtime": 1771968190,
-      "source_size": 46005,
+      "timestamp": "2026-02-25T10:25:13.548446",
+      "source_mtime": 1771982713,
+      "source_size": 57535,
       "paths": {
-        "report": "../runs/openclaw/report_full_iter004_gpt5nano_leader.html",
-        "overview": "../runs/openclaw/report/run_overview_report_full_iter004_gpt5nano_leader.md",
+        "report": "../runs/openclaw/report_full_iter016_gpt52_ko_deep_world.html",
+        "overview": "../runs/openclaw/report/run_overview_report_full_iter016_gpt52_ko_deep_world.md",
         "workflow": "../runs/openclaw/report_notes/report_workflow.md",
         "run": "../runs/openclaw"
       }
@@ -63,30 +34,59 @@
     {
       "id": "physical_ai_insight",
       "run": "physical_ai_insight",
-      "report_stem": "report_full_iter003_codex_classroom",
-      "title": "Real Time Chunking and Latency Brittleness in Language Driven Robots",
+      "report_stem": "report_full_iter015_gpt52_ko_classroom_world",
+      "title": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향",
       "author": "Federlicht Writer",
-      "summary": "Real Time Chunking and Latency Brittleness in Language Driven Robots Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 01:09 Lede A robot that “understands” language but pauses for a third of a second be…",
-      "lang": "English",
-      "template": "quanta_magazine",
+      "summary": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 10:13 Executive Summary Physical AI는 텍스트·이미지 같은 디지털 입력을 “이해”하는 수준을 넘어, 물리 세계의 제약(접촉, 동역학, 지연, 안전) 속에서 지각–추론–행동을 닫힌 루프(close…",
+      "lang": "Korean",
+      "template": "technical_deep_dive",
       "format": "html",
-      "model": "gpt-5.3-codex",
+      "model": "gpt-5.2",
       "tags": [
-        "and",
-        "language",
-        "real",
-        "time",
-        "chunking"
+        "물리",
+        "제약",
+        "VLA",
+        "세계",
+        "로봇"
       ],
       "date": "2026-02-25",
-      "timestamp": "2026-02-25T01:10:06.834951",
-      "source_mtime": 1771949407,
-      "source_size": 43584,
+      "timestamp": "2026-02-25T10:13:13.258214",
+      "source_mtime": 1771981993,
+      "source_size": 54282,
       "paths": {
-        "report": "../runs/physical_ai_insight/report_full_iter003_codex_classroom.html",
-        "overview": "../runs/physical_ai_insight/report/run_overview_report_full_iter003_codex_classroom.md",
+        "report": "../runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html",
+        "overview": "../runs/physical_ai_insight/report/run_overview_report_full_iter015_gpt52_ko_classroom_world.md",
         "workflow": "../runs/physical_ai_insight/report_notes/report_workflow.md",
         "run": "../runs/physical_ai_insight"
+      }
+    },
+    {
+      "id": "20260221_QC_report",
+      "run": "20260221_QC_report",
+      "report_stem": "report_full_iter013_gpt52_ko_general_world",
+      "title": "산업용 양자컴퓨팅 진전과 QUBO 기반 하이브리드 적용 동향",
+      "author": "Federlicht Writer",
+      "summary": "산업용 양자컴퓨팅 진전과 QUBO 기반 하이브리드 적용 동향 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 09:48 Executive Summary 최근 1년(쿼리 기준) 산업용 양자컴퓨팅(QC) 진전은 “단일 QPU의 절대 성능”보다 “문제 적합성(특히 QUBO/Ising 계열) + 하이브리드 워크플로 + 서비스 제…",
+      "lang": "Korean",
+      "template": "technical_deep_dive",
+      "format": "html",
+      "model": "gpt-5.2",
+      "tags": [
+        "QUBO",
+        "산업용",
+        "양자컴퓨팅",
+        "하이브리드",
+        "진전과"
+      ],
+      "date": "2026-02-25",
+      "timestamp": "2026-02-25T09:48:24.274137",
+      "source_mtime": 1771980504,
+      "source_size": 47159,
+      "paths": {
+        "report": "../runs/20260221_QC_report/report_full_iter013_gpt52_ko_general_world.html",
+        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter013_gpt52_ko_general_world.md",
+        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
+        "run": "../runs/20260221_QC_report"
       }
     },
     {

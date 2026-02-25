@@ -1,42 +1,43 @@
 {
-  "generated_at": "2026-02-25 01:10:06",
-  "started_at": "2026-02-25 00:58:49",
-  "duration_seconds": 677.64,
-  "duration_hms": "00:11:17",
-  "model": "gpt-5.3-codex",
-  "temperature_level": "balanced",
-  "reasoning_effort": "medium",
+  "generated_at": "2026-02-25 10:13:13",
+  "started_at": "2026-02-25 10:08:20",
+  "duration_seconds": 293.08,
+  "duration_hms": "00:04:53",
+  "model": "gpt-5.2",
+  "temperature_level": "very_low",
+  "reasoning_effort": "off",
   "model_vision": null,
   "quality_model": null,
   "quality_iterations": 0,
   "quality_strategy": "none",
-  "template": "quanta_magazine",
+  "template": "technical_deep_dive",
   "depth": "brief",
-  "template_rigidity": "balanced",
+  "template_rigidity": "strict",
   "template_rigidity_effective": {
     "template_adjust": true,
-    "template_adjust_mode": "extend",
-    "repair_mode": "append"
+    "template_adjust_mode": "replace",
+    "repair_mode": "replace"
   },
-  "template_adjust_mode": "extend",
-  "repair_mode": "append",
+  "template_adjust_mode": "replace",
+  "repair_mode": "replace",
   "agent_config": null,
-  "title": "Real Time Chunking and Latency Brittleness in Language Driven Robots",
-  "summary": "Real Time Chunking and Latency Brittleness in Language Driven Robots Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 01:09 Lede A robot that “understands” language but pauses for a third of a second be…",
+  "title": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향",
+  "summary": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 10:13 Executive Summary Physical AI는 텍스트·이미지 같은 디지털 입력을 “이해”하는 수준을 넘어, 물리 세계의 제약(접촉, 동역학, 지연, 안전) 속에서 지각–추론–행동을 닫힌 루프(close…",
   "output_format": "html",
-  "language": "English",
+  "language": "Korean",
   "author": "Federlicht Writer",
   "organization": null,
   "tags": [
-    "and",
-    "language",
-    "real",
-    "time",
-    "chunking"
+    "물리",
+    "제약",
+    "VLA",
+    "세계",
+    "로봇"
   ],
   "free_format": false,
   "style_pack": "none",
   "pdf_status": "disabled",
+  "visual_evidence_fallback_inserted": false,
   "agent_profile": {
     "id": "default",
     "name": "Default",
@@ -48,7 +49,7 @@
       "writer"
     ]
   },
-  "report_stem": "report_full_iter003_codex_classroom",
+  "report_stem": "report_full_iter015_gpt52_ko_classroom_world",
   "stage_workflow": [
     "1. scout: ran",
     "2. clarifier: skipped (no_questions)",
@@ -58,14 +59,14 @@
     "6. evidence: skipped (depth=brief)",
     "7. plan_check: skipped (missing_evidence)",
     "8. writer: ran",
-    "9. quality: disabled"
+    "9. quality: skipped (iterations=0)"
   ],
   "report_workflow_path": "./report_notes/report_workflow.md",
   "run_overview_path": "./report/run_overview.md",
-  "report_overview_path": "./report/run_overview_report_full_iter003_codex_classroom.md",
+  "report_overview_path": "./report/run_overview_report_full_iter015_gpt52_ko_classroom_world.md",
   "archive_index_path": "./archive/physical_ai_insight-index.md",
   "instruction_path": "./instruction/physical_ai_insight.txt",
   "feather_instruction_path": "./instruction/physical_ai_insight.txt",
-  "report_prompt_path": "./instruction/report_prompt_report_full_iter003_codex_classroom.txt",
+  "report_prompt_path": "./instruction/report_prompt_report_full_iter015_gpt52_ko_classroom_world.txt",
   "site_index_path": "C:\\Users\\angpa\\myProjects\\FEATHER\\site\\report_hub\\index.html"
 }

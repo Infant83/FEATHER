@@ -76,3 +76,74 @@ A robot that “understands” language but pauses for a third of a second befor
 That tension now defines physical AI in 2026. The field moved from proving that large vision-language-action models can generalize across tasks to proving they can run on real systems under tight latency, memory, and embodiment constraints. Open baselines in 2024 established scale and reproducibility, while 2025 paper
 ... [truncated]
 [2026-02-25 01:10:07] JOB END
+[2026-02-25 09:49:14] JOB START
+[2026-02-25 09:52:38] Scout Notes: 아래는 현재 상황에 대한 구조화된 인벤토리(핵심 소스 목록)와 우선 읽기 목록, 선정 이유를 요약한 결과물입니다. 한국어 대학 수업용 explainer 리포트 작성을 목표로, 배경-개념-근거-한계의 흐름과 inline 인용, 핵심 비교표 포맷을 반영해 차차 확정하겠습니다.
+
+1) 구조화된 인벤토리(핵심 소스 식별)
+- archive/arxiv/papers.jsonl: 아카이브의 arXiv 논문 메타데이터(JSONL). 여러 레이블의 최신 VLAs 연구 및 프레임워크를 포함하고 있어 핵심 트렌드 파악에 유용.
+- archive/arxiv/text/2503.02310v1.txt, archive/arxiv/text/2503.14734v2.txt, archive/arxiv/text/2503.20020v1.txt, archive/arxiv/text/2506.07339v2.txt, archive/arxiv/text/2506.07530v1.txt, archive/arxiv/text/2411.19650v1.txt, archive/arxiv/text/2410.24164v4.txt, archive/arxiv/text/2412.14058v3.txt: 위 논문들의 텍스트 초록/본문 요약 부분으로, 핵심 주장과 기술적 아이디어를 빠르게 파악 가능.
+- archive/physical_ai_insight-index.md: 물리적 AI 인사이트 인덱스(읽기 메타데이터/링크); 읽기 가이드로 활용 가능하나, 직접 본문 인용은 피하는 편이 좋음.
+- archive/tavily_extract/...txt: 관련 Glossary 및 배경 자료로
+... [truncated]
+[2026-02-25 10:07:56] Report Preview: Critique 반영 수정 초안 구성 및 템플릿
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 10:07
+다음은 Critique 반영을 바탕으로, 필수 섹션을 누락 없이 포섭하고 서술 흐름·근거 연결성·재현성 논의를 강화한 수정 초안의 구성안 및 실제 초안 예시입니다. 인용 체계는 inline 인용([n])과 Appendix의 URL 매핑으로 명확히 연결되도록 하였고, JSONL 인덱스 활용 계획과 Appendix 구성도 구체적으로 제시합니다. 표기 방식은 일반 라벨 인용을 제거하고, 각 주장에 대응하는 구체적 출처를 Appendix의 URL로 연결합니다. 아래 제안은 Revision/Finalizer 단계에서 바로 적용 가능하도록 샘플 텍스트와 템플릿을 포함합니다.
+수정된 보고서 구성(목차의 명시화)
+- Executive Summary
+- Scope & Methodology
+- Technical Background
+- Methods & Data
+- Results & Evidence
+- Limitations & Open Questions
+- Appendix
+ - Inline 인용 매핑 표 (Claim–Source 매핑)
+ - Reading Plan 및 데이터 맵
+ - 용어집 및 Reading Plan 템플릿
+ - 데이터/실험 환경 재현 절차 개요
+섹션별 실제 초안 예시 텍스트(샘플)
+1) Executive Summary
+본 보고서는 Vision-Language-Action(VLA) 기반 일반 목적 로봇 정책의 개발 흐름을 체계적으로 정리합
+... [truncated]
+[2026-02-25 10:07:56] JOB END
+[2026-02-25 10:08:18] JOB START
+[2026-02-25 10:09:01] Scout Notes: 아카이브 `physical_ai_insight`는 **“Physical AI(물리 세계에서 작동하는 AI)와 이를 구현하는 로보틱스 파운데이션/VLA(vision-language-action) 계열 모델”**을 설명 리포트(배경→개념→근거→한계)로 쓰기 위한 **arXiv 10편 + NVIDIA Glossary 1건**으로 구성되어 있습니다. (OpenAlex/YouTube/Tavily JSONL 인덱스 파일은 이번 run 폴더에 존재하지 않음)
+
+아래는 **스카우트(인벤토리/우선순위 산정)** 결과와 **읽기 계획**입니다. (원문 정독/대량 read는 하지 않음)
+
+---
+
+## 1) 커버리지/구성 인벤토리(아카이브 맵)
+
+### A. 개념 정의·대중 설명(배경 섹션에 유용)
+1) **NVIDIA Glossary – “What is Physical AI?”**  
+- 경로: `archive/tavily_extract/0001_https_www.nvidia.com_en-us_glossary_generative-physical-ai.txt`  
+- 용도: “Physical AI” 용어 정의/직관적 설명(서론·배경)용.  
+- 주의: glossary라 기술적 근거(실험/벤치마크)는 제한적.
+
+### B. “Generalist robot policy / VLA” 코어 논문(개념+근거의 중심축)
+(아카이브 인덱스 기준 arXiv 10편 모두 로봇 파운데이션/VLA/정책학습 계열)
+
+- **Octo** (2024) – generalist robot policy, Open X-Embodiment 기반 대규모 사전학습/
+... [truncated]
+[2026-02-25 10:13:13] Report Preview: 물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향
+Default assisted and prompted by "Federlicht Writer" — 2026-02-25 10:13
+Executive Summary
+Physical AI는 텍스트·이미지 같은 디지털 입력을 “이해”하는 수준을 넘어,
+물리 세계의 제약(접촉, 동역학, 지연, 안전)
+속에서
+지각–추론–행동을 닫힌 루프(closed loop)
+로 수행하는 AI를 뜻합니다. 이번 아카이브는 이 목표를 향한 대표 접근으로
+VLA(Vision-Language-Action) 기반 로봇 파운데이션 모델/범용 정책(generalist policy)
+흐름을 arXiv 논문 10편과 NVIDIA Glossary 1건으로 구성합니다.
+핵심 기술 축은 (1)
+표현
+: 시각·언어·행동을 하나의 정책 모델로 묶는지(VLA) 혹은 행동 생성기를 별도로 두는지, (2)
+학습
+: 대규모 로봇 시연 데이터에서의 행동클로닝(BC) 중심인지, flow/diffusion 계열의 생성적 정책인지, (3)
+시스템
+: 실시간 실행을 위한 action chunking, 병렬 디코딩, 저정밀/양자화(예: 1-bit) 같은 효율화입니다.
+R&D 관점에서 실행 가능한 결론은 간단합니다. 범용성은 “큰 모델”만으로 오지 않으며,
+데이터 혼합, 행동 표현(action representation), 추론 지연(latency), 로봇 하드웨어(embodiment) 차이
+가 성능을 좌우하는 설계 변수로 반복 등장합니다. 또한 실험 성과는 주로 조작(manipulation)과 제한된 벤치마크에서 제시되므로
+... [truncated]
+[2026-02-25 10:13:13] JOB END
