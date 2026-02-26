@@ -792,6 +792,18 @@ def _resolve_claim_chart_type(chart_type: str, section_hint: str) -> str:
     return "bar"
 
 
+def _resolve_claim_chart_library(library: str, section_hint: str) -> str:
+    token = str(library or "").strip().lower() or "chartjs"
+    if token in {"chartjs", "plotly"}:
+        return token
+    if token in {"mixed", "auto", "section_auto", "by_section"}:
+        hint = _normalize_section_hint(section_hint)
+        if hint in {"risks_gaps", "decision_recommendation"}:
+            return "plotly"
+        return "chartjs"
+    return "chartjs"
+
+
 def build_infographic_spec_from_claim_packet(
     claim_packet_json: str,
     *,
@@ -843,6 +855,8 @@ def build_infographic_spec_from_claim_packet(
         except Exception:
             relevance = 0.0
         strength_score = _claim_strength_to_score(raw.get("strength") or raw.get("evidence_strength"))
+        recency = str(raw.get("recency") or "unknown").strip().lower() or "unknown"
+        source_kind = str(raw.get("source_kind") or "unknown").strip().lower() or "unknown"
         parsed_rows.append(
             {
                 "label": _claim_label(raw, idx),
@@ -851,6 +865,8 @@ def build_infographic_spec_from_claim_packet(
                 "strength_score": strength_score,
                 "relevance": relevance,
                 "section_hint": _normalize_section_hint(raw.get("section_hint")),
+                "recency": recency,
+                "source_kind": source_kind,
             }
         )
     if not parsed_rows:
@@ -877,10 +893,19 @@ def build_infographic_spec_from_claim_packet(
     theme = _parse_theme_json(theme_json)
     simulated_flag = _to_bool(simulated, default=False)
 
-    library_token = str(library or "chartjs").strip().lower()
-    if library_token not in {"chartjs", "plotly"}:
-        library_token = "chartjs"
+    library_token = str(library or "chartjs").strip().lower() or "chartjs"
     chart_type_token = str(chart_type or "bar").strip().lower() or "bar"
+
+    risk_claim_count = sum(1 for item in selected if str(item.get("section_hint") or "") == "risks_gaps")
+    fresh_claim_count = sum(1 for item in selected if str(item.get("recency") or "") in {"new", "recent"})
+    fresh_ratio = round((fresh_claim_count / max(1, len(selected))) * 100.0, 1)
+    source_kind_counts: dict[str, int] = {}
+    for item in selected:
+        key = str(item.get("source_kind") or "unknown").strip().lower() or "unknown"
+        source_kind_counts[key] = source_kind_counts.get(key, 0) + 1
+    dominant_source_kind = "unknown"
+    if source_kind_counts:
+        dominant_source_kind = sorted(source_kind_counts.items(), key=lambda row: row[1], reverse=True)[0][0]
 
     title_text = str(title or "Claim-Evidence Snapshot").strip()
     subtitle_text = str(subtitle or "Auto-generated from claim-evidence packet.").strip()
@@ -899,7 +924,7 @@ def build_infographic_spec_from_claim_packet(
     charts: list[dict[str, object]] = [
         {
             "id": "claim_evidence_snapshot",
-            "library": library_token,
+            "library": _resolve_claim_chart_library(library_token, "unspecified"),
             "type": _resolve_claim_chart_type(chart_type_token, "unspecified"),
             "title": chart_title_text[:120],
             "description": chart_description_text[:280],
@@ -939,7 +964,7 @@ def build_infographic_spec_from_claim_packet(
             charts.append(
                 {
                     "id": f"claim_evidence_{_slugify(hint)}",
-                    "library": library_token,
+                    "library": _resolve_claim_chart_library(library_token, hint),
                     "type": _resolve_claim_chart_type(chart_type_token, hint),
                     "title": f"{section_label}: Evidence Profile"[:120],
                     "description": (
@@ -966,14 +991,22 @@ def build_infographic_spec_from_claim_packet(
                 "hint": f"Top {len(selected)} claims visualized from packet.",
             },
             {
-                "label": "Selected Evidence",
-                "value": str(max(0, selected_evidence)),
-                "hint": "Unique evidence items linked in packet registry.",
+                "label": "Risk-tagged Claims",
+                "value": str(max(0, risk_claim_count)),
+                "hint": "Claims mapped to Risks & Gaps via section_hint.",
             },
             {
-                "label": "Index-only Ratio",
-                "value": f"{max(0.0, index_only_ratio) * 100:.1f}%",
-                "hint": "Lower is better for direct-source grounding.",
+                "label": "Freshness Ratio",
+                "value": f"{fresh_ratio:.1f}%",
+                "hint": "Share of selected claims marked as new/recent.",
+            },
+            {
+                "label": "Dominant Source Kind",
+                "value": dominant_source_kind.replace("_", " ").title(),
+                "hint": (
+                    f"Evidence={max(0, selected_evidence)} | "
+                    f"Index-only={max(0.0, index_only_ratio) * 100:.1f}%"
+                ),
             },
         ],
         "charts": charts,

@@ -2,12 +2,13 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.30
+Version: 1.9.31
 
-## Latest Update (1.9.30, 2026-02-26)
-- Section-aware infographic auto insertion was expanded and stabilized for multi-chart claim-packet flows.
-- HTML->PDF regression tooling (`tools/run_html_pdf_regression.py`) and related QA artifacts were added.
-- Report quality gate now supports stricter infographic lint orchestration with world-class workflow tracking.
+## Latest Update (1.9.31, 2026-02-26)
+- CI quality guardrails were added in GitLab (`quality_guardrails`) and `pages` deploy now depends on quality checks.
+- Section coherence heuristics and world-class infographic lint policy were tightened for more stable quality gating.
+- Claim-packet infographic generation now supports mixed Chart.js/Plotly selection with KPI card enrichment and TeX insertion support.
+- FederHav/Federnett rewrite flows were refined with stronger section rewrite hint parsing and DeepAgent fallback diagnostics.
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:

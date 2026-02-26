@@ -26,10 +26,28 @@ pytest_smoke:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
 
+quality_guardrails:
+  stage: test
+  script:
+    - python tools/check_version_consistency.py
+    - mkdir -p temp/ci
+    - python tools/run_report_quality_gate.py --input temp/20260226/iter20_infographic_sample/report_full.html --summary-output temp/ci/quality_gate.summary.json --report-md temp/ci/quality_gate.md --quality-profile none --infographic-spec temp/20260226/iter20_infographic_sample/report_notes/infographic_spec_iter20_infographic.json --infographic-lint-output temp/ci/quality_gate.infographic_lint.json --strict-infographic-lint
+    - pytest -q tests/test_report_quality_gate_runner.py tests/test_html_pdf_regression_tool.py tests/test_report_html_pdf.py tests/test_report_infographic_insert.py
+  artifacts:
+    when: always
+    paths:
+      - temp/ci/quality_gate.summary.json
+      - temp/ci/quality_gate.md
+      - temp/ci/quality_gate.infographic_lint.json
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
 pages:
   stage: deploy
   needs:
     - pytest_smoke
+    - quality_guardrails
   script:
     - python -m federlicht.cli --site-refresh site/report_hub
     - mkdir -p public/report_hub
@@ -40,4 +58,3 @@ pages:
       - public
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-

@@ -2509,44 +2509,77 @@ def _unsupported_claim_examples(report_text: str, output_format: str, max_items:
 
 def _section_coherence_score(report_text: str, output_format: str) -> float:
     raw = report_text or ""
-    spans: list[str] = []
+    sections: list[tuple[str, str]] = []
     if output_format == "html":
-        sections = _iter_html_h2_sections(raw)
-        spans = [span for heading, span in sections if not _is_non_content_heading(heading)]
+        sections = [
+            (heading, span)
+            for heading, span in _iter_html_h2_sections(raw)
+            if not _is_non_content_heading(heading)
+        ]
     elif output_format == "tex":
         matches = list(re.finditer(r"^\\section\\*?\\{[^}]+\\}", raw, re.MULTILINE))
         if matches:
             for idx, match in enumerate(matches):
                 start = match.end()
                 end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
-                spans.append(raw[start:end])
+                title_match = re.match(r"^\\section\\*?\\{([^}]+)\\}", match.group(0))
+                title = title_match.group(1).strip() if title_match else ""
+                if _is_non_content_heading(title):
+                    continue
+                sections.append((title, raw[start:end]))
     else:
         matches = list(re.finditer(r"^##\s+.+$", raw, re.MULTILINE))
         if matches:
             for idx, match in enumerate(matches):
                 start = match.end()
                 end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
-                spans.append(raw[start:end])
-    if not spans:
+                title = re.sub(r"^##\s+", "", match.group(0)).strip()
+                if _is_non_content_heading(title):
+                    continue
+                sections.append((title, raw[start:end]))
+    if not sections:
         return 55.0
-    counts = [len(re.findall(r"\S+", _quality_plain_text(span, output_format))) for span in spans]
+    counts: list[int] = []
+    core_counts: list[int] = []
+    core_short = 0
+    core_empty = 0
+    optional_short = 0
+    optional_empty = 0
+    core_tags = {"executive_summary", "scope_methodology", "key_findings", "risks_gaps"}
+    for title, span in sections:
+        word_count = len(re.findall(r"\S+", _quality_plain_text(span, output_format)))
+        counts.append(word_count)
+        tags = _quality_heading_tags(title)
+        is_core = bool(tags & core_tags)
+        if is_core:
+            core_counts.append(word_count)
+            if word_count < 42:
+                core_short += 1
+            if word_count < 18:
+                core_empty += 1
+            continue
+        if word_count < 22:
+            optional_short += 1
+        if word_count < 10:
+            optional_empty += 1
     if not counts:
         return 55.0
-    short_sections = sum(1 for count in counts if count < 55)
-    empty_sections = sum(1 for count in counts if count < 20)
-    min_count = min(counts)
-    max_count = max(counts)
+    balance_counts = core_counts or counts
+    min_count = min(balance_counts)
+    max_count = max(balance_counts)
     imbalance = float(max_count / max(1, min_count))
     score = 100.0
-    score -= float(short_sections * 6)
-    score -= float(empty_sections * 14)
+    score -= float(core_short * 4)
+    score -= float(core_empty * 8)
+    score -= float(optional_short * 2)
+    score -= float(optional_empty * 6)
     if imbalance > 6.0:
-        score -= 14.0
+        score -= 10.0
     elif imbalance > 4.0:
-        score -= 8.0
-    if len(counts) < 3:
         score -= 6.0
-    return round(max(25.0, min(100.0, score)), 2)
+    if len(balance_counts) < 3:
+        score -= 5.0
+    return round(max(30.0, min(100.0, score)), 2)
 
 
 def _keyword_signal_score(
@@ -7155,7 +7188,7 @@ def auto_insert_claim_packet_infographic(
     max_claims: int = 8,
 ) -> tuple[str, dict[str, Any]]:
     meta: dict[str, Any] = {
-        "enabled": output_format in {"md", "html"},
+        "enabled": output_format in {"md", "html", "tex"},
         "inserted": False,
         "reason": "",
         "section": "",
@@ -7168,7 +7201,7 @@ def auto_insert_claim_packet_infographic(
         "lint_path": "",
         "chart_count": 0,
     }
-    if output_format not in {"md", "html"}:
+    if output_format not in {"md", "html", "tex"}:
         meta["reason"] = "output_not_supported"
         return report_text, meta
     if not str(report_text or "").strip():
@@ -7249,6 +7282,7 @@ def auto_insert_claim_packet_infographic(
             ),
             source=source_rel,
             simulated=False,
+            library="mixed",
             chart_type="auto",
             max_claims=max_claims,
             split_by_section=True,
@@ -7364,12 +7398,22 @@ def auto_insert_claim_packet_infographic(
         embed_html = str(render_result.get("embed_html") or "").strip()
         asset_href = _resolve_run_rel_href_for_report(asset_rel, run_dir, report_dir)
         data_href = _resolve_run_rel_href_for_report(data_rel, run_dir, report_dir)
-        embed_html = _rewrite_embed_iframe_src(embed_html, asset_href)
-        block_lines = [embed_html] if embed_html else []
-        if data_href:
-            block_lines.append(f"*Infographic spec: [{data_href}]({data_href})*")
-        if lint_href:
-            block_lines.append(f"*Lint report: [{lint_href}]({lint_href})*")
+        if output_format == "tex":
+            block_lines = ["\\begin{itemize}"]
+            if asset_rel:
+                block_lines.append(f"\\item Infographic artifact: \\texttt{{{latex_escape(asset_rel)}}}")
+            if data_rel:
+                block_lines.append(f"\\item Infographic spec: \\texttt{{{latex_escape(data_rel)}}}")
+            if lint_rel:
+                block_lines.append(f"\\item Lint report: \\texttt{{{latex_escape(lint_rel)}}}")
+            block_lines.append("\\end{itemize}")
+        else:
+            embed_html = _rewrite_embed_iframe_src(embed_html, asset_href)
+            block_lines = [embed_html] if embed_html else []
+            if data_href:
+                block_lines.append(f"*Infographic spec: [{data_href}]({data_href})*")
+            if lint_href:
+                block_lines.append(f"*Lint report: [{lint_href}]({lint_href})*")
         block = "\n\n".join(line for line in block_lines if str(line).strip()).strip()
         if not block:
             render_errors.append(f"{hint}:empty_embed_block")

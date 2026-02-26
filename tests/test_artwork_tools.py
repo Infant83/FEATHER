@@ -240,6 +240,63 @@ def test_build_infographic_spec_from_claim_packet_auto_chart_type_by_section() -
     assert chart_types.get("claim_evidence_risks_gaps") == "line"
 
 
+def test_build_infographic_spec_from_claim_packet_mixed_library_and_kpi_cards() -> None:
+    packet = {
+        "stats": {"selected_claims": 4, "selected_evidence": 8, "index_only_ratio": 0.125},
+        "claims": [
+            {
+                "claim_id": "C001",
+                "claim_text": "A",
+                "section_hint": "key_findings",
+                "evidence_ids": ["E001", "E002"],
+                "strength": "high",
+                "score": 0.92,
+                "recency": "new",
+                "source_kind": "web",
+            },
+            {
+                "claim_id": "C002",
+                "claim_text": "B",
+                "section_hint": "scope_methodology",
+                "evidence_ids": ["E003", "E004"],
+                "strength": "medium",
+                "score": 0.81,
+                "recency": "recent",
+                "source_kind": "doi",
+            },
+            {
+                "claim_id": "C003",
+                "claim_text": "C",
+                "section_hint": "risks_gaps",
+                "evidence_ids": ["E005"],
+                "strength": "low",
+                "score": 0.5,
+                "recency": "old",
+                "source_kind": "pdf",
+            },
+        ],
+    }
+    spec_text = artwork.build_infographic_spec_from_claim_packet(
+        json.dumps(packet),
+        source="./report_notes/claim_evidence_map.json",
+        split_by_section=True,
+        chart_type="auto",
+        library="mixed",
+        max_charts=4,
+    )
+    payload = json.loads(spec_text)
+    charts = [item for item in (payload.get("charts") or []) if isinstance(item, dict)]
+    assert charts
+    libs = {str(item.get("id") or ""): str(item.get("library") or "").lower() for item in charts}
+    assert libs.get("claim_evidence_scope_methodology") == "chartjs"
+    assert libs.get("claim_evidence_risks_gaps") == "plotly"
+    cards = [item for item in (payload.get("cards") or []) if isinstance(item, dict)]
+    labels = {str(item.get("label") or "") for item in cards}
+    assert "Risk-tagged Claims" in labels
+    assert "Freshness Ratio" in labels
+    assert "Dominant Source Kind" in labels
+
+
 def test_lint_infographic_spec_flags_missing_source() -> None:
     spec = {
         "title": "Lint demo",

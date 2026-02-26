@@ -12,7 +12,11 @@ from federlicht.quality_contract import (
     QUALITY_CONTRACT_METRIC_VERSION,
     detect_quality_contract_staleness,
 )
-from federlicht.quality_profiles import quality_profile_choices, resolve_quality_gate_targets
+from federlicht.quality_profiles import (
+    normalize_quality_profile,
+    quality_profile_choices,
+    resolve_quality_gate_targets,
+)
 
 METRIC_FIELDS = (
     "overall",
@@ -79,6 +83,19 @@ def evaluate_infographic_lint(spec_paths: list[Path]) -> dict[str, object]:
         "pass": len(failed_rows) == 0,
         "rows": rows,
     }
+
+
+def should_enforce_strict_infographic_lint(
+    *,
+    quality_profile: object,
+    explicit_strict: bool,
+    has_infographic_spec: bool,
+) -> bool:
+    if bool(explicit_strict):
+        return True
+    if not bool(has_infographic_spec):
+        return False
+    return normalize_quality_profile(quality_profile) == "world_class"
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess:
@@ -513,6 +530,14 @@ def main() -> int:
                 encoding="utf-8",
             )
             print(f"Wrote quality contract consistency: {output_path.as_posix()}")
+    strict_infographic_lint = should_enforce_strict_infographic_lint(
+        quality_profile=args.quality_profile,
+        explicit_strict=bool(args.strict_infographic_lint),
+        has_infographic_spec=bool(args.infographic_spec),
+    )
+    if bool(args.infographic_spec) and strict_infographic_lint and not bool(args.strict_infographic_lint):
+        print("infographic-lint-policy | strict=ON | reason=world_class_default")
+
     if args.infographic_spec:
         spec_paths = _expand_input_patterns([str(item) for item in args.infographic_spec if str(item).strip()])
         infographic_lint = evaluate_infographic_lint(spec_paths)
@@ -547,7 +572,7 @@ def main() -> int:
         return gate_proc.returncode
     if bool(args.strict_contract_consistency) and contract_fail:
         return 2
-    if bool(args.strict_infographic_lint) and infographic_lint_fail:
+    if strict_infographic_lint and infographic_lint_fail:
         return 2
     return 0
 

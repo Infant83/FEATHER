@@ -477,9 +477,15 @@ def _extract_rewrite_block_from_request(request_text: str) -> str:
 
 
 def _extract_tone_hint(request_text: str) -> str:
-    text = str(request_text or "").lower()
+    raw_text = str(request_text or "")
+    text = raw_text.lower()
     if not text:
         return ""
+    key_match = re.search(r"(?i)(?:tone|톤)\s*[:=]\s*([^\n,;]{1,80})", raw_text)
+    if key_match:
+        value = str(key_match.group(1) or "").strip().strip("\"'“”‘’`")
+        if value:
+            return value
     tone_tokens = {
         "냉철": "냉철하고 분석적인 톤",
         "차분": "차분하고 균형 잡힌 톤",
@@ -500,9 +506,22 @@ def _extract_tone_hint(request_text: str) -> str:
 
 
 def _extract_length_hint(request_text: str) -> str:
-    text = str(request_text or "").lower()
+    raw_text = str(request_text or "")
+    text = raw_text.lower()
     if not text:
         return ""
+    key_match = re.search(r"(?i)(?:length|분량|길이)\s*[:=]\s*([^\n,;]{1,80})", raw_text)
+    if key_match:
+        value = str(key_match.group(1) or "").strip().strip("\"'“”‘’`")
+        if value:
+            return value
+    para_match = re.search(r"(?i)\b(\d{1,2})\s*(?:paragraphs?|문단)\b", raw_text)
+    if para_match:
+        count = str(para_match.group(1) or "").strip()
+        if count:
+            return f"target around {count} paragraphs while preserving factual grounding."
+    if any(token in text for token in ("비슷한 길이", "same length", "similar length")):
+        return "keep approximately the current section length."
     if any(token in text for token in ("길게", "더 길", "expand", "longer")):
         return "expand length by roughly 30-70% while keeping substance concise."
     if any(token in text for token in ("짧게", "요약", "shorter", "condense")):
@@ -511,13 +530,28 @@ def _extract_length_hint(request_text: str) -> str:
 
 
 def _extract_style_hint(request_text: str) -> str:
-    text = str(request_text or "").lower()
+    raw_text = str(request_text or "")
+    text = raw_text.lower()
     if not text:
         return ""
+    key_match = re.search(r"(?i)(?:style|형식|스타일)\s*[:=]\s*([^\n,;]{1,80})", raw_text)
+    if key_match:
+        value = str(key_match.group(1) or "").strip().strip("\"'“”‘’`")
+        if value:
+            lowered = value.lower()
+            if "bullet" in lowered or "불릿" in lowered:
+                return "use concise bullets where appropriate."
+            if "narrative" in lowered or "서술" in lowered:
+                return "narrative prose format (avoid bullet-only output)."
+            if "table" in lowered or "표" in lowered:
+                return "use compact table(s) where comparison clarity improves."
+            return value
     if any(token in text for token in ("서술형", "narrative")):
         return "narrative prose format (avoid bullet-only output)."
     if any(token in text for token in ("불릿", "bullet")):
         return "use concise bullets where appropriate."
+    if any(token in text for token in ("표", "table", "tabular")):
+        return "use compact table(s) where comparison clarity improves."
     return ""
 
 
@@ -533,10 +567,12 @@ def _render_section_rewrite_prompt(
     excerpt = existing_section.strip()
     if len(excerpt) > 5000:
         excerpt = excerpt[:5000].rstrip() + "\n...(truncated)"
+    section_status = "found in current report" if excerpt else "missing in current report"
     lines = [
         "Update request:",
         f"- Base report: {report_rel}",
         f"- Target section: {section_title}",
+        f"- Target section status: {section_status}",
         "- Task: rewrite the target section only, preserving factual claims and citation traceability.",
     ]
     if tone_hint:
@@ -552,6 +588,7 @@ def _render_section_rewrite_prompt(
             "- Keep the section heading unchanged.",
             "- Do not rewrite unrelated sections unless required for consistency.",
             "- Maintain claim-evidence-source alignment; preserve citations or refresh them if the claim changes.",
+            "- If the target section is missing, create it with the same heading near related sections; fallback is append at the end.",
             "",
             "Current section excerpt:",
             "<<<",
@@ -919,11 +956,13 @@ def execute_capability_action(
             after = feder_report.upsert_named_section(before, output_format, section_title, replacement_text)
             changed = before != after
             diff_preview = _build_diff_preview(before, after, rel_path) if changed else ""
+            section_insert_policy = "upsert_missing_append_end"
             preview_payload = {
                 "effect": "rewrite_section",
                 "rewrite_mode": "direct_upsert",
                 "path": rel_path,
                 "section": section_title,
+                "section_insert_policy": section_insert_policy,
                 "changed": changed,
                 "chars_before": len(before),
                 "chars_after": len(after),
@@ -935,6 +974,7 @@ def execute_capability_action(
                     "rewrite_mode": "direct_upsert",
                     "path": rel_path,
                     "section": section_title,
+                    "section_insert_policy": section_insert_policy,
                     "found_section": bool(existing_section),
                     "changed": changed,
                     "chars_before": len(before),
@@ -953,6 +993,7 @@ def execute_capability_action(
             return result
 
         run_rel_effective = str(run_rel or "").strip() or _infer_run_rel_from_path(rel_path)
+        section_insert_policy = "upsert_missing_append_end"
         prompt_text = _render_section_rewrite_prompt(
             report_rel=rel_path,
             section_title=section_title,
@@ -973,6 +1014,7 @@ def execute_capability_action(
             "path": rel_path,
             "section": section_title,
             "found_section": bool(existing_section),
+            "section_insert_policy": section_insert_policy,
             "prompt_file": prompt_file_rel,
             "prompt_preview": prompt_text[:1200],
             "suggested_action_type": "run_federlicht" if run_rel_effective else "",
@@ -984,6 +1026,7 @@ def execute_capability_action(
                 "path": rel_path,
                 "section": section_title,
                 "found_section": bool(existing_section),
+                "section_insert_policy": section_insert_policy,
                 "existing_chars": len(existing_section),
                 "tone_hint": tone_hint,
                 "style_hint": style_hint,

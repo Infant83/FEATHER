@@ -368,7 +368,7 @@ def run_pipeline(
         report_body = merge_orphan_citations(report_body)
     if figure_entries:
         report_body = insert_figures_by_section(report_body, figure_entries, output_format, report_dir, run_dir)
-    if output_format in {"md", "html"}:
+    if output_format in {"md", "html", "tex"}:
         report_body, infographic_meta = auto_insert_claim_packet_infographic(
             report_body,
             output_format=output_format,

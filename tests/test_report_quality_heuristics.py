@@ -280,6 +280,51 @@ flowchart LR
     assert signals_visual["overall"] > signals_plain["overall"]
 
 
+def test_section_coherence_score_relaxes_optional_short_sections() -> None:
+    report_text = """
+## Executive Summary
+One concise summary sentence with context.
+
+## Scope & Methodology
+Method scope remains compact in this sample run.
+
+## Key Findings
+Key findings are listed briefly for smoke validation.
+
+## Risks & Gaps
+Risk and gap notes are present but concise.
+
+## Critics
+Short critics note.
+
+## Appendix
+    Artifact links.
+"""
+    score = report._section_coherence_score(report_text, "md")
+    assert score >= 40.0
+    assert score < 85.0
+
+
+def test_section_coherence_score_optional_section_has_limited_impact() -> None:
+    base_text = """
+## Executive Summary
+Sentence one with moderate context and rationale.
+
+## Scope & Methodology
+Method notes include selection criteria and constraints briefly.
+
+## Key Findings
+Findings are compact but include evidence-oriented wording.
+
+## Risks & Gaps
+Risks and limits are summarized in concise form.
+"""
+    with_optional = base_text + "\n## Critics\nVery short note.\n"
+    score_base = report._section_coherence_score(base_text, "md")
+    score_optional = report._section_coherence_score(with_optional, "md")
+    assert score_optional >= (score_base - 10.0)
+
+
 def test_visual_fallback_inserts_mermaid_when_deep_and_missing_visuals() -> None:
     report_text = """
 ## Executive Summary

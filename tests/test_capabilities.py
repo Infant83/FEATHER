@@ -293,7 +293,11 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
     root = _make_root(tmp_path)
     report_path = root / "site" / "runs" / "demo" / "report" / "report_full.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text("## Key Findings\nbaseline text\n", encoding="utf-8")
+    report_path.write_text(
+        "## Key Findings\n"
+        "baseline section text with enough words to be treated as an existing section body for prompt preparation.\n",
+        encoding="utf-8",
+    )
     save_capability_registry(
         root,
         {
@@ -313,10 +317,14 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
         "rewrite_section_prompt",
         dry_run=False,
         run_rel="site/runs/demo",
-        request_text="section 'Key Findings'를 냉철한 톤으로 더 길게 서술형으로 수정해줘",
+        request_text="section 'Key Findings' tone: formal style: bullet length: 3 paragraphs",
     )
     assert result.get("effect") == "rewrite_section"
     assert result.get("rewrite_mode") == "prompt_prep"
+    assert result.get("section_insert_policy") == "upsert_missing_append_end"
+    assert "formal" in str(result.get("tone_hint") or "").lower()
+    assert "bullet" in str(result.get("style_hint") or "").lower()
+    assert "3" in str(result.get("length_hint") or "")
     prompt_file = str(result.get("prompt_file") or "")
     assert prompt_file.startswith("site/runs/demo/report_notes/update_request_section_")
     prompt_abs = root / prompt_file
@@ -324,6 +332,42 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
     prompt_text = prompt_abs.read_text(encoding="utf-8")
     assert "Target section: Key Findings" in prompt_text
     assert "Tone:" in prompt_text
+    assert "Target section status: found in current report" in prompt_text
+
+
+def test_execute_capability_action_rewrite_section_prompt_prep_missing_section(tmp_path: Path) -> None:
+    root = _make_root(tmp_path)
+    report_path = root / "site" / "runs" / "demo" / "report" / "report_full.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("## Executive Summary\nbaseline text\n", encoding="utf-8")
+    save_capability_registry(
+        root,
+        {
+            "tools": [
+                {
+                    "id": "rewrite_missing_section_prompt",
+                    "label": "Rewrite Missing Section Prompt",
+                    "action": {"kind": "rewrite_section", "target": "report/report_full.md#Key Findings"},
+                }
+            ],
+            "skills": [],
+            "mcp_servers": [],
+        },
+    )
+    result = execute_capability_action(
+        root,
+        "rewrite_missing_section_prompt",
+        dry_run=False,
+        run_rel="site/runs/demo",
+        request_text="section 'Key Findings' style: narrative",
+    )
+    assert result.get("effect") == "rewrite_section"
+    assert result.get("rewrite_mode") == "prompt_prep"
+    assert result.get("found_section") is False
+    prompt_file = str(result.get("prompt_file") or "")
+    prompt_abs = root / prompt_file
+    prompt_text = prompt_abs.read_text(encoding="utf-8")
+    assert "Target section status: missing in current report" in prompt_text
 
 
 def test_infer_capability_action_rewrite_section_from_keywords(tmp_path: Path) -> None:

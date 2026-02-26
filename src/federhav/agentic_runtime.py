@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator
@@ -86,6 +87,16 @@ def _resolve_model_hint(model: str | None, backend: str) -> str:
     if _is_onprem_openai_compatible():
         return _ONPREM_FEDERHAV_MODEL_FALLBACK
     return str(os.getenv("OPENAI_MODEL") or _DEFAULT_MODEL_FALLBACK).strip()
+
+
+def _log_fallback(stage: str, exc: Exception) -> None:
+    message = str(exc or "").strip().replace("\n", " ")
+    if len(message) > 260:
+        message = message[:260].rstrip() + "..."
+    print(
+        f"[federhav][deepagent-fallback] stage={stage} reason={exc.__class__.__name__}: {message}",
+        file=sys.stderr,
+    )
 
 
 def _extract_assistant_text(payload: Any) -> str:
@@ -1121,9 +1132,10 @@ def try_deepagent_answer(
         if not answer:
             return None
         return answer, model_hint or _DEFAULT_MODEL_FALLBACK
-    except Exception:
+    except Exception as exc:
         if mode == "deepagent":
             raise
+        _log_fallback("answer", exc)
         return None
 
 
@@ -1348,7 +1360,8 @@ def try_deepagent_action_plan(
         selected["execution_handoff"] = handoff
         selected["planner"] = "deepagent"
         return selected
-    except Exception:
+    except Exception as exc:
         if mode == "deepagent":
             raise
+        _log_fallback("action_plan", exc)
         return None

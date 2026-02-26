@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.9.31 (2026-02-26)
+- Priority-ordered update batch (1~5):
+  - CI quality guardrails:
+    - add `quality_guardrails` job in `.gitlab-ci.yml`
+    - run version consistency check + quality gate smoke + regression tool tests
+    - gate `pages` deploy on both `pytest_smoke` and `quality_guardrails`
+  - quality coherence refinement:
+    - tune `section_coherence_score` logic in `src/federlicht/report.py`
+      to reduce over-penalty from optional short sections and apply heading-aware core balancing.
+  - world-class lint policy hardening:
+    - add profile-aware strict lint resolver in `tools/run_report_quality_gate.py`
+    - enforce infographic lint strict mode by default for `quality_profile=world_class` when specs are provided.
+  - infographic spec generation uplift:
+    - add mixed chart-library auto-selection (`Chart.js` + `Plotly`) by section intent.
+    - add claim-packet KPI cards for risk-tagged claims, freshness ratio, and dominant source kind.
+  - output-format expansion:
+    - extend claim-packet infographic auto insertion to `tex` pipeline path.
+  - tests:
+    - expand/adjust coverage in
+      `tests/test_report_quality_gate_runner.py`,
+      `tests/test_report_quality_heuristics.py`,
+      `tests/test_artwork_tools.py`,
+      `tests/test_report_infographic_insert.py`.
+- section rewrite UX refinement:
+  - extend `rewrite_section` hint parsing (`tone/style/length`, paragraph-count hints) in `src/federnett/capabilities.py`.
+  - expose explicit missing-section insert policy metadata (`upsert_missing_append_end`) in rewrite previews/results.
+- deepagent fallback diagnostics:
+  - add fallback reason logging for answer/action-plan paths in `src/federhav/agentic_runtime.py` when runtime mode is not forced deepagent.
+
 ## 1.9.30 (2026-02-26)
 - P0+ completion batch (iter 123~132):
   - quality-contract metric versioning and stale handling:

@@ -90,6 +90,7 @@ def test_auto_insert_claim_packet_infographic_inserts_block(tmp_path: Path) -> N
         for rel in data_paths
     ]
     chart_types: set[str] = set()
+    chart_libraries: set[str] = set()
     for spec in loaded_specs:
         charts = spec.get("charts")
         if not isinstance(charts, list):
@@ -98,7 +99,9 @@ def test_auto_insert_claim_packet_infographic_inserts_block(tmp_path: Path) -> N
             if not isinstance(chart, dict):
                 continue
             chart_types.add(str(chart.get("type") or "").strip().lower())
+            chart_libraries.add(str(chart.get("library") or "").strip().lower())
     assert "line" in chart_types
+    assert "plotly" in chart_libraries
     assert (notes_dir / "infographic_lint_auto_claim_snapshot.txt").exists()
     assert (notes_dir / "infographic_auto_insert.json").exists()
 
@@ -122,3 +125,42 @@ def test_auto_insert_claim_packet_infographic_skips_without_packet(tmp_path: Pat
     assert updated == report_text
     assert meta.get("inserted") is False
     assert meta.get("reason") == "claim_packet_missing"
+
+
+def test_auto_insert_claim_packet_infographic_supports_tex_output(tmp_path: Path) -> None:
+    run_dir = tmp_path
+    notes_dir = run_dir / "report_notes"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    _write_claim_packet(notes_dir)
+    report_text = "\n".join(
+        [
+            "\\section{Executive Summary}",
+            "Summary line.",
+            "",
+            "\\section{Key Findings}",
+            "Finding paragraph with source [https://example.com/source].",
+            "",
+            "\\section{Risks & Gaps}",
+            "Risk paragraph with source [https://example.com/risk].",
+            "",
+        ]
+    )
+
+    updated, meta = report.auto_insert_claim_packet_infographic(
+        report_text,
+        output_format="tex",
+        run_dir=run_dir,
+        report_dir=run_dir,
+        notes_dir=notes_dir,
+        report_title="Demo",
+        language="en",
+        max_claims=6,
+    )
+
+    assert meta.get("inserted") is True
+    assert "\\item Infographic artifact:" in updated
+    assert "\\texttt{" in updated
+    paths = [str(item) for item in (meta.get("paths") or []) if str(item).strip()]
+    assert paths
+    for rel in paths:
+        assert (run_dir / rel.lstrip("./")).exists()

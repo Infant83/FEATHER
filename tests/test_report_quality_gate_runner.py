@@ -116,3 +116,27 @@ def test_build_gate_report_markdown_includes_infographic_lint_block() -> None:
     assert "## Infographic Lint" in text
     assert "failed_specs: 1" in text
     assert "demo.json" in text
+
+
+def test_should_enforce_strict_infographic_lint_world_class_default() -> None:
+    strict = runner.should_enforce_strict_infographic_lint(
+        quality_profile="world_class",
+        explicit_strict=False,
+        has_infographic_spec=True,
+    )
+    assert strict is True
+
+
+def test_should_enforce_strict_infographic_lint_respects_profile_and_flag() -> None:
+    strict_baseline = runner.should_enforce_strict_infographic_lint(
+        quality_profile="baseline",
+        explicit_strict=False,
+        has_infographic_spec=True,
+    )
+    strict_explicit = runner.should_enforce_strict_infographic_lint(
+        quality_profile="baseline",
+        explicit_strict=True,
+        has_infographic_spec=False,
+    )
+    assert strict_baseline is False
+    assert strict_explicit is True
