@@ -1,6 +1,93 @@
 # PPT Writer Strategy (Draft)
 
-Last updated: 2026-02-21
+Last updated: 2026-02-26
+
+## 진행률 체크 (2026-02-26)
+- Overall: **51% (Phase 1 완료 + Phase 2 진행 + Phase 3 중반 + Phase 4 착수)**
+- 기준: 각 Phase를 동일 가중치로 집계
+
+| Phase | 상태 | 진행률 | 체크 기준(완료 정의) |
+| --- | --- | --- | --- |
+| Phase 1: schema + planner/composer JSON contract | 완료 | 100% | slide outline/ast 계약 모듈 + 스키마 + 단위테스트 통과 |
+| Phase 2: minimal pptx renderer | 진행중 | 75% | 텍스트/표/이미지 렌더 + smoke tests |
+| Phase 3: mermaid/d2 + quality loop | 진행중 | 65% | 다이어그램 snapshot + slide quality evaluator |
+| Phase 4: Federnett publish/hub 확장 | 진행중 | 15% | deck artifact 게시 플로우/인덱스 반영 |
+| Phase 5: FederHav partial patch API | 미시작 | 0% | 슬라이드 단위 patch 액션 + 승인 후 재렌더 자동화 |
+
+### 최근 반영(Phase 1)
+- `src/federlicht/slide_pipeline.py`
+  - `build_slide_outline`, `build_slide_ast` 계약 구현
+  - `validate_slide_outline`, `validate_slide_ast` 검증기 구현
+  - outline/ast 요약 formatter 구현
+- `src/federlicht/schemas/slide_outline_v1.schema.json`
+- `src/federlicht/schemas/slide_ast_v1.schema.json`
+- `tests/test_slide_pipeline.py`
+  - 계약 생성/검증/포맷터 단위테스트 추가
+
+### 최근 반영(Phase 2 진행)
+- `src/federlicht/pptx_renderer.py`
+  - `render_slide_ast_html`: slide AST -> deck HTML 렌더
+  - `render_slide_ast_pptx`: slide AST -> PPTX 렌더(의존성 미설치 시 안전 fallback)
+  - `render_slide_ast_bundle`: html/pptx 동시 산출 메타 반환
+- `src/federlicht/pipeline_runner_impl.py`
+  - `--output *.pptx` 경로에서 deck 렌더러 호출
+  - `report_notes/slide_outline.v1.json`, `slide_ast.v1.json` 자동 기록
+  - PPTX 미지원 환경에서 HTML deck fallback + 상태 메타 기록
+- `tests/test_pptx_renderer.py`
+  - HTML 렌더 smoke
+  - PPTX 의존성 미설치 fallback 동작 검증
+  - bundle 메타/산출물 검증
+- `tests/test_pipeline_runner_impl.py`
+  - deck output helper/slide count 규칙/HTML fallback 검증 추가
+
+### 최근 반영(Phase 3 착수)
+- `src/federlicht/slide_quality.py`
+  - slide AST 품질 요약기(`traceability`, `density`, `narrative_flow`, `visual_integrity`, `overall`) 추가
+  - quality gate pass/fail 및 리포트 텍스트 생성기 추가
+- `src/federlicht/pipeline_runner_impl.py`
+  - deck export 시 `slide_quality.summary.json`, `slide_quality.md` 자동 기록
+  - deck 메타에 quality score/gate 상태 포함
+- `tests/test_slide_quality.py`
+  - 균형 deck PASS / 비정상 deck FAIL 케이스 검증
+
+### 최근 반영(Phase 3 확장)
+- `src/federlicht/pptx_renderer.py`
+  - diagram block(mermaid/d2) snapshot SVG 물질화 경로 추가
+  - bundle 메타에 `diagram_snapshot_count/paths/errors` 기록
+  - HTML deck에서 snapshot 이미지를 우선 렌더하고, 실패 시 spec fallback 유지
+- `src/federlicht/pipeline_runner_impl.py`
+  - deck 메타에 diagram snapshot 수/경로/오류 집계 추가
+- `tests/test_pptx_renderer.py`
+  - mermaid snapshot 렌더 삽입 검증(모킹 기반) 추가
+
+### 최근 반영(Phase 3 quality loop)
+- `src/federlicht/slide_quality.py`
+  - `revise_slide_ast_for_quality(...)` 추가
+  - 품질 게이트 실패 시 intro/summary anchor, ref 보강, 빈 block 보정, 과도 텍스트 trim
+- `src/federlicht/pipeline_runner_impl.py`
+  - deck export 시 quality fail이면 1회 자동 보정 + 재평가
+  - `report_notes/slide_quality.trace.json` 기록
+  - run meta에 `deck_quality_iterations`, `deck_quality_actions`, `deck_quality_trace_path` 포함
+- `tests/test_slide_quality.py`
+  - auto-revision으로 quality score 개선되는 케이스 검증 추가
+
+### 최근 반영(Phase 4 착수)
+- `src/federlicht/pipeline_runner_impl.py`
+  - PPTX deck 경로에서 hub manifest entry 작성 로직 추가
+  - HTML deck을 기본 artifact로, PPTX를 companion artifact로 paths에 동시 기록
+  - deck manifest entry id를 `run_name-deck`으로 분리해 기존 report entry와 충돌 방지
+- `tests/test_pipeline_runner_impl.py`
+  - deck manifest entry의 companion path(`deck_html`, `deck_pptx`) 검증 추가
+
+### 지속 체크 방법
+- 단계 완료 시마다 아래를 고정 수행:
+  1. `pytest -q tests/test_slide_pipeline.py tests/test_pptx_renderer.py`
+  2. 관련 회귀 묶음 실행
+  3. 본 문서의 `진행률 체크` 표 갱신
+
+### 최신 체크 결과
+- `2026-02-26`: `pytest -q tests/test_slide_pipeline.py tests/test_pptx_renderer.py tests/test_slide_quality.py tests/test_pipeline_runner_impl.py` -> `19 passed`
+- `2026-02-26`: `pytest -q tests/test_federlicht_cli_args.py tests/test_version_consistency_tool.py` -> `4 passed`
 
 ## 목표
 - Federlicht가 보고서뿐 아니라 **슬라이드형 결과물(PPTX/slide HTML/PDF)** 을 같은 파이프라인에서 생성하도록 확장한다.

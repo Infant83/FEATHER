@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased (2026-02-26)
+- PPT writer Phase 1 contract implementation:
+  - add `src/federlicht/slide_pipeline.py` with
+    `slide_outline.v1` / `slide_ast.v1` contract builders and validators.
+  - add slide schema files:
+    - `src/federlicht/schemas/slide_outline_v1.schema.json`
+    - `src/federlicht/schemas/slide_ast_v1.schema.json`
+  - add tests:
+    - `tests/test_slide_pipeline.py`
+  - update progress tracking in `docs/ppt_writer_strategy.md`.
+- PPT writer Phase 2 bootstrap:
+  - add `src/federlicht/pptx_renderer.py`:
+    - slide AST -> HTML deck renderer
+    - slide AST -> PPTX renderer (safe fallback when `python-pptx` is unavailable)
+    - bundle renderer for HTML/PPTX artifact metadata.
+  - extend `src/federlicht/pipeline_runner_impl.py`:
+    - add `--output *.pptx` save-path handling for deck export.
+    - save `report_notes/slide_outline.v1.json` and `report_notes/slide_ast.v1.json`.
+    - fallback to HTML deck artifact when PPTX dependency is unavailable.
+  - add tests:
+    - `tests/test_pptx_renderer.py`
+    - expand `tests/test_pipeline_runner_impl.py` for deck helper/fallback coverage.
+- PPT writer Phase 3 bootstrap:
+  - add `src/federlicht/slide_quality.py` with slide AST quality evaluator:
+    - traceability, density, narrative flow, visual integrity, overall score, and gate pass/fail.
+  - deck export now writes:
+    - `report_notes/slide_quality.summary.json`
+    - `report_notes/slide_quality.md`
+  - add tests:
+    - `tests/test_slide_quality.py`
+  - extend diagram snapshot path:
+    - `src/federlicht/pptx_renderer.py` now materializes `mermaid`/`d2` diagram blocks into SVG snapshots.
+    - bundle metadata includes `diagram_snapshot_count`, `diagram_snapshot_paths`, `diagram_snapshot_errors`.
+    - `src/federlicht/pipeline_runner_impl.py` propagates snapshot metrics into run meta.
+    - expand `tests/test_pptx_renderer.py` for snapshot rendering coverage.
+  - add quality auto-revision loop:
+    - `src/federlicht/slide_quality.py` adds `revise_slide_ast_for_quality(...)`.
+    - deck export path now performs one quality revision pass when gate fails.
+    - write `report_notes/slide_quality.trace.json` with iteration/action trace.
+    - include `deck_quality_iterations` and `deck_quality_actions` in run meta.
+    - expand `tests/test_slide_quality.py` and `tests/test_pipeline_runner_impl.py`.
+  - Phase 4 bootstrap (deck publish path):
+    - `src/federlicht/pipeline_runner_impl.py` adds deck manifest entry builder for hub publish flow.
+    - PPTX deck runs now register companion paths (`deck_html`, `deck_pptx`) in hub manifest.
+    - deck manifest id uses `run_name-deck` to avoid collision with report entries.
+
 ## 1.9.31 (2026-02-26)
 - Priority-ordered update batch (1~5):
   - CI quality guardrails:

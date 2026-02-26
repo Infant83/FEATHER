@@ -39,7 +39,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         "  If --template is 'auto', a 'Template: <name>' line in the report prompt is used.\n"
         "  Otherwise the default template is applied.\n\n"
         "Output format:\n"
-        "  Inferred from --output extension (.md, .html, .tex).\n\n"
+        "  Inferred from --output extension (.md, .html, .tex, .pptx).\n\n"
         "Built-in templates:\n"
         f"{template_lines}\n\n"
         "Preview mode:\n"
@@ -51,6 +51,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         "  federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.html\n"
         "  federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.html --template executive_brief\n"
         "  federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_full.tex --template prl_manuscript\n"
+        "  federlicht --run ./examples/runs/20260104_oled --output ./examples/runs/20260104_oled/report_deck.pptx\n"
     )
     ap = argparse.ArgumentParser(
         description="Federlicht report engine: agentic evidence synthesis and publication-grade report generation.",
@@ -61,7 +62,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     ap.add_argument("--run", help="Path to run folder (or its archive/ subfolder).")
     ap.add_argument(
         "--output",
-        help="Write report to this path (default: print to stdout). Extension selects format (.md/.html/.tex).",
+        help="Write report to this path (default: print to stdout). Extension selects format (.md/.html/.tex/.pptx).",
     )
     ap.add_argument(
         "--site-output",

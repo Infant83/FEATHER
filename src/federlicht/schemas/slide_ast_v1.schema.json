@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Federlicht Slide AST v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "outline_schema_version",
+    "style_pack",
+    "slides"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "slide_ast.v1"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "outline_schema_version": {
+      "type": "string"
+    },
+    "style_pack": {
+      "type": "string"
+    },
+    "slides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "slide_id",
+          "layout",
+          "title_block",
+          "body_blocks",
+          "citation_footer"
+        ],
+        "properties": {
+          "slide_id": {
+            "type": "string"
+          },
+          "source_outline_id": {
+            "type": "string"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "title_block": {
+            "type": "object",
+            "required": ["headline"],
+            "properties": {
+              "headline": {
+                "type": "string"
+              },
+              "subheadline": {
+                "type": "string"
+              }
+            }
+          },
+          "body_blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "citation_footer": {
+            "type": "object",
+            "required": ["refs", "source_policy"],
+            "properties": {
+              "refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "source_policy": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

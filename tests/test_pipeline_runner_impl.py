@@ -1,8 +1,15 @@
+import datetime as dt
+import json
+from pathlib import Path
+
 from federlicht.pipeline_runner_impl import (
+    _build_deck_manifest_entry,
     _count_cached_stage_hits,
+    _deck_target_slide_count,
     _estimate_pass_tokens,
     _flatten_execution_stage_order,
     _merge_workflow_stage_status,
+    _render_slide_deck_artifacts,
 )
 
 
@@ -67,7 +74,6 @@ def test_estimate_pass_tokens_uses_delta_from_previous_state() -> None:
 
 def test_reordered_pipeline_runs_multipass_with_dependency_expansion_disabled(monkeypatch, tmp_path) -> None:
     import argparse
-    from pathlib import Path
     from types import SimpleNamespace
 
     import federlicht.pipeline_runner_impl as runner
@@ -165,3 +171,94 @@ def test_reordered_pipeline_runs_multipass_with_dependency_expansion_disabled(mo
     assert all(flag for _stage, flag, _partial in calls)
     assert all(partial for _stage, _flag, partial in calls)
     assert merged_orders and merged_orders[-1] == _flatten_execution_stage_order(execution_plan)
+
+
+def test_deck_target_slide_count_by_depth() -> None:
+    assert _deck_target_slide_count("brief") == 6
+    assert _deck_target_slide_count("normal") == 9
+    assert _deck_target_slide_count("deep") == 12
+    assert _deck_target_slide_count("exhaustive") == 16
+
+
+def test_render_slide_deck_artifacts_generates_html_fallback(monkeypatch, tmp_path) -> None:
+    import federlicht.pipeline_runner_impl as runner
+
+    run_dir = tmp_path / "run"
+    notes_dir = run_dir / "report_notes"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    claim_packet = {
+        "schema_version": "v1",
+        "claims": [
+            {
+                "claim_id": "C001",
+                "claim_text": "Demo claim for deck export.",
+                "section_hint": "key_findings",
+                "evidence_ids": ["E001"],
+                "source_kind": "web",
+                "score": 0.9,
+            }
+        ],
+        "evidence_registry": [{"evidence_id": "E001", "ref": "https://example.com/source"}],
+    }
+    (notes_dir / "claim_evidence_map.json").write_text(json.dumps(claim_packet, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(runner.pptx_renderer, "_pptx_available", lambda: False)
+
+    output_pptx = run_dir / "deck.pptx"
+    meta = _render_slide_deck_artifacts(
+        run_dir=run_dir,
+        notes_dir=notes_dir,
+        output_pptx_path=output_pptx,
+        report_prompt="Deck prompt",
+        depth="normal",
+        report_title="Demo Deck",
+    )
+
+    assert meta["deck_status"] == "partial_html_only"
+    html_path = Path(str(meta.get("deck_html_path") or ""))
+    assert html_path.exists()
+    assert output_pptx.exists() is False
+    assert (notes_dir / "slide_outline.v1.json").exists()
+    assert (notes_dir / "slide_ast.v1.json").exists()
+    assert (notes_dir / "slide_quality.summary.json").exists()
+    assert (notes_dir / "slide_quality.md").exists()
+    assert (notes_dir / "slide_quality.trace.json").exists()
+    assert isinstance(meta.get("deck_quality_gate_pass"), bool)
+    assert isinstance(meta.get("deck_diagram_snapshot_count"), int)
+    assert int(meta.get("deck_quality_iterations") or 0) >= 1
+
+
+def test_build_deck_manifest_entry_includes_companion_paths(tmp_path) -> None:
+    site_root = tmp_path / "site" / "report_hub"
+    run_dir = site_root / "runs" / "demo_run"
+    report_dir = run_dir / "report"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    primary = report_dir / "deck.html"
+    primary.write_text("<html></html>", encoding="utf-8")
+    deck_pptx = report_dir / "deck.pptx"
+    deck_pptx.write_bytes(b"pptx")
+
+    entry = _build_deck_manifest_entry(
+        site_root=site_root,
+        run_dir=run_dir,
+        title="Deck Demo",
+        author="Tester",
+        summary="Deck summary",
+        language="en",
+        template_name="default",
+        generated_at=dt.datetime(2026, 2, 26, 10, 0, 0),
+        model_name="gpt-5",
+        tags=["deck"],
+        primary_artifact_path=primary,
+        deck_html_path=primary,
+        deck_pptx_path=deck_pptx,
+        report_overview_path=None,
+        workflow_path=None,
+    )
+
+    assert entry is not None
+    payload = dict(entry or {})
+    assert payload.get("format") == "pptx"
+    paths = dict(payload.get("paths") or {})
+    assert paths.get("report") == "runs/demo_run/report/deck.html"
+    assert paths.get("deck_html") == "runs/demo_run/report/deck.html"
+    assert paths.get("deck_pptx") == "runs/demo_run/report/deck.pptx"

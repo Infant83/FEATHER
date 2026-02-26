@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Federlicht Slide Outline v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "meta",
+    "slides"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "slide_outline.v1"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "meta": {
+      "type": "object",
+      "required": [
+        "depth",
+        "audience",
+        "time_budget_minutes",
+        "target_slide_count",
+        "source"
+      ],
+      "properties": {
+        "depth": {
+          "type": "string",
+          "enum": ["brief", "normal", "deep", "exhaustive"]
+        },
+        "audience": {
+          "type": "string"
+        },
+        "time_budget_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_slide_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "slides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "slide_id",
+          "intent",
+          "title",
+          "key_claim",
+          "evidence_refs",
+          "visual_type"
+        ],
+        "properties": {
+          "slide_id": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "key_claim": {
+            "type": "string"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visual_type": {
+            "type": "string"
+          },
+          "section_hint": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

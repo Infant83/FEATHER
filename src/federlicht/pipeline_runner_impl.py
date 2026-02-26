@@ -8,6 +8,9 @@ import time
 
 from . import report as core
 from .report import *  # noqa: F401,F403
+from . import slide_pipeline
+from . import pptx_renderer
+from . import slide_quality
 from . import workflow_stages
 from .workflow_trace import write_workflow_summary
 
@@ -89,6 +92,201 @@ def _estimate_pass_tokens(result: PipelineResult, previous_state: Optional[Pipel
     if delta_chars <= 0:
         return 0
     return int(math.ceil(delta_chars / ratio))
+
+
+def _deck_target_slide_count(depth: str) -> int:
+    token = str(depth or "").strip().lower()
+    if token == "brief":
+        return 6
+    if token == "deep":
+        return 12
+    if token == "exhaustive":
+        return 16
+    return 9
+
+
+def _load_claim_packet_from_notes(notes_dir: Path) -> dict | None:
+    candidate = notes_dir / "claim_evidence_map.json"
+    if not candidate.exists():
+        return None
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _render_slide_deck_artifacts(
+    *,
+    run_dir: Path,
+    notes_dir: Path,
+    output_pptx_path: Path,
+    report_prompt: str,
+    depth: str,
+    report_title: str,
+) -> dict[str, object]:
+    claim_packet = _load_claim_packet_from_notes(notes_dir)
+    outline = slide_pipeline.build_slide_outline(
+        report_prompt=report_prompt,
+        depth=depth,
+        audience="general",
+        time_budget_minutes=20,
+        target_slide_count=_deck_target_slide_count(depth),
+        claim_packet=claim_packet,
+    )
+    outline_errors = slide_pipeline.validate_slide_outline(outline)
+    slide_ast = slide_pipeline.build_slide_ast(
+        outline,
+        style_pack=core.normalize_style_pack(core.STYLE_PACK_DEFAULT),
+    )
+    ast_errors = slide_pipeline.validate_slide_ast(slide_ast)
+    quality_summary = slide_quality.evaluate_slide_ast_quality(slide_ast)
+    quality_actions: list[str] = []
+    quality_iterations = 1
+    quality_trace: dict[str, object] = {
+        "iterations": [
+            {"name": "initial", "summary": quality_summary},
+        ],
+        "actions": [],
+    }
+    if not bool(quality_summary.get("quality_gate_pass")):
+        revised_ast, actions = slide_quality.revise_slide_ast_for_quality(
+            slide_ast,
+            baseline_summary=quality_summary,
+        )
+        revised_summary = slide_quality.evaluate_slide_ast_quality(revised_ast)
+        revised_errors = slide_pipeline.validate_slide_ast(revised_ast)
+        quality_trace["iterations"] = [
+            {"name": "initial", "summary": quality_summary},
+            {"name": "revision_1", "summary": revised_summary},
+        ]
+        quality_trace["actions"] = list(actions)
+        quality_iterations = 2
+        if bool(revised_summary.get("quality_gate_pass")) or float(revised_summary.get("overall_score") or 0.0) >= float(
+            quality_summary.get("overall_score") or 0.0
+        ):
+            slide_ast = revised_ast
+            ast_errors = revised_errors
+            quality_summary = revised_summary
+            quality_actions = list(actions)
+
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    outline_path = notes_dir / "slide_outline.v1.json"
+    ast_path = notes_dir / "slide_ast.v1.json"
+    quality_summary_path = notes_dir / "slide_quality.summary.json"
+    quality_report_path = notes_dir / "slide_quality.md"
+    quality_trace_path = notes_dir / "slide_quality.trace.json"
+    outline_path.write_text(json.dumps(outline, ensure_ascii=False, indent=2), encoding="utf-8")
+    ast_path.write_text(json.dumps(slide_ast, ensure_ascii=False, indent=2), encoding="utf-8")
+    quality_summary_path.write_text(json.dumps(quality_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    quality_report_path.write_text(slide_quality.build_slide_quality_report(quality_summary), encoding="utf-8")
+    quality_trace_path.write_text(json.dumps(quality_trace, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    bundle = pptx_renderer.render_slide_ast_bundle(
+        slide_ast,
+        output_dir=output_pptx_path.parent,
+        deck_id=output_pptx_path.stem,
+        deck_title=report_title or output_pptx_path.stem,
+        export_html=True,
+        export_pptx=True,
+    )
+    html_result = dict(bundle.get("html") or {})
+    pptx_result = dict(bundle.get("pptx") or {})
+    html_ok = bool(html_result.get("ok"))
+    pptx_ok = bool(pptx_result.get("ok"))
+    if pptx_ok:
+        deck_status = "success"
+    elif html_ok:
+        deck_status = "partial_html_only"
+    else:
+        deck_status = "failed"
+
+    return {
+        "deck_status": deck_status,
+        "deck_slide_count": int(pptx_result.get("slide_count") or html_result.get("slide_count") or 0),
+        "deck_diagram_snapshot_count": int(bundle.get("diagram_snapshot_count") or 0),
+        "deck_diagram_snapshot_paths": list(bundle.get("diagram_snapshot_paths") or []),
+        "deck_diagram_snapshot_errors": list(bundle.get("diagram_snapshot_errors") or []),
+        "deck_outline_path": rel_path_or_abs(outline_path, run_dir),
+        "deck_ast_path": rel_path_or_abs(ast_path, run_dir),
+        "deck_quality_summary_path": rel_path_or_abs(quality_summary_path, run_dir),
+        "deck_quality_report_path": rel_path_or_abs(quality_report_path, run_dir),
+        "deck_quality_trace_path": rel_path_or_abs(quality_trace_path, run_dir),
+        "deck_quality_overall": quality_summary.get("overall_score"),
+        "deck_quality_gate_pass": bool(quality_summary.get("quality_gate_pass")),
+        "deck_quality_iterations": quality_iterations,
+        "deck_quality_actions": quality_actions,
+        "deck_html_path": html_result.get("path") or "",
+        "deck_pptx_path": pptx_result.get("path") or "",
+        "deck_pptx_ok": pptx_ok,
+        "deck_html_ok": html_ok,
+        "deck_outline_errors": outline_errors,
+        "deck_ast_errors": ast_errors,
+        "deck_pptx_reason": pptx_result.get("reason") or "",
+    }
+
+
+def _build_deck_manifest_entry(
+    *,
+    site_root: Path,
+    run_dir: Path,
+    title: str,
+    author: str,
+    summary: str,
+    language: str,
+    template_name: str,
+    generated_at: dt.datetime,
+    model_name: str,
+    tags: list[str],
+    primary_artifact_path: Path,
+    deck_html_path: Path | None = None,
+    deck_pptx_path: Path | None = None,
+    report_overview_path: Path | None = None,
+    workflow_path: Path | None = None,
+) -> dict | None:
+    report_rel = relpath_if_within(primary_artifact_path, site_root)
+    if not report_rel:
+        return None
+    paths: dict[str, str] = {"report": report_rel}
+    run_rel = relpath_if_within(run_dir, site_root)
+    if run_rel:
+        paths["run"] = run_rel
+    if report_overview_path:
+        overview_rel = relpath_if_within(report_overview_path, site_root)
+        if overview_rel:
+            paths["overview"] = overview_rel
+    if workflow_path:
+        workflow_rel = relpath_if_within(workflow_path, site_root)
+        if workflow_rel:
+            paths["workflow"] = workflow_rel
+    if deck_html_path:
+        html_rel = relpath_if_within(deck_html_path, site_root)
+        if html_rel:
+            paths["deck_html"] = html_rel
+    if deck_pptx_path:
+        pptx_rel = relpath_if_within(deck_pptx_path, site_root)
+        if pptx_rel:
+            paths["deck_pptx"] = pptx_rel
+    stat = primary_artifact_path.stat()
+    return {
+        "id": f"{run_dir.name}-deck",
+        "run": run_dir.name,
+        "report_stem": primary_artifact_path.stem,
+        "title": title,
+        "author": author,
+        "summary": summary,
+        "lang": language,
+        "template": template_name,
+        "format": "pptx",
+        "model": model_name,
+        "tags": list(tags or []),
+        "date": generated_at.strftime("%Y-%m-%d"),
+        "timestamp": generated_at.isoformat(),
+        "source_mtime": int(stat.st_mtime),
+        "source_size": int(stat.st_size),
+        "paths": paths,
+    }
+
 
 def run_pipeline(
     args: argparse.Namespace,
@@ -406,6 +604,7 @@ def run_pipeline(
         out_path.parent.mkdir(parents=True, exist_ok=True)
         companion_suffixes = [".pdf"] if output_format == "tex" else None
         final_path = resolve_output_path(out_path, args.overwrite_output, companion_suffixes)
+    pptx_output_requested = bool(final_path and final_path.suffix.lower() == ".pptx")
     prompt_copy_path = write_report_prompt_copy(run_dir, report_prompt, final_path or out_path)
     report_overview_path = write_report_overview(
         run_dir,
@@ -462,7 +661,8 @@ def run_pipeline(
         "agent_config": getattr(args, "agent_config", None),
         "title": title,
         "summary": report_summary,
-        "output_format": output_format,
+        "output_format": "pptx" if pptx_output_requested else output_format,
+        "report_body_format": output_format if pptx_output_requested else None,
         "language": language,
         "author": author_label,
         "organization": author_organization or None,
@@ -627,68 +827,141 @@ def run_pipeline(
             report,
         )
 
+    resolved_output_path = final_path
     if args.output:
         if not final_path:
             raise RuntimeError("Output path resolution failed.")
-        final_path.write_text(rendered, encoding="utf-8")
-        print(f"Wrote report: {final_path}")
-        site_root = resolve_site_output(args.site_output)
-        site_index_path: Optional[Path] = None
-        if site_root:
-            entry = build_site_manifest_entry(
-                site_root,
-                run_dir,
-                final_path,
-                title,
-                author_name,
-                report_summary,
-                output_format,
-                template_spec.name,
-                language,
-                end_stamp,
-                report_overview_path=report_overview_path,
-                workflow_path=result.workflow_path,
-                model_name=args.model,
-                tags=tags_list,
+        if pptx_output_requested:
+            deck_meta = _render_slide_deck_artifacts(
+                run_dir=run_dir,
+                notes_dir=notes_dir,
+                output_pptx_path=final_path,
+                report_prompt=report_prompt or report_summary,
+                depth=result.depth,
+                report_title=title,
             )
-            if entry:
-                manifest = update_site_manifest(site_root, entry)
-                site_index_path = write_site_index(site_root, manifest, refresh_minutes=10)
-                meta["site_index_path"] = str(site_index_path)
-                meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-        if args.echo_markdown:
-            print(report)
-        if output_format == "tex" and args.pdf:
-            ok, message = compile_latex_to_pdf(final_path)
-            pdf_path = final_path.with_suffix(".pdf")
-            if ok and pdf_path.exists():
-                print(f"Wrote PDF: {pdf_path}")
-                meta["pdf_status"] = "success"
-                meta.update(inspect_pdf_artifact(pdf_path))
-            elif not ok:
-                print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
-                meta["pdf_status"] = "failed"
-            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-        elif output_format == "html" and getattr(args, "html_pdf", False):
-            pdf_path = final_path.with_suffix(".pdf")
-            ok, used_engine, message = compile_html_to_pdf(
-                final_path,
-                pdf_path=pdf_path,
-                engine=getattr(args, "html_pdf_engine", "auto"),
-                print_profile=html_print_profile,
-                wait_ms=int(getattr(args, "html_pdf_wait_ms", 1500) or 0),
-                timeout_sec=int(getattr(args, "html_pdf_timeout_sec", 120) or 120),
-            )
-            if used_engine:
-                meta["html_pdf_engine"] = used_engine
-            if ok and pdf_path.exists():
-                print(f"Wrote PDF: {pdf_path}")
-                meta["pdf_status"] = "success"
-                meta.update(inspect_pdf_artifact(pdf_path))
+            meta.update(deck_meta)
+            if bool(deck_meta.get("deck_pptx_ok")):
+                print(f"Wrote deck: {final_path}")
+            elif bool(deck_meta.get("deck_html_ok")):
+                html_path = str(deck_meta.get("deck_html_path") or "")
+                reason = str(deck_meta.get("deck_pptx_reason") or "unknown")
+                print(
+                    f"PPTX export unavailable ({reason}); HTML deck generated instead: {html_path}",
+                    file=sys.stderr,
+                )
+                if html_path:
+                    resolved_output_path = Path(html_path)
+                meta["pdf_status"] = "disabled"
             else:
-                print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
+                reason = str(deck_meta.get("deck_pptx_reason") or "deck_render_failed")
+                print(f"Deck export failed: {reason}", file=sys.stderr)
                 meta["pdf_status"] = "failed"
+            site_root = resolve_site_output(args.site_output)
+            if site_root:
+                def _resolve_artifact_path(raw: object) -> Path | None:
+                    token = str(raw or "").strip()
+                    if not token:
+                        return None
+                    candidate = Path(token)
+                    if not candidate.is_absolute():
+                        candidate = (final_path.parent / token).resolve()
+                    if candidate.exists():
+                        return candidate
+                    return None
+
+                deck_html_abs = _resolve_artifact_path(deck_meta.get("deck_html_path"))
+                deck_pptx_abs = _resolve_artifact_path(deck_meta.get("deck_pptx_path"))
+                primary_artifact = (
+                    resolved_output_path
+                    if resolved_output_path and resolved_output_path.exists()
+                    else (deck_html_abs or deck_pptx_abs)
+                )
+                if primary_artifact:
+                    entry = _build_deck_manifest_entry(
+                        site_root=site_root,
+                        run_dir=run_dir,
+                        title=title,
+                        author=author_name,
+                        summary=report_summary,
+                        language=language,
+                        template_name=template_spec.name,
+                        generated_at=end_stamp,
+                        model_name=args.model,
+                        tags=tags_list,
+                        primary_artifact_path=primary_artifact,
+                        deck_html_path=deck_html_abs,
+                        deck_pptx_path=deck_pptx_abs,
+                        report_overview_path=report_overview_path,
+                        workflow_path=result.workflow_path,
+                    )
+                    if entry:
+                        manifest = update_site_manifest(site_root, entry)
+                        site_index_path = write_site_index(site_root, manifest, refresh_minutes=10)
+                        meta["site_index_path"] = str(site_index_path)
             meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            if args.echo_markdown:
+                print(report)
+        else:
+            final_path.write_text(rendered, encoding="utf-8")
+            print(f"Wrote report: {final_path}")
+            site_root = resolve_site_output(args.site_output)
+            site_index_path: Optional[Path] = None
+            if site_root:
+                entry = build_site_manifest_entry(
+                    site_root,
+                    run_dir,
+                    final_path,
+                    title,
+                    author_name,
+                    report_summary,
+                    output_format,
+                    template_spec.name,
+                    language,
+                    end_stamp,
+                    report_overview_path=report_overview_path,
+                    workflow_path=result.workflow_path,
+                    model_name=args.model,
+                    tags=tags_list,
+                )
+                if entry:
+                    manifest = update_site_manifest(site_root, entry)
+                    site_index_path = write_site_index(site_root, manifest, refresh_minutes=10)
+                    meta["site_index_path"] = str(site_index_path)
+                    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            if args.echo_markdown:
+                print(report)
+            if output_format == "tex" and args.pdf:
+                ok, message = compile_latex_to_pdf(final_path)
+                pdf_path = final_path.with_suffix(".pdf")
+                if ok and pdf_path.exists():
+                    print(f"Wrote PDF: {pdf_path}")
+                    meta["pdf_status"] = "success"
+                    meta.update(inspect_pdf_artifact(pdf_path))
+                elif not ok:
+                    print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
+                    meta["pdf_status"] = "failed"
+                meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            elif output_format == "html" and getattr(args, "html_pdf", False):
+                pdf_path = final_path.with_suffix(".pdf")
+                ok, used_engine, message = compile_html_to_pdf(
+                    final_path,
+                    pdf_path=pdf_path,
+                    engine=getattr(args, "html_pdf_engine", "auto"),
+                    print_profile=html_print_profile,
+                    wait_ms=int(getattr(args, "html_pdf_wait_ms", 1500) or 0),
+                    timeout_sec=int(getattr(args, "html_pdf_timeout_sec", 120) or 120),
+                )
+                if used_engine:
+                    meta["html_pdf_engine"] = used_engine
+                if ok and pdf_path.exists():
+                    print(f"Wrote PDF: {pdf_path}")
+                    meta["pdf_status"] = "success"
+                    meta.update(inspect_pdf_artifact(pdf_path))
+                else:
+                    print(f"PDF compile failed: {truncate_text_head(message, 800)}", file=sys.stderr)
+                    meta["pdf_status"] = "failed"
+                meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         print(rendered)
 
@@ -701,7 +974,7 @@ def run_pipeline(
                 "base_report": update_base,
                 "update_notes": update_notes,
                 "prompt_file": update_prompt_path,
-                "output_path": f"./{final_path.relative_to(run_dir).as_posix()}" if final_path else None,
+                "output_path": f"./{resolved_output_path.relative_to(run_dir).as_posix()}" if resolved_output_path else None,
             }
             append_jsonl(history_path, entry)
         except Exception:
@@ -711,7 +984,7 @@ def run_pipeline(
         result=result,
         report=report,
         rendered=rendered,
-        output_path=final_path,
+        output_path=resolved_output_path,
         meta=meta,
         preview_text=preview_text,
         state=pipeline_state,
