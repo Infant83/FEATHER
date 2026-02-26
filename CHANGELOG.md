@@ -45,6 +45,16 @@
     - `src/federlicht/pipeline_runner_impl.py` adds deck manifest entry builder for hub publish flow.
     - PPTX deck runs now register companion paths (`deck_html`, `deck_pptx`) in hub manifest.
     - deck manifest id uses `run_name-deck` to avoid collision with report entries.
+- PPT writer stability + validation:
+  - fix artwork relative-path generation for diagram outputs when `run_dir` is passed as a relative path:
+    - add `_rel_under_run(...)` helper in `src/federlicht/artwork.py`.
+    - apply to `render_d2_svg`, `render_diagrams_architecture`, `render_mermaid_diagram`.
+  - add regression tests in `tests/test_artwork_tools.py`:
+    - `test_render_d2_svg_accepts_relative_run_dir`
+    - `test_render_mermaid_accepts_relative_run_dir`
+  - example quality checks:
+    - report gate: `site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html` with `quality_profile=world_class` -> `PASS` (`overall=89.41`, `claim_support=69.57`, `unsupported=7`, `section_coherence=94`).
+    - deck sample: `test-results/p0_deck_example_physical_ai_iter015` -> initial quality `67.33` (`FAIL`) improved to `100.00` (`PASS`) after one auto-revision; HTML/PPTX export both succeeded.
 
 ## 1.9.31 (2026-02-26)
 - Priority-ordered update batch (1~5):

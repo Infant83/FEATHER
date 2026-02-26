@@ -3,15 +3,15 @@
 Last updated: 2026-02-26
 
 ## 진행률 체크 (2026-02-26)
-- Overall: **51% (Phase 1 완료 + Phase 2 진행 + Phase 3 중반 + Phase 4 착수)**
+- Overall: **53% (Phase 1 완료 + Phase 2 진행 + Phase 3 안정화 + Phase 4 착수)**
 - 기준: 각 Phase를 동일 가중치로 집계
 
 | Phase | 상태 | 진행률 | 체크 기준(완료 정의) |
 | --- | --- | --- | --- |
 | Phase 1: schema + planner/composer JSON contract | 완료 | 100% | slide outline/ast 계약 모듈 + 스키마 + 단위테스트 통과 |
 | Phase 2: minimal pptx renderer | 진행중 | 75% | 텍스트/표/이미지 렌더 + smoke tests |
-| Phase 3: mermaid/d2 + quality loop | 진행중 | 65% | 다이어그램 snapshot + slide quality evaluator |
-| Phase 4: Federnett publish/hub 확장 | 진행중 | 15% | deck artifact 게시 플로우/인덱스 반영 |
+| Phase 3: mermaid/d2 + quality loop | 진행중 | 70% | 다이어그램 snapshot + slide quality evaluator |
+| Phase 4: Federnett publish/hub 확장 | 진행중 | 20% | deck artifact 게시 플로우/인덱스 반영 |
 | Phase 5: FederHav partial patch API | 미시작 | 0% | 슬라이드 단위 patch 액션 + 승인 후 재렌더 자동화 |
 
 ### 최근 반영(Phase 1)
@@ -79,6 +79,14 @@ Last updated: 2026-02-26
 - `tests/test_pipeline_runner_impl.py`
   - deck manifest entry의 companion path(`deck_html`, `deck_pptx`) 검증 추가
 
+### 최근 반영(Phase 3 안정화)
+- `src/federlicht/artwork.py`
+  - diagram 렌더러(`render_d2_svg`, `render_diagrams_architecture`, `render_mermaid_diagram`)의 결과 경로 계산을 절대경로 기준으로 정규화
+  - 상대 `run_dir` 입력에서도 `path`가 안정적으로 `./...` 상대 경로로 반환되도록 수정
+- `tests/test_artwork_tools.py`
+  - `test_render_d2_svg_accepts_relative_run_dir` 추가
+  - `test_render_mermaid_accepts_relative_run_dir` 추가
+
 ### 지속 체크 방법
 - 단계 완료 시마다 아래를 고정 수행:
   1. `pytest -q tests/test_slide_pipeline.py tests/test_pptx_renderer.py`
@@ -88,6 +96,9 @@ Last updated: 2026-02-26
 ### 최신 체크 결과
 - `2026-02-26`: `pytest -q tests/test_slide_pipeline.py tests/test_pptx_renderer.py tests/test_slide_quality.py tests/test_pipeline_runner_impl.py` -> `19 passed`
 - `2026-02-26`: `pytest -q tests/test_federlicht_cli_args.py tests/test_version_consistency_tool.py` -> `4 passed`
+- `2026-02-26`: `pytest -q tests/test_artwork_tools.py` -> `15 passed`
+- `2026-02-26`: `python tools/run_report_quality_gate.py --input site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html --summary-output test-results/p0_quality_gate_physical_ai_iter015.summary.json --report-md test-results/p0_quality_gate_physical_ai_iter015.md --quality-profile world_class` -> `PASS` (`overall=89.41`, `claim_support=69.57`, `unsupported=7`, `section_coherence=94`)
+- `2026-02-26`: sample deck quality run (`test-results/p0_deck_example_physical_ai_iter015`) -> 초기 `overall=67.33`/`FAIL`, auto-revision 1회 후 `overall=100.00`/`PASS`, HTML/PPTX export 성공
 
 ## 목표
 - Federlicht가 보고서뿐 아니라 **슬라이드형 결과물(PPTX/slide HTML/PDF)** 을 같은 파이프라인에서 생성하도록 확장한다.

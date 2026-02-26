@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
+from types import SimpleNamespace
 
 from federlicht import artwork
 
@@ -32,6 +35,45 @@ def test_render_d2_svg_missing_cli(tmp_path, monkeypatch) -> None:
     result = artwork.render_d2_svg(tmp_path, "a -> b")
     assert result["ok"] == "false"
     assert result["error"] == "d2_cli_missing"
+
+
+def test_render_d2_svg_accepts_relative_run_dir(tmp_path, monkeypatch) -> None:
+    run_dir = Path(os.path.relpath(tmp_path, Path.cwd()))
+
+    def fake_run(cmd, **kwargs):  # type: ignore[no-untyped-def]
+        out_path = Path(cmd[-1])
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text("<svg/>", encoding="utf-8")
+        return SimpleNamespace(returncode=0, stderr="", stdout="")
+
+    monkeypatch.setattr(artwork, "_resolve_d2_command", lambda: ["d2"])
+    monkeypatch.setattr(artwork.subprocess, "run", fake_run)
+
+    result = artwork.render_d2_svg(run_dir, "a -> b", output_rel_path="report_assets/artwork/d2.svg")
+    assert result["ok"] == "true"
+    assert result["path"] == "./report_assets/artwork/d2.svg"
+
+
+def test_render_mermaid_accepts_relative_run_dir(tmp_path, monkeypatch) -> None:
+    run_dir = Path(os.path.relpath(tmp_path, Path.cwd()))
+
+    def fake_run(cmd, **kwargs):  # type: ignore[no-untyped-def]
+        out_idx = cmd.index("-o")
+        out_path = Path(cmd[out_idx + 1])
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text("<svg/>", encoding="utf-8")
+        return SimpleNamespace(returncode=0, stderr="", stdout="")
+
+    monkeypatch.setattr(artwork, "_resolve_mmdc_command", lambda: ["mmdc"])
+    monkeypatch.setattr(artwork.subprocess, "run", fake_run)
+
+    result = artwork.render_mermaid_diagram(
+        run_dir,
+        "flowchart LR\nA-->B",
+        output_rel_path="report_assets/artwork/mermaid.svg",
+    )
+    assert result["ok"] == "true"
+    assert result["path"] == "./report_assets/artwork/mermaid.svg"
 
 
 def test_render_diagrams_missing_package(tmp_path, monkeypatch) -> None:

@@ -178,6 +178,12 @@ def _resolve_under_run(run_dir: Path, rel_path: str) -> Path:
     return candidate
 
 
+def _rel_under_run(run_dir: Path, abs_path: Path) -> str:
+    run_root = run_dir.resolve()
+    target = abs_path.resolve()
+    return f"./{target.relative_to(run_root).as_posix()}"
+
+
 def _resolve_mmdc_command() -> list[str]:
     mmdc = shutil.which("mmdc")
     if mmdc:
@@ -329,7 +335,7 @@ def render_d2_svg(
             except Exception:
                 pass
 
-    rel_out = f"./{out_path.relative_to(run_dir).as_posix()}"
+    rel_out = _rel_under_run(run_dir, out_path)
     return {
         "ok": "true",
         "path": rel_out,
@@ -444,7 +450,7 @@ def render_diagrams_architecture(
             "message": str(exc)[:400],
         }
 
-    rel_out = f"./{out_path.relative_to(run_dir).as_posix()}"
+    rel_out = _rel_under_run(run_dir, out_path)
     return {
         "ok": "true",
         "path": rel_out,
@@ -530,7 +536,7 @@ def render_mermaid_diagram(
                 temp_file.unlink()
             except Exception:
                 pass
-    rel_out = f"./{out_path.relative_to(run_dir).as_posix()}"
+    rel_out = _rel_under_run(run_dir, out_path)
     markdown = f"![Diagram]({rel_out})" if fmt in {"svg", "png"} else f"[Diagram PDF]({rel_out})"
     return {
         "ok": "true",
