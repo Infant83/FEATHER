@@ -1,7 +1,36 @@
 {
-  "revision": "2026-02-25T10:25:13.877638",
-  "generated_at": "2026-02-25T10:25:13.877638",
+  "revision": "2026-02-27T06:48:05.557763",
+  "generated_at": "2026-02-27T06:48:05.557763",
   "items": [
+    {
+      "id": "20260221_QC_report",
+      "run": "20260221_QC_report",
+      "report_stem": "report_full_iter027_codex53_ko_qc_worldclass_artwork",
+      "title": "양자 상용화 경쟁의 경제성 전환과 성과 비대칭",
+      "author": "Federlicht Writer",
+      "summary": "양자 상용화 경쟁의 경제성 전환과 성과 비대칭 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-27 06:47 Lede 2026년부터 2035년까지의 양자컴퓨팅 상용화 경쟁은 “누가 먼저 양자우위를 선언하느냐”보다, “어떤 문제에서 먼저 안정적인 경제성을 확보하느냐”의 싸움으로 바뀌고 있다. 실제 산업 의사결정자는 기술 데모…",
+      "lang": "Korean",
+      "template": "quanta_magazine",
+      "format": "html",
+      "model": "gpt-5.3-codex",
+      "tags": [
+        "상용화",
+        "기술",
+        "개선",
+        "핵심",
+        "근거"
+      ],
+      "date": "2026-02-27",
+      "timestamp": "2026-02-27T06:48:05.027921",
+      "source_mtime": 1772142485,
+      "source_size": 78841,
+      "paths": {
+        "report": "../runs/20260221_QC_report/report_full_iter027_codex53_ko_qc_worldclass_artwork.html",
+        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter027_codex53_ko_qc_worldclass_artwork.md",
+        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
+        "run": "../runs/20260221_QC_report"
+      }
+    },
     {
       "id": "openclaw",
       "run": "openclaw",
@@ -58,35 +87,6 @@
         "overview": "../runs/physical_ai_insight/report/run_overview_report_full_iter015_gpt52_ko_classroom_world.md",
         "workflow": "../runs/physical_ai_insight/report_notes/report_workflow.md",
         "run": "../runs/physical_ai_insight"
-      }
-    },
-    {
-      "id": "20260221_QC_report",
-      "run": "20260221_QC_report",
-      "report_stem": "report_full_iter013_gpt52_ko_general_world",
-      "title": "산업용 양자컴퓨팅 진전과 QUBO 기반 하이브리드 적용 동향",
-      "author": "Federlicht Writer",
-      "summary": "산업용 양자컴퓨팅 진전과 QUBO 기반 하이브리드 적용 동향 Default assisted and prompted by \"Federlicht Writer\" — 2026-02-25 09:48 Executive Summary 최근 1년(쿼리 기준) 산업용 양자컴퓨팅(QC) 진전은 “단일 QPU의 절대 성능”보다 “문제 적합성(특히 QUBO/Ising 계열) + 하이브리드 워크플로 + 서비스 제…",
-      "lang": "Korean",
-      "template": "technical_deep_dive",
-      "format": "html",
-      "model": "gpt-5.2",
-      "tags": [
-        "QUBO",
-        "산업용",
-        "양자컴퓨팅",
-        "하이브리드",
-        "진전과"
-      ],
-      "date": "2026-02-25",
-      "timestamp": "2026-02-25T09:48:24.274137",
-      "source_mtime": 1771980504,
-      "source_size": 47159,
-      "paths": {
-        "report": "../runs/20260221_QC_report/report_full_iter013_gpt52_ko_general_world.html",
-        "overview": "../runs/20260221_QC_report/report/run_overview_report_full_iter013_gpt52_ko_general_world.md",
-        "workflow": "../runs/20260221_QC_report/report_notes/report_workflow.md",
-        "run": "../runs/20260221_QC_report"
       }
     },
     {

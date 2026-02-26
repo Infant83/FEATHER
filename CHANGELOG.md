@@ -1,6 +1,24 @@
 # Changelog
 
-## Unreleased (2026-02-26)
+## Unreleased (2026-02-27)
+
+## 1.9.32 (2026-02-27)
+- release alignment:
+  - bump version to `1.9.32` across `pyproject.toml`, `src/federlicht/versioning.py`, and `README.md`.
+- policy/docs refresh:
+  - reprioritize roadmap to `PPTX reader/ingest first` and `PPTX-style HTML/artwork quality` in:
+    - `docs/codex_handoff_20260227.md`
+    - `docs/ppt_writer_strategy.md`
+- QC world-class sample run (Codex 5.3):
+  - generated QC narrative sample with required visuals (10-year roadmap, country investment, error-rate trend, radar, pipeline diagram, tables).
+  - source run output is under `site/runs/20260221_QC_report/` (run folder is repo-ignored).
+  - committed reproducible snapshot and gate artifacts in `test-results/`:
+    - `test-results/p0_sample_qc_iter027_codex53_ko_worldclass_artwork_snapshot.html`
+    - `test-results/p0_prompt_qc_iter027_codex53_worldclass_artwork.txt`
+    - `test-results/p0_quality_gate_qc_iter027_codex53_world_v4.summary.json`
+    - `test-results/p0_quality_gate_qc_iter027_codex53_world_v4.md`
+  - world_class gate result: `PASS` (`overall=93.61`, `claim_support=97.67`, `unsupported=1`, `section_coherence=100.00`).
+
 - policy realignment (2026-02-27 docs update):
   - prioritize PPTX `reader/ingest management` over writer expansion.
   - prioritize `PPTX-style HTML deck rendering` and artwork quality loop for presentation quality.

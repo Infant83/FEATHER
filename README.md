@@ -2,13 +2,13 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.31
+Version: 1.9.32
 
-## Latest Update (1.9.31, 2026-02-26)
-- CI quality guardrails were added in GitLab (`quality_guardrails`) and `pages` deploy now depends on quality checks.
-- Section coherence heuristics and world-class infographic lint policy were tightened for more stable quality gating.
-- Claim-packet infographic generation now supports mixed Chart.js/Plotly selection with KPI card enrichment and TeX insertion support.
-- FederHav/Federnett rewrite flows were refined with stronger section rewrite hint parsing and DeepAgent fallback diagnostics.
+## Latest Update (1.9.32, 2026-02-27)
+- Policy priority was realigned to PPTX reader/ingest management first, then PPTX-style HTML rendering/artwork quality uplift.
+- QC world-class sample report run was added with Codex backend (`gpt-5.3-codex`) and upgraded visual composition.
+- New QC sample snapshot and quality-gate artifacts were added under `test-results/` for reproducible review.
+- World-class gate pass was confirmed on the final QC sample (`overall=93.61`, `claim_support=97.67`, `unsupported=1`, `section_coherence=100`).
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
