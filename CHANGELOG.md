@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased (2026-02-26)
+- policy realignment (2026-02-27 docs update):
+  - prioritize PPTX `reader/ingest management` over writer expansion.
+  - prioritize `PPTX-style HTML deck rendering` and artwork quality loop for presentation quality.
+  - prioritize `HTML report style` uplift as the primary quality-improvement path.
+  - reflect new priorities in:
+    - `docs/codex_handoff_20260227.md`
+    - `docs/ppt_writer_strategy.md`
 - PPT writer Phase 1 contract implementation:
   - add `src/federlicht/slide_pipeline.py` with
     `slide_outline.v1` / `slide_ast.v1` contract builders and validators.

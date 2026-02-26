@@ -1,16 +1,25 @@
 # PPT Writer Strategy (Draft)
 
-Last updated: 2026-02-26
+Last updated: 2026-02-27
 
-## 진행률 체크 (2026-02-26)
-- Overall: **53% (Phase 1 완료 + Phase 2 진행 + Phase 3 안정화 + Phase 4 착수)**
+## 정책 강화 (2026-02-27)
+- 우선순위 정책:
+  - PPTX는 `작성(writer)`보다 `읽기(reader)/관리`를 우선 강화한다.
+  - 슬라이드 결과물 품질은 PPTX binary보다 `PPTX 스타일 HTML 렌더`를 우선 기준으로 운영한다.
+  - 보고서 최종 품질 개선은 HTML 스타일(가독성/흐름/시각근거 배치) 고도화를 우선한다.
+- 운영 정책:
+  - PPTX export는 유지하되 fallback HTML deck을 1급 산출물로 취급한다.
+  - 품질 게이트/수기 리뷰는 HTML 기준 산출물(`*.html`, `slide_quality.*`)을 기본 근거로 사용한다.
+
+## 진행률 체크 (2026-02-27)
+- Overall: **55% (Phase 1 완료 + Phase 2 리밸런싱 + Phase 3 안정화 + Phase 4 착수)**
 - 기준: 각 Phase를 동일 가중치로 집계
 
 | Phase | 상태 | 진행률 | 체크 기준(완료 정의) |
 | --- | --- | --- | --- |
 | Phase 1: schema + planner/composer JSON contract | 완료 | 100% | slide outline/ast 계약 모듈 + 스키마 + 단위테스트 통과 |
-| Phase 2: minimal pptx renderer | 진행중 | 75% | 텍스트/표/이미지 렌더 + smoke tests |
-| Phase 3: mermaid/d2 + quality loop | 진행중 | 70% | 다이어그램 snapshot + slide quality evaluator |
+| Phase 2: PPTX read/ingest 관리 강화 | 진행중 | 78% | 텍스트/이미지/슬라이드 추출 계약 + provenance 메타 |
+| Phase 3: PPTX-style HTML 렌더 + artwork loop | 진행중 | 72% | 다이어그램 snapshot + html visual quality + slide quality evaluator |
 | Phase 4: Federnett publish/hub 확장 | 진행중 | 20% | deck artifact 게시 플로우/인덱스 반영 |
 | Phase 5: FederHav partial patch API | 미시작 | 0% | 슬라이드 단위 patch 액션 + 승인 후 재렌더 자동화 |
 
@@ -99,6 +108,12 @@ Last updated: 2026-02-26
 - `2026-02-26`: `pytest -q tests/test_artwork_tools.py` -> `15 passed`
 - `2026-02-26`: `python tools/run_report_quality_gate.py --input site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html --summary-output test-results/p0_quality_gate_physical_ai_iter015.summary.json --report-md test-results/p0_quality_gate_physical_ai_iter015.md --quality-profile world_class` -> `PASS` (`overall=89.41`, `claim_support=69.57`, `unsupported=7`, `section_coherence=94`)
 - `2026-02-26`: sample deck quality run (`test-results/p0_deck_example_physical_ai_iter015`) -> 초기 `overall=67.33`/`FAIL`, auto-revision 1회 후 `overall=100.00`/`PASS`, HTML/PPTX export 성공
+
+## 정책 기준 우선순위 (실행용)
+1. PPTX reader/관리: 입력 정합성과 provenance 계약 고정
+2. PPTX-style HTML deck: typography/layout/visual block 품질 고도화
+3. HTML report style: 섹션 전개/근거 배치/가독성 개선
+4. PPTX writer/export: 호환성 유지 + fallback 안정성 확보
 
 ## 목표
 - Federlicht가 보고서뿐 아니라 **슬라이드형 결과물(PPTX/slide HTML/PDF)** 을 같은 파이프라인에서 생성하도록 확장한다.
