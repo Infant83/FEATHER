@@ -62,6 +62,7 @@ Top recommendation: run a 12-week pilot with explicit stop/go criteria [https://
     assert "section_coherence_score" in signals
     assert "evidence_density_score" in signals
     assert "narrative_density_score" in signals
+    assert "narrative_flow_score" in signals
 
 
 def test_heuristic_handles_html_headings_and_links() -> None:
@@ -278,6 +279,47 @@ flowchart LR
     )
     assert signals_visual["visual_evidence_score"] > signals_plain["visual_evidence_score"]
     assert signals_visual["overall"] > signals_plain["overall"]
+
+
+def test_narrative_flow_score_penalizes_label_list_style_blocks() -> None:
+    required = ["Executive Summary", "Key Findings"]
+    list_style = """
+## Executive Summary
+주장: 도입 우선순위를 조정해야 한다 [https://example.com/a].
+근거: 파일럿 편차가 크다 [https://example.com/b].
+인사이트: 운영 KPI 중심으로 재설계해야 한다 [https://example.com/c].
+
+## Key Findings
+주장: 통합 복잡도가 핵심 병목이다 [https://example.com/d].
+근거: 조직별 표준 편차가 크다 [https://example.com/e].
+인사이트: 단계별 게이트가 필요하다 [https://example.com/f].
+"""
+    prose_style = """
+## Executive Summary
+양자컴퓨팅 도입의 성패는 단일 성능 수치보다 운영 환경에서의 재현성에 달려 있다 [https://example.com/a].
+따라서 의사결정자는 파일럿의 평균 성과보다 편차 원인을 먼저 추적해야 하며, 이를 기반으로 단계별 게이트를 설계해야 한다 [https://example.com/b].
+이러한 기준은 다음 섹션의 실행 조건 정의로 이어진다 [https://example.com/c].
+
+## Key Findings
+통합 복잡도는 기술 자체보다 조직 표준 부재에서 더 크게 발생하는 경향이 확인된다 [https://example.com/d].
+한편 운영 단위 KPI를 사전에 맞추면 실패비용을 줄이면서도 실험 속도를 유지할 수 있다 [https://example.com/e].
+결론적으로 단계별 도입 로드맵은 기술 지표와 운영 지표를 함께 묶어 설계되어야 한다 [https://example.com/f].
+"""
+    list_signals = report.compute_heuristic_quality_signals(
+        list_style,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    prose_signals = report.compute_heuristic_quality_signals(
+        prose_style,
+        required,
+        "md",
+        depth="deep",
+        report_intent="research",
+    )
+    assert prose_signals["narrative_flow_score"] > list_signals["narrative_flow_score"]
 
 
 def test_section_coherence_score_relaxes_optional_short_sections() -> None:

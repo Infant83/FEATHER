@@ -434,6 +434,15 @@ def build_writer_prompt(
         "서술 연결성: 섹션 간 논리 전환을 자연스럽게 유지하세요. "
         "심층형 보고서에서는 섹션 시작/끝 문장으로 연결을 명시하고, brief 모드에서는 과도한 연결 문구를 줄이세요. "
     )
+    narrative_prose_guidance = (
+        "문장 품질: '주장/근거/인사이트' 같은 라벨형 단답 문장을 연속 나열하지 말고, "
+        "하나의 논지를 자연스러운 문단(3~6문장)으로 전개하세요. "
+        "각 핵심 섹션은 도입(왜 중요한가) -> 근거 해석(무엇이 확인되었나) -> 전환/함의(다음 논점 연결) 흐름을 유지하세요. "
+    )
+    if depth in {"deep", "exhaustive"}:
+        narrative_prose_guidance += (
+            "심층 모드에서는 각 핵심 섹션 끝에 다음 섹션으로 이어지는 1문장 전환 문장을 반드시 포함하세요. "
+        )
     coherence_structure_guidance = ""
     if depth in {"deep", "exhaustive"} and intent in {"research", "review", "decision"}:
         coherence_structure_guidance = (
@@ -619,6 +628,17 @@ def build_writer_prompt(
                 "시각 근거 통합: figure 후보가 없으면 최소 1개 Mermaid 코드블록 또는 compact 비교표를 포함하고, "
                 "인접 문단에서 출처와 해석 근거를 자연문으로 연결하세요. "
             )
+    visual_context_guidance = ""
+    if output_format != "tex":
+        visual_context_guidance = (
+            "시각물 문맥 규칙: 각 figure/diagram/infographic 앞 문단에는 '무엇을 보여주는지'를 1~2문장으로 적고, "
+            "직후 문단에는 해석/한계/의사결정 함의를 2~4문장으로 마무리하세요. "
+            "캡션에는 지표, 단위, 기간, 정규화 기준, 데이터 상태(Measured/Derived/Simulated)를 가능한 범위에서 명시하세요. "
+        )
+    citation_integrity_guidance = (
+        "인용 무결성: 깨진 링크 문법(예: [1](url)[2](url) 꼬임, 중첩 링크)이나 번호-only 인용을 만들지 마세요. "
+        "문장 끝에 실제 URL/DOI를 독립된 대괄호 인용으로 분리해 표기하세요. "
+    )
     tone_instruction = (
         "PRL/Nature/Annual Review 스타일의 학술 저널 톤으로 작성하세요. "
         if template_spec.name in FORMAL_TEMPLATES
@@ -670,6 +690,7 @@ def build_writer_prompt(
         f"{result_traceability_guidance}"
         f"{uncertainty_guidance}"
         f"{narrative_flow_guidance}"
+        f"{narrative_prose_guidance}"
         f"{coherence_structure_guidance}"
         f"{intent_writer_guidance}"
         f"{figure_guidance}"
@@ -677,6 +698,8 @@ def build_writer_prompt(
         f"{visual_mandate_guidance}"
         f"{depth_density_guidance}"
         f"{visual_evidence_integration_guidance}"
+        f"{visual_context_guidance}"
+        f"{citation_integrity_guidance}"
         f"{critics_guidance}"
         f"{risk_gap_guidance}"
         f"{not_applicable_guidance}"
@@ -725,6 +748,9 @@ def build_writer_finalizer_prompt(
         "Secondary draft가 제공되면 명확성/구조/커버리지를 강화하는 데만 사용하세요. "
         "근거 노트에 없는 새로운 주장이나 출처를 추가하지 마세요. "
         "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')를 제거하고 자연스러운 서술로 정리하세요. "
+        "라벨형 단답 나열(예: '주장/근거/인사이트')이 반복되면 문단형 서술로 통합하고 섹션 전환 문장을 보강하세요. "
+        "시각물 주변에는 앞 문단(도입)과 뒤 문단(해석/한계)이 모두 존재하는지 확인하고 누락 시 보완하세요. "
+        "깨진 인용 문법(중첩 링크/번호-only 인용)은 실제 URL/DOI 인용으로 정리하세요. "
         "인용과 필수 섹션 헤딩을 유지하세요. "
         "보고서 본문만 반환하세요."
     )

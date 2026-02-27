@@ -2734,6 +2734,111 @@ def _narrative_density_score(
     return round(max(20.0, min(100.0, score)), 2)
 
 
+def _flow_paragraphs(span: str, output_format: str) -> list[str]:
+    if output_format == "html":
+        chunks = [seg.strip() for seg in re.findall(r"(?is)<p[^>]*>(.*?)</p>", span or "")]
+        if not chunks:
+            plain = _quality_plain_text(span, output_format)
+            chunks = [seg.strip() for seg in re.split(r"\n\s*\n+", plain) if seg.strip()]
+    else:
+        plain = _quality_plain_text(span, output_format)
+        chunks = [seg.strip() for seg in re.split(r"\n\s*\n+", plain) if seg.strip()]
+    paragraphs: list[str] = []
+    for chunk in chunks:
+        plain = _quality_plain_text(chunk, output_format)
+        if plain:
+            paragraphs.append(plain)
+    return paragraphs
+
+
+def _narrative_flow_score(report_text: str, output_format: str) -> float:
+    raw = str(report_text or "")
+    if not raw.strip():
+        return 0.0
+    sections: list[tuple[str, str]] = []
+    if output_format == "html":
+        sections = [
+            (heading, span)
+            for heading, span in _iter_html_h2_sections(raw)
+            if not _is_non_content_heading(heading)
+        ]
+    elif output_format == "tex":
+        matches = list(re.finditer(r"^\\section\\*?\\{[^}]+\\}", raw, re.MULTILINE))
+        for idx, match in enumerate(matches):
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+            title_match = re.match(r"^\\section\\*?\\{([^}]+)\\}", match.group(0))
+            title = title_match.group(1).strip() if title_match else ""
+            if _is_non_content_heading(title):
+                continue
+            sections.append((title, raw[start:end]))
+    else:
+        matches = list(re.finditer(r"^##\s+.+$", raw, re.MULTILINE))
+        for idx, match in enumerate(matches):
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+            title = re.sub(r"^##\s+", "", match.group(0)).strip()
+            if _is_non_content_heading(title):
+                continue
+            sections.append((title, raw[start:end]))
+    if not sections:
+        sections = [("body", raw)]
+
+    transition_re = re.compile(
+        r"(?i)\b(therefore|however|meanwhile|next|as a result|consequently|overall|in turn)\b"
+        r"|(?:따라서|결론적으로|한편|반면|다음으로|이에 따라|결국|요약하면)",
+    )
+    label_line_re = re.compile(r"(?im)^\s*(?:\d+\)\s*)?(?:주장|근거|인사이트|claim|evidence|insight)\s*:\s*")
+    bullet_line_re = re.compile(r"(?im)^\s*(?:[-*•]|\d+\.)\s+\S+")
+
+    section_scores: list[float] = []
+    section_paragraphs: list[list[str]] = []
+    for _, span in sections:
+        score = 78.0
+        paragraphs = _flow_paragraphs(span, output_format)
+        section_paragraphs.append(paragraphs)
+        if not paragraphs:
+            section_scores.append(42.0)
+            continue
+        first_words = len(re.findall(r"[A-Za-z0-9가-힣_]+", paragraphs[0]))
+        if first_words >= 16:
+            score += 7.0
+        else:
+            score -= 8.0
+        last_para = paragraphs[-1]
+        if transition_re.search(last_para):
+            score += 8.0
+        elif len(paragraphs) >= 2:
+            score -= 4.0
+        span_plain = _quality_plain_text(span, output_format)
+        label_hits = len(label_line_re.findall(span_plain))
+        if label_hits > 2:
+            score -= float(min(22, (label_hits - 2) * 4))
+        bullet_hits = len(bullet_line_re.findall(span_plain))
+        if bullet_hits > (len(paragraphs) * 2):
+            score -= 8.0
+        if output_format == "html" and "###" in span:
+            score -= 8.0
+        section_scores.append(max(30.0, min(100.0, score)))
+
+    cross_bonus = 0.0
+    cross_pairs = 0
+    for idx in range(len(section_paragraphs) - 1):
+        left = section_paragraphs[idx]
+        right = section_paragraphs[idx + 1]
+        if not left or not right:
+            continue
+        cross_pairs += 1
+        if transition_re.search(left[-1]):
+            cross_bonus += 1.0
+        if len(re.findall(r"[A-Za-z0-9가-힣_]+", right[0])) >= 14:
+            cross_bonus += 0.5
+    avg_score = sum(section_scores) / max(1, len(section_scores))
+    if cross_pairs > 0:
+        avg_score += ((cross_bonus / (cross_pairs * 1.5)) * 8.0) - 3.0
+    return round(max(30.0, min(100.0, avg_score)), 2)
+
+
 def compute_heuristic_quality_signals(
     report_text: str,
     required_sections: list[str],
@@ -2817,6 +2922,7 @@ def compute_heuristic_quality_signals(
         depth=normalized_depth,
         report_intent=intent,
     )
+    narrative_flow = _narrative_flow_score(report_text, output_format)
     narrative_density = _narrative_density_score(
         report_text,
         output_format,
@@ -2832,33 +2938,36 @@ def compute_heuristic_quality_signals(
             "traceability": 0.12,
             "uncertainty": 0.12,
             "claim_support_ratio": 0.14,
-            "section_coherence": 0.10,
+            "section_coherence": 0.08,
             "narrative_density": 0.02,
             "visual_evidence": 0.01,
+            "narrative_flow": 0.05,
         }
     elif intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}:
         weights = {
-            "section_coverage": 0.11,
-            "citation_density": 0.16,
-            "method_transparency": 0.16,
-            "traceability": 0.16,
+            "section_coverage": 0.10,
+            "citation_density": 0.15,
+            "method_transparency": 0.15,
+            "traceability": 0.15,
             "uncertainty": 0.09,
             "claim_support_ratio": 0.12,
-            "section_coherence": 0.07,
-            "narrative_density": 0.06,
+            "section_coherence": 0.06,
+            "narrative_density": 0.04,
             "visual_evidence": 0.07,
+            "narrative_flow": 0.07,
         }
     else:
         weights = {
-            "section_coverage": 0.15,
-            "citation_density": 0.18,
-            "method_transparency": 0.14,
-            "traceability": 0.14,
-            "uncertainty": 0.10,
+            "section_coverage": 0.14,
+            "citation_density": 0.17,
+            "method_transparency": 0.13,
+            "traceability": 0.13,
+            "uncertainty": 0.09,
             "claim_support_ratio": 0.14,
-            "section_coherence": 0.12,
+            "section_coherence": 0.10,
             "narrative_density": 0.01,
             "visual_evidence": 0.02,
+            "narrative_flow": 0.07,
         }
     overall = (
         (section_coverage * weights["section_coverage"])
@@ -2870,6 +2979,7 @@ def compute_heuristic_quality_signals(
         + (section_coherence * weights["section_coherence"])
         + (narrative_density * weights["narrative_density"])
         + (visual_evidence * weights["visual_evidence"])
+        + (narrative_flow * weights["narrative_flow"])
     )
     return {
         "section_coverage": round(section_coverage, 2),
@@ -2882,6 +2992,7 @@ def compute_heuristic_quality_signals(
         "traceability": round(traceability, 2),
         "uncertainty_handling": round(uncertainty, 2),
         "narrative_density_score": round(narrative_density, 2),
+        "narrative_flow_score": round(narrative_flow, 2),
         "visual_evidence_score": round(visual_evidence, 2),
         "overall": round(overall, 2),
     }

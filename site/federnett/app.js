@@ -17439,30 +17439,47 @@ function parseWorkflowStageEvents(lineText) {
 }
 
 function renderWorkflowTimelineFromLines(lines) {
-  const events = [];
-  const seen = new Set();
+  const stageOrder = [];
+  const stageMap = new Map();
   for (const line of lines || []) {
     for (const event of parseWorkflowStageEvents(line)) {
-      const key = `${event.stage}:${event.status}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      events.push(event);
+      if (!stageMap.has(event.stage)) stageOrder.push(event.stage);
+      stageMap.set(event.stage, event);
     }
   }
+  const events = stageOrder.map((stage) => stageMap.get(stage)).filter(Boolean);
   if (!events.length) return "";
+  const statusCounts = { success: 0, cached: 0, active: 0, skipped: 0, error: 0, resume: 0 };
+  events.forEach((event) => {
+    const key = String(event.statusClass || "").toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(statusCounts, key)) {
+      statusCounts[key] += 1;
+    }
+  });
+  const summary = [
+    statusCounts.success > 0 ? `ok ${statusCounts.success}` : "",
+    statusCounts.cached > 0 ? `cache ${statusCounts.cached}` : "",
+    statusCounts.active > 0 ? `run ${statusCounts.active}` : "",
+    statusCounts.error > 0 ? `err ${statusCounts.error}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const summaryChip = summary
+    ? `<span class="log-workflow-summary">${escapeHtml(summary)}</span>`
+    : "";
   return `<div class="log-workflow-timeline">${events
-    .map((event, idx) => {
-      const node = `
+    .map(
+      (event) => `
         <span class="log-workflow-node status-${escapeHtml(event.statusClass)}">
           <span class="log-workflow-icon">${escapeHtml(event.icon)}</span>
-          <span class="log-workflow-stage">${escapeHtml(event.stageLabel)}</span>
-          <span class="log-workflow-state">${escapeHtml(event.status)}</span>
+          <span class="log-workflow-copy">
+            <span class="log-workflow-stage">${escapeHtml(event.stageLabel)}</span>
+            <span class="log-workflow-state">${escapeHtml(event.status)}</span>
+          </span>
         </span>
-      `;
-      if (idx >= events.length - 1) return node;
-      return `${node}<span class="log-workflow-arrow" aria-hidden="true">→</span>`;
-    })
-    .join("")}</div>`;
+      `,
+    )
+    .join("")}${summaryChip}</div>`;
 }
 
 function classifyLogEntryLine(rawLine) {

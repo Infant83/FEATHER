@@ -11,8 +11,12 @@ from ..utils.strings import slugify_label
 _MATH_BLOCK_RE = re.compile(r"(?s)(\$\$.*?\$\$|\\\[.*?\\\])")
 # Bracketed inline math: \( ... \)
 _MATH_BRACKET_RE = re.compile(r"(?s)(\\\(.*?\\\))")
-_MERMAID_CODE_BLOCK_RE = re.compile(r'(?is)<pre><code(?: class="([^"]*)")?>(.*?)</code></pre>')
+_MERMAID_CODE_BLOCK_RE = re.compile(r"(?is)<pre><code([^>]*)>(.*?)</code></pre>")
+_MERMAID_FENCE_RE = re.compile(r"(?is)(?:^|\n)\s*```mermaid\s*\n(.*?)\n\s*```(?:\n|$)")
+_MERMAID_DIV_RE = re.compile(r"(?is)<div([^>]*)>(.*?)</div>")
 _MERMAID_FLOWCHART_NODE_RE = re.compile(r'(?m)\b([A-Za-z][A-Za-z0-9_]*)\[(.*?)\]')
+_CLASS_ATTR_RE = re.compile(r'(?is)\bclass\s*=\s*(?:"([^"]*)"|\'([^\']*)\')')
+_SECTION_WRAPPER_RE = re.compile(r"(?im)^\s*</?section(?:\s+[^>]*)?>\s*$")
 _HEADING_RE = re.compile(r"(?is)<h([23])([^>]*)>(.*?)</h\1>")
 _HEADING_ID_RE = re.compile(r'(?i)\bid\s*=\s*"([^"]+)"')
 
@@ -259,13 +263,22 @@ def _unmask_math_segments(html_text: str, placeholders: list[str]) -> str:
     return restored
 
 
+def _normalize_mixed_markdown_html(text: str) -> str:
+    if not text:
+        return ""
+    normalized = _SECTION_WRAPPER_RE.sub("", text)
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    return normalized
+
+
 def markdown_to_html(markdown_text: str) -> str:
     try:
         import markdown  # type: ignore
     except Exception:
         escaped = html_lib.escape(markdown_text)
         return f"<pre>{escaped}</pre>"
-    masked, placeholders = _mask_math_segments(markdown_text)
+    normalized = _normalize_mixed_markdown_html(markdown_text)
+    masked, placeholders = _mask_math_segments(normalized)
     html_text = markdown.markdown(masked, extensions=["extra", "tables", "fenced_code"])
     return _unmask_math_segments(html_text, placeholders)
 
@@ -297,27 +310,63 @@ def _normalize_mermaid_source(raw: str) -> str:
     return _MERMAID_FLOWCHART_NODE_RE.sub(_quote_label, text)
 
 
+def _has_mermaid_class(attrs: str) -> bool:
+    match = _CLASS_ATTR_RE.search(attrs or "")
+    if not match:
+        return False
+    class_attr = (match.group(1) or match.group(2) or "").lower()
+    return "mermaid" in class_attr
+
+
+def _render_mermaid_figure(raw: str) -> str:
+    safe = html_lib.escape(raw)
+    return (
+        "<figure class=\"report-figure report-diagram\">"
+        f"<div class=\"mermaid\">{safe}</div>"
+        "</figure>"
+    )
+
+
 def transform_mermaid_code_blocks(body_html: str) -> tuple[str, bool]:
     has_mermaid = False
 
-    def replace(match: re.Match[str]) -> str:
+    def replace_code(match: re.Match[str]) -> str:
         nonlocal has_mermaid
-        class_attr = (match.group(1) or "").lower()
-        if "mermaid" not in class_attr:
+        attrs = match.group(1) or ""
+        if not _has_mermaid_class(attrs):
             return match.group(0)
         raw = html_lib.unescape(match.group(2) or "").strip()
         if not raw:
             return ""
         raw = _normalize_mermaid_source(raw)
         has_mermaid = True
-        safe = html_lib.escape(raw)
-        return (
-            "<figure class=\"report-figure report-diagram\">"
-            f"<div class=\"mermaid\">{safe}</div>"
-            "</figure>"
-        )
+        return _render_mermaid_figure(raw)
 
-    transformed = _MERMAID_CODE_BLOCK_RE.sub(replace, body_html or "")
+    def replace_fence(match: re.Match[str]) -> str:
+        nonlocal has_mermaid
+        raw = html_lib.unescape(match.group(1) or "").strip()
+        if not raw:
+            return ""
+        raw = _normalize_mermaid_source(raw)
+        has_mermaid = True
+        return f"\n{_render_mermaid_figure(raw)}\n"
+
+    def replace_div(match: re.Match[str]) -> str:
+        nonlocal has_mermaid
+        attrs = match.group(1) or ""
+        if not _has_mermaid_class(attrs):
+            return match.group(0)
+        raw = html_lib.unescape(match.group(2) or "").strip()
+        if not raw:
+            return match.group(0)
+        raw = _normalize_mermaid_source(raw)
+        has_mermaid = True
+        safe = html_lib.escape(raw)
+        return f"<div{attrs}>{safe}</div>"
+
+    transformed = _MERMAID_CODE_BLOCK_RE.sub(replace_code, body_html or "")
+    transformed = _MERMAID_FENCE_RE.sub(replace_fence, transformed)
+    transformed = _MERMAID_DIV_RE.sub(replace_div, transformed)
     return transformed, has_mermaid
 
 

@@ -177,3 +177,25 @@ def test_writer_prompt_deep_adds_density_and_visual_integration_guidance() -> No
     )
     assert "심층 모드에서는 핵심 섹션" in prompt
     assert "figure 후보가 없거나 부족하면 artwork 도구" in prompt
+    assert "문장 품질: '주장/근거/인사이트'" in prompt
+    assert "시각물 문맥 규칙" in prompt
+
+
+def test_writer_finalizer_prompt_enforces_narrative_cleanup_and_citation_integrity() -> None:
+    prompt = prompts.build_writer_finalizer_prompt(
+        _format_instructions(),
+        "",
+        _template_spec(),
+        ["Executive Summary", "Key Findings"],
+        "html",
+        "Korean",
+        depth="deep",
+        template_rigidity="balanced",
+        figures_enabled=False,
+        figures_mode="auto",
+        artwork_enabled=True,
+        free_form=False,
+        report_intent="research",
+    )
+    assert "라벨형 단답 나열" in prompt
+    assert "깨진 인용 문법" in prompt
