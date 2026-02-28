@@ -450,6 +450,17 @@ def build_writer_prompt(
             "(2) 근거를 종합한 비교/해석 단락을 포함하고, "
             "(3) 다음 섹션과 연결되는 1~2문장 전환을 마지막에 배치하세요. "
         )
+    narrative_arc_contract_guidance = ""
+    if depth in {"deep", "exhaustive"} and not free_form:
+        narrative_arc_contract_guidance = (
+            "서사 아크 계약: 핵심 H2 섹션은 가능하면 3개 단락으로 구성하세요. "
+            "첫 단락은 문제 맥락/질문, 둘째 단락은 근거 해석, 셋째 단락은 함의/의사결정 영향으로 마무리하세요. "
+            "표/그림은 둘째 단락 이후에 배치하고, 직후 단락에서 '그래서 무엇인가'를 명시하세요. "
+        )
+    implication_ladder_guidance = (
+        "함의 확장 규칙: 인사이트를 단문 결론으로 끝내지 말고, "
+        "직접 함의(Immediate implication) -> 2차 함의(Second-order implication) -> 실행 시사점(Action) 순서로 전개하세요. "
+    )
     if intent == "research":
         intent_writer_guidance = (
             "의도=research: 주장마다 재현 가능한 근거 경로와 한계를 분리해 기술하고, 방법-결과-해석 순서를 우선하세요. "
@@ -634,6 +645,8 @@ def build_writer_prompt(
             "시각물 문맥 규칙: 각 figure/diagram/infographic 앞 문단에는 '무엇을 보여주는지'를 1~2문장으로 적고, "
             "직후 문단에는 해석/한계/의사결정 함의를 2~4문장으로 마무리하세요. "
             "캡션에는 지표, 단위, 기간, 정규화 기준, 데이터 상태(Measured/Derived/Simulated)를 가능한 범위에서 명시하세요. "
+            "레이아웃 규칙: 시각물은 섹션당 1~2개로 제한하고, 동일 밀도의 대형 그래픽을 연속 배치하지 마세요. "
+            "첫 번째 핵심 그래픽은 강조하되, 이후 그래픽은 보조 크기로 배치해 가독성을 유지하세요. "
         )
     citation_integrity_guidance = (
         "인용 무결성: 깨진 링크 문법(예: [1](url)[2](url) 꼬임, 중첩 링크)이나 번호-only 인용을 만들지 마세요. "
@@ -692,6 +705,8 @@ def build_writer_prompt(
         f"{narrative_flow_guidance}"
         f"{narrative_prose_guidance}"
         f"{coherence_structure_guidance}"
+        f"{narrative_arc_contract_guidance}"
+        f"{implication_ladder_guidance}"
         f"{intent_writer_guidance}"
         f"{figure_guidance}"
         f"{artwork_guidance}"
@@ -749,7 +764,10 @@ def build_writer_finalizer_prompt(
         "근거 노트에 없는 새로운 주장이나 출처를 추가하지 마세요. "
         "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')를 제거하고 자연스러운 서술로 정리하세요. "
         "라벨형 단답 나열(예: '주장/근거/인사이트')이 반복되면 문단형 서술로 통합하고 섹션 전환 문장을 보강하세요. "
+        "핵심 H2 섹션은 도입 맥락 -> 근거 해석 -> 함의 확장 순서가 보이도록 문단을 재배열하세요. "
+        "섹션 마지막에 다음 논점으로 이어지는 전환 문장을 1문장 이상 남기고, 단절된 섹션을 연결하세요. "
         "시각물 주변에는 앞 문단(도입)과 뒤 문단(해석/한계)이 모두 존재하는지 확인하고 누락 시 보완하세요. "
+        "시각물 뒤 문단에는 정책/사업/운영 중 최소 1개 실행 함의를 명시하세요. "
         "깨진 인용 문법(중첩 링크/번호-only 인용)은 실제 URL/DOI 인용으로 정리하세요. "
         "인용과 필수 섹션 헤딩을 유지하세요. "
         "보고서 본문만 반환하세요."
@@ -813,6 +831,8 @@ def build_critic_prompt(language: str, required_sections: list[str]) -> str:
         "JSONL 인덱스 데이터를 원문 대신 사용했는지, 또는 JSONL을 인용했는지 여부도 지적하세요. "
         "사실/수치/출처 의존 주장에 인용이 있는지 확인하세요. "
         "일반 라벨 인용('[source]' '[paper]')이 남아 있으면 반드시 지적하세요. "
+        "섹션이 '근거 단편 나열'에 그치고 서사 아크(맥락->해석->함의)로 연결되지 않으면 중대 이슈로 지적하세요. "
+        "시각물이 본문 해석 없이 고립되어 있거나, 크기/배치로 가독성을 해치면 반드시 수정사항에 포함하세요. "
         f"{section_check}"
         "보고서가 이미 충분히 우수하면 'NO_CHANGES'로 답하세요. "
         f"{language}로 작성하세요."
@@ -833,6 +853,8 @@ def build_revise_prompt(format_instructions: "FormatInstructions", output_format
         "사실/수치/출처 의존 주장은 인용을 추가해 보강하세요. "
         "노출형 메타 꼬리표(예: '(해석)', '(주의)', '(리스크)')는 쓰지 말고 문맥으로 표현하세요. "
         "일반 라벨 인용('[source]' '[paper]')을 실제 URL/파일 경로 인용으로 교체하세요. "
+        "핵심 섹션마다 맥락->근거 해석->함의 확장(정책/사업/운영 영향) 순서를 보이게 문단을 재구성하세요. "
+        "시각물은 과도한 크기/중복 배치를 피하고, 앞뒤 해설 문단을 연결해 독해 흐름을 유지하세요. "
         "References 전체 목록은 추가하지 마세요(스크립트가 Source Index를 자동 추가). "
         f"{'LaTeX 서식을 유지하고 섹션 명령을 사용하세요. Markdown으로 변환하지 마세요. ' if output_format == 'tex' else ''}"
         f"{format_instructions.latex_safety_instruction}"

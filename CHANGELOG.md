@@ -1,17 +1,29 @@
 # Changelog
 
-## Unreleased (2026-02-28)
+## Unreleased (2026-03-01)
+- (no entries yet)
+
+## 1.9.34 (2026-03-01)
+- release alignment:
+  - bump version to `1.9.34` across `pyproject.toml`, `src/federlicht/versioning.py`, and `README.md`.
 - citation rewrite hardening for raw HTML/SVG:
   - `rewrite_citations(...)` now skips naked URL/path rewrites when the token is inside an HTML tag attribute.
   - prevents malformed SVG/XML attribute rewrites (e.g., `xmlns="http://..."` -> citation token injection).
   - tests: add regression `test_rewrite_citations_keeps_urls_inside_html_attributes`.
-- QC iter029 deep_research rerun:
-  - snapshot: `test-results/p0_sample_qc_iter029_codex53_ko_deepresearch_artwork_snapshot.html`
+- narrative/artwork quality policy upgrade:
+  - writer/finalizer/critic/revise prompts now enforce section-level narrative flow
+    (`context -> evidence interpretation -> implication`) and implication ladder.
+  - infographic renderer UI/UX was upgraded with a modernized visual system, chart hierarchy, and metadata chip layout.
+  - report embed styling now uses dedicated infographic classes for responsive placement and readable sizing.
+  - tests: `tests/test_artwork_tools.py` updated for new infographic embed contract.
+- QC iter030 deep_research rerun:
+  - snapshot: `test-results/p0_sample_qc_iter030_codex53_ko_deepresearch_artwork_snapshot.html`
+  - prompt: `test-results/p0_prompt_qc_iter030_codex53_deepresearch_artwork.txt`
   - gate summary/report:
-    - `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.summary.json`
-    - `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.md`
-  - manual review: `test-results/p0_manual_review_qc_iter029_codex53_deepresearch.md`
-  - gate result: `PASS` (`overall=90.66`, `claim_support=83.87`, `unsupported=5`, `section_coherence=100.00`)
+    - `test-results/p0_quality_gate_qc_iter030_codex53_deepresearch.summary.json`
+    - `test-results/p0_quality_gate_qc_iter030_codex53_deepresearch.md`
+  - manual review: `test-results/p0_manual_review_qc_iter030_codex53_deepresearch.md`
+  - gate result: `PASS` (`overall=94.22`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`)
 
 ## 1.9.33 (2026-02-28)
 - release alignment:

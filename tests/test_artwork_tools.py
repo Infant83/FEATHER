@@ -158,9 +158,13 @@ def test_render_infographic_html_writes_html_and_spec(tmp_path) -> None:
     assert "Quarterly Trend" in html
     assert "Metric: Quarterly Trend" in html
     assert "Unit: unspecified" in html
+    assert "chart-grid" in html
     embed_html = str(result.get("embed_html") or "")
     assert "Primary chart metadata - Metric: Quarterly Trend" in embed_html
     assert "Source: https://example.com/data" in embed_html
+    assert "class=\"report-infographic-frame\"" in embed_html
+    assert "data-chart-count=\"1\"" in embed_html
+    assert "style=\"width:100%" not in embed_html
     assert "Demo Infographic" in stored_spec
 
 

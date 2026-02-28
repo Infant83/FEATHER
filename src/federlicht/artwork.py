@@ -1307,49 +1307,135 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
     lines.extend(
         [
             "  <style>",
+            "    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');",
             "    :root {",
             f"      --primary: {html_lib.escape(str(theme.get('primary') or '#1a237e'))};",
             f"      --secondary: {html_lib.escape(str(theme.get('secondary') or '#00bcd4'))};",
             f"      --accent: {html_lib.escape(str(theme.get('accent') or '#ff5722'))};",
             f"      --surface: {html_lib.escape(str(theme.get('surface') or '#f8fafc'))};",
             f"      --ink: {html_lib.escape(str(theme.get('ink') or '#111827'))};",
+            "      --panel: rgba(255, 255, 255, 0.88);",
+            "      --panel-strong: #ffffff;",
+            "      --panel-edge: rgba(15, 23, 42, 0.10);",
+            "      --soft-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);",
+            "      --hard-shadow: 0 26px 56px rgba(15, 23, 42, 0.16);",
             "    }",
             "    body {",
-            "      background: radial-gradient(circle at 10% 0%, rgba(26,35,126,0.10), transparent 45%),",
-            "                  radial-gradient(circle at 90% 10%, rgba(0,188,212,0.14), transparent 40%),",
-            "                  var(--surface);",
+            "      background: radial-gradient(circle at 8% -6%, rgba(26,35,126,0.12), transparent 50%),",
+            "                  radial-gradient(circle at 94% 0%, rgba(0,188,212,0.16), transparent 44%),",
+            "                  linear-gradient(180deg, #f5f8ff 0%, var(--surface) 48%, #f7fafc 100%);",
             "      color: var(--ink);",
-            "      font-family: \"Pretendard\", \"Noto Sans KR\", \"Segoe UI\", sans-serif;",
+            "      font-family: \"Space Grotesk\", \"Noto Sans KR\", \"Segoe UI\", sans-serif;",
             "    }",
             "    .hero {",
-            "      background: linear-gradient(120deg, var(--primary), #26369c 50%, var(--secondary));",
+            "      position: relative;",
+            "      overflow: hidden;",
+            "      border: 1px solid rgba(255,255,255,0.30);",
+            "      background: linear-gradient(124deg, var(--primary) 0%, #2d418f 42%, var(--secondary) 100%);",
+            "      box-shadow: var(--hard-shadow);",
+            "    }",
+            "    .hero::after {",
+            "      content: '';",
+            "      position: absolute;",
+            "      inset: -40% -15% auto auto;",
+            "      width: 420px;",
+            "      height: 320px;",
+            "      border-radius: 999px;",
+            "      background: radial-gradient(circle, rgba(255,255,255,0.24), rgba(255,255,255,0));",
+            "      pointer-events: none;",
+            "    }",
+            "    .hero-kicker {",
+            "      font-size: 0.72rem;",
+            "      letter-spacing: 0.18em;",
+            "      text-transform: uppercase;",
+            "      color: rgba(237, 247, 255, 0.82);",
             "    }",
             "    .metric-card {",
-            "      background: rgba(255,255,255,0.86);",
-            "      backdrop-filter: blur(6px);",
-            "      border: 1px solid rgba(17,24,39,0.08);",
+            "      background: var(--panel);",
+            "      backdrop-filter: blur(7px);",
+            "      border: 1px solid var(--panel-edge);",
+            "      box-shadow: var(--soft-shadow);",
+            "      transition: transform 0.22s ease, box-shadow 0.22s ease;",
+            "    }",
+            "    .metric-card:hover {",
+            "      transform: translateY(-2px);",
+            "      box-shadow: 0 20px 36px rgba(15, 23, 42, 0.16);",
+            "    }",
+            "    .chart-grid {",
+            "      display: grid;",
+            "      grid-template-columns: repeat(12, minmax(0, 1fr));",
+            "      gap: 16px;",
             "    }",
             "    .chart-card {",
-            "      background: #ffffff;",
+            "      grid-column: span 12;",
+            "      background: var(--panel-strong);",
             "      border-radius: 1rem;",
-            "      border: 1px solid rgba(17,24,39,0.08);",
-            "      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);",
+            "      border: 1px solid var(--panel-edge);",
+            "      box-shadow: var(--soft-shadow);",
+            "    }",
+            "    .chart-card.chart-feature {",
+            "      box-shadow: var(--hard-shadow);",
+            "    }",
+            "    .chart-head {",
+            "      display: flex;",
+            "      justify-content: space-between;",
+            "      gap: 10px;",
+            "      align-items: baseline;",
+            "      flex-wrap: wrap;",
+            "    }",
+            "    .chart-rank {",
+            "      font-size: 0.72rem;",
+            "      letter-spacing: 0.15em;",
+            "      text-transform: uppercase;",
+            "      color: #64748b;",
             "    }",
             "    .chart-frame {",
             "      width: 100%;",
-            "      min-height: 320px;",
-            "      height: 320px;",
+            "      min-height: 300px;",
+            "      height: 300px;",
+            "    }",
+            "    .chart-card.chart-feature .chart-frame {",
+            "      min-height: 360px;",
+            "      height: 360px;",
+            "    }",
+            "    .meta-row {",
+            "      display: flex;",
+            "      flex-wrap: wrap;",
+            "      gap: 8px;",
+            "      margin-top: 12px;",
+            "    }",
+            "    .meta-chip {",
+            "      font-size: 0.72rem;",
+            "      line-height: 1.2;",
+            "      color: #475569;",
+            "      background: #f1f5f9;",
+            "      border: 1px solid #e2e8f0;",
+            "      border-radius: 999px;",
+            "      padding: 5px 9px;",
+            "      white-space: nowrap;",
+            "    }",
+            "    .meta-chip.warn {",
+            "      color: #92400e;",
+            "      background: #fef3c7;",
+            "      border-color: #facc15;",
+            "    }",
+            "    @media (min-width: 1024px) {",
+            "      .chart-card.chart-feature { grid-column: span 12; }",
+            "      .chart-card { grid-column: span 6; }",
             "    }",
             "    @media (max-width: 768px) {",
-            "      .chart-frame { min-height: 270px; height: 270px; }",
+            "      .chart-frame { min-height: 250px; height: 250px; }",
+            "      .chart-card.chart-feature .chart-frame { min-height: 300px; height: 300px; }",
+            "      .hero { padding: 1.4rem !important; }",
             "    }",
             "  </style>",
             "</head>",
             "<body class=\"min-h-screen antialiased\">",
             "  <main class=\"max-w-6xl mx-auto px-4 pb-12\">",
-            "    <header class=\"hero rounded-2xl text-white p-8 md:p-10 mt-6 shadow-xl\">",
-            f"      <h1 class=\"text-2xl md:text-4xl font-black tracking-tight\">{html_lib.escape(title)}</h1>",
-            f"      <p class=\"mt-3 text-sm md:text-lg text-cyan-100\">{html_lib.escape(subtitle)}</p>",
+            "    <header class=\"hero rounded-2xl text-white p-8 md:p-10 mt-6\">",
+            "      <p class=\"hero-kicker\">Evidence Dashboard</p>",
+            f"      <h1 class=\"text-2xl md:text-4xl font-bold tracking-tight\">{html_lib.escape(title)}</h1>",
+            f"      <p class=\"mt-3 text-sm md:text-lg text-cyan-100 max-w-3xl\">{html_lib.escape(subtitle)}</p>",
             "    </header>",
         ]
     )
@@ -1368,8 +1454,8 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
                 ]
             )
         lines.append("    </section>")
-    lines.append("    <section class=\"space-y-5 mt-6\">")
-    for chart in charts:
+    lines.append("    <section class=\"chart-grid mt-6\">")
+    for chart_idx, chart in enumerate(charts, start=1):
         if not isinstance(chart, dict):
             continue
         chart_id = html_lib.escape(str(chart.get("dom_id") or ""))
@@ -1382,22 +1468,33 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
         normalization = str(chart.get("normalization") or "").strip()
         note = str(chart.get("note") or "").strip()
         simulated = bool(chart.get("simulated"))
-        tokens = [
-            f"Metric: {metric or 'unspecified'}",
-            f"Unit: {unit or 'unspecified'}",
-            f"Period: {period or 'unspecified'}",
-            f"Normalization: {normalization or 'unspecified'}",
-            f"Source: {source or 'not specified'}",
+        chip_tokens = [
+            ("Metric", metric or "unspecified", False),
+            ("Unit", unit or "unspecified", False),
+            ("Period", period or "unspecified", False),
+            ("Normalization", normalization or "unspecified", False),
+            ("Source", source or "not specified", False),
         ]
         if simulated:
-            tokens.append("Label: Simulated/Illustrative")
+            chip_tokens.append(("Data", "Simulated/Illustrative", True))
         if note:
-            tokens.append(note)
-        meta_text = html_lib.escape(" | ".join(tokens))
+            chip_tokens.append(("Note", note, False))
+        meta_chips: list[str] = []
+        for chip_label, chip_value, warn in chip_tokens:
+            cls = "meta-chip warn" if warn else "meta-chip"
+            meta_chips.append(
+                f"<span class=\"{cls}\">{html_lib.escape(chip_label)}: {html_lib.escape(str(chip_value))}</span>"
+            )
+        card_classes = "chart-card p-5"
+        if chart_idx == 1:
+            card_classes += " chart-feature"
         lines.extend(
             [
-                "      <article class=\"chart-card p-5\">",
-                f"        <h2 class=\"text-lg font-bold text-slate-900\">{chart_title}</h2>",
+                f"      <article class=\"{card_classes}\">",
+                "        <div class=\"chart-head\">",
+                f"          <h2 class=\"text-lg font-bold text-slate-900\">{chart_title}</h2>",
+                f"          <span class=\"chart-rank\">Visual {chart_idx}</span>",
+                "        </div>",
                 f"        <p class=\"text-sm text-slate-600 mt-1\">{chart_desc}</p>",
             ]
         )
@@ -1405,12 +1502,8 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
             lines.append(f"        <div id=\"{chart_id}\" class=\"chart-frame mt-3\"></div>")
         else:
             lines.append(f"        <div class=\"chart-frame mt-3\"><canvas id=\"{chart_id}\"></canvas></div>")
-        lines.extend(
-            [
-                f"        <p class=\"text-xs text-slate-500 mt-2\">{meta_text}</p>",
-                "      </article>",
-            ]
-        )
+        lines.append(f"        <div class=\"meta-row\">{''.join(meta_chips)}</div>")
+        lines.append("      </article>")
     lines.append("    </section>")
     if disclaimer:
         lines.append(
@@ -1551,6 +1644,9 @@ def _build_infographic_embed_caption(title: str, charts: list[dict[str, object]]
             primary_tokens.append(f"{label}: {value}")
     if primary_tokens:
         caption_parts.append("Primary chart metadata - " + "; ".join(primary_tokens) + ".")
+        caption_parts.append(
+            "Narrative cue: interpret the metric in terms of decision impact (cost/time/risk) rather than raw technical KPI only."
+        )
 
     if len(charts) > 1:
         metrics: list[str] = []
@@ -1615,10 +1711,14 @@ def render_infographic_html(
     title = str(normalized.get("title") or "Data-Driven Infographic")
     charts_for_caption = [item for item in charts if isinstance(item, dict)]
     caption = _build_infographic_embed_caption(title, charts_for_caption)
+    chart_count = len(charts_for_caption)
+    figure_classes = "report-figure report-infographic"
+    if chart_count > 1:
+        figure_classes += " is-multi"
     embed_html = (
-        '<figure class="report-figure report-infographic">'
+        f'<figure class="{figure_classes}" data-chart-count="{chart_count}">'
         f'<iframe src="{html_lib.escape(rel_out, quote=True)}" loading="lazy" '
-        'style="width:100%;min-height:560px;border:0;border-radius:12px;" '
+        'class="report-infographic-frame" '
         f'title="{html_lib.escape(title, quote=True)}"></iframe>'
         f"<figcaption>{html_lib.escape(caption)}</figcaption>"
         "</figure>"

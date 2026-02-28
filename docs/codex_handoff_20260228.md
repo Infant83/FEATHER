@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-28
 
-Last updated: 2026-02-28 23:52 +09:00 (iter029 citation-guard sync)  
+Last updated: 2026-03-01 09:20 +09:00 (iter030 narrative/artwork rerun sync)  
 Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 1) 목적 (고정)
@@ -15,6 +15,8 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 2) 이번 사이클 요약 (2026-02-27~28 반영)
 - 릴리즈:
+  - `1.9.34` 릴리즈 반영 (iter030 narrative/artwork + version sync)
+  - 버전 동기화: `pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`
   - `1.9.33` 릴리즈 준비 완료 (version sync + QC iter028 재측정 반영)
   - 버전 동기화: `pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`
   - `1.9.32` 배포 완료 (commit: `48e1231`)
@@ -40,7 +42,13 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
   - gate summary: `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.summary.json`
   - gate report: `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.md`
   - manual review: `test-results/p0_manual_review_qc_iter029_codex53_deepresearch.md`
-- 이번 턴 추가 반영(2026-02-28):
+- iter030 재생성/재측정 산출물 (이번 턴):
+  - snapshot: `test-results/p0_sample_qc_iter030_codex53_ko_deepresearch_artwork_snapshot.html`
+  - prompt: `test-results/p0_prompt_qc_iter030_codex53_deepresearch_artwork.txt`
+  - gate summary: `test-results/p0_quality_gate_qc_iter030_codex53_deepresearch.summary.json`
+  - gate report: `test-results/p0_quality_gate_qc_iter030_codex53_deepresearch.md`
+  - manual review: `test-results/p0_manual_review_qc_iter030_codex53_deepresearch.md`
+- 이번 턴 추가 반영(2026-02-28~03-01):
   - Federnett Hub/Index E2E 보강:
     - deck manifest에 `deck_quality(profile/effective_band/overall/gate_pass/iterations)` 포함
     - hub index 링크에 `Deck HTML`, `Deck PPTX` 노출
@@ -101,8 +109,22 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
     - `clean_citation_labels(...)`에서 malformed anchor chain(`href=\"...)[[n]](...\"`) 복구
     - markdown citation wrapper가 anchor를 감싼 패턴 제거
     - URL anchor 뒤 dangling `)` 정리
+  - Writer/Artwork 품질 고도화(iter030):
+    - writer/finalizer/critic/revise 프롬프트에 서사 아크(`context -> evidence -> implication`)와 implication ladder 규칙 강화
+    - infographic HTML에 chart hierarchy/metadata chip/반응형 grid/iframe embed class 계약 적용
+    - 보고서 iframe embed를 클래스 기반으로 정리해 본문 내 배치/크기 일관성 개선
 
 ## 3) 품질 결과 스냅샷
+- deep_research gate (iter030 narrative+artwork): `PASS`
+  - overall: `94.22`
+  - claim_support_ratio: `100.00`
+  - unsupported_claim_count: `0.00`
+  - section_coherence_score: `100.00`
+  - narrative_flow_score: `83.11`
+  - narrative_density_score: `51.60`
+- 수기 리뷰(iter030):
+  - 개선: 단답 라벨형 패턴 소거, 인포그래픽 배치/캡션 메타 안정화
+  - 잔여 이슈: `Report Prompt` 노출, 캡션의 `</a>)` 꼬리 패턴, 실측 데이터 비중 부족
 - deep_research gate (iter029 citation-guard): `PASS`
   - overall: `90.66`
   - claim_support_ratio: `83.87`
@@ -160,9 +182,9 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 4) 진행률 재정렬 (2026-02-28 계획 기준)
 - P0 (deep-research sustain): `100%` (완료/유지)
-- P1 (DeepAgent + section rewrite UX): `76%` (rewrite flow 힌트/제약 + citation integrity 보정 + citation cleanup 복구)
+- P1 (DeepAgent + section rewrite UX): `80%` (rewrite flow 힌트/제약 + citation integrity 보정 + citation cleanup 복구 + narrative arc 계약 강화)
 - P2 (Productization + infographic pipeline): `100%` (caption 메타 계약 + lint/coverage + report embed 캡션 반영)
-- P3 (PPT reader-first + deck/html pipeline): `77%` (reader 계약 추출기 + hub/index deck 가시화 + manifest 보정도구)
+- P3 (PPT reader-first + deck/html pipeline): `78%` (reader 계약 추출기 + hub/index deck 가시화 + manifest 보정도구 + artwork embed 계약 안정화)
 
 ### P3 세부 상태
 | Phase | 상태 | 진행률 | 완료 기준 |

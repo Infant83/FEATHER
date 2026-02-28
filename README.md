@@ -2,18 +2,19 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.33
+Version: 1.9.34
 
-## Latest Update (1.9.33, 2026-02-28)
-- Version sync completed at `1.9.33` (`pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`).
-- QC deep-research sample was regenerated as iter028 with updated writer/finalizer constraints (`FEDERLICHT_LLM_BACKEND=codex_cli`, `CODEX_MODEL=gpt-5.3-codex`).
+## Latest Update (1.9.34, 2026-03-01)
+- Version sync completed at `1.9.34` (`pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`).
+- Writer/Finalizer/Critic/Reviser prompt contracts were tightened for narrative continuity (`context -> evidence interpretation -> implication`), and infographic render styling/layout was upgraded for report-quality embedding.
+- QC deep-research sample was regenerated as iter030 with the updated writing/artwork rules (`FEDERLICHT_LLM_BACKEND=codex_cli`, `CODEX_MODEL=gpt-5.3-codex`).
 - Reproducible artifacts were added under `test-results/`:
-  - `p0_sample_qc_iter028_codex53_ko_deepresearch_artwork_snapshot.html`
-  - `p0_prompt_qc_iter028_codex53_deepresearch_artwork.txt`
-  - `p0_quality_gate_qc_iter028_codex53_deepresearch.summary.json`
-  - `p0_quality_gate_qc_iter028_codex53_deepresearch.md`
-  - `p0_manual_review_qc_iter028_codex53_deepresearch.md`
-- Deep-research gate pass was reconfirmed on the regenerated QC sample (`overall=92.48`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`).
+  - `p0_sample_qc_iter030_codex53_ko_deepresearch_artwork_snapshot.html`
+  - `p0_prompt_qc_iter030_codex53_deepresearch_artwork.txt`
+  - `p0_quality_gate_qc_iter030_codex53_deepresearch.summary.json`
+  - `p0_quality_gate_qc_iter030_codex53_deepresearch.md`
+  - `p0_manual_review_qc_iter030_codex53_deepresearch.md`
+- Deep-research gate pass was reconfirmed on iter030 (`overall=94.22`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`).
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
