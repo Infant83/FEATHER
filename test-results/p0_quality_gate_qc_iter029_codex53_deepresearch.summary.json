@@ -1,0 +1,49 @@
+{
+  "rows": [
+    {
+      "path": "test-results/p0_sample_qc_iter029_codex53_ko_deepresearch_artwork_snapshot.html",
+      "format": "html",
+      "overall": 90.66,
+      "claim_support_ratio": 83.87,
+      "unsupported_claim_count": 5.0,
+      "evidence_density_score": 100.0,
+      "section_coherence_score": 100.0,
+      "signals": {
+        "section_coverage": 100.0,
+        "citation_density": 100.0,
+        "citation_integrity_score": 100.0,
+        "evidence_density_score": 100.0,
+        "claim_support_ratio": 83.87,
+        "unsupported_claim_count": 5.0,
+        "section_coherence_score": 100.0,
+        "method_transparency": 100.0,
+        "traceability": 74.0,
+        "uncertainty_handling": 100.0,
+        "narrative_density_score": 51.6,
+        "narrative_flow_score": 85.56,
+        "visual_evidence_score": 92.0,
+        "overall": 90.66
+      }
+    }
+  ],
+  "rows_count": 1,
+  "summary": {
+    "overall": 90.66,
+    "claim_support_ratio": 83.87,
+    "unsupported_claim_count": 5.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 100.0
+  },
+  "baseline_summary": null,
+  "delta_summary": null,
+  "compare_markdown": "",
+  "suite": null,
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

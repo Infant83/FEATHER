@@ -8043,6 +8043,15 @@ def rewrite_citations(
         "/archive/supporting/web_text/",
     )
 
+    def is_inside_html_tag(text: str, position: int) -> bool:
+        if position < 0:
+            return False
+        last_open = text.rfind("<", 0, position)
+        if last_open < 0:
+            return False
+        last_close = text.rfind(">", 0, position)
+        return last_close < last_open
+
     def normalize_target(value: str, kind: str) -> str:
         if kind == "url":
             normalized_url = normalize_reference_url(value)
@@ -8154,6 +8163,8 @@ def rewrite_citations(
 
         def replace_naked_url(match: re.Match[str]) -> str:
             raw = match.group(0)
+            if is_inside_html_tag(match.string, match.start()):
+                return raw
             trimmed = raw.rstrip(".,;:!?)]")
             suffix = raw[len(trimmed) :]
             if not trimmed:
@@ -8179,6 +8190,8 @@ def rewrite_citations(
 
         def replace_naked_path(match: re.Match[str]) -> str:
             raw = match.group(1)
+            if is_inside_html_tag(match.string, match.start(1)):
+                return raw
             trimmed = raw.rstrip(".,;:!?)]")
             suffix = raw[len(trimmed) :]
             if not trimmed:

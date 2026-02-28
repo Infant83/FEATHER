@@ -140,6 +140,17 @@ def test_rewrite_citations_strips_trailing_semicolon_from_bracket_url() -> None:
     assert "[\\[1\\]](https://arxiv.org/abs/2504.05180)" in rewritten
 
 
+def test_rewrite_citations_keeps_urls_inside_html_attributes() -> None:
+    text = '<svg xmlns="http://www.w3.org/2000/svg"></svg> 참고: https://example.com/evidence'
+    rewritten, refs = report.rewrite_citations(text, output_format="md")
+
+    assert 'xmlns="http://www.w3.org/2000/svg"' in rewritten
+    assert "http://www.w3.org/2000/svg" not in [entry["target"] for entry in refs]
+    assert refs
+    assert refs[0]["target"] == "https://example.com/evidence"
+    assert "[\\[1\\]](https://example.com/evidence)" in rewritten
+
+
 def test_render_reference_section_normalizes_url_target_suffix() -> None:
     rendered = report.render_reference_section(
         citations=[{"index": 1, "kind": "url", "target": "https://arxiv.org/abs/2504.05180;"}],

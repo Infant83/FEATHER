@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>양자컴퓨팅 상용화 경쟁의 실용 이득 전환</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script>
+    (function () {
+      const candidates = [
+        '/vendor/mathjax/tex-svg.js',
+        './vendor/mathjax/tex-svg.js',
+        '../vendor/mathjax/tex-svg.js',
+        '../../federnett/vendor/mathjax/tex-svg.js',
+        '../../../federnett/vendor/mathjax/tex-svg.js',
+        'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+      ];
+      const head = document.head || document.getElementsByTagName('head')[0];
+      let index = 0;
+      const loadNext = () => {
+        if (window.MathJax && window.MathJax.typesetPromise) return;
+        if (index >= candidates.length) return;
+        const script = document.createElement('script');
+        script.src = candidates[index++];
+        script.async = true;
+        script.onerror = loadNext;
+        head.appendChild(script);
+      };
+      loadNext();
+    })();
+  </script>
+  <script>
+    (function () {
+      const candidates = [
+        '/vendor/mermaid/mermaid.min.js',
+        './vendor/mermaid/mermaid.min.js',
+        '../vendor/mermaid/mermaid.min.js',
+        '../../federnett/vendor/mermaid/mermaid.min.js',
+        '../../../federnett/vendor/mermaid/mermaid.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js',
+      ];
+      const head = document.head || document.getElementsByTagName('head')[0];
+      let index = 0;
+      const applyMermaid = () => {
+        if (!window.mermaid) return;
+        window.mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: 'neutral' });
+        if (typeof window.mermaid.run === 'function') {
+          window.mermaid.run({ querySelector: '.mermaid' });
+        }
+      };
+      const loadNext = () => {
+        if (window.mermaid) {
+          applyMermaid();
+          return;
+        }
+        if (index >= candidates.length) return;
+        const script = document.createElement('script');
+        script.src = candidates[index++];
+        script.async = true;
+        script.onload = applyMermaid;
+        script.onerror = loadNext;
+        head.appendChild(script);
+      };
+      loadNext();
+    })();
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --bg: #0b0f14;
+      --bg-2: #121821;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f5f7fb;
+      --site-muted: rgba(245, 247, 251, 0.65);
+      --accent: #4ee0b5;
+      --accent-2: #6bd3ff;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(78, 224, 181, 0.25);
+      --ink: #0b1220;
+      --muted: #425066;
+      --accent-strong: #2fb892;
+      --paper: rgba(255, 255, 255, 0.94);
+      --paper-strong: #ffffff;
+      --paper-alt: rgba(240, 245, 255, 0.6);
+      --rule: rgba(15, 23, 42, 0.12);
+      --shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+      --chrome-ink: #f5f7fb;
+      --chrome-muted: rgba(245, 247, 251, 0.66);
+      --chrome-surface: rgba(11, 17, 29, 0.62);
+      --chrome-border: rgba(255, 255, 255, 0.16);
+      --chrome-hover-soft: rgba(255, 255, 255, 0.06);
+      --chrome-hover: rgba(255, 255, 255, 0.08);
+      --link: var(--accent-2);
+      --link-hover: var(--accent);
+      --page-bg: radial-gradient(1200px 600px at 12% -10%, var(--glow), transparent 60%),
+        radial-gradient(900px 540px at 92% 8%, rgba(107, 211, 255, 0.18), transparent 55%),
+        linear-gradient(180deg, #0b111d 0%, var(--bg-2) 45%, var(--bg) 100%);
+      --body-font: "Fraunces", "Charter", Georgia, serif;
+      --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --ui-font: "Space Grotesk", "Segoe UI", sans-serif;
+      --mono-font: "JetBrains Mono", "Consolas", monospace;
+    }
+    :root[data-theme="sky"] {
+      --bg: #0b1220;
+      --bg-2: #0f1b2e;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #f4f7ff;
+      --site-muted: rgba(244, 247, 255, 0.62);
+      --accent: #64b5ff;
+      --accent-2: #8fd1ff;
+      --edge: rgba(255, 255, 255, 0.18);
+      --glow: rgba(100, 181, 255, 0.28);
+      --accent-strong: #3f8ed1;
+    }
+    :root[data-theme="crimson"] {
+      --bg: #120a0d;
+      --bg-2: #1c0f16;
+      --card: rgba(255, 255, 255, 0.06);
+      --site-ink: #fff5f7;
+      --site-muted: rgba(255, 245, 247, 0.62);
+      --accent: #ff6b81;
+      --accent-2: #ff9aa9;
+      --edge: rgba(255, 255, 255, 0.15);
+      --glow: rgba(255, 107, 129, 0.25);
+      --accent-strong: #e3546d;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--site-ink);
+      background: var(--page-bg);
+      font-family: var(--body-font);
+      line-height: 1.7;
+      letter-spacing: -0.01em;
+      overflow-x: hidden;
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      filter: blur(0px);
+      animation: float 16s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 122, 89, 0.55), transparent 60%);
+      top: -220px;
+      left: -160px;
+    }
+    .orb-2 {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 60% 40%, rgba(14, 165, 164, 0.5), transparent 62%);
+      top: 80px;
+      right: -120px;
+      animation-delay: -4s;
+    }
+    .orb-3 {
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.35), transparent 70%);
+      bottom: -180px;
+      left: 22%;
+      animation-delay: -8s;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 56px auto 96px;
+      padding: 0 28px;
+    }
+    .toc-sidebar {
+      display: none;
+      position: fixed;
+      left: max(18px, calc(50% - 700px));
+      top: 64px;
+      width: 250px;
+      max-height: calc(100vh - 96px);
+      overflow-y: auto;
+      padding: 16px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--chrome-border);
+      background: var(--chrome-surface);
+      backdrop-filter: blur(8px);
+      z-index: 2;
+    }
+    .toc-title {
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--chrome-muted);
+      margin-bottom: 10px;
+    }
+    .toc-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .toc-item {
+      display: block;
+      color: var(--chrome-ink);
+      text-decoration: none;
+      font-family: var(--ui-font);
+      font-size: 0.88rem;
+      line-height: 1.35;
+      opacity: 0.82;
+      border-left: 2px solid transparent;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: all 0.18s ease;
+    }
+    .toc-item:hover {
+      opacity: 1;
+      border-left-color: var(--accent);
+      background: var(--chrome-hover-soft);
+    }
+    .toc-item.active {
+      opacity: 1;
+      border-left-color: var(--accent);
+      background: var(--chrome-hover);
+    }
+    .toc-sub {
+      margin-left: 12px;
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }
+    body.layout-sidebar_toc .page {
+      max-width: 980px;
+    }
+    @media (min-width: 1300px) {
+      body.layout-sidebar_toc .toc-sidebar {
+        display: block;
+      }
+      body.layout-sidebar_toc .page {
+        margin-left: max(300px, calc(50% - 370px));
+        margin-right: 56px;
+      }
+    }
+    .masthead {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px 22px 22px;
+      border: 1px solid var(--masthead-border, rgba(226, 232, 240, 0.18));
+      border-radius: 18px;
+      background: var(--masthead-bg, rgba(10, 14, 20, 0.55));
+      backdrop-filter: blur(8px);
+      margin-bottom: 36px;
+      color: var(--masthead-text, #f8fafc);
+      animation: fadeIn 0.7s ease-out both;
+    }
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .kicker {
+      font-family: var(--ui-font);
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--masthead-kicker, rgba(255, 255, 255, 0.68));
+    }
+    .back-link {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ui-font);
+      font-size: 0.78rem;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--masthead-link-border, rgba(255, 255, 255, 0.2));
+      color: var(--masthead-link, rgba(255, 255, 255, 0.78));
+      background: var(--masthead-link-bg, rgba(15, 23, 42, 0.35));
+      transition: all 0.2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-1px);
+    }
+    .report-title {
+      font-family: var(--heading-font);
+      font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+      margin: 0;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--masthead-title, #f8fafc);
+    }
+    .report-deck {
+      color: var(--masthead-deck, rgba(226, 232, 240, 0.8));
+      font-size: 1.05rem;
+      max-width: 720px;
+    }
+    .article {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 22px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise 0.8s ease-out both;
+    }
+    .article > * { animation: rise 0.6s ease-out both; }
+    .article > *:nth-child(1) { animation-delay: 0.05s; }
+    .article > *:nth-child(2) { animation-delay: 0.1s; }
+    .article > *:nth-child(3) { animation-delay: 0.15s; }
+    .article > *:nth-child(4) { animation-delay: 0.2s; }
+    .article > *:nth-child(5) { animation-delay: 0.25s; }
+    .article h1, .article h2, .article h3, .article h4 {
+      font-family: var(--heading-font);
+      color: var(--ink);
+    }
+    .article h1 { font-size: 2rem; margin-top: 0; }
+    .article h2 {
+      font-size: 1.55rem;
+      margin-top: 2.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      padding-left: 18px;
+    }
+    .article h2::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.45rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+    }
+    .article h3 { font-size: 1.2rem; margin-top: 1.7rem; color: #1f2937; }
+    .article h2, .article h3 { scroll-margin-top: 92px; }
+    .article p { font-size: 1.05rem; }
+    .article ul, .article ol { padding-left: 1.4rem; }
+    .article blockquote {
+      margin: 1.4rem 0;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--accent);
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .article .misc-block {
+      margin: 1.2rem 0 1.4rem;
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: rgba(148, 163, 184, 0.1);
+    }
+    .article .misc-block ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .article .misc-block li {
+      margin: 0.35rem 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .article .misc-block.ai-disclosure {
+      border-color: var(--accent);
+      background: rgba(78, 224, 181, 0.08);
+    }
+    .article .misc-block.ai-disclosure p {
+      margin: 0 0 0.55rem;
+      color: var(--ink);
+      font-family: var(--ui-font);
+      letter-spacing: 0.01em;
+    }
+    .article a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .article a:hover { color: var(--link-hover); border-bottom-color: var(--link-hover); }
+    .article code {
+      font-family: var(--mono-font);
+      font-size: 0.94rem;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .article pre {
+      background: rgba(148, 163, 184, 0.18);
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .article figure.report-figure {
+      margin: 1.8rem 0;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .article figure.report-figure img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+    }
+    .article figure.report-figure figcaption {
+      margin-top: 0.65rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .article figure.report-diagram {
+      background: rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      border-radius: 14px;
+      padding: 0.9rem;
+    }
+    .article .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      min-height: 40px;
+    }
+    .article .mermaid svg {
+      max-width: 100% !important;
+      height: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }
+    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }
+    .article th { background: rgba(148, 163, 184, 0.15); text-align: left; }
+    .article tr:nth-child(even) td { background: rgba(148, 163, 184, 0.08); }
+    .article hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    .viewer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+    .viewer-overlay.open { opacity: 1; pointer-events: auto; }
+    .viewer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(480px, 92vw);
+      background: #fff;
+      box-shadow: -20px 0 60px rgba(15, 23, 42, 0.25);
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+    .viewer-panel.open { transform: translateX(0); }
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .viewer-title { font-size: 0.95rem; color: var(--ink); flex: 1; }
+    .viewer-actions { display: flex; gap: 8px; align-items: center; }
+    .viewer-actions a {
+      font-size: 0.78rem;
+      text-decoration: none;
+      color: var(--link);
+    }
+    .viewer-close {
+      border: none;
+      background: #1f2937;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .viewer-frame { flex: 1; border: none; width: 100%; border-radius: 0 0 16px 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(18px); } }
+    @media print {
+  @page {
+    size: A4;
+    margin: 12mm 12mm 14mm 12mm;
+  }
+  * {
+    animation: none !important;
+    transition: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  .backdrop,
+  .toc-sidebar,
+  .viewer-overlay,
+  .viewer-panel,
+  .back-link {
+    display: none !important;
+  }
+  .page {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .masthead,
+  .article {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .masthead {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    margin-bottom: 16px !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+  .kicker,
+  .report-title,
+  .report-deck {
+    color: #0f172a !important;
+  }
+  .article {
+    border: 0 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  .article h2,
+  .article h3,
+  .article blockquote,
+  .article pre,
+  .article table,
+  .article figure.report-figure {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+  .article img,
+  .article svg,
+  .article canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+  .article h2,
+  .article h3 {
+    scroll-margin-top: 0 !important;
+  }
+  .article a,
+  .article a:visited {
+    color: #0f172a !important;
+    text-decoration: underline;
+  }
+}
+
+    body.template-quanta_magazine {
+  --site-ink: var(--ink);
+  --site-muted: var(--muted);
+  --ink: #1b1c22;
+  --muted: #4c5566;
+  --accent: #2f4b8f;
+  --link: #2f4b8f;
+  --page-bg: radial-gradient(1200px 700px at 15% -10%, #e9eef9 0%, #f4f6fb 45%, #ffffff 100%);
+  --body-font: "Baskerville", "Palatino Linotype", "Book Antiqua", "Iowan Old Style", Georgia, serif;
+  --heading-font: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+  --ui-font: "Gill Sans", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+body.template-quanta_magazine .report-title {
+  font-size: 2.8rem;
+}
+
+body.template-quanta_magazine .article {
+  border-radius: 20px;
+  box-shadow: 0 26px 70px rgba(43, 69, 121, 0.16);
+}
+
+body.template-quanta_magazine .article p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.2rem;
+  line-height: 1;
+  padding-right: 8px;
+  color: var(--accent);
+  font-family: var(--heading-font);
+}
+
+body.template-quanta_magazine .article h2 {
+  border-top: 1px solid rgba(47, 75, 143, 0.3);
+}
+body.template-quanta_magazine {
+  --masthead-bg: #6f7377;
+  --masthead-border: rgba(255, 255, 255, 0.35);
+  --masthead-title: #f8fafc;
+  --masthead-deck: rgba(248, 250, 252, 0.85);
+  --masthead-kicker: rgba(248, 250, 252, 0.72);
+  --masthead-link: rgba(248, 250, 252, 0.88);
+  --masthead-link-border: rgba(248, 250, 252, 0.3);
+  --masthead-link-bg: rgba(15, 23, 42, 0.2);
+}
+
+  </style>
+</head>
+<body class="theme-coral template-quanta_magazine">
+  <div class="backdrop">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  
+  <div class="page">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="kicker">FEDERLICHT</div>
+        <a class="back-link" id="back-link" href="#">목록으로</a>
+      </div>
+      <div class="report-title">양자컴퓨팅 상용화 경쟁의 실용 이득 전환</div>
+      <div class="report-deck">Research review and tech survey</div>
+    </header>
+    <main class="article">
+<h1>양자컴퓨팅 상용화 경쟁의 실용 이득 전환</h1>
+<p>Default assisted and prompted by "Federlicht Writer" — 2026-02-28 23:45</p>
+<h2>Lede</h2>
+<p>양자컴퓨팅 상용화 경쟁의 초점은 이제 “누가 더 많은 큐비트를 갖는가”에서 “어떤 문제에서, 얼마만큼, 반복 가능하게 이득을 내는가”로 이동했다. 최근 벤치마크는 이 전환을 분명히 보여준다. 특정 BQP(이진 이차 최적화)나 도메인 특화 문제에서는 양자-고전 하이브리드가 실용적 가능성을 보이지만, 일반 대규모 MILP(혼합정수선형계획)에서는 고전 최적화기의 우위가 여전히 강하다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<p>같은 2025년 연구 안에서도 대비는 선명하다. 에너지 unit commitment 같은 MILP 계열에서는 Gurobi가 짧은 시간에 작은 갭을 보이며, 축소 인스턴스에서도 고전 해법이 더 빠른 구간이 확인된다. 반대로, 화학/바이오의 조합 탐색처럼 구조적으로 다른 문제에서는 하이브리드 양자 접근이 후보 다양성이나 탐색 전략 측면에서 의미 있는 신호를 준다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a>.</p>
+<p>의사결정의 핵심은 기술 낙관론이 아니라 문제 선택과 운영 설계다. 현재 아카이브에서 국가별 투자액 장기 시계열과 플랫폼별 오류율 장기 추세는 결측이 커서, 해당 정량 차트는 보수적으로 <code>Simulated/Illustrative</code>로 분리하는 것이 타당하다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h2>Central Question</h2>
+<p>2026-2035년 사이, 양자컴퓨팅은 어떤 문제군에서 고전 컴퓨팅 대비 비용-성능 우위를 안정적으로 만들 수 있는가? 그 판단은 하드웨어 경쟁 자체보다, 하이브리드 워크플로우와 문제 포트폴리오를 어떻게 설계하느냐에 달려 있다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>. 
+현재 가장 큰 불확실성은 국가 투자 데이터의 시계열 불연속과 플랫폼별 오류율의 비교 가능성 부족이며, 이 때문에 장기 전망은 가정표와 함께 제시되어야 한다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a>.</p>
+<h2>The Story So Far</h2>
+<h3>2020년대 전반: “가능성”에서 “비교 가능성”으로</h3>
+<p>초기 상용화 서사는 주로 큐비트 수 확장과 데모 중심이었다. 그러나 2025년 전후의 흐름은, 산업 의사결정에 필요한 질문이 “작동한다”에서 “고전 대비 언제, 어디서, 얼마나 유리한가”로 이동했음을 보여준다. 특히 하이브리드 아키텍처가 사실상 기본 운영모델로 자리잡기 시작했다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>.</p>
+<h3>2025년: 문제유형 분기점이 명확해진 해</h3>
+<p><code>Quantum annealing applications...</code>는 D-Wave 하이브리드가 일부 BQP/이차 구조 문제에서 경쟁력을 보일 수 있음을 제시하면서도, MILP unit commitment에서는 고전 해법을 넘지 못했다고 정리한다. 논문 본문에서는 CPLEX 1000초 컷오프 구간에서 편차가 커지는 사례(약 25% 수준)와 함께, MILP에서는 Gurobi가 180초에서 0.05% gap을 달성한 점이 보고된다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>. 
+<code>On the Baltimore Light RailLink...</code>도 서두에서 양자 방법이 고전 솔버 대비 열위일 수 있음을 명시하고, ILP 기준 CPLEX 계산시간이 0.0014–0.08초 범위였다고 제시한다 <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>.</p>
+<h3>2025년 말~2026년 초: 도메인 특화 상용화 신호와 PR 서사의 한계</h3>
+<p><code>De Novo Design of Protein-Binding Peptides...</code>는 양자-고전 결합으로 화학·구조 탐색을 분리해 다루는 접근을 제시하며, 실험 데이터와 상관되는 후보 생성 가능성을 보고한다. 이는 “전면 대체”가 아니라 “특정 탐색 문제에서의 보완”이라는 상용화 프레임을 강화한다 <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a>. 
+동시에 2025년 12월~2026년 1월의 기업 발표는 타임라인 보강에는 유효하지만, 강한 정량 결론의 1차 근거로는 제한적이다. 따라서 본 보고서는 PR/보도 기반 수치에 낮은 근거 강도를 부여한다 <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[7]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h2>How It Works</h2>
+<h3>오류율 개선 메커니즘: 제어, 보정, 소재/소자, 코드/디코더</h3>
+<p>오류율 개선은 단일 기술의 성과가 아니라 네 층의 결합 효과로 이해하는 편이 정확하다. 첫째, 제어(control)는 펄스·게이트·스케줄 최적화로 물리 오류를 직접 낮춘다. 둘째, 보정(calibration)은 시간에 따라 이동하는 장치 상태를 추적해 성능 저하를 완화한다. 셋째, 소재/소자는 코히런스와 제조 균일성의 바닥선을 정한다. 넷째, 코드/디코더는 남은 물리 오류를 논리 오류로 증폭시키지 않도록 흡수한다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>. 
+개념적으로 논리 오류율은 아래 관계를 따른다.
+\[
+p_L \approx A\left(\frac{p}{p_{th}}\right)^{(d+1)/2}
+\]
+여기서 $p$는 물리 오류율, $p_{th}$는 임계값, $d$는 코드 거리다. 즉, 물리 오류를 낮추는 공정/제어 개선과 코드 거리 확장이 함께 가야 장기적인 하락 곡선이 만들어진다.</p>
+<h3>에러율 개선 추세 (Line Chart)</h3>
+<figure class="report-figure report-diagram"><div class="mermaid">xychart-beta
+ title &quot;QC Error-Rate Index Trend (2026=100)&quot;
+ x-axis [2026,2027,2028,2029,2030,2031,2032,2033,2034,2035]
+ y-axis &quot;Index (lower is better)&quot; 0 --&gt; 110
+ line [100,87,76,66,57,49,42,36,31,27]</div></figure>
+<p>캡션: 지표는 절대 오류율이 아니라 정규화된 오류지수(2026=100)이며, 기간은 2026-2035, 단위는 index다. 현재 아카이브의 플랫폼별 장기 실측이 부족하므로 전 구간 <code>Simulated/Illustrative</code>로 제시했다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a>.</p>
+<h3>큐비트 타입별 에러 저감 역량 (Radar)</h3>
+<p>아래 레이더는 플랫폼별 상대 강점을 같은 축에서 비교하기 위한 정규화 뷰다. 값은 0-100 점수이며, 절대 성능이 아니라 운영 가능성 관점의 상대 평가다.</p>
+<div>
+<svg viewbox="0 0 420 360" width="100%" role="img" aria-label="Qubit type radar chart">
+ <polygon points="180,50 294,133 251,267 109,267 66,133" fill="none" stroke="#d0d0d0" stroke-width="1" />
+ <polygon points="180,86 254,146 222,228 122,249 109,147" fill="none" stroke="#e6e6e6" stroke-width="1" />
+ <line x1="180" y1="170" x2="180" y2="50" stroke="#cfcfcf" />
+ <line x1="180" y1="170" x2="294" y2="133" stroke="#cfcfcf" />
+ <line x1="180" y1="170" x2="251" y2="267" stroke="#cfcfcf" />
+ <line x1="180" y1="170" x2="109" y2="267" stroke="#cfcfcf" />
+ <line x1="180" y1="170" x2="66" y2="133" stroke="#cfcfcf" />
+
+ <polygon points="180,68 260,144 236,248 118,255 94,142" fill="rgba(52,152,219,0.18)" stroke="#3498db" stroke-width="2" />
+ <polygon points="180,60 283,137 233,243 138,228 91,141" fill="rgba(231,76,60,0.18)" stroke="#e74c3c" stroke-width="2" />
+ <polygon points="180,76 264,143 226,233 129,240 102,145" fill="rgba(46,204,113,0.18)" stroke="#2ecc71" stroke-width="2" />
+ <polygon points="180,86 254,146 222,228 122,249 109,147" fill="rgba(243,156,18,0.18)" stroke="#f39c12" stroke-width="2" />
+
+ <text x="168" y="38" font-size="11">Gate fidelity</text>
+ <text x="302" y="132" font-size="11">Coherence</text>
+ <text x="248" y="282" font-size="11">Calibration</text>
+ <text x="68" y="282" font-size="11">Scalability</text>
+ <text x="18" y="132" font-size="11">Runtime stability</text>
+
+ <text x="300" y="28" font-size="11" fill="#3498db">Superconducting</text>
+ <text x="300" y="44" font-size="11" fill="#e74c3c">Trapped-ion</text>
+ <text x="300" y="60" font-size="11" fill="#2ecc71">Neutral-atom</text>
+ <text x="300" y="76" font-size="11" fill="#f39c12">Photonic</text>
+</svg>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Qubit Type</th>
+<th style="text-align: right;">Gate fidelity</th>
+<th style="text-align: right;">Coherence</th>
+<th style="text-align: right;">Calibration maturity</th>
+<th style="text-align: right;">Scalability readiness</th>
+<th style="text-align: right;">Runtime stability</th>
+<th>Data status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Superconducting</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">88</td>
+<td style="text-align: right;">75</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>Trapped-ion</td>
+<td style="text-align: right;">92</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">78</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>Neutral-atom</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">74</td>
+<td style="text-align: right;">65</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">68</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>Photonic</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">65</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">62</td>
+<td>Simulated/Illustrative</td>
+</tr>
+</tbody>
+</table>
+<p>캡션: 축은 gate fidelity, coherence, calibration maturity, scalability readiness, runtime stability(0-100 정규화), 기간은 2026 기준 비교다. 데이터 결측으로 인해 모든 값은 <code>Simulated/Illustrative</code>다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<p>이 도표가 말하는 핵심은 “절대 1등 플랫폼”이 아니라 “문제유형별 최적 조합”이다. 따라서 조달·투자 전략은 단일 벤더 고정이 아니라, 워크로드 기준의 멀티플랫폼 옵션을 전제로 설계하는 편이 리스크를 줄인다.</p>
+<h2>Why It Matters</h2>
+<h3>과학적 함의</h3>
+<p>현재 근거가 공통으로 지지하는 결론은, 상용화 경쟁력이 계산 복잡도 일반론보다 문제 구조 의존성에 더 민감하다는 점이다. 이는 연구개발의 초점이 “양자 우위의 선언”에서 “문제 클래스별 재현 가능한 성능 곡선”으로 이동해야 함을 뜻한다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>.</p>
+<h3>산업적 함의</h3>
+<p>운영 관점에서는 하이브리드 아키텍처가 사실상 기본값이다. 바이오 설계처럼 탐색 공간이 큰 도메인에서 양자 서브루틴을 붙이는 방식은 초기 상용화의 현실적 경로가 될 수 있지만, MILP 중심의 범용 운영계획에서는 고전 솔버가 계속 기준선으로 남을 가능성이 크다 <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a> <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a>. 
+정책적으로는 “모든 분야 확산”보다, 문제 선별 기준과 검증 프로토콜을 예산 조건으로 묶는 편이 효율적이다.</p>
+<h3>인간·사회적 함의</h3>
+<p>교통 스케줄링, 전력운영, 신약 탐색은 모두 비용과 시간의 개선이 직접 사회적 편익으로 연결되는 영역이다. 다만 기술 성숙 이전의 과대 약속은 공공 신뢰와 조달 효율을 동시에 해칠 수 있어, 실증 범위를 명시한 단계적 도입이 필요하다 <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h2>Open Questions</h2>
+<h3>데이터 결측</h3>
+<ol>
+<li>국가별 공공·민간 양자 투자액을 2026-2035 연속 시계열로 통일할 수 있는 1차 소스(예산서/법안/공식 통계)는 어디까지 확보되어 있는가? <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> </li>
+<li>플랫폼별 오류율/논리오류율을 동일 정의로 비교 가능한 공개 데이터셋은 어떤 범위까지 존재하는가? <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a></li>
+</ol>
+<h3>측정 한계</h3>
+<ol>
+<li>서로 다른 문제군(BQP, MILP, 도메인 특화)을 하나의 “양자 우위” 지표로 합치는 순간 발생하는 왜곡을 어떻게 통제할 것인가? <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> </li>
+<li>벤치마크의 시간제한(예: solver cutoff)과 비용함수 정의가 결과 해석에 주는 편향을 어떤 표준으로 교정할 것인가? <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a></li>
+</ol>
+<h3>시나리오 민감도</h3>
+<ol>
+<li>하드웨어 개선 속도가 기대보다 2-3년 지연될 때, 하이브리드 ROI가 유지되는 산업군과 붕괴되는 산업군의 경계는 어디인가? <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a> <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a></li>
+</ol>
+<h2>Appendix</h2>
+<h3>핵심 근거 요약</h3>
+<ul>
+<li>최상위 근거는 문제유형 분기다. BQP·도메인 특화 영역의 신호와 MILP·대규모 일반문제의 한계를 분리해 읽어야 한다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>. </li>
+<li>도메인 특화(바이오 설계)에서는 하이브리드의 탐색 보완 가치가 관찰되지만, 이를 범용 성능 우위로 일반화하기는 이르다 <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a>. </li>
+<li>웹/보도는 이벤트 타임라인 보강에 유용하나, 정량 결론의 1차 근거로 사용하기에는 한계가 크다 <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[7]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>. </li>
+<li>현재 런의 근거맵 통계는 selected claims 4/4이지만 high-strength claim이 좁아, 강한 장기 추정에는 보수적 해석이 필요하다 <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">[8]</a>.</li>
+</ul>
+<h3>방법·재현성 체크리스트</h3>
+<ul>
+<li>분석 범위: 2026-2035, 축은 기술·투자·오류율·산업적용으로 고정. </li>
+<li>소스 우선순위: 동료심사 원문 &gt; 공식 문서 &gt; 웹/보도. </li>
+<li>비교 단위: 문제유형(BQP/MILP/도메인 특화) 분리. </li>
+<li>정량 결측 처리: <code>Simulated/Illustrative</code> 라벨 강제. </li>
+<li>차트 캡션 규칙: 단위·기간·정규화 기준·데이터 상태(Measured/Derived/Simulated) 명시. </li>
+<li>한계 공개: 국가투자·장기 오류율 결측을 결론 앞에 선제적으로 표기 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a>.</li>
+</ul>
+<h3>범위 내 아카이브 상태 요약</h3>
+<p>이번 런은 소스 수량은 충분하지만, 플랫폼 균형과 시계열 완결성은 부족하다. OpenAlex/arXiv 기반의 본문 근거는 의미 있으나, 투자·오류율 장기 시계열의 직접 근거가 약해 전망 계열 차트는 보수적으로 해석해야 한다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-viewer="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-raw="archive/20260221_QC_report-index.md" class="viewer-link">[9]</a>.</p>
+<h3>Key Sources</h3>
+<ul>
+<li>D-Wave Quantum usage jumps 314%, targets 2026 gate system — <a href="https://www.stocktitan.net/news/QBTS/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-0m5af7f09ke8.html" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+<li>Quantum Computing Companies in 2026 (76 Major Players) — <a href="https://thequantuminsider.com/2025/09/23/top-quantum-computing-companies/" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+<li>D-Wave Announces Advancements in Annealing and Gate-Model ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+<li>D-Wave to Bring Commercial Quantum Computing to CES 2026 ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-to-bring-commercial-quantum-computing-to-ces-2026/" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+<li>D-Wave Announces Qubits 2026 Quantum Computing User ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-qubits-2026-quantum-computing-user-conference/" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+<li>D-Wave Announces Advancements in Annealing and Gate-Model ... — <a href="https://finance.yahoo.com/news/d-wave-announces-advancements-annealing-121500111.html" target="_blank" rel="noopener">source</a> / <a href="report_views/archive_tavily_search.jsonl-275cc811.html" data-viewer="report_views/archive_tavily_search.jsonl-275cc811.html" data-raw="archive/tavily_search.jsonl" class="viewer-link">archive</a></li>
+</ul>
+<h3>Artifacts</h3>
+<ul>
+<li>Source index: <a href="report_views/report_notes_source_index.jsonl-69956240.html" data-viewer="report_views/report_notes_source_index.jsonl-69956240.html" data-raw="report_notes/source_index.jsonl" class="viewer-link">./report_notes/source_index.jsonl</a></li>
+<li>Source triage: <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">./report_notes/source_triage.md</a></li>
+<li>Evidence notes: <a href="report_views/report_notes_evidence_notes.md-a9c09e81.html" data-viewer="report_views/report_notes_evidence_notes.md-a9c09e81.html" data-raw="report_notes/evidence_notes.md" class="viewer-link">./report_notes/evidence_notes.md</a></li>
+<li>Claim-evidence map: <a href="report_views/report_notes_claim_evidence_map.md-d12c4c04.html" data-viewer="report_views/report_notes_claim_evidence_map.md-d12c4c04.html" data-raw="report_notes/claim_evidence_map.md" class="viewer-link">./report_notes/claim_evidence_map.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+</ul>
+<h3>Checklist</h3>
+<ul>
+<li>원문 링크/파일 경로를 확인했는가?</li>
+<li>근거 유형(primary/supporting)을 명확히 구분했는가?</li>
+<li>핵심 주장마다 출처가 연결되어 있는가?</li>
+<li>재현성에 필요한 입력/설정이 기록되었는가?</li>
+<li>범위/한계가 명시되었는가?</li>
+</ul>
+<h2>Scope &amp; Methodology</h2>
+<h3>분석 범위</h3>
+<p>본 보고서의 분석 범위는 2026-2035이며, 축은 기술(하드웨어/오류정정/SW stack), 투자(국가·지역 단위), 오류율 개선, 산업 적용(교통·에너지·바이오)으로 한정했다. 오프토픽(핵물리·일반 NLP pruning·HIPE 등)은 제외했다 <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h3>소스 범주와 근거 등급</h3>
+<table>
+<thead>
+<tr>
+<th>근거 등급</th>
+<th>정의</th>
+<th>본 보고서 예시</th>
+<th>활용 원칙</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>High</td>
+<td>동료심사 원문·재현 가능한 실험</td>
+<td>Scientific Reports 2025 2편, JCTC 2025 1편</td>
+<td>핵심 주장/정량 근거의 기준선</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>공식 문서·기술 문서</td>
+<td>기업 공식 발표/제품 업데이트</td>
+<td>타임라인·맥락 보강</td>
+</tr>
+<tr>
+<td>Low</td>
+<td>웹/보도·2차 요약</td>
+<td>PR/검색 스니펫</td>
+<td>정성 보조, 정량 결론 금지</td>
+</tr>
+</tbody>
+</table>
+<p>근거 강도 분포는 균등하지 않으며, 이 편향 자체를 결과 해석에 포함했다 <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">[8]</a> <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a>.</p>
+<h3>Feather -&gt; Federlicht 분석 파이프라인</h3>
+<figure class="report-figure report-diagram"><div class="mermaid">flowchart LR
+ A[&quot;Feather 수집&lt;br/&gt;OpenAlex/arXiv/Web&quot;] --&gt; B[&quot;소스 트리아지&lt;br/&gt;오프토픽 제외&quot;]
+ B --&gt; C[&quot;근거맵 작성&lt;br/&gt;Claim-Evidence 연결&quot;]
+ C --&gt; D[&quot;서술 초안 생성&lt;br/&gt;섹션별 주장-근거 매핑&quot;]
+ D --&gt; E[&quot;시각화 생성&lt;br/&gt;로드맵/투자/오류율/레이더&quot;]
+ E --&gt; F[&quot;품질 게이트&lt;br/&gt;단위·기간·라벨·인용 점검&quot;]
+ F --&gt; G[&quot;Federlicht 최종 보고서&quot;]</div></figure>
+<p>캡션: 파이프라인은 수집-선별-근거맵-작성-시각화-QA-출력의 7단계이며, 정량 결측은 시각화 단계에서 <code>Simulated/Illustrative</code>로 강제 라벨링한다 <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">[10]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h3>Simulated/Illustrative 가정·범위·한계 표</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>가정</th>
+<th>범위</th>
+<th>한계</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>국가별 투자 비교</td>
+<td>2026 기준 상대 규모를 보수적으로 정렬</td>
+<td>미국/중국/EU/일본/한국/캐나다/영국</td>
+<td>공식 예산 연속 시계열 부재로 절대값 불확실</td>
+</tr>
+<tr>
+<td>오류율 추세 line</td>
+<td>2026=100 정규화 지수 하락 경로</td>
+<td>2026-2035 연도별 index</td>
+<td>플랫폼별 실측 통합 부재, 절대 오류율 아님</td>
+</tr>
+<tr>
+<td>큐비트 레이더</td>
+<td>5개 축 상대 성숙도 점수화</td>
+<td>4개 플랫폼 비교</td>
+<td>축 가중치 합의 부재, 운영환경별 변동 큼</td>
+</tr>
+</tbody>
+</table>
+<h2>Trends &amp; Implications</h2>
+<h3>2026-2035 로드맵 인포그래픽</h3>
+<figure class="report-figure report-diagram"><div class="mermaid">gantt
+ title QC Commercialization Roadmap (2026-2035)
+ dateFormat YYYY-MM-DD
+ axisFormat %Y
+
+ section Hardware
+ 오류완화 중심 NISQ 확장 :h1, 2026-01-01, 2y
+ 모듈형/고집적 아키텍처 전환 :h2, 2028-01-01, 3y
+ 오류정정 연계 스케일업 :h3, 2031-01-01, 3y
+ 초기 내결함 서비스 상용화 :h4, 2034-01-01, 2y
+
+ section Error Correction
+ 코드거리 확장 PoC :e1, 2026-01-01, 2y
+ 논리 큐비트 시험 서비스 :e2, 2028-01-01, 3y
+ 디코더 자동화·실시간 제어 :e3, 2031-01-01, 3y
+ 산업 SLA 연계 운영 :e4, 2034-01-01, 2y
+
+ section SW Stack
+ 하이브리드 오케스트레이션 표준화 :s1, 2026-01-01, 3y
+ 도메인 특화 컴파일러/라이브러리 :s2, 2029-01-01, 3y
+ 비용-성능 스케줄러 고도화 :s3, 2032-01-01, 3y
+
+ section Industry Applications
+ 파일럿(교통/에너지/바이오) :i1, 2026-01-01, 3y
+ 운영계 통합(선별 워크로드) :i2, 2029-01-01, 3y
+ 규제·품질 기준 내재화 :i3, 2032-01-01, 2y
+ 확대 배치(고가치 문제군) :i4, 2034-01-01, 2y</div></figure>
+<p>캡션: 기간은 2026-2035, 단위는 연도 기반 마일스톤이며 데이터 상태는 <code>Derived + Simulated/Illustrative</code>다. 분기의 근거는 문제유형별 상용화 신호의 비대칭성(BQP/도메인 특화 vs MILP 일반문제)에서 출발한다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a>.</p>
+<h3>국가별 투자금액 비교 (표 + 차트)</h3>
+<p>아카이브에서 국가별 장기 실측이 부족해 아래 값은 비교 프레임 고정을 위한 <code>Simulated/Illustrative</code>다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a>.</p>
+<table>
+<thead>
+<tr>
+<th>국가/지역</th>
+<th style="text-align: right;">2026 투자액 (USD bn)</th>
+<th style="text-align: right;">2030 투자액 (USD bn)</th>
+<th style="text-align: right;">2035 투자액 (USD bn)</th>
+<th>데이터 상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>미국</td>
+<td style="text-align: right;">15.0</td>
+<td style="text-align: right;">19.0</td>
+<td style="text-align: right;">24.0</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>중국</td>
+<td style="text-align: right;">14.0</td>
+<td style="text-align: right;">18.0</td>
+<td style="text-align: right;">23.0</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>EU</td>
+<td style="text-align: right;">11.0</td>
+<td style="text-align: right;">14.0</td>
+<td style="text-align: right;">18.0</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>일본</td>
+<td style="text-align: right;">4.0</td>
+<td style="text-align: right;">5.5</td>
+<td style="text-align: right;">7.0</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>한국</td>
+<td style="text-align: right;">3.0</td>
+<td style="text-align: right;">4.5</td>
+<td style="text-align: right;">6.0</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>캐나다</td>
+<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">3.6</td>
+<td>Simulated/Illustrative</td>
+</tr>
+<tr>
+<td>영국</td>
+<td style="text-align: right;">2.5</td>
+<td style="text-align: right;">3.5</td>
+<td style="text-align: right;">4.8</td>
+<td>Simulated/Illustrative</td>
+</tr>
+</tbody>
+</table>
+<figure class="report-figure report-diagram"><div class="mermaid">xychart-beta
+ title &quot;National/Regional Quantum Investment (2026, USD bn)&quot;
+ x-axis [US,China,EU,Japan,Korea,Canada,UK]
+ y-axis &quot;USD bn&quot; 0 --&gt; 16
+ bar [15,14,11,4,3,2,2.5]</div></figure>
+<p>캡션: 단위는 USD billion, 기간은 2026 단년도 비교, 정규화 없음, 데이터 상태는 <code>Simulated/Illustrative</code>다. 해석 포인트는 절대값보다 상대 투자 여력과 정책 선택지의 차이이며, 실집계 확보 전까지 순위 단정은 금지한다.</p>
+<h3>핵심 비교표 (기술/비용/리스크/적용 난도)</h3>
+<table>
+<thead>
+<tr>
+<th>접근</th>
+<th>기술 성숙도(2026)</th>
+<th>비용 구조</th>
+<th>핵심 리스크</th>
+<th>적용 난도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Superconducting (gate)</td>
+<td>중상</td>
+<td>냉각/보정 CAPEX 큼</td>
+<td>보정 복잡도, 수율</td>
+<td>중상</td>
+</tr>
+<tr>
+<td>Trapped-ion (gate)</td>
+<td>중</td>
+<td>느린 게이트/제어비용</td>
+<td>스케일링 속도</td>
+<td>중</td>
+</tr>
+<tr>
+<td>Neutral-atom (gate/analog)</td>
+<td>중</td>
+<td>광학 제어비용</td>
+<td>안정성·표준화</td>
+<td>중</td>
+</tr>
+<tr>
+<td>Photonic</td>
+<td>중하~중</td>
+<td>인터커넥트·집적 비용</td>
+<td>손실/에러 모델 이질성</td>
+<td>중상</td>
+</tr>
+<tr>
+<td>Annealing + Hybrid</td>
+<td>중상(특정 문제)</td>
+<td>클라우드 사용료 + 통합비용</td>
+<td>범용성 한계</td>
+<td>중</td>
+</tr>
+</tbody>
+</table>
+<p>이 비교는 “무조건 한 플랫폼”보다 “워크로드 매칭”이 총비용 위험을 줄인다는 점을 시사한다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>.</p>
+<h3>핵심 주장-근거-인사이트-정책/사업 시사점</h3>
+<table>
+<thead>
+<tr>
+<th>주장</th>
+<th>근거</th>
+<th>인사이트</th>
+<th>정책/사업 시사점</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>상용화는 문제유형 분리 프레임이 안전하다</td>
+<td>BQP/도메인 특화와 MILP 결과가 상반 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a></td>
+<td>“전면 우위”가 아니라 “선별 우위”</td>
+<td>조달·PoC를 문제클래스 기준으로 설계</td>
+</tr>
+<tr>
+<td>하이브리드가 초기 상용 운영의 중심이다</td>
+<td>바이오 설계에서 양자-고전 결합 성과 제시 <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">[2]</a></td>
+<td>QC는 대체재보다 보완재 성격</td>
+<td>기존 HPC/OR 스택과 통합 투자 우선</td>
+</tr>
+<tr>
+<td>투자/오류율 장기 시계열은 아직 공백이 크다</td>
+<td>런 내부 gap 진단 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a></td>
+<td>정량 전망의 과신 위험</td>
+<td>Simulated/Illustrative 분리 공시 의무화</td>
+</tr>
+<tr>
+<td>PR/보도는 타임라인 보강용으로 제한해야 한다</td>
+<td>기업 발표와 트리아지 노트 <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">[7]</a> <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a></td>
+<td>신호는 유용하되 검증은 별개</td>
+<td>의사결정 문서에 근거등급 병기</td>
+</tr>
+</tbody>
+</table>
+<figure class="report-figure report-infographic"><iframe src="report_assets/artwork/auto_claim_snapshot_01_decision_recommendation.html" loading="lazy" style="width:100%;min-height:560px;border:0;border-radius:12px;" title="근거 패킷 기반 인포그래픽"></iframe><figcaption>Infographic: 근거 패킷 기반 인포그래픽. Primary chart metadata - Metric: Claim Evidence Coverage; Unit: count/score; Period: run_snapshot; Normalization: top_n_claims; Source: <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">./report_notes/claim_evidence_map.json</a>. Portfolio summary - Charts: 2; Metrics: Claim Evidence Coverage, Claim Evidence Coverage (Decision &amp; Recommendation); Sources: <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">./report_notes/claim_evidence_map.json</a>.</figcaption></figure>
+
+<p><em>Infographic spec: <a href="report_views/report_notes_infographic_spec_auto_claim_snapshot_01_decision_recommendation.jso-453e13d7.html" data-viewer="report_views/report_notes_infographic_spec_auto_claim_snapshot_01_decision_recommendation.jso-453e13d7.html" data-raw="report_notes/infographic_spec_auto_claim_snapshot_01_decision_recommendation.json" class="viewer-link">report_notes/infographic_spec_auto_claim_snapshot_01_decision_recommendation.json</a></em></p>
+<p><em>Lint report: <a href="report_views/report_notes_infographic_lint_auto_claim_snapshot.txt-c1e55af6.html" data-viewer="report_views/report_notes_infographic_lint_auto_claim_snapshot.txt-c1e55af6.html" data-raw="report_notes/infographic_lint_auto_claim_snapshot.txt" class="viewer-link">report_notes/infographic_lint_auto_claim_snapshot.txt</a></em></p>
+<figure class="report-figure report-infographic"><iframe src="report_assets/artwork/auto_claim_snapshot_02_key_findings.html" loading="lazy" style="width:100%;min-height:560px;border:0;border-radius:12px;" title="근거 패킷 기반 인포그래픽"></iframe><figcaption>Infographic: 근거 패킷 기반 인포그래픽. Primary chart metadata - Metric: Claim Evidence Coverage (Key Findings); Unit: count/score; Period: run_snapshot; Normalization: top_n_claims; Source: <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">./report_notes/claim_evidence_map.json</a>.</figcaption></figure>
+
+<p><em>Infographic spec: <a href="report_views/report_notes_infographic_spec_auto_claim_snapshot_02_key_findings.json-77c9b191.html" data-viewer="report_views/report_notes_infographic_spec_auto_claim_snapshot_02_key_findings.json-77c9b191.html" data-raw="report_notes/infographic_spec_auto_claim_snapshot_02_key_findings.json" class="viewer-link">report_notes/infographic_spec_auto_claim_snapshot_02_key_findings.json</a></em></p>
+<p><em>Lint report: <a href="report_views/report_notes_infographic_lint_auto_claim_snapshot.txt-c1e55af6.html" data-viewer="report_views/report_notes_infographic_lint_auto_claim_snapshot.txt-c1e55af6.html" data-raw="report_notes/infographic_lint_auto_claim_snapshot.txt" class="viewer-link">report_notes/infographic_lint_auto_claim_snapshot.txt</a></em></p>
+<h2>Risks &amp; Gaps</h2>
+<h3>근거 공백</h3>
+<p>현재 근거맵은 selected claims 4/4로 정렬은 되어 있지만, 고강도 근거가 좁고 no-evidence 항목이 남아 있다. 이 상태에서 국가투자·장기오류율에 강한 결론을 붙이면 과적합된 서사가 된다 <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">[8]</a> <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a>. 
+또한 본문 근거가 일부 플랫폼/벤더에 편중되어 있어, 플랫폼 간 일반화에는 보수성이 필요하다 <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a>.</p>
+<h3>기술·사업 리스크</h3>
+<p>기술적으로는 성능 지표의 이질성(문제군/시간제한/목표함수 차이)이 가장 큰 해석 리스크다. 사업적으로는 파일럿 성공을 운영 확장으로 오해하는 전환 리스크가 크며, 하이브리드 통합 비용을 과소추정하면 ROI가 빠르게 악화될 수 있다 <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">[1]</a> <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">[5]</a>.</p>
+<h3>지역·플랫폼 편향</h3>
+<p>현재 수집 구조는 OpenAlex 중심의 학술 신호와 일부 기업 발표에 의존한다. 지역별 공공투자 원천 데이터와 플랫폼별 장기 운영 지표의 공백이 남아 있어, 국가/플랫폼 순위화는 잠정적이다 <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a> <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">[6]</a>.</p>
+<h3>실행 우선순위(단기/중기/장기)와 대응안</h3>
+<ol>
+<li>단기(0-12개월): 문제유형별 벤치마크 프로토콜을 고정하고, 모든 PoC에 고전 baseline·비용지표·재현 조건을 의무화한다. 동시에 투자/오류율 차트는 <code>Simulated/Illustrative</code>와 실측을 시각적으로 분리한다. </li>
+<li>중기(1-3년): 국가투자 1차 소스(예산/법안/공식 통계)와 플랫폼별 오류 메트릭 스키마를 통일해 데이터셋을 잠그고, 하이브리드 운영표준(워크로드 라우팅, SLA, 감사로그)을 구축한다. </li>
+<li>장기(3-10년): 산업별 레퍼런스 아키텍처를 “양자 단독”이 아닌 “HPC+OR+QC” 통합 모델로 제도화하고, 성능 주장을 규제/조달 기준과 연결해 과장 마케팅 리스크를 낮춘다 <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">[4]</a> <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">[3]</a>.</li>
+</ol>
+<h2>Report Prompt</h2>
+<p>당신은 Federlicht 리포트 작성 에이전트다. 아래 요구사항을 모두 만족하는 한국어 보고서를 작성하라.</p>
+<p>[주제]
+양자컴퓨팅(QC) 상용화 경쟁: 2026-2035 기술/투자/오류율 개선 로드맵</p>
+<p>[핵심 작성 톤]
+- 서술형(읽히는 스토리) 중심이되, 주장-근거-인사이트를 분리해 명확히 제시
+- 과장 금지, 근거 없는 단정 금지, 불확실성/가정은 명시
+- 각 핵심 주장마다 출처 근거(citation)와 정책/사업적 시사점 연결</p>
+<p>[필수 시각화 요구사항]
+1) 10년 로드맵 인포그래픽
+- 2026~2035 연도축으로 기술/산업 전개(하드웨어, 오류정정, SW stack, 산업적용) 마일스톤 제시
+- timeline 또는 roadmap 형식(인포그래픽 블록으로 명확히 보이게)</p>
+<p>2) 국가별 투자금액 비교 차트
+- 주요 지역(미국, 중국, EU, 일본, 한국, 캐나다, 영국 등) 투자 규모 비교
+- 표 + 차트를 함께 제공(독자가 수치와 추세를 동시에 이해 가능)</p>
+<p>3) 에러율(error rate) 개선 추세 차트
+- 최근 기간의 오류율 개선 흐름을 line chart로 시각화
+- 논리적 근거와 함께 개선 기여 요인(제어, 보정, 소재/소자, 코드/디코더) 설명</p>
+<p>4) 큐비트 타입별 에러 저감 역량 비교(방사형/radar)
+- 예: superconducting / trapped-ion / neutral-atom / photonic
+- 비교 축 예: gate fidelity, coherence, calibration maturity, scalability readiness, runtime stability
+- 레이더 차트 + 해설 문단 필수</p>
+<p>5) 다이어그램 + 표
+- "Feather -&gt; Federlicht" 분석 파이프라인(수집/근거맵/작성/품질게이트) 다이어그램 1개
+- 핵심 비교표 1개 이상(기술/비용/리스크/적용 난도)</p>
+<p>[근거 정책]
+- 모든 핵심 주장에 근거를 명시
+- 출처 데이터가 충분하지 않은 수치/전망은 반드시 Simulated/Illustrative 라벨 처리
+- 시뮬레이션을 쓴 경우, 별도 표로 "가정/범위/한계"를 명확히 적시</p>
+<p>[결과물 목표]
+- world_class 수준을 목표로 하며 section coherence를 높게 유지
+- 단순 나열이 아니라 "왜 중요한지"와 "무엇을 결정해야 하는지"까지 제시
+- 마지막 섹션에서 실행 우선순위(단기/중기/장기)와 리스크 대응안을 제안</p>
+<h2>References</h2>
+<p>Citation policy: keep citations inline as <code>[n]</code>; source rights belong to original publishers/authors. Validate primary sources before high-stakes use.</p>
+<ol>
+<li><span id="ref-1"></span> Finley Alexander Quinton et al. (2025). Quantum annealing applications, challenges and limitations for optimisation problems compared to classical solvers. Scientific Reports — <a href="https://doi.org/10.1038/s41598-025-96220-2" target="_blank" rel="noopener">link</a> <small>citations: 20</small></li>
+<li><span id="ref-2"></span> Lars Meuser, Alexandros Patsilinakos, Pietro Faccioli (2025). <i>De Novo</i> Design of Protein-Binding Peptides by Quantum Computing. Journal of Chemical Theory and Computation — <a href="https://doi.org/10.1021/acs.jctc.5c00768" target="_blank" rel="noopener">link</a> <small>citations: 2</small></li>
+<li><span id="ref-3"></span> scout_notes.md — <a href="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-viewer="report_views/report_notes_scout_notes.md-eb4d1c74.html" data-raw="report_notes/scout_notes.md" class="viewer-link">file</a></li>
+<li><span id="ref-4"></span> source_triage.md — <a href="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-viewer="report_views/report_notes_source_triage.md-a7ea9f7b.html" data-raw="report_notes/source_triage.md" class="viewer-link">file</a></li>
+<li><span id="ref-5"></span> Krzysztof Domino et al. (2025). On the Baltimore Light RailLink into the quantum future. Scientific Reports — <a href="https://doi.org/10.1038/s41598-025-15545-0" target="_blank" rel="noopener">link</a> <small>citations: 2</small></li>
+<li><span id="ref-6"></span> gap_finder.md — <a href="report_views/report_notes_gap_finder.md-f11434d3.html" data-viewer="report_views/report_notes_gap_finder.md-f11434d3.html" data-raw="report_notes/gap_finder.md" class="viewer-link">file</a></li>
+<li><span id="ref-7"></span> D-Wave Announces Advancements in Annealing and Gate-Model ... — <a href="https://www.dwavequantum.com/company/newsroom/press-release/d-wave-announces-advancements-in-annealing-and-gate-model-quantum-computing-technologies/" target="_blank" rel="noopener">link</a></li>
+<li><span id="ref-8"></span> claim_evidence_map.json — <a href="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-viewer="report_views/report_notes_claim_evidence_map.json-8068d99a.html" data-raw="report_notes/claim_evidence_map.json" class="viewer-link">file</a></li>
+<li><span id="ref-9"></span> 20260221_QC_report-index.md — <a href="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-viewer="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-raw="archive/20260221_QC_report-index.md" class="viewer-link">file</a></li>
+<li><span id="ref-10"></span> report_workflow.md — <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">file</a></li>
+</ol>
+<h2>Miscellaneous</h2>
+<div class="misc-block">
+<ul>
+<li>Generated at: 2026-02-28 23:45:55</li>
+<li>Duration: 00:43:18 (2598.53s)</li>
+<li>Model: gpt-5.3-codex</li>
+<li>Quality model: gpt-5.3-codex</li>
+<li>Quality strategy: pairwise</li>
+<li>Quality iterations: 2</li>
+<li>Template: quanta_magazine</li>
+<li>Depth: deep</li>
+<li>Language: Korean</li>
+<li>Tags: 양자컴퓨팅, 상용화, 개선, 핵심, 근거</li>
+<li>Output format: html</li>
+<li>PDF compile: disabled</li>
+<li>Run overview: <a href="report_views/report_run_overview.md-40ef65a9.html" data-viewer="report_views/report_run_overview.md-40ef65a9.html" data-raw="report/run_overview.md" class="viewer-link">./report/run_overview.md</a></li>
+<li>Report overview: <a href="report_views/report_run_overview_report_full_iter029_codex53_ko_qc_deepresearch_artwork.md-dbb41e93.html" data-viewer="report_views/report_run_overview_report_full_iter029_codex53_ko_qc_deepresearch_artwork.md-dbb41e93.html" data-raw="report/run_overview_report_full_iter029_codex53_ko_qc_deepresearch_artwork.md" class="viewer-link">./report/run_overview_report_full_iter029_codex53_ko_qc_deepresearch_artwork.md</a></li>
+<li>Report workflow: <a href="report_views/report_notes_report_workflow.md-bd2306de.html" data-viewer="report_views/report_notes_report_workflow.md-bd2306de.html" data-raw="report_notes/report_workflow.md" class="viewer-link">./report_notes/report_workflow.md</a></li>
+<li>Archive index: <a href="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-viewer="report_views/archive_20260221_QC_report-index.md-7ec35315.html" data-raw="archive/20260221_QC_report-index.md" class="viewer-link">./archive/20260221_QC_report-index.md</a></li>
+<li>Instruction file: <a href="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-viewer="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-raw="instruction/20260221_QC_report.txt" class="viewer-link">./instruction/20260221_QC_report.txt</a></li>
+<li>Feather instruction: <a href="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-viewer="report_views/instruction_20260221_QC_report.txt-da923f4d.html" data-raw="instruction/20260221_QC_report.txt" class="viewer-link">./instruction/20260221_QC_report.txt</a></li>
+<li>Report prompt: <a href="report_views/instruction_report_prompt_report_full_iter029_codex53_ko_qc_deepresearch_artwork-d5d017d4.html" data-viewer="report_views/instruction_report_prompt_report_full_iter029_codex53_ko_qc_deepresearch_artwork-d5d017d4.html" data-raw="instruction/report_prompt_report_full_iter029_codex53_ko_qc_deepresearch_artwork.txt" class="viewer-link">./instruction/report_prompt_report_full_iter029_codex53_ko_qc_deepresearch_artwork.txt</a></li>
+</ul>
+</div>
+<div class="misc-block ai-disclosure">
+<p><strong>AI Transparency and Source Notice</strong></p>
+<ul>
+<li>AI 투명성 고지: 본 문서는 Federlicht 에이전트 파이프라인을 통해 생성되었으며, 최종 책임과 배포 판단은 사용자/조직에 있습니다.</li>
+<li>출처·저작권 고지: 외부 소스의 저작권/라이선스는 원 저작권자 정책을 따르며, 본문 인용은 분석 목적의 요약/재서술을 원칙으로 합니다.</li>
+<li>검증 고지: 고위험 의사결정(법률·의료·재무·규제)에는 원문 대조 및 추가 검증을 수행하세요.</li>
+<li>EU AI Act 정합성 참고: 본 산출물은 AI 보조 생성물임을 명시하며, 인간 검토를 전제로 사용해야 합니다.</li>
+</ul>
+</div>
+    </main>
+  </div>
+  <div id="viewer-overlay" class="viewer-overlay"></div>
+  <aside id="viewer-panel" class="viewer-panel" aria-hidden="true">
+    <div class="viewer-header">
+      <div class="viewer-title" id="viewer-title">Source preview</div>
+      <div class="viewer-actions">
+        <a id="viewer-raw" href="#" target="_blank" rel="noopener">Open raw</a>
+        <button class="viewer-close" id="viewer-close" aria-label="Close">x</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" class="viewer-frame" title="Source preview"></iframe>
+  </aside>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      const storedTheme = localStorage.getItem('federlicht.theme');
+      const theme = themeParam || storedTheme;
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('federlicht.theme', theme);
+      }
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        // Report files are placed under runs/<run>/report*.html.
+        // A stable relative target is ../../report_hub/index.html from the report file.
+        // Keep extra candidates for mixed hosting roots (/site, /).
+        const candidates = [
+          '../../report_hub/index.html',
+          '/report_hub/index.html',
+          '/site/report_hub/index.html',
+          '../index.html',
+          '/index.html',
+        ];
+        backLink.style.display = 'inline-flex';
+        backLink.href = candidates[0];
+        const canProbe = String(window.location.protocol || '').startsWith('http');
+        if (canProbe) {
+          const probe = async () => {
+            for (const href of candidates) {
+              try {
+                const resp = await fetch(href, { method: 'HEAD' });
+                if (resp && resp.ok) {
+                  backLink.href = href;
+                  return;
+                }
+              } catch (_) {}
+            }
+          };
+          probe();
+        }
+      }
+      const panel = document.getElementById('viewer-panel');
+      const overlay = document.getElementById('viewer-overlay');
+      const frame = document.getElementById('viewer-frame');
+      const rawLink = document.getElementById('viewer-raw');
+      const title = document.getElementById('viewer-title');
+      const closeBtn = document.getElementById('viewer-close');
+      function closeViewer() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        frame.src = 'about:blank';
+      }
+      function openViewer(viewer, raw, label) {
+        frame.src = viewer;
+        rawLink.href = raw || viewer;
+        title.textContent = label || 'Source preview';
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('.viewer-link').forEach((link) => {
+        link.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const viewer = link.getAttribute('data-viewer') || link.href;
+          const raw = link.getAttribute('data-raw');
+          const label = link.textContent || 'Source preview';
+          if (viewer) openViewer(viewer, raw, label);
+        });
+      });
+      overlay.addEventListener('click', closeViewer);
+      closeBtn.addEventListener('click', closeViewer);
+      const tocLinks = Array.from(document.querySelectorAll('.toc-item'));
+      const tocSections = tocLinks
+        .map((link) => {
+          const id = (link.getAttribute('href') || '').replace('#', '');
+          if (!id) return null;
+          const section = document.getElementById(id);
+          if (!section) return null;
+          return { link, section };
+        })
+        .filter(Boolean);
+      if (tocSections.length) {
+        tocLinks.forEach((link) => {
+          link.addEventListener('click', (ev) => {
+            const href = link.getAttribute('href') || '';
+            if (!href.startsWith('#')) return;
+            const target = document.getElementById(href.slice(1));
+            if (!target) return;
+            ev.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (history && history.replaceState) {
+              history.replaceState(null, '', href);
+            }
+          });
+        });
+        
+        const updateToc = () => {
+          const threshold = window.scrollY + 180;
+          let active = null;
+          for (const item of tocSections) {
+            if (item.section.offsetTop <= threshold) active = item;
+          }
+          tocLinks.forEach((node) => node.classList.remove('active'));
+          if (active) active.link.classList.add('active');
+        };
+        updateToc();
+        window.addEventListener('scroll', updateToc, { passive: true });
+      }
+    })();
+  </script>
+</body>
+</html>

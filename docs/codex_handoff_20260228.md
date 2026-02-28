@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-28
 
-Last updated: 2026-02-28 22:20 +09:00 (iter028 rerun sync)  
+Last updated: 2026-02-28 23:52 +09:00 (iter029 citation-guard sync)  
 Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 1) 목적 (고정)
@@ -34,6 +34,12 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
   - gate summary: `test-results/p0_quality_gate_qc_iter028_codex53_deepresearch.summary.json`
   - gate report: `test-results/p0_quality_gate_qc_iter028_codex53_deepresearch.md`
   - manual review: `test-results/p0_manual_review_qc_iter028_codex53_deepresearch.md`
+- iter029 재생성/재측정 산출물 (이번 턴):
+  - snapshot: `test-results/p0_sample_qc_iter029_codex53_ko_deepresearch_artwork_snapshot.html`
+  - prompt: `test-results/p0_prompt_qc_iter029_codex53_deepresearch_artwork.txt`
+  - gate summary: `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.summary.json`
+  - gate report: `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.md`
+  - manual review: `test-results/p0_manual_review_qc_iter029_codex53_deepresearch.md`
 - 이번 턴 추가 반영(2026-02-28):
   - Federnett Hub/Index E2E 보강:
     - deck manifest에 `deck_quality(profile/effective_band/overall/gate_pass/iterations)` 포함
@@ -97,6 +103,16 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
     - URL anchor 뒤 dangling `)` 정리
 
 ## 3) 품질 결과 스냅샷
+- deep_research gate (iter029 citation-guard): `PASS`
+  - overall: `90.66`
+  - claim_support_ratio: `83.87`
+  - unsupported_claim_count: `5.00`
+  - section_coherence_score: `100.00`
+  - citation_integrity_score: `100.00`
+  - narrative_flow_score: `85.56`
+- 수기 리뷰(iter029):
+  - 개선: SVG `xmlns` citation 오염 재발 없음, malformed citation token(`[[`) 0건
+  - 잔여 이슈: claim_support 하락(`100.00 -> 83.87`), unsupported claim `5`건
 - deep_research gate (iter028 refresh): `PASS`
   - overall: `92.48`
   - claim_support_ratio: `100.00`

@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased (2026-02-28)
+- citation rewrite hardening for raw HTML/SVG:
+  - `rewrite_citations(...)` now skips naked URL/path rewrites when the token is inside an HTML tag attribute.
+  - prevents malformed SVG/XML attribute rewrites (e.g., `xmlns="http://..."` -> citation token injection).
+  - tests: add regression `test_rewrite_citations_keeps_urls_inside_html_attributes`.
+- QC iter029 deep_research rerun:
+  - snapshot: `test-results/p0_sample_qc_iter029_codex53_ko_deepresearch_artwork_snapshot.html`
+  - gate summary/report:
+    - `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.summary.json`
+    - `test-results/p0_quality_gate_qc_iter029_codex53_deepresearch.md`
+  - manual review: `test-results/p0_manual_review_qc_iter029_codex53_deepresearch.md`
+  - gate result: `PASS` (`overall=90.66`, `claim_support=83.87`, `unsupported=5`, `section_coherence=100.00`)
 
 ## 1.9.33 (2026-02-28)
 - release alignment:
