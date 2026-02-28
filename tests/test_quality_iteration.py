@@ -11,8 +11,8 @@ from federlicht.quality_iteration import (
 )
 
 
-def test_policy_for_profile_world_class_has_higher_min_iterations() -> None:
-    world = policy_for_profile("world_class")
+def test_policy_for_profile_deep_research_has_higher_min_iterations() -> None:
+    world = policy_for_profile("deep_research")
     baseline = policy_for_profile("baseline")
     assert world.min_iterations >= baseline.min_iterations
     assert world.max_iterations >= baseline.max_iterations
@@ -20,7 +20,7 @@ def test_policy_for_profile_world_class_has_higher_min_iterations() -> None:
 
 def test_resolve_iteration_plan_respects_profile_min_when_gate_enabled() -> None:
     plan = resolve_iteration_plan(
-        profile="world_class",
+        profile="deep_research",
         gate_enabled=True,
         requested_iterations=1,
         auto_extra_iterations=1,
@@ -31,7 +31,7 @@ def test_resolve_iteration_plan_respects_profile_min_when_gate_enabled() -> None
 
 def test_resolve_iteration_plan_no_gate_keeps_requested() -> None:
     plan = resolve_iteration_plan(
-        profile="world_class",
+        profile="deep_research",
         gate_enabled=False,
         requested_iterations=2,
         auto_extra_iterations=4,
@@ -67,7 +67,7 @@ def test_compute_delta_and_plateau() -> None:
 
 def test_build_focus_directives_includes_priority_hints() -> None:
     text = build_focus_directives(
-        profile_label="world_class",
+        profile_label="deep_research",
         targets={
             "min_overall": 82.0,
             "min_claim_support": 60.0,
@@ -84,7 +84,7 @@ def test_build_focus_directives_includes_priority_hints() -> None:
             "This claim has no citation and should be grounded.",
         ],
     )
-    assert "Quality profile: world_class" in text
+    assert "Quality profile: deep_research" in text
     assert "Increase claim grounding" in text
     assert "Reduce unsupported claims" in text
     assert "Improve section coherence" in text

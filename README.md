@@ -2,13 +2,18 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.32
+Version: 1.9.33
 
-## Latest Update (1.9.32, 2026-02-27)
-- Policy priority was realigned to PPTX reader/ingest management first, then PPTX-style HTML rendering/artwork quality uplift.
-- QC world-class sample report run was added with Codex backend (`gpt-5.3-codex`) and upgraded visual composition.
-- New QC sample snapshot and quality-gate artifacts were added under `test-results/` for reproducible review.
-- World-class gate pass was confirmed on the final QC sample (`overall=93.61`, `claim_support=97.67`, `unsupported=1`, `section_coherence=100`).
+## Latest Update (1.9.33, 2026-02-28)
+- Version sync completed at `1.9.33` (`pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`).
+- QC deep-research sample was regenerated as iter028 with updated writer/finalizer constraints (`FEDERLICHT_LLM_BACKEND=codex_cli`, `CODEX_MODEL=gpt-5.3-codex`).
+- Reproducible artifacts were added under `test-results/`:
+  - `p0_sample_qc_iter028_codex53_ko_deepresearch_artwork_snapshot.html`
+  - `p0_prompt_qc_iter028_codex53_deepresearch_artwork.txt`
+  - `p0_quality_gate_qc_iter028_codex53_deepresearch.summary.json`
+  - `p0_quality_gate_qc_iter028_codex53_deepresearch.md`
+  - `p0_manual_review_qc_iter028_codex53_deepresearch.md`
+- Deep-research gate pass was reconfirmed on the regenerated QC sample (`overall=92.48`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`).
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:
@@ -330,7 +335,7 @@ Use profile presets to keep quality thresholds explicit and comparable across ru
 - `--quality-profile smoke`: pipeline health check only (not publication-quality)
 - `--quality-profile baseline`: default regression bar
 - `--quality-profile professional`: production-quality bar
-- `--quality-profile world_class`: top-tier research bar
+- `--quality-profile deep_research`: high-rigor deep research bar
 
 Per-metric options still work as overrides:
 - `--quality-min-overall`
@@ -341,7 +346,7 @@ Per-metric options still work as overrides:
 Example:
 ```bash
 federlicht --run ./runs/demo --output ./runs/demo/report_full.html \
-  --quality-profile world_class \
+  --quality-profile deep_research \
   --quality-iterations 3 \
   --quality-auto-extra-iterations 2
 ```

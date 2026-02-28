@@ -1,0 +1,58 @@
+[
+  {
+    "iteration": 0,
+    "summary": {
+      "slide_count": 12,
+      "traceability_score": 16.67,
+      "density_score": 100.0,
+      "narrative_flow_score": 75.0,
+      "visual_integrity_score": 100.0,
+      "overall_score": 67.33,
+      "quality_gate_pass": false,
+      "gate_failures": [
+        "overall",
+        "traceability"
+      ],
+      "targets": {
+        "min_overall": 78.0,
+        "min_traceability": 70.0,
+        "min_density": 65.0,
+        "min_flow": 70.0,
+        "min_visual_integrity": 70.0
+      }
+    }
+  },
+  {
+    "iteration": 1,
+    "summary": {
+      "slide_count": 12,
+      "traceability_score": 100.0,
+      "density_score": 100.0,
+      "narrative_flow_score": 100.0,
+      "visual_integrity_score": 100.0,
+      "overall_score": 100.0,
+      "quality_gate_pass": true,
+      "gate_failures": [],
+      "targets": {
+        "min_overall": 78.0,
+        "min_traceability": 70.0,
+        "min_density": 65.0,
+        "min_flow": 70.0,
+        "min_visual_integrity": 70.0
+      }
+    },
+    "actions": [
+      "set_last_slide_summary",
+      "add_placeholder_ref:2",
+      "add_placeholder_ref:3",
+      "add_placeholder_ref:4",
+      "add_placeholder_ref:5",
+      "add_placeholder_ref:6",
+      "add_placeholder_ref:7",
+      "add_placeholder_ref:8",
+      "add_placeholder_ref:9",
+      "add_placeholder_ref:10",
+      "add_placeholder_ref:11"
+    ]
+  }
+]

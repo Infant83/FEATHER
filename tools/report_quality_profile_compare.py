@@ -10,7 +10,7 @@ from federlicht import report as report_mod
 from federlicht.quality_profiles import QUALITY_PROFILES, resolve_quality_gate_targets
 
 
-PROFILES = ("smoke", "baseline", "professional", "world_class")
+PROFILES = ("smoke", "baseline", "professional", "deep_research")
 
 
 def _to_float(value: Any, default: float = 0.0) -> float:
@@ -131,4 +131,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

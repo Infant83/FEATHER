@@ -83,6 +83,7 @@ def test_heuristic_handles_html_headings_and_links() -> None:
     )
     assert signals["section_coverage"] >= 99.0
     assert signals["citation_density"] > 0.0
+    assert signals["citation_integrity_score"] > 0.0
     assert signals["claim_support_ratio"] > 0.0
 
 
@@ -110,6 +111,41 @@ Gateway exposure can be reduced with ACL hardening and sandbox isolation
     )
     assert signals["claim_support_ratio"] >= 90.0
     assert signals["unsupported_claim_count"] == 0.0
+
+
+def test_citation_integrity_score_penalizes_broken_link_syntax_html() -> None:
+    clean_html = """
+<html><body>
+<h2>Executive Summary</h2>
+<p>Validated result with citation <a href="https://example.com/a">[1]</a>.</p>
+<h2>Key Findings</h2>
+<p>Second grounded claim <a href="https://example.com/b">[2]</a>.</p>
+</body></html>
+"""
+    broken_html = """
+<html><body>
+<h2>Executive Summary</h2>
+<p>Broken citation chain [\\[1\\]](<a href="https://example.com/a)[\\[2\\]](https://example.com/b">https://example.com/a)[\\[2\\]](https://example.com/b</a>).</p>
+<h2>Key Findings</h2>
+<p>Another sentence with malformed chain [\\[3\\]](<a href="https://example.com/c)[\\[4\\]](https://example.com/d">https://example.com/c)[\\[4\\]](https://example.com/d</a>).</p>
+</body></html>
+"""
+    clean = report.compute_heuristic_quality_signals(
+        clean_html,
+        ["Executive Summary", "Key Findings"],
+        "html",
+        depth="deep",
+        report_intent="research",
+    )
+    broken = report.compute_heuristic_quality_signals(
+        broken_html,
+        ["Executive Summary", "Key Findings"],
+        "html",
+        depth="deep",
+        report_intent="research",
+    )
+    assert broken["citation_integrity_score"] < clean["citation_integrity_score"]
+    assert broken["overall"] < clean["overall"]
 
 
 def test_heuristic_section_coverage_supports_semantic_heading_aliases_html() -> None:

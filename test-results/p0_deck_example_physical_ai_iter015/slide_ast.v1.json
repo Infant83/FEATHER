@@ -1,0 +1,404 @@
+{
+  "schema_version": "slide_ast.v1",
+  "created_at": "2026-02-27T04:51:07",
+  "outline_schema_version": "slide_outline.v1",
+  "style_pack": "quanta_magazine",
+  "slides": [
+    {
+      "slide_id": "SLIDE-01",
+      "source_outline_id": "SLIDE-01",
+      "layout": "title_body",
+      "title_block": {
+        "headline": "Problem Framing",
+        "subheadline": "Intro"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Contents Executive Summary Scope & Methodology Technical Background Physical AI와 ‘닫힌 루프’의 의미 VLA(Vision-Language-Action)와 로봇 파운데이션 모델 행동 표현(action representation)과 action chunking 생성적 정책:..."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Contents Executive Summary Scope & Methodology Technical Background Physical AI와 ‘닫힌 루프..."
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-02",
+      "source_outline_id": "SLIDE-02",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Scope and Methodology",
+        "subheadline": "Methodology"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Define scope boundaries, assumptions, and selection criteria."
+        },
+        {
+          "type": "diagram",
+          "engine": "mermaid",
+          "spec": "flowchart LR\n  A[\"Scope and Methodology\"] --> B[\"Define scope boundaries, assumptions, and selection crite...\"]\n  B --> C[\"Decision / Action\"]"
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-03",
+      "source_outline_id": "SLIDE-03",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Evidence Snapshot",
+        "subheadline": "Evidence"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Summarize strongest evidence and benchmark outcomes."
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Claim",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "Summarize strongest evidence and benchmark outcomes.",
+              "TBD"
+            ]
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-04",
+      "source_outline_id": "SLIDE-04",
+      "layout": "title_body",
+      "title_block": {
+        "headline": "Risks and Gaps",
+        "subheadline": "Risk"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "List uncertainty and unresolved validation gaps."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "List uncertainty and unresolved validation gaps"
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-05",
+      "source_outline_id": "SLIDE-05",
+      "layout": "title_body",
+      "title_block": {
+        "headline": "Recommendation and Next Step",
+        "subheadline": "Recommendation"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Provide decision recommendation with execution guardrails."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "Provide decision recommendation with execution guardrails"
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-06",
+      "source_outline_id": "SLIDE-06",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 4",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 4"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-07",
+      "source_outline_id": "SLIDE-07",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 5",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 5"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-08",
+      "source_outline_id": "SLIDE-08",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 6",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 6"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-09",
+      "source_outline_id": "SLIDE-09",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 7",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 7"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-10",
+      "source_outline_id": "SLIDE-10",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 8",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 8"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-11",
+      "source_outline_id": "SLIDE-11",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 9",
+        "subheadline": "Analysis"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 9"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [
+          "./report_notes/claim_evidence_map.json"
+        ],
+        "source_policy": "claim-evidence-source"
+      }
+    },
+    {
+      "slide_id": "SLIDE-12",
+      "source_outline_id": "SLIDE-12",
+      "layout": "title_two_column",
+      "title_block": {
+        "headline": "Deep Dive 10",
+        "subheadline": "Summary"
+      },
+      "body_blocks": [
+        {
+          "type": "text",
+          "text": "Expand evidence interpretation and implications for stakeholders."
+        },
+        {
+          "type": "chart",
+          "library": "chartjs",
+          "kind": "bar",
+          "labels": [
+            "Deep Dive 10"
+          ],
+          "series": [
+            {
+              "label": "Evidence references",
+              "data": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "citation_footer": {
+        "refs": [],
+        "source_policy": "claim-evidence-source"
+      }
+    }
+  ]
+}

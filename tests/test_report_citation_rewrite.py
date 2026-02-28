@@ -35,6 +35,18 @@ def test_linkify_html_supports_unicode_archive_path() -> None:
     assert 'href="./archive/동영상생성AI-index.md"' in linked
 
 
+def test_clean_citation_labels_heals_malformed_anchor_chain() -> None:
+    raw = (
+        '<p>근거: [\\[7\\]](<a href="https://example.com/a)[\\[8\\]](https://example.com/b">'
+        "https://example.com/a)[\\[8\\]](https://example.com/b</a>).</p>"
+    )
+    cleaned = report.clean_citation_labels(raw)
+
+    assert "[\\[7\\]](<a href=" not in cleaned
+    assert ")[\\[8\\]](" not in cleaned
+    assert 'href="https://example.com/a"' in cleaned
+
+
 def test_scrub_internal_index_mentions_rewrites_plain_filename() -> None:
     text = "근거는 tavily_search.jsonl 과 source_index.jsonl에서 확인했다."
     cleaned = report.scrub_internal_index_mentions(text)

@@ -47,7 +47,7 @@ _POLICIES: dict[str, QualityIterationPolicy] = {
         plateau_delta=0.8,
         plateau_patience=2,
     ),
-    "world_class": QualityIterationPolicy(
+    "deep_research": QualityIterationPolicy(
         min_iterations=3,
         max_iterations=7,
         plateau_delta=0.7,

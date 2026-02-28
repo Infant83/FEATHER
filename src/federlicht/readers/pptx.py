@@ -107,6 +107,159 @@ def _extract_text_frame(shape) -> list[str]:
     return lines
 
 
+def _source_path_under_run(path: Path, run_dir: Path) -> str:
+    try:
+        rel = path.resolve().relative_to(run_dir.resolve()).as_posix()
+        return f"./{rel}"
+    except Exception:
+        return path.resolve().as_posix()
+
+
+def _shape_type_name(shape) -> str:
+    if getattr(shape, "has_table", False):
+        return "table"
+    if getattr(shape, "has_chart", False):
+        return "chart"
+    if MSO_SHAPE_TYPE is not None and getattr(shape, "shape_type", None) == MSO_SHAPE_TYPE.PICTURE:
+        return "picture"
+    if getattr(shape, "has_text_frame", False):
+        return "text"
+    return "unknown"
+
+
+def _shape_text_payload(shape, shape_type: str) -> str:
+    lines: list[str] = []
+    if shape_type == "table":
+        lines = _extract_table_text(shape)
+    elif shape_type == "chart":
+        lines = _extract_chart_text(shape)
+    elif shape_type == "text":
+        lines = _extract_text_frame(shape)
+    return "\n".join(line for line in lines if str(line).strip()).strip()
+
+
+def extract_pptx_slide_contract(
+    pptx_path: Path,
+    run_dir: Path,
+    *,
+    max_slides: int = 0,
+    start_slide: int = 0,
+    include_notes: bool = True,
+    max_text_chars_per_shape: int = 500,
+) -> dict:
+    source_path = _source_path_under_run(pptx_path, run_dir)
+    if not _pptx_available():
+        return {
+            "schema_version": "pptx_ingest.v1",
+            "reader": "python-pptx",
+            "available": False,
+            "error": "python-pptx is not installed",
+            "source_path": source_path,
+            "slide_count_total": 0,
+            "extracted_slide_count": 0,
+            "truncated": False,
+            "slides": [],
+        }
+
+    prs = pptx.Presentation(pptx_path)  # type: ignore[attr-defined]
+    total = len(prs.slides)
+    if total <= 0:
+        return {
+            "schema_version": "pptx_ingest.v1",
+            "reader": "python-pptx",
+            "available": True,
+            "source_path": source_path,
+            "slide_count_total": 0,
+            "extracted_slide_count": 0,
+            "slide_start": 0,
+            "slide_end": 0,
+            "truncated": False,
+            "slides": [],
+        }
+
+    start_slide = max(0, min(start_slide, max(0, total - 1)))
+    if max_slides <= 0:
+        count = max(0, total - start_slide)
+    else:
+        count = min(max_slides, total - start_slide)
+
+    slides: list[dict] = []
+    for idx in range(start_slide, start_slide + count):
+        slide = prs.slides[idx]
+        slide_no = idx + 1
+        slide_id = f"slide-{slide_no:03d}"
+        slide_anchor = f"{source_path}#slide-{slide_no}"
+        elements: list[dict] = []
+        for shape_idx, shape in enumerate(slide.shapes, start=1):
+            shape_type = _shape_type_name(shape)
+            text_payload = _shape_text_payload(shape, shape_type)
+            if max_text_chars_per_shape > 0 and text_payload:
+                text_payload = text_payload[:max_text_chars_per_shape]
+            content_kind = "image" if shape_type == "picture" else "text"
+            element: dict[str, object] = {
+                "element_id": f"{slide_id}-shape-{shape_idx:03d}",
+                "shape_index": shape_idx,
+                "shape_type": shape_type,
+                "content_kind": content_kind,
+                "source_path": source_path,
+                "anchor": f"{slide_anchor}-shape-{shape_idx}",
+            }
+            if text_payload:
+                element["text"] = text_payload
+            if shape_type == "picture":
+                width = _emu_to_px(int(getattr(shape, "width", 0) or 0))
+                height = _emu_to_px(int(getattr(shape, "height", 0) or 0))
+                element["image"] = {"width_px": max(0, width), "height_px": max(0, height)}
+            if shape_type == "unknown" and not text_payload:
+                continue
+            elements.append(element)
+
+        if include_notes:
+            try:
+                notes = slide.notes_slide.notes_text_frame.text  # type: ignore[attr-defined]
+            except Exception:
+                notes = ""
+            note_text = str(notes or "").strip()
+            if max_text_chars_per_shape > 0 and note_text:
+                note_text = note_text[:max_text_chars_per_shape]
+            if note_text:
+                elements.append(
+                    {
+                        "element_id": f"{slide_id}-notes",
+                        "shape_index": len(elements) + 1,
+                        "shape_type": "notes",
+                        "content_kind": "text",
+                        "source_path": source_path,
+                        "anchor": f"{slide_anchor}-notes",
+                        "text": note_text,
+                    }
+                )
+
+        slides.append(
+            {
+                "slide_id": slide_id,
+                "slide_index": slide_no,
+                "slide_title": _slide_title(slide),
+                "source_path": source_path,
+                "anchor": slide_anchor,
+                "elements": elements,
+            }
+        )
+
+    return {
+        "schema_version": "pptx_ingest.v1",
+        "reader": "python-pptx",
+        "available": True,
+        "source_path": source_path,
+        "slide_count_total": total,
+        "extracted_slide_count": len(slides),
+        "slide_start": start_slide + 1,
+        "slide_end": start_slide + count,
+        "truncated": (start_slide + count) < total,
+        "slides": slides,
+    }
+
+
 def read_pptx_text(
     pptx_path: Path,
     max_slides: int,

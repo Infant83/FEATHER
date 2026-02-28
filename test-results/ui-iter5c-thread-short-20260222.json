@@ -1,9 +1,0 @@
-{
-  "url": "http://127.0.0.1:8883/",
-  "checks": {
-    "turn_count": 1,
-    "thread_has_short_class": false,
-    "global_log_card_count": 0
-  },
-  "page_errors": []
-}

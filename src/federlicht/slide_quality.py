@@ -3,6 +3,34 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from .quality_profiles import normalize_quality_profile
+
+
+DEFAULT_SLIDE_QUALITY_PROFILE = "professional"
+SLIDE_QUALITY_TARGETS: dict[str, dict[str, float]] = {
+    "baseline": {
+        "min_overall": 72.0,
+        "min_traceability": 60.0,
+        "min_density": 58.0,
+        "min_flow": 62.0,
+        "min_visual_integrity": 62.0,
+    },
+    "professional": {
+        "min_overall": 78.0,
+        "min_traceability": 70.0,
+        "min_density": 65.0,
+        "min_flow": 70.0,
+        "min_visual_integrity": 70.0,
+    },
+    "deep_research": {
+        "min_overall": 84.0,
+        "min_traceability": 78.0,
+        "min_density": 72.0,
+        "min_flow": 80.0,
+        "min_visual_integrity": 78.0,
+    },
+}
+
 
 def _clean_text(value: object) -> str:
     return str(value or "").strip()
@@ -13,6 +41,25 @@ def _safe_float(value: object, default: float = 0.0) -> float:
         return float(value)
     except Exception:
         return default
+
+
+def _normalize_slide_quality_profile(value: object) -> str:
+    token = normalize_quality_profile(value)
+    if token in {"none", "smoke", "baseline"}:
+        return "baseline"
+    if token in {"professional", "deep_research"}:
+        return token
+    return DEFAULT_SLIDE_QUALITY_PROFILE
+
+
+def resolve_slide_quality_targets(profile: object) -> dict[str, object]:
+    normalized = _normalize_slide_quality_profile(profile)
+    targets = dict(SLIDE_QUALITY_TARGETS.get(normalized) or SLIDE_QUALITY_TARGETS[DEFAULT_SLIDE_QUALITY_PROFILE])
+    return {
+        "profile": normalized,
+        "effective_band": normalized,
+        "targets": targets,
+    }
 
 
 def _is_transition_intent(intent: str) -> bool:
@@ -134,12 +181,24 @@ def _visual_integrity_score(slides: list[dict[str, Any]]) -> float:
 def evaluate_slide_ast_quality(
     slide_ast: dict[str, Any],
     *,
-    min_overall: float = 78.0,
-    min_traceability: float = 70.0,
-    min_density: float = 65.0,
-    min_flow: float = 70.0,
-    min_visual_integrity: float = 70.0,
+    profile: object = DEFAULT_SLIDE_QUALITY_PROFILE,
+    min_overall: float | None = None,
+    min_traceability: float | None = None,
+    min_density: float | None = None,
+    min_flow: float | None = None,
+    min_visual_integrity: float | None = None,
 ) -> dict[str, Any]:
+    policy = resolve_slide_quality_targets(profile)
+    target_map = dict(policy.get("targets") or {})
+    resolved_min_overall = _safe_float(min_overall, _safe_float(target_map.get("min_overall"), 78.0))
+    resolved_min_traceability = _safe_float(
+        min_traceability, _safe_float(target_map.get("min_traceability"), 70.0)
+    )
+    resolved_min_density = _safe_float(min_density, _safe_float(target_map.get("min_density"), 65.0))
+    resolved_min_flow = _safe_float(min_flow, _safe_float(target_map.get("min_flow"), 70.0))
+    resolved_min_visual_integrity = _safe_float(
+        min_visual_integrity, _safe_float(target_map.get("min_visual_integrity"), 70.0)
+    )
     slides = _iter_slide_entries(slide_ast)
     traceability = _traceability_score(slides)
     density = _density_score(slides)
@@ -153,17 +212,19 @@ def evaluate_slide_ast_quality(
         2,
     )
     gate_failures: list[str] = []
-    if overall < float(min_overall):
+    if overall < float(resolved_min_overall):
         gate_failures.append("overall")
-    if traceability < float(min_traceability):
+    if traceability < float(resolved_min_traceability):
         gate_failures.append("traceability")
-    if density < float(min_density):
+    if density < float(resolved_min_density):
         gate_failures.append("density")
-    if flow < float(min_flow):
+    if flow < float(resolved_min_flow):
         gate_failures.append("narrative_flow")
-    if visual < float(min_visual_integrity):
+    if visual < float(resolved_min_visual_integrity):
         gate_failures.append("visual_integrity")
     return {
+        "quality_profile": str(policy.get("profile") or DEFAULT_SLIDE_QUALITY_PROFILE),
+        "quality_effective_band": str(policy.get("effective_band") or DEFAULT_SLIDE_QUALITY_PROFILE),
         "slide_count": len(slides),
         "traceability_score": traceability,
         "density_score": density,
@@ -173,11 +234,11 @@ def evaluate_slide_ast_quality(
         "quality_gate_pass": not gate_failures,
         "gate_failures": gate_failures,
         "targets": {
-            "min_overall": _safe_float(min_overall),
-            "min_traceability": _safe_float(min_traceability),
-            "min_density": _safe_float(min_density),
-            "min_flow": _safe_float(min_flow),
-            "min_visual_integrity": _safe_float(min_visual_integrity),
+            "min_overall": _safe_float(resolved_min_overall),
+            "min_traceability": _safe_float(resolved_min_traceability),
+            "min_density": _safe_float(resolved_min_density),
+            "min_flow": _safe_float(resolved_min_flow),
+            "min_visual_integrity": _safe_float(resolved_min_visual_integrity),
         },
     }
 
@@ -248,6 +309,8 @@ def build_slide_quality_report(summary: dict[str, Any]) -> str:
     payload = dict(summary or {})
     lines = [
         "Slide Quality Summary",
+        f"- profile: {str(payload.get('quality_profile') or DEFAULT_SLIDE_QUALITY_PROFILE)}",
+        f"- effective_band: {str(payload.get('quality_effective_band') or DEFAULT_SLIDE_QUALITY_PROFILE)}",
         f"- slides: {int(payload.get('slide_count') or 0)}",
         f"- overall: {_safe_float(payload.get('overall_score')):.2f}",
         f"- traceability: {_safe_float(payload.get('traceability_score')):.2f}",

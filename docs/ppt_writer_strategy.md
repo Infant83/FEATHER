@@ -106,7 +106,7 @@ Last updated: 2026-02-27
 - `2026-02-26`: `pytest -q tests/test_slide_pipeline.py tests/test_pptx_renderer.py tests/test_slide_quality.py tests/test_pipeline_runner_impl.py` -> `19 passed`
 - `2026-02-26`: `pytest -q tests/test_federlicht_cli_args.py tests/test_version_consistency_tool.py` -> `4 passed`
 - `2026-02-26`: `pytest -q tests/test_artwork_tools.py` -> `15 passed`
-- `2026-02-26`: `python tools/run_report_quality_gate.py --input site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html --summary-output test-results/p0_quality_gate_physical_ai_iter015.summary.json --report-md test-results/p0_quality_gate_physical_ai_iter015.md --quality-profile world_class` -> `PASS` (`overall=89.41`, `claim_support=69.57`, `unsupported=7`, `section_coherence=94`)
+- `2026-02-26`: `python tools/run_report_quality_gate.py --input site/runs/physical_ai_insight/report_full_iter015_gpt52_ko_classroom_world.html --summary-output test-results/p0_quality_gate_physical_ai_iter015.summary.json --report-md test-results/p0_quality_gate_physical_ai_iter015.md --quality-profile deep_research` -> `PASS` (`overall=89.41`, `claim_support=69.57`, `unsupported=7`, `section_coherence=94`)
 - `2026-02-26`: sample deck quality run (`test-results/p0_deck_example_physical_ai_iter015`) -> 초기 `overall=67.33`/`FAIL`, auto-revision 1회 후 `overall=100.00`/`PASS`, HTML/PPTX export 성공
 
 ## 정책 기준 우선순위 (실행용)

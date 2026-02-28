@@ -1,0 +1,48 @@
+{
+  "rows": [
+    {
+      "path": "test-results/p0_sample_qc_iter027_codex53_ko_worldclass_artwork_snapshot.html",
+      "format": "html",
+      "overall": 92.35,
+      "claim_support_ratio": 97.67,
+      "unsupported_claim_count": 1.0,
+      "evidence_density_score": 100.0,
+      "section_coherence_score": 100.0,
+      "signals": {
+        "section_coverage": 100.0,
+        "citation_density": 100.0,
+        "evidence_density_score": 100.0,
+        "claim_support_ratio": 97.67,
+        "unsupported_claim_count": 1.0,
+        "section_coherence_score": 100.0,
+        "method_transparency": 100.0,
+        "traceability": 86.0,
+        "uncertainty_handling": 100.0,
+        "narrative_density_score": 44.8,
+        "narrative_flow_score": 64.22,
+        "visual_evidence_score": 92.0,
+        "overall": 92.35
+      }
+    }
+  ],
+  "rows_count": 1,
+  "summary": {
+    "overall": 92.35,
+    "claim_support_ratio": 97.67,
+    "unsupported_claim_count": 1.0,
+    "evidence_density_score": 100.0,
+    "section_coherence_score": 100.0
+  },
+  "baseline_summary": null,
+  "delta_summary": null,
+  "compare_markdown": "",
+  "suite": null,
+  "required_sections": [
+    "Executive Summary",
+    "Scope & Methodology",
+    "Key Findings",
+    "Risks & Gaps"
+  ],
+  "depth": "deep",
+  "intent": "research"
+}

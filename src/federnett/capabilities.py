@@ -381,6 +381,8 @@ def _normalize_rewrite_override(raw: Any) -> dict[str, Any]:
         "content",
         "tone",
         "style",
+        "flow",
+        "structure",
         "length",
         "request_text",
     ):
@@ -395,6 +397,8 @@ def _normalize_rewrite_override(raw: Any) -> dict[str, Any]:
         "rewrite_text": "replacement",
         "tone_hint": "tone",
         "style_hint": "style",
+        "flow_hint": "flow",
+        "structure_hint": "structure",
         "length_hint": "length",
         "request": "request_text",
     }
@@ -415,6 +419,9 @@ def _merge_rewrite_spec(
     section = str(spec.get("section") or spec.get("section_title") or "").strip()
     if section:
         spec["section"] = section[:160]
+    flow_hint = str(spec.get("flow") or spec.get("structure") or "").strip()
+    if flow_hint:
+        spec["flow"] = flow_hint[:180]
     request = str(request_text or spec.get("request_text") or "").strip()
     if request:
         spec["request_text"] = request[:1200]
@@ -555,6 +562,25 @@ def _extract_style_hint(request_text: str) -> str:
     return ""
 
 
+def _extract_flow_hint(request_text: str) -> str:
+    raw_text = str(request_text or "")
+    text = raw_text.lower()
+    if not text:
+        return ""
+    key_match = re.search(r"(?i)(?:flow|structure|전개|흐름|문맥)\s*[:=]\s*([^\n,;]{1,100})", raw_text)
+    if key_match:
+        value = str(key_match.group(1) or "").strip().strip("\"'“”‘’`")
+        if value:
+            return value
+    if any(token in text for token in ("기승전결", "서론 본론 결론", "narrative arc")):
+        return "narrative arc with setup -> development -> implication/closure."
+    if any(token in text for token in ("문맥", "연결", "전환", "coherence", "transition")):
+        return "explicit bridge sentences between paragraphs/sections to preserve context continuity."
+    if any(token in text for token in ("서술형", "narrative", "산문")):
+        return "prose-first flow: opening claim -> evidence interpretation -> transition/implication."
+    return ""
+
+
 def _render_section_rewrite_prompt(
     *,
     report_rel: str,
@@ -562,6 +588,7 @@ def _render_section_rewrite_prompt(
     existing_section: str,
     tone_hint: str,
     style_hint: str,
+    flow_hint: str,
     length_hint: str,
 ) -> str:
     excerpt = existing_section.strip()
@@ -579,6 +606,8 @@ def _render_section_rewrite_prompt(
         lines.append(f"- Tone: {tone_hint}")
     if style_hint:
         lines.append(f"- Writing style: {style_hint}")
+    if flow_hint:
+        lines.append(f"- Narrative flow: {flow_hint}")
     if length_hint:
         lines.append(f"- Length: {length_hint}")
     lines.extend(
@@ -588,6 +617,9 @@ def _render_section_rewrite_prompt(
             "- Keep the section heading unchanged.",
             "- Do not rewrite unrelated sections unless required for consistency.",
             "- Maintain claim-evidence-source alignment; preserve citations or refresh them if the claim changes.",
+            "- Use narrative prose, not a repetitive label list (avoid '주장:/근거:/인사이트:' or 'Claim:/Evidence:/Insight:' line patterns).",
+            "- Keep section logic as: opening claim sentence -> evidence interpretation paragraph(s) -> transition/implication closing sentence.",
+            "- If the section includes visuals/tables, add one short lead-in sentence before and one interpretation/limitation sentence after.",
             "- If the target section is missing, create it with the same heading near related sections; fallback is append at the end.",
             "",
             "Current section excerpt:",
@@ -950,6 +982,9 @@ def execute_capability_action(
 
         tone_hint = str(merged_spec.get("tone") or "").strip() or _extract_tone_hint(str(merged_spec.get("request_text") or ""))
         style_hint = str(merged_spec.get("style") or "").strip() or _extract_style_hint(str(merged_spec.get("request_text") or ""))
+        flow_hint = str(merged_spec.get("flow") or merged_spec.get("structure") or "").strip() or _extract_flow_hint(
+            str(merged_spec.get("request_text") or "")
+        )
         length_hint = str(merged_spec.get("length") or "").strip() or _extract_length_hint(str(merged_spec.get("request_text") or ""))
 
         if replacement_text:
@@ -1000,6 +1035,7 @@ def execute_capability_action(
             existing_section=existing_section,
             tone_hint=tone_hint,
             style_hint=style_hint,
+            flow_hint=flow_hint,
             length_hint=length_hint,
         )
         prompt_file_rel = ""
@@ -1017,6 +1053,7 @@ def execute_capability_action(
             "section_insert_policy": section_insert_policy,
             "prompt_file": prompt_file_rel,
             "prompt_preview": prompt_text[:1200],
+            "flow_hint": flow_hint,
             "suggested_action_type": "run_federlicht" if run_rel_effective else "",
         }
         result.update(
@@ -1030,6 +1067,7 @@ def execute_capability_action(
                 "existing_chars": len(existing_section),
                 "tone_hint": tone_hint,
                 "style_hint": style_hint,
+                "flow_hint": flow_hint,
                 "length_hint": length_hint,
                 "prompt_text": prompt_text,
                 "prompt_file": prompt_file_rel,

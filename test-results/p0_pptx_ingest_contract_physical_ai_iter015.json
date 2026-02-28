@@ -1,0 +1,337 @@
+{
+  "schema_version": "pptx_ingest.v1",
+  "reader": "python-pptx",
+  "available": true,
+  "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+  "slide_count_total": 12,
+  "extracted_slide_count": 12,
+  "slide_start": 1,
+  "slide_end": 12,
+  "truncated": false,
+  "slides": [
+    {
+      "slide_id": "slide-001",
+      "slide_index": 1,
+      "slide_title": "Problem Framing",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-1",
+      "elements": [
+        {
+          "element_id": "slide-001-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-1-shape-1",
+          "text": "Problem Framing"
+        },
+        {
+          "element_id": "slide-001-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-1-shape-2",
+          "text": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Contents Executive Summary Scope & Methodology Technical Background Physical AI와 ‘닫힌 루프’의 의미 VLA(Vision-Language-Action)와 로봇 파운데이션 모델 행동 표현(action representation)과 action chunking 생성적 정책:...\n- - 물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Contents Executive Summary Scope & Methodology Technical Background Physical AI와 ‘닫힌 루프..."
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-002",
+      "slide_index": 2,
+      "slide_title": "Scope and Methodology",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-2",
+      "elements": [
+        {
+          "element_id": "slide-002-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-2-shape-1",
+          "text": "Scope and Methodology"
+        },
+        {
+          "element_id": "slide-002-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-2-shape-2",
+          "text": "Define scope boundaries, assumptions, and selection criteria.\n- [diagram:mermaid] snapshot=deck_assets/physical_ai_iter015_sample_deck/diagrams/slide_02_02_mermaid.svg"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-003",
+      "slide_index": 3,
+      "slide_title": "Evidence Snapshot",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-3",
+      "elements": [
+        {
+          "element_id": "slide-003-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-3-shape-1",
+          "text": "Evidence Snapshot"
+        },
+        {
+          "element_id": "slide-003-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-3-shape-2",
+          "text": "Summarize strongest evidence and benchmark outcomes.\n- Claim | Evidence\n- Summarize strongest evidence and benchmark outcomes. | TBD"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-004",
+      "slide_index": 4,
+      "slide_title": "Risks and Gaps",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-4",
+      "elements": [
+        {
+          "element_id": "slide-004-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-4-shape-1",
+          "text": "Risks and Gaps"
+        },
+        {
+          "element_id": "slide-004-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-4-shape-2",
+          "text": "List uncertainty and unresolved validation gaps.\n- - List uncertainty and unresolved validation gaps"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-005",
+      "slide_index": 5,
+      "slide_title": "Recommendation and Next Step",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-5",
+      "elements": [
+        {
+          "element_id": "slide-005-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-5-shape-1",
+          "text": "Recommendation and Next Step"
+        },
+        {
+          "element_id": "slide-005-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-5-shape-2",
+          "text": "Provide decision recommendation with execution guardrails.\n- - Provide decision recommendation with execution guardrails"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-006",
+      "slide_index": 6,
+      "slide_title": "Deep Dive 4",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-6",
+      "elements": [
+        {
+          "element_id": "slide-006-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-6-shape-1",
+          "text": "Deep Dive 4"
+        },
+        {
+          "element_id": "slide-006-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-6-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-007",
+      "slide_index": 7,
+      "slide_title": "Deep Dive 5",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-7",
+      "elements": [
+        {
+          "element_id": "slide-007-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-7-shape-1",
+          "text": "Deep Dive 5"
+        },
+        {
+          "element_id": "slide-007-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-7-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-008",
+      "slide_index": 8,
+      "slide_title": "Deep Dive 6",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-8",
+      "elements": [
+        {
+          "element_id": "slide-008-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-8-shape-1",
+          "text": "Deep Dive 6"
+        },
+        {
+          "element_id": "slide-008-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-8-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-009",
+      "slide_index": 9,
+      "slide_title": "Deep Dive 7",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-9",
+      "elements": [
+        {
+          "element_id": "slide-009-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-9-shape-1",
+          "text": "Deep Dive 7"
+        },
+        {
+          "element_id": "slide-009-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-9-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-010",
+      "slide_index": 10,
+      "slide_title": "Deep Dive 8",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-10",
+      "elements": [
+        {
+          "element_id": "slide-010-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-10-shape-1",
+          "text": "Deep Dive 8"
+        },
+        {
+          "element_id": "slide-010-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-10-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-011",
+      "slide_index": 11,
+      "slide_title": "Deep Dive 9",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-11",
+      "elements": [
+        {
+          "element_id": "slide-011-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-11-shape-1",
+          "text": "Deep Dive 9"
+        },
+        {
+          "element_id": "slide-011-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-11-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    },
+    {
+      "slide_id": "slide-012",
+      "slide_index": 12,
+      "slide_title": "Deep Dive 10",
+      "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-12",
+      "elements": [
+        {
+          "element_id": "slide-012-shape-001",
+          "shape_index": 1,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-12-shape-1",
+          "text": "Deep Dive 10"
+        },
+        {
+          "element_id": "slide-012-shape-002",
+          "shape_index": 2,
+          "shape_type": "text",
+          "content_kind": "text",
+          "source_path": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+          "anchor": "./test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx#slide-12-shape-2",
+          "text": "Expand evidence interpretation and implications for stakeholders.\n- [chart] data attached"
+        }
+      ]
+    }
+  ]
+}

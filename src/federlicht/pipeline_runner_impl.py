@@ -124,6 +124,7 @@ def _render_slide_deck_artifacts(
     report_prompt: str,
     depth: str,
     report_title: str,
+    quality_profile: str,
 ) -> dict[str, object]:
     claim_packet = _load_claim_packet_from_notes(notes_dir)
     outline = slide_pipeline.build_slide_outline(
@@ -140,7 +141,7 @@ def _render_slide_deck_artifacts(
         style_pack=core.normalize_style_pack(core.STYLE_PACK_DEFAULT),
     )
     ast_errors = slide_pipeline.validate_slide_ast(slide_ast)
-    quality_summary = slide_quality.evaluate_slide_ast_quality(slide_ast)
+    quality_summary = slide_quality.evaluate_slide_ast_quality(slide_ast, profile=quality_profile)
     quality_actions: list[str] = []
     quality_iterations = 1
     quality_trace: dict[str, object] = {
@@ -154,7 +155,7 @@ def _render_slide_deck_artifacts(
             slide_ast,
             baseline_summary=quality_summary,
         )
-        revised_summary = slide_quality.evaluate_slide_ast_quality(revised_ast)
+        revised_summary = slide_quality.evaluate_slide_ast_quality(revised_ast, profile=quality_profile)
         revised_errors = slide_pipeline.validate_slide_ast(revised_ast)
         quality_trace["iterations"] = [
             {"name": "initial", "summary": quality_summary},
@@ -203,6 +204,8 @@ def _render_slide_deck_artifacts(
 
     return {
         "deck_status": deck_status,
+        "deck_quality_profile": str(quality_summary.get("quality_profile") or ""),
+        "deck_quality_effective_band": str(quality_summary.get("quality_effective_band") or ""),
         "deck_slide_count": int(pptx_result.get("slide_count") or html_result.get("slide_count") or 0),
         "deck_diagram_snapshot_count": int(bundle.get("diagram_snapshot_count") or 0),
         "deck_diagram_snapshot_paths": list(bundle.get("diagram_snapshot_paths") or []),
@@ -241,6 +244,11 @@ def _build_deck_manifest_entry(
     primary_artifact_path: Path,
     deck_html_path: Path | None = None,
     deck_pptx_path: Path | None = None,
+    deck_quality_profile: str = "",
+    deck_quality_effective_band: str = "",
+    deck_quality_overall: float | None = None,
+    deck_quality_gate_pass: bool | None = None,
+    deck_quality_iterations: int | None = None,
     report_overview_path: Path | None = None,
     workflow_path: Path | None = None,
 ) -> dict | None:
@@ -268,7 +276,7 @@ def _build_deck_manifest_entry(
         if pptx_rel:
             paths["deck_pptx"] = pptx_rel
     stat = primary_artifact_path.stat()
-    return {
+    entry = {
         "id": f"{run_dir.name}-deck",
         "run": run_dir.name,
         "report_stem": primary_artifact_path.stem,
@@ -286,6 +294,26 @@ def _build_deck_manifest_entry(
         "source_size": int(stat.st_size),
         "paths": paths,
     }
+    if (
+        str(deck_quality_profile or "").strip()
+        or str(deck_quality_effective_band or "").strip()
+        or deck_quality_overall is not None
+        or deck_quality_gate_pass is not None
+        or deck_quality_iterations is not None
+    ):
+        quality_payload: dict[str, object] = {}
+        if str(deck_quality_profile or "").strip():
+            quality_payload["profile"] = str(deck_quality_profile or "").strip()
+        if str(deck_quality_effective_band or "").strip():
+            quality_payload["effective_band"] = str(deck_quality_effective_band or "").strip()
+        if deck_quality_overall is not None:
+            quality_payload["overall"] = float(deck_quality_overall)
+        if deck_quality_gate_pass is not None:
+            quality_payload["gate_pass"] = bool(deck_quality_gate_pass)
+        if deck_quality_iterations is not None:
+            quality_payload["iterations"] = int(deck_quality_iterations)
+        entry["deck_quality"] = quality_payload
+    return entry
 
 
 def run_pipeline(
@@ -839,6 +867,7 @@ def run_pipeline(
                 report_prompt=report_prompt or report_summary,
                 depth=result.depth,
                 report_title=title,
+                quality_profile=str(getattr(args, "quality_profile", "professional") or "professional"),
             )
             meta.update(deck_meta)
             if bool(deck_meta.get("deck_pptx_ok")):
@@ -892,6 +921,23 @@ def run_pipeline(
                         primary_artifact_path=primary_artifact,
                         deck_html_path=deck_html_abs,
                         deck_pptx_path=deck_pptx_abs,
+                        deck_quality_profile=str(deck_meta.get("deck_quality_profile") or ""),
+                        deck_quality_effective_band=str(deck_meta.get("deck_quality_effective_band") or ""),
+                        deck_quality_overall=(
+                            float(deck_meta.get("deck_quality_overall"))
+                            if deck_meta.get("deck_quality_overall") is not None
+                            else None
+                        ),
+                        deck_quality_gate_pass=(
+                            bool(deck_meta.get("deck_quality_gate_pass"))
+                            if deck_meta.get("deck_quality_gate_pass") is not None
+                            else None
+                        ),
+                        deck_quality_iterations=(
+                            int(deck_meta.get("deck_quality_iterations"))
+                            if deck_meta.get("deck_quality_iterations") is not None
+                            else None
+                        ),
                         report_overview_path=report_overview_path,
                         workflow_path=result.workflow_path,
                     )

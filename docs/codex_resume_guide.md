@@ -15,7 +15,7 @@ Last updated: 2026-02-25
 - `docs/dev_history/version_summary.md`
 - 버전별 간략 개발 이력
 - `docs/report_quality_threshold_policy.md`
-- score 해석, profile 기준, world-class 판정 정책
+- score 해석, profile 기준, deep_research 판정 정책
 - `README.md`
 - 실행/환경/컴포넌트 개요
 - `CHANGELOG.md`

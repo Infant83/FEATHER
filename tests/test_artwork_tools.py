@@ -115,6 +115,10 @@ def test_build_infographic_spec_from_table_csv() -> None:
     assert first.get("title") == "Relative Trend"
     assert first.get("source") == "https://example.com/series"
     assert first.get("simulated") is False
+    assert first.get("metric") == "Relative Trend"
+    assert first.get("unit") == "index"
+    assert first.get("period") == "table_input_snapshot"
+    assert first.get("normalization") == "raw"
     labels = first.get("labels")
     assert labels == ["Jan", "Feb", "Mar"]
     datasets = first.get("datasets")
@@ -152,6 +156,11 @@ def test_render_infographic_html_writes_html_and_spec(tmp_path) -> None:
     assert "Demo Infographic" in html
     assert "Simulated/Illustrative" in html
     assert "Quarterly Trend" in html
+    assert "Metric: Quarterly Trend" in html
+    assert "Unit: unspecified" in html
+    embed_html = str(result.get("embed_html") or "")
+    assert "Primary chart metadata - Metric: Quarterly Trend" in embed_html
+    assert "Source: https://example.com/data" in embed_html
     assert "Demo Infographic" in stored_spec
 
 
@@ -187,6 +196,10 @@ def test_build_infographic_spec_from_claim_packet() -> None:
     first = charts[0]
     assert first.get("source") == "./report_notes/claim_evidence_map.json"
     assert first.get("simulated") is False
+    assert first.get("metric") == "Claim Evidence Coverage"
+    assert first.get("unit") == "count/score"
+    assert first.get("period") == "run_snapshot"
+    assert first.get("normalization") == "top_n_claims"
     datasets = first.get("datasets")
     assert isinstance(datasets, list)
     assert len(datasets) == 2
@@ -353,4 +366,58 @@ def test_lint_infographic_spec_flags_missing_source() -> None:
     }
     issues = artwork.lint_infographic_spec(spec)
     assert any("source is missing" in item for item in issues)
+    assert any("metric is missing" in item for item in issues)
+    assert any("unit is missing" in item for item in issues)
     assert any("simulated flag is missing" in item for item in issues)
+
+
+def test_lint_infographic_spec_flags_placeholder_metadata() -> None:
+    spec = {
+        "title": "Lint placeholder demo",
+        "charts": [
+            {
+                "id": "demo",
+                "type": "bar",
+                "labels": ["A", "B"],
+                "datasets": [{"label": "x", "data": [1, 2]}],
+                "source": "Source: pending mapping",
+                "metric": "unspecified",
+                "unit": "not specified",
+                "period": "unknown",
+                "normalization": "tbd",
+                "simulated": False,
+            }
+        ],
+    }
+    issues = artwork.lint_infographic_spec(spec)
+    assert any("source is placeholder-like" in item for item in issues)
+    assert any("metric is placeholder-like" in item for item in issues)
+    assert any("unit is placeholder-like" in item for item in issues)
+
+
+def test_infographic_caption_meta_summary_counts_complete_charts() -> None:
+    spec = {
+        "title": "Summary demo",
+        "charts": [
+            {
+                "id": "a",
+                "metric": "Error Rate",
+                "unit": "%",
+                "period": "2025Q1-Q4",
+                "normalization": "baseline=100",
+                "source": "https://example.com/qc",
+            },
+            {
+                "id": "b",
+                "metric": "unspecified",
+                "unit": "not specified",
+                "period": "unknown",
+                "normalization": "tbd",
+                "source": "Source: pending mapping",
+            },
+        ],
+    }
+    summary = artwork.infographic_caption_meta_summary(spec)
+    assert int(summary.get("chart_count", 0) or 0) == 2
+    assert int(summary.get("complete_chart_count", 0) or 0) == 1
+    assert float(summary.get("complete_chart_ratio", 0.0) or 0.0) == 50.0

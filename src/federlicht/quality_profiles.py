@@ -5,6 +5,7 @@ from typing import Any
 
 
 QUALITY_PROFILE_NONE = "none"
+QUALITY_PROFILE_DEEP_RESEARCH = "deep_research"
 
 
 @dataclass(frozen=True)
@@ -65,10 +66,10 @@ QUALITY_PROFILES: dict[str, QualityProfileSpec] = {
             min_section_coherence=68.0,
         ),
     ),
-    "world_class": QualityProfileSpec(
-        name="world_class",
-        label="World-Class Research",
-        purpose="Top-tier professional quality gate for external publication readiness.",
+    QUALITY_PROFILE_DEEP_RESEARCH: QualityProfileSpec(
+        name=QUALITY_PROFILE_DEEP_RESEARCH,
+        label="Deep Research",
+        purpose="High-rigor deep research quality gate for publication-ready deliverables.",
         thresholds=QualityGateThresholds(
             min_overall=82.0,
             min_claim_support=60.0,
@@ -80,15 +81,25 @@ QUALITY_PROFILES: dict[str, QualityProfileSpec] = {
 
 
 def quality_profile_choices() -> tuple[str, ...]:
-    return (QUALITY_PROFILE_NONE, *tuple(QUALITY_PROFILES.keys()))
+    # Canonical choices are exposed to CLI/help; legacy aliases are normalized.
+    return (QUALITY_PROFILE_NONE, "smoke", "baseline", "professional", QUALITY_PROFILE_DEEP_RESEARCH)
 
 
 def normalize_quality_profile(value: object) -> str:
     token = str(value or "").strip().lower()
     if not token or token in {"off", "false", "0", QUALITY_PROFILE_NONE}:
         return QUALITY_PROFILE_NONE
-    if token in {"world", "worldclass", "world-class", "wc"}:
-        return "world_class"
+    if token in {
+        "deepresearch",
+        "deep-research",
+        QUALITY_PROFILE_DEEP_RESEARCH,
+        "world",
+        "worldclass",
+        "world-class",
+        "world_class",
+        "wc",
+    }:
+        return QUALITY_PROFILE_DEEP_RESEARCH
     if token in QUALITY_PROFILES:
         return token
     return QUALITY_PROFILE_NONE
@@ -211,8 +222,8 @@ def classify_quality_band(thresholds: dict[str, float]) -> str:
             and min_coherence >= target.min_section_coherence
         )
 
-    if _meets(QUALITY_PROFILES["world_class"]):
-        return "world_class"
+    if _meets(QUALITY_PROFILES[QUALITY_PROFILE_DEEP_RESEARCH]):
+        return QUALITY_PROFILE_DEEP_RESEARCH
     if _meets(QUALITY_PROFILES["professional"]):
         return "professional"
     if _meets(QUALITY_PROFILES["baseline"]):
@@ -227,4 +238,3 @@ def classify_quality_band(thresholds: dict[str, float]) -> str:
     ):
         return "disabled"
     return "custom"
-

@@ -1,6 +1,72 @@
 # Changelog
 
-## Unreleased (2026-02-27)
+## Unreleased (2026-02-28)
+
+## 1.9.33 (2026-02-28)
+- release alignment:
+  - bump version to `1.9.33` across `pyproject.toml`, `src/federlicht/versioning.py`, and `README.md`.
+- QC deep-research sample regeneration (Codex 5.3):
+  - rerun report generation with updated writer/finalizer prompt constraints:
+    - `site/runs/20260221_QC_report/report_full_iter028_codex53_ko_qc_deepresearch_artwork.html`
+  - snapshot/prompt/gate artifacts:
+    - `test-results/p0_sample_qc_iter028_codex53_ko_deepresearch_artwork_snapshot.html`
+    - `test-results/p0_prompt_qc_iter028_codex53_deepresearch_artwork.txt`
+    - `test-results/p0_quality_gate_qc_iter028_codex53_deepresearch.summary.json`
+    - `test-results/p0_quality_gate_qc_iter028_codex53_deepresearch.md`
+  - objective gate result (`deep_research`): `PASS`
+    - `overall=92.48`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`
+  - manual review artifact:
+    - `test-results/p0_manual_review_qc_iter028_codex53_deepresearch.md`
+
+- deck quality/profile alignment:
+  - `src/federlicht/slide_quality.py` now supports `baseline/professional/deep_research` targets.
+  - `src/federlicht/pipeline_runner_impl.py` propagates report `quality_profile` into deck quality gate.
+  - deck meta now includes `deck_quality_profile` and `deck_quality_effective_band`.
+  - deck manifest entries now include `deck_quality` payload (`profile/effective_band/overall/gate_pass/iterations`).
+- Federnett hub/index deck visibility:
+  - `src/federlicht/site_hub_index.py` now exposes companion links (`Deck HTML`, `Deck PPTX`).
+  - latest/archive cards now show `DeckQ` summary (band/gate/overall/iterations) when deck metadata exists.
+  - legacy fallback: infer `Deck HTML` from `paths.report` for `format=pptx`, and read legacy flat `deck_quality_*` fields.
+  - tag filtering and trend chips now include derived deck tags (`deck-pass`, `deck-fail`, `deck:<band>`).
+- report_hub manifest normalization tool:
+  - add `tools/normalize_report_hub_manifest.py` for legacy manifest backfill (deck companion paths + deck_quality + derived tags).
+  - supports dry-run, in-place write, and JSON summary artifact export.
+- PPTX ingest contract tooling:
+  - add `extract_pptx_slide_contract(...)` in `src/federlicht/readers/pptx.py`.
+  - schema: `pptx_ingest.v1` with `slide_id`, `shape_type`, `content_kind`, `source_path`, `anchor`.
+  - add tool: `tools/run_pptx_ingest_report.py` (JSON/Markdown contract output).
+  - sample artifacts:
+    - `test-results/p0_pptx_ingest_contract_physical_ai_iter015.json`
+    - `test-results/p0_pptx_ingest_contract_physical_ai_iter015.md`
+- infographic caption/provenance contract hardening:
+  - infographic chart schema includes `metric`, `unit`, `period`, `normalization`, `source`.
+  - `lint_infographic_spec(...)` now flags missing caption metadata fields.
+  - `lint_infographic_spec(...)` now also flags placeholder-like metadata values
+    (`unspecified`, `not specified`, `pending mapping`, etc.).
+  - rendered chart captions in infographic HTML now expose structured metadata.
+  - report embed figcaption now includes primary chart metadata
+    (`Metric/Unit/Period/Normalization/Source`) and simulated-state note.
+  - quality gate infographic lint summary now reports caption metadata coverage ratio
+    and complete-chart ratio across specs/charts.
+- tests:
+  - add `tests/test_readers_pptx_contract.py`.
+  - add `tests/test_report_hub_manifest_normalize_tool.py`.
+  - extend `tests/test_slide_quality.py`, `tests/test_pipeline_runner_impl.py`, `tests/test_artwork_tools.py`, `tests/test_site_hub_index.py`.
+- Federnett section rewrite UX hardening:
+  - `src/federnett/capabilities.py` rewrite-section prompt path now accepts `flow/structure` hints.
+  - generated rewrite prompt now enforces narrative flow constraints
+    (opening claim -> evidence interpretation -> transition/implication).
+  - generated rewrite prompt now explicitly blocks repetitive label-style lines
+    (`주장/근거/인사이트`, `Claim/Evidence/Insight`).
+  - rewrite action result payload now includes `flow_hint`.
+  - tests: extend `tests/test_capabilities.py` for flow-hint extraction/propagation.
+- quality heuristic citation-integrity calibration:
+  - add `citation_integrity_score` in `src/federlicht/report.py` heuristic signals.
+  - detect malformed citation/link patterns (broken href chains, nested markdown/anchor artifacts).
+  - apply citation-count correction when integrity issues are detected to reduce false-high support signals.
+  - harden `clean_citation_labels(...)` to heal malformed anchor chains and strip markdown-wrapper artifacts.
+  - tests: extend `tests/test_report_quality_heuristics.py` with broken-link penalty coverage.
+  - tests: extend `tests/test_report_citation_rewrite.py` with malformed-anchor healing case.
 
 ## 1.9.32 (2026-02-27)
 - release alignment:
@@ -9,7 +75,7 @@
   - reprioritize roadmap to `PPTX reader/ingest first` and `PPTX-style HTML/artwork quality` in:
     - `docs/codex_handoff_20260227.md`
     - `docs/ppt_writer_strategy.md`
-- QC world-class sample run (Codex 5.3):
+- QC deep-research sample run (Codex 5.3):
   - generated QC narrative sample with required visuals (10-year roadmap, country investment, error-rate trend, radar, pipeline diagram, tables).
   - source run output is under `site/runs/20260221_QC_report/` (run folder is repo-ignored).
   - committed reproducible snapshot and gate artifacts in `test-results/`:
@@ -17,7 +83,7 @@
     - `test-results/p0_prompt_qc_iter027_codex53_worldclass_artwork.txt`
     - `test-results/p0_quality_gate_qc_iter027_codex53_world_v4.summary.json`
     - `test-results/p0_quality_gate_qc_iter027_codex53_world_v4.md`
-  - world_class gate result: `PASS` (`overall=93.61`, `claim_support=97.67`, `unsupported=1`, `section_coherence=100.00`).
+  - deep_research gate result: `PASS` (`overall=93.61`, `claim_support=97.67`, `unsupported=1`, `section_coherence=100.00`).
 
 - policy realignment (2026-02-27 docs update):
   - prioritize PPTX `reader/ingest management` over writer expansion.

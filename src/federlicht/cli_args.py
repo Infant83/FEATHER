@@ -20,9 +20,10 @@ from .report import (
     TEMPLATE_RIGIDITY_POLICIES,
     TEMPERATURE_LEVELS,
     list_builtin_templates,
+    normalize_reasoning_effort,
     parse_max_input_tokens,
 )
-from .quality_profiles import quality_profile_choices
+from .quality_profiles import normalize_quality_profile, quality_profile_choices
 
 class CleanHelpFormatter(argparse.RawDescriptionHelpFormatter):
     def __init__(self, prog: str) -> None:
@@ -338,11 +339,12 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     ap.add_argument(
         "--quality-profile",
         default="none",
+        type=normalize_quality_profile,
         choices=list(quality_profile_choices()),
         help=(
             "Quality gate profile preset. "
             "none=disabled, smoke=health-check, baseline=default regression bar, "
-            "professional=production bar, world_class=top-tier bar."
+            "professional=production bar, deep_research=high-rigor deep research bar."
         ),
     )
     ap.add_argument(
@@ -411,10 +413,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     ap.add_argument(
         "--reasoning-effort",
         default=os.getenv("FEDERLICHT_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT,
+        type=normalize_reasoning_effort,
         choices=list(REASONING_EFFORT_CHOICES),
         help=(
             "Reasoning effort preference for reasoning-capable models "
-            "(off|low|medium|high|extra_high; extra_high maps to high where needed). "
+            "(off|low|medium|high|extra_high; aliases: normal->medium, extended->high). "
             f"Default: {DEFAULT_REASONING_EFFORT}."
         ),
     )

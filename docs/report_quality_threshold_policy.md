@@ -2,7 +2,7 @@
 
 Last updated: 2026-02-25
 
-## 1) Why `overall=65` Is Not World-Class
+## 1) Why `overall=65` Is Not Deep-Research Level
 - `overall=65` is a **smoke/health-check** threshold.
 - It only indicates that a run is not totally broken and has minimum structural quality.
 - It must not be used as a publication-quality target.
@@ -14,7 +14,7 @@ Last updated: 2026-02-25
 | `smoke` | pipeline health only | 65 | 2 | 70 | 55 |
 | `baseline` | routine regression baseline | 70 | 40 | 25 | 60 |
 | `professional` | production-grade report quality | 76 | 50 | 18 | 68 |
-| `world_class` | top-tier research quality gate | 82 | 60 | 12 | 75 |
+| `deep_research` | high-rigor deep research quality gate | 82 | 60 | 12 | 75 |
 
 Notes:
 - Lower `max_unsupported` is stricter.
@@ -34,11 +34,11 @@ Notes:
 
 Weights vary by intent/depth (`briefing`, `research`, `decision`, etc.).
 
-## 4) World-Class Pass Policy (Operational)
-World-class is treated as **composite pass**, not one scalar score.
+## 4) Deep-Research Pass Policy (Operational)
+Deep-research level is treated as **composite pass**, not one scalar score.
 
 Required:
-1. `quality_profile=world_class` gate pass.
+1. `quality_profile=deep_research` gate pass.
 2. `quality_contract.latest.json` and benchmark summary consistency pass.
 3. No critical unsupported-claim clusters in key sections.
 4. Section-level coherence and method/result traceability preserved after finalizer.
@@ -51,7 +51,7 @@ Federlicht runtime quality gate:
 python -m federlicht.report \
   --run site/runs/20260221_QC_report \
   --output site/runs/20260221_QC_report/report_full.html \
-  --quality-profile world_class \
+  --quality-profile deep_research \
   --quality-iterations 3 \
   --quality-auto-extra-iterations 2
 ```
@@ -62,7 +62,7 @@ python tools/run_report_quality_gate.py \
   --input site/runs/20260221_QC_report/report_full.html \
   --summary-output test-results/qc.summary.json \
   --report-md test-results/qc.gate.md \
-  --quality-profile world_class
+  --quality-profile deep_research
 ```
 
 Profile compare (same summary, all profiles):

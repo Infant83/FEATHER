@@ -17,7 +17,7 @@ def _load_module():
 tool = _load_module()
 
 
-def test_evaluate_profiles_has_world_class_fail_for_mid_summary() -> None:
+def test_evaluate_profiles_has_deep_research_fail_for_mid_summary() -> None:
     summary = {
         "overall": 74.0,
         "claim_support_ratio": 52.0,
@@ -28,7 +28,7 @@ def test_evaluate_profiles_has_world_class_fail_for_mid_summary() -> None:
     by_profile = {row["profile"]: row for row in rows}
     assert by_profile["baseline"]["pass"] is True
     assert by_profile["professional"]["pass"] is False
-    assert by_profile["world_class"]["pass"] is False
+    assert by_profile["deep_research"]["pass"] is False
 
 
 def test_load_summary_supports_bundle_and_render_markdown(tmp_path: Path) -> None:
@@ -46,5 +46,4 @@ def test_load_summary_supports_bundle_and_render_markdown(tmp_path: Path) -> Non
     rows = tool.evaluate_profiles(summary)
     md = tool.render_markdown(summary, rows)
     assert "Quality Profile Compare" in md
-    assert "| world_class |" in md
-
+    assert "| deep_research |" in md

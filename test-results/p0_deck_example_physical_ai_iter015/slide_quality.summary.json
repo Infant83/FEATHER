@@ -1,0 +1,52 @@
+{
+  "slide_count": 12,
+  "traceability_score": 100.0,
+  "density_score": 100.0,
+  "narrative_flow_score": 100.0,
+  "visual_integrity_score": 100.0,
+  "overall_score": 100.0,
+  "quality_gate_pass": true,
+  "gate_failures": [],
+  "targets": {
+    "min_overall": 78.0,
+    "min_traceability": 70.0,
+    "min_density": 65.0,
+    "min_flow": 70.0,
+    "min_visual_integrity": 70.0
+  },
+  "quality_iterations": 2,
+  "quality_actions": [
+    "set_last_slide_summary",
+    "add_placeholder_ref:2",
+    "add_placeholder_ref:3",
+    "add_placeholder_ref:4",
+    "add_placeholder_ref:5",
+    "add_placeholder_ref:6",
+    "add_placeholder_ref:7",
+    "add_placeholder_ref:8",
+    "add_placeholder_ref:9",
+    "add_placeholder_ref:10",
+    "add_placeholder_ref:11"
+  ],
+  "render_bundle": {
+    "deck_id": "physical_ai_iter015_sample_deck",
+    "output_dir": "test-results/p0_deck_example_physical_ai_iter015",
+    "diagram_snapshot_count": 1,
+    "diagram_snapshot_paths": [
+      "deck_assets/physical_ai_iter015_sample_deck/diagrams/slide_02_02_mermaid.svg"
+    ],
+    "diagram_snapshot_errors": [],
+    "html": {
+      "ok": true,
+      "path": "test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.html",
+      "slide_count": 12,
+      "bytes": 6810
+    },
+    "pptx": {
+      "ok": true,
+      "path": "test-results/p0_deck_example_physical_ai_iter015/physical_ai_iter015_sample_deck.pptx",
+      "slide_count": 12,
+      "bytes": 38429
+    }
+  }
+}

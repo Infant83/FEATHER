@@ -1,0 +1,121 @@
+{
+  "schema_version": "slide_outline.v1",
+  "created_at": "2026-02-27T04:51:07",
+  "meta": {
+    "depth": "deep",
+    "audience": "classroom",
+    "time_budget_minutes": 30,
+    "target_slide_count": 12,
+    "source": "prompt_only"
+  },
+  "slides": [
+    {
+      "slide_id": "SLIDE-01",
+      "intent": "intro",
+      "title": "Problem Framing",
+      "key_claim": "물리 세계 제약 하 VLA 로봇 파운데이션 모델 동향 Contents Executive Summary Scope & Methodology Technical Background Physical AI와 ‘닫힌 루프’의 의미 VLA(Vision-Language-Action)와 로봇 파운데이션 모델 행동 표현(action representation)과 action chunking 생성적 정책:...",
+      "evidence_refs": [],
+      "visual_type": "bullets",
+      "section_hint": "executive_summary"
+    },
+    {
+      "slide_id": "SLIDE-02",
+      "intent": "methodology",
+      "title": "Scope and Methodology",
+      "key_claim": "Define scope boundaries, assumptions, and selection criteria.",
+      "evidence_refs": [],
+      "visual_type": "diagram",
+      "section_hint": "scope_methodology"
+    },
+    {
+      "slide_id": "SLIDE-03",
+      "intent": "evidence",
+      "title": "Evidence Snapshot",
+      "key_claim": "Summarize strongest evidence and benchmark outcomes.",
+      "evidence_refs": [],
+      "visual_type": "table",
+      "section_hint": "key_findings"
+    },
+    {
+      "slide_id": "SLIDE-04",
+      "intent": "risk",
+      "title": "Risks and Gaps",
+      "key_claim": "List uncertainty and unresolved validation gaps.",
+      "evidence_refs": [],
+      "visual_type": "bullets",
+      "section_hint": "risks_gaps"
+    },
+    {
+      "slide_id": "SLIDE-05",
+      "intent": "recommendation",
+      "title": "Recommendation and Next Step",
+      "key_claim": "Provide decision recommendation with execution guardrails.",
+      "evidence_refs": [],
+      "visual_type": "bullets",
+      "section_hint": "decision_recommendation"
+    },
+    {
+      "slide_id": "SLIDE-06",
+      "intent": "analysis",
+      "title": "Deep Dive 4",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-07",
+      "intent": "analysis",
+      "title": "Deep Dive 5",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-08",
+      "intent": "analysis",
+      "title": "Deep Dive 6",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-09",
+      "intent": "analysis",
+      "title": "Deep Dive 7",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-10",
+      "intent": "analysis",
+      "title": "Deep Dive 8",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-11",
+      "intent": "analysis",
+      "title": "Deep Dive 9",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    },
+    {
+      "slide_id": "SLIDE-12",
+      "intent": "analysis",
+      "title": "Deep Dive 10",
+      "key_claim": "Expand evidence interpretation and implications for stakeholders.",
+      "evidence_refs": [],
+      "visual_type": "chart",
+      "section_hint": "unspecified"
+    }
+  ]
+}

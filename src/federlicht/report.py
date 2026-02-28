@@ -1602,6 +1602,10 @@ def normalize_reasoning_effort(value: object, default: str = DEFAULT_REASONING_E
         if not token:
             return ""
         token = token.replace("-", "_").replace(" ", "_")
+        if token in {"normal", "standard", "std", "default"}:
+            token = "medium"
+        if token in {"extended", "long", "expanded"}:
+            token = "high"
         if token in {"very_high", "veryhigh", "x_high", "extra"}:
             token = "extra_high"
         if token in {"off", "none", "false", "0", "disabled", "disable"}:
@@ -2401,7 +2405,43 @@ def _count_citations(raw: str, plain_text: str, *, output_format: str) -> int:
     )
     citation_count += len(re.findall(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", raw, re.IGNORECASE))
     citation_count += len(re.findall(r"\\?\[\d{1,3}\\?\]", plain_text))
+    issue_count = _citation_integrity_issue_count(raw)
+    if issue_count > 0:
+        citation_count = max(0, citation_count - (issue_count * 2))
     return citation_count
+
+
+def _citation_integrity_issue_count(raw_text: str) -> int:
+    raw = str(raw_text or "")
+    if not raw.strip():
+        return 0
+    issue_count = 0
+    # Broken link symptom: href contains concatenated markdown citation tokens.
+    issue_count += len(re.findall(r"""href=["'][^"']*\)\[[^"']*["']""", raw, re.IGNORECASE))
+    # Broken citation symptom: back-to-back markdown citation blocks without delimiter.
+    issue_count += len(re.findall(r"""\)\s*\[\\\[\d+\\\]\]\(""", raw))
+    # Broken conversion symptom: markdown link opening wraps an already-rendered anchor tag.
+    issue_count += len(re.findall(r"""\[[^\]]+\]\(\s*<a\s+href=""", raw, re.IGNORECASE))
+    # Broken conversion symptom: anchor href itself includes escaped citation blocks.
+    issue_count += len(
+        re.findall(
+            r"""<a\s+[^>]*href=["']\s*https?://[^"']*\[\\\[\d+\\\]\]\(""",
+            raw,
+            re.IGNORECASE,
+        )
+    )
+    return issue_count
+
+
+def _citation_integrity_score(report_text: str, output_format: str) -> float:
+    raw = str(report_text or "")
+    if not raw.strip():
+        return 0.0
+    issue_count = _citation_integrity_issue_count(raw)
+    if issue_count <= 0:
+        return 100.0
+    penalty = min(70.0, float(issue_count) * 8.0)
+    return round(max(30.0, 100.0 - penalty), 2)
 
 
 def _evidence_density_score(report_text: str, output_format: str) -> float:
@@ -2851,6 +2891,7 @@ def compute_heuristic_quality_signals(
     normalized_depth = normalize_depth_choice(depth)
     section_coverage = _required_section_coverage_score(report_text, required_sections, output_format)
     citation_density = _citation_density_score(report_text, output_format)
+    citation_integrity = _citation_integrity_score(report_text, output_format)
     evidence_density = _evidence_density_score(report_text, output_format)
     claim_support_ratio, unsupported_claim_count = _claim_support_metrics(report_text, output_format)
     section_coherence = _section_coherence_score(report_text, output_format)
@@ -2933,7 +2974,8 @@ def compute_heuristic_quality_signals(
     if intent in {"briefing", "slide"} or normalized_depth == "brief":
         weights = {
             "section_coverage": 0.20,
-            "citation_density": 0.19,
+            "citation_density": 0.16,
+            "citation_integrity": 0.03,
             "method_transparency": 0.10,
             "traceability": 0.12,
             "uncertainty": 0.12,
@@ -2946,7 +2988,8 @@ def compute_heuristic_quality_signals(
     elif intent in {"decision", "review", "research"} or normalized_depth in {"deep", "exhaustive"}:
         weights = {
             "section_coverage": 0.10,
-            "citation_density": 0.15,
+            "citation_density": 0.12,
+            "citation_integrity": 0.03,
             "method_transparency": 0.15,
             "traceability": 0.15,
             "uncertainty": 0.09,
@@ -2959,7 +3002,8 @@ def compute_heuristic_quality_signals(
     else:
         weights = {
             "section_coverage": 0.14,
-            "citation_density": 0.17,
+            "citation_density": 0.14,
+            "citation_integrity": 0.03,
             "method_transparency": 0.13,
             "traceability": 0.13,
             "uncertainty": 0.09,
@@ -2972,6 +3016,7 @@ def compute_heuristic_quality_signals(
     overall = (
         (section_coverage * weights["section_coverage"])
         + (citation_density * weights["citation_density"])
+        + (citation_integrity * weights["citation_integrity"])
         + (method_transparency * weights["method_transparency"])
         + (traceability * weights["traceability"])
         + (uncertainty * weights["uncertainty"])
@@ -2984,6 +3029,7 @@ def compute_heuristic_quality_signals(
     return {
         "section_coverage": round(section_coverage, 2),
         "citation_density": round(citation_density, 2),
+        "citation_integrity_score": round(citation_integrity, 2),
         "evidence_density_score": round(evidence_density, 2),
         "claim_support_ratio": round(claim_support_ratio, 2),
         "unsupported_claim_count": float(unsupported_claim_count),
@@ -5702,7 +5748,36 @@ def inject_viewer_links(html_text: str, viewer_map: dict[str, dict[str, str]]) -
 
 def clean_citation_labels(html_text: str) -> str:
     pattern = re.compile(r'(<a\b[^>]*>)\\\[(\d+)\\\](</a>)')
-    return pattern.sub(r'\1[\2]\3', html_text)
+    cleaned = pattern.sub(r"\1[\2]\3", html_text)
+    # Heal malformed href chains like href="https://...)[\[2\]](..."
+    cleaned = re.sub(
+        r"""(<a\b[^>]*\bhref=["'])(https?://[^"')\s<]+)\)[^"']*(["'])""",
+        r"\1\2\3",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    # Remove markdown citation wrapper accidentally wrapped around rendered anchors.
+    cleaned = re.sub(
+        r"""\[\\\[\d+\\\]\]\(\s*(<a\b[^>]*>[^<]*</a>)""",
+        r"\1",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    # If anchor text itself still contains malformed chain tokens, keep the first URL-looking token only.
+    cleaned = re.sub(
+        r"""(<a\b[^>]*>)(https?://[^<)\s]+)\)\[[^<]*?(</a>)""",
+        r"\1\2\3",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    # Trim a dangling closing paren right after URL-like anchors.
+    cleaned = re.sub(
+        r"""(<a\b[^>]*>https?://[^<]+</a>)\)""",
+        r"\1",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned
 
 
 def build_text_meta_index(

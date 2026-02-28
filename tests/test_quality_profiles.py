@@ -9,8 +9,10 @@ from federlicht.quality_profiles import (
 
 
 def test_normalize_quality_profile_aliases() -> None:
-    assert normalize_quality_profile("worldclass") == "world_class"
-    assert normalize_quality_profile("world-class") == "world_class"
+    assert normalize_quality_profile("worldclass") == "deep_research"
+    assert normalize_quality_profile("world-class") == "deep_research"
+    assert normalize_quality_profile("world_class") == "deep_research"
+    assert normalize_quality_profile("deep_research") == "deep_research"
     assert normalize_quality_profile("off") == QUALITY_PROFILE_NONE
 
 
@@ -25,7 +27,7 @@ def test_resolve_quality_gate_targets_baseline_defaults() -> None:
     assert policy["effective_band"] == "baseline"
 
 
-def test_resolve_quality_gate_targets_override_to_world_class() -> None:
+def test_resolve_quality_gate_targets_override_to_deep_research() -> None:
     policy = resolve_quality_gate_targets(
         profile="professional",
         min_overall=84.0,
@@ -39,7 +41,7 @@ def test_resolve_quality_gate_targets_override_to_world_class() -> None:
     assert targets["min_claim_support"] == 62.0
     assert targets["max_unsupported"] == 10.0
     assert targets["min_section_coherence"] == 77.0
-    assert classify_quality_band(targets) == "world_class"
+    assert classify_quality_band(targets) == "deep_research"
 
 
 def test_resolve_quality_gate_targets_none_and_disabled() -> None:
@@ -51,4 +53,3 @@ def test_resolve_quality_gate_targets_none_and_disabled() -> None:
     assert targets["max_unsupported"] == -1.0
     assert targets["min_section_coherence"] == 0.0
     assert policy["effective_band"] == "disabled"
-

@@ -616,6 +616,11 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 
+      const formatNumber = (value, digits = 1) => {{
+        const num = Number(value);
+        return Number.isFinite(num) ? num.toFixed(digits) : '-';
+      }};
+
       const countBy = (items, getter) => {{
         const counts = new Map();
         items.forEach((item) => {{
@@ -636,12 +641,58 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         return tb - ta;
       }});
 
-      const buildLinks = (paths = {{}}) => {{
+      const buildLinks = (paths = {{}}, item = {{}}) => {{
         const entries = [];
+        const reportPath = String(paths.report || '').trim();
+        const itemFormat = String((item && item.format) || '').toLowerCase();
+        const resolvedDeckHtml = String(paths.deck_html || '').trim() || (
+          itemFormat === 'pptx' && reportPath.toLowerCase().endsWith('.html') ? reportPath : ''
+        );
+        const resolvedDeckPptx = String(paths.deck_pptx || '').trim();
         if (paths.report) entries.push(['Report', paths.report]);
+        if (resolvedDeckHtml) entries.push(['Deck HTML', resolvedDeckHtml]);
+        if (resolvedDeckPptx) entries.push(['Deck PPTX', resolvedDeckPptx]);
         if (paths.overview) entries.push(['Overview', paths.overview]);
         if (paths.workflow) entries.push(['Workflow', paths.workflow]);
         return entries.map(([label, href]) => `<a href="${{escapeHtml(href)}}">${{label}}</a>`).join('');
+      }};
+
+      const buildDeckQualityText = (item) => {{
+        const qualityRaw = item && typeof item === 'object' ? item.deck_quality : null;
+        const quality = qualityRaw && typeof qualityRaw === 'object' ? qualityRaw : {{}};
+        const band = String(
+          quality.effective_band || quality.profile || item.deck_quality_effective_band || item.deck_quality_profile || ''
+        ).trim();
+        const gateRaw = quality.gate_pass !== undefined ? quality.gate_pass : item.deck_quality_gate_pass;
+        const gate = gateRaw === true ? 'PASS' : (gateRaw === false ? 'FAIL' : 'N/A');
+        const overall = formatNumber(
+          quality.overall !== undefined ? quality.overall : item.deck_quality_overall,
+          1
+        );
+        const iterationRaw = quality.iterations !== undefined ? quality.iterations : item.deck_quality_iterations;
+        const iterations = Number.isFinite(Number(iterationRaw)) ? ` · iter=${{Number(iterationRaw)}}` : '';
+        if (!band && gate === 'N/A' && overall === '-') return '';
+        return `DeckQ ${{band || 'unknown'}} · ${{gate}} · overall=${{overall}}${{iterations}}`;
+      }};
+
+      const buildItemTags = (item) => {{
+        const tags = [item.lang, item.template, item.model, item.format]
+          .filter(tag => tag && tag !== 'unknown');
+        const quality = item && typeof item === 'object' ? item.deck_quality : null;
+        if (quality && typeof quality === 'object') {{
+          const band = String(quality.effective_band || quality.profile || '').trim();
+          if (band) tags.push(`deck:${{band}}`);
+          if (quality.gate_pass === true) tags.push('deck-pass');
+          if (quality.gate_pass === false) tags.push('deck-fail');
+        }}
+        return tags;
+      }};
+
+      const buildMetaText = (item) => {{
+        const chunks = [item.date || '', item.author || 'Unknown'].filter(Boolean);
+        const deckQuality = buildDeckQualityText(item);
+        if (deckQuality) chunks.push(deckQuality);
+        return chunks.join(' · ');
       }};
 
         const renderLatest = (item) => {{
@@ -652,21 +703,19 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
           latestLink.href = (item.paths && item.paths.report) ? item.paths.report : '#';
         }}
         document.getElementById('latest-summary').textContent = item.summary || '요약 정보가 없습니다.';
-        document.getElementById('latest-meta').textContent = `${{item.date || ''}} · ${{item.author || 'Unknown'}}`;
-        const tags = [item.lang, item.template, item.model, item.format]
-          .filter(tag => tag && tag !== 'unknown')
+        document.getElementById('latest-meta').textContent = buildMetaText(item);
+        const tags = buildItemTags(item)
           .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
         document.getElementById('latest-tags').innerHTML = tags;
-        document.getElementById('latest-links').innerHTML = buildLinks(item.paths);
+        document.getElementById('latest-links').innerHTML = buildLinks(item.paths, item);
       }};
 
       const buildCardHtml = (item, idx) => {{
         const delay = (idx % 6) * 0.05;
-        const tags = [item.lang, item.template, item.model, item.format]
-          .filter(tag => tag && tag !== 'unknown')
+        const tags = buildItemTags(item)
           .map(tag => `<span class="tag">${{escapeHtml(tag)}}</span>`).join('');
         const summary = escapeHtml(item.summary || '');
-        const meta = `${{escapeHtml(item.date || '')}} · ${{escapeHtml(item.author || 'Unknown')}}`;
+        const meta = escapeHtml(buildMetaText(item));
         const reportHref = (item.paths && item.paths.report) ? item.paths.report : '#';
         return `
           <article class="card" style="animation-delay:${{delay}}s">
@@ -674,7 +723,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
             <h3><a href="${{escapeHtml(reportHref)}}">${{escapeHtml(item.title || 'Untitled')}}</a></h3>
             <p class="summary">${{summary || '요약 정보가 없습니다.'}}</p>
             <div class="meta">${{meta}}</div>
-            <div class="links">${{buildLinks(item.paths)}}</div>
+            <div class="links">${{buildLinks(item.paths, item)}}</div>
           </article>
         `;
       }};
@@ -803,7 +852,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         if (!templateSelect || !langSelect || !tagSelect || !authorSelect) return;
         const templates = Array.from(new Set(items.map(item => item.template).filter(Boolean))).sort();
         const langs = Array.from(new Set(items.map(item => item.lang).filter(Boolean))).sort();
-        const tags = Array.from(new Set(items.flatMap(item => item.tags || []))).sort();
+        const tags = Array.from(new Set(items.flatMap(item => buildItemTags(item)))).sort();
         const authors = Array.from(new Set(items.map(item => item.author).filter(Boolean))).sort();
         const fill = (select, values, label) => {{
           const current = select.value;
@@ -826,7 +875,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         return items.filter(item => {{
           if (template && item.template !== template) return false;
           if (lang && item.lang !== lang) return false;
-          if (tag && !(item.tags || []).includes(tag)) return false;
+          if (tag && !buildItemTags(item).includes(tag)) return false;
           if (author && item.author !== author) return false;
           if (!query) return true;
           const haystack = `${{item.title || ''}} ${{item.summary || ''}} ${{item.author || ''}}`.toLowerCase();
@@ -839,7 +888,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         const tabTemplates = document.getElementById('tab-templates');
         const tabAuthors = document.getElementById('tab-authors');
         if (!tabTopics || !tabTemplates || !tabAuthors) return;
-        const topTags = countBy(items, item => item.tags || []).slice(0, 20);
+        const topTags = countBy(items, item => buildItemTags(item)).slice(0, 20);
         const topTemplates = countBy(items, item => item.template).slice(0, 20);
         const topAuthors = countBy(items, item => item.author).slice(0, 20);
         const chipHtml = (list, type) => {{
@@ -858,7 +907,7 @@ def build_site_index_html(manifest: dict, refresh_minutes: int = 10) -> str:
         if (!target) return;
         const scoped = withinDays(items, 30);
         const pool = scoped.length ? scoped : items;
-        const topTags = countBy(pool, item => item.tags || []).slice(0, 3);
+        const topTags = countBy(pool, item => buildItemTags(item)).slice(0, 3);
         const topTemplates = countBy(pool, item => item.template).slice(0, 3);
         const topAuthors = countBy(pool, item => item.author).slice(0, 3);
         const block = (title, list) => {{

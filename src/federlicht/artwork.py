@@ -15,6 +15,21 @@ _DEFAULT_D2_OUTPUT = "report_assets/artwork/d2_diagram.svg"
 _DEFAULT_DIAGRAMS_OUTPUT = "report_assets/artwork/diagrams_architecture.svg"
 _DEFAULT_INFOGRAPHIC_OUTPUT = "report_assets/artwork/infographic.html"
 _MERMAID_FORMATS = {"svg", "png", "pdf"}
+_INFOGRAPHIC_META_FIELDS = ("metric", "unit", "period", "normalization", "source")
+_INFOGRAPHIC_META_PLACEHOLDERS = {
+    "unspecified",
+    "not specified",
+    "pending mapping",
+    "source: pending mapping",
+    "unknown",
+    "not available",
+    "n/a",
+    "na",
+    "none",
+    "null",
+    "-",
+    "tbd",
+}
 _DOT_CANDIDATES = (
     Path("C:/Program Files/Graphviz/bin/dot.exe"),
     Path("C:/Program Files (x86)/Graphviz/bin/dot.exe"),
@@ -661,6 +676,10 @@ def build_infographic_spec_from_table(
     library: str = "chartjs",
     source: str = "",
     simulated: bool | str = True,
+    metric: str = "",
+    unit: str = "",
+    period: str = "",
+    normalization: str = "",
     theme_json: str = "",
     note: str = "",
     disclaimer: str = "",
@@ -708,6 +727,10 @@ def build_infographic_spec_from_table(
         library_token = "chartjs"
     chart_type_token = str(chart_type or "line").strip().lower() or "line"
     source_text = str(source or "").strip() or "Source: pending mapping"
+    metric_text = str(metric or chart_title_text or "Primary Metric").strip()
+    unit_text = str(unit or "index").strip()
+    period_text = str(period or "table_input_snapshot").strip()
+    normalization_text = str(normalization or "raw").strip()
     note_text = str(note or "").strip()
     simulated_flag = _to_bool(simulated, default=True)
     theme = _parse_theme_json(theme_json)
@@ -734,6 +757,10 @@ def build_infographic_spec_from_table(
                 "labels": labels[:240],
                 "datasets": datasets,
                 "source": source_text[:240],
+                "metric": metric_text[:120],
+                "unit": unit_text[:80],
+                "period": period_text[:120],
+                "normalization": normalization_text[:120],
                 "note": note_text[:280],
                 "simulated": simulated_flag,
             }
@@ -819,6 +846,10 @@ def build_infographic_spec_from_claim_packet(
     chart_description: str = "",
     source: str = "",
     simulated: bool | str = False,
+    metric: str = "",
+    unit: str = "",
+    period: str = "",
+    normalization: str = "",
     library: str = "chartjs",
     chart_type: str = "bar",
     theme_json: str = "",
@@ -921,6 +952,10 @@ def build_infographic_spec_from_claim_packet(
         or "Selected claims are ranked by evidence coverage and claim strength extracted from the evidence packet."
     ).strip()
     source_text = str(source or "./report_notes/claim_evidence_map.json").strip()
+    metric_text = str(metric or "Claim Evidence Coverage").strip()
+    unit_text = str(unit or "count/score").strip()
+    period_text = str(period or "run_snapshot").strip()
+    normalization_text = str(normalization or "top_n_claims").strip()
     note_text = str(note or "Generated from claim packet fields: evidence_ids, strength, score.").strip()
     if not disclaimer and simulated_flag:
         disclaimer = "Some values are marked as Simulated/Illustrative."
@@ -940,6 +975,10 @@ def build_infographic_spec_from_claim_packet(
                 {"label": "Strength Score", "data": strength_values, "color": "#1a237e"},
             ],
             "source": source_text[:240],
+            "metric": metric_text[:120],
+            "unit": unit_text[:80],
+            "period": period_text[:120],
+            "normalization": normalization_text[:120],
             "note": note_text[:280],
             "simulated": simulated_flag,
         }
@@ -982,6 +1021,10 @@ def build_infographic_spec_from_claim_packet(
                         {"label": "Strength Score", "data": strength_hint, "color": "#1a237e"},
                     ],
                     "source": source_text[:240],
+                    "metric": f"{metric_text} ({section_label})"[:120],
+                    "unit": unit_text[:80],
+                    "period": period_text[:120],
+                    "normalization": normalization_text[:120],
                     "note": (f"{note_text} | section_hint={hint}")[:280],
                     "simulated": simulated_flag,
                 }
@@ -1023,6 +1066,72 @@ def build_infographic_spec_from_claim_packet(
     return json.dumps(spec, ensure_ascii=False, indent=2)
 
 
+def _normalize_infographic_meta_value(value: object) -> str:
+    token = str(value or "").strip()
+    if not token:
+        return ""
+    return re.sub(r"\s+", " ", token).strip()
+
+
+def is_meaningful_infographic_meta_value(field: str, value: object) -> bool:
+    token = _normalize_infographic_meta_value(value)
+    if not token:
+        return False
+    normalized = token.lower()
+    if normalized in _INFOGRAPHIC_META_PLACEHOLDERS:
+        return False
+    if str(field or "").strip().lower() == "source" and normalized.startswith("source: pending"):
+        return False
+    return True
+
+
+def infographic_caption_meta_summary(spec: dict[str, object]) -> dict[str, object]:
+    charts = spec.get("charts")
+    if not isinstance(charts, list) or not charts:
+        return {
+            "chart_count": 0,
+            "complete_chart_count": 0,
+            "complete_chart_ratio": 0.0,
+            "meta_coverage_ratio": 0.0,
+            "field_coverage_ratio": {field: 0.0 for field in _INFOGRAPHIC_META_FIELDS},
+        }
+    field_valid_counts = {field: 0 for field in _INFOGRAPHIC_META_FIELDS}
+    complete_chart_count = 0
+    chart_count = 0
+    total_fields = len(_INFOGRAPHIC_META_FIELDS)
+    present_fields = 0
+    for chart in charts:
+        if not isinstance(chart, dict):
+            continue
+        chart_count += 1
+        valid_count = 0
+        for field in _INFOGRAPHIC_META_FIELDS:
+            if is_meaningful_infographic_meta_value(field, chart.get(field)):
+                field_valid_counts[field] += 1
+                valid_count += 1
+        present_fields += valid_count
+        if valid_count == total_fields:
+            complete_chart_count += 1
+    if chart_count <= 0:
+        return {
+            "chart_count": 0,
+            "complete_chart_count": 0,
+            "complete_chart_ratio": 0.0,
+            "meta_coverage_ratio": 0.0,
+            "field_coverage_ratio": {field: 0.0 for field in _INFOGRAPHIC_META_FIELDS},
+        }
+    field_coverage = {
+        field: round((count / chart_count) * 100.0, 2) for field, count in field_valid_counts.items()
+    }
+    return {
+        "chart_count": chart_count,
+        "complete_chart_count": complete_chart_count,
+        "complete_chart_ratio": round((complete_chart_count / chart_count) * 100.0, 2),
+        "meta_coverage_ratio": round((present_fields / (chart_count * total_fields)) * 100.0, 2),
+        "field_coverage_ratio": field_coverage,
+    }
+
+
 def lint_infographic_spec(spec: dict[str, object]) -> list[str]:
     issues: list[str] = []
     if not isinstance(spec, dict):
@@ -1037,6 +1146,14 @@ def lint_infographic_spec(spec: dict[str, object]) -> list[str]:
         source = str(raw.get("source") or "").strip()
         if not source:
             issues.append(f"charts[{idx}] source is missing.")
+        elif not is_meaningful_infographic_meta_value("source", source):
+            issues.append(f"charts[{idx}] source is placeholder-like.")
+        for field in ("metric", "unit", "period", "normalization"):
+            value = str(raw.get(field) or "").strip()
+            if not value:
+                issues.append(f"charts[{idx}] {field} is missing.")
+            elif not is_meaningful_infographic_meta_value(field, value):
+                issues.append(f"charts[{idx}] {field} is placeholder-like.")
         if "simulated" not in raw:
             issues.append(f"charts[{idx}] simulated flag is missing.")
         elif not isinstance(raw.get("simulated"), bool):
@@ -1122,6 +1239,10 @@ def _normalize_infographic_spec(spec: dict[str, object], page_title: str = "") -
             )
         plotly_raw = raw.get("plotly") if isinstance(raw.get("plotly"), dict) else {}
         source = str(raw.get("source") or raw.get("source_label") or "").strip()
+        metric = str(raw.get("metric") or title or "").strip()
+        unit = str(raw.get("unit") or "unspecified").strip()
+        period = str(raw.get("period") or "unspecified").strip()
+        normalization = str(raw.get("normalization") or "unspecified").strip()
         note = str(raw.get("note") or "").strip()
         simulated_raw = raw.get("simulated")
         simulated = bool(simulated_raw) and str(simulated_raw).strip().lower() not in {"0", "false", "no", "off"}
@@ -1137,6 +1258,10 @@ def _normalize_infographic_spec(spec: dict[str, object], page_title: str = "") -
                 "datasets": datasets,
                 "plotly": plotly_raw,
                 "source": source[:240],
+                "metric": metric[:120],
+                "unit": unit[:80],
+                "period": period[:120],
+                "normalization": normalization[:120],
                 "note": note[:280],
                 "simulated": simulated,
             }
@@ -1251,16 +1376,24 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
         chart_title = html_lib.escape(str(chart.get("title") or ""))
         chart_desc = html_lib.escape(str(chart.get("description") or ""))
         source = str(chart.get("source") or "").strip()
+        metric = str(chart.get("metric") or "").strip()
+        unit = str(chart.get("unit") or "").strip()
+        period = str(chart.get("period") or "").strip()
+        normalization = str(chart.get("normalization") or "").strip()
         note = str(chart.get("note") or "").strip()
         simulated = bool(chart.get("simulated"))
-        tokens = []
-        if source:
-            tokens.append(f"Source: {source}")
+        tokens = [
+            f"Metric: {metric or 'unspecified'}",
+            f"Unit: {unit or 'unspecified'}",
+            f"Period: {period or 'unspecified'}",
+            f"Normalization: {normalization or 'unspecified'}",
+            f"Source: {source or 'not specified'}",
+        ]
         if simulated:
             tokens.append("Label: Simulated/Illustrative")
         if note:
             tokens.append(note)
-        meta_text = html_lib.escape(" | ".join(tokens) if tokens else "Source: not specified")
+        meta_text = html_lib.escape(" | ".join(tokens))
         lines.extend(
             [
                 "      <article class=\"chart-card p-5\">",
@@ -1399,6 +1532,48 @@ def _render_infographic_html(spec: dict[str, object], *, needs_chartjs: bool, ne
     return "\n".join(lines).strip() + "\n"
 
 
+def _build_infographic_embed_caption(title: str, charts: list[dict[str, object]]) -> str:
+    caption_parts = [f"Infographic: {title}."]
+    if not charts:
+        return " ".join(caption_parts).strip()
+
+    primary = charts[0]
+    primary_tokens: list[str] = []
+    for field, label in (
+        ("metric", "Metric"),
+        ("unit", "Unit"),
+        ("period", "Period"),
+        ("normalization", "Normalization"),
+        ("source", "Source"),
+    ):
+        value = _normalize_infographic_meta_value(primary.get(field))
+        if is_meaningful_infographic_meta_value(field, value):
+            primary_tokens.append(f"{label}: {value}")
+    if primary_tokens:
+        caption_parts.append("Primary chart metadata - " + "; ".join(primary_tokens) + ".")
+
+    if len(charts) > 1:
+        metrics: list[str] = []
+        sources: list[str] = []
+        for chart in charts:
+            metric = _normalize_infographic_meta_value(chart.get("metric"))
+            source = _normalize_infographic_meta_value(chart.get("source"))
+            if metric and is_meaningful_infographic_meta_value("metric", metric) and metric not in metrics:
+                metrics.append(metric)
+            if source and is_meaningful_infographic_meta_value("source", source) and source not in sources:
+                sources.append(source)
+        summary_tokens = [f"Charts: {len(charts)}"]
+        if metrics:
+            summary_tokens.append(f"Metrics: {', '.join(metrics[:3])}")
+        if sources:
+            summary_tokens.append(f"Sources: {', '.join(sources[:2])}")
+        caption_parts.append("Portfolio summary - " + "; ".join(summary_tokens) + ".")
+
+    if any(bool(chart.get("simulated")) for chart in charts):
+        caption_parts.append("Data state: includes Simulated/Illustrative values where measured data is unavailable.")
+    return " ".join(caption_parts).strip()[:760]
+
+
 def render_infographic_html(
     run_dir: Path,
     spec_json: str,
@@ -1438,9 +1613,8 @@ def render_infographic_html(
     rel_out = f"./{run_rel}"
     rel_spec = f"./{spec_path.resolve().relative_to(run_root).as_posix()}"
     title = str(normalized.get("title") or "Data-Driven Infographic")
-    caption = f"Infographic: {title}"
-    if any(bool((item or {}).get("simulated")) for item in charts if isinstance(item, dict)):
-        caption += " (Simulated/Illustrative labels included where applicable)."
+    charts_for_caption = [item for item in charts if isinstance(item, dict)]
+    caption = _build_infographic_embed_caption(title, charts_for_caption)
     embed_html = (
         '<figure class="report-figure report-infographic">'
         f'<iframe src="{html_lib.escape(rel_out, quote=True)}" loading="lazy" '

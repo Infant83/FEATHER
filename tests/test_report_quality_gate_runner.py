@@ -49,9 +49,9 @@ def test_build_gate_report_markdown_contains_key_sections() -> None:
         "gate-result | PASS",
         0,
         gate_policy={
-            "profile": "world_class",
-            "effective_band": "world_class",
-            "source": "profile:world_class",
+            "profile": "deep_research",
+            "effective_band": "deep_research",
+            "source": "profile:deep_research",
             "thresholds": {
                 "min_overall": 82.0,
                 "min_claim_support": 60.0,
@@ -61,8 +61,8 @@ def test_build_gate_report_markdown_contains_key_sections() -> None:
         },
     )
     assert "gate_result: PASS" in text
-    assert "gate_profile: world_class" in text
-    assert "gate_effective_band: world_class" in text
+    assert "gate_profile: deep_research" in text
+    assert "gate_effective_band: deep_research" in text
     assert "## Summary" in text
     assert "## Delta (current - baseline)" in text
     assert "## Compare Table" in text
@@ -83,6 +83,8 @@ def test_evaluate_infographic_lint_detects_missing_source(tmp_path: Path) -> Non
     lint = runner.evaluate_infographic_lint([spec_path])
     assert lint.get("pass") is False
     assert int(lint.get("failed_count", 0) or 0) >= 1
+    assert int(lint.get("chart_count", 0) or 0) == 1
+    assert float(lint.get("caption_meta_coverage_ratio", 0.0) or 0.0) < 100.0
     rows = lint.get("rows")
     assert isinstance(rows, list)
     assert rows
@@ -110,17 +112,31 @@ def test_build_gate_report_markdown_includes_infographic_lint_block() -> None:
             "checked_count": 1,
             "failed_count": 1,
             "pass": False,
-            "rows": [{"path": "demo.json", "chart_count": 1, "issues": ["charts[1] source is missing."]}],
+            "chart_count": 2,
+            "caption_meta_complete_chart_count": 1,
+            "caption_meta_coverage_ratio": 80.0,
+            "caption_meta_complete_chart_ratio": 50.0,
+            "rows": [
+                {
+                    "path": "demo.json",
+                    "chart_count": 2,
+                    "caption_meta_coverage_ratio": 80.0,
+                    "caption_meta_complete_chart_count": 1,
+                    "issues": ["charts[1] source is missing."],
+                }
+            ],
         },
     )
     assert "## Infographic Lint" in text
     assert "failed_specs: 1" in text
+    assert "caption_meta_coverage_ratio: 80.00%" in text
+    assert "caption_meta_complete_charts: 1/2 (50.00%)" in text
     assert "demo.json" in text
 
 
-def test_should_enforce_strict_infographic_lint_world_class_default() -> None:
+def test_should_enforce_strict_infographic_lint_deep_research_default() -> None:
     strict = runner.should_enforce_strict_infographic_lint(
-        quality_profile="world_class",
+        quality_profile="deep_research",
         explicit_strict=False,
         has_infographic_spec=True,
     )

@@ -81,6 +81,7 @@ def test_evaluate_slide_ast_quality_passes_for_balanced_deck() -> None:
     summary = slide_quality.evaluate_slide_ast_quality(_good_slide_ast())
     assert summary["quality_gate_pass"] is True
     assert summary["overall_score"] >= 78.0
+    assert summary["quality_profile"] == "professional"
     report_text = slide_quality.build_slide_quality_report(summary)
     assert "PASS" in report_text
 
@@ -92,6 +93,23 @@ def test_evaluate_slide_ast_quality_flags_unbalanced_deck() -> None:
     assert "traceability" in set(summary["gate_failures"]) or "density" in set(summary["gate_failures"])
     report_text = slide_quality.build_slide_quality_report(summary)
     assert "FAIL" in report_text
+
+
+def test_resolve_slide_quality_targets_supports_aliases_and_band_mapping() -> None:
+    legacy = slide_quality.resolve_slide_quality_targets("world_class")
+    none_profile = slide_quality.resolve_slide_quality_targets("none")
+    assert legacy["profile"] == "deep_research"
+    assert none_profile["profile"] == "baseline"
+
+
+def test_deep_research_targets_are_stricter_than_professional() -> None:
+    professional = slide_quality.resolve_slide_quality_targets("professional")
+    deep_research = slide_quality.resolve_slide_quality_targets("deep_research")
+    p = dict(professional.get("targets") or {})
+    d = dict(deep_research.get("targets") or {})
+    assert float(d.get("min_overall", 0.0)) > float(p.get("min_overall", 0.0))
+    assert float(d.get("min_traceability", 0.0)) > float(p.get("min_traceability", 0.0))
+    assert float(d.get("min_flow", 0.0)) > float(p.get("min_flow", 0.0))
 
 
 def test_revise_slide_ast_for_quality_improves_bad_case() -> None:

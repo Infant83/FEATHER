@@ -1,0 +1,13 @@
+{
+  "manifest_input": "site/report_hub/manifest.json",
+  "manifest_output": "site/report_hub/manifest.json",
+  "write": false,
+  "stats": {
+    "item_count": 7,
+    "fallback_deck_html": 0,
+    "fallback_deck_pptx": 0,
+    "quality_promoted": 0,
+    "quality_from_legacy_flat": 0,
+    "tags_enriched": 0
+  }
+}

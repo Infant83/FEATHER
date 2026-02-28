@@ -317,13 +317,14 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
         "rewrite_section_prompt",
         dry_run=False,
         run_rel="site/runs/demo",
-        request_text="section 'Key Findings' tone: formal style: bullet length: 3 paragraphs",
+        request_text="section 'Key Findings' tone: formal style: bullet flow: context continuity length: 3 paragraphs",
     )
     assert result.get("effect") == "rewrite_section"
     assert result.get("rewrite_mode") == "prompt_prep"
     assert result.get("section_insert_policy") == "upsert_missing_append_end"
     assert "formal" in str(result.get("tone_hint") or "").lower()
     assert "bullet" in str(result.get("style_hint") or "").lower()
+    assert "context continuity" in str(result.get("flow_hint") or "").lower()
     assert "3" in str(result.get("length_hint") or "")
     prompt_file = str(result.get("prompt_file") or "")
     assert prompt_file.startswith("site/runs/demo/report_notes/update_request_section_")
@@ -332,7 +333,9 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
     prompt_text = prompt_abs.read_text(encoding="utf-8")
     assert "Target section: Key Findings" in prompt_text
     assert "Tone:" in prompt_text
+    assert "Narrative flow:" in prompt_text
     assert "Target section status: found in current report" in prompt_text
+    assert "opening claim sentence -> evidence interpretation" in prompt_text
 
 
 def test_execute_capability_action_rewrite_section_prompt_prep_missing_section(tmp_path: Path) -> None:
@@ -368,6 +371,41 @@ def test_execute_capability_action_rewrite_section_prompt_prep_missing_section(t
     prompt_abs = root / prompt_file
     prompt_text = prompt_abs.read_text(encoding="utf-8")
     assert "Target section status: missing in current report" in prompt_text
+
+
+def test_execute_capability_action_rewrite_section_prompt_prep_flow_hint_from_override(tmp_path: Path) -> None:
+    root = _make_root(tmp_path)
+    report_path = root / "site" / "runs" / "demo" / "report" / "report_full.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text("## Key Findings\nbaseline text\n", encoding="utf-8")
+    save_capability_registry(
+        root,
+        {
+            "tools": [
+                {
+                    "id": "rewrite_section_prompt_flow",
+                    "label": "Rewrite Section Prompt Flow",
+                    "action": {"kind": "rewrite_section", "target": "report/report_full.md#Key Findings"},
+                }
+            ],
+            "skills": [],
+            "mcp_servers": [],
+        },
+    )
+    result = execute_capability_action(
+        root,
+        "rewrite_section_prompt_flow",
+        dry_run=False,
+        run_rel="site/runs/demo",
+        action_override={"flow_hint": "setup -> evidence -> implication"},
+    )
+    assert result.get("effect") == "rewrite_section"
+    assert result.get("rewrite_mode") == "prompt_prep"
+    assert str(result.get("flow_hint") or "") == "setup -> evidence -> implication"
+    prompt_file = str(result.get("prompt_file") or "")
+    prompt_abs = root / prompt_file
+    prompt_text = prompt_abs.read_text(encoding="utf-8")
+    assert "Narrative flow: setup -> evidence -> implication" in prompt_text
 
 
 def test_infer_capability_action_rewrite_section_from_keywords(tmp_path: Path) -> None:

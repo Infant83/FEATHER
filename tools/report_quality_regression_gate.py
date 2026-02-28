@@ -6,7 +6,11 @@ import json
 from pathlib import Path
 
 from federlicht import report as report_mod
-from federlicht.quality_profiles import quality_profile_choices, resolve_quality_gate_targets
+from federlicht.quality_profiles import (
+    normalize_quality_profile,
+    quality_profile_choices,
+    resolve_quality_gate_targets,
+)
 
 
 def _to_float(value: object, default: float = 0.0) -> float:
@@ -70,9 +74,10 @@ def main() -> int:
     parser.add_argument(
         "--quality-profile",
         default="baseline",
+        type=normalize_quality_profile,
         choices=list(quality_profile_choices()),
         help=(
-            "Gate threshold preset: none/smoke/baseline/professional/world_class "
+            "Gate threshold preset: none/smoke/baseline/professional/deep_research "
             "(default: baseline)."
         ),
     )

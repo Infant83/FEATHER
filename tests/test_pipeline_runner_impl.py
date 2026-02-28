@@ -211,6 +211,7 @@ def test_render_slide_deck_artifacts_generates_html_fallback(monkeypatch, tmp_pa
         report_prompt="Deck prompt",
         depth="normal",
         report_title="Demo Deck",
+        quality_profile="deep_research",
     )
 
     assert meta["deck_status"] == "partial_html_only"
@@ -223,6 +224,7 @@ def test_render_slide_deck_artifacts_generates_html_fallback(monkeypatch, tmp_pa
     assert (notes_dir / "slide_quality.md").exists()
     assert (notes_dir / "slide_quality.trace.json").exists()
     assert isinstance(meta.get("deck_quality_gate_pass"), bool)
+    assert meta.get("deck_quality_profile") == "deep_research"
     assert isinstance(meta.get("deck_diagram_snapshot_count"), int)
     assert int(meta.get("deck_quality_iterations") or 0) >= 1
 
@@ -251,6 +253,11 @@ def test_build_deck_manifest_entry_includes_companion_paths(tmp_path) -> None:
         primary_artifact_path=primary,
         deck_html_path=primary,
         deck_pptx_path=deck_pptx,
+        deck_quality_profile="deep_research",
+        deck_quality_effective_band="deep_research",
+        deck_quality_overall=92.4,
+        deck_quality_gate_pass=True,
+        deck_quality_iterations=2,
         report_overview_path=None,
         workflow_path=None,
     )
@@ -262,3 +269,9 @@ def test_build_deck_manifest_entry_includes_companion_paths(tmp_path) -> None:
     assert paths.get("report") == "runs/demo_run/report/deck.html"
     assert paths.get("deck_html") == "runs/demo_run/report/deck.html"
     assert paths.get("deck_pptx") == "runs/demo_run/report/deck.pptx"
+    quality = dict(payload.get("deck_quality") or {})
+    assert quality.get("profile") == "deep_research"
+    assert quality.get("effective_band") == "deep_research"
+    assert quality.get("overall") == 92.4
+    assert quality.get("gate_pass") is True
+    assert quality.get("iterations") == 2

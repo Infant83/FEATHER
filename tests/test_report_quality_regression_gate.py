@@ -91,7 +91,7 @@ def test_load_rows_supports_bundle_shape() -> None:
     assert len(rows) == 1
 
 
-def test_profile_policy_world_class_makes_gate_stricter() -> None:
+def test_profile_policy_deep_research_makes_gate_stricter() -> None:
     rows = [
         {
             "overall": 79.0,
@@ -111,7 +111,7 @@ def test_profile_policy_world_class_makes_gate_stricter() -> None:
     )
     assert ok_baseline is True
 
-    world_policy = gate.resolve_quality_gate_targets(profile="world_class")
+    world_policy = gate.resolve_quality_gate_targets(profile="deep_research")
     world_targets = world_policy["thresholds"]
     ok_world, errors_world = gate.run_gate(
         rows,

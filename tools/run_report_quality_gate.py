@@ -51,6 +51,9 @@ def _expand_input_patterns(patterns: list[str]) -> list[Path]:
 
 def evaluate_infographic_lint(spec_paths: list[Path]) -> dict[str, object]:
     rows: list[dict[str, object]] = []
+    total_charts = 0
+    total_complete_charts = 0
+    weighted_meta_coverage = 0.0
     for path in spec_paths:
         row: dict[str, object] = {
             "path": str(path),
@@ -73,14 +76,35 @@ def evaluate_infographic_lint(spec_paths: list[Path]) -> dict[str, object]:
             continue
         issues = feder_artwork.lint_infographic_spec(payload)
         row["issues"] = list(issues)
-        charts = payload.get("charts")
-        row["chart_count"] = len(charts) if isinstance(charts, list) else 0
+        meta_summary = feder_artwork.infographic_caption_meta_summary(payload)
+        chart_count = int(meta_summary.get("chart_count", 0) or 0)
+        complete_chart_count = int(meta_summary.get("complete_chart_count", 0) or 0)
+        meta_coverage_ratio = float(meta_summary.get("meta_coverage_ratio", 0.0) or 0.0)
+        row["chart_count"] = chart_count
+        row["caption_meta_complete_chart_count"] = complete_chart_count
+        row["caption_meta_coverage_ratio"] = round(meta_coverage_ratio, 2)
+        row["caption_meta_complete_chart_ratio"] = round(
+            float(meta_summary.get("complete_chart_ratio", 0.0) or 0.0), 2
+        )
+        row["caption_meta_field_coverage_ratio"] = dict(meta_summary.get("field_coverage_ratio") or {})
+        total_charts += chart_count
+        total_complete_charts += complete_chart_count
+        weighted_meta_coverage += meta_coverage_ratio * chart_count
         rows.append(row)
     failed_rows = [item for item in rows if isinstance(item.get("issues"), list) and item.get("issues")]
+    overall_meta_coverage = 0.0
+    overall_complete_chart_ratio = 0.0
+    if total_charts > 0:
+        overall_meta_coverage = round(weighted_meta_coverage / total_charts, 2)
+        overall_complete_chart_ratio = round((total_complete_charts / total_charts) * 100.0, 2)
     return {
         "checked_count": len(rows),
         "failed_count": len(failed_rows),
         "pass": len(failed_rows) == 0,
+        "chart_count": total_charts,
+        "caption_meta_complete_chart_count": total_complete_charts,
+        "caption_meta_coverage_ratio": overall_meta_coverage,
+        "caption_meta_complete_chart_ratio": overall_complete_chart_ratio,
         "rows": rows,
     }
 
@@ -95,7 +119,7 @@ def should_enforce_strict_infographic_lint(
         return True
     if not bool(has_infographic_spec):
         return False
-    return normalize_quality_profile(quality_profile) == "world_class"
+    return normalize_quality_profile(quality_profile) == "deep_research"
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess:
@@ -323,6 +347,10 @@ def build_gate_report_markdown(
         checked_count = int(infographic_lint.get("checked_count", 0) or 0)
         failed_count = int(infographic_lint.get("failed_count", 0) or 0)
         lint_pass = bool(infographic_lint.get("pass"))
+        chart_count = int(infographic_lint.get("chart_count", 0) or 0)
+        complete_chart_count = int(infographic_lint.get("caption_meta_complete_chart_count", 0) or 0)
+        coverage_ratio = float(infographic_lint.get("caption_meta_coverage_ratio", 0.0) or 0.0)
+        complete_ratio = float(infographic_lint.get("caption_meta_complete_chart_ratio", 0.0) or 0.0)
         lines.extend(
             [
                 "",
@@ -330,6 +358,8 @@ def build_gate_report_markdown(
                 f"- checked_specs: {checked_count}",
                 f"- failed_specs: {failed_count}",
                 f"- lint_result: {'PASS' if lint_pass else 'FAIL'}",
+                f"- caption_meta_coverage_ratio: {coverage_ratio:.2f}%",
+                f"- caption_meta_complete_charts: {complete_chart_count}/{chart_count} ({complete_ratio:.2f}%)",
             ]
         )
         lint_rows = infographic_lint.get("rows")
@@ -337,8 +367,8 @@ def build_gate_report_markdown(
             lines.extend(
                 [
                     "",
-                    "| spec_path | chart_count | issues |",
-                    "| --- | ---: | --- |",
+                    "| spec_path | chart_count | caption_meta_coverage | complete_charts | issues |",
+                    "| --- | ---: | ---: | ---: | --- |",
                 ]
             )
             for item in lint_rows:
@@ -346,12 +376,16 @@ def build_gate_report_markdown(
                     continue
                 path = str(item.get("path") or "").strip() or "(unknown)"
                 chart_count = int(item.get("chart_count", 0) or 0)
+                row_coverage = float(item.get("caption_meta_coverage_ratio", 0.0) or 0.0)
+                row_complete = int(item.get("caption_meta_complete_chart_count", 0) or 0)
                 issues = item.get("issues")
                 if isinstance(issues, list) and issues:
                     issue_text = "; ".join(str(issue) for issue in issues[:4])
                 else:
                     issue_text = "-"
-                lines.append(f"| {path} | {chart_count} | {issue_text} |")
+                lines.append(
+                    f"| {path} | {chart_count} | {row_coverage:.2f}% | {row_complete}/{chart_count} | {issue_text} |"
+                )
     lines.extend(["", "## Gate Output", "```text", (gate_stdout or "").strip(), "```"])
     return "\n".join(lines) + "\n"
 
@@ -414,9 +448,10 @@ def main() -> int:
     parser.add_argument(
         "--quality-profile",
         default="baseline",
+        type=normalize_quality_profile,
         choices=list(quality_profile_choices()),
         help=(
-            "Gate threshold preset: none/smoke/baseline/professional/world_class "
+            "Gate threshold preset: none/smoke/baseline/professional/deep_research "
             "(default: baseline)."
         ),
     )
@@ -536,7 +571,7 @@ def main() -> int:
         has_infographic_spec=bool(args.infographic_spec),
     )
     if bool(args.infographic_spec) and strict_infographic_lint and not bool(args.strict_infographic_lint):
-        print("infographic-lint-policy | strict=ON | reason=world_class_default")
+        print("infographic-lint-policy | strict=ON | reason=deep_research_default")
 
     if args.infographic_spec:
         spec_paths = _expand_input_patterns([str(item) for item in args.infographic_spec if str(item).strip()])

@@ -10,7 +10,18 @@ def test_build_site_index_html_embeds_manifest_and_refresh_interval() -> None:
             {
                 "title": "Sample",
                 "summary": "Summary",
-                "paths": {"report": "runs/sample/report_full.html"},
+                "paths": {
+                    "report": "runs/sample/report_full.html",
+                    "deck_html": "runs/sample/deck.html",
+                    "deck_pptx": "runs/sample/deck.pptx",
+                },
+                "deck_quality": {
+                    "profile": "deep_research",
+                    "effective_band": "deep_research",
+                    "overall": 91.2,
+                    "gate_pass": True,
+                    "iterations": 2,
+                },
             }
         ],
     }
@@ -18,6 +29,9 @@ def test_build_site_index_html_embeds_manifest_and_refresh_interval() -> None:
     assert '<script id="manifest-data" type="application/json">' in html
     assert '"revision": "rev-1"' in html
     assert "const REFRESH_MS = 180000;" in html
+    assert "Deck HTML" in html
+    assert "Deck PPTX" in html
+    assert "DeckQ" in html
 
 
 def test_report_wrapper_uses_site_hub_index_renderer() -> None:
