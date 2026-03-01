@@ -2048,7 +2048,14 @@ def format_report_title(title: str, output_format: str) -> str:
     return f"# {title}"
 
 
-def format_report_prompt_block(report_prompt: Optional[str], output_format: str) -> str:
+def format_report_prompt_block(
+    report_prompt: Optional[str],
+    output_format: str,
+    *,
+    include: bool = True,
+) -> str:
+    if not include:
+        return ""
     prompt_text = (report_prompt or "").strip() or "No report prompt provided."
     if output_format == "tex":
         return (
@@ -2879,6 +2886,320 @@ def _narrative_flow_score(report_text: str, output_format: str) -> float:
     return round(max(30.0, min(100.0, avg_score)), 2)
 
 
+def _iter_content_sections_for_lint(report_text: str, output_format: str) -> list[tuple[str, str]]:
+    raw = str(report_text or "")
+    sections: list[tuple[str, str]] = []
+    if output_format == "html":
+        sections = [
+            (heading, span)
+            for heading, span in _iter_html_h2_sections(raw)
+            if not _is_non_content_heading(heading)
+        ]
+    elif output_format == "tex":
+        matches = list(re.finditer(r"^\\section\\*?\\{([^}]+)\\}", raw, re.MULTILINE))
+        for idx, match in enumerate(matches):
+            title = str(match.group(1) or "").strip()
+            if _is_non_content_heading(title):
+                continue
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+            sections.append((title, raw[start:end]))
+    else:
+        matches = list(re.finditer(r"^##\s+(.+)$", raw, re.MULTILINE))
+        for idx, match in enumerate(matches):
+            title = str(match.group(1) or "").strip()
+            if _is_non_content_heading(title):
+                continue
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+            sections.append((title, raw[start:end]))
+    if not sections and raw.strip():
+        sections = [("body", raw)]
+    return sections
+
+
+def _strip_list_heavy_lines(text: str) -> str:
+    kept: list[str] = []
+    for raw_line in str(text or "").splitlines():
+        line = raw_line.strip()
+        if not line:
+            kept.append("")
+            continue
+        if line.startswith(("### ", "#### ", "|")):
+            continue
+        if re.match(r"^\s*(?:[-*•]|\d+\.)\s+", line):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def _text_lint_findings(
+    report_text: str,
+    output_format: str,
+    *,
+    report_intent: Optional[str] = None,
+    depth: Optional[str] = None,
+) -> dict[str, Any]:
+    raw = str(report_text or "")
+    if not raw.strip():
+        return {
+            "issue_count": 0,
+            "critical_count": 0,
+            "major_count": 0,
+            "minor_count": 0,
+            "issues": [],
+        }
+
+    intent = _normalize_report_intent(report_intent)
+    normalized_depth = normalize_depth_choice(depth)
+    sections = _iter_content_sections_for_lint(raw, output_format)
+    issues: list[dict[str, Any]] = []
+    transition_re = re.compile(
+        r"(?i)\b(therefore|however|meanwhile|next|as a result|consequently|overall|in turn)\b"
+        r"|(?:따라서|결론적으로|한편|반면|다음으로|이에 따라|결국|요약하면)",
+    )
+
+    # Rule 1) Missing citations for substantive/core claims.
+    _support_ratio, unsupported_count = _claim_support_metrics(raw, output_format)
+    unsupported_examples = _unsupported_claim_examples(raw, output_format, max_items=4)
+    if unsupported_count > 0:
+        issues.append(
+            {
+                "rule": "core_claim_missing_citation",
+                "severity": "critical",
+                "message": (
+                    f"Unsupported substantive claims detected: {int(unsupported_count)}. "
+                    "Decision-impact claims must include inline citations."
+                ),
+                "examples": unsupported_examples,
+                "guide": "Attach inline URL/DOI/path citations to each substantive claim sentence.",
+            }
+        )
+
+    # Rule 2) Simulated/Illustrative values presented without explicit status labeling.
+    plain_text = _quality_plain_text(raw, output_format)
+    sentence_candidates = [seg.strip() for seg in re.split(r"(?<=[.!?])\s+|(?<=다\.)\s+", plain_text) if seg.strip()]
+    risky_sentences: list[str] = []
+    numeric_re = re.compile(r"\d+(?:\.\d+)?\s*(?:%|bp|x|배|건|명|년|개월|억|만|조|bn|m|k)?", re.IGNORECASE)
+    scenario_re = re.compile(
+        r"(?i)\b(scenario|projection|forecast|estimate|modeled?|simulat(?:ed|ion)?|illustrative)\b"
+        r"|(?:시나리오|전망|추정|가정|모형|모델링|예측)",
+    )
+    explicit_label_re = re.compile(
+        r"(?i)simulated/?illustrative|simulated|illustrative|"
+        r"(?:시뮬레이션|가정치|추정치|예시값|참고 시나리오)",
+    )
+    for sentence in sentence_candidates:
+        if not numeric_re.search(sentence):
+            continue
+        if not scenario_re.search(sentence):
+            continue
+        if explicit_label_re.search(sentence):
+            continue
+        risky_sentences.append(sentence[:200])
+        if len(risky_sentences) >= 3:
+            break
+    if risky_sentences:
+        issues.append(
+            {
+                "rule": "simulated_without_explicit_label",
+                "severity": "major",
+                "message": (
+                    "Scenario/estimated numeric statements detected without explicit "
+                    "Simulated/Illustrative-style labeling."
+                ),
+                "examples": risky_sentences,
+                "guide": (
+                    "Mark scenario-like numeric statements explicitly as "
+                    "Measured/Derived/Simulated in nearby prose or caption."
+                ),
+            }
+        )
+
+    # Rule 3) Heading list / low body density.
+    sparse_titles: list[str] = []
+    short_run = 0
+    long_short_run_detected = False
+    for title, span in sections:
+        lint_body = _strip_list_heavy_lines(_quality_plain_text(span, output_format))
+        words = len(re.findall(r"[A-Za-z0-9가-힣_]+", lint_body))
+        paragraphs = [seg.strip() for seg in re.split(r"\n\s*\n+", lint_body) if seg.strip()]
+        para_count = len(paragraphs)
+        sparse = words < 80 or para_count <= 1
+        if sparse:
+            sparse_titles.append(title)
+            short_run += 1
+        else:
+            short_run = 0
+        if short_run >= 3:
+            long_short_run_detected = True
+    if sparse_titles and (long_short_run_detected or len(sparse_titles) >= 3):
+        issues.append(
+            {
+                "rule": "heading_list_low_body_density",
+                "severity": "major",
+                "message": (
+                    "Multiple sections are sparse (heading-heavy, low paragraph density). "
+                    "This weakens narrative completeness."
+                ),
+                "examples": sparse_titles[:4],
+                "guide": (
+                    "Merge thin subsections and expand each core section with context -> "
+                    "evidence interpretation -> implication paragraphs."
+                ),
+            }
+        )
+
+    # Rule 4) Missing bridge transitions between sections.
+    bridge_missing_titles: list[str] = []
+    if len(sections) >= 2:
+        for idx, (title, span) in enumerate(sections[:-1]):
+            paragraphs = _flow_paragraphs(span, output_format)
+            if len(paragraphs) < 1:
+                continue
+            if not transition_re.search(paragraphs[-1]):
+                bridge_missing_titles.append(title)
+                if len(bridge_missing_titles) >= 4:
+                    break
+    if bridge_missing_titles and len(bridge_missing_titles) >= max(1, len(sections) // 2):
+        issues.append(
+            {
+                "rule": "missing_section_bridge",
+                "severity": "major",
+                "message": "Section-to-section bridge sentences are missing in multiple sections.",
+                "examples": bridge_missing_titles,
+                "guide": "Add one bridge sentence at section endings to connect to the next section.",
+            }
+        )
+
+    # Rule 5) Rhythm collapse (too many tiny chunks / overly long paragraphs).
+    all_paragraphs: list[str] = []
+    for _, span in sections:
+        all_paragraphs.extend(_flow_paragraphs(span, output_format))
+    para_lengths = [len(re.findall(r"[A-Za-z0-9가-힣_]+", para)) for para in all_paragraphs]
+    long_paragraphs = sum(1 for size in para_lengths if size >= 230)
+    max_short_run = 0
+    current_short = 0
+    for size in para_lengths:
+        if size <= 20:
+            current_short += 1
+            if current_short > max_short_run:
+                max_short_run = current_short
+        else:
+            current_short = 0
+    if long_paragraphs >= 2 or max_short_run >= 3:
+        issues.append(
+            {
+                "rule": "paragraph_rhythm_collapse",
+                "severity": "minor" if long_paragraphs < 3 and max_short_run < 4 else "major",
+                "message": (
+                    f"Paragraph rhythm imbalance detected (long_paragraphs={long_paragraphs}, "
+                    f"max_short_run={max_short_run})."
+                ),
+                "examples": [],
+                "guide": "Re-balance paragraph lengths to maintain a stable prose rhythm.",
+            }
+        )
+
+    # Rule 6) Tone mismatch by intent.
+    hype_re = re.compile(
+        r"(?i)(world[- ]?class|game[- ]?changer|must[- ]?win|revolutionary|unprecedented|"
+        r"대박|압도적|혁신적|완벽|최고)",
+    )
+    emoji_re = re.compile(
+        r"[\U0001F300-\U0001FAFF\u2600-\u27BF]",
+        re.UNICODE,
+    )
+    hype_hits = len(hype_re.findall(plain_text)) + len(re.findall(r"!!+", plain_text))
+    emoji_hits = len(emoji_re.findall(plain_text))
+    if intent in {"research", "review", "decision"} and (hype_hits + emoji_hits) >= 2:
+        issues.append(
+            {
+                "rule": "tone_mismatch_formal_context",
+                "severity": "major",
+                "message": "Colloquial/promotional tone signals detected in formal report intent.",
+                "examples": [],
+                "guide": "Use neutral analytical prose and remove promotional/exclamatory phrasing.",
+            }
+        )
+    if intent in {"briefing", "explainer", "narrative"} and normalized_depth != "exhaustive":
+        sentences = [seg.strip() for seg in re.split(r"[.!?]\s+", plain_text) if seg.strip()]
+        sentence_lengths = [len(re.findall(r"[A-Za-z0-9가-힣_]+", seg)) for seg in sentences]
+        avg_sentence = (sum(sentence_lengths) / max(1, len(sentence_lengths))) if sentence_lengths else 0.0
+        explainer_markers = re.compile(r"(?i)(예를 들어|즉,|쉽게 말해|for example|in short|that is)")
+        if avg_sentence >= 34 and not explainer_markers.search(plain_text):
+            issues.append(
+                {
+                    "rule": "tone_mismatch_overly_dry_for_explainer",
+                    "severity": "minor",
+                    "message": "Explainer/briefing intent appears overly dense and dry.",
+                    "examples": [],
+                    "guide": "Add concise transitions/definitions/examples to improve reader guidance.",
+                }
+            )
+
+    severity_rank = {"critical": 3, "major": 2, "minor": 1}
+    issues.sort(key=lambda item: severity_rank.get(str(item.get("severity") or ""), 0), reverse=True)
+    critical_count = sum(1 for item in issues if str(item.get("severity")) == "critical")
+    major_count = sum(1 for item in issues if str(item.get("severity")) == "major")
+    minor_count = sum(1 for item in issues if str(item.get("severity")) == "minor")
+    return {
+        "issue_count": len(issues),
+        "critical_count": critical_count,
+        "major_count": major_count,
+        "minor_count": minor_count,
+        "issues": issues,
+    }
+
+
+def text_lint_findings(
+    report_text: str,
+    output_format: str,
+    *,
+    report_intent: Optional[str] = None,
+    depth: Optional[str] = None,
+) -> dict[str, Any]:
+    return _text_lint_findings(
+        report_text,
+        output_format,
+        report_intent=report_intent,
+        depth=depth,
+    )
+
+
+def format_text_lint_summary(lint: dict[str, Any], max_items: int = 6) -> str:
+    payload = lint if isinstance(lint, dict) else {}
+    issues = payload.get("issues")
+    issue_rows = issues if isinstance(issues, list) else []
+    issue_count = int(payload.get("issue_count", len(issue_rows)) or 0)
+    if issue_count <= 0:
+        return "No critical text-lint issues detected."
+    lines = [
+        (
+            f"Text-lint summary: issues={issue_count}, "
+            f"critical={int(payload.get('critical_count', 0) or 0)}, "
+            f"major={int(payload.get('major_count', 0) or 0)}, "
+            f"minor={int(payload.get('minor_count', 0) or 0)}"
+        )
+    ]
+    for item in issue_rows[: max(1, max_items)]:
+        rule = str(item.get("rule") or "unknown")
+        severity = str(item.get("severity") or "minor")
+        message = str(item.get("message") or "").strip()
+        guide = str(item.get("guide") or "").strip()
+        examples = item.get("examples")
+        sample = ""
+        if isinstance(examples, list) and examples:
+            sample = str(examples[0] or "").strip()
+        line = f"- [{severity}] {rule}: {message}"
+        if sample:
+            line += f" | sample: {sample[:160]}"
+        if guide:
+            line += f" | guide: {guide}"
+        lines.append(line)
+    return "\n".join(lines).strip()
+
+
 def compute_heuristic_quality_signals(
     report_text: str,
     required_sections: list[str],
@@ -3307,6 +3628,18 @@ def evaluate_report(
             evaluation[metric_key] = heuristic.get(metric_key)
     unsupported_examples = _unsupported_claim_examples(report_text, output_format, max_items=6)
     evaluation["unsupported_claim_examples"] = unsupported_examples
+    lint_payload = text_lint_findings(
+        report_text,
+        output_format,
+        report_intent=report_intent,
+        depth=depth,
+    )
+    evaluation["text_lint"] = lint_payload
+    evaluation["text_lint_issue_count"] = int(lint_payload.get("issue_count", 0) or 0)
+    evaluation["text_lint_critical_count"] = int(lint_payload.get("critical_count", 0) or 0)
+    evaluation["text_lint_major_count"] = int(lint_payload.get("major_count", 0) or 0)
+    evaluation["text_lint_minor_count"] = int(lint_payload.get("minor_count", 0) or 0)
+    evaluation["text_lint_summary"] = format_text_lint_summary(lint_payload, max_items=5)
     evaluation["overall"] = round((llm_overall * (1.0 - blend_ratio)) + (heuristic_overall * blend_ratio), 2)
     for key in ("strengths", "weaknesses", "fixes"):
         value = parsed.get(key, [])
@@ -3319,6 +3652,16 @@ def evaluate_report(
     if unsupported_examples:
         fixes = list(evaluation.get("fixes") or [])
         fixes.append("Add inline citations for unsupported claims listed in unsupported_claim_examples.")
+        evaluation["fixes"] = fixes
+    lint_issues = lint_payload.get("issues") if isinstance(lint_payload, dict) else []
+    if isinstance(lint_issues, list) and lint_issues:
+        fixes = list(evaluation.get("fixes") or [])
+        for item in lint_issues[:5]:
+            if not isinstance(item, dict):
+                continue
+            guide = str(item.get("guide") or "").strip()
+            if guide and guide not in fixes:
+                fixes.append(guide)
         evaluation["fixes"] = fixes
     return evaluation
 

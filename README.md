@@ -2,19 +2,13 @@
 
 Author: Hyun-Jung Kim (angpangmokjang@gmail.com, Infant@kias.re.kr)
 
-Version: 1.9.34
+Version: 1.9.35
 
-## Latest Update (1.9.34, 2026-03-01)
-- Version sync completed at `1.9.34` (`pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`).
-- Writer/Finalizer/Critic/Reviser prompt contracts were tightened for narrative continuity (`context -> evidence interpretation -> implication`), and infographic render styling/layout was upgraded for report-quality embedding.
-- QC deep-research sample was regenerated as iter030 with the updated writing/artwork rules (`FEDERLICHT_LLM_BACKEND=codex_cli`, `CODEX_MODEL=gpt-5.3-codex`).
-- Reproducible artifacts were added under `test-results/`:
-  - `p0_sample_qc_iter030_codex53_ko_deepresearch_artwork_snapshot.html`
-  - `p0_prompt_qc_iter030_codex53_deepresearch_artwork.txt`
-  - `p0_quality_gate_qc_iter030_codex53_deepresearch.summary.json`
-  - `p0_quality_gate_qc_iter030_codex53_deepresearch.md`
-  - `p0_manual_review_qc_iter030_codex53_deepresearch.md`
-- Deep-research gate pass was reconfirmed on iter030 (`overall=94.22`, `claim_support=100.00`, `unsupported=0`, `section_coherence=100.00`).
+## Latest Update (1.9.35, 2026-03-01)
+- Version sync completed at `1.9.35` (`pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`).
+- Internal text-lint rules were added to the quality loop and fed into critic/reviser passes to improve report writing quality.
+- Text-lint output is kept as internal quality metadata only and is not included in the final report body.
+- Lint coverage and quality-loop regression tests were expanded and re-validated.
 
 ## Core Idea
 Federlicht is an agentic research and reporting platform designed around one principle:

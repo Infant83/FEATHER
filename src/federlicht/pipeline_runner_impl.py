@@ -622,7 +622,8 @@ def run_pipeline(
     )
     openalex_meta = load_openalex_meta(archive_dir)
     report = ensure_appendix_contents(report, output_format, refs, run_dir, notes_dir, language)
-    report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format)}"
+    embed_report_prompt = bool(getattr(args, "embed_report_prompt", False))
+    report = f"{report.rstrip()}{format_report_prompt_block(report_prompt, output_format, include=embed_report_prompt)}"
     if clarification_questions and "no_questions" not in clarification_questions.lower():
         report = f"{report.rstrip()}{format_clarifications_block(clarification_questions, clarification_answers, output_format)}"
     report = f"{report.rstrip()}{render_reference_section(citation_refs, refs, openalex_meta, output_format, text_meta_index)}"

@@ -577,7 +577,7 @@ def _extract_flow_hint(request_text: str) -> str:
     if any(token in text for token in ("문맥", "연결", "전환", "coherence", "transition")):
         return "explicit bridge sentences between paragraphs/sections to preserve context continuity."
     if any(token in text for token in ("서술형", "narrative", "산문")):
-        return "prose-first flow: opening claim -> evidence interpretation -> transition/implication."
+        return "prose-first flow with context continuity and integrated evidence-based insight."
     return ""
 
 
@@ -618,7 +618,9 @@ def _render_section_rewrite_prompt(
             "- Do not rewrite unrelated sections unless required for consistency.",
             "- Maintain claim-evidence-source alignment; preserve citations or refresh them if the claim changes.",
             "- Use narrative prose, not a repetitive label list (avoid '주장:/근거:/인사이트:' or 'Claim:/Evidence:/Insight:' line patterns).",
-            "- Keep section logic as: opening claim sentence -> evidence interpretation paragraph(s) -> transition/implication closing sentence.",
+            "- Avoid rigid formulaic skeletons; write as natural prose with clear context, evidence interpretation, and decision-relevant meaning.",
+            "- If the section has many short subheadings with only 1-2 sentences each, merge them into fewer, fuller paragraphs.",
+            "- Avoid template phrases like '근거는...', '즉시 함의는...', '2차 함의는...'.",
             "- If the section includes visuals/tables, add one short lead-in sentence before and one interpretation/limitation sentence after.",
             "- If the target section is missing, create it with the same heading near related sections; fallback is append at the end.",
             "",

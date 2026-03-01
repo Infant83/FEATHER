@@ -180,6 +180,15 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     ap.add_argument("--prompt", help="Inline report focus prompt.")
     ap.add_argument("--prompt-file", help="Path to a text file containing a report focus prompt.")
     ap.add_argument(
+        "--embed-report-prompt",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Embed a 'Report Prompt' section in the final report body (default: disabled). "
+            "Prompt text is always saved under instruction/report_prompt_*.txt and linked in run overview."
+        ),
+    )
+    ap.add_argument(
         "--generate-prompt",
         action="store_true",
         default=False,

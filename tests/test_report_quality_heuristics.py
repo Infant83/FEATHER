@@ -422,3 +422,45 @@ def test_visual_fallback_inserts_mermaid_when_deep_and_missing_visuals() -> None
     assert inserted is True
     assert "```mermaid" in updated
     assert "핵심 주장과 해석 경로" in updated
+
+
+def test_text_lint_findings_detects_sparse_sections_and_missing_claim_citations() -> None:
+    report_text = """
+## Executive Summary
+이 문단은 의사결정에 영향을 주는 비교 결론을 단정적으로 제시하지만 검증 가능한 인용이 전혀 없어 신뢰를 확보하기 어렵다.
+
+## Key Findings
+이 문단은 운영 성과가 크게 개선된다고 주장하지만 근거 링크와 출처가 없어 재현성과 추적성 기준을 충족하지 못한다.
+
+## Why It Matters
+이 문단은 비용과 리스크에 중대한 함의를 말하지만 실제 근거를 제시하지 않아 실행 판단에 바로 쓰기 어렵다.
+"""
+    lint = report.text_lint_findings(
+        report_text,
+        "md",
+        report_intent="research",
+        depth="deep",
+    )
+    rules = {str(item.get("rule") or "") for item in lint.get("issues") or []}
+    assert "core_claim_missing_citation" in rules
+    assert "heading_list_low_body_density" in rules
+
+
+def test_text_lint_findings_flags_simulated_numeric_without_explicit_label() -> None:
+    report_text = """
+## Key Findings
+2030년 시나리오에서는 오류율이 0.02%까지 낮아지고 운영 비용이 18% 줄어드는 것으로 전망되며 이는 산업 확장에 직접 연결된다.
+"""
+    lint = report.text_lint_findings(
+        report_text,
+        "md",
+        report_intent="research",
+        depth="deep",
+    )
+    rules = {str(item.get("rule") or "") for item in lint.get("issues") or []}
+    assert "simulated_without_explicit_label" in rules
+
+
+def test_format_text_lint_summary_handles_empty_payload() -> None:
+    summary = report.format_text_lint_summary({"issue_count": 0, "issues": []})
+    assert "No critical text-lint issues detected." in summary

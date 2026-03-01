@@ -4183,6 +4183,21 @@ class ReportOrchestrator:
                     if hasattr(helpers, "_unsupported_claim_examples")
                     else []
                 )
+                text_lint_pre = (
+                    helpers.text_lint_findings(
+                        report,
+                        output_format,
+                        report_intent=report_intent,
+                        depth=depth,
+                    )
+                    if hasattr(helpers, "text_lint_findings")
+                    else {}
+                )
+                text_lint_summary_pre = (
+                    helpers.format_text_lint_summary(text_lint_pre, max_items=6)
+                    if hasattr(helpers, "format_text_lint_summary")
+                    else ""
+                )
                 quality_focus_directives = feder_quality_iteration.build_focus_directives(
                     profile_label=quality_gate_profile_band,
                     targets=quality_gate_args,
@@ -4257,6 +4272,17 @@ class ReportOrchestrator:
                             "quality_focus",
                             "Quality focus directives:",
                             quality_focus_directives,
+                            priority="high",
+                            base_limit=1800,
+                            min_limit=700,
+                        )
+                    )
+                if text_lint_summary_pre:
+                    critic_sections.append(
+                        make_section(
+                            "text_lint",
+                            "Text lint (internal quality signal):",
+                            text_lint_summary_pre,
                             priority="high",
                             base_limit=1800,
                             min_limit=700,
@@ -4495,6 +4521,17 @@ class ReportOrchestrator:
                             min_limit=700,
                         )
                     )
+                if text_lint_summary_pre:
+                    revise_sections.append(
+                        make_section(
+                            "text_lint",
+                            "Text lint (internal quality signal):",
+                            text_lint_summary_pre,
+                            priority="high",
+                            base_limit=1800,
+                            min_limit=700,
+                        )
+                    )
                 revise_budget = resolve_stage_budget(
                     revise_max,
                     reserve=2400,
@@ -4617,6 +4654,16 @@ class ReportOrchestrator:
                     if quality_gate_enabled
                     else []
                 )
+                text_lint_post = (
+                    helpers.text_lint_findings(
+                        report,
+                        output_format,
+                        report_intent=report_intent,
+                        depth=depth,
+                    )
+                    if hasattr(helpers, "text_lint_findings")
+                    else {}
+                )
                 delta_signals = feder_quality_iteration.compute_delta(pre_signals, gate_signals)
                 quality_pass_trace.append(
                     {
@@ -4626,6 +4673,8 @@ class ReportOrchestrator:
                         "post_signals": gate_signals,
                         "delta": delta_signals,
                         "quality_gate_failures": gate_failures,
+                        "text_lint_pre": text_lint_pre,
+                        "text_lint_post": text_lint_post,
                     }
                 )
                 if feder_quality_iteration.is_plateau_delta(
@@ -4743,6 +4792,16 @@ class ReportOrchestrator:
                         if hasattr(helpers, "_unsupported_claim_examples")
                         else []
                     )
+                    text_lint_fallback = (
+                        helpers.text_lint_findings(
+                            candidate["text"],
+                            output_format,
+                            report_intent=report_intent,
+                            depth=depth,
+                        )
+                        if hasattr(helpers, "text_lint_findings")
+                        else {}
+                    )
                     evaluation = {
                         "overall": round(max(0.0, (fallback_overall * 0.7) + (float(heuristic.get("overall", 0.0)) * 0.3)), 2),
                         "coverage": max(0.0, fallback_overall - 2.0),
@@ -4763,6 +4822,13 @@ class ReportOrchestrator:
                         "unsupported_claim_count": float(heuristic.get("unsupported_claim_count", 0.0)),
                         "section_coherence_score": float(heuristic.get("section_coherence_score", 0.0)),
                         "unsupported_claim_examples": unsupported_examples,
+                        "text_lint": text_lint_fallback,
+                        "text_lint_issue_count": int(text_lint_fallback.get("issue_count", 0) or 0),
+                        "text_lint_summary": (
+                            helpers.format_text_lint_summary(text_lint_fallback, max_items=5)
+                            if hasattr(helpers, "format_text_lint_summary")
+                            else ""
+                        ),
                         "raw": f"context_overflow: {exc}",
                     }
                 evaluation["label"] = candidate["label"]

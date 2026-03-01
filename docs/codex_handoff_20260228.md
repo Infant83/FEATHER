@@ -1,6 +1,6 @@
 # Codex Unified Handoff - 2026-02-28
 
-Last updated: 2026-03-01 09:20 +09:00 (iter030 narrative/artwork rerun sync)  
+Last updated: 2026-03-01 10:05 +09:00 (narrative policy reset + artwork readability patch)  
 Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 1) 목적 (고정)
@@ -14,6 +14,23 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
   - 품질 게이트/수기 리뷰는 HTML 산출물을 기준으로 관리
 
 ## 2) 이번 사이클 요약 (2026-02-27~28 반영)
+- 2026-03-01 추가(이번 턴):
+  - 보고서 서술 정책 리셋(경직 규약 완화):
+    - writer/finalizer/critic/revise 프롬프트에서 템플릿형 문장(`근거는.../즉시 함의는.../2차 함의는...`) 억제
+    - Why It Matters류 섹션의 과분할(H3 1~2문장 반복)을 결함으로 규정하고 통합 서술형 재작성 규칙 추가
+  - Federnett `rewrite_section` 프롬프트 갱신:
+    - 고정 스켈레톤 지시 삭제, 맥락 연속성과 자연문 중심 제약으로 교체
+  - FederHav profile 시스템 프롬프트 갱신:
+    - 성숙한 산문 스타일/소제목 과분할 억제 규칙 추가
+  - 아트워크 렌더 고도화:
+    - Mermaid 렌더 초기화(theme/base + spacing/font) 보강
+    - `diagram-gantt`/`diagram-xychart` 타입별 클래스/가로 스크롤/최소폭 규칙 추가
+    - plain `<figure>` 자동 스타일링으로 레이더/도표 가독성 보강
+    - infographic Chart.js/Plotly 기본 스타일(legend/tooltip/grid/radar/line fill) 강화
+  - 보고서 본문 정책:
+    - `Report Prompt` 섹션은 기본 비노출(`--embed-report-prompt` opt-in)로 변경
+  - 상태:
+    - `iter031` QC 재생성은 런타임 타임아웃으로 아직 미완료(코드/테스트 반영은 완료)
 - 릴리즈:
   - `1.9.34` 릴리즈 반영 (iter030 narrative/artwork + version sync)
   - 버전 동기화: `pyproject.toml`, `src/federlicht/versioning.py`, `README.md`, `CHANGELOG.md`
@@ -182,9 +199,9 @@ Previous handoff (archived): `docs/codex_handoff_20260227.md`
 
 ## 4) 진행률 재정렬 (2026-02-28 계획 기준)
 - P0 (deep-research sustain): `100%` (완료/유지)
-- P1 (DeepAgent + section rewrite UX): `80%` (rewrite flow 힌트/제약 + citation integrity 보정 + citation cleanup 복구 + narrative arc 계약 강화)
+- P1 (DeepAgent + section rewrite UX): `84%` (rewrite flow 힌트/제약 + citation integrity 보정 + citation cleanup 복구 + narrative arc 계약 강화 + anti-formulaic 규칙 반영)
 - P2 (Productization + infographic pipeline): `100%` (caption 메타 계약 + lint/coverage + report embed 캡션 반영)
-- P3 (PPT reader-first + deck/html pipeline): `78%` (reader 계약 추출기 + hub/index deck 가시화 + manifest 보정도구 + artwork embed 계약 안정화)
+- P3 (PPT reader-first + deck/html pipeline): `80%` (reader 계약 추출기 + hub/index deck 가시화 + manifest 보정도구 + artwork embed 계약 안정화 + mermaid readability patch)
 
 ### P3 세부 상태
 | Phase | 상태 | 진행률 | 완료 기준 |

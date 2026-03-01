@@ -164,7 +164,40 @@ def _mermaid_loader_script() -> str:
         "      let index = 0;\n"
         "      const applyMermaid = () => {\n"
         "        if (!window.mermaid) return;\n"
-        "        window.mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: 'neutral' });\n"
+        "        window.mermaid.initialize({\n"
+        "          startOnLoad: true,\n"
+        "          securityLevel: 'strict',\n"
+        "          theme: 'base',\n"
+        "          themeVariables: {\n"
+        "            fontFamily: 'Space Grotesk, Noto Sans KR, Segoe UI, sans-serif',\n"
+        "            primaryColor: '#e9f2ff',\n"
+        "            primaryTextColor: '#0f172a',\n"
+        "            lineColor: '#475569',\n"
+        "            textColor: '#0f172a',\n"
+        "            tertiaryColor: '#f8fafc',\n"
+        "          },\n"
+        "          flowchart: {\n"
+        "            htmlLabels: true,\n"
+        "            curve: 'basis',\n"
+        "            nodeSpacing: 54,\n"
+        "            rankSpacing: 62,\n"
+        "            padding: 18,\n"
+        "            useMaxWidth: false,\n"
+        "          },\n"
+        "          gantt: {\n"
+        "            fontSize: 13,\n"
+        "            numberSectionStyles: 4,\n"
+        "            topPadding: 48,\n"
+        "            gridLineStartPadding: 40,\n"
+        "            leftPadding: 170,\n"
+        "            barHeight: 26,\n"
+        "            barGap: 8,\n"
+        "            useMaxWidth: false,\n"
+        "          },\n"
+        "          timeline: {\n"
+        "            disableMulticolor: false,\n"
+        "          },\n"
+        "        });\n"
         "        if (typeof window.mermaid.run === 'function') {\n"
         "          window.mermaid.run({ querySelector: '.mermaid' });\n"
         "        }\n"
@@ -310,6 +343,28 @@ def _normalize_mermaid_source(raw: str) -> str:
     return _MERMAID_FLOWCHART_NODE_RE.sub(_quote_label, text)
 
 
+def _mermaid_diagram_kind(raw: str) -> str:
+    text = (raw or "").strip()
+    if not text:
+        return "generic"
+    for line in text.splitlines():
+        token = line.strip().lower()
+        if not token or token.startswith("%%"):
+            continue
+        if token.startswith("xychart-beta") or token.startswith("xychart"):
+            return "xychart"
+        if token.startswith("gantt"):
+            return "gantt"
+        if token.startswith("timeline"):
+            return "timeline"
+        if token.startswith("flowchart") or token.startswith("graph"):
+            return "flowchart"
+        if token.startswith("mindmap"):
+            return "mindmap"
+        return "generic"
+    return "generic"
+
+
 def _has_mermaid_class(attrs: str) -> bool:
     match = _CLASS_ATTR_RE.search(attrs or "")
     if not match:
@@ -320,9 +375,11 @@ def _has_mermaid_class(attrs: str) -> bool:
 
 def _render_mermaid_figure(raw: str) -> str:
     safe = html_lib.escape(raw)
+    kind = _mermaid_diagram_kind(raw)
+    safe_kind = re.sub(r"[^a-z0-9_-]+", "", kind.lower()) or "generic"
     return (
-        "<figure class=\"report-figure report-diagram\">"
-        f"<div class=\"mermaid\">{safe}</div>"
+        f"<figure class=\"report-figure report-diagram diagram-{safe_kind}\">"
+        f"<div class=\"mermaid\" data-mermaid-kind=\"{safe_kind}\">{safe}</div>"
         "</figure>"
     )
 
@@ -362,7 +419,13 @@ def transform_mermaid_code_blocks(body_html: str) -> tuple[str, bool]:
         raw = _normalize_mermaid_source(raw)
         has_mermaid = True
         safe = html_lib.escape(raw)
-        return f"<div{attrs}>{safe}</div>"
+        kind = _mermaid_diagram_kind(raw)
+        safe_kind = re.sub(r"[^a-z0-9_-]+", "", kind.lower()) or "generic"
+        if "data-mermaid-kind" in attrs:
+            attrs_clean = re.sub(r'(?i)\sdata-mermaid-kind\s*=\s*(?:"[^"]*"|\'[^\']*\')', "", attrs)
+        else:
+            attrs_clean = attrs
+        return f"<div{attrs_clean} data-mermaid-kind=\"{safe_kind}\">{safe}</div>"
 
     transformed = _MERMAID_CODE_BLOCK_RE.sub(replace_code, body_html or "")
     transformed = _MERMAID_FENCE_RE.sub(replace_fence, transformed)
@@ -872,6 +935,25 @@ def wrap_html(
         "      max-width: 100%;\n"
         "      overflow: hidden;\n"
         "    }\n"
+        "    .article figure:not(.report-figure) {\n"
+        "      margin: 1.4rem 0;\n"
+        "      border: 1px solid var(--rule);\n"
+        "      border-radius: 14px;\n"
+        "      background: rgba(148, 163, 184, 0.06);\n"
+        "      padding: 0.85rem;\n"
+        "    }\n"
+        "    .article figure:not(.report-figure) > img,\n"
+        "    .article figure:not(.report-figure) > svg,\n"
+        "    .article figure:not(.report-figure) > canvas {\n"
+        "      display: block;\n"
+        "      width: 100%;\n"
+        "      max-width: 100%;\n"
+        "      height: auto;\n"
+        "      margin: 0 auto;\n"
+        "      border-radius: 10px;\n"
+        "      background: rgba(255, 255, 255, 0.92);\n"
+        "      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);\n"
+        "    }\n"
         "    .article figure.report-infographic {\n"
         "      border: 1px solid var(--rule);\n"
         "      border-radius: 16px;\n"
@@ -918,20 +1000,45 @@ def wrap_html(
         "      }\n"
         "    }\n"
         "    .article figure.report-diagram {\n"
-        "      background: rgba(15, 23, 42, 0.04);\n"
-        "      border: 1px solid rgba(15, 23, 42, 0.1);\n"
+        "      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.82));\n"
+        "      border: 1px solid rgba(15, 23, 42, 0.12);\n"
         "      border-radius: 14px;\n"
-        "      padding: 0.9rem;\n"
+        "      padding: 0.95rem;\n"
+        "      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);\n"
         "    }\n"
         "    .article .mermaid {\n"
         "      display: flex;\n"
         "      justify-content: center;\n"
         "      overflow-x: auto;\n"
+        "      padding-bottom: 0.35rem;\n"
         "      min-height: 40px;\n"
         "    }\n"
         "    .article .mermaid svg {\n"
         "      max-width: 100% !important;\n"
         "      height: auto;\n"
+        "      font-family: var(--ui-font) !important;\n"
+        "      shape-rendering: geometricPrecision;\n"
+        "    }\n"
+        "    .article figure.report-diagram.diagram-gantt .mermaid,\n"
+        "    .article figure.report-diagram.diagram-xychart .mermaid,\n"
+        "    .article .mermaid[data-mermaid-kind=\"gantt\"],\n"
+        "    .article .mermaid[data-mermaid-kind=\"xychart\"] {\n"
+        "      justify-content: flex-start;\n"
+        "      overflow-x: auto;\n"
+        "    }\n"
+        "    .article figure.report-diagram.diagram-gantt .mermaid svg,\n"
+        "    .article figure.report-diagram.diagram-xychart .mermaid svg,\n"
+        "    .article .mermaid[data-mermaid-kind=\"gantt\"] svg,\n"
+        "    .article .mermaid[data-mermaid-kind=\"xychart\"] svg {\n"
+        "      width: max-content !important;\n"
+        "      min-width: 1080px;\n"
+        "      max-width: none !important;\n"
+        "    }\n"
+        "    .article figure.report-diagram.diagram-gantt .mermaid text,\n"
+        "    .article figure.report-diagram.diagram-xychart .mermaid text,\n"
+        "    .article .mermaid[data-mermaid-kind=\"gantt\"] text,\n"
+        "    .article .mermaid[data-mermaid-kind=\"xychart\"] text {\n"
+        "      font-size: 13px !important;\n"
         "    }\n"
         "    .article table { border-collapse: collapse; width: 100%; margin: 1.4rem 0; }\n"
         "    .article th, .article td { border: 1px solid var(--rule); padding: 10px 12px; }\n"

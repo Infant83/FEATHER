@@ -335,7 +335,7 @@ def test_execute_capability_action_rewrite_section_prompt_prep(tmp_path: Path) -
     assert "Tone:" in prompt_text
     assert "Narrative flow:" in prompt_text
     assert "Target section status: found in current report" in prompt_text
-    assert "opening claim sentence -> evidence interpretation" in prompt_text
+    assert "Avoid rigid formulaic skeletons" in prompt_text
 
 
 def test_execute_capability_action_rewrite_section_prompt_prep_missing_section(tmp_path: Path) -> None:

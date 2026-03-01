@@ -1,9 +1,40 @@
 # Changelog
 
 ## Unreleased (2026-03-01)
-- (no entries yet)
+
+## 1.9.35 (2026-03-01)
+- release alignment:
+  - bump version to `1.9.35` across `pyproject.toml`, `src/federlicht/versioning.py`, and `README.md`.
+- text lint quality loop integration:
+  - added internal text-lint rules for key quality failures:
+    - missing citations on substantive claims,
+    - simulated/scenario numeric statements without explicit labeling,
+    - heading-list / low-body-density structure,
+    - missing section-bridge transitions,
+    - paragraph rhythm collapse,
+    - tone mismatch by intent.
+  - text-lint summaries are injected into critic/reviser passes as an internal quality signal.
+  - lint results are not embedded into the final report body.
+  - added lint metadata to evaluation payload (`text_lint`, issue counts, summary) for quality-loop guidance.
+  - tests:
+    - `tests/test_report_quality_heuristics.py` extended with text-lint coverage.
+    - `tests/test_pipeline_runner_impl.py`, `tests/test_federlicht_cli_args.py`, `tests/test_report_quality_gate_runner.py` regression re-run.
 
 ## 1.9.34 (2026-03-01)
+- narrative policy reset for report quality:
+  - relaxed rigid section skeleton guidance and added anti-formulaic writing rules across writer/finalizer/critic/revise prompts.
+  - Why-It-Matters style sections now explicitly discourage over-fragmented short H3 blocks.
+  - rewrite-section prompt constraints now prefer context continuity + integrated prose over template sentence patterns.
+- federhav profile writing policy update:
+  - added guidance to avoid template-like implication phrasing and over-segmented micro-subheadings.
+- artwork readability and visual polish upgrade:
+  - Mermaid runtime config updated (theme/base + spacing/font tuning).
+  - diagram-kind classes (`diagram-gantt`, `diagram-xychart`) added with horizontal-scroll and min-width safeguards for dense axis labels.
+  - plain `<figure>` styling fallback improved for inline SVG/canvas readability.
+  - infographic Chart.js/Plotly defaults upgraded (legend/tooltip/grid/radar/line-fill styling).
+- report body policy update:
+  - `Report Prompt` section is no longer embedded by default.
+  - new CLI flag: `--embed-report-prompt` (opt-in).
 - release alignment:
   - bump version to `1.9.34` across `pyproject.toml`, `src/federlicht/versioning.py`, and `README.md`.
 - citation rewrite hardening for raw HTML/SVG:

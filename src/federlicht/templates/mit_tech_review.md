@@ -19,7 +19,7 @@ guide Executive Summary: 2 short paragraphs; lede + deck; no bullets.
 guide What Changed: 1-2 paragraphs; describe the shift without jargon.
 guide The Core Idea: plain-language explanation; define 1-2 key terms.
 guide Evidence Snapshot: 3-5 bullets with sources and metrics.
-guide Why It Matters: connect to outcomes, adoption, or capability thresholds.
+guide Why It Matters: connect evidence to outcomes/adoption thresholds in cohesive prose; avoid over-fragmented one-paragraph subheadings.
 guide What's Next: near-term milestones and decision questions.
 guide Risks & Gaps: unknowns, negative results, missing evidence.
 writer_guidance: Keep paragraphs short (<=3 sentences).
